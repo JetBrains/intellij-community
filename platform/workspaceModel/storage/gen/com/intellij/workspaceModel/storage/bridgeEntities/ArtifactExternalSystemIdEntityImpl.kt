@@ -50,7 +50,8 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
     return connections
   }
 
-  class Builder(var result: ArtifactExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<ArtifactExternalSystemIdEntity>(), ArtifactExternalSystemIdEntity.Builder {
+  class Builder(result: ArtifactExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<ArtifactExternalSystemIdEntity, ArtifactExternalSystemIdEntityData>(
+    result), ArtifactExternalSystemIdEntity.Builder {
     constructor() : this(ArtifactExternalSystemIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,7 +71,7 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -119,7 +120,7 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -128,7 +129,7 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
       get() = getEntityData().externalSystemId
       set(value) {
         checkModificationAllowed()
-        getEntityData().externalSystemId = value
+        getEntityData(true).externalSystemId = value
         changedProperty.add("externalSystemId")
       }
 
@@ -146,18 +147,18 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, ARTIFACTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(ARTIFACTENTITY_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, ARTIFACTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -167,7 +168,6 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
         changedProperty.add("artifactEntity")
       }
 
-    override fun getEntityData(): ArtifactExternalSystemIdEntityData = result ?: super.getEntityData() as ArtifactExternalSystemIdEntityData
     override fun getEntityClass(): Class<ArtifactExternalSystemIdEntity> = ArtifactExternalSystemIdEntity::class.java
   }
 }

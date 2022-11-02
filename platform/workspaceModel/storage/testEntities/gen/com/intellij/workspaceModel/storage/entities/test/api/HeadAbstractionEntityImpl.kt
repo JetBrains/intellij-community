@@ -49,7 +49,8 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
     return connections
   }
 
-  class Builder(var result: HeadAbstractionEntityData?) : ModifiableWorkspaceEntityBase<HeadAbstractionEntity>(), HeadAbstractionEntity.Builder {
+  class Builder(result: HeadAbstractionEntityData?) : ModifiableWorkspaceEntityBase<HeadAbstractionEntity, HeadAbstractionEntityData>(
+    result), HeadAbstractionEntity.Builder {
     constructor() : this(HeadAbstractionEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -69,7 +70,7 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -104,7 +105,7 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -113,7 +114,7 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -131,18 +132,18 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractOneChildOfParent(CHILD_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -152,7 +153,6 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
         changedProperty.add("child")
       }
 
-    override fun getEntityData(): HeadAbstractionEntityData = result ?: super.getEntityData() as HeadAbstractionEntityData
     override fun getEntityClass(): Class<HeadAbstractionEntity> = HeadAbstractionEntity::class.java
   }
 }

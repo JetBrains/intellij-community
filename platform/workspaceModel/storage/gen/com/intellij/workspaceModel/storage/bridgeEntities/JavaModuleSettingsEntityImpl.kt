@@ -58,7 +58,8 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
     return connections
   }
 
-  class Builder(var result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity>(), JavaModuleSettingsEntity.Builder {
+  class Builder(result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity, JavaModuleSettingsEntityData>(
+    result), JavaModuleSettingsEntity.Builder {
     constructor() : this(JavaModuleSettingsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -78,7 +79,7 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "compilerOutput", this.compilerOutput)
       index(this, "compilerOutputForTests", this.compilerOutputForTests)
@@ -130,7 +131,7 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -149,18 +150,18 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -174,7 +175,7 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       get() = getEntityData().inheritedCompilerOutput
       set(value) {
         checkModificationAllowed()
-        getEntityData().inheritedCompilerOutput = value
+        getEntityData(true).inheritedCompilerOutput = value
         changedProperty.add("inheritedCompilerOutput")
       }
 
@@ -182,7 +183,7 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       get() = getEntityData().excludeOutput
       set(value) {
         checkModificationAllowed()
-        getEntityData().excludeOutput = value
+        getEntityData(true).excludeOutput = value
         changedProperty.add("excludeOutput")
       }
 
@@ -190,7 +191,7 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       get() = getEntityData().compilerOutput
       set(value) {
         checkModificationAllowed()
-        getEntityData().compilerOutput = value
+        getEntityData(true).compilerOutput = value
         changedProperty.add("compilerOutput")
         val _diff = diff
         if (_diff != null) index(this, "compilerOutput", value)
@@ -200,7 +201,7 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       get() = getEntityData().compilerOutputForTests
       set(value) {
         checkModificationAllowed()
-        getEntityData().compilerOutputForTests = value
+        getEntityData(true).compilerOutputForTests = value
         changedProperty.add("compilerOutputForTests")
         val _diff = diff
         if (_diff != null) index(this, "compilerOutputForTests", value)
@@ -210,11 +211,10 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       get() = getEntityData().languageLevelId
       set(value) {
         checkModificationAllowed()
-        getEntityData().languageLevelId = value
+        getEntityData(true).languageLevelId = value
         changedProperty.add("languageLevelId")
       }
 
-    override fun getEntityData(): JavaModuleSettingsEntityData = result ?: super.getEntityData() as JavaModuleSettingsEntityData
     override fun getEntityClass(): Class<JavaModuleSettingsEntity> = JavaModuleSettingsEntity::class.java
   }
 }

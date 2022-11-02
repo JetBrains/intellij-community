@@ -40,7 +40,8 @@ open class ChildWithNullsMultipleImpl(val dataSource: ChildWithNullsMultipleData
     return connections
   }
 
-  class Builder(var result: ChildWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsMultiple>(), ChildWithNullsMultiple.Builder {
+  class Builder(result: ChildWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsMultiple, ChildWithNullsMultipleData>(
+    result), ChildWithNullsMultiple.Builder {
     constructor() : this(ChildWithNullsMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,7 +61,7 @@ open class ChildWithNullsMultipleImpl(val dataSource: ChildWithNullsMultipleData
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -95,7 +96,7 @@ open class ChildWithNullsMultipleImpl(val dataSource: ChildWithNullsMultipleData
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -104,11 +105,10 @@ open class ChildWithNullsMultipleImpl(val dataSource: ChildWithNullsMultipleData
       get() = getEntityData().childData
       set(value) {
         checkModificationAllowed()
-        getEntityData().childData = value
+        getEntityData(true).childData = value
         changedProperty.add("childData")
       }
 
-    override fun getEntityData(): ChildWithNullsMultipleData = result ?: super.getEntityData() as ChildWithNullsMultipleData
     override fun getEntityClass(): Class<ChildWithNullsMultiple> = ChildWithNullsMultiple::class.java
   }
 }

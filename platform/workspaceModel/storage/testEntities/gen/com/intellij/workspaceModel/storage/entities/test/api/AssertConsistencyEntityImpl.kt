@@ -37,7 +37,8 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
     return connections
   }
 
-  class Builder(var result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity>(), AssertConsistencyEntity.Builder {
+  class Builder(result: AssertConsistencyEntityData?) : ModifiableWorkspaceEntityBase<AssertConsistencyEntity, AssertConsistencyEntityData>(
+    result), AssertConsistencyEntity.Builder {
     constructor() : this(AssertConsistencyEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -57,7 +58,7 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -89,7 +90,7 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -98,11 +99,10 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
       get() = getEntityData().passCheck
       set(value) {
         checkModificationAllowed()
-        getEntityData().passCheck = value
+        getEntityData(true).passCheck = value
         changedProperty.add("passCheck")
       }
 
-    override fun getEntityData(): AssertConsistencyEntityData = result ?: super.getEntityData() as AssertConsistencyEntityData
     override fun getEntityClass(): Class<AssertConsistencyEntity> = AssertConsistencyEntity::class.java
   }
 }

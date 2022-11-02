@@ -44,7 +44,8 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
     return connections
   }
 
-  class Builder(var result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity>(), SymbolicIdEntity.Builder {
+  class Builder(result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity, SymbolicIdEntityData>(
+    result), SymbolicIdEntity.Builder {
     constructor() : this(SymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -64,7 +65,7 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -99,7 +100,7 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -108,11 +109,10 @@ open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : Symbolic
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): SymbolicIdEntityData = result ?: super.getEntityData() as SymbolicIdEntityData
     override fun getEntityClass(): Class<SymbolicIdEntity> = SymbolicIdEntity::class.java
   }
 }

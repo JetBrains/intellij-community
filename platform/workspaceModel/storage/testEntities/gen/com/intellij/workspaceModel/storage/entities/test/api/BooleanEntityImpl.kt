@@ -38,7 +38,8 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
     return connections
   }
 
-  class Builder(var result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity>(), BooleanEntity.Builder {
+  class Builder(result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity, BooleanEntityData>(
+    result), BooleanEntity.Builder {
     constructor() : this(BooleanEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,7 +59,7 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -90,7 +91,7 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -99,11 +100,10 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): BooleanEntityData = result ?: super.getEntityData() as BooleanEntityData
     override fun getEntityClass(): Class<BooleanEntity> = BooleanEntity::class.java
   }
 }

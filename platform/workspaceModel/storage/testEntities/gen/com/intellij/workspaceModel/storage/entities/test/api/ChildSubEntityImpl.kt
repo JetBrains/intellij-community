@@ -52,7 +52,8 @@ open class ChildSubEntityImpl(val dataSource: ChildSubEntityData) : ChildSubEnti
     return connections
   }
 
-  class Builder(var result: ChildSubEntityData?) : ModifiableWorkspaceEntityBase<ChildSubEntity>(), ChildSubEntity.Builder {
+  class Builder(result: ChildSubEntityData?) : ModifiableWorkspaceEntityBase<ChildSubEntity, ChildSubEntityData>(
+    result), ChildSubEntity.Builder {
     constructor() : this(ChildSubEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -72,7 +73,7 @@ open class ChildSubEntityImpl(val dataSource: ChildSubEntityData) : ChildSubEnti
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -117,7 +118,7 @@ open class ChildSubEntityImpl(val dataSource: ChildSubEntityData) : ChildSubEnti
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -136,18 +137,18 @@ open class ChildSubEntityImpl(val dataSource: ChildSubEntityData) : ChildSubEnti
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -171,18 +172,18 @@ open class ChildSubEntityImpl(val dataSource: ChildSubEntityData) : ChildSubEnti
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(CHILD_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -192,7 +193,6 @@ open class ChildSubEntityImpl(val dataSource: ChildSubEntityData) : ChildSubEnti
         changedProperty.add("child")
       }
 
-    override fun getEntityData(): ChildSubEntityData = result ?: super.getEntityData() as ChildSubEntityData
     override fun getEntityClass(): Class<ChildSubEntity> = ChildSubEntity::class.java
   }
 }

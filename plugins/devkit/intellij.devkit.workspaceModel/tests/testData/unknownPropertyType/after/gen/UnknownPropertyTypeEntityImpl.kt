@@ -36,7 +36,8 @@ open class UnknownPropertyTypeEntityImpl(val dataSource: UnknownPropertyTypeEnti
     return connections
   }
 
-  class Builder(var result: UnknownPropertyTypeEntityData?) : ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity>(), UnknownPropertyTypeEntity.Builder {
+  class Builder(result: UnknownPropertyTypeEntityData?) : ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity, UnknownPropertyTypeEntityData>(
+    result), UnknownPropertyTypeEntity.Builder {
     constructor() : this(UnknownPropertyTypeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -56,7 +57,7 @@ open class UnknownPropertyTypeEntityImpl(val dataSource: UnknownPropertyTypeEnti
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -91,7 +92,7 @@ open class UnknownPropertyTypeEntityImpl(val dataSource: UnknownPropertyTypeEnti
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -100,12 +101,11 @@ open class UnknownPropertyTypeEntityImpl(val dataSource: UnknownPropertyTypeEnti
       get() = getEntityData().date
       set(value) {
         checkModificationAllowed()
-        getEntityData().date = value
+        getEntityData(true).date = value
         changedProperty.add("date")
 
       }
 
-    override fun getEntityData(): UnknownPropertyTypeEntityData = result ?: super.getEntityData() as UnknownPropertyTypeEntityData
     override fun getEntityClass(): Class<UnknownPropertyTypeEntity> = UnknownPropertyTypeEntity::class.java
   }
 }

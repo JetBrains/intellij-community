@@ -78,7 +78,8 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
     return connections
   }
 
-  class Builder(var result: ArtifactEntityData?) : ModifiableWorkspaceEntityBase<ArtifactEntity>(), ArtifactEntity.Builder {
+  class Builder(result: ArtifactEntityData?) : ModifiableWorkspaceEntityBase<ArtifactEntity, ArtifactEntityData>(
+    result), ArtifactEntity.Builder {
     constructor() : this(ArtifactEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -98,7 +99,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "outputUrl", this.outputUrl)
       // Process linked entities that are connected without a builder
@@ -151,7 +152,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -160,7 +161,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData().name = value
+        getEntityData(true).name = value
         changedProperty.add("name")
       }
 
@@ -168,7 +169,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       get() = getEntityData().artifactType
       set(value) {
         checkModificationAllowed()
-        getEntityData().artifactType = value
+        getEntityData(true).artifactType = value
         changedProperty.add("artifactType")
       }
 
@@ -176,7 +177,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       get() = getEntityData().includeInProjectBuild
       set(value) {
         checkModificationAllowed()
-        getEntityData().includeInProjectBuild = value
+        getEntityData(true).includeInProjectBuild = value
         changedProperty.add("includeInProjectBuild")
       }
 
@@ -184,7 +185,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       get() = getEntityData().outputUrl
       set(value) {
         checkModificationAllowed()
-        getEntityData().outputUrl = value
+        getEntityData(true).outputUrl = value
         changedProperty.add("outputUrl")
         val _diff = diff
         if (_diff != null) index(this, "outputUrl", value)
@@ -204,18 +205,18 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, ROOTELEMENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractOneChildOfParent(ROOTELEMENT_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, ROOTELEMENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -247,9 +248,9 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CUSTOMPROPERTIES_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -261,7 +262,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CUSTOMPROPERTIES_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -286,18 +287,18 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -307,7 +308,6 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
         changedProperty.add("artifactOutputPackagingElement")
       }
 
-    override fun getEntityData(): ArtifactEntityData = result ?: super.getEntityData() as ArtifactEntityData
     override fun getEntityClass(): Class<ArtifactEntity> = ArtifactEntity::class.java
   }
 }

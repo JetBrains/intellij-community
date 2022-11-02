@@ -84,7 +84,8 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
     return connections
   }
 
-  class Builder(var result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity>(), LibraryEntity.Builder {
+  class Builder(result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity, LibraryEntityData>(
+    result), LibraryEntity.Builder {
     constructor() : this(LibraryEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -104,7 +105,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       indexLibraryRoots(roots)
       // Process linked entities that are connected without a builder
@@ -178,7 +179,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -187,7 +188,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData().name = value
+        getEntityData(true).name = value
         changedProperty.add("name")
       }
 
@@ -195,7 +196,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       get() = getEntityData().tableId
       set(value) {
         checkModificationAllowed()
-        getEntityData().tableId = value
+        getEntityData(true).tableId = value
         changedProperty.add("tableId")
 
       }
@@ -223,7 +224,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().roots = value
+        getEntityData(true).roots = value
         rootsUpdater.invoke(value)
       }
 
@@ -247,9 +248,9 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, EXCLUDEDROOTS_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -261,7 +262,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, EXCLUDEDROOTS_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -285,18 +286,18 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, SDK_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(SDK_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, SDK_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -320,18 +321,18 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, LIBRARYPROPERTIES_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(LIBRARYPROPERTIES_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, LIBRARYPROPERTIES_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -355,18 +356,18 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -376,7 +377,6 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
         changedProperty.add("libraryFilesPackagingElement")
       }
 
-    override fun getEntityData(): LibraryEntityData = result ?: super.getEntityData() as LibraryEntityData
     override fun getEntityClass(): Class<LibraryEntity> = LibraryEntity::class.java
   }
 }

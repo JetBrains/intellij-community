@@ -47,7 +47,8 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
     return connections
   }
 
-  class Builder(var result: WithListSoftLinksEntityData?) : ModifiableWorkspaceEntityBase<WithListSoftLinksEntity>(), WithListSoftLinksEntity.Builder {
+  class Builder(result: WithListSoftLinksEntityData?) : ModifiableWorkspaceEntityBase<WithListSoftLinksEntity, WithListSoftLinksEntityData>(
+    result), WithListSoftLinksEntity.Builder {
     constructor() : this(WithListSoftLinksEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,7 +68,7 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -113,7 +114,7 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -122,7 +123,7 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       get() = getEntityData().myName
       set(value) {
         checkModificationAllowed()
-        getEntityData().myName = value
+        getEntityData(true).myName = value
         changedProperty.add("myName")
       }
 
@@ -144,11 +145,10 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().links = value
+        getEntityData(true).links = value
         linksUpdater.invoke(value)
       }
 
-    override fun getEntityData(): WithListSoftLinksEntityData = result ?: super.getEntityData() as WithListSoftLinksEntityData
     override fun getEntityClass(): Class<WithListSoftLinksEntity> = WithListSoftLinksEntity::class.java
   }
 }

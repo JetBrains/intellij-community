@@ -36,7 +36,7 @@ open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
   override val entitySource: EntitySource
     get() = TODO("Not yet implemented")
 
-  class Builder(val result: TestEntityData?): ModifiableWorkspaceEntityBase<TestEntity>(), TestEntity.Builder {
+  class Builder(result: TestEntityData?): ModifiableWorkspaceEntityBase<TestEntity, TestEntityData>(result), TestEntity.Builder {
         constructor(): this(TestEntityData())
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -112,7 +112,6 @@ open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun getEntityData(): TestEntityData = result ?: super.getEntityData() as TestEntityData
         override fun getEntityClass(): Class<TestEntity> = TestEntity::class.java
     }
 }

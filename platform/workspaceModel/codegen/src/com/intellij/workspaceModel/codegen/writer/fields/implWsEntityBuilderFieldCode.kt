@@ -24,7 +24,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 get() = getEntityData().${field.javaName}
                 set(value) {
                     checkModificationAllowed()
-                    getEntityData().${field.javaName} = value
+                    getEntityData(true).${field.javaName} = value
                     changedProperty.add("${field.javaName}")
                 }
                 
@@ -34,7 +34,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 get() = getEntityData().${field.javaName}
                 set(value) {
                     checkModificationAllowed()
-                    getEntityData().${field.javaName} = value
+                    getEntityData(true).${field.javaName} = value
                     changedProperty.add("${field.javaName}")
                 }
                 
@@ -59,11 +59,11 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
         section("set(value)") {
           line("checkModificationAllowed()")
           line("val _diff = diff")
-          `if`("_diff != null && value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && value.diff == null") {
+          `if`("_diff != null && value is ${ModifiableWorkspaceEntityBase::class.fqn}<*, *> && value.diff == null") {
             backrefSetup(field)
             line("_diff.addEntity(value)")
           }
-          section("if (_diff != null && (value !is ${ModifiableWorkspaceEntityBase::class.fqn}<*> || value.diff != null))") {
+          section("if (_diff != null && (value !is ${ModifiableWorkspaceEntityBase::class.fqn}<*, *> || value.diff != null))") {
             line("_diff.${getterSetterNames.setter}($connectionName, this, value)")
           }
           section("else") {
@@ -98,9 +98,9 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
               line("val _diff = diff")
               `if`("_diff != null") {
                 `for`("item_value in value") {
-                  `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && (item_value as? ${
+                  `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*, *> && (item_value as? ${
                     ModifiableWorkspaceEntityBase::class.fqn
-                  }<*>)?.diff == null") {
+                  }<*, *>)?.diff == null") {
                     lineComment("Backref setup before adding to store an abstract entity")
                     backrefSetup(field, "item_value")
                     line("_diff.addEntity(item_value)")
@@ -139,7 +139,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
               line("val _diff = diff")
               `if`("_diff != null") {
                 `for`("item_value in value") {
-                  `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && (item_value as? ${ModifiableWorkspaceEntityBase::class.fqn}<*>)?.diff == null") {
+                  `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*, *> && (item_value as? ${ModifiableWorkspaceEntityBase::class.fqn}<*, *>)?.diff == null") {
                     lineComment("Backref setup before adding to store")
                     backrefSetup(field, "item_value")
                     line()
@@ -178,7 +178,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 }
                 set(value) {
                     checkModificationAllowed()
-                    getEntityData().${field.javaName} = value
+                    getEntityData(true).${field.javaName} = value
                     ${field.javaName}Updater.invoke(value)
                 }
                 
@@ -208,7 +208,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 }
                 set(value) {
                     checkModificationAllowed()
-                    getEntityData().${field.javaName} = value
+                    getEntityData(true).${field.javaName} = value
                     ${field.javaName}Updater.invoke(value)
                 }
                 
@@ -220,7 +220,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 get() = getEntityData().${field.javaName}
                 set(value) {
                     checkModificationAllowed()
-                    getEntityData().${field.javaName} = value
+                    getEntityData(true).${field.javaName} = value
                     changedProperty.add("${field.javaName}")
                 }
                 
@@ -232,7 +232,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 get() = getEntityData().${field.javaName}
                 set(value) {
                     checkModificationAllowed()
-                    getEntityData().${field.javaName} = value
+                    getEntityData(true).${field.javaName} = value
                     changedProperty.add("${field.javaName}")
                     ${
     if (javaType.decoded == VirtualFileUrl::class.java.name)
@@ -257,7 +257,7 @@ private fun LinesBuilder.backrefSetup(
   when (type) {
     is ValueType.List<*> -> {
       lineComment("Setting backref of the list")
-      `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
+      `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*, *>") {
         line("val data = ($varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] as? List<Any> ?: emptyList()) + this")
         line("$varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] = data")
       }
@@ -265,20 +265,20 @@ private fun LinesBuilder.backrefSetup(
     }
     is ValueType.Set<*> -> {
       lineComment("Setting backref of the set")
-      `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
+      `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*, *>") {
         line("val data = ($varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] as? Set<Any> ?: emptySet()) + this")
         line("$varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] = data")
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
     is ValueType.Optional<*> -> {
-      `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
+      `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*, *>") {
         line("$varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] = this")
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")
     }
     is ValueType.ObjRef<*> -> {
-      `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
+      `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*, *>") {
         line("$varName.entityLinks[${EntityLink::class.fqn}($isChild, ${field.refsConnectionId})] = this")
       }
       line("// else you're attaching a new entity to an existing entity that is not modifiable")

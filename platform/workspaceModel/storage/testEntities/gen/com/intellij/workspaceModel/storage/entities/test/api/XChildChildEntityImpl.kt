@@ -50,7 +50,8 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
     return connections
   }
 
-  class Builder(var result: XChildChildEntityData?) : ModifiableWorkspaceEntityBase<XChildChildEntity>(), XChildChildEntity.Builder {
+  class Builder(result: XChildChildEntityData?) : ModifiableWorkspaceEntityBase<XChildChildEntity, XChildChildEntityData>(
+    result), XChildChildEntity.Builder {
     constructor() : this(XChildChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,7 +71,7 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -129,7 +130,7 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -148,21 +149,21 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENT1_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENT1_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(PARENT1_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENT1_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENT1_CONNECTION_ID)] = data
           }
@@ -187,21 +188,21 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENT2_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENT2_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(PARENT2_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENT2_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENT2_CONNECTION_ID)] = data
           }
@@ -212,7 +213,6 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
         changedProperty.add("parent2")
       }
 
-    override fun getEntityData(): XChildChildEntityData = result ?: super.getEntityData() as XChildChildEntityData
     override fun getEntityClass(): Class<XChildChildEntity> = XChildChildEntity::class.java
   }
 }

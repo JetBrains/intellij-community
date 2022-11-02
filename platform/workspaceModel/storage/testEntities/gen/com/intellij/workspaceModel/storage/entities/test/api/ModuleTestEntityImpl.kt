@@ -56,7 +56,8 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
     return connections
   }
 
-  class Builder(var result: ModuleTestEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestEntity>(), ModuleTestEntity.Builder {
+  class Builder(result: ModuleTestEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestEntity, ModuleTestEntityData>(
+    result), ModuleTestEntity.Builder {
     constructor() : this(ModuleTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -76,7 +77,7 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -133,7 +134,7 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -142,7 +143,7 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
       get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData().name = value
+        getEntityData(true).name = value
         changedProperty.add("name")
       }
 
@@ -166,9 +167,9 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CONTENTROOTS_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -180,7 +181,7 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CONTENTROOTS_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -212,9 +213,9 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -226,7 +227,7 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -237,7 +238,6 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
         changedProperty.add("facets")
       }
 
-    override fun getEntityData(): ModuleTestEntityData = result ?: super.getEntityData() as ModuleTestEntityData
     override fun getEntityClass(): Class<ModuleTestEntity> = ModuleTestEntity::class.java
   }
 }

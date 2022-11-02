@@ -106,7 +106,7 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 
 
 
-  class Builder(val result: SuperSimpleEntityData?): ModifiableWorkspaceEntityBase<SuperSimpleEntity>(), SuperSimpleEntity.Builder {
+  class Builder(result: SuperSimpleEntityData?): ModifiableWorkspaceEntityBase<SuperSimpleEntity, SuperSimpleEntityData>(result), SuperSimpleEntity.Builder {
     constructor(): this(SuperSimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -134,12 +134,12 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
         }
         if (entity is List<*>) {
           for (item in entity) {
-            if (item is ModifiableWorkspaceEntityBase<*>) {
+            if (item is ModifiableWorkspaceEntityBase<*, *>) {
               builder.addEntity(item)
             }
           }
           entity as List<WorkspaceEntity>
-          val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+          val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*, *> && it.diff != null }
           applyRef(key.getConnectionId(), withBuilder_entity)
           keysToRemove.add(key)
         }
@@ -186,7 +186,6 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 
 
 
-    override fun getEntityData(): SuperSimpleEntityData = result ?: super.getEntityData() as SuperSimpleEntityData
     override fun connectionIdList(): List<ConnectionId> {
       TODO("Not yet implemented")
     }

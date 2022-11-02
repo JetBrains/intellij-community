@@ -51,7 +51,7 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
     return connections
   }
 
-  class Builder(var result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity>(), SdkEntity.Builder {
+  class Builder(result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity, SdkEntityData>(result), SdkEntity.Builder {
     constructor() : this(SdkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -71,7 +71,7 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "homeUrl", this.homeUrl)
       // Process linked entities that are connected without a builder
@@ -121,7 +121,7 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -140,18 +140,18 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -165,13 +165,12 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
       get() = getEntityData().homeUrl
       set(value) {
         checkModificationAllowed()
-        getEntityData().homeUrl = value
+        getEntityData(true).homeUrl = value
         changedProperty.add("homeUrl")
         val _diff = diff
         if (_diff != null) index(this, "homeUrl", value)
       }
 
-    override fun getEntityData(): SdkEntityData = result ?: super.getEntityData() as SdkEntityData
     override fun getEntityClass(): Class<SdkEntity> = SdkEntity::class.java
   }
 }

@@ -45,7 +45,8 @@ open class ParentChainEntityImpl(val dataSource: ParentChainEntityData) : Parent
     return connections
   }
 
-  class Builder(var result: ParentChainEntityData?) : ModifiableWorkspaceEntityBase<ParentChainEntity>(), ParentChainEntity.Builder {
+  class Builder(result: ParentChainEntityData?) : ModifiableWorkspaceEntityBase<ParentChainEntity, ParentChainEntityData>(
+    result), ParentChainEntity.Builder {
     constructor() : this(ParentChainEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,7 +66,7 @@ open class ParentChainEntityImpl(val dataSource: ParentChainEntityData) : Parent
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -96,7 +97,7 @@ open class ParentChainEntityImpl(val dataSource: ParentChainEntityData) : Parent
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -115,18 +116,18 @@ open class ParentChainEntityImpl(val dataSource: ParentChainEntityData) : Parent
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, ROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractOneChildOfParent(ROOT_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, ROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -136,7 +137,6 @@ open class ParentChainEntityImpl(val dataSource: ParentChainEntityData) : Parent
         changedProperty.add("root")
       }
 
-    override fun getEntityData(): ParentChainEntityData = result ?: super.getEntityData() as ParentChainEntityData
     override fun getEntityClass(): Class<ParentChainEntity> = ParentChainEntity::class.java
   }
 }

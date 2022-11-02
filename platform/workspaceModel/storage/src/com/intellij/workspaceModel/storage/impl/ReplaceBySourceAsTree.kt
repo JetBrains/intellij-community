@@ -125,7 +125,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           targetStorage.entityDataByIdOrDie(targetEntityId).createEntity(targetStorage)
         }
         targetStorage.modifyEntity(WorkspaceEntity.Builder::class.java, targetEntity) {
-          (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity, parents)
+          (this as ModifiableWorkspaceEntityBase<*, *>).relabel(replaceWithEntity, parents)
         }
         targetStorage.indexes.updateExternalMappingForEntityId(operation.replaceWithEntityId, operation.targetEntityId, replaceWithStorage.indexes)
       }
@@ -142,7 +142,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
 
       val modifiableEntity = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParents)
-      modifiableEntity as ModifiableWorkspaceEntityBase<out WorkspaceEntity>
+      modifiableEntity as ModifiableWorkspaceEntityBase<out WorkspaceEntity, out WorkspaceEntityData<*>>
 
       // We actually bind parents in [createDetachedEntity], but we can't do it for external entities (that are defined in a separate module)
       // Here we bind them again, so I guess we can remove "parents binding" from [createDetachedEntity], but let's do it twice for now.

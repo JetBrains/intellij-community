@@ -46,7 +46,8 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
     return connections
   }
 
-  class Builder(var result: ComposedIdSoftRefEntityData?) : ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity>(), ComposedIdSoftRefEntity.Builder {
+  class Builder(result: ComposedIdSoftRefEntityData?) : ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity, ComposedIdSoftRefEntityData>(
+    result), ComposedIdSoftRefEntity.Builder {
     constructor() : this(ComposedIdSoftRefEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,7 +67,7 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -105,7 +106,7 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -114,7 +115,7 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
       get() = getEntityData().myName
       set(value) {
         checkModificationAllowed()
-        getEntityData().myName = value
+        getEntityData(true).myName = value
         changedProperty.add("myName")
       }
 
@@ -122,12 +123,11 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
       get() = getEntityData().link
       set(value) {
         checkModificationAllowed()
-        getEntityData().link = value
+        getEntityData(true).link = value
         changedProperty.add("link")
 
       }
 
-    override fun getEntityData(): ComposedIdSoftRefEntityData = result ?: super.getEntityData() as ComposedIdSoftRefEntityData
     override fun getEntityClass(): Class<ComposedIdSoftRefEntity> = ComposedIdSoftRefEntity::class.java
   }
 }

@@ -39,7 +39,8 @@ open class FirstEntityWithPIdImpl(val dataSource: FirstEntityWithPIdData) : Firs
     return connections
   }
 
-  class Builder(var result: FirstEntityWithPIdData?) : ModifiableWorkspaceEntityBase<FirstEntityWithPId>(), FirstEntityWithPId.Builder {
+  class Builder(result: FirstEntityWithPIdData?) : ModifiableWorkspaceEntityBase<FirstEntityWithPId, FirstEntityWithPIdData>(
+    result), FirstEntityWithPId.Builder {
     constructor() : this(FirstEntityWithPIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,7 +60,7 @@ open class FirstEntityWithPIdImpl(val dataSource: FirstEntityWithPIdData) : Firs
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -94,7 +95,7 @@ open class FirstEntityWithPIdImpl(val dataSource: FirstEntityWithPIdData) : Firs
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -103,11 +104,10 @@ open class FirstEntityWithPIdImpl(val dataSource: FirstEntityWithPIdData) : Firs
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): FirstEntityWithPIdData = result ?: super.getEntityData() as FirstEntityWithPIdData
     override fun getEntityClass(): Class<FirstEntityWithPId> = FirstEntityWithPId::class.java
   }
 }

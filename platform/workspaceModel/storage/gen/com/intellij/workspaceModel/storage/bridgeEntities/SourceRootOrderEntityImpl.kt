@@ -52,7 +52,8 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
     return connections
   }
 
-  class Builder(var result: SourceRootOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootOrderEntity>(), SourceRootOrderEntity.Builder {
+  class Builder(result: SourceRootOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootOrderEntity, SourceRootOrderEntityData>(
+    result), SourceRootOrderEntity.Builder {
     constructor() : this(SourceRootOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -72,7 +73,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "orderOfSourceRoots", this.orderOfSourceRoots.toHashSet())
       // Process linked entities that are connected without a builder
@@ -129,7 +130,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -148,18 +149,18 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, CONTENTROOTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(CONTENTROOTENTITY_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, CONTENTROOTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -188,11 +189,10 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().orderOfSourceRoots = value
+        getEntityData(true).orderOfSourceRoots = value
         orderOfSourceRootsUpdater.invoke(value)
       }
 
-    override fun getEntityData(): SourceRootOrderEntityData = result ?: super.getEntityData() as SourceRootOrderEntityData
     override fun getEntityClass(): Class<SourceRootOrderEntity> = SourceRootOrderEntity::class.java
   }
 }

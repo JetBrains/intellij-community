@@ -43,7 +43,8 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
     return connections
   }
 
-  class Builder(var result: DefaultValueEntityData?) : ModifiableWorkspaceEntityBase<DefaultValueEntity>(), DefaultValueEntity.Builder {
+  class Builder(result: DefaultValueEntityData?) : ModifiableWorkspaceEntityBase<DefaultValueEntity, DefaultValueEntityData>(
+    result), DefaultValueEntity.Builder {
     constructor() : this(DefaultValueEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,7 +64,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -100,7 +101,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -109,7 +110,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData().name = value
+        getEntityData(true).name = value
         changedProperty.add("name")
       }
 
@@ -117,7 +118,7 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       get() = getEntityData().isGenerated
       set(value) {
         checkModificationAllowed()
-        getEntityData().isGenerated = value
+        getEntityData(true).isGenerated = value
         changedProperty.add("isGenerated")
       }
 
@@ -125,11 +126,10 @@ open class DefaultValueEntityImpl(val dataSource: DefaultValueEntityData) : Defa
       get() = getEntityData().anotherName
       set(value) {
         checkModificationAllowed()
-        getEntityData().anotherName = value
+        getEntityData(true).anotherName = value
         changedProperty.add("anotherName")
       }
 
-    override fun getEntityData(): DefaultValueEntityData = result ?: super.getEntityData() as DefaultValueEntityData
     override fun getEntityClass(): Class<DefaultValueEntity> = DefaultValueEntity::class.java
   }
 }
