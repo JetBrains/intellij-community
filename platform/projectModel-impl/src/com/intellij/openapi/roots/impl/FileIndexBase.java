@@ -60,8 +60,8 @@ abstract class FileIndexBase implements FileIndex {
             return SKIP_CHILDREN;
           }
         }
-        boolean accepted = ReadAction.compute(() -> !isScopeDisposed() && isInContent(file, info))
-                           && (customFilter == null || customFilter.accept(file));
+        boolean accepted = ReadAction.compute(() -> !isScopeDisposed() && isInContent(file, info) &&
+                                                    (customFilter == null || customFilter.accept(file)));
         ContentIteratorEx.Status status = accepted ? processorEx.processFileEx(file) : ContentIteratorEx.Status.CONTINUE;
         if (status == ContentIteratorEx.Status.CONTINUE) {
           return CONTINUE;
