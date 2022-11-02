@@ -60,9 +60,7 @@ public final class LeakHunter {
                                    @NotNull Class<T> suspectClass,
                                    @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
     processLeaks(rootsSupplier, suspectClass, isReallyLeak, (leaked, backLink)->{
-      StringBuilder builder = new StringBuilder();
-      appendLeakedObjectDetails(builder, leaked, backLink, true);
-      String message = builder.toString();
+      String message = getLeakedObjectDetails(leaked, backLink, true);
 
       System.out.println(message);
       System.out.println(";-----");
@@ -141,39 +139,38 @@ public final class LeakHunter {
   }
 
   @TestOnly
-  public static void appendLeakedObjectDetails(
-    @NotNull StringBuilder builder,
-    @NotNull Object leaked,
-    @Nullable Object backLink,
-    boolean detailedErrorDescription
-  ) {
-    String creationPlace = leaked instanceof Project ? getCreationPlace((Project)leaked) : null;
+  @NotNull
+  public static String getLeakedObjectDetails(@NotNull Object leaked,
+                                              @Nullable Object backLink,
+                                              boolean detailedErrorDescription) {
     int hashCode = System.identityHashCode(leaked);
-
-    builder.append("Found a leaked instance of ").append(leaked.getClass())
-      .append("\nInstance: ").append(leaked)
-      .append("\nHashcode: ").append(hashCode);
+    String result = "Found a leaked instance of "+leaked.getClass()
+                    +"\nInstance: "+leaked
+                    +"\nHashcode: "+hashCode;
     if (detailedErrorDescription) {
-      appendLeakedObjectErrorDescription(builder, null);
+      result += "\n"+getLeakedObjectErrorDescription(null);
     }
     if (backLink != null) {
-      builder.append("\nExisting strong reference path to the instance:\n")
-        .append(backLink.toString().indent(2));
+      result += "\nExisting strong reference path to the instance:\n" +backLink.toString().indent(2);
     }
 
+    String creationPlace = leaked instanceof Project ? getCreationPlace((Project)leaked) : null;
     if (creationPlace != null) {
-      builder.append("\nThe instance was created at: ").append(creationPlace);
+      result += "\nThe instance was created at: "+creationPlace;
     }
+    return result;
   }
 
   @TestOnly
-  public static void appendLeakedObjectErrorDescription(@NotNull StringBuilder builder, @Nullable String knownHeapDumpPath) {
-    builder.append("\nError description:")
-      .append("\n  This error means that the object is expected to be collected by the garbage collector by this time, but it was not.")
-      .append("\n  Please make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html");
+  public static @NotNull String getLeakedObjectErrorDescription(@Nullable String knownHeapDumpPath) {
+    String result = """
+      Error description:
+        This error means that the object is expected to be collected by the garbage collector by this time, but it was not.
+        Please make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html""";
 
-    if (knownHeapDumpPath != null) {
-      builder.append("\n  Please see `").append(knownHeapDumpPath).append("` for a memory dump");
+    if (knownHeapDumpPath == null) {
+      result += "\n  If this is a TeamCity build, you can find a memory snapshot `"+LEAKED_PROJECTS+".hproof.zip` in the \"Artifacts\" tab of the build run."
+        +"\n  Otherwise, try looking for '"+HEAP_DUMP_IS_PUBLISHED+"' string in the system output in the log  below.";
     }
     else if (TeamCityLogger.isUnderTC) {
       builder
@@ -185,5 +182,6 @@ public final class LeakHunter {
       builder.append("\n  Try looking for '").append(DumpKt.HEAP_DUMP_IS_PUBLISHED)
         .append("' string in the system output below in the log ↓.");
     }
+    return result;
   }
 }

@@ -26,8 +26,6 @@ import com.intellij.openapi.project.impl.runInitProjectActivities
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
-import com.intellij.testFramework.LeakHunter.appendLeakedObjectDetails
-import com.intellij.testFramework.LeakHunter.appendLeakedObjectErrorDescription
 import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
 import com.intellij.testFramework.common.LEAKED_PROJECTS
 import com.intellij.util.ModalityUiUtil
@@ -36,6 +34,7 @@ import com.intellij.util.ref.GCUtil
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -47,6 +46,7 @@ private val LOG_PROJECT_LEAKAGE = System.getProperty("idea.log.leaked.projects.i
 var totalCreatedProjectsCount = 0
 
 @ApiStatus.Internal
+@TestOnly
 open class TestProjectManager : ProjectManagerImpl() {
   companion object {
 
@@ -274,23 +274,24 @@ open class TestProjectManager : ProjectManagerImpl() {
   }
 }
 
+@TestOnly
 private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
   val hashCodes = HashSet<Int>()
-  val message = StringBuilder("Too many projects leaked: \n")
+  var message = "Too many projects leaked: \n"
   for (project in leakedProjects) {
     val hashCode = System.identityHashCode(project)
     hashCodes.add(hashCode)
-    appendLeakedObjectDetails(message, project, null, false)
+    message += LeakHunter.getLeakedObjectDetails(project, null, false)
   }
   val dumpPath = publishHeapDump(LEAKED_PROJECTS)
   LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
                           { hashCodes.contains(System.identityHashCode(it)) },
                           { leaked, backLink ->
                             val hashCode = System.identityHashCode(leaked)
-                            appendLeakedObjectDetails(message, leaked, backLink, false)
+                            message += LeakHunter.getLeakedObjectDetails(leaked, backLink, false)
                             hashCodes.remove(hashCode)
                             !hashCodes.isEmpty()
                           })
-  appendLeakedObjectErrorDescription(message, dumpPath)
-  throw AssertionError(message.toString())
+  message += LeakHunter.getLeakedObjectErrorDescription(dumpPath)
+  throw AssertionError(message)
 }
