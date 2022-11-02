@@ -32,6 +32,14 @@
       <track-action id="GotoSymbol"/>
     </feature>
 
+    <feature id="navigation.popup.action"
+             tip-id="GoToAction"
+             first-show="7"
+             successive-show="3"
+             min-usage-count="1">
+      <track-action id="GotoAction"/>
+    </feature>
+
     <feature id="navigation.popup.camelprefix"
              tip-id="CamelPrefixesInNavigationPopups"
              min-usage-count="3"
@@ -110,6 +118,13 @@
              tip-id="GotoLineInFile"
              show-in-guide="false"
     />
+
+    <feature id="switcher"
+             tip-id="Switcher"
+             first-show="10"
+             successive-show="5"
+             min-usage-count="5"
+    />
   </group>
 
 
@@ -181,6 +196,13 @@
              min-usage-count="3"
              first-show="3"
              successive-show="5"
+    />
+
+    <feature id="find.completion"
+             tip-id="CodeCompletionInSearch"
+             first-show="10"
+             successive-show="3"
+             min-usage-count="5"
     />
   </group>
 
@@ -379,5 +401,56 @@
              first-show="1"
              successive-show="3"
     />
+  </group>
+
+
+  <group id="ui">
+    <feature id="ui.tree.speedsearch"
+             tip-id="SpeedSearch"
+             first-show="5"
+             successive-show="4"
+             min-usage-count="6"
+    />
+
+    <feature id="ui.scheme.quickswitch"
+             tip-id="QuickSwitchScheme"
+             first-show="7"
+             successive-show="3"
+             min-usage-count="1"
+    />
+
+    <feature id="ui.recentchanges"
+             tip-id="RecentChanges"
+             first-show="5"
+             successive-show="5"
+             min-usage-count="1">
+      <track-action id="RecentChanges"/>
+    </feature>
+
+    <feature id="ui.horizontal.scrolling"
+             tip-id="HorizontalScrolling"
+             first-show="1"
+             successive-show="1"
+             min-usage-count="1"
+    />
+
+    <feature id="find.recent.search"
+             tip-id="RecentSearch"
+             first-show="10"
+             successive-show="3"
+             min-usage-count="5"
+    />
+
+    <feature id="ui.close.other.editors"
+             tip-id="CloseOthers"
+             show-in-guide="false">
+      <track-action id="CloseAllEditorsButActive"/>
+    </feature>
+
+    <feature id="ui.close.all.editors"
+             tip-id="Close_all_editor_tabs"
+             show-in-guide="false">
+      <track-action id="CloseAllEditors"/>
+    </feature>
   </group>
 </component>
