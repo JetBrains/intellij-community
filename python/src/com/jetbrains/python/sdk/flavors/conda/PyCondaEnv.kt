@@ -9,9 +9,11 @@ import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.createProcessWithResult
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.io.exists
 import com.jetbrains.python.FullPathOnTarget
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.flavors.conda.CondaPathFix.Companion.shouldBeFixed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -49,7 +51,7 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
       return@withContext Result.success(result)
     }
 
-suspend  fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
+    suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
 
       val (_, env, commandLineBuilder) = command.createRequestEnvAndCommandLine().getOrElse { return Result.failure(it) }
 
@@ -67,8 +69,9 @@ suspend  fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequ
 
   /**
    * Add conda prefix to [targetedCommandLineBuilder]
+   * [sdk] may be used to fetch local env vars, see implementation
    */
-  fun addCondaToTargetBuilder(targetedCommandLineBuilder: TargetedCommandLineBuilder) {
+  fun addCondaToTargetBuilder(sdk: Sdk?, targetedCommandLineBuilder: TargetedCommandLineBuilder) {
     targetedCommandLineBuilder.apply {
       setExePath(fullCondaPathOnTarget)
       addParameter("run")
@@ -84,6 +87,10 @@ suspend  fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequ
       }
       // Otherwise we wouldn't have interactive output (for console etc.)
       addParameter("--no-capture-output")
+    }
+
+    if (targetedCommandLineBuilder.shouldBeFixed && sdk != null) {
+      CondaPathFix.BySdk(sdk).fix(targetedCommandLineBuilder)
     }
   }
 

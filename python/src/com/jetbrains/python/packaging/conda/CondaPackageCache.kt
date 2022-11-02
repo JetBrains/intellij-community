@@ -51,7 +51,7 @@ object CondaPackageCache : PythonPackageCache<String> {
 
       val helpersPath = helpers.apply(targetEnv)
 
-      baseConda.addCondaToTargetBuilder(commandLineBuilder)
+      baseConda.addCondaToTargetBuilder(sdk, commandLineBuilder)
 
       commandLineBuilder.addParameter("python")
       commandLineBuilder.addParameter("$helpersPath/conda_packaging_tool.py")
