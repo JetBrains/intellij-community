@@ -206,7 +206,7 @@ public final class FileManagerImpl implements FileManager {
         String psiFiles = vp.getAllFiles().stream().map(f -> f.getClass() + " [" + f.getLanguage() + "]").collect(Collectors.joining(", "));
         LOG.error(
           "Light files should have PSI only in one project, existing=" + vp + " in " + project + ", requested in " + myManager.getProject()
-          + "; psiFiles: " + psiFiles+". You probably shouldn't call findFile() for VirtualFile in unrelated project. E.g., you could use ProjectFileIndex.isInProject() to decide whether to call findFile()");
+          + "; psiFiles: " + psiFiles);
       }
     }
   }
