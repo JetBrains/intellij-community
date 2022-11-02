@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.ProjectTopics
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
@@ -10,6 +12,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -20,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
 import com.jetbrains.python.PyBundle.*
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
@@ -27,8 +32,12 @@ import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
-import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.applyHelperPackageToPythonPath
+import com.jetbrains.python.run.buildTargetedCommandLine
+import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.sdkFlavor
 import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
@@ -192,10 +201,42 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
     }
   }
 
-  private fun rstToHtml(text: String, sdk: Sdk): String {
-    val commandLine = PythonHelper.REST_RUNNER.newCommandLine(sdk, listOf("rst2html_no_code"))
-    val output = PySdkUtil.getProcessOutput(commandLine, sdk.homeDirectory!!.parent.path, null, 5000,
-                                            text.toByteArray(Charsets.UTF_8), false)
+  private suspend fun rstToHtml(text: String, sdk: Sdk): String {
+    val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
+    val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
+    val pythonExecution = prepareHelperScriptExecution(PythonHelper.REST_RUNNER, helpersAwareTargetRequest)
+
+    // todo[akniazev]: this workaround should can be removed when PY-57134 is fixed
+    val helperLocation = if (sdk.sdkFlavor.getLanguageLevel(sdk).isPython2) "py2only" else "py3only"
+    val path = PythonHelpersLocator.getHelpersRoot().toPath().resolve(helperLocation)
+    pythonExecution.applyHelperPackageToPythonPath(listOf(path.toString()), helpersAwareTargetRequest)
+
+    pythonExecution.addParameter("rst2html_no_code")
+    val targetProgressIndicator = TargetProgressIndicator.EMPTY
+    val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(targetProgressIndicator)
+
+    targetEnvironment.uploadVolumes.entries.forEach { (_, value) ->
+      value.upload(".", targetProgressIndicator)
+    }
+
+    val targetedCommandLine = pythonExecution.buildTargetedCommandLine(targetEnvironment, sdk, emptyList())
+
+    val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+    val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
+
+    val commandLine = targetedCommandLine.collectCommandsSynchronously()
+    val commandLineString = commandLine.joinToString(" ")
+
+    val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
+
+    val output = withBackgroundProgressIndicator(project, message("python.toolwindow.packages.converting.description.progress"), cancellable = true) {
+      val processInput = handler.processInput
+      processInput.use {
+        processInput.write(text.toByteArray())
+      }
+      handler.runProcess(10 * 60 * 1000)
+    }
+
     return when {
       output.checkSuccess(thisLogger()) -> output.stdout
       else -> wrapHtml("<p>${message("python.toolwindow.packages.rst.parsing.failed")}</p>")
