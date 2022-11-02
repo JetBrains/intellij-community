@@ -23,8 +23,11 @@ import java.util.UUID
 class PackageManagerHolder {
   private val cache = mutableMapOf<UUID, PythonPackageManager>()
 
-  fun forSdk(project: Project, sdk: Sdk): PythonPackageManager? {
-    val cacheKey = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.uuid ?: return null
+  /**
+   * Requires Sdk to be Python Sdk and have PythonSdkAdditionalData.
+   */
+  fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
+    val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
     if (cacheKey in cache) {
       val manager = cache[cacheKey]!!
       if (manager.project == project) return manager

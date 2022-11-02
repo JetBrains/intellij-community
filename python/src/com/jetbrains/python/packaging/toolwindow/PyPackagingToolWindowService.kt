@@ -116,7 +116,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
     val previousSdk = currentSdk
     currentSdk = sdk
     if (currentSdk != null) {
-      manager = PythonPackageManager.forSdk(project, currentSdk!!) ?: error("No packages manager found for sdk: ${sdk?.name}")
+      manager = PythonPackageManager.forSdk(project, currentSdk!!)
       manager.repositoryManager.initCaches()
       manager.reloadPackages()
       refreshInstalledPackages()

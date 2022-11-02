@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 class CondaPackageManagerProvider : PythonPackageManagerProvider {
   override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? {
-    val additionalData = sdk.sdkAdditionalData as? PythonSdkAdditionalData ?: return null
+    val additionalData = sdk.sdkAdditionalData as PythonSdkAdditionalData
 
     return if (additionalData.flavorAndData.data is PyCondaFlavorData) CondaPackageManager(project, sdk)
     else null
