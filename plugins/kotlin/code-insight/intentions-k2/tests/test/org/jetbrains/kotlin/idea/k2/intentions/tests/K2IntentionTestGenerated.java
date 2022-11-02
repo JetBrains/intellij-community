@@ -1679,6 +1679,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializerWithAlias2.kt");
         }
 
+        @TestMetadata("lambdaInitializerWithTypeArgument.kt")
+        public void testLambdaInitializerWithTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializerWithTypeArgument.kt");
+        }
+
         @TestMetadata("needTypeArgument.kt")
         public void testNeedTypeArgument() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/needTypeArgument.kt");

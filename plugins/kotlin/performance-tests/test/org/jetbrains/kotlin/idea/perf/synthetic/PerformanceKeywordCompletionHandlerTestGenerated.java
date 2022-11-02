@@ -183,16 +183,6 @@ public class PerformanceKeywordCompletionHandlerTestGenerated extends AbstractPe
         runTest("../completion/testData/handlers/keywords/QualifiedReturnNonUnitExplicit.kt");
     }
 
-    @TestMetadata("QualifiedReturnNonUnitExplicit.fir.kt")
-    public void testQualifiedReturnNonUnitExplicit_fir() throws Exception {
-        runTest("../completion/testData/handlers/keywords/QualifiedReturnNonUnitExplicit.fir.kt");
-    }
-
-    @TestMetadata("QualifiedReturnNonUnit.fir.kt")
-    public void testQualifiedReturnNonUnit_fir() throws Exception {
-        runTest("../completion/testData/handlers/keywords/QualifiedReturnNonUnit.fir.kt");
-    }
-
     @TestMetadata("QualifiedReturnUnit.kt")
     public void testQualifiedReturnUnit() throws Exception {
         runTest("../completion/testData/handlers/keywords/QualifiedReturnUnit.kt");
