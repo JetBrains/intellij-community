@@ -18,7 +18,6 @@ import com.intellij.lang.documentation.impl.computeDocumentationBlocking
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.impl.referencesAt
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
@@ -55,7 +54,6 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
-import java.util.concurrent.Callable
 
 internal val webSymbolsTestsDataPath get() = "${PlatformTestUtil.getCommunityPath()}/platform/webSymbols/testData/"
 
@@ -377,7 +375,7 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
     file = editor.injectedFile
     offset -= InjectedLanguageManager.getInstance(project).injectedToHost(file, 0)
   }
-  val gtduOutcome = ReadAction.nonBlocking(Callable { GotoDeclarationOrUsageHandler2.testGTDUOutcome (editor, file, offset) }).submit(com.intellij.util.concurrency.AppExecutorUtil.getAppExecutorService()).get()
+  val gtduOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(editor, file, offset)
   Assert.assertEquals(signature,
                       expectedOutcome,
                       gtduOutcome)
