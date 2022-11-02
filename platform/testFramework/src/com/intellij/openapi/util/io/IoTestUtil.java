@@ -43,7 +43,7 @@ public final class IoTestUtil {
 
   private IoTestUtil() { }
 
-  @SuppressWarnings("SpellCheckingInspection")
+  @SuppressWarnings({"SpellCheckingInspection", "NonAsciiCharacters"})
   private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
 
   public static @Nullable String getUnicodeName() {
@@ -54,7 +54,7 @@ public final class IoTestUtil {
     return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
   }
 
-  private static String filterParts(@NotNull Predicate<? super String> predicate) {
+  private static @Nullable String filterParts(Predicate<String> predicate) {
     return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
@@ -143,10 +143,9 @@ public final class IoTestUtil {
   }
 
   /**
-   * (Windows-only)
-   * creates "subst" drive for target, perform some tests on it and deletes it
+   * Creates a "subst" drive for target, perform some tests on it, and deletes it. Windows-only.
    */
-  public static void performTestOnWindowsSubst(@NotNull String target, @NotNull Consumer<? super @NotNull File> createdSubstTester) {
+  public static void performTestOnWindowsSubst(@NotNull String target, @NotNull Consumer<@NotNull File> createdSubstTester) {
     assertTrue(SystemInfo.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
