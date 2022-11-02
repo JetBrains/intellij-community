@@ -21,7 +21,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -85,7 +84,7 @@ class ConcurrentBitSetTest {
 
   @Test
   void testStressFineGrainedSmallSetModifications() {
-    Assumptions.assumeTrue(ForkJoinPool.commonPool().getParallelism() >= 4, "not enough CPU cores, couldn't test parallel performance: "+ForkJoinPool.commonPool().getParallelism());
+    PlatformTestUtil.assumeEnoughParallelism();
     int L = 128;
     int N = 100_000;
     PlatformTestUtil.startPerformanceTest("testStressFineGrainedSmallSetModifications", 80_000, () -> tortureParallelSetClear(L, N)).assertTiming();
@@ -93,7 +92,7 @@ class ConcurrentBitSetTest {
 
   @Test
   void testStressCoarseGrainedBigSet() {
-    Assumptions.assumeTrue(ForkJoinPool.commonPool().getParallelism() >= 4, "not enough CPU cores, couldn't test parallel performance: "+ForkJoinPool.commonPool().getParallelism());
+    PlatformTestUtil.assumeEnoughParallelism();
     int L = 100_000;
     // todo ARM64 is slow for some reason
     int N = CpuArch.isArm64() ? 300 : 1000;
@@ -166,6 +165,7 @@ class ConcurrentBitSetTest {
 
   @Test
   void testParallelReadPerformance() {
+    PlatformTestUtil.assumeEnoughParallelism();
     int len = 100_000;
     ConcurrentBitSet set = ConcurrentBitSet.create();
     Random random = new Random();

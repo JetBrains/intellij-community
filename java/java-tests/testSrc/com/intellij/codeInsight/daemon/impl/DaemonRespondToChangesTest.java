@@ -113,7 +113,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.AssumptionViolatedException;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -121,7 +120,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -2713,19 +2715,19 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
-    ensureEnoughParallelism();
+    PlatformTestUtil.assumeEnoughParallelism();
     useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyInfoAnnotator(), new MySleepyAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
   }
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately1() {
-    ensureEnoughParallelism();
+    PlatformTestUtil.assumeEnoughParallelism();
     useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyInfoAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
   }
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately2() {
-    ensureEnoughParallelism();
+    PlatformTestUtil.assumeEnoughParallelism();
     useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyFastAnnotator(), new MyInfoAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
   }
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately3() {
-    ensureEnoughParallelism();
+    PlatformTestUtil.assumeEnoughParallelism();
     // also check in the opposite order in case the order of annotators is important
     useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyFastAnnotator(), new MyInfoAnnotator(), new MySleepyAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
   }
@@ -2797,7 +2799,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddInspectionProblemToProblemsHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
-    ensureEnoughParallelism();
+    PlatformTestUtil.assumeEnoughParallelism();
     registerInspection(new MySwearingInspection());
     checkSwearingAnnotationIsVisibleImmediately();
   }
@@ -2846,14 +2848,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private static void ensureEnoughParallelism() {
-    if (ForkJoinPool.commonPool().getParallelism() <= 3) {
-      throw new AssumptionViolatedException("Too low parallelism, I will not even bother, it's hopeless: " + ForkJoinPool.commonPool().getParallelism());
-    }
-  }
-
   public void testAddAnnotationViaBuilderEntailsCreatingCorrespondingRangeHighlighterImmediately() {
-    ensureEnoughParallelism();
+    PlatformTestUtil.assumeEnoughParallelism();
     useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyNewBuilderAnnotator()},
                     this::checkSwearingAnnotationIsVisibleImmediately);
   }
@@ -2885,7 +2881,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void test_SerializeCodeInsightPasses_SecretSettingDoesWork() {
-    ensureEnoughParallelism();
+    PlatformTestUtil.assumeEnoughParallelism();
 
     TextEditorHighlightingPassRegistrarImpl registrar =
       (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
