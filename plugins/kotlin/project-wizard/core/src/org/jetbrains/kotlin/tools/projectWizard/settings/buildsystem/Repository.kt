@@ -33,6 +33,7 @@ data class DefaultRepository(val type: Type) : Repository {
 
 interface CustomMavenRepository : Repository
 
+@Suppress("unused")
 data class CustomMavenRepositoryImpl(val repository: String, val base: String) : CustomMavenRepository {
     override val url: String = "$base/$repository"
 
@@ -61,7 +62,6 @@ object Repositories {
     val KOTLINX_HTML = JetBrainsSpace("public/p/kotlinx-html/maven")
     val KOTLIN_JS_WRAPPERS = DefaultRepository.MAVEN_CENTRAL
     val KOTLIN_EAP_MAVEN_CENTRAL = DefaultRepository.MAVEN_CENTRAL
-    val JETBRAINS_COMPOSE_DEV = JetBrainsSpace("public/p/compose/dev")
     val JETBRAINS_KOTLIN_DEV = JetBrainsSpace("kotlin/p/kotlin/dev")
     val JETBRAINS_KOTLIN_BOOTSTRAP = CacheRedirector(
         "maven.pkg.jetbrains.space",
