@@ -132,6 +132,12 @@ public class HighlightInfo implements Segment {
   private final ProblemGroup myProblemGroup;
   private final String inspectionToolId;
   private int group;
+  /**
+   * Quick fix text range: the range within which the Alt-Enter should open the quick fix popup.
+   * Might be bigger than (getStartOffset(), getEndOffset()) when it's deemed more usable,
+   * e.g. when "import class" fix wanted to be Alt-Entered from everywhere at the same line.
+   *
+   */
   private long fixRange;
   /**
    * @see FlagConstant for allowed values
@@ -1093,7 +1099,8 @@ public class HighlightInfo implements Segment {
     return highlighter.getDocument().getText(TextRange.create(highlighter));
   }
 
-  public void registerFix(@Nullable IntentionAction action,
+  public synchronized // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
+  void registerFix(@Nullable IntentionAction action,
                           @Nullable List<? extends IntentionAction> options,
                           @Nullable @Nls String displayName,
                           @Nullable TextRange fixRange,
@@ -1106,6 +1113,21 @@ public class HighlightInfo implements Segment {
     IntentionActionDescriptor desc =
       new IntentionActionDescriptor(action, options, displayName, null, key, getProblemGroup(), getSeverity());
     quickFixActionRanges.add(Pair.create(desc, fixRange));
+    if (fixMarker != null && fixMarker.isValid()) {
+      this.fixRange = TextRangeScalarUtil.toScalarRange(fixMarker);
+    }
+    else {
+      Document document = fixMarker != null ? fixMarker.getDocument() :
+                          highlighter != null ? highlighter.getDocument() :
+                          quickFixActionMarkers != null && !quickFixActionMarkers.isEmpty() && quickFixActionMarkers.get(0).getSecond() != null ? quickFixActionMarkers.get(0).getSecond().getDocument() :
+                          null;
+      if (document != null) {
+        // coerce fixRange inside document
+        int newEnd = Math.min(document.getTextLength(), TextRangeScalarUtil.endOffset(this.fixRange));
+        int newStart = Math.min(newEnd, TextRangeScalarUtil.startOffset(this.fixRange));
+        this.fixRange = TextRangeScalarUtil.toScalarRange(newStart, newEnd);
+      }
+    }
     this.fixRange = TextRangeScalarUtil.union(this.fixRange, TextRangeScalarUtil.toScalarRange(fixRange));
     if (action instanceof HintAction) {
       setHint(true);
@@ -1117,7 +1139,8 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  public void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
+  public synchronized //TODO rework to lock-free
+  void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
     if (quickFixActionRanges != null) {
       quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
     }
@@ -1163,10 +1186,20 @@ public class HighlightInfo implements Segment {
                                                                                            TextRangeScalarUtil.endOffset(textRange)));
   }
 
-  void updateQuickFixFields(@NotNull Document document,
+  // convert ranges to markers: from quickFixRanges -> quickFixMarkers and fixRange -> fixMarker
+  // TODO rework to lock-free
+  synchronized void updateQuickFixFields(@NotNull Document document,
                             @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache,
                             long finalHighlighterRange) {
-    if (quickFixActionRanges != null) {
+    if (quickFixActionMarkers != null && quickFixActionRanges != null && quickFixActionRanges.size() == quickFixActionMarkers.size() +1) {
+      // markers already created, make quickFixRanges <-> quickFixMarkers consistent by adding new marker to the quickFixMarkers if necessary
+      Pair<IntentionActionDescriptor, TextRange> last = ContainerUtil.getLastItem(quickFixActionRanges);
+      Segment textRange = last.getSecond();
+      RangeMarker marker = getOrCreate(document, ranges2markersCache, TextRangeScalarUtil.toScalarRange(textRange));
+      quickFixActionMarkers.add(Pair.create(last.getFirst(), marker));
+      return;
+    }
+    if (quickFixActionRanges != null && quickFixActionMarkers == null) {
       List<Pair<IntentionActionDescriptor, RangeMarker>> list = new ArrayList<>(quickFixActionRanges.size());
       for (Pair<IntentionActionDescriptor, TextRange> pair : quickFixActionRanges) {
         TextRange textRange = pair.second;
