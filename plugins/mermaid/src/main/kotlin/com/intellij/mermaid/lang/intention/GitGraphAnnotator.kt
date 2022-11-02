@@ -39,8 +39,7 @@ class GitGraphAnnotator : Annotator {
         ?: (element as? MermaidCheckoutStatement)?.identifier
         ?: return
 
-    val text = identifier.text
-    if (text == MAIN) return
+    if (identifier.textMatches(MAIN)) return
 
     val parent = element.parent ?: return
 
@@ -49,8 +48,8 @@ class GitGraphAnnotator : Annotator {
       .filterIsInstance<MermaidGitGraphStatement>()
       .map { it.firstChild }
       .filterIsInstance<MermaidBranchStatement>()
-      .map { it.identifier.text }
-      .filter { it == text }
+      .map { it.identifier }
+      .filter { identifier.textMatches(it) }
 
     if (matchingIds.toList().isNotEmpty()) {
       return
@@ -66,7 +65,6 @@ class GitGraphAnnotator : Annotator {
   private fun annotateUnresolvedCommitId(element: MermaidCherryPickStatement, holder: AnnotationHolder) {
     val identifier = element.commitIdAttribute.commitIdValue
 
-    val text = identifier.text
     val parent = element.parent ?: return
 
     val matchingIds = parent
@@ -74,8 +72,8 @@ class GitGraphAnnotator : Annotator {
       .filterIsInstance<MermaidGitGraphStatement>()
       .map { it.firstChild }
       .filterIsInstance<MermaidCommitStatement>()
-      .mapNotNull { it.commitIdAttribute?.commitIdValue?.text }
-      .filter { it == text }
+      .mapNotNull { it.commitIdAttribute?.commitIdValue }
+      .filter { identifier.textMatches(it) }
 
     if (matchingIds.toList().isNotEmpty()) {
       return
@@ -91,7 +89,6 @@ class GitGraphAnnotator : Annotator {
   private fun annotateConflictingCommitId(element: MermaidMergeStatement, holder: AnnotationHolder) {
     val identifier = element.commitIdAttribute?.commitIdValue ?: return
 
-    val text = identifier.text
     val parent = element.parentOfType<MermaidGitGraphDocument>() ?: return
 
     val siblings = parent
@@ -107,8 +104,7 @@ class GitGraphAnnotator : Annotator {
       .filterIsInstance<MermaidCommitStatement>()
       .mapNotNull { it.commitIdAttribute?.commitIdValue }
     val matchingIds = (mergeStatementIdentifiers + commitStatementIdentifiers)
-      .map { it.text }
-      .filter { it == text }
+      .filter { identifier.textMatches(it) }
 
     if (matchingIds.toList().isEmpty()) {
       return
@@ -123,7 +119,6 @@ class GitGraphAnnotator : Annotator {
   private fun annotateConflictingCommitId(element: MermaidCommitStatement, holder: AnnotationHolder) {
     val identifier = element.commitIdAttribute?.commitIdValue ?: return
 
-    val text = identifier.text
     val parent = element.parentOfType<MermaidGitGraphDocument>() ?: return
 
     val siblings = parent
@@ -133,8 +128,8 @@ class GitGraphAnnotator : Annotator {
 
     val matchingMergeStatementIdentifiers = siblings
       .filterIsInstance<MermaidMergeStatement>()
-      .mapNotNull { it.commitIdAttribute?.commitIdValue?.text }
-      .filter { it == text }
+      .mapNotNull { it.commitIdAttribute?.commitIdValue }
+      .filter { identifier.textMatches(it) }
 
     if (matchingMergeStatementIdentifiers.isNotEmpty()) {
       holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.conflicting.commit.id"))
@@ -148,8 +143,8 @@ class GitGraphAnnotator : Annotator {
     val matchingCommitStatementIdentifiers = siblings
       .filterIsInstance<MermaidCommitStatement>()
       .filter { it != element }
-      .mapNotNull { it.commitIdAttribute?.commitIdValue?.text }
-      .filter { it == text }
+      .mapNotNull { it.commitIdAttribute?.commitIdValue }
+      .filter { identifier.textMatches(it) }
 
     if (matchingCommitStatementIdentifiers.toList().isNotEmpty()) {
       holder.newAnnotation(HighlightSeverity.WARNING, MermaidBundle.message("annotator.conflicting.commit.id"))
@@ -164,8 +159,7 @@ class GitGraphAnnotator : Annotator {
   private fun annotateConflictingBranch(element: MermaidBranchStatement, holder: AnnotationHolder) {
     val identifier = element.identifier
 
-    val text = identifier.text
-    if (text == MAIN) {
+    if (identifier.textMatches(MAIN)) {
       addConflictingBranchAnnotation(holder, identifier.textRange)
     }
 
@@ -178,8 +172,8 @@ class GitGraphAnnotator : Annotator {
 
     val matchingIds = siblings
       .filterIsInstance<MermaidBranchStatement>()
-      .map { it.identifier.text }
-      .filter { it == text }
+      .map { it.identifier }
+      .filter { identifier.textMatches(it) }
 
     if (!matchingIds.iterator().hasNext()) {
       return

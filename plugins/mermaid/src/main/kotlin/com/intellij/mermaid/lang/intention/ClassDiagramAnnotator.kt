@@ -22,7 +22,7 @@ class ClassDiagramAnnotator : Annotator {
 
   private fun annotateUnresolvedClass(element: MermaidClassDiagramIdentifierHolder, holder: AnnotationHolder) {
     val identifier = element.classDiagramIdentifier
-    val text = identifier.text
+
     val parent = element.parent ?: return
 
     val prevSiblings = parent
@@ -37,8 +37,7 @@ class ClassDiagramAnnotator : Annotator {
       .filterIsInstance<MermaidRelationStatement>()
       .flatMap { listOf(it.leftId.classDiagramIdentifier, it.rightId.classDiagramIdentifier) }
     val matchingIds = (classStatementIdentifiers + mermaidStatementIdentifiers)
-      .map { it.text }
-      .filter { it == text }
+      .filter { identifier.textMatches(it) }
 
     if (matchingIds.toList().isNotEmpty()) {
       return

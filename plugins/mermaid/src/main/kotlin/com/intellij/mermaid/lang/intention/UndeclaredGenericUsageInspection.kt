@@ -138,8 +138,7 @@ class UndeclaredGenericUsageInspection : LocalInspectionTool() {
       diagramIdentifier: MermaidClassDiagramIdentifier,
       elementId: MermaidClassDiagramIdentifier
     ): Pair<MermaidClassDiagramIdentifier, PsiElement>? {
-      val id = diagramIdentifier.text
-      if (id == elementId.text) {
+      if (diagramIdentifier.textMatches(elementId)) {
         return diagramIdentifier to diagramIdentifier.parent
       }
       return null

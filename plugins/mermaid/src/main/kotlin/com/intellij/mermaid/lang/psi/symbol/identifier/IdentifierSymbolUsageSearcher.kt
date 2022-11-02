@@ -127,7 +127,7 @@ class IdentifierSymbolUsageSearcher : UsageSearcher {
         val foundReferences = sequenceOf(element)
           .filter { it.textRangeInParent.containsOffset(offsetInElement) }
           .filter { it.isDeclaration }
-          .filter { it.text == symbol.searchText }
+          .filter { it.textMatches(symbol.searchText) }
           .filter { it.textRange != symbol.range }
         if (foundReferences.any()) {
           return foundReferences.toList()
