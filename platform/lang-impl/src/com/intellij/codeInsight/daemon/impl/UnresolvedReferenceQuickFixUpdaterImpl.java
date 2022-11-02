@@ -110,7 +110,7 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
     job = JobLauncher.getInstance().submitToJobThread(() ->
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() ->
         ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-          if (DumbService.getInstance(myProject).isDumb()) {
+          if (DumbService.getInstance(myProject).isDumb() || !reference.getElement().isValid()) {
             // this will be restarted anyway on smart mode switch
             return;
           }
