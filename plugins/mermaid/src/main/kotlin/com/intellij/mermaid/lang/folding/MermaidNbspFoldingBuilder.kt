@@ -32,8 +32,8 @@ class MermaidNbspFoldingBuilder : CustomFoldingBuilder() {
         val endOffset = startOffset + it.range.length
         TextRange.create(startOffset, endOffset)
       }
-      if (rangeSequence.iterator().hasNext()) {
-        var spaceRange = rangeSequence.iterator().next()
+      if (rangeSequence.any()) {
+        var spaceRange = rangeSequence.first()
         var length = 1
 
         for (range in rangeSequence) {

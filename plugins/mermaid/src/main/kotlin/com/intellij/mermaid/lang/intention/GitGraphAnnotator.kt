@@ -92,7 +92,7 @@ class GitGraphAnnotator : Annotator {
     val parent = element.parentOfType<MermaidGitGraphDocument>() ?: return
 
     val siblings = parent
-      .children
+      .children()
       .filterIsInstance<MermaidGitGraphStatement>()
       .map { it.firstChild }
 
@@ -122,7 +122,7 @@ class GitGraphAnnotator : Annotator {
     val parent = element.parentOfType<MermaidGitGraphDocument>() ?: return
 
     val siblings = parent
-      .children
+      .children()
       .filterIsInstance<MermaidGitGraphStatement>()
       .map { it.firstChild }
 
@@ -131,7 +131,7 @@ class GitGraphAnnotator : Annotator {
       .mapNotNull { it.commitIdAttribute?.commitIdValue }
       .filter { identifier.textMatches(it) }
 
-    if (matchingMergeStatementIdentifiers.isNotEmpty()) {
+    if (matchingMergeStatementIdentifiers.none()) {
       holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.conflicting.commit.id"))
         .range(identifier.textRange)
         .highlightType(ProblemHighlightType.ERROR)
@@ -166,7 +166,7 @@ class GitGraphAnnotator : Annotator {
     val parent = element.parentOfType<MermaidGitGraphDocument>() ?: return
 
     val siblings = parent
-      .children
+      .children()
       .filterIsInstance<MermaidGitGraphStatement>()
       .map { it.firstChild }
 
@@ -175,7 +175,7 @@ class GitGraphAnnotator : Annotator {
       .map { it.identifier }
       .filter { identifier.textMatches(it) }
 
-    if (!matchingIds.iterator().hasNext()) {
+    if (matchingIds.none()) {
       return
     }
 

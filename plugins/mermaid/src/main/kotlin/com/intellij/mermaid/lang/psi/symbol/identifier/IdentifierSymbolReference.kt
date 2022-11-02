@@ -22,7 +22,7 @@ class IdentifierSymbolReference(
     val file = element.containingFile
     val declarations = file.collectNamedElements().filter { it.isDeclaration }
     val matchingDeclarations = declarations.filter { it.text == text }
-    if (!matchingDeclarations.iterator().hasNext()) {
+    if (matchingDeclarations.none()) {
       return listOf(element).mapNotNull {
         (it as? MermaidNamedPsiElement)?.let { element ->
           UnresolvedIdentifierSymbol.createPointer(
