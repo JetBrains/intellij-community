@@ -229,12 +229,9 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaModuleSettingsEntity> {
     val modifiable = JavaModuleSettingsEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 

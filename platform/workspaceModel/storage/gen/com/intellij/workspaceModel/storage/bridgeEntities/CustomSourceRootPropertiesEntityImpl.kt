@@ -182,12 +182,9 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity> {
     val modifiable = CustomSourceRootPropertiesEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 

@@ -122,12 +122,9 @@ class OneEntityWithSymbolicIdData : WorkspaceEntityData.WithCalculableSymbolicId
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
     val modifiable = OneEntityWithSymbolicIdImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
