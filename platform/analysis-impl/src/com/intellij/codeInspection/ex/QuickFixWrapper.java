@@ -121,6 +121,11 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
                                                        @NotNull Editor editor,
                                                        @NotNull PsiFile file) {
+    PsiFile psiFile = getFile();
+    PsiFile originalFile = file.getOriginalFile();
+    if (originalFile != psiFile && originalFile.isPhysical()) {
+      return myFix.generatePreview(project, myDescriptor);
+    }
     ProblemDescriptor descriptorForPreview;
     try {
       descriptorForPreview = myDescriptor.getDescriptorForPreview(file);
