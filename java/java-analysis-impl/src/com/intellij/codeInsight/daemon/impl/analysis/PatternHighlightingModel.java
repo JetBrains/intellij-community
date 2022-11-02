@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -35,7 +36,7 @@ class PatternHighlightingModel {
     PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
     PsiPattern[] patternComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
     if (recordComponents.length != patternComponents.length) {
-      String message = HighlightMethodUtil.createMismatchedArgumentCountTooltip(recordComponents.length, patternComponents.length);
+      String message = JavaAnalysisBundle.message("arguments.count.mismatch", recordComponents.length, patternComponents.length);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(deconstructionPattern.getDeconstructionList())
         .description(message)
