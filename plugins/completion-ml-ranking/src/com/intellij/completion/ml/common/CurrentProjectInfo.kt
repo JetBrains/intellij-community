@@ -2,7 +2,6 @@
 package com.intellij.completion.ml.common
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -15,12 +14,12 @@ import java.nio.file.Paths
 class CurrentProjectInfo(project: Project) : Disposable {
   private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
   private val updateInterval = Time.DAY
-  private var _modulesCount: Int = ModuleManager.getInstance(project).modules.size
-  private var _librariesCount: Int = LibraryUtil.getLibraryRoots(project).size
-  private var _filesCount: Int = countFiles(project)
+  private var _modulesCount: Int = 0
+  private var _librariesCount: Int = 0
+  private var _filesCount: Int = 0
 
   init {
-    alarm.addRequest({ updateStats(project) }, updateInterval)
+    alarm.addRequest({ updateStats(project) }, 10)
   }
 
   val isIdeaProject = project.basePath?.let {
@@ -37,8 +36,9 @@ class CurrentProjectInfo(project: Project) : Disposable {
 
   private fun countFiles(project: Project): Int {
     var counter = 0
-    ProjectFileIndex.getInstance(project).iterateContent {
-      if (!it.isDirectory) {
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+    projectFileIndex.iterateContent {
+      if (!it.isDirectory && projectFileIndex.isInSourceContent(it)) {
         counter++
       }
       return@iterateContent true
@@ -50,7 +50,7 @@ class CurrentProjectInfo(project: Project) : Disposable {
     try {
       _modulesCount = ModuleManager.getInstance(project).modules.size
       _librariesCount = LibraryUtil.getLibraryRoots(project).size
-      _filesCount = runReadAction { countFiles(project) }
+      _filesCount = countFiles(project)
     } finally {
       alarm.addRequest({ updateStats(project) }, updateInterval)
     }
