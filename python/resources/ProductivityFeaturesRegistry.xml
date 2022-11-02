@@ -1,43 +1,4 @@
 <component>
-  <group id="codeassists">
-    <feature
-      id="codeassists.surroundwith.statement"
-      tip-id="SurroundWith"
-      first-show="5"
-      successive-show="5"
-      min-usage-count="4"
-      />
-    <!--
-    <feature
-      id="codeassists.surroundwith.expression"
-      tip-id="Surround"
-      first-show="6"
-      successive-show="5"
-      min-usage-count="3"
-      />
-    -->
-  </group>
-
-  <group id="refactoring">
-    <feature
-      id="refactoring.introduceVariable"
-      tip-id="IntroduceVariable"
-      min-usage-count="5"
-      first-show="1"
-      successive-show="3"
-      />
-
-    <feature
-      id="refactoring.rename"
-      tip-id="Rename"
-      min-usage-count="2"
-      first-show="1"
-      successive-show="3"
-      />
-
-  </group>
-
-
   <group id="ui">
     <feature
       id="ui.tree.speedsearch"

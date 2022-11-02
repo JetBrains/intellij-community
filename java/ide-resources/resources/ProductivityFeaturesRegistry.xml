@@ -118,20 +118,6 @@
       successive-show="7">
     </feature>
     <feature
-      id="codeassists.surroundwith.statement"
-      tip-id="SurroundWith"
-      first-show="5"
-      successive-show="5"
-      min-usage-count="4"
-      />
-    <feature
-      id="codeassists.surroundwith.expression"
-      tip-id="SurroundWith"
-      first-show="6"
-      successive-show="5"
-      min-usage-count="3"
-      />
-    <feature
       id="codeassists.comment.block"
       tip-id="CommentCode"
       first-show="6"
@@ -162,6 +148,13 @@
   </group>
 
   <group id="refactoring">
+    <feature
+      id="codeassists.surroundwith.expression"
+      tip-id="SurroundWith"
+      first-show="6"
+      successive-show="5"
+      min-usage-count="3"
+    />
     <feature 
       id="refactoring.move.moveInner" 
       tip-id="MoveInnerToUpper"
@@ -170,41 +163,12 @@
       successive-show="10"
     />
     <feature
-      id="refactoring.introduceVariable.incompleteStatement"
-      tip-id="IntroduceVariableIncompleteCode"
-      min-usage-count="5"
-      first-show="3"
-      successive-show="7"
-      />
-
-    <feature
-      id="refactoring.introduceVariable"
-      tip-id="IntroduceVariable"
-      min-usage-count="5"
-      first-show="1"
-      successive-show="3"
-      />
-    
-    <feature
-      id="refactoring.rename"
-      tip-id="Rename"
-      min-usage-count="2"
-      first-show="1"
-      successive-show="3"
-      />
-
-    <feature
       id="refactoring.copyClass"
       tip-id="CopyClass"
       min-usage-count="2"
       first-show="10"
       successive-show="8"
       />
-    <feature id="refactoring.show.quick.list"
-             tip-id="RefactorThis"
-             show-in-guide="false">
-      <track-action id="Refactorings.QuickListPopupAction"/>
-    </feature>
   </group>
   
 
