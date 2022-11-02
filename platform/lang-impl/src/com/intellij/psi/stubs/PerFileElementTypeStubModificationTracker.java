@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -68,12 +69,14 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   @Override
   public synchronized void endUpdatesBatch() {
     myModificationsInCurrentBatch.clear();
-    fastCheck();
-    if (myProbablyExpensiveUpdates.size() > PRECISE_CHECK_THRESHOLD) {
-      coarseCheck();
-    } else {
-      preciseCheck();
-    }
+    ReadAction.run(() -> {
+      fastCheck();
+      if (myProbablyExpensiveUpdates.size() > PRECISE_CHECK_THRESHOLD) {
+        coarseCheck();
+      } else {
+        preciseCheck();
+      }
+    });
   }
 
   private void fastCheck() {
