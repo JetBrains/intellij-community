@@ -7,7 +7,7 @@ import com.jetbrains.python.sdk.flavors.PyFlavorData
 
 data class PyCondaFlavorData(val env: PyCondaEnv) : PyFlavorData {
   override fun prepareTargetCommandLine(sdk: Sdk, targetCommandLineBuilder: TargetedCommandLineBuilder) {
-    env.addCondaToTargetBuilder(targetCommandLineBuilder)
+    env.addCondaToTargetBuilder(sdk, targetCommandLineBuilder)
     targetCommandLineBuilder.addParameter("python")
   }
 

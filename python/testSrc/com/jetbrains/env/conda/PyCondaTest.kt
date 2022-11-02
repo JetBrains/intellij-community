@@ -73,7 +73,7 @@ internal class PyCondaTest {
 
   private suspend fun getPythonVersion(condaEnv: PyCondaEnv): String {
     val req = LocalTargetEnvironmentRequest()
-    val commandLine = TargetedCommandLineBuilder(req).also { condaEnv.addCondaToTargetBuilder(it) }
+    val commandLine = TargetedCommandLineBuilder(req).also { condaEnv.addCondaToTargetBuilder(sdk = null, it) }
     commandLine.addParameter("python")
     return getPythonVersion(commandLine, CondaEnvSdkFlavor.getInstance(), req) ?: error("No version for $condaEnv")
   }
