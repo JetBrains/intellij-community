@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.EnumSet;
 
@@ -121,8 +122,13 @@ public class RepositoryLibraryWithDescriptionEditor
   }
 
   private void reloadLibraryDirectory(Project project, LibraryEx library) {
-    deleteAndReloadDependencies(project, library);
-    showBalloon(JavaUiBundle.message("popup.reload.success.result", library.getName()), MessageType.INFO);
+    try {
+      deleteAndReloadDependencies(project, library);
+      showBalloon(JavaUiBundle.message("popup.reload.success.result", library.getName()), MessageType.INFO);
+    } catch (IOException | UnsupportedOperationException e) {
+      var error = e.getLocalizedMessage();
+      showBalloon(error, MessageType.ERROR);
+    }
   }
 
   private void showBalloon(@NlsSafe String text, MessageType type) {

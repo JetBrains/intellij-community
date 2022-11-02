@@ -31,7 +31,7 @@ public class RepositoryUtilsTest extends LibraryTest {
   }
 
   @Test
-  public void testLibraryReloadFixesCorruptedJar() {
+  public void testLibraryReloadFixesCorruptedJar() throws IOException {
     var group = "test";
     var artifact = "test";
     var version = "0.0.1";

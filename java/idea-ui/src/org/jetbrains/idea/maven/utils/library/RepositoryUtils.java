@@ -214,7 +214,8 @@ public final class RepositoryUtils {
     return loadDependenciesToLibrary(project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library));
   }
 
-  public static Promise<List<OrderRoot>> deleteAndReloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
+  public static Promise<List<OrderRoot>> deleteAndReloadDependencies(@NotNull final Project project,
+                                                                     @NotNull final LibraryEx library) throws IOException {
     LOG.debug("start deleting files in library " + library.getName());
     var filesToDelete = new ArrayList<VirtualFile>();
     for (var rootType : OrderRootType.getAllTypes()) {
@@ -222,16 +223,12 @@ public final class RepositoryUtils {
     }
 
     for (VirtualFile file : filesToDelete) {
-      try {
-        if (file.getFileSystem() instanceof ArchiveFileSystem archiveFs) {
-          var local = archiveFs.getLocalByEntry(file);
-          if (null != local) {
-            var path = local.toNioPath();
-            FileUtil.delete(path);
-          }
+      if (file.getFileSystem() instanceof ArchiveFileSystem archiveFs) {
+        var local = archiveFs.getLocalByEntry(file);
+        if (null != local) {
+          var path = local.toNioPath();
+          FileUtil.delete(path);
         }
-      } catch (IOException | UnsupportedOperationException e) {
-        LOG.error("error deleting file in library " + library.getName(), e);
       }
     }
     return reloadDependencies(project, library);
