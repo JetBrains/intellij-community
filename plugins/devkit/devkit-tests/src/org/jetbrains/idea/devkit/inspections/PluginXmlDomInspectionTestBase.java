@@ -8,7 +8,9 @@ public abstract class PluginXmlDomInspectionTestBase extends LightJavaCodeInsigh
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public interface DataContext {}");
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction {}");
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public abstract class ActionGroup extends AnAction {}");
     myFixture.addClass("package com.intellij.openapi.components; public interface ApplicationComponent {}");
     myFixture.enableInspections(new PluginXmlDomInspection());
   }
