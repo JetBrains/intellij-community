@@ -422,6 +422,10 @@ internal class FixedSizeScrollPanel(view: Component, private val fixedSize: Dime
   init {
     border = empty()
     viewportBorder = empty()
+    isOpaque = false
+    horizontalScrollBar.isOpaque = false
+    verticalScrollBar.isOpaque = false
+    viewport.isOpaque = false
   }
 
   override fun getPreferredSize(): Dimension {
