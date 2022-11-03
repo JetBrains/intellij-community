@@ -11,7 +11,7 @@ import com.intellij.psi.*
 
 /**
  * This node aims to avoid long [getValue] invocations. Namely, type of node (class/package) and fqn are used
- * for fast [JavaCoverageAnnotator] requests.
+ * for fast [com.intellij.coverage.JavaCoverageAnnotator] requests.
  */
 class JavaCoverageNode(project: Project,
                        classOrPackage: PsiNamedElement,

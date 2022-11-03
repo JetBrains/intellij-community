@@ -81,7 +81,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
               }
               catch (Exception ignored) {
                 Notifications.Bus.notify(new Notification("Coverage",
-                                                          CoverageBundle.message("coverage.error.collecting.data"),
+                                                          CoverageBundle.message("coverage.error.collecting.data.text"),
                                                           JavaCoverageBundle.message("download.coverage.report.from.target.failed"),
                                                           NotificationType.ERROR));
                 return;
