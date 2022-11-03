@@ -309,6 +309,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         }
     }
 
+   open fun testDropAnnotations() {
+        doOverrideFileTest()
+    }
+
    open fun testUnresolvedType() {
         doOverrideFileTest()
     }

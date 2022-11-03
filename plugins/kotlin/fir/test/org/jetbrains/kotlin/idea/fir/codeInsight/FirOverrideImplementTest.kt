@@ -7,9 +7,7 @@ import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTest
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
-import org.junit.Ignore
 import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.jupiter.api.Disabled
 import org.junit.runner.RunWith
 
 @Suppress("RedundantOverride") // overrides are for easier test debugging
@@ -310,6 +308,11 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testCopyExperimental() {
         super.testCopyExperimental()
+    }
+
+    override fun testDropAnnotations() {
+        // KTIJ-23517
+        //super.testDropAnnotations()
     }
 
     override fun testUnresolvedType() {
