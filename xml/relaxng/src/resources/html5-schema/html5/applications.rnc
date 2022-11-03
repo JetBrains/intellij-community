@@ -34,13 +34,39 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	common.attrs.hidden =
 		attribute hidden {
-			w:string "hidden" | w:string ""
+			w:string "hidden" | w:string "until-found" | w:string ""
+		}
+
+## Global attributes applicable on elements with editable content
+
+	common.attrs.editing &=
+		(	common.attrs.inputmode?
+		&	common.attrs.spellcheck?
+		&	common.attrs.autocapitalize?
+		&	common.attrs.enterkeyhint?
+		)
+		
+	common.attrs.other &= common.attrs.editing
+
+## Hint expected data type: inputmode
+
+	common.attrs.inputmode =
+		attribute inputmode {
+			(	w:string "none"
+			|	w:string "text"
+			|	w:string "tel"
+			|	w:string "url"
+			|	w:string "email"
+			|	w:string "numeric"
+			|	w:string "decimal"
+			|	w:string "search"
+			)
 		}
 
 ## Spellchecking and grammar checking: spellcheck
 
 	common.attrs.spellcheck =
-		attribute spellcheck{
+		attribute spellcheck {
 			w:string "true" | w:string "false" | w:string ""
 		}
 
@@ -57,14 +83,19 @@ datatypes w = "http://whattf.org/datatype-draft"
 			)
 		}
 
-## Application Cache: manifest
+## Type of Enter button on virtual keyboards: enterkeyhint
 
-	html.attrs.manifest =
-		attribute manifest {
-			common.data.uri.non-empty
+	common.attrs.enterkeyhint =
+		attribute enterkeyhint {
+			(	w:string "enter"
+			|	w:string "done"
+			|	w:string "go"
+			|	w:string "next"
+			|	w:string "previous"
+			|	w:string "search"
+			|	w:string "send"
+			)
 		}
-		
-	html.attrs &= html.attrs.manifest?
 
 ## Progess Indicator: <progress>
 
