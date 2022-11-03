@@ -6,10 +6,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.speedSearch.FilteringTableModel
 import com.intellij.ui.table.JBTable
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.attach.XAttachPresentationGroup
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
-import com.intellij.xdebugger.impl.ui.attach.dialog.isListMerged
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupColumnRenderer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupFirstColumnRenderer
@@ -146,12 +144,10 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachToProcessElement>,
 
 class AttachToProcessListColumnModel : DefaultTableColumnModel() {
   init {
-    val columnsCount = if (isListMerged()) 4 else 3
+    val columnsCount = 4
     addColumn(TableColumn(0).apply { identifier = 0; headerValue = XDebuggerBundle.message("xdebugger.attach.executable.column.name") })
     addColumn(TableColumn(1).apply { identifier = 1; headerValue = XDebuggerBundle.message("xdebugger.attach.pid.column.name") })
-    if (isListMerged()) {
-      addColumn(TableColumn(2).apply { identifier = 2; headerValue = XDebuggerBundle.message("xdebugger.attach.debuggers.column.name") })
-    }
+    addColumn(TableColumn(2).apply { identifier = 2; headerValue = XDebuggerBundle.message("xdebugger.attach.debuggers.column.name") })
     addColumn(TableColumn(columnsCount - 1).apply { identifier = columnsCount - 1; headerValue = XDebuggerBundle.message("xdebugger.attach.command.line.column.name") })
   }
 }
@@ -161,7 +157,7 @@ internal class AttachToProcessTableModel(private val itemNodes: List<AttachToPro
 
   override fun getRowCount(): Int = itemNodes.size
 
-  override fun getColumnCount(): Int = if (isListMerged()) 4 else 3
+  override fun getColumnCount(): Int = 4
 
   override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
     val itemNode = itemNodes[rowIndex]
@@ -171,60 +167,14 @@ internal class AttachToProcessTableModel(private val itemNodes: List<AttachToPro
     if (columnIndex < 0 || columnIndex >= columnCount) throw IllegalStateException("Unexpected column number: $columnIndex")
     if (columnIndex == 0) return ExecutableListCell(state.attachListColumnSettings, itemNode)
     if (columnIndex == 1) return PidListCell(itemNode.item.processInfo.pid, state.attachListColumnSettings)
-    if (isListMerged() && columnIndex == 2) return DebuggersListCell(itemNode, state.attachListColumnSettings)
+    if (columnIndex == 2) return DebuggersListCell(itemNode, state.attachListColumnSettings)
     if (columnIndex == columnCount - 1) return CommandLineListCell(itemNode, state.attachListColumnSettings)
     throw IllegalStateException("Unexpected column number: $columnIndex")
   }
 }
 
 internal suspend fun buildList(itemsInfo: AttachItemsInfo, dialogState: AttachDialogState): AttachToProcessItemsList {
-  return if (isListMerged()) {
-    buildMergedList(itemsInfo, dialogState)
-  }
-  else {
-    buildListGroupedByProvider(itemsInfo, dialogState)
-  }
-}
-
-private suspend fun buildListGroupedByProvider(itemsInfo: AttachItemsInfo, dialogState: AttachDialogState): AttachToProcessItemsList {
-  val allGroups = mutableSetOf<AttachToProcessListGroupBase>()
-
-  val recentItems = itemsInfo.recentItems
-  var firstGroup = true
-  if (recentItems.any()) {
-    val recentGroup = AttachToProcessListRecentGroup().apply { isFirstGroup = true }
-    firstGroup = false
-    allGroups.add(recentGroup)
-
-    for (recentItem in recentItems) {
-      recentGroup.add(AttachToProcessListItem(recentItem))
-    }
-  }
-
-  val itemGroups = mutableMapOf<XAttachPresentationGroup<*>, AttachToProcessListGroup>()
-
-  for (item in itemsInfo.processItems) {
-    coroutineContext.ensureActive()
-
-    val presentationGroup = item.getGroups().singleOrNull() ?: throw IllegalStateException("List view does not support items with several groups")
-    itemGroups.putIfAbsent(presentationGroup, AttachToProcessListGroup(presentationGroup).apply {
-      allGroups.add(this)
-      this.isFirstGroup = firstGroup
-      firstGroup = false
-    })
-    val group = itemGroups[presentationGroup] ?: throw IllegalStateException("Group should be available at this point")
-
-    val itemNode = AttachToProcessListItem(item)
-    group.add(itemNode)
-  }
-
-  val itemNodes = mutableListOf<AttachToProcessElement>()
-  for (group in allGroups.sortedBy { it.getOrder() }) {
-    itemNodes.add(group)
-    itemNodes.addAll(group.getNodes())
-  }
-
-  return AttachToProcessItemsList(itemNodes, dialogState)
+  return buildMergedList(itemsInfo, dialogState)
 }
 
 private suspend fun buildMergedList(itemsInfo: AttachItemsInfo, dialogState: AttachDialogState): AttachToProcessItemsList {

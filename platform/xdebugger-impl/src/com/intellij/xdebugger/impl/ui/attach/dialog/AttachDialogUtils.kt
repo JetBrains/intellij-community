@@ -2,15 +2,12 @@ package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.StartupUiUtil
 import java.awt.Font
 import java.awt.FontMetrics
 import javax.swing.JComponent
 
 private val logger = Logger.getInstance(AttachToProcessDialog::class.java)
-
-fun isListMerged(): Boolean = Registry.`is`("debugger.attach.dialog.list.processes.merged")
 
 fun getProcessName(textToTruncate: String, fontMetrics: FontMetrics, maxWidth: Int): @NlsSafe String {
   if (textToTruncate.isEmpty()) return ""

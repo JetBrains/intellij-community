@@ -6,7 +6,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogUiInvisiblePresentationGroup
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachTreeDebuggersPresentationProvider
-import com.intellij.xdebugger.impl.ui.attach.dialog.isListMerged
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachColumnSettingsState
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachNodeContainer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachTableCell
@@ -43,9 +42,7 @@ internal class DebuggersListCell(private val node: AttachToProcessListItem, stat
 }
 
 
-internal class CommandLineListCell(private val node: AttachToProcessListItem, state: AttachColumnSettingsState) : AttachTableCell(state,
-                                                                                                                          if (isListMerged()) 3 else 2,
-                                                                                                                          XDebuggerBundle.message(
+internal class CommandLineListCell(private val node: AttachToProcessListItem, state: AttachColumnSettingsState) : AttachTableCell(state, 3, XDebuggerBundle.message(
                                                                                                                                         "xdebugger.attach.command.line.column.name")) {
 
   override fun getTextToDisplay(): String = node.item.commandLineText
