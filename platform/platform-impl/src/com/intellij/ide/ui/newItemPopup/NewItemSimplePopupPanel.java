@@ -34,7 +34,7 @@ import java.util.function.Predicate;
 public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   protected final ExtendableTextField myTextField;
 
-  private JBPopup myErrorPopup;
+  protected JBPopup myErrorPopup;
   protected RelativePoint myErrorShowPoint;
 
   protected Consumer<? super InputEvent> myApplyAction;
