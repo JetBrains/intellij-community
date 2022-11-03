@@ -68,7 +68,7 @@
     <dependency>
       <groupId>com.jetbrains.intellij.space</groupId>
       <artifactId>space-java-jps</artifactId>
-      <version>${bootstrap.intellij.version}</version>
+      <version>223.3949</version>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.groovy</groupId>
