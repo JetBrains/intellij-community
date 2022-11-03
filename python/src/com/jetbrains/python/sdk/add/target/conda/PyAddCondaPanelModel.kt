@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.target.conda
 
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -10,7 +11,6 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.isMutableTarget
@@ -173,11 +173,21 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    * @return either null (if no error) or localized error string
    */
   fun getValidationError(): @Nls String? {
-    condaEnvs.exceptionOrNull()?.let {
+
+    val envIdentities = condaEnvs.getOrElse {
       return it.message ?: PyBundle.message("python.sdk.conda.problem.running")
-    }
-    if (showCreateNewEnvPanelRoProp.get() && !newEnvNameRwProperty.get().matches(notEmptyRegex)) {
-      return PyBundle.message("python.sdk.conda.problem.env.empty.invalid")
+    }.envs.map { it.envIdentity }.filterIsInstance<PyCondaEnvIdentity.NamedEnv>().map { it.envName }
+
+
+    if (showCreateNewEnvPanelRoProp.get()) {
+      // Create new env
+      val newEnvName = newEnvNameRwProperty.get()
+      if (!newEnvName.matches(notEmptyRegex)) {
+        return PyBundle.message("python.sdk.conda.problem.env.empty.invalid")
+      }
+      else if (newEnvName in envIdentities) {
+        return PyBundle.message("python.sdk.conda.problem.env.name.used")
+      }
     }
     return null
   }

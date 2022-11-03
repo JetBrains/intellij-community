@@ -59,10 +59,15 @@ internal class PyCondaTest {
     Assert.assertTrue("No environments returned", condaEnvs.isNotEmpty())
 
     var baseFound = false
-    for (condaEnv in condaEnvs) {
+
+    //Check first three, checking same for all envs may be too slow
+    condaEnvs.take(3).forEach { condaEnv ->
       val version = getPythonVersion(condaEnv)
       Assert.assertTrue(condaEnv.envIdentity.toString(), version.isNotBlank())
       println("${condaEnv.envIdentity}: $version")
+    }
+
+    for (condaEnv in condaEnvs) {
       if ((condaEnv.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true) {
         Assert.assertFalse("More than one base environment", baseFound)
         baseFound = true
