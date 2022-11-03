@@ -20,6 +20,7 @@ public class FeatureDescriptor {
   private int myDaysBeforeFirstShowUp;
   private int myDaysBetweenSuccessiveShowUps;
   private int myMinUsageCount;
+  private int myUtilityScore;  // should be from 1 to 5, required for tips sorting in Tips of the Day
   private boolean myNeedToBeShownInGuide = true;
   private final List<FeatureUsageEvent.Action> myActionEvents = new ArrayList<>();
   private final List<FeatureUsageEvent.Intention> myIntentionEvents = new ArrayList<>();
@@ -40,6 +41,7 @@ public class FeatureDescriptor {
   @NonNls private static final String ATTRIBUTE_FIRST_SHOW = "first-show";
   @NonNls private static final String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
   @NonNls private static final String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
+  @NonNls private static final String ATTRIBUTE_UTILITY_SCORE = "utility-score";
   @NonNls private static final String ATTRIBUTE_SHOW_IN_GUIDE = "show-in-guide";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ELEMENT_DEPENDENCY = "dependency";
@@ -61,6 +63,19 @@ public class FeatureDescriptor {
                            @Nullable Set<String> dependencies,
                            int minUsageCount,
                            @Nullable ProductivityFeaturesProvider provider) {
+    this(id, groupId, tipId, displayName, daysBeforeFirstShowUp, daysBetweenSuccessiveShowUps, dependencies, minUsageCount, 3, provider);
+  }
+
+  public FeatureDescriptor(@NonNls @NotNull String id,
+                           @NonNls @Nullable String groupId,
+                           @NonNls @Nullable String tipId,
+                           @NotNull String displayName,
+                           int daysBeforeFirstShowUp,
+                           int daysBetweenSuccessiveShowUps,
+                           @Nullable Set<String> dependencies,
+                           int minUsageCount,
+                           int utilityScore,
+                           @Nullable ProductivityFeaturesProvider provider) {
     myId = id;
     myGroupId = groupId;
     myTipId = tipId;
@@ -69,6 +84,7 @@ public class FeatureDescriptor {
     myDaysBetweenSuccessiveShowUps = daysBetweenSuccessiveShowUps;
     myDependencies = dependencies;
     myMinUsageCount = minUsageCount;
+    myUtilityScore = utilityScore;
     myProvider = provider;
   }
 
@@ -84,6 +100,7 @@ public class FeatureDescriptor {
     myDaysBetweenSuccessiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), 3);
     String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
+    myUtilityScore = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_UTILITY_SCORE), 3);
     List<Element> actionEvents = element.getChildren(ELEMENT_TRACK_ACTION);
     for (Element actionElement : actionEvents) {
       @NonNls String actionId = actionElement.getAttributeValue(ATTRIBUTE_ID);
@@ -193,6 +210,10 @@ public class FeatureDescriptor {
 
   public int getMinUsageCount() {
     return myMinUsageCount;
+  }
+
+  public int getUtilityScore() {
+    return myUtilityScore;
   }
 
   public long getLastTimeShown() {
