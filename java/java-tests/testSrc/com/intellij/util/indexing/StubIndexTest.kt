@@ -1,13 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
-import com.intellij.lang.java.JavaParserDefinition
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.stubs.StubIndexEx
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
@@ -37,20 +32,5 @@ class StubIndexTest : JavaCodeInsightFixtureTestCase() {
     val indexQueryResultNotOptimized =
       JavaShortClassNameIndex.getInstance().get("Bar", myFixture.project, GlobalSearchScope.allScope(myFixture.project))
     assertEmpty(indexQueryResultNotOptimized)
-  }
-
-  fun `test java file element type mod count increments on java file creation and change`() {
-    var lastModCount = 0L
-    fun checkModCountIncreasedAtLeast(minInc: Int) {
-      val modCount = (StubIndex.getInstance() as StubIndexEx)
-        .getPerFileElementTypeModificationTracker(JavaParserDefinition.JAVA_FILE).modificationCount
-      assert(lastModCount + minInc <= modCount)
-      lastModCount = modCount
-    }
-    checkModCountIncreasedAtLeast(0)
-    val psi = myFixture.addClass("class Foo { String bar; }")
-    checkModCountIncreasedAtLeast(1)
-    WriteAction.run<Throwable> { VfsUtil.saveText(psi.containingFile.virtualFile, "class Foo { int val; }"); }
-    checkModCountIncreasedAtLeast(1)
   }
 }
