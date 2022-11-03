@@ -18,7 +18,7 @@ internal class ExecutableListCell(state: AttachColumnSettingsState, val node: At
   override fun getTextToDisplay(): String = node.item.executableText
 
   override fun getTextStartOffset(component: SimpleColoredComponent): Int =
-    (getIcon()?.iconWidth ?: JBUI.scale(16)) + component.iconTextGap
+    (getIcon()?.iconWidth ?: JBUI.scale(16)) + JBUI.scale(8)
 
   override fun getAttachNode(): AttachToProcessListItem = node
 

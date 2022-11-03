@@ -6,6 +6,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachSelectionIgnoredNode
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElement
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.TableGroupHeaderSeparator
 
 
 internal class AttachToProcessListItem(
@@ -40,6 +41,10 @@ internal abstract class AttachToProcessListGroupBase(val groupName: String?) : A
   abstract fun getOrder(): Int
 
   override fun getProcessItem(): AttachDialogProcessItem? = null
+
+  fun getExpectedHeight(): Int {
+    return TableGroupHeaderSeparator.getExpectedHeight(isFirstGroup)
+  }
 }
 
 internal class AttachToProcessListGroup(private val presentationGroup: XAttachPresentationGroup<*>) : AttachToProcessListGroupBase(presentationGroup.groupName) {
