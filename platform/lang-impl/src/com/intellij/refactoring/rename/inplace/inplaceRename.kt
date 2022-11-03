@@ -84,12 +84,21 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
     // => fall back to rename with a dialog
     return false
   }
-  if (originUsage !is ModifiableRenameUsage || originUsage.fileUpdater !== idFileRangeUpdater) {
-    // TODO support starting inplace rename from a usage with a custom updater,
-    //  e.g., starting rename from `foo` reference to `getFoo` method.
-    //  This will require an ability to obtain the new name by a usage text,
-    //  and we don't need this ability when we are 100% sure they are the same (idFileRangeUpdater).
+  if (originUsage !is ModifiableRenameUsage) {
     return false
+  }
+  if (originUsage.fileUpdater !== idFileRangeUpdater) {
+    val originUsageRange: TextRange = usageRangeInHost(hostFile, originUsage)
+                                      ?: return false
+    val hostDocumentContent = hostDocument.text
+    val originUsageText = originUsageRange.substring(hostDocumentContent)
+    if (!originUsage.declaration || originUsageText != target.targetName) {
+      // TODO support starting inplace rename from a usage with a custom updater,
+      //  e.g., starting rename from `foo` reference to `getFoo` method.
+      //  This will require an ability to obtain the new name by a usage text,
+      //  and we don't need this ability when we are 100% sure they are the same (idFileRangeUpdater).
+      return false
+    }
   }
   var textOptions: TextOptions = getTextOptions(target)
   val data = prepareTemplate(hostDocument, hostFile, originUsage, psiUsages, textOptionsRef = { textOptions })
@@ -182,7 +191,14 @@ private fun prepareTemplate(
     }
     val usageRangeInHost: TextRange = usageRangeInHost(hostFile, usage)
                                       ?: continue // the usage is inside injection, and it's split into several chunks in host
-    val usageTextByName = fileUpdater.usageTextByName
+    val usageTextByName = if (fileUpdater === idFileRangeUpdater)
+      fileUpdater.usageTextByName
+    else {
+      val usagePtr = (usage as ModifiableRenameUsage).createPointer();
+      { newName: String ->
+        usagePtr.dereference()?.fileUpdater?.asSafely<PsiRenameUsageRangeUpdater>()?.usageTextByName?.invoke(newName) ?: newName
+      }
+    }
     val segment = if (usage is TextRenameUsage) {
       val originalText = usageRangeInHost.substring(hostDocumentContent)
       when (usage.context) {
