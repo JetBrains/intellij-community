@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.RootProvider
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -222,9 +223,11 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
   }
 
-  private inner class JdkChangeListener : ProjectJdkTable.Listener {
+  private inner class JdkChangeListener : ProjectJdkTable.Listener, ProjectRootManagerEx.ProjectJdkListener {
     private val sdkDependencies = MultiMap.createSet<ModuleDependencyItem, ModuleId>()
     private val watchedSdks = HashSet<RootProvider>()
+    private var watchedProjectSdk: Sdk? = null
+    private var projectJdkListenerAdded = false
 
     override fun jdkAdded(jdk: Sdk) {
       if (hasDependencyOn(jdk)) {
@@ -232,6 +235,9 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           eventDispatcher.multicaster.firstDependencyOnSdkAdded()
         }
         eventDispatcher.multicaster.referencedSdkAdded(jdk)
+        if (hasProjectSdkDependency() && isProjectSdk(jdk)) {
+          watchedProjectSdk = jdk
+        }
         if (watchedSdks.add(jdk.rootProvider)) {
           eventDispatcher.multicaster.addedDependencyOn(jdk)
           jdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
@@ -261,6 +267,9 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     override fun jdkRemoved(jdk: Sdk) {
+      if (hasProjectSdkDependency() && isProjectSdk(jdk)) {
+        watchedProjectSdk = null
+      }
       if (watchedSdks.remove(jdk.rootProvider)) {
         jdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.removedDependencyOn(jdk)
@@ -274,28 +283,55 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     fun addTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
+      if (sdkDependency == ModuleDependencyItem.InheritedSdkDependency && !projectJdkListenerAdded) {
+        (projectRootManager as ProjectRootManagerEx).addProjectJdkListener(this)
+      }
       val sdk = findSdk(sdkDependency)
       if (sdk != null) {
-        if (watchedSdks.isEmpty()) {
-          eventDispatcher.multicaster.firstDependencyOnSdkAdded()
+        if (sdkDependency == ModuleDependencyItem.InheritedSdkDependency) {
+          watchedProjectSdk = sdk
         }
-        if (watchedSdks.add(sdk.rootProvider)) {
-          eventDispatcher.multicaster.addedDependencyOn(sdk)
-          sdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
-        }
+        addTrackedJdk(sdk)
       }
       sdkDependencies.putValue(sdkDependency, moduleEntity.symbolicId)
+    }
+
+    private fun addTrackedJdk(sdk: Sdk) {
+      if (watchedSdks.isEmpty()) {
+        eventDispatcher.multicaster.firstDependencyOnSdkAdded()
+      }
+      if (watchedSdks.add(sdk.rootProvider)) {
+        eventDispatcher.multicaster.addedDependencyOn(sdk)
+        sdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
+      }
     }
 
     fun removeTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
       sdkDependencies.remove(sdkDependency, moduleEntity.symbolicId)
       val sdk = findSdk(sdkDependency)
-      if (sdk != null && !hasDependencyOn(sdk) && watchedSdks.remove(sdk.rootProvider)) {
+      if (sdkDependency == ModuleDependencyItem.InheritedSdkDependency && !hasProjectSdkDependency()) {
+        watchedProjectSdk = null
+      }
+      if (sdk != null) {
+        removeTrackedJdk(sdk)
+      }
+    }
+
+    private fun removeTrackedJdk(sdk: Sdk) {
+      if (!hasDependencyOn(sdk) && watchedSdks.remove(sdk.rootProvider)) {
         sdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.removedDependencyOn(sdk)
         if (watchedSdks.isEmpty()) {
           eventDispatcher.multicaster.lastDependencyOnSdkRemoved()
         }
+      }
+    }
+
+    override fun projectJdkChanged() {
+      if (hasProjectSdkDependency()) {
+        watchedProjectSdk?.let { removeTrackedJdk(it) }
+        watchedProjectSdk = projectRootManager.projectSdk
+        watchedProjectSdk?.let { addTrackedJdk(it) }
       }
     }
 
@@ -313,8 +349,11 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
     fun hasDependencyOn(jdk: Sdk): Boolean {
       return sdkDependencies.get(ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)).isNotEmpty()
-             || jdk.name == projectRootManager.projectSdkName && jdk.sdkType.name == projectRootManager.projectSdkTypeName && hasProjectSdkDependency()
+             || isProjectSdk(jdk) && hasProjectSdkDependency()
     }
+
+    private fun isProjectSdk(jdk: Sdk) =
+      jdk.name == projectRootManager.projectSdkName && jdk.sdkType.name == projectRootManager.projectSdkTypeName
 
     fun unsubscribe() {
       watchedSdks.forEach {
