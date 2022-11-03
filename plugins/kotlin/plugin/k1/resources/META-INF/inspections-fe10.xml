@@ -2883,6 +2883,15 @@
                      language="kotlin"
                      key="external.interface.contains.non.nullable.property.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.EnumValuesSoftDeprecateMigrationInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     enabledByDefault="false"
+                     cleanupTool="false"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.enum.values.method.soft.deprecate.migration.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 
 </idea-plugin>

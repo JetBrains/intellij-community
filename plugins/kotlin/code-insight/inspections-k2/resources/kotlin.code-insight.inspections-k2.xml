@@ -181,5 +181,15 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.inconsistent.comment.for.java.parameter.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.EnumValuesSoftDeprecateMigrationInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     enabledByDefault="false"
+                     cleanupTool="false"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.enum.values.method.soft.deprecate.migration.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
