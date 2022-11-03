@@ -443,13 +443,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     get() {
       assertDispatchThread()
       if (Registry.`is`("ide.navigate.to.recently.focused.editor", false)) {
-        val splitters = getAllSplitters().toMutableList()
-        if (!splitters.isEmpty()) {
-          splitters.sortWith(Comparator { o1, o2 ->
-            o2.lastFocusGainedTime.compareTo(o1.lastFocusGainedTime)
-          })
-          return splitters[0]
-        }
+        getLastFocusedSplitters()?.let { return it }
       }
 
       val fm = IdeFocusManager.getInstance(project)
@@ -1432,6 +1426,19 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   override fun getSplitters(): EditorsSplitters {
     return if (ApplicationManager.getApplication().isDispatchThread) activeSplittersSync else mainSplitters
+  }
+
+  fun getLastFocusedSplitters(): EditorsSplitters? {
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      val splitters = getAllSplitters().toMutableList()
+      if (!splitters.isEmpty()) {
+        splitters.sortWith(Comparator { o1, o2 ->
+          o2.lastFocusGainedTime.compareTo(o1.lastFocusGainedTime)
+        })
+        return splitters[0]
+      }
+    }
+    return null
   }
 
   override fun getSelectedEditor(): FileEditor? {
