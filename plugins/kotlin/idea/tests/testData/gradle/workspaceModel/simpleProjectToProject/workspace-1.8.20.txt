@@ -67,7 +67,7 @@ MODULES
             dependsOn module names:
                 :a:commonTest
             Additional visible module names:
-            Additional compiler arguments: -Xallow-no-source-files -module-name a_test
+            Additional compiler arguments: -Xallow-no-source-files
     Order entries:
         < Gradle JDK >
         <Module source>
@@ -181,7 +181,7 @@ MODULES
             dependsOn module names:
                 :b:commonTest
             Additional visible module names:
-            Additional compiler arguments: -Xallow-no-source-files -module-name b_test
+            Additional compiler arguments: -Xallow-no-source-files
     Order entries:
         < Gradle JDK >
         <Module source>

@@ -58,7 +58,7 @@ MODULES
             dependsOn module names:
                 SimpleTwoLevel:commonTest
             Additional visible module names:
-            Additional compiler arguments: -Xallow-no-source-files -module-name SimpleTwoLevel_test
+            Additional compiler arguments: -Xallow-no-source-files
     Order entries:
         < Gradle JDK >
         <Module source>
