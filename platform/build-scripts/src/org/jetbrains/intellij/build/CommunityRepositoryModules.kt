@@ -70,7 +70,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.xml.langInjection", "IntelliLang.jar")
       spec.withModule("intellij.java.langInjection.jps")
     },
-    plugin(listOf("intellij.performanceTesting")),
     plugin("intellij.tasks.core") { spec ->
       spec.directoryName = "tasks"
       spec.withModule("intellij.tasks")
