@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import kotlin.reflect.KClass
 
 /**
@@ -46,7 +47,7 @@ sealed class KotlinApplicableIntentionBase<ELEMENT : KtElement>(
         if (ranges.isEmpty()) return false
 
         // A KotlinApplicabilityRange should be relative to the element, while `caretOffset` is absolute.
-        val relativeCaretOffset = caretOffset - element.textRange.startOffset
+        val relativeCaretOffset = caretOffset - element.startOffset
         return ranges.any { it.containsOffset(relativeCaretOffset) }
     }
 
