@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
@@ -44,17 +46,19 @@ import static java.util.stream.Collectors.toList;
  *                                         // -> removes few oldest ones
  * </pre>
  */
+@ApiStatus.Internal
 public class FileSetLimiter {
+  private static final Logger LOG = Logger.getInstance(FileSetLimiter.class);
+
   public static final int DEFAULT_FILES_TO_KEEP = 10;
   public static final String DEFAULT_DATETIME_FORMAT = "{0, date, yyyy-MM-dd-HH-mm-ss}";
 
   public static final Consumer<Collection<? extends Path>> DELETE_IMMEDIATELY = paths -> {
     for (Path path : paths) {
-      try {
-        Files.deleteIfExists(path);
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException("Can't delete " + path, e);
+      final File file = path.toFile();
+      if (!FileUtilRt.deleteFile(file)) {
+        file.deleteOnExit();
+        LOG.info("Can't delete " + path +" (scheduled for delete on exit)");
       }
     }
   };
