@@ -17,10 +17,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.search.runSearch
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.api.ModifiableRenameUsage
+import com.intellij.refactoring.rename.api.*
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.*
-import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.api.RenameUsage
 import com.intellij.refactoring.rename.impl.FileUpdates.Companion.createFileUpdates
 import com.intellij.refactoring.rename.ui.*
 import com.intellij.util.Query
@@ -322,4 +320,11 @@ fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
     }
   }
   PsiDocumentManager.getInstance(project).commitAllDocuments()
+}
+
+internal object EmptyRenameValidator: RenameValidator {
+  override fun validate(newName: String): RenameValidationResult {
+    return RenameValidationResult.ok()
+  }
+
 }
