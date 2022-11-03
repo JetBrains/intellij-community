@@ -613,15 +613,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
         try {
           DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
-          ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
-          myGuiDumbTaskRunner.processTasksWithProgress(
-            activity,
-            taskIndicator -> {
-              suspender.attachToProgress(taskIndicator);
-              taskIndicator.addStateDelegate(relayToVisibleIndicator);
-            },
-            taskIndicator -> ((AbstractProgressIndicatorExBase)taskIndicator).removeStateDelegate(relayToVisibleIndicator)
-          );
+          myGuiDumbTaskRunner.processTasksWithProgress(activity, suspender, visibleIndicator);
         }
         catch (Throwable unexpected) {
           LOG.error(unexpected);

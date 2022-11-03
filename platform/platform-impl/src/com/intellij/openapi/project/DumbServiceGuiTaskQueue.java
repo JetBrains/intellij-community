@@ -6,7 +6,11 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressSuspender;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -32,16 +36,18 @@ final class DumbServiceGuiTaskQueue {
   }
 
   void processTasksWithProgress(@NotNull StructuredIdeActivity activity,
-                                @NotNull Consumer<? super ProgressIndicatorEx> bindProgress,
-                                @NotNull Consumer<? super ProgressIndicatorEx> unbindProgress) {
+                                @NotNull ProgressSuspender suspender,
+                                @NotNull ProgressIndicator visibleIndicator) {
     while (true) {
-      //we do jump in EDT to
       if (myProject.isDisposed()) break;
 
       try (QueuedDumbModeTask pair = myTaskQueue.extractNextTask()) {
         if (pair == null) break;
 
-        bindProgress.accept(pair.getIndicator());
+        AbstractProgressIndicatorExBase taskIndicator = (AbstractProgressIndicatorExBase)pair.getIndicator();
+        ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
+        suspender.attachToProgress(taskIndicator);
+        taskIndicator.addStateDelegate(relayToVisibleIndicator);
         pair.registerStageStarted(activity);
 
         try {
@@ -49,7 +55,7 @@ final class DumbServiceGuiTaskQueue {
             .performOperation(HeavyProcessLatch.Type.Indexing, IdeBundle.message("progress.performing.indexing.tasks"), () -> runSingleTask(pair));
         }
         finally {
-          unbindProgress.accept(pair.getIndicator());
+          taskIndicator.removeStateDelegate(relayToVisibleIndicator);
         }
       }
     }
