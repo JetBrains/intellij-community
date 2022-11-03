@@ -36,21 +36,27 @@ object LocationFeaturesUtil {
   }
 
   fun linesDiff(completionParameters: CompletionParameters, completionElement: PsiElement?): Int? {
-    if (completionElement == null || completionParameters.position.containingFile != completionElement.containingFile) {
+    if (completionElement == null) {
       return null
     }
 
     try {
-      val completionLine = completionParameters.editor.caretModel.primaryCaret.logicalPosition.line
-      val elementOffset = if (completionElement.textOffset >= completionParameters.position.textOffset) {
-        val completionDiff = completionParameters.position.containingFile.textLength - completionParameters.originalFile.textLength
-        completionElement.textOffset - completionDiff
-      } else {
-        completionElement.textOffset
+      val elementOffset = when (completionElement.containingFile) {
+        completionParameters.position.containingFile -> {
+          if (completionElement.textOffset >= completionParameters.position.textOffset) {
+            val completionDiff = completionElement.containingFile.textLength - completionParameters.originalFile.textLength
+            completionElement.textOffset - completionDiff
+          } else {
+            completionElement.textOffset
+          }
+        }
+        completionParameters.originalFile -> completionElement.textOffset
+        else -> null
       }
-      if (elementOffset < 0) {
+      if (elementOffset == null || elementOffset < 0) {
         return null
       }
+      val completionLine = completionParameters.editor.caretModel.primaryCaret.logicalPosition.line
       val elementLine = completionParameters.editor.document.getLineNumber(elementOffset)
       return completionLine - elementLine
     } catch (e: ProcessCanceledException) {
