@@ -394,6 +394,7 @@
              show-in-guide="false"
              utility-score="3">
       <track-action id="CopyReference"/>
+      <track-action id="CopyReferencePopupGroup"/>
     </feature>
 
     <feature id="editing.copy.line"
