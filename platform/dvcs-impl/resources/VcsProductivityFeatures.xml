@@ -37,12 +37,12 @@
     </feature>
 
     <!--Failed to find the way how to track usage of this feature-->
-    <feature
-      id="vcs.partial.commit"
-      tip-id="partial_git_commit"
-      show-in-guide="false"
-      utility-score="3">
-    </feature>
+    <!--<feature-->
+    <!--  id="vcs.partial.commit"-->
+    <!--  tip-id="partial_git_commit"-->
+    <!--  show-in-guide="false"-->
+    <!--  utility-score="3">-->
+    <!--</feature>-->
 
     <feature
       id="vcs.annotate"
