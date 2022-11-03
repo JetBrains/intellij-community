@@ -104,7 +104,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection);
     myWatchesManager = new XDebuggerWatchesManager(project);
     myPinToTopManager = new XDebuggerPinToTopManager();
-    myExecutionPointHighlighter = new ExecutionPointHighlighter(project, this);
+    myExecutionPointHighlighter = new ExecutionPointHighlighter(project, messageBusConnection);
 
     messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override

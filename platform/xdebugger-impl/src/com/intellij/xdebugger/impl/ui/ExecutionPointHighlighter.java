@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -59,10 +60,14 @@ public class ExecutionPointHighlighter {
   }
 
   public ExecutionPointHighlighter(@NotNull Project project, @NotNull Disposable parentDisposable) {
+    this(project, project.getMessageBus().connect(parentDisposable));
+  }
+
+  public ExecutionPointHighlighter(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
     myProject = project;
 
     // Update highlighter colors if global color schema was changed
-    project.getMessageBus().connect(parentDisposable).subscribe(EditorColorsManager.TOPIC, scheme -> update(false));
+    messageBusConnection.subscribe(EditorColorsManager.TOPIC, scheme -> update(false));
   }
 
   public void show(@NotNull XSourcePosition position, boolean notTopFrame,
