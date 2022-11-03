@@ -191,6 +191,12 @@ internal object MermaidSpacingBuilder {
       // C4
       .after(C4_KEYWORDS_SPACE_AFTER).spaceIf(false)
       .around(MermaidTokens.C4.EQUALITY).spacing(0, 1, 0, false, 0)
+      // Mindmap
+      .between(MermaidTokens.Mindmap.NODE_DESCR, MermaidTokens.Mindmap.NODE_DESCR).spaces(1)
+      .around(MermaidTokens.Mindmap.NODE_DESCR_START).spaceIf(false)
+      .between(MermaidElements.MINDMAP_NODE_ID, MermaidElements.MINDMAP_NODE_DESCR).spaceIf(false)
+      .around(MermaidTokens.Mindmap.NODE_DESCR_END).spaceIf(false)
+      .betweenInside(MermaidTokens.ID, MermaidTokens.ID, MermaidElements.MINDMAP_NODE_ID).spaces(1)
       // indent
       .between(MermaidElements.SEQUENCE_DOCUMENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
       .between(MermaidElements.SUBGRAPH_DOCUMENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)

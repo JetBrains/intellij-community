@@ -28,7 +28,8 @@ object MermaidTokenTypeSets {
     MermaidElements.REQUIREMENT_BODY_STATEMENT,
     MermaidElements.ELEMENT_BODY_STATEMENT,
     MermaidElements.GIT_GRAPH_STATEMENT,
-    MermaidElements.C_4_STATEMENT
+    MermaidElements.C_4_STATEMENT,
+    MermaidElements.MINDMAP_STATEMENT
   )
 
   val DIAGRAM_DOCUMENTS = TokenSet.create(

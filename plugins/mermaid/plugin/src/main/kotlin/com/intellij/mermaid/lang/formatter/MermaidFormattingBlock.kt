@@ -4,6 +4,7 @@ import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_DOCUMENTS
+import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
 import com.intellij.psi.formatter.common.SettingsAwareBlock
@@ -30,6 +31,9 @@ internal open class MermaidFormattingBlock(
   }
 
   override fun buildChildren(): List<Block> {
+    if (node.elementType == MermaidElements.MINDMAP_DOCUMENT) {
+      return node.children().map { MermaidFormattingBlock(it, settings, spacing) }.toList()
+    }
     return filterFromWhitespaces(node.children()).map { MermaidFormattingBlock(it, settings, spacing) }.toList()
   }
 

@@ -30,6 +30,8 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
 
   fun `test c4`() = doTest()
 
+  fun `test mindmap`() = doTest()
+
   private fun doTest() {
     val before = getTestName(true) + "_before.mermaid"
     val after = getTestName(true) + "_after.mermaid"
