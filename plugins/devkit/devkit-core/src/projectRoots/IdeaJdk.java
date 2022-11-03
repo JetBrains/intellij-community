@@ -121,7 +121,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Nullable
-  private static Sdk getInternalJavaSdk(final Sdk sdk) {
+  public static Sdk getInternalJavaSdk(final Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof Sandbox) {
       return ((Sandbox)data).getJavaSdk();
