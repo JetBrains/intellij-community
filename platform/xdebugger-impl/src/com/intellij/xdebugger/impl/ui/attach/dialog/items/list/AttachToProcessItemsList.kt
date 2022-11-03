@@ -74,8 +74,9 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachToProcessElement>,
   private fun updateRowsHeight(from: Int = 0, to: Int = rowCount - 1) {
     setRowHeight(AttachDialogState.DEFAULT_ROW_HEIGHT)
     for (row in from until to + 1) {
-      if (model.getValueAt<AttachToProcessElement>(row) is AttachToProcessListGroupBase) {
-        setRowHeight(row, AttachDialogState.GROUP_ROW_HEIGHT)
+      val valueAt = model.getValueAt<AttachToProcessElement>(row)
+      if (valueAt is AttachToProcessListGroupBase) {
+        setRowHeight(row, valueAt.getExpectedHeight())
       }
     }
   }
@@ -189,8 +190,10 @@ private suspend fun buildListGroupedByProvider(itemsInfo: AttachItemsInfo, dialo
   val allGroups = mutableSetOf<AttachToProcessListGroupBase>()
 
   val recentItems = itemsInfo.recentItems
+  var firstGroup = true
   if (recentItems.any()) {
-    val recentGroup = AttachToProcessListRecentGroup()
+    val recentGroup = AttachToProcessListRecentGroup().apply { isFirstGroup = true }
+    firstGroup = false
     allGroups.add(recentGroup)
 
     for (recentItem in recentItems) {
@@ -204,7 +207,11 @@ private suspend fun buildListGroupedByProvider(itemsInfo: AttachItemsInfo, dialo
     coroutineContext.ensureActive()
 
     val presentationGroup = item.getGroups().singleOrNull() ?: throw IllegalStateException("List view does not support items with several groups")
-    itemGroups.putIfAbsent(presentationGroup, AttachToProcessListGroup(presentationGroup).apply { allGroups.add(this) })
+    itemGroups.putIfAbsent(presentationGroup, AttachToProcessListGroup(presentationGroup).apply {
+      allGroups.add(this)
+      this.isFirstGroup = firstGroup
+      firstGroup = false
+    })
     val group = itemGroups[presentationGroup] ?: throw IllegalStateException("Group should be available at this point")
 
     val itemNode = AttachToProcessListItem(item)
@@ -225,7 +232,7 @@ private suspend fun buildMergedList(itemsInfo: AttachItemsInfo, dialogState: Att
   val itemNodes = mutableListOf<AttachToProcessElement>()
   val recentItems = itemsInfo.recentItems
   if (recentItems.any()) {
-    val recentGroup = AttachToProcessListRecentGroup()
+    val recentGroup = AttachToProcessListRecentGroup().apply { isFirstGroup = true }
     itemNodes.add(recentGroup)
 
     for (recentItem in recentItems) {
@@ -254,6 +261,7 @@ private suspend fun buildMergedList(itemsInfo: AttachItemsInfo, dialogState: Att
   if (itemNodes.any()) {
     itemNodes.add(AttachToProcessOtherItemsGroup().apply {
       allItemsSorted.forEach { this.add(it) }
+      isFirstGroup = false
     })
   }
 
