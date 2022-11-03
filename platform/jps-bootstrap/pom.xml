@@ -10,7 +10,7 @@
 
   <properties>
     <maven.compiler.release>11</maven.compiler.release>
-    <bootstrap.intellij.version>223.6102</bootstrap.intellij.version>
+    <bootstrap.intellij.version>223.3949</bootstrap.intellij.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -68,7 +68,7 @@
     <dependency>
       <groupId>com.jetbrains.intellij.space</groupId>
       <artifactId>space-java-jps</artifactId>
-      <version>223.3949</version>
+      <version>${bootstrap.intellij.version}</version>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.groovy</groupId>
