@@ -3,7 +3,7 @@
     <feature
       id="navigation.goto.implementation"
       tip-id="GoToImplementation"
-      min-usage-count="10"
+      min-usage-count="5"
       first-show="2"
       successive-show="5"
       utility-score="4">
@@ -15,7 +15,7 @@
     <feature
       id="editing.completion.smarttype.general"
       tip-id="SmartTypeCompletion"
-      min-usage-count="10"
+      min-usage-count="5"
       first-show="2"
       successive-show="3"
       utility-score="3">
@@ -24,7 +24,7 @@
     <feature
       id="editing.completion.smarttype.afternew"
       tip-id="SmartTypeAfterNew"
-      min-usage-count="7"
+      min-usage-count="3"
       first-show="3"
       successive-show="4"
       utility-score="3"
@@ -32,7 +32,7 @@
     <feature
       id="editing.completion.smarttype.casting"
       tip-id="SmartTypeCasting"
-      min-usage-count="5"
+      min-usage-count="3"
       first-show="5"
       successive-show="7"
       utility-score="3"
@@ -40,7 +40,7 @@
     <feature
       id="editing.completion.second.basic"
       tip-id="SecondBasicClassNameCompletion"
-      min-usage-count="8"
+      min-usage-count="5"
       first-show="10"
       successive-show="3"
       utility-score="3">
@@ -50,7 +50,7 @@
     <feature
       id="editing.completion.second.smarttype.chain"
       tip-id="SecondSmartCompletionChain"
-      min-usage-count="8"
+      min-usage-count="3"
       first-show="10"
       successive-show="3"
       utility-score="3">
@@ -59,7 +59,7 @@
     <feature
       id="editing.completion.second.smarttype.toar"
       tip-id="SecondSmartCompletionToar"
-      min-usage-count="8"
+      min-usage-count="2"
       first-show="10"
       successive-show="3"
       utility-score="3">
@@ -68,7 +68,7 @@
     <feature
       id="editing.completion.second.smarttype.aslist"
       tip-id="SecondSmartCompletionAsList"
-      min-usage-count="8"
+      min-usage-count="2"
       first-show="10"
       successive-show="3"
       utility-score="3">
@@ -77,7 +77,7 @@
     <feature
       id="editing.completion.second.smarttype.array.member"
       tip-id="SecondSmartCompletionArrayMember"
-      min-usage-count="8"
+      min-usage-count="2"
       first-show="10"
       successive-show="3"
       utility-score="3">
@@ -86,7 +86,7 @@
     <feature
       id="editing.completion.global.member.name"
       tip-id="CompletionImportStatic"
-      min-usage-count="8"
+      min-usage-count="3"
       first-show="10"
       successive-show="3"
       utility-score="3">
@@ -94,7 +94,7 @@
     <feature
       id="editing.completion.finishByExclamation"
       tip-id="FinishByExclamation"
-      min-usage-count="4"
+      min-usage-count="3"
       first-show="10"
       successive-show="3"
       utility-score="2">
@@ -105,7 +105,7 @@
     <feature
       id="editing.completion.variable.name"
       tip-id="VariableNameCompletion"
-      min-usage-count="7"
+      min-usage-count="5"
       first-show="5"
       successive-show="3"
       utility-score="3"
@@ -113,7 +113,7 @@
     <feature
       id="editing.completion.finishBySmartEnter"
       tip-id="FinishBySmartEnter"
-      min-usage-count="7"
+      min-usage-count="5"
       first-show="4"
       successive-show="8"
       utility-score="3">
@@ -126,6 +126,7 @@
     <feature
       id="move.element.left.right"
       tip-id="ChangeSignatureAfterMovingParameters"
+      min-usage-count="3"
       utility-score="3">
       <track-action id="MoveElementLeft"/>
       <track-action id="MoveElementRight"/>
@@ -156,7 +157,7 @@
       tip-id="HighlightImplements"
       first-show="3"
       successive-show="5"
-      min-usage-count="5"
+      min-usage-count="3"
       utility-score="3"
       />
     <feature
@@ -164,7 +165,7 @@
       tip-id="HighlightMethodExitPoint"
       first-show="3"
       successive-show="5"
-      min-usage-count="5"
+      min-usage-count="3"
       utility-score="3"
     />
     <feature
@@ -172,7 +173,7 @@
       tip-id="HighlightThrows"
       first-show="3"
       successive-show="5"
-      min-usage-count="5"
+      min-usage-count="3"
       utility-score="3"
       />
   </group>
@@ -240,6 +241,7 @@
     <feature id="intentions.fix.javadoc"
              tip-id="FixDocComment"
              show-in-guide="false"
+             min-usage-count="3"
              utility-score="3">
       <track-intention class-name="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection$RemoveTagFix"/>
       <track-intention class-name="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection$RenameReferenceQuickFix"/>
