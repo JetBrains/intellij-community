@@ -188,13 +188,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
     final byte[] oldContent;
     synchronized (LOCK) {
       if (myOldContent == null) {
-        final LocalHistory localHistory = LocalHistory.getInstance();
-        byte[] byteContent = localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
-          @Override
-          public boolean isSuitable(long revisionTimestamp) {
-            return revisionTimestamp < date;
-          }
-        });
+        byte[] byteContent = loadFromLocalHistory(date, virtualFile);
 
         if (byteContent == null && virtualFile.getTimeStamp() > date) {
           byteContent = loadFromVersionControl(date, virtualFile);
@@ -222,6 +216,16 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
       return null;
     }
     return new SoftReference<>(getCoverageVersionToCurrentLineMapping(change, oldLines.length));
+  }
+
+  private static byte @Nullable [] loadFromLocalHistory(long date, VirtualFile virtualFile) {
+    final LocalHistory localHistory = LocalHistory.getInstance();
+    return ReadAction.compute(() -> localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
+      @Override
+      public boolean isSuitable(long revisionTimestamp) {
+        return revisionTimestamp < date;
+      }
+    }));
   }
 
   private byte @Nullable [] loadFromVersionControl(long date, VirtualFile f) {
