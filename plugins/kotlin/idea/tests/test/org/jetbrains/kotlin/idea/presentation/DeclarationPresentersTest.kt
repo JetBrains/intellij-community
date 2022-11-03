@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinIconProvider
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10KotlinIconProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -20,10 +19,11 @@ class DeclarationPresentersTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByText("Foo.kt", "class <caret>Foo")
         val element = myFixture.elementAtCaret as KtNamedDeclaration
 
-        // By default, we expect whatever the standard Fe10KotlinIconProvider returns.
-        val defaultExpectedIcon = Fe10KotlinIconProvider().getIcon(element, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
+        // By default, we expect whatever the first KotlinIconProvider returns.
+        val firstProvider = IconProvider.EXTENSION_POINT_NAME.findFirstSafe { it is KotlinIconProvider }!!
+        val expectedIcon = firstProvider.getIcon(element, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
 
-        assertEquals(defaultExpectedIcon, KotlinDefaultNamedDeclarationPresentation(element).getIcon(false))
+        assertEquals(expectedIcon, KotlinDefaultNamedDeclarationPresentation(element).getIcon(false))
     }
 
     fun testGetIconWithAdditionalIconProvider() {
