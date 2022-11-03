@@ -127,7 +127,6 @@
 + -com-intellij-jsf-
 + -com-intellij-spring-
 + -CloudFoundry-
-+ -com-intellij-dmserver-
 + -com-intellij-spring-osgi-
 + -com-intellij-spring-security-
 + -com-intellij-thymeleaf-
