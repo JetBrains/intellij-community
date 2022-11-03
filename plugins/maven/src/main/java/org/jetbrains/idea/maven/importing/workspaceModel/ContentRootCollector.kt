@@ -34,6 +34,10 @@ object ContentRootCollector {
         }
         nearestRoot = ContentRootWithFolders(curr.path)
         result.add(nearestRoot)
+
+        if (curr is ProjectRootFolder) {
+          return@forEach
+        }
       }
 
       // 2. MERGE DUPLICATE PATHS
@@ -47,8 +51,13 @@ object ContentRootCollector {
       // 3. MERGE SUBFOLDERS:
       if (prev != null && FileUtil.isAncestor(prev.path, curr.path, true)) {
         if (prev is SourceFolder && curr is UserOrGeneratedSourceFolder) {
-          // don't add sub source folders
-          return@forEach
+          // don't add resource under source folder, test under production
+          if (prev.rootTypeRank <= curr.rootTypeRank) {
+            return@forEach
+          }
+          else {
+            nearestRoot.folders.removeLast()
+          }
         }
         else if (prev is GeneratedSourceFolder && curr is UserOrGeneratedSourceFolder) {
           // don't add generated folder when there are sub source folder

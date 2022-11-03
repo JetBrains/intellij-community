@@ -311,6 +311,50 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
+  public void testSourceFolderPointsToProjectRoot() {
+    createStdProjectFolders();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <sourceDirectory>${basedir}</sourceDirectory>" +
+                  "</build>");
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertSources("project", "");
+    assertTestSources("project");
+    assertResources("project");
+    assertTestResources("project");
+  }
+
+  @Test
+  public void testResourceFolderPointsToProjectRoot() {
+    createStdProjectFolders();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource><directory>${basedir}</directory></resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertSources("project", "src/main/java");
+    assertTestSources("project", "src/test/java");
+    assertResources("project");
+    assertTestResources("project", "src/test/resources");
+  }
+
+  @Test
   public void testPluginSources() {
     createStdProjectFolders();
     createProjectSubDirs("src1", "src2");
