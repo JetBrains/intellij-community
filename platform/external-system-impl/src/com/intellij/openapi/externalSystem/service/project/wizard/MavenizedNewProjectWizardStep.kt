@@ -6,6 +6,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logG
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.nameProperty
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
@@ -91,6 +92,8 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
           .columns(COLUMNS_MEDIUM)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID)
           .validation { validateArtifactId() }
+          .validationRequestor(WHEN_TEXT_CHANGED)
+          .validationRequestor(AFTER_PROPERTY_CHANGE(nameProperty))
           .whenTextChangedFromUi { logArtifactIdChanged() }
       }.bottomGap(BottomGap.SMALL)
     }
