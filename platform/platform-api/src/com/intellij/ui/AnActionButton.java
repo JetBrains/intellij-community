@@ -97,7 +97,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
-    boolean enabled = isEnabled() && isContextComponentOk();
+    boolean enabled = isEnabled();
     if (enabled && myUpdaters != null) {
       for (AnActionButtonUpdater updater : myUpdaters) {
         if (!updater.isEnabled(e)) {
@@ -122,8 +122,6 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   public void updateButton(@NotNull AnActionEvent e) {
-    final JComponent component = getContextComponent();
-    e.getPresentation().setEnabled(component != null && component.isShowing() && component.isEnabled());
   }
 
   @Override
@@ -146,12 +144,6 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   @NotNull
   public DataContext getDataContext() {
     return DataManager.getInstance().getDataContext(getContextComponent());
-  }
-
-  private boolean isContextComponentOk() {
-    return myContextComponent == null
-           || (myContextComponent.isVisible() && ComponentUtil.getParentOfType((Class<? extends JLayeredPane>)JLayeredPane.class,
-                                                                               (Component)myContextComponent) != null);
   }
 
   @NotNull
@@ -210,11 +202,6 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     @Override
     public void updateButton(@NotNull AnActionEvent e) {
       myAction.update(e);
-      final boolean enabled = e.getPresentation().isEnabled();
-      final boolean visible = e.getPresentation().isVisible();
-      if (enabled && visible) {
-        super.updateButton(e);
-      }
     }
 
     @Override
