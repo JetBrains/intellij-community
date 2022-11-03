@@ -124,6 +124,7 @@ public final class JUnitUtil {
   }
 
   public static boolean isTestMethod(final Location<? extends PsiMethod> location, boolean checkAbstract, boolean checkRunWith, boolean checkClass) {
+    if (location == null) return false;
     final PsiMethod psiMethod = location.getPsiElement();
     final PsiClass aClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : psiMethod.getContainingClass();
     if (checkClass && (aClass == null || !isTestClass(aClass, checkAbstract, true))) return false;
