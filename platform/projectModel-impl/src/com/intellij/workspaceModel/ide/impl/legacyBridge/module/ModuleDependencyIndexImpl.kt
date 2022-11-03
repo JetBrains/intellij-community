@@ -285,6 +285,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     fun addTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
       if (sdkDependency == ModuleDependencyItem.InheritedSdkDependency && !projectJdkListenerAdded) {
         (projectRootManager as ProjectRootManagerEx).addProjectJdkListener(this)
+        projectJdkListenerAdded = true
       }
       val sdk = findSdk(sdkDependency)
       if (sdk != null) {
