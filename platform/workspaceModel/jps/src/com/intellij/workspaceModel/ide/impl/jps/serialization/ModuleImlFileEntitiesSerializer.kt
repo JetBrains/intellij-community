@@ -823,7 +823,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
         entitySourceFilter(it.entitySource)
         || it.contentRoots.any { cr -> entitySourceFilter(cr.entitySource) }
         || it.sourceRoots.any { sr -> entitySourceFilter(sr.entitySource) }
-        || it.contentRoots.flatMap { cr -> cr.excludedUrls }.any { ex -> entitySourceFilter(ex.entitySource) }
+        || it.contentRoots.any { cr -> cr.excludedUrls.any { ex -> entitySourceFilter(ex.entitySource) } }
       }
       .mapNotNullTo(ArrayList()) { module -> getSourceToSave(module)?.let { Pair(it, module) } }
       .sortedBy { it.second.name }
