@@ -5,7 +5,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.*
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -73,9 +72,7 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
       outputDirectory = "$path/$name"
-      if (gitData?.git == true) {
-        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
-      }
+      addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       if (addSampleCode) {
         withJavaSampleCodeAsset("src/main/java", groupId)
       }

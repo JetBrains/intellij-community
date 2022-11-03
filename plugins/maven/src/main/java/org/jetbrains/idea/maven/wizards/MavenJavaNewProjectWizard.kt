@@ -8,7 +8,6 @@ import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.chain
@@ -76,9 +75,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
       outputDirectory = "$path/$name"
-      if (gitData?.git == true) {
-        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
-      }
+      addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
       if (parent.addSampleCode) {
         withJavaSampleCodeAsset("src/main/java", parent.groupId)
       }

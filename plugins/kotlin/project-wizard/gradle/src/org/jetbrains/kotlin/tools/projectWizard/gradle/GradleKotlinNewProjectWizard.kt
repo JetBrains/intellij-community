@@ -5,7 +5,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -81,9 +80,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         override fun setupAssets(project: Project) {
             outputDirectory = "$path/$name"
             addAssets(StandardAssetsProvider().getGradlewAssets())
-            if (gitData?.git == true) {
-                addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
-            }
+            addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
         }
 
         override fun setupProject(project: Project) {
