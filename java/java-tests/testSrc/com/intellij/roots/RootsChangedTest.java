@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
@@ -222,16 +221,11 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
       final Sdk jdk;
       final Sdk jdkBBB;
-      try {
-        jdk = (Sdk)IdeaTestUtil.getMockJdk17("AAA").clone();
-        ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
-        myModuleRootListener.assertNoEvents();
+      jdk = ProjectJdkTable.getInstance().createSdk("AAA", JavaSdk.getInstance());
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+      myModuleRootListener.assertNoEvents();
 
-        jdkBBB = (Sdk)IdeaTestUtil.getMockJdk17("BBB").clone();
-      }
-      catch (CloneNotSupportedException e) {
-        throw new RuntimeException(e);
-      }
+      jdkBBB = ProjectJdkTable.getInstance().createSdk("BBB", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       myModuleRootListener.assertNoEvents();
 
