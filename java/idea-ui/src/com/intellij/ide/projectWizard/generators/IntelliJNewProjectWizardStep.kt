@@ -12,6 +12,7 @@ import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
@@ -40,7 +41,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   final override val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
   final override val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
   final override val addSampleCodeProperty = propertyGraph.property(true)
-    .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
+    .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
   final override var sdk by sdkProperty
   final override var moduleName by moduleNameProperty

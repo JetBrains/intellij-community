@@ -10,6 +10,7 @@ import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.StdModuleTypes
@@ -64,7 +65,7 @@ abstract class CommonStarterInitialStep(
   }
   protected val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.lazyProperty { starterContext.includeExamples }
   protected val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
-    .bindBooleanStorage("NewProjectWizard.gitState")
+    .bindBooleanStorage(GIT_PROPERTY_NAME)
 
   protected var entityName: String by entityNameProperty.trim()
   protected var location: String by locationProperty

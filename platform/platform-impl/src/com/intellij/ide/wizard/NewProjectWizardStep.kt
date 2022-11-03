@@ -82,4 +82,11 @@ interface NewProjectWizardStep {
       this.keywords[owner] = keywords.toSet()
     }
   }
+
+  companion object {
+
+    const val GIT_PROPERTY_NAME = "NewProjectWizard.gitState"
+
+    const val ADD_SAMPLE_CODE_PROPERTY_NAME = "NewProjectWizard.addSampleCodeState"
+  }
 }

@@ -10,6 +10,7 @@ import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
@@ -36,7 +37,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     BuildSystemJavaNewProjectWizardData by parent {
 
     private val addSampleCodeProperty = propertyGraph.property(true)
-      .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
+      .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
     var addSampleCode by addSampleCodeProperty
 
