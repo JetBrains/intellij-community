@@ -49,11 +49,6 @@ data class IntellijUpdateMetadata(
   val until: String? = null,
   val productCode: String? = null,
   val url: String? = null,
-  val forumUrl: String? = null,
-  val licenseUrl: String? = null,
-  val bugtrackerUrl: String? = null,
-  val documentationUrl: String? = null,
-  val sourceCodeUrl: String? = null,
   val size: Int = 0
 ) {
   fun toPluginNode(): PluginNode {
@@ -68,11 +63,6 @@ data class IntellijUpdateMetadata(
     pluginNode.version = version
     pluginNode.organization = organization
     pluginNode.url = url
-    pluginNode.forumUrl = forumUrl
-    pluginNode.licenseUrl = licenseUrl
-    pluginNode.bugtrackerUrl = bugtrackerUrl
-    pluginNode.documentationUrl = documentationUrl
-    pluginNode.sourceCodeUrl = sourceCodeUrl
     for (dep in dependencies) {
       pluginNode.addDepends(dep, false)
     }
@@ -185,5 +175,18 @@ data class ReviewCommentPlugin(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijPluginMetadata(
-  val screenshots: List<String>? = null
-)
+  val screenshots: List<String>? = null,
+  val forumUrl: String? = null,
+  val licenseUrl: String? = null,
+  val bugtrackerUrl: String? = null,
+  val documentationUrl: String? = null,
+  val sourceCodeUrl: String? = null) {
+
+  fun toPluginNode(pluginNode: PluginNode) {
+    pluginNode.forumUrl = forumUrl
+    pluginNode.licenseUrl = licenseUrl
+    pluginNode.bugtrackerUrl = bugtrackerUrl
+    pluginNode.documentationUrl = documentationUrl
+    pluginNode.sourceCodeUrl = sourceCodeUrl
+  }
+}
