@@ -2,6 +2,7 @@
 package com.intellij.webSymbols.webTypes.impl
 
 import com.intellij.model.Pointer
+import com.intellij.model.Symbol
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
@@ -20,9 +21,9 @@ import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.utils.merge
+import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.WebTypesSymbol
 import com.intellij.webSymbols.webTypes.WebTypesSymbolsScopeBase
-import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.json.*
 import javax.swing.Icon
 
@@ -173,9 +174,9 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       // Should not reach to super contributions, because it can lead to stack overflow
       // when special containers are trying to merge symbols
       get() = base.contribution.source
-                ?.let {
-                  base.jsonOrigin.resolveSourceSymbol(it, base.cacheHolder)
-                }
+        ?.let {
+          base.jsonOrigin.resolveSourceSymbol(it, base.cacheHolder)
+        }
 
     override val attributeValue: WebSymbolHtmlAttributeValue?
       get() = (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
@@ -252,6 +253,10 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
 
     override fun toString(): String =
       base.toString()
+
+    override fun isEquivalentTo(symbol: Symbol): Boolean =
+      (symbol is WebTypesSymbolImpl && symbol.base == this.base)
+      || super.isEquivalentTo(symbol)
 
     private inner class HtmlAttributeValueImpl(private val value: HtmlAttributeValue) : WebSymbolHtmlAttributeValue {
       override val kind: WebSymbolHtmlAttributeValue.Kind?
