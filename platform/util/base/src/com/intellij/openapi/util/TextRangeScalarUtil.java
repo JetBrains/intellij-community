@@ -13,6 +13,9 @@ public class TextRangeScalarUtil {
   }
 
   public static long toScalarRange(int start, int end) {
+    if (start > end) {
+      throw new IllegalArgumentException("Incorrect offsets: start="+start+"; end="+end);
+    }
     return ((long)start << 32) | end;
   }
 
