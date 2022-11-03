@@ -219,7 +219,7 @@ class PostCommitChecksHandler(val project: Project) {
         .text(VcsBundle.message("post.commit.checks.failed.push.dialog.notification.text", text))
       for (problem in problems) {
         if (problem is CommitProblemWithDetails) {
-          panel.createActionLabel(problem.showDetailsAction) {
+          panel.createActionLabel(problem.showDetailsAction.dropMnemonic()) {
             closeDialog.run()
             problem.showDetails(project)
           }

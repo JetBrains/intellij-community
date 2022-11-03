@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.BundleBase
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -43,10 +44,12 @@ import kotlin.reflect.KProperty
 
 private val LOG = logger<AbstractCommitWorkflow>()
 
-@Nls
-internal fun String.removeEllipsisSuffix() = StringUtil.removeEllipsisSuffix(this)
+
+internal fun @Nls String.removeEllipsisSuffix(): @Nls String = StringUtil.removeEllipsisSuffix(this)
 
 internal fun cleanActionText(text: @Nls String): @Nls String = UIUtil.removeMnemonic(text).removeEllipsisSuffix()
+
+internal fun @Nls String.dropMnemonic(): @Nls String = this.replace(BundleBase.MNEMONIC_STRING, "")
 
 fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
 fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
