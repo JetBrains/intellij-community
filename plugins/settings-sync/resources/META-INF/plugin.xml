@@ -3,7 +3,8 @@
   <id>com.intellij.settingsSync</id>
   <category>IDE Settings</category>
   <description><![CDATA[
-  <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
+    <p>Synchronizes settings across all JetBrains IDE instances using your JetBrains account.
+    The list of synced settings is customizable and includes UI, keymaps, code style, plugins, and much more.</p>
   ]]></description>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.SettingsSyncBundle</resource-bundle>
