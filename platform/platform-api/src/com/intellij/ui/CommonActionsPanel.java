@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.function.Supplier;
@@ -174,7 +173,6 @@ public final class CommonActionsPanel extends JPanel {
     if (getBackground() != null && !getBackground().equals(UIUtil.getPanelBackground())) {
       SwingUtilities.updateComponentTreeUI(this.getParent());
     }
-    final JRootPane pane = getRootPane();
     for (AnActionButton button : myActions) {
       ShortcutSet shortcut = button.getShortcut();
       if (shortcut != null) {
@@ -184,11 +182,7 @@ public final class CommonActionsPanel extends JPanel {
             shortcut = customShortCut;
           }
         }
-        if (button instanceof AddButton && UIUtil.isDialogRootPane(pane)) {
-          button.registerCustomShortcutSet(shortcut, pane);
-        } else {
-          button.registerCustomShortcutSet(shortcut, button.getContextComponent());
-        }
+        button.registerCustomShortcutSet(shortcut, button.getContextComponent());
         if (button instanceof RemoveButton) {
           registerDeleteHook((MyActionButton)button);
         }
@@ -285,24 +279,39 @@ public final class CommonActionsPanel extends JPanel {
     }
 
     @Override
-    public void updateButton(@NotNull AnActionEvent e) {
-      super.updateButton(e);
-      if (!e.getPresentation().isEnabled()) return;
+    public final void updateButton(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(
+        isEnabled() &&
+        isContextComponentShowingAndEnabled() &&
+        isContextComponentStateAllowingAction() &&
+        isEventAllowingAction(e)
+      );
+    }
 
-      final JComponent c = getContextComponent();
+    private boolean isContextComponentShowingAndEnabled() {
+      final var component = getContextComponent();
+      return component != null && component.isShowing() && component.isEnabled();
+    }
+
+    private boolean isContextComponentStateAllowingAction() {
+      final var c = getContextComponent();
       if (c instanceof JTable || c instanceof JList) {
-        final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel()
-                                                             : ((JList<?>)c).getSelectionModel();
-        final int size = c instanceof JTable ? ((JTable)c).getRowCount()
-                                             : ((JList)c).getModel().getSize();
+        final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel() : ((JList<?>)c).getSelectionModel();
+        final int size = c instanceof JTable ? ((JTable)c).getRowCount() : ((JList<?>)c).getModel().getSize();
         final int min = model.getMinSelectionIndex();
         final int max = model.getMaxSelectionIndex();
-        e.getPresentation().setEnabled(isEnabled() && isEnabled(size, min, max));
+        return isEnabled(size, min, max);
+      } else {
+        return true;
       }
     }
 
+    protected boolean isEventAllowingAction(AnActionEvent e) {
+      return true;
+    }
+
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
+    public final @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
     }
 
@@ -319,10 +328,6 @@ public final class CommonActionsPanel extends JPanel {
       return true;
     }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myListener.doAdd();
@@ -351,23 +356,19 @@ public final class CommonActionsPanel extends JPanel {
     }
 
     @Override
-    public void updateButton(@NotNull AnActionEvent e) {
-      final JComponent c = getContextComponent();
-      if (c == null || !c.isShowing() || !c.isEnabled()) {
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-
-      InputEvent inputEvent = e.getInputEvent();
-      if (inputEvent instanceof KeyEvent &&
-          c instanceof JTable &&
-          ((JTable)c).isEditing() &&
-          !(inputEvent.getComponent() instanceof ActionButtonComponent) // action button active in any case in the toolbar
+    protected boolean isEventAllowingAction(AnActionEvent e) {
+      final var c = getContextComponent();
+      final var inputEvent = e.getInputEvent();
+      if (
+        inputEvent instanceof KeyEvent &&
+        c instanceof JTable &&
+        ((JTable)c).isEditing() &&
+        !(inputEvent.getComponent() instanceof ActionButtonComponent) // action button active in any case in the toolbar
       ) {
-        e.getPresentation().setEnabled(false);
-        return;
+        return false;
+      } else {
+        return true;
       }
-      super.updateButton(e);
     }
 
     @Override
