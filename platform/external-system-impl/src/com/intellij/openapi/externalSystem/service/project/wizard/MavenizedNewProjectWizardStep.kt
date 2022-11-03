@@ -8,8 +8,10 @@ import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.nameProperty
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
+import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.*
@@ -34,6 +36,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
 
   final override val parentProperty = propertyGraph.lazyProperty(::suggestParentByPath)
   final override val groupIdProperty = propertyGraph.lazyProperty(::suggestGroupIdByParent)
+    .bindStorage(GROUP_ID_PROPERTY_NAME)
   final override val artifactIdProperty = propertyGraph.lazyProperty(::suggestArtifactIdByName)
   final override val versionProperty = propertyGraph.lazyProperty(::suggestVersionByParent)
 

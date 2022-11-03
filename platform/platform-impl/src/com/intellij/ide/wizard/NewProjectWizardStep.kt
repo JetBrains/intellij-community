@@ -88,5 +88,7 @@ interface NewProjectWizardStep {
     const val GIT_PROPERTY_NAME = "NewProjectWizard.gitState"
 
     const val ADD_SAMPLE_CODE_PROPERTY_NAME = "NewProjectWizard.addSampleCodeState"
+
+    const val GROUP_ID_PROPERTY_NAME = "NewProjectWizard.groupIdState"
   }
 }
