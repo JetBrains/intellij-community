@@ -35,7 +35,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -219,12 +218,9 @@ public final class PySdkUtil {
     if (additionalData == null) {
       return Collections.emptyMap();
     }
-    if (additionalData.getFlavorAndData().getFlavor().supportsVirtualEnvActivation()) {
-      final Map<String, String> environment = activateVirtualEnv(sdkHome);
-      sdk.putUserData(ENVIRONMENT_KEY, environment);
-      return environment;
-    }
-    return Collections.emptyMap();
+    final Map<String, String> environment = activateVirtualEnv(sdkHome);
+    sdk.putUserData(ENVIRONMENT_KEY, environment);
+    return environment;
   }
 
   /**

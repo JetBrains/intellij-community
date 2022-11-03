@@ -74,16 +74,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * Some flavours support virtual env activation: Intellij searches for activate(.bat) script and reads
-   * envs from it. This is harmless and sometimes useful for virtualenvs, but severe for conda.
-   * See inheritors docs.
-   */
-  public boolean supportsVirtualEnvActivation() {
-    return true;
-  }
-
-
-  /**
    * On local targets some flavours could be detected. It returns path to python interpreters for such cases.
    */
   public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
