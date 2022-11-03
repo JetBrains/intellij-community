@@ -37,12 +37,12 @@ object JUnit4Assertions : Assertions() {
         UsefulTestCase.assertSameElements(message?.invoke() ?: "Collections are different", actual, expected)
     }
 
-    override fun assertAll(exceptions: List<Throwable>) {
+    override fun failAll(exceptions: List<Throwable>) {
         exceptions.forEach { throw it }
     }
 
-    override fun assertAll(vararg blocks: () -> Unit) {
-        blocks.forEach { it.invoke() }
+    override fun assertAll(conditions: List<() -> Unit>) {
+        conditions.forEach { it.invoke() }
     }
 
     override fun fail(message: () -> String): Nothing {
