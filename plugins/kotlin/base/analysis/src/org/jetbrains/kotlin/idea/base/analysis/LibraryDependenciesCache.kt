@@ -105,7 +105,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         val infoCache = LibraryInfoCache.getInstance(project)
-        ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(object : RootPolicy<Unit>() {
+        ModuleRootManager.getInstance(module).orderEntries()
+            // TODO: it results into O(n^2)
+            .recursively()
+            .satisfying(condition).process(object : RootPolicy<Unit>() {
             override fun visitModuleSourceOrderEntry(moduleSourceOrderEntry: ModuleSourceOrderEntry, value: Unit) {
                 processedModules.add(moduleSourceOrderEntry.ownerModule)
             }
@@ -130,7 +133,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     /*
     * When built-ins are created from module dependencies (as opposed to loading them from classloader)
-    * we must resolve Kotlin standard library containing some of the built-ins declarations in the same
+    * we must resolve Kotlin standard library containing some built-ins declarations in the same
     * resolver for project as JDK. This comes from the following requirements:
     * - JvmBuiltins need JDK and standard library descriptors -> resolver for project should be able to
     *   resolve them
@@ -212,7 +215,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class ModuleDependenciesCache :
-        SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project),
         ProjectJdkTable.Listener,
         LibraryInfoListener,
         ModuleRootListener {
@@ -265,6 +268,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 entity.findModule(storage)
 
             override fun entitiesChanged(outdated: List<Module>) {
+                // TODO: incorrect in case of transitive module dependency
                 invalidateKeys(outdated) { _, _ -> false }
             }
         }

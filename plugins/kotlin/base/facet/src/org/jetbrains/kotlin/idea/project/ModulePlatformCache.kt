@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-class ModulePlatformCache(project: Project): SynchronizedFineGrainedEntityCache<Module, TargetPlatform>(project, cleanOnLowMemory = false) {
+class ModulePlatformCache(project: Project): SynchronizedFineGrainedEntityCache<Module, TargetPlatform>(project) {
     override fun subscribe() {
         project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener(project))
     }

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 
 abstract class FrameworkAvailabilityChecker(
     project: Project
-) : SynchronizedFineGrainedEntityCache<FrameworkAvailabilityChecker.CompoundKey, Boolean>(project, cleanOnLowMemory = false) {
+) : SynchronizedFineGrainedEntityCache<FrameworkAvailabilityChecker.CompoundKey, Boolean>(project) {
     data class CompoundKey(val module: Module, val includeTests: Boolean)
 
     protected abstract val fqNames: Set<String>
