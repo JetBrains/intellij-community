@@ -280,6 +280,7 @@
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.starter.moduleImporter" interface="com.intellij.ide.starters.StarterModuleImporter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.starter.projectConfigurator" interface="com.intellij.ide.impl.StarterProjectConfigurator" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.newProjectWizard.java.buildSystem"
                     interface="com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jarRepositoryAuthenticationDataProvider"

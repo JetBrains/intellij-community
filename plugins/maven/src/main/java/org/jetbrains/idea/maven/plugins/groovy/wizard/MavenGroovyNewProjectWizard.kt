@@ -26,6 +26,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.asSafely
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
@@ -82,6 +83,8 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       }
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
+      MavenProjectsManager.setupCreatedMavenProject(project)
+
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
       builder.commit(project)
     }
