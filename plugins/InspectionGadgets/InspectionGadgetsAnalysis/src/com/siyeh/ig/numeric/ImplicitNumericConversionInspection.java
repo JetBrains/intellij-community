@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -159,8 +160,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           builder.append("(").append(promotedType.getCanonicalText()).append(')');
         }
       }
-      builder.append(lhsText);
-      builder.append(sign.getText().charAt(0));
+      builder.append(lhsText).append(StringUtil.substringBefore(sign.getText(), "="));
       if (!ignoreWideningConversions && !promotedType.equals(rhsType) &&
           !(ignoreCharConversions && isCharConversion(rhsType, promotedType))) {
         builder.append('(').append(promotedType.getCanonicalText()).append(')');
@@ -175,7 +175,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
 
     @Nullable
     @NonNls
-    private String convertExpression(PsiExpression expression, PsiType expectedType) {
+    private static String convertExpression(PsiExpression expression, PsiType expectedType) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiLiteralExpression) && !isNegatedLiteral(expression)) {
         return null;
@@ -228,12 +228,12 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       return null;
     }
 
-    private boolean isDecimalLiteral(String text) {
+    private static boolean isDecimalLiteral(String text) {
       // should not be binary, octal or hexadecimal: 0b101, 077, 0xFF
       return text.length() > 0 && text.charAt(0) != '0';
     }
 
-    private boolean isNegatedLiteral(PsiExpression expression) {
+    private static boolean isNegatedLiteral(PsiExpression expression) {
       if (!(expression instanceof PsiPrefixExpression)) {
         return false;
       }
