@@ -39,7 +39,7 @@ class CurrentProjectInfo(project: Project) : Disposable {
     var counter = 0
     val projectFileIndex = ProjectFileIndex.getInstance(project)
     projectFileIndex.iterateContent {
-      if (!it.isDirectory && projectFileIndex.isInSourceContent(it)) {
+      if (!it.isDirectory && runReadAction { projectFileIndex.isInSourceContent(it) }) {
         counter++
       }
       return@iterateContent true
@@ -51,7 +51,7 @@ class CurrentProjectInfo(project: Project) : Disposable {
     try {
       _modulesCount = ModuleManager.getInstance(project).modules.size
       _librariesCount = LibraryUtil.getLibraryRoots(project).size
-      _filesCount = runReadAction { countFiles(project) }
+      _filesCount = countFiles(project)
     } finally {
       alarm.addRequest({ updateStats(project) }, updateInterval)
     }
