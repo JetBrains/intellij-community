@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_4_32
-import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_5_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_6_21
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_20
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
@@ -21,6 +20,8 @@ import org.junit.runners.Parameterized
 
 @Suppress("ACCIDENTAL_OVERRIDE")
 abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
+
+    annotation class AndroidImportingTest
 
     sealed class KotlinVersionRequirement {
         data class Exact(val version: KotlinToolingVersion) : KotlinVersionRequirement()
@@ -39,6 +40,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     @Rule
     @JvmField
     var gradleAndKotlinPluginVersionMatchingRule = PluginTargetVersionsRule()
+
+    @Rule
+    @JvmField
+    var androidImportingTestRule = AndroidImportingTestRule()
 
     @JvmField
     @Parameterized.Parameter(1)
@@ -79,6 +84,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         }
     }
 
+
     companion object {
         const val kotlinAndGradleParametersName: String = "Gradle-{0}, KotlinGradlePlugin-{1}"
 
@@ -107,13 +113,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         }
     }
 
-    val androidProperties: Map<String, String>
-        get() = mapOf(
-            "android_gradle_plugin_version" to "7.3.0",
-            "compile_sdk_version" to "31",
-            "build_tools_version" to "28.0.3",
-        )
-
     val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
 
     protected val hmppProperties: Map<String, String>
@@ -138,7 +137,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
-            putAll(androidProperties)
+            putAll(androidImportingTestRule.properties)
             putAll(hmppProperties)
             put("kotlin_plugin_version", kotlinPluginVersion.toString())
             put("kotlin_plugin_repositories", repositories(false))
