@@ -5,7 +5,8 @@
              tip-id="SearchEverywhere"
              first-show="1"
              successive-show="1"
-             min-usage-count="1">
+             min-usage-count="1"
+             utility-score="5">
       <track-action id="SearchEverywhere"/>
     </feature>
 
@@ -13,7 +14,8 @@
              tip-id="GoToClass"
              min-usage-count="3"
              first-show="1"
-             successive-show="5">
+             successive-show="5"
+             utility-score="4">
       <track-action id="GotoClass"/>
     </feature>
 
@@ -21,14 +23,16 @@
              tip-id="GoToFile"
              min-usage-count="2"
              first-show="3"
-             successive-show="5">
+             successive-show="5"
+             utility-score="4">
       <track-action id="GotoFile"/>
     </feature>
 
     <feature id="navigation.popup.symbol"
              tip-id="GoToSymbol"
              first-show="5"
-             successive-show="8">
+             successive-show="8"
+             utility-score="3">
       <track-action id="GotoSymbol"/>
     </feature>
 
@@ -36,7 +40,8 @@
              tip-id="GoToAction"
              first-show="7"
              successive-show="3"
-             min-usage-count="1">
+             min-usage-count="1"
+             utility-score="4">
       <track-action id="GotoAction"/>
     </feature>
 
@@ -44,7 +49,8 @@
              tip-id="CamelPrefixesInNavigationPopups"
              min-usage-count="3"
              first-show="4"
-             successive-show="7">
+             successive-show="7"
+             utility-score="3">
       <dependency id="navigation.popup.class"/>
       <dependency id="navigation.popup.file"/>
       <dependency id="navigation.popup.symbol"/>
@@ -54,7 +60,8 @@
              tip-id="WildcardsInNavigationPopups"
              min-usage-count="2"
              first-show="3"
-             successive-show="5">
+             successive-show="5"
+             utility-score="3">
       <dependency id="navigation.popup.class"/>
       <dependency id="navigation.popup.file"/>
       <dependency id="navigation.popup.symbol"/>
@@ -64,7 +71,8 @@
              tip-id="FileStructurePopup"
              min-usage-count="3"
              first-show="2"
-             successive-show="5">
+             successive-show="5"
+             utility-score="4">
       <track-action id="FileStructurePopup"/>
     </feature>
 
@@ -72,13 +80,15 @@
              tip-id="RecentFiles"
              min-usage-count="3"
              first-show="3"
-             successive-show="5">
+             successive-show="5"
+             utility-score="4">
       <track-action id="RecentFiles"/>
     </feature>
 
     <feature id="navigation.recent.locations"
              tip-id="recent-locations"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="4">
       <track-action id="RecentLocations"/>
     </feature>
 
@@ -86,7 +96,8 @@
              tip-id="SelectIn"
              min-usage-count="3"
              first-show="4"
-             successive-show="7">
+             successive-show="7"
+             utility-score="3">
       <track-action id="SelectIn"/>
     </feature>
 
@@ -94,7 +105,8 @@
              tip-id="GoToDeclaration"
              min-usage-count="15"
              first-show="1"
-             successive-show="4">
+             successive-show="4"
+             utility-score="5">
       <track-action id="GotoDeclaration"/>
     </feature>
 
@@ -102,13 +114,15 @@
              tip-id="ShowUsages"
              min-usage-count="3"
              first-show="5"
-             successive-show="5">
+             successive-show="4"
+             utility-score="4">
       <track-action id="ShowUsages"/>
     </feature>
 
     <feature id="navigation.find.usages"
              tip-id="find_usages"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-action id="FindUsages"/>
     </feature>
 
@@ -116,62 +130,72 @@
              tip-id="GoToInspection"
              min-usage-count="3"
              first-show="5"
-             successive-show="5">
+             successive-show="5"
+             utility-score="2">
       <track-action id="RunInspection"/>
     </feature>
 
     <feature id="navigation.goto.file.line"
              tip-id="GotoLineInFile"
              show-in-guide="false"
+             utility-score="3"
     />
 
     <feature id="switcher"
              tip-id="Switcher"
              first-show="10"
              successive-show="5"
-             min-usage-count="5">
+             min-usage-count="5"
+             utility-score="3">
       <track-action id="Switcher"/>
     </feature>
 
     <feature id="navigation.find.in.files"
              tip-id="FindInPath"
-             min-usage-count="7">
+             min-usage-count="7"
+             utility-score="5">
       <track-action id="FindInPath"/>
     </feature>
 
     <feature id="navigation.replace.in.files"
              tip-id="FindReplaceToggle"
-             min-usage-count="3">
+             min-usage-count="3"
+             utility-score="4">
       <track-action id="ReplaceInPath"/>
     </feature>
 
     <feature id="navigation.find.replace.in.files.toggle"
              tip-id="FindReplaceToggle"
-             min-usage-count="3">
+             min-usage-count="3"
+             utility-score="4">
       <track-action id="com.intellij.find.impl.FindUIHelper$1"/>
     </feature>
 
     <feature id="navigation.find"
              tip-id="FindReplaceToggle"
-             min-usage-count="7">
+             min-usage-count="7"
+             utility-score="5">
       <track-action id="Find"/>
     </feature>
 
     <feature id="navigation.replace"
              tip-id="FindReplaceToggle"
-             min-usage-count="5">
+             min-usage-count="5"
+             utility-score="4">
       <track-action id="Replace"/>
     </feature>
 
     <feature id="navigation.find.replace.toggle"
              tip-id="FindReplaceToggle"
-             min-usage-count="3">
+             min-usage-count="3"
+             utility-score="4">
       <track-action id="com.intellij.find.SearchReplaceComponent$ModeAction"/>
     </feature>
 
     <feature id="navigation.inheritance.hierarchy"
              tip-id="HierarchyBrowser"
-             min-usage-count="3">
+             min-usage-count="3"
+             utility-score="4">
       <track-action id="TypeHierarchy"/>
     </feature>
   </group>
@@ -182,7 +206,8 @@
              tip-id="CodeCompletion"
              min-usage-count="15"
              first-show="1"
-             successive-show="3">
+             successive-show="3"
+             utility-score="5">
       <track-action id="EditorChooseLookupItem"/>
     </feature>
 
@@ -190,7 +215,8 @@
              tip-id="TabInLookups"
              min-usage-count="10"
              first-show="6"
-             successive-show="8">
+             successive-show="8"
+             utility-score="4">
       <track-action id="EditorChooseLookupItemReplace"/>
     </feature>
 
@@ -198,7 +224,8 @@
              tip-id="CompleteStatement"
              first-show="3"
              successive-show="5"
-             min-usage-count="10">
+             min-usage-count="10"
+             utility-score="3">
       <track-action id="EditorChooseLookupItemCompleteStatement"/>
     </feature>
 
@@ -206,7 +233,8 @@
              tip-id="CtrlDotInLookups"
              min-usage-count="7"
              first-show="4"
-             successive-show="8">
+             successive-show="8"
+             utility-score="3">
       <track-action id="EditorChooseLookupItemDot"/>
     </feature>
 
@@ -215,6 +243,7 @@
              min-usage-count="7"
              first-show="4"
              successive-show="8"
+             utility-score="3"
     />
 
     <feature id="editing.completion.camelHumps"
@@ -222,13 +251,15 @@
              min-usage-count="8"
              first-show="5"
              successive-show="7"
+             utility-score="4"
     />
 
     <feature id="editing.completion.cancelByControlArrows"
              tip-id="CancelByControlArrows"
              min-usage-count="10"
              first-show="2"
-             successive-show="3">
+             successive-show="3"
+             utility-score="2">
       <track-action id="EditorLookupDown"/>
       <track-action id="EditorLookupUp"/>
     </feature>
@@ -237,7 +268,8 @@
              tip-id="ChangeSorting"
              min-usage-count="10"
              first-show="2"
-             successive-show="3">
+             successive-show="3"
+             utility-score="2">
       <track-action id="com.intellij.codeInsight.lookup.impl.LookupUi$ChangeSortingAction"/>
     </feature>
 
@@ -245,20 +277,24 @@
              tip-id="PostfixCompletion"
              min-usage-count="10"
              first-show="2"
-             successive-show="3"/>
+             successive-show="3"
+             utility-score="3"
+    />
 
     <feature id="codeassists.liveTemplates"
              tip-id="LiveTemplates"
              min-usage-count="3"
              first-show="3"
              successive-show="5"
+             utility-score="4"
     />
 
     <feature id="editing.completion.show.liveTemplates"
              tip-id="InsertLiveTemplate"
              min-usage-count="3"
              first-show="2"
-             successive-show="3">
+             successive-show="3"
+             utility-score="3">
       <track-action id="InsertLiveTemplate"/>
     </feature>
 
@@ -266,7 +302,8 @@
              tip-id="CodeCompletionInSearch"
              first-show="10"
              successive-show="3"
-             min-usage-count="5">
+             min-usage-count="5"
+             utility-score="3">
       <track-action id="com.intellij.find.editorHeaderActions.VariantsCompletionAction"/>
     </feature>
   </group>
@@ -277,7 +314,8 @@
              tip-id="CtrlW"
              min-usage-count="10"
              first-show="2"
-             successive-show="4">
+             successive-show="4"
+             utility-score="5">
       <track-action id="EditorSelectWord"/>
       <track-action id="EditorUnSelectWord"/>
     </feature>
@@ -286,13 +324,15 @@
              tip-id="DeleteLine"
              min-usage-count="1"
              first-show="2"
-             successive-show="1">
+             successive-show="1"
+             utility-score="3">
       <track-action id="EditorDeleteLine"/>
     </feature>
 
     <feature id="editing.duplicate"
              tip-id="CtrlD"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="4">
       <track-action id="EditorDuplicate"/>
     </feature>
 
@@ -300,18 +340,21 @@
              tip-id="Scratch"
              min-usage-count="10"
              first-show="2"
-             successive-show="3">
+             successive-show="3"
+             utility-score="4">
       <track-action id="NewScratchFile"/>
     </feature>
 
     <feature id="editing.add.carets.using.double.ctrl"
-             tip-id="Multicursor">
+             tip-id="Multicursor"
+             utility-score="3">
       <track-action id="EditorCloneCaretAbove"/>
       <track-action id="EditorCloneCaretBelow"/>
     </feature>
 
     <feature id="editing.convert.line.separators"
-             tip-id="LineEndings">
+             tip-id="LineEndings"
+             utility-score="1">
       <track-action id="ConvertToMacLineSeparators"/>
       <track-action id="ConvertToWindowsLineSeparators"/>
       <track-action id="ConvertToUnixLineSeparators"/>
@@ -319,43 +362,50 @@
 
     <feature id="editing.move.statement.up.down"
              tip-id="MoveUpDown"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-action id="MoveStatementUp"/>
       <track-action id="MoveStatementDown"/>
     </feature>
 
     <feature id="editing.join.lines"
              tip-id="JoinLines"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-action id="EditorJoinLines"/>
     </feature>
 
     <feature id="editing.clipboard.history"
              tip-id="ClipboardStack"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="4">
       <track-action id="PasteMultiple"/>
     </feature>
 
     <feature id="editing.compare.editor.with.clipboard"
              tip-id="CompareEditorWithClipboard"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-action id="CompareClipboardWithSelection"/>
     </feature>
 
     <feature id="editing.copy.reference"
              tip-id="CopyPasteReference"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-action id="CopyReference"/>
     </feature>
 
     <feature id="editing.copy.line"
              tip-id="CopyWithNoSelection"
              show-in-guide="false"
+             utility-score="3"
     />
 
     <feature id="editing.reformat.code"
              tip-id="LayoutCode"
-             min-usage-count="5">
+             min-usage-count="5"
+             utility-score="4">
       <track-action id="ReformatCode"/>
     </feature>
   </group>
@@ -366,7 +416,8 @@
              tip-id="QuickJavaDoc"
              min-usage-count="3"
              first-show="3"
-             successive-show="5">
+             successive-show="5"
+             utility-score="4">
       <track-action id="QuickJavaDoc"/>
     </feature>
 
@@ -374,7 +425,8 @@
              tip-id="CtrlShiftI"
              min-usage-count="9"
              first-show="3"
-             successive-show="5">
+             successive-show="5"
+             utility-score="4">
       <track-action id="QuickImplementations"/>
     </feature>
 
@@ -382,7 +434,8 @@
              tip-id="CtrlShiftIForLookup"
              min-usage-count="1"
              first-show="5"
-             successive-show="7">
+             successive-show="7"
+             utility-score="3">
       <dependency id="codeassists.quickdefinition"/>
     </feature>
 
@@ -390,7 +443,8 @@
              tip-id="QuickJavaDocInLookups"
              min-usage-count="1"
              first-show="5"
-             successive-show="7">
+             successive-show="7"
+             utility-score="3">
       <dependency id="codeassists.quickjavadoc"/>
     </feature>
 
@@ -398,7 +452,8 @@
              tip-id="QuickJavaDocInLookups"
              min-usage-count="1"
              first-show="5"
-             successive-show="7">
+             successive-show="7"
+             utility-score="3">
       <dependency id="codeassists.quickjavadoc"/>
     </feature>
 
@@ -406,7 +461,8 @@
              tip-id="CommentCode"
              first-show="6"
              successive-show="5"
-             min-usage-count="3">
+             min-usage-count="3"
+             utility-score="5">
       <track-action id="CommentByLineComment"/>
     </feature>
 
@@ -415,11 +471,13 @@
              first-show="3"
              successive-show="6"
              min-usage-count="7"
+             utility-score="4"
     />
 
     <feature id="codeassists.highlight.usages"
              tip-id="HighlightUsagesInFile"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="4">
       <track-action id="HighlightUsagesInFile"/>
     </feature>
 
@@ -427,7 +485,8 @@
              tip-id="InspectCode"
              first-show="3"
              min-usage-count="5"
-             successive-show="5">
+             successive-show="5"
+             utility-score="3">
       <track-action id="InspectCode"/>
     </feature>
 
@@ -435,19 +494,22 @@
              tip-id="ParameterInfo"
              min-usage-count="3"
              first-show="3"
-             successive-show="5">
+             successive-show="5"
+             utility-score="4">
       <track-action id="ParameterInfo"/>
     </feature>
 
     <feature id="codeassists.generate.code"
              tip-id="AltInsertInEditor"
-             min-usage-count="3">
+             min-usage-count="3"
+             utility-score="4">
       <track-action id="Generate"/>
     </feature>
 
     <feature id="codeassists.context.actions"
              tip-id="ContextActions"
-             min-usage-count="7">
+             min-usage-count="7"
+             utility-score="5">
       <track-action id="ShowIntentionActions"/>
     </feature>
   </group>
@@ -458,7 +520,8 @@
              tip-id="SurroundWith"
              first-show="5"
              successive-show="5"
-             min-usage-count="4">
+             min-usage-count="4"
+             utility-score="4">
       <track-action id="SurroundWith"/>
     </feature>
 
@@ -467,6 +530,7 @@
              min-usage-count="5"
              first-show="1"
              successive-show="3"
+             utility-score="4"
     />
 
     <feature id="refactoring.introduceVariable.incompleteStatement"
@@ -474,19 +538,22 @@
              min-usage-count="5"
              first-show="3"
              successive-show="7"
+             utility-score="2"
     />
 
     <feature id="refactoring.rename"
              tip-id="Rename"
              min-usage-count="2"
              first-show="1"
-             successive-show="3">
+             successive-show="3"
+             utility-score="5">
       <track-action id="RenameElement"/>
     </feature>
 
     <feature id="refactoring.show.quick.list"
              tip-id="RefactorThis"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-action id="Refactorings.QuickListPopupAction"/>
     </feature>
 
@@ -494,7 +561,8 @@
              tip-id="ExtractMethod"
              min-usage-count="5"
              first-show="1"
-             successive-show="3">
+             successive-show="3"
+             utility-score="3">
       <track-action id="ExtractMethod"/>
     </feature>
   </group>
@@ -506,13 +574,15 @@
              first-show="5"
              successive-show="4"
              min-usage-count="6"
+             utility-score="4"
     />
 
     <feature id="ui.scheme.quickswitch"
              tip-id="QuickSwitchScheme"
              first-show="7"
              successive-show="3"
-             min-usage-count="1">
+             min-usage-count="1"
+             utility-score="4">
       <track-action id="QuickChangeScheme"/>
     </feature>
 
@@ -520,7 +590,8 @@
              tip-id="RecentChanges"
              first-show="5"
              successive-show="5"
-             min-usage-count="1">
+             min-usage-count="1"
+             utility-score="2">
       <track-action id="RecentChanges"/>
     </feature>
 
@@ -529,43 +600,50 @@
              first-show="1"
              successive-show="1"
              min-usage-count="1"
+             utility-score="3"
     />
 
     <feature id="find.recent.search"
              tip-id="RecentSearch"
              first-show="10"
              successive-show="3"
-             min-usage-count="5">
+             min-usage-count="5"
+             utility-score="3">
       <track-action id="com.intellij.find.SearchTextArea$ShowHistoryAction"/>
     </feature>
 
     <feature id="ui.close.other.editors"
              tip-id="CloseOthers"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-action id="CloseAllEditorsButActive"/>
     </feature>
 
     <feature id="ui.close.all.editors"
              tip-id="Close_all_editor_tabs"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-action id="CloseAllEditors"/>
     </feature>
 
     <feature id="ui.hide.tool.window"
              tip-id="Escape"
-             min-usage-count="7">
+             min-usage-count="7"
+             utility-score="4">
       <track-action id="HideActiveWindow"/>
     </feature>
 
     <feature id="ui.open.last.tool.window"
              tip-id="Escape"
-             min-usage-count="3">
+             min-usage-count="3"
+             utility-score="3">
       <track-action id="JumpToLastWindow"/>
     </feature>
 
     <feature id="ui.open.project.tool.window"
              tip-id="FocusProjectToolWindow"
-             min-usage-count="7">
+             min-usage-count="7"
+             utility-score="5">
       <track-action id="ActivateProjectToolWindow"/>
     </feature>
   </group>
@@ -577,23 +655,27 @@
              first-show="6"
              successive-show="10"
              min-usage-count="1"
+             utility-score="3"
     />
   </group>
 
 
   <group id="debugger">
     <feature id="debugger.breakpoint.edit"
-             tip-id="BreakpointSpeedmenu">
+             tip-id="BreakpointSpeedmenu"
+             utility-score="4">
       <track-action id="com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction"/>
     </feature>
 
     <feature id="debugger.evaluate.expression"
              tip-id="EvaluateExpression"
+             utility-score="4"
     />
 
     <feature id="debugger.breakpoint.non.suspending"
              tip-id="NonSuspendingBreakpoints"
              show-in-guide="false"
+             utility-score="4"
     />
   </group>
 
@@ -601,7 +683,8 @@
   <group id="profiler">
     <feature id="profiler.open.snapshot"
              tip-id="hprof"
-             min-usage-count="1">
+             min-usage-count="1"
+             utility-score="2">
       <track-action id="com.intellij.profiler.actions.ImportProfilerResultAction$Open"/>
       <track-action id="com.intellij.profiler.actions.ImportProfilerResultAction$Recent"/>
     </feature>
@@ -611,7 +694,8 @@
   <group id="vcs">
     <feature id="vcs.show.local.history"
              tip-id="local_history"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="4">
       <track-action id="LocalHistory.ShowHistory"/>
     </feature>
   </group>
@@ -620,13 +704,15 @@
   <group id="intentions">
     <feature id="intentions.check.regexp"
              tip-id="CheckRegExp"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-intention class-name="org.intellij.lang.regexp.intention.CheckRegExpIntentionAction"/>
     </feature>
 
     <feature id="intentions.edit.regexp"
              tip-id="EditRegExp"
-             min-usage-count="1">
+             min-usage-count="1"
+             utility-score="2">
       <track-intention class-name="com.intellij.codeInsight.intention.impl.QuickEditAction"/>
     </feature>
   </group>
