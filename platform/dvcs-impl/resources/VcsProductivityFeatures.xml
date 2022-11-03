@@ -4,6 +4,7 @@
       id="vcs.show.quick.list"
       tip-id="VcsQuickList"
       show-in-guide="false"
+      min-usage-count="3"
       utility-score="4">
       <track-action id="Vcs.QuickListPopupAction"/>
     </feature>
@@ -12,6 +13,7 @@
       id="vcs.pull.requests"
       tip-id="pull_requests"
       show-in-guide="false"
+      min-usage-count="2"
       utility-score="3">
       <track-action id="Github.View.Pull.Request"/>
     </feature>
@@ -20,6 +22,7 @@
       id="vcs.use.integration"
       tip-id="VCS_general"
       show-in-guide="false"
+      min-usage-count="5"
       utility-score="4">
       <track-action id="ActivateVersionControlToolWindow"/>
       <track-action id="CheckinProject"/>
@@ -29,6 +32,7 @@
       id="vcs.compare.file.versions"
       tip-id="Compare"
       show-in-guide="false"
+      min-usage-count="3"
       utility-score="3">
       <track-action id="Compare.Selected"/>
       <track-action id="Git.CompareWithBranch"/>
@@ -48,6 +52,7 @@
       id="vcs.annotate"
       tip-id="AnnotationsAndDiffs"
       show-in-guide="false"
+      min-usage-count="3"
       utility-score="4">
       <track-action id="Annotate"/>
     </feature>
