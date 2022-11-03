@@ -5,7 +5,8 @@
       tip-id="GoToImplementation"
       min-usage-count="10"
       first-show="2"
-      successive-show="5">
+      successive-show="5"
+      utility-score="4">
       <track-action id="GotoImplementation"/>
     </feature>
   </group>
@@ -16,7 +17,8 @@
       tip-id="SmartTypeCompletion"
       min-usage-count="10"
       first-show="2"
-      successive-show="3">
+      successive-show="3"
+      utility-score="3">
       <track-action id="SmartTypeCompletion"/>
     </feature>
     <feature
@@ -24,84 +26,97 @@
       tip-id="SmartTypeAfterNew"
       min-usage-count="7"
       first-show="3"
-      successive-show="4"/>
+      successive-show="4"
+      utility-score="3"
+    />
     <feature
       id="editing.completion.smarttype.casting"
       tip-id="SmartTypeCasting"
       min-usage-count="5"
       first-show="5"
-      successive-show="7"/>
+      successive-show="7"
+      utility-score="3"
+    />
     <feature
       id="editing.completion.second.basic"
       tip-id="SecondBasicClassNameCompletion"
       min-usage-count="8"
       first-show="10"
-      successive-show="3">
+      successive-show="3"
+      utility-score="3">
       <dependency id="editing.completion.basic"/>
       <dependency id="editing.completion.smarttype.general"/>
-      </feature>
+    </feature>
     <feature
       id="editing.completion.second.smarttype.chain"
       tip-id="SecondSmartCompletionChain"
       min-usage-count="8"
       first-show="10"
-      successive-show="3">
+      successive-show="3"
+      utility-score="3">
       <dependency id="editing.completion.smarttype.general"/>
-      </feature>
+    </feature>
     <feature
       id="editing.completion.second.smarttype.toar"
       tip-id="SecondSmartCompletionToar"
       min-usage-count="8"
       first-show="10"
-      successive-show="3">
+      successive-show="3"
+      utility-score="3">
       <dependency id="editing.completion.smarttype.general"/>
-      </feature>
+    </feature>
     <feature
       id="editing.completion.second.smarttype.aslist"
       tip-id="SecondSmartCompletionAsList"
       min-usage-count="8"
       first-show="10"
-      successive-show="3">
+      successive-show="3"
+      utility-score="3">
       <dependency id="editing.completion.smarttype.general"/>
-      </feature>
+    </feature>
     <feature
       id="editing.completion.second.smarttype.array.member"
       tip-id="SecondSmartCompletionArrayMember"
       min-usage-count="8"
       first-show="10"
-      successive-show="3">
+      successive-show="3"
+      utility-score="3">
       <dependency id="editing.completion.smarttype.general"/>
-      </feature>
+    </feature>
     <feature
       id="editing.completion.global.member.name"
       tip-id="CompletionImportStatic"
       min-usage-count="8"
       first-show="10"
-      successive-show="3">
-      </feature>
+      successive-show="3"
+      utility-score="3">
+    </feature>
     <feature
       id="editing.completion.finishByExclamation"
       tip-id="FinishByExclamation"
       min-usage-count="4"
       first-show="10"
-      successive-show="3">
+      successive-show="3"
+      utility-score="2">
       <dependency id="editing.completion.basic"/>
       <dependency id="editing.completion.smarttype.general"/>
       <dependency id="editing.completion.finishByDotEtc"/>
-      </feature>
+    </feature>
     <feature
       id="editing.completion.variable.name"
       tip-id="VariableNameCompletion"
       min-usage-count="7"
       first-show="5"
       successive-show="3"
+      utility-score="3"
       />
     <feature
       id="editing.completion.finishBySmartEnter"
       tip-id="FinishBySmartEnter"
       min-usage-count="7"
       first-show="4"
-      successive-show="8">
+      successive-show="8"
+      utility-score="3">
       <dependency id="editing.completion.finishByDotEtc"/>
       <track-action id="EditorCompleteStatement"/>
     </feature>
@@ -110,7 +125,8 @@
   <group id="editing">
     <feature
       id="move.element.left.right"
-      tip-id="ChangeSignatureAfterMovingParameters">
+      tip-id="ChangeSignatureAfterMovingParameters"
+      utility-score="3">
       <track-action id="MoveElementLeft"/>
       <track-action id="MoveElementRight"/>
     </feature>
@@ -122,7 +138,8 @@
       tip-id="ExternalJavaDoc"
       min-usage-count="1"
       first-show="5"
-      successive-show="7">
+      successive-show="7"
+      utility-score="2">
       <track-action id="ExternalJavaDoc"/>
     </feature>
     <feature
@@ -130,7 +147,8 @@
       tip-id="CommentCode"
       first-show="6"
       successive-show="5"
-      min-usage-count="3">
+      min-usage-count="3"
+      utility-score="4">
       <track-action id="CommentByBlockComment"/>
     </feature>
     <feature
@@ -139,20 +157,23 @@
       first-show="3"
       successive-show="5"
       min-usage-count="5"
+      utility-score="3"
       />
-     <feature
+    <feature
       id="codeassists.highlight.return"
       tip-id="HighlightMethodExitPoint"
       first-show="3"
       successive-show="5"
       min-usage-count="5"
-      />
+      utility-score="3"
+    />
     <feature
       id="codeassists.highlight.throws"
       tip-id="HighlightThrows"
       first-show="3"
       successive-show="5"
       min-usage-count="5"
+      utility-score="3"
       />
   </group>
 
@@ -163,13 +184,15 @@
       first-show="6"
       successive-show="5"
       min-usage-count="3"
+      utility-score="3"
     />
-    <feature 
-      id="refactoring.move.moveInner" 
+    <feature
+      id="refactoring.move.moveInner"
       tip-id="MoveInnerToUpper"
       min-usage-count="2"
       first-show="5"
-      successive-show="10">
+      successive-show="10"
+      utility-score="3">
       <track-action id="Move"/>
     </feature>
     <feature
@@ -178,6 +201,7 @@
       min-usage-count="2"
       first-show="10"
       successive-show="8"
+      utility-score="3"
       />
   </group>
 
@@ -187,7 +211,8 @@
       tip-id="CreatePropertyTag"
       first-show="6"
       successive-show="10"
-      min-usage-count="1">
+      min-usage-count="1"
+      utility-score="2">
       <track-intention class-name="com.intellij.lang.ant.quickfix.AntCreatePropertyFix"/>
     </feature>
     <feature
@@ -195,7 +220,8 @@
       tip-id="CreateTargetTag"
       first-show="6"
       successive-show="10"
-      min-usage-count="1">
+      min-usage-count="1"
+      utility-score="2">
       <track-intention class-name="com.intellij.lang.ant.quickfix.AntCreateTargetFix"/>
     </feature>
   </group>
@@ -206,13 +232,15 @@
       tip-id="JarDiff"
       first-show="6"
       successive-show="10"
-      min-usage-count="1"/>
+      min-usage-count="1"
+      utility-score="3"/>
   </group>
 
   <group id="intentions">
     <feature id="intentions.fix.javadoc"
              tip-id="FixDocComment"
-             show-in-guide="false">
+             show-in-guide="false"
+             utility-score="3">
       <track-intention class-name="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection$RemoveTagFix"/>
       <track-intention class-name="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection$RenameReferenceQuickFix"/>
     </feature>
