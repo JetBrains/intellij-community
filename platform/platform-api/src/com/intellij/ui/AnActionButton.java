@@ -156,19 +156,29 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
         break;
       }
     }
+
     if (toolbar instanceof JComponent) {
-      for (Component comp : ((JComponent)toolbar).getComponents()) {
-        if (comp instanceof ActionButtonComponent) {
-          if (comp instanceof AnActionHolder) {
-            if (((AnActionHolder)comp).getAction() == this) {
-              return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
-            }
+      RelativePoint preferredPoint = computePreferredPopupPoint((JComponent)toolbar, this);
+      if (preferredPoint != null) return preferredPoint;
+    }
+    LOG.error("Can't find toolbar button");
+    return RelativePoint.getCenterOf(myContextComponent);
+  }
+
+  public static @Nullable RelativePoint computePreferredPopupPoint(@NotNull JComponent toolbar, @NotNull AnAction action) {
+    for (Component comp : toolbar.getComponents()) {
+      if (comp instanceof ActionButtonComponent) {
+        if (comp instanceof AnActionHolder) {
+          AnAction componentAction = ((AnActionHolder)comp).getAction();
+          if (componentAction == action ||
+              (componentAction instanceof ActionWithDelegate<?> && ((ActionWithDelegate<?>)componentAction).getDelegate() == action)) {
+            return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
           }
         }
       }
     }
-    LOG.error("Can't find toolbar button");
-    return RelativePoint.getCenterOf(myContextComponent);
+
+    return null;
   }
 
   public void addActionButtonListener(ActionButtonListener l, Disposable parentDisposable) {
