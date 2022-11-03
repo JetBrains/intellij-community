@@ -1542,6 +1542,21 @@ public class Py3TypeTest extends PyTestCase {
                  pass""");
   }
 
+  // PY-55734
+  public void testEnumValueType() {
+    doTest("int",
+           """
+             from enum import IntEnum, auto
+                          
+             class State(IntEnum):
+                 A = auto()
+                 B = auto()
+                          
+             def foo(arg: State):
+                 expr = arg.value
+             """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
