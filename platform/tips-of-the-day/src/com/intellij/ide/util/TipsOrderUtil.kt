@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
+import com.intellij.featureStatistics.FeatureDescriptor
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.openapi.components.Service
@@ -36,10 +37,15 @@ internal class TipsOrderUtil {
           }
           else true
         }
-        val unusedScore = features.count { it.isUnused } * 1.0 / features.size
-        TipInfo(tip, true, isApplicable, unusedScore, lastTimeShown)
+        val unusedFeatures = features.filter(FeatureDescriptor::isUnused)
+        val unusedScore = unusedFeatures.size * 1.0 / features.size
+        val utilityScore = if (unusedFeatures.isNotEmpty()) {
+          unusedFeatures.maxOf(FeatureDescriptor::getUtilityScore)
+        }
+        else features.maxOf(FeatureDescriptor::getUtilityScore)
+        TipInfo(tip, true, isApplicable, unusedScore, utilityScore, lastTimeShown)
       }
-      else TipInfo(tip, false, true, 0.0, lastTimeShown)
+      else TipInfo(tip, false, true, 0.0, 3, lastTimeShown)
     }
 
     val sortedTips = tipInfoList.sortedWith(getComparator()).map { it.tip }
@@ -50,8 +56,9 @@ internal class TipsOrderUtil {
   private fun getComparator(): Comparator<TipInfo> {
     return compareBy<TipInfo> { info -> info.featureFound && info.isApplicable && info.unusedScore > 0.1 }
       .then(compareBy { info -> !info.featureFound })
-      .thenComparingDouble { info -> info.unusedScore }.reversed()
-      .then(compareByDescending { info -> info.isApplicable })
+      .thenComparingDouble { info -> info.unusedScore }
+      .then(compareBy { info -> info.isApplicable })
+      .thenComparingInt { info -> info.utilityScore }.reversed()
       .thenComparingLong { info -> info.lastTimeShown }
   }
 
@@ -60,6 +67,7 @@ internal class TipsOrderUtil {
     val featureFound: Boolean,
     val isApplicable: Boolean,
     val unusedScore: Double,
+    val utilityScore: Int,
     val lastTimeShown: Long
   )
 
