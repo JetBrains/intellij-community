@@ -37,6 +37,8 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer"/>
 
+    <javaMainMethodProvider implementation="org.jetbrains.kotlin.idea.codeInsight.runner.KotlinMainMethodProvider"/>
+
     <codeInsight.parameterInfo
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinFunctionParameterInfoHandler"/>
