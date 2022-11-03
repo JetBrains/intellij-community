@@ -43,14 +43,6 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
   }
 
   @Override
-  public boolean supportsVirtualEnvActivation() {
-    // Conda has its own machinery to set env vars, so it doesn't need explicit activation.
-    // Even worse: settings ``PATH`` read from base environment activation script executes python
-    // from base environment (instead of selected one), hence breaks everything
-    return false;
-  }
-
-  @Override
   public boolean isPlatformIndependent() {
     return true;
   }
