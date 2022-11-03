@@ -24,16 +24,18 @@ import static java.nio.file.StandardOpenOption.*;
  * name, epochStartNanos, epochEndNanos, value
  * <br/>
  * <br/>
- * Expected to be temporary solution for metrics export -- until full-fledged (json?) exporter
- * will be implemented. Hence it is not very performant, and lacks features better to have for
- * production use, like file rolling.
+ * This is expected to be temporary solution for metrics export -- until full-fledged (json?) exporter will be implemented.
+ * That is why implementation is quite limited: only simplest metrics types are supported (e.g. no support for histograms),
+ * no support for attributes, and IO/file format itself is not the most effective one. But until now it seems like this limited
+ * implementation could be enough at least for a while.
  * <p>
  * <br/>
  * <p>
  * TODO not all metrics types are supported now, see .toCSVLine()
+ * TODO no support for attributes now, see .toCSVLine()
  */
 @ApiStatus.Internal
-final class CsvMetricsExporter implements MetricExporter {
+public final class CsvMetricsExporter implements MetricExporter {
   private static final Logger LOGGER = Logger.getInstance(CsvMetricsExporter.class);
 
   private final @NotNull Path writeToFile;
@@ -42,8 +44,16 @@ final class CsvMetricsExporter implements MetricExporter {
   public CsvMetricsExporter(final @NotNull Path writeToFile) throws IOException {
     this.writeToFile = writeToFile;
 
-    if (!Files.exists(this.writeToFile) || Files.size(this.writeToFile) == 0) {
-      Files.write(this.writeToFile, csvHeadersLines(), CREATE, WRITE);
+    if (!Files.exists(writeToFile)) {
+      final Path parentDir = writeToFile.getParent();
+      if (!Files.isDirectory(parentDir)) {
+        //RC: createDirectories() _does_ throw FileAlreadyExistsException if path is a _symlink_ to a directory, not a directory
+        // itself (JDK-8130464). Check !isDirectory() above should work around that case.
+        Files.createDirectories(parentDir);
+      }
+    }
+    if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0) {
+      Files.write(writeToFile, csvHeadersLines(), CREATE, WRITE);
     }
   }
 
@@ -110,7 +120,11 @@ final class CsvMetricsExporter implements MetricExporter {
 
   @NotNull
   private static List<String> csvHeadersLines() {
-    return List.of("name, startEpochNanos, epochNanos, value");
+    return List.of(
+      "# OpenTelemetry Metrics report: .csv, 4 fields (metric name, period start-end nanoseconds, metric value)" +
+      "# See CsvMetricsExporter for details",
+      "name, startEpochNanos, endEpochNanos, value"
+    );
   }
 
   @NotNull

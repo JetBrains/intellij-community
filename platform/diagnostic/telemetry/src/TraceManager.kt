@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
  * See [Span](https://opentelemetry.io/docs/reference/specification),
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
  *
- * TODO Rename TraceManager to more generic (OTel|Telemetry|Monitoring|...)Manager.
+ * TODO Rename TraceManager to more generic (OTel|Telemetry|Monitoring|...)Manager
  *             Name TraceManager is misleading now: today it is entry-point not only for Traces (spans), but also for Metrics. It looks
  *             unnatural (to me) to request Meter instances with the call like TraceManager.getMeter("meterName").
  *             We could move .getMeter() to another facade (e.g. MeterManager), but this looks artificial (to me:), since Tracer and
@@ -75,19 +75,9 @@ object TraceManager {
 
     val metricExporters = mutableListOf<MetricExporter>()
     if (metricsEnabled) {
-      //if metrics path is relative -> resolve it against IDEA logDir:
-      val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(metricsReportingPath).toAbsolutePath()
-      val suffixDateFormat = System.getProperty("idea.diagnostic.opentelemetry.metrics.suffix-date-format", "yyyy-MM-dd-HH-mm-ss")
-      val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.metrics.max-files-to-keep", 14)
+      val exporter = createMetricsExporter(metricsReportingPath)
 
-      val writeMetricsTo = FileSetLimiter.inDirectory(pathResolvedAgainstLogDir.parent)
-        .withBaseNameAndDateFormatSuffix(pathResolvedAgainstLogDir.fileName.toString(), suffixDateFormat)
-        .removeOldFilesBut(maxFilesToKeep)
-        .createNewFile()
-
-      metricExporters.add(
-        CsvMetricsExporter(writeMetricsTo)
-      )
+      metricExporters.add(exporter)
     }
 
     val resource = Resource.create(Attributes.of(
@@ -135,6 +125,21 @@ object TraceManager {
 
     val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
     verboseMode = useVerboseSdk?.toBooleanStrictOrNull() == true
+  }
+
+  private fun createMetricsExporter(metricsReportingPath: String): MetricExporter {
+    val suffixDateFormat = System.getProperty("idea.diagnostic.opentelemetry.metrics.suffix-date-format", "yyyy-MM-dd-HH-mm-ss")
+    val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.metrics.max-files-to-keep", 14)
+
+    //if metrics path is relative -> resolve it against IDEA logDir:
+    val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(metricsReportingPath).toAbsolutePath()
+
+    val writeMetricsTo = FileSetLimiter.inDirectory(pathResolvedAgainstLogDir.parent)
+      .withBaseNameAndDateFormatSuffix(pathResolvedAgainstLogDir.fileName.toString(), suffixDateFormat)
+      .removeOldFilesBut(maxFilesToKeep, FileSetLimiter.DELETE_ASYNC)
+      .createNewFile()
+
+    return CsvMetricsExporter(writeMetricsTo)
   }
 
   /**
