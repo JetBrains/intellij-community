@@ -15,7 +15,11 @@ import com.intellij.refactoring.rename.impl.RenameOptions
 import com.intellij.refactoring.rename.impl.TextOptions
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.UserActivityWatcher
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.Gaps
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
 import javax.swing.AbstractAction
@@ -33,6 +37,7 @@ internal class RenameDialog(
   private var myCommentsStringsOccurrences: Boolean? = initOptions.renameOptions.textOptions.commentStringOccurrences
   private var myTextOccurrences: Boolean? = initOptions.renameOptions.textOptions.textOccurrences
   private var myScope: SearchScope = initOptions.renameOptions.searchScope
+
   var preview: Boolean = false
     private set
 
@@ -77,63 +82,62 @@ internal class RenameDialog(
     searchScope()
   }
 
-  private fun LayoutBuilder.presentableText() {
+  private fun Panel.presentableText() {
     row {
-      label(presentableText)
+      label(RefactoringBundle.message("rename.0.and.its.usages.to", presentableText))
     }
   }
 
-  private fun LayoutBuilder.newName() {
+  private fun Panel.newName() {
     row {
-      val labelBuilder = label(RefactoringBundle.message("rename.dialog.new.name.label"))
-      val nameSuggestionsField = NameSuggestionsField(arrayOf(myTargetName), project)
-      nameSuggestionsField.addDataChangedListener {
-        myTargetName = nameSuggestionsField.enteredName
-      }
-      nameSuggestionsField.invoke().constraints(growX).focused()
-      labelBuilder.component.labelFor = nameSuggestionsField
+      cell(NameSuggestionsField(arrayOf(myTargetName), project))
+        .applyToComponent {
+          addDataChangedListener {
+            myTargetName = enteredName
+          }
+        }
+        .focused()
+        .label(RefactoringBundle.message("rename.dialog.new.name.label"))
+        .widthGroup("")
+        .align(AlignX.RIGHT)
     }
   }
 
-  private fun LayoutBuilder.textOccurrenceCheckboxes() {
+  private fun Panel.textOccurrenceCheckboxes() {
     if (myCommentsStringsOccurrences == null && myTextOccurrences == null) {
       return
     }
     row {
-      cell(isFullWidth = true) {
-        myCommentsStringsOccurrences?.let {
-          checkBox(
-            text = RefactoringBundle.getSearchInCommentsAndStringsText(),
-            getter = { it },
-            setter = { myCommentsStringsOccurrences = it }
-          )
-        }
-        myTextOccurrences?.let {
-          checkBox(
-            text = RefactoringBundle.getSearchForTextOccurrencesText(),
-            getter = { it },
-            setter = { myTextOccurrences = it }
-          )
-        }
+      myCommentsStringsOccurrences?.let {
+        this@row.checkBox(RefactoringBundle.getSearchInCommentsAndStringsText())
+          .bindSelected({ it }, { myCommentsStringsOccurrences = it })
+      }
+      myTextOccurrences?.let {
+        this@row.checkBox(RefactoringBundle.getSearchForTextOccurrencesText())
+          .bindSelected({ it }, { myTextOccurrences = it })
       }
     }
   }
 
-  private fun LayoutBuilder.searchScope() {
+  private fun Panel.searchScope() {
     if (myScope is LocalSearchScope) {
       return
     }
-    val scopeCombo = ScopeChooserCombo(project, true, true, myScope.displayName)
-    Disposer.register(myDisposable, scopeCombo)
-    scopeCombo.comboBox.addItemListener { event ->
-      if (event.stateChange == ItemEvent.SELECTED) {
-        myScope = scopeCombo.selectedScope ?: return@addItemListener
-      }
-    }
     row {
-      val labelBuilder = label(FindBundle.message("find.scope.label"))
-      scopeCombo.invoke()
-      labelBuilder.component.labelFor = scopeCombo
+      cell(ScopeChooserCombo(project, true, true, myScope.displayName))
+        .applyToComponent {
+          Disposer.register(myDisposable, this)
+          comboBox.addItemListener { event ->
+            if (event.stateChange == ItemEvent.SELECTED) {
+              myScope = selectedScope ?: return@addItemListener
+            }
+          }
+        }
+        // For some reason Scope and New name fields are misaligned - fix this here
+        .customize(Gaps(right = 3))
+        .label(FindBundle.message("find.scope.label"))
+        .widthGroup("")
+        .align(AlignX.RIGHT)
     }
   }
 
