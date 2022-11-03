@@ -662,6 +662,17 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Readonly = load("ide/readonly.svg", 887305494, 2);
     /** 16x16 */ public static final @NotNull Icon Readwrite = load("ide/readwrite.svg", 2065798685, 2);
 
+    public static final class RoundShadow {
+      /** 4x14 */ public static final @NotNull Icon Bottom = load("ide/roundShadow/bottom.svg", 1133331817, 0);
+      /** 18x22 */ public static final @NotNull Icon BottomLeft = load("ide/roundShadow/bottomLeft.svg", 1801890707, 0);
+      /** 18x22 */ public static final @NotNull Icon BottomRight = load("ide/roundShadow/bottomRight.svg", 1477021856, 0);
+      /** 10x4 */ public static final @NotNull Icon Left = load("ide/roundShadow/left.svg", -1533209055, 0);
+      /** 10x4 */ public static final @NotNull Icon Right = load("ide/roundShadow/right.svg", 1338470472, 0);
+      /** 4x6 */ public static final @NotNull Icon Top = load("ide/roundShadow/top.svg", -1083137688, 0);
+      /** 18x14 */ public static final @NotNull Icon TopLeft = load("ide/roundShadow/topLeft.svg", -1752682572, 0);
+      /** 18x14 */ public static final @NotNull Icon TopRight = load("ide/roundShadow/topRight.svg", 2010221262, 0);
+    }
+
     public static final class RunAnything {
       /** 16x16 */ public static final @NotNull Icon OpenRecentProject = load("ide/runAnything/openRecentProject.svg", -1196570278, 0);
     }

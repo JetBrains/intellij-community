@@ -19,13 +19,49 @@ import java.awt.geom.RoundRectangle2D;
  * @author Alexander Lobas
  */
 public class NotificationBalloonShadowBorderProvider implements BalloonImpl.ShadowBorderProvider {
-  private static final JBInsets INSETS = new JBInsets(4, 6, 8, 6);
   protected final Color myFillColor;
   protected final Color myBorderColor;
 
+  private final Icon myTopIcon;
+  private final Icon myLeftIcon;
+  private final Icon myBottomIcon;
+  private final Icon myRightIcon;
+  private final Icon myTopLeftIcon;
+  private final Icon myTopRightIcon;
+  private final Icon myBottomLeftIcon;
+  private final Icon myBottomRightIcon;
+
+  private final JBInsets INSETS;
+
   public NotificationBalloonShadowBorderProvider(@NotNull Color fillColor, @NotNull Color borderColor) {
+    this(fillColor, borderColor,
+         Shadow.Top, Shadow.Left, Shadow.Bottom, Shadow.Right,
+         Shadow.TopLeft, Shadow.TopRight, Shadow.BottomLeft, Shadow.BottomRight);
+  }
+
+  protected NotificationBalloonShadowBorderProvider(@NotNull Color fillColor,
+                                                    @NotNull Color borderColor,
+                                                    @NotNull Icon topIcon,
+                                                    @NotNull Icon leftIcon,
+                                                    @NotNull Icon bottomIcon,
+                                                    @NotNull Icon rightIcon,
+                                                    @NotNull Icon topLeftIcon,
+                                                    @NotNull Icon topRightIcon,
+                                                    @NotNull Icon bottomLeftIcon,
+                                                    @NotNull Icon bottomRightIcon) {
     myFillColor = fillColor;
     myBorderColor = borderColor;
+
+    myTopIcon = topIcon;
+    myLeftIcon = leftIcon;
+    myBottomIcon = bottomIcon;
+    myRightIcon = rightIcon;
+    myTopLeftIcon = topLeftIcon;
+    myTopRightIcon = topRightIcon;
+    myBottomLeftIcon = bottomLeftIcon;
+    myBottomRightIcon = bottomRightIcon;
+
+    INSETS = new JBInsets(topIcon.getIconHeight(), leftIcon.getIconWidth(), bottomIcon.getIconHeight(), rightIcon.getIconWidth());
   }
 
   @NotNull
@@ -39,31 +75,31 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     int width = component.getWidth();
     int height = component.getHeight();
 
-    int topLeftWidth = Shadow.TopLeft.getIconWidth();
-    int topLeftHeight = Shadow.TopLeft.getIconHeight();
+    int topLeftWidth = myTopLeftIcon.getIconWidth();
+    int topLeftHeight = myTopLeftIcon.getIconHeight();
 
-    int topRightWidth = Shadow.TopRight.getIconWidth();
-    int topRightHeight = Shadow.TopRight.getIconHeight();
+    int topRightWidth = myTopRightIcon.getIconWidth();
+    int topRightHeight = myTopRightIcon.getIconHeight();
 
-    int bottomLeftWidth = Shadow.BottomLeft.getIconWidth();
-    int bottomLeftHeight = Shadow.BottomLeft.getIconHeight();
+    int bottomLeftWidth = myBottomLeftIcon.getIconWidth();
+    int bottomLeftHeight = myBottomLeftIcon.getIconHeight();
 
-    int bottomRightWidth = Shadow.BottomRight.getIconWidth();
-    int bottomRightHeight = Shadow.BottomRight.getIconHeight();
+    int bottomRightWidth = myBottomRightIcon.getIconWidth();
+    int bottomRightHeight = myBottomRightIcon.getIconHeight();
 
     int rightWidth = Shadow.Right.getIconWidth();
     int bottomHeight = Shadow.Bottom.getIconHeight();
 
-    drawLine(component, g, Shadow.Top, width, topLeftWidth, topRightWidth, 0, true);
-    drawLine(component, g, Shadow.Bottom, width, bottomLeftWidth, bottomRightWidth, height - bottomHeight, true);
+    drawLine(component, g, myTopIcon, width, topLeftWidth, topRightWidth, 0, true);
+    drawLine(component, g, myBottomIcon, width, bottomLeftWidth, bottomRightWidth, height - bottomHeight, true);
 
-    drawLine(component, g, Shadow.Left, height, topLeftHeight, bottomLeftHeight, 0, false);
-    drawLine(component, g, Shadow.Right, height, topRightHeight, bottomRightHeight, width - rightWidth, false);
+    drawLine(component, g, myLeftIcon, height, topLeftHeight, bottomLeftHeight, 0, false);
+    drawLine(component, g, myRightIcon, height, topRightHeight, bottomRightHeight, width - rightWidth, false);
 
-    Shadow.TopLeft.paintIcon(component, g, 0, 0);
-    Shadow.TopRight.paintIcon(component, g, width - topRightWidth, 0);
-    Shadow.BottomRight.paintIcon(component, g, width - bottomRightWidth, height - bottomRightHeight);
-    Shadow.BottomLeft.paintIcon(component, g, 0, height - bottomLeftHeight);
+    myTopLeftIcon.paintIcon(component, g, 0, 0);
+    myTopRightIcon.paintIcon(component, g, width - topRightWidth, 0);
+    myBottomRightIcon.paintIcon(component, g, width - bottomRightWidth, height - bottomRightHeight);
+    myBottomLeftIcon.paintIcon(component, g, 0, height - bottomLeftHeight);
   }
 
   private static void drawLine(@NotNull JComponent component,
