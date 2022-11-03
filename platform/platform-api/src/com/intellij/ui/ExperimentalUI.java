@@ -40,15 +40,14 @@ public abstract class ExperimentalUI {
     // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
     // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
 
-    // CWM-7348 thin client does not support new UI
-    return (EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported()) || Boolean.getBoolean("ide.force.new.ui"); // temp flag for remote dev
+    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
   }
 
   public static boolean isSupported() {
     // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
     // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
 
-    return !PlatformUtils.isJetBrainsClient();
+    return true;
   }
 
   public static boolean isNewNavbar() {
@@ -64,10 +63,14 @@ public abstract class ExperimentalUI {
   }
 
   @SuppressWarnings("unused")
-  private final static class NewUiRegistryListener implements RegistryValueListener {
+  public static class NewUiRegistryListener implements RegistryValueListener {
+    protected boolean isApplicable() {
+      return !PlatformUtils.isJetBrainsClient(); // JetBrains Client has custom listener
+    }
+
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
-      if (!value.getKey().equals(KEY)) {
+      if (!isApplicable() || !value.getKey().equals(KEY)) {
         return;
       }
 
@@ -82,12 +85,12 @@ public abstract class ExperimentalUI {
           getInstance().iconPathPatcher = getInstance().createPathPatcher();
           IconLoader.installPathPatcher(getInstance().iconPathPatcher);
         }
-        getInstance().onExpUIEnabled();
+        getInstance().onExpUIEnabled(true);
       }
       else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
         IconLoader.removePathPatcher(getInstance().iconPathPatcher);
         getInstance().iconPathPatcher = null;
-        getInstance().onExpUIDisabled();
+        getInstance().onExpUIDisabled(true);
       }
     }
   }
@@ -123,8 +126,8 @@ public abstract class ExperimentalUI {
 
   public abstract Map<ClassLoader, Map<String, String>> getIconMappings();
 
-  public abstract void onExpUIEnabled();
-  public abstract void onExpUIDisabled();
+  public abstract void onExpUIEnabled(boolean suggestRestart);
+  public abstract void onExpUIDisabled(boolean suggestRestart);
 
   private static void patchUIDefaults(boolean isNewUiEnabled) {
     if (!isNewUiEnabled) {

@@ -84,7 +84,6 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
   // Please, modify this code synchronously with ExperimentalUI.isNewUI()
   private static boolean isNewUi() {
     // CWM-7348 thin client does not support new UI
-    return (EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui") && !PlatformUtils.isJetBrainsClient()) ||
-           Boolean.getBoolean("ide.force.new.ui"); // temp flag for remote dev
+    return (EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui"));
   }
 }
