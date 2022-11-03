@@ -37,12 +37,12 @@ object JUnit4Assertions : Assertions() {
         KtUsefulTestCase.assertSameElements(message?.invoke() ?: "", expected, actual)
     }
 
-    override fun assertAll(exceptions: List<Throwable>) {
+    override fun failAll(exceptions: List<Throwable>) {
         exceptions.forEach { throw it }
     }
 
-    override fun assertAll(vararg blocks: () -> Unit) {
-        blocks.forEach { it.invoke() }
+    override fun assertAll(conditions: List<() -> Unit>) {
+        conditions.forEach { it.invoke() }
     }
 
     override fun fail(message: () -> String): Nothing {
