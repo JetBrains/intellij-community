@@ -25,37 +25,146 @@
     <orderEntry type="library" scope="TEST" name="JUnit5Launcher" level="project" />
     <orderEntry type="module-library">
       <library name="kinference.core.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:inference-core-jvm:0.2.0">
-          <exclude>
-            <dependency maven-id="net.java.dev.jna:jna-platform" />
-            <dependency maven-id="net.java.dev.jna:jna" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-            <dependency maven-id="org.jetbrains:annotations" />
-          </exclude>
-        </properties>
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-core-jvm:0.2.0" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.0/inference-core-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.0/ndarray-api-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.19/primitives-annotations-jvm-0.1.19.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.0/ndarray-core-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.0/inference-api-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.0/inference-ir-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.0/serializer-protobuf-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/model-profiler-jvm/0.2.0/model-profiler-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/common-utils-jvm/0.2.0/common-utils-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.0/serializer-tiled-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/logger-jvm/0.2.0/logger-jvm-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.3.0/wire-runtime-jvm-4.3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/3.0.0/okio-3.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.0/inference-core-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.ndarray.api.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:ndarray-api-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.0/ndarray-api-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.0/ndarray-api-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.primitives.annotations.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference.primitives:primitives-annotations-jvm:0.1.19" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.19/primitives-annotations-jvm-0.1.19.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.19/primitives-annotations-jvm-0.1.19-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.ndarray.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:ndarray-core-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.0/ndarray-core-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.0/ndarray-core-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.api.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-api-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.0/inference-api-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.0/inference-api-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.ir.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-ir-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.0/inference-ir-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.0/inference-ir-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.serializer.protobuf.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:serializer-protobuf-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.0/serializer-protobuf-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.0/serializer-protobuf-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.api.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-api-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.0/inference-api-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.0/inference-api-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.model.profiler.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:model-profiler-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/model-profiler-jvm/0.2.0/model-profiler-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/model-profiler-jvm/0.2.0/model-profiler-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.common.utils.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:common-utils-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/common-utils-jvm/0.2.0/common-utils-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/common-utils-jvm/0.2.0/common-utils-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.serializer.tiled.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:serializer-tiled-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.0/serializer-tiled-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.0/serializer-tiled-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.logger.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:logger-jvm:0.2.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/logger-jvm/0.2.0/logger-jvm-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/logger-jvm/0.2.0/logger-jvm-0.2.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -82,7 +191,7 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="github.ben.manes.caffeine" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.github.ben-manes.caffeine:caffeine:3.1.1" >
+        <properties include-transitive-deps="false" maven-id="com.github.ben-manes.caffeine:caffeine:3.1.1">
           <exclude>
             <dependency maven-id="org.checkerframework:checker-qual" />
             <dependency maven-id="com.google.errorprone:error_prone_annotations" />
@@ -93,6 +202,42 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="squareup.wire.runtime.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.squareup.wire:wire-runtime-jvm:4.3.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.3.0/wire-runtime-jvm-4.3.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.3.0/wire-runtime-jvm-4.3.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="squareup.okio" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.squareup.okio:okio:3.0.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/3.0.0/okio-3.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/3.0.0/okio-3.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="squareup.okio.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.squareup.okio:okio-jvm:3.0.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>
