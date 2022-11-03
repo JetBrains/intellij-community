@@ -169,18 +169,18 @@ public final class LeakHunter {
         Please make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html""";
 
     if (knownHeapDumpPath == null) {
-      result += "\n  If this is a TeamCity build, you can find a memory snapshot `"+LEAKED_PROJECTS+".hproof.zip` in the \"Artifacts\" tab of the build run."
-        +"\n  Otherwise, try looking for '"+HEAP_DUMP_IS_PUBLISHED+"' string in the system output in the log  below.";
+      result += "\n  If this is a TeamCity build, you can find a memory snapshot `" +
+                TestApplicationKt.LEAKED_PROJECTS + ".hproof.zip` in the \"Artifacts\" tab of the build run."
+                + "\n  Otherwise, try looking for '" + DumpKt.HEAP_DUMP_IS_PUBLISHED + "' string in the system output in the log  below.";
     }
     else if (TeamCityLogger.isUnderTC) {
-      builder
-        .append("\n  You can find a memory snapshot `")
-        .append(TestApplicationKt.LEAKED_PROJECTS)
-        .append(".hproof.zip` in the \"Artifacts\" tab of the build run.");
+      result+="\n  You can find a memory snapshot `"
+        +TestApplicationKt.LEAKED_PROJECTS
+        +".hproof.zip` in the \"Artifacts\" tab of the build run.";
     }
     else {
-      builder.append("\n  Try looking for '").append(DumpKt.HEAP_DUMP_IS_PUBLISHED)
-        .append("' string in the system output below in the log ↓.");
+      result += "\n  Try looking for '"+DumpKt.HEAP_DUMP_IS_PUBLISHED
+        +"' string in the system output log below.";
     }
     return result;
   }
