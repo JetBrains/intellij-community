@@ -26,7 +26,7 @@ fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(project: Pr
         KotlinTestUtils.assertEqualsToFile(
             expectedFile,
             actualWorkspaceModelText,
-            ::sanitizeExpectedFile,
+            ::sanitizeExpectedFile
         )
     }
 }
