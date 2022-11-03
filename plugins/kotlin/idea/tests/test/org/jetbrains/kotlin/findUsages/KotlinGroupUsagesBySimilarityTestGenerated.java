@@ -23,6 +23,11 @@ public class KotlinGroupUsagesBySimilarityTestGenerated extends AbstractKotlinGr
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("blockHierarchy.kt")
+    public void testBlockHierarchy() throws Exception {
+        runTest("testData/findUsages/similarity/grouping/blockHierarchy.kt");
+    }
+
     @TestMetadata("chainCalls.kt")
     public void testChainCalls() throws Exception {
         runTest("testData/findUsages/similarity/grouping/chainCalls.kt");
