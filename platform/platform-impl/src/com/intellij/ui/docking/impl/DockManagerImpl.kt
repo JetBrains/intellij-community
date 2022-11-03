@@ -511,12 +511,14 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       // Close the container if it's empty, and we've just removed the last tool window
       project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
         override fun stateChanged(toolWindowManager: ToolWindowManager, eventType: ToolWindowManagerEventType) {
-          if (eventType == ToolWindowManagerEventType.ActivateToolWindow ||
-              eventType == ToolWindowManagerEventType.MovedOrResized ||
-              eventType == ToolWindowManagerEventType.SetContentUiType) {
-            return
+          // Various events can mean a tool window has been removed from the frame's stripes. The comments are not exhaustive
+          if (eventType == ToolWindowManagerEventType.HideToolWindow
+            || eventType == ToolWindowManagerEventType.SetSideToolAndAnchor   // Last tool window dragged to another stripe on another frame
+            || eventType == ToolWindowManagerEventType.SetToolWindowType      // Last tool window made floating
+            || eventType == ToolWindowManagerEventType.ToolWindowUnavailable  // Last tool window programmatically set unavailable
+            || eventType == ToolWindowManagerEventType.UnregisterToolWindow) {
+            ready.doWhenDone(Runnable(::closeIfEmpty))
           }
-          ready.doWhenDone(Runnable(::closeIfEmpty))
         }
       })
     }
