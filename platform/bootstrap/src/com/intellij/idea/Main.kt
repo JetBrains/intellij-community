@@ -9,13 +9,16 @@ import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.PathManager
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.function.Supplier
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
@@ -69,7 +72,16 @@ private fun initProjectorIfNeeded(args: List<String>) {
     return
   }
 
+  if (!JBR.isProjectorUtilsSupported()) {
+    error("JBR version 17.0.5b653.12 or later is required to run a remote-dev server")
+  }
+
   runActivity("cwm host init") {
+    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider( Supplier {
+      val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
+      projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
+    })
+
     val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
     MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
       projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
