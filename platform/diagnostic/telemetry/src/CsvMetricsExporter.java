@@ -31,29 +31,19 @@ import static java.nio.file.StandardOpenOption.*;
  * <br/>
  * <p>
  * TODO not all metrics types are supported now, see .toCSVLine()
- * MAYBE roll output files daily/hourly?
  */
 @ApiStatus.Internal
 final class CsvMetricsExporter implements MetricExporter {
   private static final Logger LOGGER = Logger.getInstance(CsvMetricsExporter.class);
 
-  @NotNull
-  private final Path writeToPath;
+  private final @NotNull Path writeToFile;
 
-  public CsvMetricsExporter(final @NotNull String writeToPath) throws IOException {
-    this(Path.of(writeToPath));
-  }
 
-  public CsvMetricsExporter(final @NotNull Path writeToPath) throws IOException {
-    this.writeToPath = writeToPath.toAbsolutePath();
-    if (!Files.exists(this.writeToPath)) {
-      final Path parentDir = this.writeToPath.getParent();
-      if(!Files.isDirectory(parentDir)) {
-        //RC: createDirectories() _does_ throw FileAlreadyExistsException if path is a _symlink_ to a directory, not a directory
-        // itself (JDK-8130464). Check !isDirectory() above should work around that case.
-        Files.createDirectories(parentDir);
-      }
-      Files.write(this.writeToPath, csvHeadersLines(), CREATE, WRITE);
+  public CsvMetricsExporter(final @NotNull Path writeToFile) throws IOException {
+    this.writeToFile = writeToFile;
+
+    if (!Files.exists(this.writeToFile) || Files.size(this.writeToFile) == 0) {
+      Files.write(this.writeToFile, csvHeadersLines(), CREATE, WRITE);
     }
   }
 
@@ -64,20 +54,22 @@ final class CsvMetricsExporter implements MetricExporter {
 
   @Override
   public CompletableResultCode export(final Collection<MetricData> metrics) {
-    final CompletableResultCode result = new CompletableResultCode();
-    if (!metrics.isEmpty()) {
-      final List<String> lines = metrics.stream()
-        .flatMap(CsvMetricsExporter::toCSVLine)
-        .toList();
+    if (metrics.isEmpty()) {
+      return CompletableResultCode.ofSuccess();
+    }
 
-      try {
-        Files.write(writeToPath, lines, CREATE, APPEND);
-        result.succeed();
-      }
-      catch (IOException e) {
-        LOGGER.warn("Can't write metrics into " + writeToPath, e);
-        result.fail();
-      }
+    final CompletableResultCode result = new CompletableResultCode();
+    final List<String> lines = metrics.stream()
+      .flatMap(CsvMetricsExporter::toCSVLine)
+      .toList();
+
+    try {
+      Files.write(writeToFile, lines, CREATE, APPEND);
+      result.succeed();
+    }
+    catch (IOException e) {
+      LOGGER.warn("Can't write metrics into " + writeToFile.toAbsolutePath(), e);
+      result.fail();
     }
     return result;
   }
