@@ -92,7 +92,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
           .columns(COLUMNS_MEDIUM)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID)
           .validation { validateArtifactId() }
-          .validationRequestor(WHEN_TEXT_CHANGED)
+          .validationRequestor(AFTER_PROPERTY_CHANGE(artifactIdProperty))
           .validationRequestor(AFTER_PROPERTY_CHANGE(nameProperty))
           .whenTextChangedFromUi { logArtifactIdChanged() }
       }.bottomGap(BottomGap.SMALL)
