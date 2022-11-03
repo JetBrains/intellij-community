@@ -109,7 +109,14 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
                 ktParameter.modifierList?.getModifier(KtTokens.FINAL_KEYWORD)?.delete()
                 ktParameter.defaultValue?.delete()
                 ktParameter.equalsToken?.delete()
-                uField.sourcePsi?.delete()
+                val psiField = uField.sourcePsi
+                if (psiField != null) {
+                    val nextSibling = psiField.nextSibling
+                    if (nextSibling is PsiWhiteSpace) {
+                        nextSibling.delete()
+                    }
+                    psiField.delete()
+                }
                 psiElement.replace(ktParameter)
             }
             else {
