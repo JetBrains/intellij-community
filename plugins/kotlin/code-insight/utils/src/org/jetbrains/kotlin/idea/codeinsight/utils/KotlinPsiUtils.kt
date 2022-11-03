@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
@@ -10,8 +13,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 fun KtContainerNode.getControlFlowElementDescription(): String? {
     when (node.elementType) {
@@ -194,4 +196,49 @@ fun KtDotQualifiedExpression.replaceFirstReceiver(
     }
 
     return replacedExpression
+}
+
+/**
+ * Returns true if the [KtDotQualifiedExpression] has no receiver. Otherwise, returns false.
+ *
+ * A [KtDotQualifiedExpression] doesn't have a receiver if the selector is
+ *   1. A class or an object or
+ *   2. A constructor or
+ *   3. A static method or
+ *   4. A [KtCallableDeclaration] e.g., [KtNamedFunction] defined in an object when the declaration has a null receiverTypeReference.
+ *
+ * Note that the selector of [KtDotQualifiedExpression] is the right side of the dot operation e.g., `bar()` in `foo.bar()`.
+ */
+fun KtDotQualifiedExpression.hasNotReceiver(): Boolean {
+    val element = getQualifiedElementSelector()?.mainReference?.resolve() ?: return false
+    return element is KtClassOrObject ||
+            element is KtConstructor<*> ||
+            element is KtCallableDeclaration && element.receiverTypeReference == null && (element.containingClassOrObject is KtObjectDeclaration?) ||
+            element is PsiMember && element.hasModifier(JvmModifier.STATIC) ||
+            element is PsiMethod && element.isConstructor
+}
+
+tailrec fun KtDotQualifiedExpression.firstExpressionWithoutReceiver(): KtDotQualifiedExpression? = if (hasNotReceiver())
+    this
+else
+    (receiverExpression as? KtDotQualifiedExpression)?.firstExpressionWithoutReceiver()
+
+val ENUM_STATIC_METHODS = listOf("values", "valueOf")
+
+val KtQualifiedExpression.callExpression: KtCallExpression?
+    get() = selectorExpression as? KtCallExpression
+
+fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
+    return when (this) {
+        /**
+         * TODO: Handle [KtTypeReference], [KtCallExpression], and [KtCallableReferenceExpression].
+         *  See [org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction].
+         */
+        is KtQualifiedExpression -> {
+            var target: KtQualifiedExpression = this
+            while (target.callExpression == null) target = target.parent as? KtQualifiedExpression ?: break
+            target.callExpression?.calleeExpression?.text in ENUM_STATIC_METHODS
+        }
+        else -> false
+    }
 }

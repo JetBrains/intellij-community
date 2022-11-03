@@ -26,6 +26,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantElvisReturnNull")
             model("${idea}/inspectionsLocal/replaceCollectionCountWithSize")
             model("${idea}/inspectionsLocal/removeToStringInStringTemplate")
+            model("${idea}/inspectionsLocal/removeRedundantQualifierName")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
 
