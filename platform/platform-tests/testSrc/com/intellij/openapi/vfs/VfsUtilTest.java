@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -278,10 +279,8 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   private void doRenameAndRefreshTest(boolean full) throws IOException {
     assertFalse(ApplicationManager.getApplication().isDispatchThread());
 
-    File tempDir = this.tempDir.newDirectory();
-    assertTrue(new File(tempDir, "child").createNewFile());
-
-    VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+    File testFile = tempDir.newFile("test/child");
+    VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile.getParentFile());
     assertNotNull(parent);
     if (full) {
       assertEquals(1, parent.getChildren().length);
@@ -289,23 +288,28 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     VirtualFile child = parent.findChild("child");
     assertNotNull(child);
 
-    List<VirtualFile> files = Collections.singletonList(parent);
+    ApplicationManagerEx.setInStressTest(true);
+    try {
+      List<VirtualFile> files = List.of(parent);
+      Semaphore semaphore = new Semaphore();
+      for (int i = 0; i < 1000; i++) {
+        semaphore.down();
+        VfsUtil.markDirty(true, false, parent);
+        LocalFileSystem.getInstance().refreshFiles(files, true, true, semaphore::up);
 
-    Semaphore semaphore = new Semaphore();
-    for (int i = 0; i < 1000; i++) {
-      semaphore.down();
-      VfsUtil.markDirty(true, false, parent);
-      LocalFileSystem.getInstance().refreshFiles(files, true, true, semaphore::up);
+        assertTrue(child.isValid());
+        String newName = "name" + i;
+        WriteAction.runAndWait(() -> child.rename(this, newName));
+        assertTrue(child.isValid());
 
-      assertTrue(child.isValid());
-      String newName = "name" + i;
-      WriteAction.runAndWait(() -> child.rename(this, newName));
-      assertTrue(child.isValid());
+        TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
+      }
 
-      TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
+      semaphore.waitFor();
     }
-
-    semaphore.waitFor();
+    finally {
+      ApplicationManagerEx.setInStressTest(false);
+    }
   }
 
   @Test(timeout = 20_000)
