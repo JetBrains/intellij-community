@@ -20,7 +20,6 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.JavaElementKind
@@ -161,7 +160,7 @@ private class MyMethodBodyListener(val project: Project, val editor: Editor, val
     if (IntentionPreviewUtils.isIntentionPreviewActive()) {
       finishTemplate(method)
     } else {
-      WriteCommandAction.runWriteCommandAction(project, Computable { finishTemplate(method) })
+      WriteCommandAction.runWriteCommandAction(project, message("create.method.body"), null, { finishTemplate(method) }, file)
     }
   }
 
