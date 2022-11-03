@@ -48,7 +48,7 @@ open class JBLoadingPanel(manager: LayoutManager?,
     decorator!!.loadingText = text
   }
 
-  fun stopLoading() {
+  open fun stopLoading() {
     decorator!!.stopLoading()
     for (listener in listeners) {
       listener.onLoadingFinish()
