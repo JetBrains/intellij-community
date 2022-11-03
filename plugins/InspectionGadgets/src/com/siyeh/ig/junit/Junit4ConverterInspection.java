@@ -66,7 +66,7 @@ public class Junit4ConverterInspection extends BaseInspection {
   protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
     return new InspectionGadgetsFix() {
       @Override
-      protected void doFix(Project project, ProblemDescriptor descriptor) {
+      protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiClass pClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
         JUnit4AnnotatedMethodInJUnit3TestCaseInspection.convertJUnit3ClassToJUnit4(pClass);
       }

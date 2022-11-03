@@ -63,7 +63,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiElement parent = methodName.getParent();
       if (!(parent instanceof PsiMethod)) {

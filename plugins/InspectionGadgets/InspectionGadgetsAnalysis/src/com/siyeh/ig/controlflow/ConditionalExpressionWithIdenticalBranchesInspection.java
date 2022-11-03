@@ -51,7 +51,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)descriptor.getPsiElement();
       final PsiExpression thenExpression = conditionalExpression.getThenExpression();
       if (thenExpression == null) {

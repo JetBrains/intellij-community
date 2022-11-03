@@ -56,7 +56,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiPolyadicExpression) {
         doReplacePolyadicExpression((PsiPolyadicExpression)element);

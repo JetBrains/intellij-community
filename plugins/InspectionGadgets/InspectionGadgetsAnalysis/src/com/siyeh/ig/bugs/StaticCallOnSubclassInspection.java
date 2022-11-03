@@ -60,7 +60,7 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiIdentifier name = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiIdentifier.class);
       if (name == null) return;
       final PsiReferenceExpression expression = ObjectUtils.tryCast(name.getParent(), PsiReferenceExpression.class);

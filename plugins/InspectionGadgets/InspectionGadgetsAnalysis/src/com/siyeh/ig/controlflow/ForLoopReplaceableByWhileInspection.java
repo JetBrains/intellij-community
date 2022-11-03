@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Objects;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 
@@ -86,7 +85,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection implemen
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiForStatement forStatement = ObjectUtils.tryCast(element.getParent(), PsiForStatement.class);
       if (forStatement == null) return;

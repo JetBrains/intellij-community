@@ -36,7 +36,7 @@ public class ChangeModifierFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
     if (modifierListOwner == null) {

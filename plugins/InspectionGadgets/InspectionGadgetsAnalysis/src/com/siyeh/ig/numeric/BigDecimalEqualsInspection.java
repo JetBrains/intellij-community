@@ -56,7 +56,7 @@ public class BigDecimalEqualsInspection extends BaseInspection implements Cleanu
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       final EqualityCheck check = EqualityCheck.from(call);
       if (check == null) return;

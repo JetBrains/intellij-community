@@ -388,7 +388,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement variableIdentifier = descriptor.getPsiElement();
       if (!(variableIdentifier instanceof PsiIdentifier)) {
         return;

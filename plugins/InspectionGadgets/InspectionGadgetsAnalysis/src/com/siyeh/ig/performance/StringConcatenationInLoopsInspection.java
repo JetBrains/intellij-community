@@ -645,7 +645,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiExpression.class);
       if (expression == null) return;
       PsiVariable variable = getAppendedVariable(expression);
@@ -746,7 +746,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiExpression.class);
       if (expression == null) return;
       PsiVariable variable = getAppendedVariable(expression);

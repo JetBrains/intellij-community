@@ -49,7 +49,7 @@ public class InlineGetterSetterCallFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(final Project project, ProblemDescriptor descriptor) {
+  public void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement nameElement = descriptor.getPsiElement();
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)nameElement.getParent();
     if (methodExpression == null) return;

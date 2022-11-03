@@ -81,7 +81,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement identifier = descriptor.getPsiElement();
       final PsiElement parent = identifier.getParent();
       if (parent instanceof PsiTypeParameter) {

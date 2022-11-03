@@ -120,7 +120,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiLoopStatement loop = tryCast(descriptor.getPsiElement().getParent(), PsiLoopStatement.class);
       String newExpression = null;
       if (loop instanceof PsiForStatement) {

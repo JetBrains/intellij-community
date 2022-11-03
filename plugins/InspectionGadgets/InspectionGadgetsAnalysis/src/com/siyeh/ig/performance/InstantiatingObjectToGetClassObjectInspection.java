@@ -64,7 +64,7 @@ public class InstantiatingObjectToGetClassObjectInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();

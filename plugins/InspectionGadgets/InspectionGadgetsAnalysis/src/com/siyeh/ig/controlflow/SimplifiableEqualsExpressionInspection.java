@@ -83,7 +83,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(element);
       if (!(parent instanceof PsiPolyadicExpression)) {

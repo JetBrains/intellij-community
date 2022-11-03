@@ -42,7 +42,7 @@ public class IntroduceConstantFix extends RefactoringInspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void doFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element instanceof PsiExpression expression) {
       doIntroduce(project, expression);

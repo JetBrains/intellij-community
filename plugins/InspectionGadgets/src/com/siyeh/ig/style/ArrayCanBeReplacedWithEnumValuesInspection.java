@@ -68,7 +68,7 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myEnumName == null) {
         return;
       }

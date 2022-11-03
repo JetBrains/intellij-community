@@ -153,7 +153,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiPolyadicExpression)) {
         return;

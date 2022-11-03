@@ -90,7 +90,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
       if (expression == null) {

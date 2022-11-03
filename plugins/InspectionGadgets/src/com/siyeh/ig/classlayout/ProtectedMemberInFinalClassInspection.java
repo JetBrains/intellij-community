@@ -66,7 +66,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       applyFix(project, new CommonProblemDescriptor[] {descriptor}, List.of(), null);
     }
 

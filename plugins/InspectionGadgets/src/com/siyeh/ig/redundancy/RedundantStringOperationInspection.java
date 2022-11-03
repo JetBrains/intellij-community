@@ -898,7 +898,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiNewExpression expression = tryCast(descriptor.getPsiElement().getParent(), PsiNewExpression.class);
       if (expression == null) return;
       final PsiExpressionList argList = expression.getArgumentList();
@@ -937,7 +937,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiNewExpression expression = tryCast(descriptor.getPsiElement().getParent(), PsiNewExpression.class);
       if (expression == null) return;
 
@@ -978,7 +978,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression expression = tryCast(descriptor.getPsiElement().getParent().getParent(), PsiMethodCallExpression.class);
       if (expression == null) return;
       new CommentTracker().replaceAndRestoreComments(expression, "\"\"");
@@ -1000,7 +1000,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiNewExpression expression = tryCast(descriptor.getPsiElement().getParent(), PsiNewExpression.class);
       if (expression == null) return;
       final CharArrayCreationArgument charArrayCreationArgument = CharArrayCreationArgument.from(expression.getArgumentList());
@@ -1031,7 +1031,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiNewExpression expression = tryCast(descriptor.getPsiElement(), PsiNewExpression.class);
       if (expression == null) return;
       final PsiArrayInitializerExpression initializer = expression.getArrayInitializer();

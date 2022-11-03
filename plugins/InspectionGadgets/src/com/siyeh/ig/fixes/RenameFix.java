@@ -86,7 +86,7 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (m_targetName == null) {
       super.doFix(project, descriptor);
     }

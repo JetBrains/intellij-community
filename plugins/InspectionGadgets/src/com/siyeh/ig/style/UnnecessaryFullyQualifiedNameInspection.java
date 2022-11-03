@@ -98,7 +98,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       final PsiJavaCodeReferenceElement referenceElement;
       if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {

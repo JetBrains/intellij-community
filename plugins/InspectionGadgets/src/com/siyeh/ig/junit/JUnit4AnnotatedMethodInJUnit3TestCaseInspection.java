@@ -132,7 +132,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       WriteAction.run(() -> deleteAnnotation(descriptor, IGNORE));
       super.doFix(project, descriptor);
     }
@@ -176,7 +176,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       convertJUnit3ClassToJUnit4(getPsiClass(descriptor));
     }
 
@@ -426,7 +426,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       WriteAction.run(() -> deleteAnnotation(descriptor, "org.junit.Test"));
       if (myNewName != null) {
         super.doFix(project, descriptor);

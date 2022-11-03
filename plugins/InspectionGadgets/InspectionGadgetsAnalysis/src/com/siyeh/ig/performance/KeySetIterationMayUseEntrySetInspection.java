@@ -79,7 +79,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = tryCast(descriptor.getPsiElement(), PsiExpression.class);
       if (expression == null) return;
       final PsiVariable toRemove;

@@ -110,7 +110,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
       if (expectedType == null) {

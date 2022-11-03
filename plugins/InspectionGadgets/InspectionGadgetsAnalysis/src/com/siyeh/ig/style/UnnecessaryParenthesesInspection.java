@@ -72,7 +72,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiParameterList parameterList) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());

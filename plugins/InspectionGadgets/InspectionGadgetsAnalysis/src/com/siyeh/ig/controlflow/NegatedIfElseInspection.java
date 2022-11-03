@@ -78,7 +78,7 @@ public class NegatedIfElseInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement ifToken = descriptor.getPsiElement();
       final PsiIfStatement ifStatement = (PsiIfStatement)ifToken.getParent();
       assert ifStatement != null;

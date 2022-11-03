@@ -82,7 +82,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection implements Cle
 
   private static class ReplaceObsoleteAssertsFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (call == null) {
         return;
