@@ -21,6 +21,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.GitGraph.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.C4.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Mindmap.*'
   ]
   generateTokens=false
 }
@@ -39,6 +40,7 @@ private diagram ::= pieHeader pieDocument
 	| REQUIREMENT_DIAGRAM requirementDocument
 	| GIT_GRAPH gitGraphDocument
 	| c4Header c4Document
+	| MINDMAP mindmapDocument
 
 titleStatement ::= TITLE complexTitleValue
 complexTitleValue ::= TITLE_VALUE+
@@ -598,6 +600,25 @@ boundaryStart ::= ENTERPRISE_BOUNDARY c4Attributes
   | NODE c4Attributes
   | NODE_L c4Attributes
   | NODE_R c4Attributes
+
+
+mindmapDocument ::= mindmapLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
+private mindmapLines ::= mindmapLine [mindmapLines]
+private mindmapLine ::= mindmapStatement [EOL] | EOL
+mindmapStatement ::= mindmapNodeStatement
+  | iconStatement
+  | mindmapClassStatement
+
+mindmapNodeStatement ::= mindmapNodeId [mindmapNodeDescr]
+mindmapNodeId ::= (ID | COLON)+ {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+mindmapNodeDescr ::= NODE_DESCR_START nodeDescription NODE_DESCR_END
+nodeDescription ::= NODE_DESCR+ | string
+
+iconStatement ::= OPEN_ICON ICON_VALUE? CLOSE_ICON
+mindmapClassStatement ::= STYLE_SEPARATOR CLASS+
+
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
 private directiveContent ::= property [COMMA directiveContent]

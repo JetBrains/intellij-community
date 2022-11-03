@@ -785,4 +785,27 @@ object MermaidTokens {
     @JvmField
     val EQUALITY = MermaidToken("C4.EQUALITY")
   }
+
+  object Mindmap {
+    @JvmField
+    val MINDMAP = MermaidToken("Mindmap.MINDMAP")
+
+    @JvmField
+    val OPEN_ICON = MermaidToken("Mindmap.OPEN_ICON")
+
+    @JvmField
+    val CLOSE_ICON = MermaidToken("Mindmap.CLOSE_ICON")
+
+    @JvmField
+    val ICON_VALUE = MermaidToken("Mindmap.ICON_VALUE")
+
+    @JvmField
+    val NODE_DESCR_START = MermaidToken("Mindmap.NODE_DESCR_START")
+
+    @JvmField
+    val NODE_DESCR_END = MermaidToken("Mindmap.NODE_DESCR_END")
+
+    @JvmField
+    val NODE_DESCR = MermaidToken("Mindmap.NODE_DESCR")
+  }
 }
