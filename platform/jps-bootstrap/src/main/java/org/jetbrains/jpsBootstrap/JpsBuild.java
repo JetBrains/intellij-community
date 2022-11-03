@@ -81,7 +81,7 @@ public class JpsBuild {
     info("Resolving project dependencies...");
     var spaceUsername = System.getProperty("jps.auth.spaceUsername");
     var spacePassword = System.getProperty("jps.auth.spacePassword");
-    if (spaceUsername == null || spaceUsername.isBlank() || spacePassword == null || spacePassword.isBlank()) {
+    if (spaceUsername == null || spacePassword == null) {
       warn("Space credentials are not provided via -Djps.auth.spaceUsername and -Djps.auth.spacePassword. " +
         "Private Space Maven dependencies, if not available locally, will fail to be resolved.");
     }
