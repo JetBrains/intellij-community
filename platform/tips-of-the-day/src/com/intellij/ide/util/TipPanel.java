@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ObjectUtils;
@@ -266,9 +267,14 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myCurrentLikenessState = getLikenessState(tip);
     myCurrentTip = tip;
 
-    String groupName = TipUtils.getGroupDisplayNameForTip(tip);
-    mySubSystemLabel.setText(ObjectUtils.notNull(groupName, ""));
-    mySubSystemLabel.setVisible(groupName != null);
+    if (Registry.is("tips.of.the.day.show.group.label", false)) {
+      String groupName = TipUtils.getGroupDisplayNameForTip(tip);
+      mySubSystemLabel.setText(ObjectUtils.notNull(groupName, ""));
+      mySubSystemLabel.setVisible(groupName != null);
+    }
+    else {
+      mySubSystemLabel.setVisible(false);
+    }
 
     myTextPane.setParagraphs(tipContent);
     adjustTextPaneBorder(tipContent);
