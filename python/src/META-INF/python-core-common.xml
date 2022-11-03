@@ -43,7 +43,6 @@
     <editorHighlighterProvider filetype="Python" implementationClass="com.jetbrains.python.PyEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
     <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
-    <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
