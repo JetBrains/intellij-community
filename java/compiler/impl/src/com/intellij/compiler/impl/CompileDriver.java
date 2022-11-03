@@ -438,16 +438,9 @@ public final class CompileDriver {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    // ensure the project model seen by build process is up-to-date
-    StoreUtil.saveSettings(myProject);
-    if (!isUnitTestMode) {
-      StoreUtil.saveSettings(ApplicationManager.getApplication());
-    }
-
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, compileTask, scope, !isRebuild && !forceCompile, isRebuild);
     span.complete();
     final Runnable compileWork = () -> {
-      Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       final ProgressIndicator indicator = compileContext.getProgressIndicator();
       if (indicator.isCanceled() || myProject.isDisposed()) {
         if (callback != null) {
@@ -455,6 +448,14 @@ public final class CompileDriver {
         }
         return;
       }
+
+      // ensure the project model seen by build process is up-to-date
+      StoreUtil.saveSettings(myProject);
+      if (!isUnitTestMode) {
+        StoreUtil.saveSettings(ApplicationManager.getApplication());
+      }
+
+      Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();
       try {
