@@ -42,6 +42,18 @@ class ContentRootCollectorTest : MavenTestCase() {
   }
 
   @Test
+  fun `test source root points at the content root`() {
+    val contentRoot = "/home/source"
+    val contentRoots = collect(projectRoots = listOf(contentRoot),
+                               mainSourceFolders = listOf(contentRoot))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(expectedPath = contentRoot,
+                                                  expectedMainSourceFolders = listOf(contentRoot)))
+    )
+  }
+
+  @Test
   fun `test do not register nested sources`() {
     val baseContentRoot = "/home"
     val source = "/home/source"
@@ -49,6 +61,88 @@ class ContentRootCollectorTest : MavenTestCase() {
 
     val contentRoots = collect(projectRoots = listOf(baseContentRoot),
                                mainSourceFolders = listOf(source, nestedSource))
+
+    assertContentRoots(contentRoots,
+                       listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                                  expectedMainSourceFolders = listOf(source)))
+    )
+  }
+
+  @Test
+  fun `test inner source folders overwrite outer with lower rank`() {
+    val baseContentRoot = "/home"
+
+    // main overwrites test
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        testSourceFolders = listOf("/home/tests"),
+        mainSourceFolders = listOf("/home/tests/main"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedMainSourceFolders = listOf("/home/tests/main")))
+    )
+
+    // source overwrites resources
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        mainResourceFolders = listOf("/home/resources"),
+        mainSourceFolders = listOf("/home/resources/main"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedMainSourceFolders = listOf("/home/resources/main")))
+    )
+
+    // test source overwrites main resources
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        mainResourceFolders = listOf("/home/resources"),
+        testSourceFolders = listOf("/home/resources/test"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedTestSourceFolders = listOf("/home/resources/test")))
+    )
+
+    // main resources overwrite test resources
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        testResourceFolders = listOf("/home/test_resources"),
+        mainResourceFolders = listOf("/home/test_resources/main_resources"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedMainResourcesFolders = listOf("/home/test_resources/main_resources")))
+    )
+
+    // only one remains
+    assertContentRoots(
+      collect(
+        projectRoots = listOf(baseContentRoot),
+        testResourceFolders = listOf("/home/test_resources"),
+        mainResourceFolders = listOf("/home/test_resources/main_resources"),
+        testSourceFolders = listOf("/home/test_resources/main_resources/test"),
+        mainSourceFolders = listOf("/home/test_resources/main_resources/test/main"),
+      ),
+      listOf(ContentRootTestData(expectedPath = baseContentRoot,
+                                 expectedMainSourceFolders = listOf("/home/test_resources/main_resources/test/main")))
+    )
+  }
+
+  @Test
+  fun `test do not register nested test and resources`() {
+    val baseContentRoot = "/home"
+    val source = "/home/source"
+    val nestedResource = "/home/source/nested-resource"
+    val nestedTestSource = "/home/source/nested-test-source"
+    val nestedTestResource = "/home/source/nested-test-resource"
+
+    val contentRoots = collect(projectRoots = listOf(baseContentRoot),
+                               mainSourceFolders = listOf(source),
+                               mainResourceFolders = listOf(nestedResource),
+                               testSourceFolders = listOf(nestedTestSource),
+                               testResourceFolders = listOf(nestedTestResource))
 
     assertContentRoots(contentRoots,
                        listOf(ContentRootTestData(expectedPath = baseContentRoot,
