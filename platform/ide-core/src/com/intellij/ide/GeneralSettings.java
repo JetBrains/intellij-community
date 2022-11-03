@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -42,7 +43,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
 
   private static final String SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY = "ide.show.tips.on.startup.default.value";
 
-  private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
+  private String myBrowserPath = getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = Boolean.parseBoolean(System.getProperty(SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY, "true"));
   private boolean myReopenLastProject = true;
   private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, false);
@@ -280,5 +281,20 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
 
   public void setDefaultProjectDirectory(@SystemDependent String defaultProjectDirectory) {
     myDefaultProjectDirectory = defaultProjectDirectory;
+  }
+
+  private static @NotNull String getDefaultAlternativeBrowserPath() {
+    if (SystemInfo.isWindows) {
+      return "C:\\Program Files\\Internet Explorer\\IExplore.exe";
+    }
+    else if (SystemInfo.isMac) {
+      return "open";
+    }
+    else if (SystemInfo.isUnix) {
+      return "/usr/bin/firefox";
+    }
+    else {
+      return "";
+    }
   }
 }

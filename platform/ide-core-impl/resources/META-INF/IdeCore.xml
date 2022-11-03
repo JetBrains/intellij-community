@@ -9,5 +9,7 @@
                         serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
     <applicationService serviceInterface="com.intellij.notification.NotificationGroupManager"
                         serviceImplementation="com.intellij.notification.impl.NotificationGroupManagerImpl"/>
+    <applicationService serviceImplementation="com.intellij.ide.GeneralSettings" preload="notHeadless"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
   </extensions>
 </idea-plugin>

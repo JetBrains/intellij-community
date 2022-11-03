@@ -46,13 +46,6 @@
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
-    <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
-    <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>
-    <postFormatProcessor implementation="com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor"/>
-    <postFormatProcessor implementation="com.jetbrains.python.formatter.PyFromImportPostFormatProcessor"/>
-    <lang.whiteSpaceFormattingStrategy language="Python"
-                                       implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
-    <lang.lineWrapStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyLineWrapPositionStrategy"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
     <lang.surroundDescriptor language="Python"
                              implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>

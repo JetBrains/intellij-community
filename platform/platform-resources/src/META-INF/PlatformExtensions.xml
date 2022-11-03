@@ -160,8 +160,6 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl" key="jar" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.ex.temp.TempFileSystem" key="temp" physical="true"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.GeneralSettings" preload="notHeadless"/>
-
     <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="notHeadless" os="mac"/>
     <cachesInvalidator implementation="com.intellij.ui.jcef.JBCefAppCacheInvalidator" order="last" />
 
@@ -638,7 +636,6 @@
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.AbbreviationManager"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OsSpecificState"/>
     <applicationConfigurable
         groupId="editor"

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.StaticSymbolWhiteSpaceDefinitionStrategy;
-import com.jetbrains.python.editor.PythonEnterHandler;
+import com.jetbrains.python.editor.PyWhiteSpaceUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -25,7 +25,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
                                                   CodeStyleSettings codeStyleSettings) {
     CharSequence whiteSpace =  super.adjustWhiteSpaceIfNecessary(whiteSpaceText, startElement, startOffset, endOffset, codeStyleSettings);
     if (whiteSpace.length() > 0 && whiteSpace.charAt(0) == '\n' && !Strings.contains(whiteSpace, 0, whiteSpace.length(), '\\') &&
-        PythonEnterHandler.needInsertBackslash(startElement.getContainingFile(), startOffset, false)) {
+        PyWhiteSpaceUtil.needInsertBackslash(startElement.getContainingFile(), startOffset, false)) {
       return addBackslashPrefix(whiteSpace, codeStyleSettings);
     }
     return whiteSpace;
@@ -60,7 +60,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     Int2IntMap initialBackSlashes = countBackSlashes(text, startOffset, endOffset);
     if (initialBackSlashes.isEmpty()) {
       if (nodeAfter != null && whiteSpaceText.length() > 0 && whiteSpaceText.charAt(0) == '\n' &&
-        PythonEnterHandler.needInsertBackslash(nodeAfter, false)) {
+        PyWhiteSpaceUtil.needInsertBackslash(nodeAfter, false)) {
         return addBackslashPrefix(whiteSpaceText, codeStyleSettings);
       }
       return whiteSpaceText;

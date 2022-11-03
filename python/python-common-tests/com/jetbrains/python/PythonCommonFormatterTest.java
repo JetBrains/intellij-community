@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.formatting.WrapType;
@@ -7,15 +7,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStatement;
 import org.jetbrains.annotations.NotNull;
 
+public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
+  protected static final LanguageLevel LANGUAGE_LEVEL = LanguageLevel.getLatest();
 
-public class PyFormatterTest extends PyTestCase {
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
@@ -522,7 +523,7 @@ public class PyFormatterTest extends PyTestCase {
   public void testAlignmentOfClosingBraceInDictLiteralWhenNoHangingIndent() {
     doTest();
   }
-  
+
   public void testNoAlignmentClosingBraceInDictLiteralWhenOpeningBraceIsForcedOnNewLine() {
     getPythonCodeStyleSettings().DICT_NEW_LINE_AFTER_LEFT_BRACE = true;
     doTest();
@@ -671,7 +672,7 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().DICT_NEW_LINE_BEFORE_RIGHT_BRACE = true;
     doTest();
   }
-  
+
   public void testForceNewLineAfterLeftParenInMethodParameters() {  // PY-33060
     getCommonCodeStyleSettings().METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
     doTest();
@@ -714,7 +715,7 @@ public class PyFormatterTest extends PyTestCase {
   public void testHangingIndentDetectionIgnoresComments() {
     doTest();
   }
-  
+
   // PY-15530
   public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
     doTest();
@@ -814,7 +815,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  // PY-10182  
+  // PY-10182
   public void testHangClosingParenthesisInFunctionDefinition() {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     doTest();
@@ -831,7 +832,7 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = false;
     doTest();
   }
-  
+
   // PY-15874
   public void testHangClosingOnComprehensionsAndGeneratorExpressions() {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
@@ -853,7 +854,7 @@ public class PyFormatterTest extends PyTestCase {
     getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 35);
     doTest();
   }
-  
+
   // PY-20633
   public void testFromImportParenthesesPlacementHangClosingParenthesis() {
     getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
@@ -1157,17 +1158,17 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     doTest();
   }
-  
+
   // PY-48009
   public void testItemAlignmentInMappingPatterns() {
     doTest();
   }
-  
+
   // PY-48009
   public void testItemIndentInMappingPatterns() {
     doTest();
   }
-  
+
   // PY-48009
   public void testHangingClosingBracketInMappingPatterns() {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
