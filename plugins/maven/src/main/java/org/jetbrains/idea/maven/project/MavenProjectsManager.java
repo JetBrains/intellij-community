@@ -177,6 +177,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myManagerListeners.clear();
   }
 
+  public static void setupCreatedMavenProject(@NotNull Project project) {
+    setupCreatedMavenProject(getInstance(project).getImportingSettings());
+  }
+
+  public static void setupCreatedMavenProject(@NotNull MavenImportingSettings settings) {
+    settings.setWorkspaceImportEnabled(true);
+  }
+
   public ModificationTracker getModificationTracker() {
     return myModificationTracker;
   }

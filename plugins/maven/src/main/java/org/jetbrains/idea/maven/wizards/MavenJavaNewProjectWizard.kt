@@ -22,6 +22,7 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
@@ -65,6 +66,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       }
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
+      MavenProjectsManager.setupCreatedMavenProject(project)
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
 
       builder.commit(project)

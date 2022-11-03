@@ -348,6 +348,7 @@
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsLanguageLevelQuickFix"/>
 
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
+    <starter.projectConfigurator implementation="org.jetbrains.idea.maven.starters.MavenStarterProjectConfigurator"/>
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
     <dependencyCollector kind="maven-packaging" implementation="org.jetbrains.idea.maven.project.MavenPackagingDependencyCollector"/>
