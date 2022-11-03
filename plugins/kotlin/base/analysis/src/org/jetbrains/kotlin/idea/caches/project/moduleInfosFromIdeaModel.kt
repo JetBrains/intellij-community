@@ -115,7 +115,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
     override fun dispose() = Unit
 
     abstract inner class AbstractCache<Key : Any, Value : Any>(initializer: (AbstractCache<Key, Value>) -> Unit) :
-        SynchronizedFineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory = false),
+        SynchronizedFineGrainedEntityCache<Key, Value>(project),
         WorkspaceModelChangeListener {
 
         @Volatile
