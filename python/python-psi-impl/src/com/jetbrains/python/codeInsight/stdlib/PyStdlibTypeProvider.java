@@ -102,6 +102,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
+      else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
+        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getIntType());
+      }
       else if ((PyNames.TYPE_ENUM + ".value").equals(name) && anchor instanceof PyReferenceExpression && context.maySwitchToAST(anchor)) {
         final PyReferenceExpression anchorExpr = (PyReferenceExpression)anchor;
         final PyExpression qualifier = anchorExpr.getQualifier();
