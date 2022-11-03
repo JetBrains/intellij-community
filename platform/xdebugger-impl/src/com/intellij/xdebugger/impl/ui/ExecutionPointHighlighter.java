@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -49,11 +50,19 @@ public class ExecutionPointHighlighter {
 
   private final AtomicBoolean updateRequested = new AtomicBoolean();
 
+  /**
+   * @deprecated This constructor doesn't subscribe to events for updating itself. Use the overload taking a {@link Disposable}.
+   */
+  @Deprecated
   public ExecutionPointHighlighter(@NotNull Project project) {
+    myProject = project;
+  }
+
+  public ExecutionPointHighlighter(@NotNull Project project, @NotNull Disposable parentDisposable) {
     myProject = project;
 
     // Update highlighter colors if global color schema was changed
-    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, scheme -> update(false));
+    project.getMessageBus().connect(parentDisposable).subscribe(EditorColorsManager.TOPIC, scheme -> update(false));
   }
 
   public void show(@NotNull XSourcePosition position, boolean notTopFrame,
