@@ -12,19 +12,21 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   final CoverageSuitesBundle myData;
   final CoverageViewManager.StateBean myStateBean;
-  private final CoverageListRootNode myRootNode;
+  private CoverageListRootNode myRootNode;
 
   public CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
     myProject = project;
     myData = bundle;
     myStateBean = stateBean;
-    myRootNode = (CoverageListRootNode)bundle.getCoverageEngine().createCoverageViewExtension(project, bundle, stateBean).createRootNode();
   }
 
 
   @NotNull
   @Override
-  public Object getRootElement() {
+  synchronized public Object getRootElement() {
+    if (myRootNode == null) {
+      myRootNode = (CoverageListRootNode)myData.getCoverageEngine().createCoverageViewExtension(myProject, myData, myStateBean).createRootNode();
+    }
     return myRootNode;
   }
 
