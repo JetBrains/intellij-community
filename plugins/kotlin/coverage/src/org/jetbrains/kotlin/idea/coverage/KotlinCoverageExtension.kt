@@ -73,13 +73,13 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
     ): Boolean {
         if (srcFile is KtFile) {
             val fileIndex = ProjectRootManager.getInstance(srcFile.getProject()).fileIndex
-            if (fileIndex.isInLibraryClasses(srcFile.getVirtualFile()) ||
-                fileIndex.isInLibrarySource(srcFile.getVirtualFile())
-            ) {
-                return false
-            }
-
             return runReadAction {
+                if (fileIndex.isInLibraryClasses(srcFile.getVirtualFile()) ||
+                    fileIndex.isInLibrarySource(srcFile.getVirtualFile())
+                ) {
+                    return@runReadAction false
+                }
+
                 val outputRoots = findOutputRoots(srcFile) ?: return@runReadAction false
                 val existingClassFiles = getClassesGeneratedFromFile(outputRoots, srcFile)
                 existingClassFiles.mapTo(classFiles) { File(it.path) }
