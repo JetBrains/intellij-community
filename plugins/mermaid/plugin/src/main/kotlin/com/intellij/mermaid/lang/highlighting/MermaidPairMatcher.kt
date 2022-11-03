@@ -40,6 +40,9 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
         BracePair(MermaidTokens.Flowchart.DOUBLE_CIRCLE_START, MermaidTokens.Flowchart.DOUBLE_CIRCLE_END, false),
         BracePair(MermaidTokens.Flowchart.SEP, MermaidTokens.Flowchart.SEP, false),
 
+        BracePair(MermaidTokens.Mindmap.OPEN_ICON, MermaidTokens.Mindmap.CLOSE_ICON, false),
+        BracePair(MermaidTokens.Mindmap.NODE_DESCR_START, MermaidTokens.Mindmap.NODE_DESCR_END, false),
+
         BracePair(MermaidTokens.ANNOTATION_START, MermaidTokens.ANNOTATION_END, false),
         BracePair(MermaidTokens.OPEN_DIRECTIVE, MermaidTokens.CLOSE_DIRECTIVE, false)
       )

@@ -252,6 +252,22 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     }
   }
 
+  private fun getMindmapHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
+    return when (tokenType) {
+      MermaidTokens.Mindmap.MINDMAP -> arrayOf(MermaidTextAttributes.keyword)
+
+      MermaidTokens.Mindmap.NODE_DESCR,
+      MermaidTokens.Mindmap.ICON_VALUE -> arrayOf(MermaidTextAttributes.string)
+
+      MermaidTokens.Mindmap.NODE_DESCR_START,
+      MermaidTokens.Mindmap.NODE_DESCR_END,
+      MermaidTokens.Mindmap.OPEN_ICON,
+      MermaidTokens.Mindmap.CLOSE_ICON -> arrayOf(MermaidTextAttributes.operationSign)
+
+      else -> null
+    }
+  }
+
   override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
     val pieHighlights = getPieHighlights(tokenType)
     val journeyHighlighter = getJourneyHighlights(tokenType)
@@ -264,6 +280,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     val requirementHighlights = getRequirementHighlights(tokenType)
     val gitGraphHighlights = getGitGraphHighlights(tokenType)
     val c4Highlights = getC4Highlights(tokenType)
+    val mindmapHighlights = getMindmapHighlights(tokenType)
     return pieHighlights
       ?: journeyHighlighter
       ?: flowchartHighlighter
@@ -275,6 +292,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       ?: requirementHighlights
       ?: gitGraphHighlights
       ?: c4Highlights
+      ?: mindmapHighlights
       ?: when (tokenType) {
         MermaidTokens.END,
         MermaidTokens.TITLE,
