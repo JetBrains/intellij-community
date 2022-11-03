@@ -173,11 +173,21 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    * @return either null (if no error) or localized error string
    */
   fun getValidationError(): @Nls String? {
-    condaEnvs.exceptionOrNull()?.let {
+
+    val envIdentities = condaEnvs.getOrElse {
       return it.message ?: PyBundle.message("python.sdk.conda.problem.running")
-    }
-    if (showCreateNewEnvPanelRoProp.get() && !newEnvNameRwProperty.get().matches(notEmptyRegex)) {
-      return PyBundle.message("python.sdk.conda.problem.env.empty.invalid")
+    }.envs.map { it.envIdentity }.filterIsInstance<PyCondaEnvIdentity.NamedEnv>().map { it.envName }
+
+
+    if (showCreateNewEnvPanelRoProp.get()) {
+      // Create new env
+      val newEnvName = newEnvNameRwProperty.get()
+      if (!newEnvName.matches(notEmptyRegex)) {
+        return PyBundle.message("python.sdk.conda.problem.env.empty.invalid")
+      }
+      else if (newEnvName in envIdentities) {
+        return PyBundle.message("python.sdk.conda.problem.env.name.used")
+      }
     }
     return null
   }

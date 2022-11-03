@@ -18,7 +18,6 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers.*
@@ -72,31 +71,27 @@ class PyAddCondaPanelModelTest {
   }
 
   @Test
-  fun testCondaCreateNewEnv() {
+  fun testCondaCreateNewEnv(): Unit = runTest {
     val condaName = "someNewCondaEnv"
-    runBlocking {
-      val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
-      model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
-      model.condaActionCreateNewEnvRadioRwProp.set(true)
-      model.condaActionUseExistingEnvRadioRwProp.set(false)
+    val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
+    model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
+    model.condaActionCreateNewEnvRadioRwProp.set(true)
+    model.condaActionUseExistingEnvRadioRwProp.set(false)
 
       MatcherAssert.assertThat("No 3.9 suggested", model.languageLevels, hasItem(LanguageLevel.PYTHON39))
       MatcherAssert.assertThat("2.6 suggested", model.languageLevels, not(hasItem(LanguageLevel.PYTHON26)))
-      model.newEnvLanguageLevelRwProperty.set(LanguageLevel.PYTHON38)
-      Assert.assertNotNull("Empty conda env name didn't lead to validation", model.getValidationError())
-      model.newEnvNameRwProperty.set("d     f --- ")
-      Assert.assertNotNull("Bad conda name didn't lead to validation", model.getValidationError())
-      model.newEnvNameRwProperty.set(condaName)
+    model.newEnvLanguageLevelRwProperty.set(LanguageLevel.PYTHON38)
+    Assert.assertNotNull("Empty conda env name didn't lead to validation", model.getValidationError())
+    model.newEnvNameRwProperty.set("d     f --- ")
+    Assert.assertNotNull("Bad conda name didn't lead to validation", model.getValidationError())
+    model.newEnvNameRwProperty.set(condaName)
 
-
-      val mockSink = MockSink()
-      val sdk = model.onCondaCreateSdkClicked(coroutineContext, mockSink).getOrThrow()
-      val newName = ((sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.envIdentity as PyCondaEnvIdentity.NamedEnv).envName
-      Assert.assertEquals("Wrong conda name", condaName, newName)
-      Assert.assertTrue("No output provided for sink", mockSink.out.toString().isNotEmpty())
-    }
+    val mockSink = MockSink()
+    val sdk = model.onCondaCreateSdkClicked(coroutineContext, mockSink).getOrThrow()
+    val newName = ((sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.envIdentity as PyCondaEnvIdentity.NamedEnv).envName
+    Assert.assertEquals("Wrong conda name", condaName, newName)
+    Assert.assertTrue("No output provided for sink", mockSink.out.toString().isNotEmpty())
   }
-
   @Test
   fun testCondaCantUseNameUsedAlready(): Unit = runTest {
     val name = "cond_env_" + Math.random().toString().replace('.', '_')
