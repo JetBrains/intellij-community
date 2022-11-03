@@ -304,7 +304,7 @@ public abstract class UsefulTestCase extends TestCase {
             removeGlobalTempDirectory(myTempDir);
           }
           catch (Throwable e) {
-            printThreadDump();
+            ThreadUtil.printThreadDump();
             throw e;
           }
         }
@@ -815,15 +815,6 @@ public abstract class UsefulTestCase extends TestCase {
       }
     }
     Assert.fail(value + " should be equal to one of " + Arrays.toString(values));
-  }
-
-  /**
-   * @deprecated moved to {@link ThreadUtil#printThreadDump()}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  public static void printThreadDump() {
-    ThreadUtil.printThreadDump();
   }
 
   public static void assertEmpty(Object @NotNull [] array) {

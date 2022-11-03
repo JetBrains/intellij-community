@@ -45,6 +45,7 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.testFramework.common.ThreadUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.NotNull
@@ -776,7 +777,7 @@ public interface Test {
       joinCompletion()
       LookupImpl l1 = LookupManager.getActiveLookup(another)
       if (l1) {
-        printThreadDump()
+        ThreadUtil.printThreadDump()
         println l1.items
         println l1.calculating
         println myFixture.editor
