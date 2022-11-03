@@ -2,6 +2,7 @@
 package com.intellij.completion.ml.common
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -50,7 +51,7 @@ class CurrentProjectInfo(project: Project) : Disposable {
     try {
       _modulesCount = ModuleManager.getInstance(project).modules.size
       _librariesCount = LibraryUtil.getLibraryRoots(project).size
-      _filesCount = countFiles(project)
+      _filesCount = runReadAction { countFiles(project) }
     } finally {
       alarm.addRequest({ updateStats(project) }, updateInterval)
     }
