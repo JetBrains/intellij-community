@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -268,6 +269,20 @@ public class RegistryValue {
 
     myChangedSinceStart = true;
     LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
+  }
+
+  @ApiStatus.Internal
+  public void setValueBypassListeners(String value) {
+    resetCache();
+
+    myRegistry.getUserProperties().put(myKey, value);
+
+    if (!isChangedFromDefault() && !isRestartRequired()) {
+      myRegistry.getUserProperties().remove(myKey);
+    }
+
+    myChangedSinceStart = true;
+    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'' + "[LISTENERS BYPASSED]");
   }
 
   public void setValue(boolean value, @NotNull Disposable parentDisposable) {
