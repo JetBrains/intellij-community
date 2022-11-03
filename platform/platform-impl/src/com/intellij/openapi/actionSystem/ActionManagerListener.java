@@ -2,8 +2,10 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface ActionManagerListener {
   @Topic.AppLevel
   Topic<ActionManagerListener> TOPIC = Topic.create("Action Manager Listener", ActionManagerListener.class);
