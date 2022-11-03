@@ -5,8 +5,6 @@ import com.intellij.execution.process.ProcessInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.util.containers.MultiMap
-import com.intellij.xdebugger.attach.XAttachDebugger
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
 import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
@@ -68,64 +66,6 @@ internal suspend fun collectAttachProcessItemsGroupByProcessInfo(
   }
 }
 
-internal suspend fun collectAttachProcessItems(project: Project,
-                                               host: XAttachHost,
-                                               attachDebuggerProviders: List<XAttachDebuggerProvider>): AttachItemsInfo {
-
-  return try {
-    val dataHolder = UserDataHolderBase()
-
-    val currentItems = mutableListOf<AttachToProcessItem>()
-    val dialogItems = mutableListOf<AttachDialogProcessItem>()
-
-    val applicableDebuggerProviders = attachDebuggerProviders.filter { it.isAttachHostApplicable(host) }
-    for (process in host.processList) {
-      coroutineContext.ensureActive()
-      val groupsWithDebuggers = MultiMap<XAttachPresentationGroup<ProcessInfo>, XAttachDebugger>()
-      for (provider in applicableDebuggerProviders) {
-        groupsWithDebuggers.putValues(provider.presentationGroup,
-                                      provider.getAvailableDebuggers(project, host, process!!, dataHolder))
-      }
-      for (group in groupsWithDebuggers.keySet()) {
-        val debuggers = groupsWithDebuggers[group]
-        if (!debuggers.isEmpty()) {
-          val attachToProcessItem = AttachToProcessItem(group, false, host, process!!, ArrayList(debuggers), project, dataHolder)
-          currentItems.add(attachToProcessItem)
-          dialogItems.add(attachToProcessItem.toDialogItem())
-        }
-      }
-    }
-
-    val recentItems = getRecentItems(currentItems, host, project, dataHolder)
-
-    AttachItemsInfo(dialogItems, recentItems, dataHolder)
-  }
-  catch (processesFetchingProblemException: ProcessesFetchingProblemException) {
-    throw processesFetchingProblemException
-  }
-  catch (cancellationException: CancellationException) {
-    throw cancellationException
-  }
-  catch (executionException: ExecutionException) {
-    AttachItemsInfo.EMPTY
-  }
-  catch (t: Throwable) {
-    logger.error(t)
-    AttachItemsInfo.EMPTY
-  }
-}
-
-private fun getRecentItems(currentItems: List<AttachToProcessItem>,
-                           host: XAttachHost,
-                           project: Project,
-                           dataHolder: UserDataHolderBase): List<AttachDialogProcessItem> {
-  return AttachToProcessActionBase.getRecentItems(currentItems, host, project, dataHolder).groupBy { it.processInfo.pid }.map { groupedItems ->
-    val firstItem = groupedItems.value.first()
-    val processInfo = firstItem.processInfo
-    return@map AttachDialogProcessItem.create(processInfo, groupedItems.value.groupBy { it.group }, dataHolder)
-  }
-}
-
 private fun getRecentItems(currentItems: List<AttachToProcessItem>,
                            currentDialogItems: Map<ProcessInfo, AttachDialogProcessItem>,
                            host: XAttachHost,
@@ -142,8 +82,4 @@ private fun getRecentItems(currentItems: List<AttachToProcessItem>,
 
     return@mapNotNull AttachDialogRecentItem(dialogItem, groupedItems.value.sortedBy { it.group.order }.flatMap { it.debuggers })
   }
-}
-
-private fun AttachToProcessItem.toDialogItem(): AttachDialogProcessItem {
-  return AttachDialogProcessItem.create(processInfo, mapOf(group to listOf(this)), dataHolder)
 }

@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.list.AttachListColumnSettingsState
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.AttachTreeColumnSettingsState
 import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 
@@ -31,7 +30,7 @@ class AttachDialogState(val dialogDisposable: Disposable) {
   val selectedDebuggersFilter = AtomicLazyProperty<AttachDialogDebuggersFilter> { AttachDialogAllDebuggersFilter }
 
   val attachTreeColumnSettings = AttachTreeColumnSettingsState()
-  val attachListColumnSettings = if (isListMerged()) AttachTreeColumnSettingsState() else AttachListColumnSettingsState()
+  val attachListColumnSettings = AttachTreeColumnSettingsState()
 
   val selectedViewType = AtomicLazyProperty { getDefaultView() }
 

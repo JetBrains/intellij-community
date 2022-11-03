@@ -147,12 +147,7 @@ internal abstract class AttachToProcessView(
 
   private suspend fun processAsPlainList(host: XAttachHost) {
     val itemsInfo = try {
-      if (isListMerged()) {
-        collectAttachProcessItemsGroupByProcessInfo(project, host, attachDebuggerProviders)
-      }
-      else {
-        collectAttachProcessItems(project, host, attachDebuggerProviders)
-      }
+      collectAttachProcessItemsGroupByProcessInfo(project, host, attachDebuggerProviders)
     }
     catch (processesFetchingException: ProcessesFetchingProblemException) {
       processDiagnosticInfo(processesFetchingException, host)
