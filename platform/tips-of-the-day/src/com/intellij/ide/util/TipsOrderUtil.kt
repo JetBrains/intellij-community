@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.util.text.DateFormatUtil
 
 @Service
 internal class TipsOrderUtil {
@@ -49,7 +50,7 @@ internal class TipsOrderUtil {
     }
 
     val sortedTips = tipInfoList.sortedWith(getComparator()).map { it.tip }
-    val adjustedSortedTips = tipsUsageManager.makeLastShownTipFirst(sortedTips)
+    val adjustedSortedTips = adjustFirstTip(sortedTips)
     return TipsSortingResult(adjustedSortedTips, SORTING_ALGORITHM, SORTING_ALGORITHM_VERSION)
   }
 
@@ -60,6 +61,27 @@ internal class TipsOrderUtil {
       .then(compareBy { info -> info.isApplicable })
       .thenComparingInt { info -> info.utilityScore }.reversed()
       .thenComparingLong { info -> info.lastTimeShown }
+  }
+
+  private fun adjustFirstTip(tips: List<TipAndTrickBean>): List<TipAndTrickBean> {
+    val tipsUsageManager = TipsUsageManager.getInstance()
+    if (tipsUsageManager.wereTipsShownToday()) {
+      return tipsUsageManager.makeLastShownTipFirst(tips)
+    }
+    else {
+      val index = tips.indexOfFirst { tip ->
+        System.currentTimeMillis() - tipsUsageManager.getLastTimeShown(tip.id) > MIN_SUCCESSIVE_SHOW_INTERVAL_DAYS * DateFormatUtil.DAY
+      }
+      if (index <= 0) {
+        return tips
+      }
+      else {
+        val mutableTips = tips.toMutableList()
+        val newFirstTip = mutableTips.removeAt(index)
+        mutableTips.add(0, newFirstTip)
+        return mutableTips
+      }
+    }
   }
 
   private data class TipInfo(
@@ -75,6 +97,9 @@ internal class TipsOrderUtil {
     const val SHUFFLE_ALGORITHM = "shuffle"
     const val SORTING_ALGORITHM = "usage_and_applicability"
     private const val SORTING_ALGORITHM_VERSION = "1"
+
+    // Minimum time between showing the same tip at the first place
+    private const val MIN_SUCCESSIVE_SHOW_INTERVAL_DAYS = 5
 
     @JvmStatic
     fun getInstance(): TipsOrderUtil = service()
