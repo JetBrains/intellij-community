@@ -175,9 +175,7 @@ grammar {
         SVG.DocumentEvents.attrib,
         SVG.GraphicalEvents.attrib,
         SVG.External.attrib,
-        (common.attrs.aria.role.application
-          | common.attrs.aria.landmark.document
-          | common.attrs.aria.role.img)?,
+        common.attrs.aria?,
         attribute x { Coordinate.datatype }?,
         attribute y { Coordinate.datatype }?,
         attribute width { Length.datatype }?,
