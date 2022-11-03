@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.common
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
@@ -37,47 +36,23 @@ object LocationFeaturesUtil {
   }
 
   fun linesDiff(completionParameters: CompletionParameters, completionElement: PsiElement?): Int? {
-
-    if (completionElement == null) {
+    if (completionElement == null || completionParameters.position.containingFile != completionElement.containingFile) {
       return null
     }
 
-    fun line(element: PsiElement?): Int? {
-      if (element == null) {
+    try {
+      val completionLine = completionParameters.editor.caretModel.primaryCaret.logicalPosition.line
+      val elementOffset = if (completionElement.textOffset >= completionParameters.position.textOffset) {
+        val completionDiff = completionParameters.position.containingFile.textLength - completionParameters.originalFile.textLength
+        completionElement.textOffset - completionDiff
+      } else {
+        completionElement.textOffset
+      }
+      if (elementOffset < 0) {
         return null
       }
-
-      val offset =
-        if (completionParameters.position.containingFile == element.containingFile) {
-          val textOffset = element.textOffset
-
-          if (textOffset == -1) {
-            return null
-          }
-
-          if (textOffset <= completionParameters.position.textOffset) textOffset
-          else textOffset - DUMMY_IDENTIFIER.length
-        }
-        else if (completionParameters.originalFile == element.containingFile) {
-          val textOffset = element.textOffset
-
-          if (textOffset == -1) {
-            return null
-          }
-
-          textOffset
-        }
-        else {
-          return null
-        }
-
-      return completionParameters.editor.document.getLineNumber(offset)
-    }
-
-    try {
-      val positionLine = line(completionParameters.position) ?: return null
-      val elementLine = line(completionElement) ?: return null
-      return positionLine - elementLine
+      val elementLine = completionParameters.editor.document.getLineNumber(elementOffset)
+      return completionLine - elementLine
     } catch (e: ProcessCanceledException) {
       throw e
     } catch (e: Throwable) {
