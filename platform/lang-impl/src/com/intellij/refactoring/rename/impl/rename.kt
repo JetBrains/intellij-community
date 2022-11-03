@@ -47,7 +47,7 @@ internal fun showDialogAndRename(project: Project, target: RenameTarget, targetN
     targetName = targetName,
     renameOptions = renameOptions(project, target)
   )
-  val dialog = RenameDialog(project, target, target.presentation().presentableText, initOptions)
+  val dialog = RenameDialog(project, target.presentation().presentableText, initOptions)
   if (!dialog.showAndGet()) {
     // cancelled
     return

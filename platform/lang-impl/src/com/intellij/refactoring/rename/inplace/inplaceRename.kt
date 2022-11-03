@@ -2,25 +2,16 @@
 package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.hint.HintManager
-import com.intellij.codeInsight.hint.HintManager.ABOVE
-import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.template.Expression
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.TemplateResultListener.TemplateResult
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.codeInsight.template.impl.Variable
-import com.intellij.ide.nls.NlsMessages
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.FinishMarkAction
@@ -29,18 +20,11 @@ import com.intellij.openapi.command.impl.StartMarkAction.AlreadyStartedException
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.CaretEvent
-import com.intellij.openapi.editor.event.CaretListener
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.LocalSearchScope
@@ -52,30 +36,17 @@ import com.intellij.refactoring.rename.api.ReplaceTextTargetContext.IN_PLAIN_TEX
 import com.intellij.refactoring.rename.impl.*
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring.PRIMARY_VARIABLE_NAME
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.createRenameSettingsInlay
-import com.intellij.ui.LightweightHint
 import com.intellij.util.Query
-import com.intellij.util.asSafely
 
 /**
  * @return `false` if the template cannot be started,
  * e.g., when usage under caret isn't supported
  */
 internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarget): Boolean {
-  val validatorPointer = RenameValidatorFactory.renameValidator(project, target)?.createPointer()
-
-  fun validateName(newName: String): RenameValidationResultData {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    return (validatorPointer?.dereference()?.validate(newName)
-           ?: RenameValidationResult.ok()) as RenameValidationResultData
-  }
-
   val targetPointer: Pointer<out RenameTarget> = target.createPointer()
 
   fun performRename(newName: String) {
-    val validation = validateName(newName)
-    if (validation.level == RenameValidationResultProblemLevel.ERROR) {
-      return
-    }
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     val restoredTarget = targetPointer.dereference() ?: return
     val options = renameOptions(project, restoredTarget)
     rename(project, targetPointer, newName, options)
@@ -113,21 +84,12 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
     // => fall back to rename with a dialog
     return false
   }
-  if (originUsage !is ModifiableRenameUsage) {
+  if (originUsage !is ModifiableRenameUsage || originUsage.fileUpdater !== idFileRangeUpdater) {
+    // TODO support starting inplace rename from a usage with a custom updater,
+    //  e.g., starting rename from `foo` reference to `getFoo` method.
+    //  This will require an ability to obtain the new name by a usage text,
+    //  and we don't need this ability when we are 100% sure they are the same (idFileRangeUpdater).
     return false
-  }
-  if (originUsage.fileUpdater !== idFileRangeUpdater) {
-    val originUsageRange: TextRange = usageRangeInHost(hostFile, originUsage)
-                                      ?: return false
-    val hostDocumentContent = hostDocument.text
-    val originUsageText = originUsageRange.substring(hostDocumentContent)
-    if (!originUsage.declaration || originUsageText != target.targetName) {
-      // TODO support starting inplace rename from a usage with a custom updater,
-      //  e.g., starting rename from `foo` reference to `getFoo` method.
-      //  This will require an ability to obtain the new name by a usage text,
-      //  and we don't need this ability when we are 100% sure they are the same (idFileRangeUpdater).
-      return false
-    }
   }
   var textOptions: TextOptions = getTextOptions(target)
   val data = prepareTemplate(hostDocument, hostFile, originUsage, psiUsages, textOptionsRef = { textOptions })
@@ -158,7 +120,6 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
         templateHighlighting.updateHighlighters(textOptions)
         setTextOptions(targetPointer, textOptions)
       }
-      registerTemplateValidation(templateState, editor, ::validateName)
       Disposer.register(templateState, templateHighlighting)
       Disposer.register(templateState, storeInplaceContinuation(hostEditor, InplaceRenameContinuation(targetPointer)))
       Disposer.register(templateState, finishMarkAction::run)
@@ -221,14 +182,7 @@ private fun prepareTemplate(
     }
     val usageRangeInHost: TextRange = usageRangeInHost(hostFile, usage)
                                       ?: continue // the usage is inside injection, and it's split into several chunks in host
-    val usageTextByName = if (fileUpdater === idFileRangeUpdater)
-      fileUpdater.usageTextByName
-    else {
-      val usagePtr = (usage as ModifiableRenameUsage).createPointer();
-      { newName: String ->
-        usagePtr.dereference()?.fileUpdater?.asSafely<PsiRenameUsageRangeUpdater>()?.usageTextByName?.invoke(newName) ?: newName
-      }
-    }
+    val usageTextByName = fileUpdater.usageTextByName
     val segment = if (usage is TextRenameUsage) {
       val originalText = usageRangeInHost.substring(hostDocumentContent)
       when (usage.context) {
@@ -372,93 +326,5 @@ private fun storeInplaceContinuation(editor: Editor, continuation: InplaceRefact
   return Disposable {
     editor.putUserData(InplaceRefactoringContinuation.INPLACE_REFACTORING_CONTINUATION, null)
     editor.putUserData(InplaceRefactoring.INPLACE_RENAMER, null)
-  }
-}
-
-private fun registerTemplateValidation(templateState: TemplateState,
-                                       editor: Editor,
-                                       nameValidator: (String) -> RenameValidationResultData) {
-
-  var showWarningConfirmation = false
-
-  fun validateAndShowHint() {
-    val newName = templateState.getNewName()
-    if (newName.isEmpty()) return
-    val validationResult = nameValidator(newName)
-    if (validationResult.level != RenameValidationResultProblemLevel.OK) {
-      ApplicationManager.getApplication().invokeLater {
-        val label = if (validationResult.level == RenameValidationResultProblemLevel.WARNING) {
-          val confirmMessage = if (showWarningConfirmation)
-            HtmlBuilder().append(HtmlChunk.p().addText(
-              RefactoringBundle.message(
-                "inplace.refactoring.press.again.to.complete",
-                NlsMessages.formatOrList(
-                  ActionUtil.getShortcutSet("NextTemplateVariable").shortcuts.map { KeymapUtil.getShortcutText(it) }))
-            )).toString()
-          else ""
-          HintUtil.createWarningLabel(validationResult.message(newName) + confirmMessage)
-        }
-        else
-          HintUtil.createErrorLabel(validationResult.message(newName))
-        val hint = LightweightHint(label)
-        val flags = HintManager.HIDE_BY_ESCAPE or HintManager.HIDE_BY_CARET_MOVE or HintManager.HIDE_BY_TEXT_CHANGE
-        HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, ABOVE, flags, 0, false)
-      }
-    }
-  }
-
-  val preventAction = PreventInvalidTemplateFinishAction(
-    nameValidator, templateState, { showWarningConfirmation },
-    { showWarningConfirmation = it; validateAndShowHint() }
-  )
-  preventAction.registerCustomShortcutSet(ActionUtil.getShortcutSet("NextTemplateVariable"),
-                                          editor.component, templateState)
-
-  editor.document.addDocumentListener(object : DocumentListener {
-    override fun documentChanged(event: DocumentEvent) {
-      showWarningConfirmation = false
-      validateAndShowHint()
-    }
-  }, templateState)
-
-  editor.caretModel.addCaretListener(object : CaretListener {
-    override fun caretPositionChanged(event: CaretEvent) {
-      validateAndShowHint()
-    }
-  }, templateState)
-
-  validateAndShowHint()
-}
-
-private class PreventInvalidTemplateFinishAction(
-  private val nameValidator: (String) -> RenameValidationResultData,
-  private val templateState: TemplateState,
-  private val hasWarningConfirmed: () -> Boolean,
-  private val validateAndShowHint: (Boolean) -> Unit) : AnAction() {
-
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-
-  override fun update(e: AnActionEvent) {
-    val result = nameValidator(templateState.getNewName())
-    e.presentation.isEnabled = true
-    when (result.level) {
-      RenameValidationResultProblemLevel.OK -> {
-        e.presentation.isEnabled = false
-      }
-      RenameValidationResultProblemLevel.WARNING -> {
-        if (!hasWarningConfirmed()) {
-          validateAndShowHint(true)
-        } else {
-          e.presentation.isEnabled = false
-        }
-      }
-      RenameValidationResultProblemLevel.ERROR -> {
-        validateAndShowHint(false)
-      }
-    }
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-
   }
 }

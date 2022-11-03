@@ -250,7 +250,7 @@ public class ComponentValidator {
       reset();
     }
 
-    if (hasNewInfo || (info != null && popup != null && !popup.isVisible())) {
+    if (hasNewInfo) {
       validationInfo = info;
 
       if (popup != null && popup.isVisible() && tipComponent != null) {

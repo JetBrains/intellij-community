@@ -25,8 +25,6 @@
     <extensionPoint name="moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler" dynamic="true"/>
     <extensionPoint name="rename.symbolRenameTargetFactory" dynamic="true"
                     interface="com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory"/>
-    <extensionPoint name="rename.renameTargetRenameValidatorFactory" dynamic="true"
-                    interface="com.intellij.refactoring.rename.api.RenameTargetRenameValidatorFactory"/>
 
     <extensionPoint name="renameFileActionProvider" interface="com.intellij.refactoring.actions.RenameFileActionProvider" dynamic="true"/>
 
