@@ -1161,6 +1161,62 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent(), psiFile.text)
     }
 
+    fun `test initialize field in primary constructor with same name and class body`() {
+        val psiFile = myFixture.configureByText("MyClass.kt", """
+            class My<caret>Class(field: String) {
+                private val field: String
+
+                public fun test() {
+                    val i = 0
+                }
+            }
+        """.trimIndent())
+
+        val uClass =
+            myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>().toUElementOfType<UClass>()
+                ?: kfail("Cannot find UClass")
+        val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
+        val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
+
+        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        TestCase.assertEquals("""
+            class MyClass(private val field: String) {
+                public fun test() {
+                    val i = 0
+                }
+            }
+        """.trimIndent(), psiFile.text)
+    }
+
+    fun `test initialize field in primary constructor with leading blank line`() {
+        val psiFile = myFixture.configureByText("MyClass.kt", """
+            class My<caret>Class(field: String) {
+
+                private val field: String
+
+                public fun test() {
+                    val i = 0
+                }
+            }
+        """.trimIndent())
+
+        val uClass =
+            myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>().toUElementOfType<UClass>()
+                ?: kfail("Cannot find UClass")
+        val uField = uClass.fields.firstOrNull() ?: kfail("Cannot find field")
+        val uParameter = uClass.methods.find { it.uastParameters.isNotEmpty() }?.uastParameters?.firstOrNull() ?: kfail("Cannot find parameter")
+
+        WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
+        TestCase.assertEquals("""
+            class MyClass(private val field: String) {
+
+                public fun test() {
+                    val i = 0
+                }
+            }
+        """.trimIndent(), psiFile.text)
+    }
+
     private fun createTypeFromText(s: String, newClass: PsiElement?): PsiType {
         return JavaPsiFacade.getElementFactory(myFixture.project).createTypeFromText(s, newClass)
     }
