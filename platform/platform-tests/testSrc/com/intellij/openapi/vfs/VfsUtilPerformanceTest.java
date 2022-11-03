@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.IntStream;
 
 import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.*;
@@ -322,17 +321,14 @@ public class VfsUtilPerformanceTest {
     WriteCommandAction.runWriteCommandAction(null, () -> RefreshQueue.getInstance().processEvents(false, events));
   }
 
-  private void eventsForCreating(List<? super VFileEvent> events, int N, VirtualDirectoryImpl temp) {
+  private void eventsForCreating(List<VFileEvent> events, int N, VirtualDirectoryImpl temp) throws IOException {
     events.clear();
     TempFileSystem fs = TempFileSystem.getInstance();
-    IntStream.range(0, N)
-      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, null, null, false, null))
-      .peek(event -> {
-        if (fs.findModelChild(temp, event.getChildName()) == null) {
-          fs.createChildFile(this, temp, event.getChildName());
-        }
-      })
-      .forEach(events::add);
+    for (int i = 0; i < N; i++) {
+      String childName = i + ".txt";
+      fs.createIfNotExists(temp, childName);
+      events.add(new VFileCreateEvent(this, temp, childName, false, null, null, false, null));
+    }
     List<CharSequence> names = ContainerUtil.map(events, e -> ((VFileCreateEvent)e).getChildName());
     temp.removeChildren(IntSortedSets.EMPTY_SET, names);
   }
