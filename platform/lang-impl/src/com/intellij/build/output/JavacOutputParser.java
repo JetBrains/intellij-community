@@ -32,7 +32,7 @@ public class JavacOutputParser implements BuildOutputParser {
 
   private static final char COLON = ':';
   private static final @NonNls String WARNING_PREFIX = "warning:"; // default value
-  private static final @NonNls String NOTE_PREFIX = "note:";
+  private static final @NonNls String NOTE_PREFIX = "Note:";
   private static final @NonNls String ERROR_PREFIX = "error:";
   private final String[] myFileExtensions;
 
