@@ -49,7 +49,6 @@ public class MavenIndices implements Disposable {
 
   private final MavenIndexerWrapper myIndexer;
   private final File myIndicesDir;
-  private final MavenSearchIndex.IndexListener myListener;
 
   private volatile @NotNull MavenIndexHolder myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
   private volatile boolean indicesInit;
@@ -57,10 +56,9 @@ public class MavenIndices implements Disposable {
 
   private final ReentrantLock updateIndicesLock = new ReentrantLock();
 
-  public MavenIndices(MavenIndexerWrapper indexer, File indicesDir, MavenSearchIndex.IndexListener listener) {
+  public MavenIndices(MavenIndexerWrapper indexer, File indicesDir) {
     myIndexer = indexer;
     myIndicesDir = indicesDir;
-    myListener = listener;
   }
 
   void updateIndicesList(@NotNull Project project) {
@@ -81,7 +79,7 @@ public class MavenIndices implements Disposable {
       List<MavenIndex> remoteIndices = myIndexHolder.getRemoteIndices();
 
       if (isDisposed) return;
-      RepositoryDiffContext context = new RepositoryDiffContext(myIndexer, myListener, myIndicesDir);
+      RepositoryDiffContext context = new RepositoryDiffContext(myIndexer, myIndicesDir);
 
       RepositoryDiff<MavenIndex> localDiff = getLocalDiff(localRepository, context, localIndex);
       RepositoryDiff<List<MavenIndex>> remoteDiff = getRemoteDiff(remoteRepositoryIdsByUrl, remoteIndices, context);
@@ -187,7 +185,7 @@ public class MavenIndices implements Disposable {
     List<MavenIndex> list = new ArrayList<>(indices);
     for (MavenIndex each : list) {
       try {
-        each.finalClose(false);
+        each.close(false);
       }
       catch (Exception e) {
         MavenLog.LOG.error("indices dispose error", e);
@@ -308,14 +306,11 @@ public class MavenIndices implements Disposable {
 
   static class RepositoryDiffContext {
     final @NotNull MavenIndexerWrapper indexer;
-    final @NotNull MavenSearchIndex.IndexListener listener;
     final @NotNull File indicesDir;
     @Nullable List<MavenIndexUtils.IndexPropertyHolder> indexPropertyHolders;
 
-    RepositoryDiffContext(@NotNull MavenIndexerWrapper indexer,
-                          MavenSearchIndex.@NotNull IndexListener listener, @NotNull File dir) {
+    RepositoryDiffContext(@NotNull MavenIndexerWrapper indexer, @NotNull File dir) {
       this.indexer = indexer;
-      this.listener = listener;
       indicesDir = dir;
     }
   }

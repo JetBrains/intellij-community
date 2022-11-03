@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
+import org.jetbrains.idea.maven.indices.MavenIndices;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
@@ -437,6 +438,13 @@ public final class MavenServerManager implements Disposable {
         new MavenIndexerWrapper(null) {
 
           @Override
+          protected MavenIndices createMavenIndices() {
+            MavenIndices indices = new MavenIndices(this, getIndicesDir().toFile());
+            Disposer.register(MavenServerManager.this, indices);
+            return indices;
+          }
+
+          @Override
           protected @NotNull MavenServerIndexer create() throws RemoteException {
             MavenServerConnector indexingConnector = getIndexingConnector();
             return indexingConnector.createIndexer();
@@ -492,12 +500,26 @@ public final class MavenServerManager implements Disposable {
     if (MavenWslUtil.tryGetWslDistributionForPath(path) != null) {
       return new MavenIndexerWrapper(null) {
         @Override
+        protected MavenIndices createMavenIndices() {
+          MavenIndices indices = new MavenIndices(this, getIndicesDir().toFile());
+          Disposer.register(project, indices);
+          return indices;
+        }
+
+        @Override
         protected @NotNull MavenServerIndexer create() throws RemoteException {
           return new DummyIndexer();
         }
       };
     }
     return new MavenIndexerWrapper(null) {
+      @Override
+      protected MavenIndices createMavenIndices() {
+        MavenIndices indices = new MavenIndices(this, getIndicesDir().toFile());
+        Disposer.register(project, indices);
+        return indices;
+      }
+
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {

@@ -51,7 +51,6 @@ public final class MavenIndicesManager implements Disposable {
   private final IndexFixer myIndexFixer = new IndexFixer();
   private final MavenIndexUpdateManager myIndexUpdateManager;
 
-  private volatile Path myTestIndicesDir;
 
   public static MavenIndicesManager getInstance(@NotNull Project project) {
     return project.getService(MavenIndicesManager.class);
@@ -61,11 +60,10 @@ public final class MavenIndicesManager implements Disposable {
     myProject = project;
     myIndexerWrapper = MavenServerManager.getInstance().createIndexer(myProject);
     myIndexUpdateManager = new MavenIndexUpdateManager();
-    myMavenIndices = new MavenIndices(myIndexerWrapper, getIndicesDir().toFile(), new MavenSearchIndexListener(this));
+    myMavenIndices = myIndexerWrapper.getOrCreateIndices();
 
     initListeners();
 
-    Disposer.register(this, myMavenIndices);
     Disposer.register(this, myIndexUpdateManager);
   }
 
@@ -134,16 +132,9 @@ public final class MavenIndicesManager implements Disposable {
     }, this);
   }
 
-  @TestOnly
-  public void setTestIndexDir(Path indicesDir) {
-    myTestIndicesDir = indicesDir;
-  }
-
   @NotNull
   Path getIndicesDir() {
-    return myTestIndicesDir == null
-           ? MavenUtil.getPluginSystemDir("Indices")
-           : myTestIndicesDir;
+    return MavenIndexerWrapper.getIndicesDir();
   }
 
   public void addArchetype(@NotNull MavenArchetype archetype) {
