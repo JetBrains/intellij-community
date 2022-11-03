@@ -180,8 +180,13 @@ public final class FormatDecode {
       final Validator allowed;
       if (dateSpec != null) {  // a t or T
         checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
+        DateTimeConversionType dateTimeConversionType = getDateTimeConversionType(conversion.charAt(0));
+        if (dateTimeConversionType == DateTimeConversionType.UNKNOWN) {
+          throw new IllegalFormatException(
+            InspectionGadgetsBundle.message("format.string.error.unknown.conversion", dateSpec + conversion));
+        }
         checkNoPrecision(precision, specifier);
-        allowed = new DateValidator(specifier);
+        allowed = new DateValidator(specifier, dateTimeConversionType);
       }
       else {
         switch (conversion.charAt(0)) {
@@ -200,6 +205,7 @@ public final class FormatDecode {
           }
           case 'd' -> { // decimal integer
             checkFlags(flagBits, ~ALTERNATE, specifier);
+            checkNoPrecision(precision, specifier);
             allowed = new IntValidator(specifier);
           }
           case 'o', 'x', 'X' -> { // octal integer, hexadecimal integer
@@ -248,6 +254,16 @@ public final class FormatDecode {
     }
 
     return parameters.toArray(new Validator[0]);
+  }
+
+  private static DateTimeConversionType getDateTimeConversionType(char conversion) {
+    return switch (conversion) {
+      case 'H', 'I', 'k', 'l', 'M', 'S', 'L', 'N', 'p', 'R', 'T', 'r' -> DateTimeConversionType.TIME;
+      case 'z', 'Z' -> DateTimeConversionType.ZONE;
+      case 's', 'Q', 'c' -> DateTimeConversionType.ZONED_DATE_TIME;
+      case 'B', 'b', 'h', 'A', 'a', 'C', 'Y', 'y', 'j', 'm', 'd', 'e', 'D', 'F' -> DateTimeConversionType.DATE;
+      default -> DateTimeConversionType.UNKNOWN;
+    };
   }
 
   private static void checkNoPrecision(String precision, String specifier) {
@@ -354,8 +370,11 @@ public final class FormatDecode {
 
   private static class DateValidator extends Validator {
 
-    DateValidator(String specifier) {
+    private final DateTimeConversionType dateTimeConversionType;
+
+    DateValidator(String specifier, DateTimeConversionType dateTimeConversionType) {
       super(specifier);
+      this.dateTimeConversionType = dateTimeConversionType;
     }
 
     @Override
@@ -365,7 +384,20 @@ public final class FormatDecode {
              CommonClassNames.JAVA_LANG_LONG.equals(text) ||
              InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_DATE) ||
              InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_CALENDAR) ||
-             InheritanceUtil.isInheritor(type, "java.time.temporal.TemporalAccessor");
+             (InheritanceUtil.isInheritor(type, "java.time.temporal.TemporalAccessor") &&
+              isValidTemporalAccessor(text));
+    }
+
+    private boolean isValidTemporalAccessor(String text) {
+      return switch (text) {
+        case CommonClassNames.JAVA_TIME_LOCAL_DATE_TIME -> dateTimeConversionType == DateTimeConversionType.TIME ||
+                                          dateTimeConversionType == DateTimeConversionType.DATE;
+        case CommonClassNames.JAVA_TIME_LOCAL_DATE -> dateTimeConversionType == DateTimeConversionType.DATE;
+        case CommonClassNames.JAVA_TIME_LOCAL_TIME -> dateTimeConversionType == DateTimeConversionType.TIME;
+        case CommonClassNames.JAVA_TIME_OFFSET_TIME -> dateTimeConversionType == DateTimeConversionType.TIME ||
+                                       dateTimeConversionType == DateTimeConversionType.ZONE;
+        default -> true;
+      };
     }
   }
 
@@ -545,11 +577,15 @@ public final class FormatDecode {
     }
 
     public String calculateValue() {
-       final PsiType formatType = myExpression.getType();
+      final PsiType formatType = myExpression.getType();
       if (formatType == null) {
         return null;
       }
       return (String)ConstantExpressionUtil.computeCastTo(myExpression, formatType);
     }
+  }
+
+  private enum DateTimeConversionType {
+    UNKNOWN, TIME, ZONE, ZONED_DATE_TIME, DATE
   }
 }

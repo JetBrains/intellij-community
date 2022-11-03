@@ -101,11 +101,24 @@ public class MalformedFormatString {
         String.format(<warning descr="Illegal format string specifier: precision ('.4') not allowed in '%.4tT'">"%.4tT"</warning>, new Date());
         String.format(<warning descr="Illegal format string specifier: precision ('.5') not allowed in '%.5c'">"%.5c"</warning>, '\u00A9');
         String.format(<warning descr="Illegal format string specifier: precision ('.6') not allowed in '%.6x'">"%.6x"</warning>, 15);
+        String.format(<warning descr="Illegal format string specifier: precision ('.1') not allowed in '%.1d'">"%.1d"</warning>, 1);
+
+        //date-time conversions not allowed
+        String.format(<warning descr="Illegal format string specifier: unknown conversion in 'tX'">"%tX"</warning>, java.time.LocalDateTime.now());
+        String.format("%tz", <warning descr="Argument type 'LocalDateTime' does not match the type of the format specifier '%tz'">java.time.LocalDateTime.now()</warning>);
+        String.format("%ts", <warning descr="Argument type 'LocalDateTime' does not match the type of the format specifier '%ts'">java.time.LocalDateTime.now()</warning>);
+        String.format("%tH", <warning descr="Argument type 'LocalDate' does not match the type of the format specifier '%tH'">java.time.LocalDate.now()</warning>);
+        String.format("%th", <warning descr="Argument type 'LocalTime' does not match the type of the format specifier '%th'">java.time.LocalTime.now()</warning>);
+        String.format("%ta", <warning descr="Argument type 'OffsetTime' does not match the type of the format specifier '%ta'">java.time.OffsetTime.now()</warning>);
     }
 
     void goodStrings() {
         String.format("%,d", 34567890);
         System.out.printf("%tF %n", java.time.ZonedDateTime.now()); // java.time.temporal.TemporalAccessor, new in Java 8
+        System.out.printf("%tI", java.time.LocalDateTime.now());
+        System.out.printf("%tB", java.time.LocalDate.now());
+        System.out.printf("%tR", java.time.LocalTime.now());
+        System.out.printf("%tZ", java.time.OffsetDateTime.now());
     }
 
     void previousFlag() {
