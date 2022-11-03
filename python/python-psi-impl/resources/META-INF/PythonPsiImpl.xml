@@ -87,6 +87,8 @@
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"
                               language="Python"/>
 
+    <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.imports.PyImportOptimizer"/>
+
     <!-- PyDocstring -->
     <languageInjector implementation="com.jetbrains.python.documentation.doctest.PyDocstringLanguageInjector"/>
     <lang.parserDefinition language="Doctest" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringParserDefinition"/>
