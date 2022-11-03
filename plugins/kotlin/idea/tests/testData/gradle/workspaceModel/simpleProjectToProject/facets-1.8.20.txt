@@ -39,7 +39,7 @@ MODULES
             dependsOn module names:
                 :a:commonTest
             Additional visible module names:
-            Additional compiler arguments: -Xallow-no-source-files -module-name a_test
+            Additional compiler arguments: -Xallow-no-source-files
     SimpleProjectToProject.a.macosX64Main
         Settings from the Kotlin facet:
             External project ID: :a
@@ -99,7 +99,7 @@ MODULES
             dependsOn module names:
                 :b:commonTest
             Additional visible module names:
-            Additional compiler arguments: -Xallow-no-source-files -module-name b_test
+            Additional compiler arguments: -Xallow-no-source-files
     SimpleProjectToProject.b.macosX64Main
         Settings from the Kotlin facet:
             External project ID: :b
