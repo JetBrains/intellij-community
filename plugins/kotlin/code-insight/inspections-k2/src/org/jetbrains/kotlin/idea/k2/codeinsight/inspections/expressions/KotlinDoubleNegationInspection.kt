@@ -1,34 +1,30 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 
-internal class KotlinDoubleNegationInspection :
-    AbstractKotlinApplicatorBasedInspection<KtPrefixExpression, KotlinApplicatorInput.Empty>(KtPrefixExpression::class) {
-    override fun getApplicabilityRange() = ApplicabilityRanges.SELF
+internal class KotlinDoubleNegationInspection : KotlinApplicableInspection<KtPrefixExpression>(KtPrefixExpression::class) {
+    override fun getFamilyName(): String = KotlinBundle.message("inspection.kotlin.double.negation.display.name")
+    override fun getActionName(element: KtPrefixExpression): String =
+        KotlinBundle.message("inspection.kotlin.double.negation.action.name")
 
-    override fun getInputProvider() = inputProvider { element: KtPrefixExpression ->
-        KotlinApplicatorInput.Empty.takeIf { element.getKtType()?.isBoolean == true }
-    }
+    override fun isApplicableByPsi(element: KtPrefixExpression): Boolean =
+        element.operationToken == KtTokens.EXCL
+            && (element.parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
 
-    override fun getApplicator() = applicator<KtPrefixExpression, KotlinApplicatorInput.Empty> {
-        familyAndActionName(KotlinBundle.lazyMessage("inspection.kotlin.double.negation.display.name"))
-        isApplicableByPsi { element ->
-            element.operationToken == KtTokens.EXCL
-                    && (element.parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
-        }
-        applyTo { element, _ ->
-            element.baseExpression?.let { element.parentThroughParenthesis.replace(it) }
-        }
+    context(KtAnalysisSession)
+    override fun isApplicableByAnalyze(element: KtPrefixExpression): Boolean = element.getKtType()?.isBoolean == true
+
+    override fun apply(element: KtPrefixExpression, project: Project, editor: Editor?) {
+        element.baseExpression?.let { element.parentThroughParenthesis.replace(it) }
     }
 }
 

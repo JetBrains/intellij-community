@@ -2,37 +2,39 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableDiagnosticInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
-import kotlin.reflect.KClass
 
 internal class UnusedVariableInspection :
-    AbstractKotlinDiagnosticBasedInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, KotlinApplicatorInput.Empty>(
-        elementType = KtNamedDeclaration::class,
+    KotlinApplicableDiagnosticInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable>(
+        KtNamedDeclaration::class,
     ) {
+
+    override fun getFamilyName(): String = KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
+    override fun getActionName(element: KtNamedDeclaration): String =
+        KotlinBundle.message("remove.variable.0", element.name.toString())
+
     override fun getDiagnosticType() = KtFirDiagnostic.UnusedVariable::class
 
-    override fun getInputByDiagnosticProvider() =
-        inputByDiagnosticProvider<_, KtFirDiagnostic.UnusedVariable, _> { diagnostic ->
-            val ktProperty = diagnostic.psi as? KtProperty ?: return@inputByDiagnosticProvider null
-            if (ktProperty.isExplicitTypeReferenceNeededForTypeInference()) return@inputByDiagnosticProvider null
-            KotlinApplicatorInput
-        }
-
     override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_NAME
-    override fun getApplicator() = applicator<KtNamedDeclaration, KotlinApplicatorInput.Empty> {
-        familyName(KotlinBundle.lazyMessage("remove.element"))
-        actionName { psi, _ ->
-            KotlinBundle.message("remove.variable.0", psi.name.toString())
-        }
-        applyTo { psi, _ ->
-            removeProperty(psi as KtProperty)
-        }
+
+    context(KtAnalysisSession)
+    override fun isApplicableByDiagnostic(element: KtNamedDeclaration, diagnostic: KtFirDiagnostic.UnusedVariable): Boolean {
+        val ktProperty = diagnostic.psi as? KtProperty ?: return false
+        return !ktProperty.isExplicitTypeReferenceNeededForTypeInference()
+    }
+
+    override fun apply(element: KtNamedDeclaration, project: Project, editor: Editor?) {
+        val property = element as? KtProperty ?: return
+        removeProperty(property)
     }
 }

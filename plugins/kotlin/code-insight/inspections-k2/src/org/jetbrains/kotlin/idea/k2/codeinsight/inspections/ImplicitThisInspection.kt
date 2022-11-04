@@ -1,64 +1,63 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
-internal class ImplicitThisInspection : AbstractKotlinApplicatorBasedInspection<KtExpression, ImplicitThisInspection.ImplicitReceiverInfo>(
+internal class ImplicitThisInspection : KotlinApplicableInspectionWithContext<KtExpression, ImplicitThisInspection.ImplicitReceiverInfo>(
     KtExpression::class
 ) {
     data class ImplicitReceiverInfo(
         val receiverLabel: Name?,
         val isUnambiguousLabel: Boolean
-    ) : KotlinApplicatorInput
+    )
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
+    override fun getFamilyName(): String = KotlinBundle.message("inspection.implicit.this.display.name")
+    override fun getActionName(element: KtExpression, context: ImplicitReceiverInfo): String =
+        KotlinBundle.message("inspection.implicit.this.action.name")
 
-    override fun getInputProvider() = inputProvider { expression: KtExpression ->
-        val reference = if (expression is KtCallableReferenceExpression) expression.callableReference else expression
-        val declarationSymbol = reference.mainReference?.resolveToSymbol() ?: return@inputProvider null
+    override fun isApplicableByPsi(element: KtExpression): Boolean {
+        return when (element) {
+            is KtSimpleNameExpression -> {
+                if (element !is KtNameReferenceExpression) return false
+                if (element.parent is KtThisExpression) return false
+                if (element.parent is KtCallableReferenceExpression) return false
+                if (element.isSelectorOfDotQualifiedExpression()) return false
+                val parent = element.parent
+                if (parent is KtCallExpression && parent.isSelectorOfDotQualifiedExpression()) return false
+                true
+            }
+            is KtCallableReferenceExpression -> element.receiverExpression == null
+            else -> false
+        }
+    }
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtExpression): ImplicitReceiverInfo? {
+        val reference = if (element is KtCallableReferenceExpression) element.callableReference else element
+        val declarationSymbol = reference.mainReference?.resolveToSymbol() ?: return null
 
         // Get associated class symbol on declaration-site
-        val declarationAssociatedClass = getAssociatedClass(declarationSymbol) ?: return@inputProvider null
+        val declarationAssociatedClass = getAssociatedClass(declarationSymbol) ?: return null
 
         // Getting the implicit receiver
         val allImplicitReceivers = reference.containingKtFile.getScopeContextForPosition(reference).implicitReceivers
-        getImplicitReceiverInfoOfClass(allImplicitReceivers, declarationAssociatedClass)
+        return getImplicitReceiverInfoOfClass(allImplicitReceivers, declarationAssociatedClass)
     }
 
-    override fun getApplicator(): KotlinApplicator<KtExpression, ImplicitReceiverInfo> = applicator<KtExpression, ImplicitReceiverInfo> {
-        familyAndActionName(KotlinBundle.lazyMessage(("inspection.implicit.this.display.name")))
-        isApplicableByPsi { expression ->
-            when (expression) {
-                is KtSimpleNameExpression -> {
-                    if (expression !is KtNameReferenceExpression) return@isApplicableByPsi false
-                    if (expression.parent is KtThisExpression) return@isApplicableByPsi false
-                    if (expression.parent is KtCallableReferenceExpression) return@isApplicableByPsi false
-                    if (expression.isSelectorOfDotQualifiedExpression()) return@isApplicableByPsi false
-                    val parent = expression.parent
-                    if (parent is KtCallExpression && parent.isSelectorOfDotQualifiedExpression()) return@isApplicableByPsi false
-                    true
-                }
-                is KtCallableReferenceExpression -> expression.receiverExpression == null
-                else -> false
-            }
-        }
-        applyTo { expression, input ->
-            expression.addImplicitThis(input)
-        }
+    override fun apply(element: KtExpression, context: ImplicitReceiverInfo, project: Project, editor: Editor?) {
+        element.addImplicitThis(context)
     }
-
 }
 
 private fun KtAnalysisSession.getAssociatedClass(symbol: KtSymbol): KtClassOrObjectSymbol? {

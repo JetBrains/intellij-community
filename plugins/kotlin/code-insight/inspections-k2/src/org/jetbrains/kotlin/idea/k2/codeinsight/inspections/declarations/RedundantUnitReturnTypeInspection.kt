@@ -3,38 +3,38 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class RedundantUnitReturnTypeInspection :
-    AbstractKotlinApplicatorBasedInspection<KtNamedFunction, TypeInfo>(
-        KtNamedFunction::class
-    ), CleanupLocalInspectionTool {
+    KotlinApplicableInspectionWithContext<KtNamedFunction, TypeInfo>(KtNamedFunction::class),
+    CleanupLocalInspectionTool {
+
+    override fun getFamilyName(): String = KotlinBundle.message("inspection.redundant.unit.return.type.display.name")
+    override fun getActionName(element: KtNamedFunction, context: TypeInfo): String =
+        KotlinBundle.message("inspection.redundant.unit.return.type.action.name")
 
     override fun getApplicabilityRange() = ApplicabilityRanges.CALLABLE_RETURN_TYPE
 
-    override fun getApplicator() = applicator<KtNamedFunction, TypeInfo> {
-        isApplicableByPsi { callable ->
-            val function = callable as? KtNamedFunction ?: return@isApplicableByPsi false
-            function.hasBlockBody() && function.typeReference != null
-        }
-        familyName(KotlinBundle.lazyMessage("remove.explicit.type.specification"))
-        actionName(KotlinBundle.lazyMessage("redundant.unit.return.type"))
-        applyTo { declaration, typeInfo, project, editor ->
-            updateType(declaration, typeInfo, project, editor)
-        }
+    override fun isApplicableByPsi(element: KtNamedFunction): Boolean {
+        val function = element as? KtNamedFunction ?: return false
+        return function.hasBlockBody() && function.typeReference != null
     }
 
-    override fun getInputProvider() = inputProvider<KtNamedFunction, TypeInfo> { function ->
-        when {
-            function.getFunctionLikeSymbol().returnType.isUnit -> TypeInfo(TypeInfo.UNIT)
-            else -> null
-        }
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtNamedFunction): TypeInfo? = when {
+        element.getFunctionLikeSymbol().returnType.isUnit -> TypeInfo(TypeInfo.UNIT)
+        else -> null
+    }
+
+    override fun apply(element: KtNamedFunction, context: TypeInfo, project: Project, editor: Editor?) {
+        updateType(element, context, project, editor)
     }
 }

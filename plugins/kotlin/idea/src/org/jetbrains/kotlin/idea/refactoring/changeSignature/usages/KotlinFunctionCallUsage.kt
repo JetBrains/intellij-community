@@ -14,8 +14,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.RemoveEmptyParenthesesFromLambdaCallApplicator
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeEmptyArgumentListIfApplicable
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.isInsideOfCallerBody
@@ -470,13 +469,7 @@ class KotlinFunctionCallUsage(
         }
 
         if (!skipRedundantArgumentList) {
-            newCallExpression?.valueArgumentList?.let {
-                if (RemoveEmptyParenthesesFromLambdaCallApplicator.applicator.isApplicableByPsi(it, it.project)) {
-                    RemoveEmptyParenthesesFromLambdaCallApplicator.applicator.applyTo(
-                        it, KotlinApplicatorInput.Empty, it.project, editor = null
-                    )
-                }
-            }
+            newCallExpression?.valueArgumentList?.let(::removeEmptyArgumentListIfApplicable)
         }
 
         newElement.flushElementsForShorteningToWaitList()
