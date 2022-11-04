@@ -96,7 +96,7 @@ private val EVERYTHING_BUT_KOTLIN = object : QueryFactory<PsiMethod, OverridingM
 
 internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchParameters, PsiElement> {
     @RequiresReadLock
-    override fun collectSearchRequest(parameters: SearchParameters): Query<out PsiElement> {
+    override fun collectSearchRequests(parameters: SearchParameters): Collection<Query<out PsiElement>> {
         val baseFunction = parameters.ktCallableDeclaration
         val methods = baseFunction.toLightMethods()
 
@@ -104,10 +104,6 @@ internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchPa
             EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(it, parameters.searchScope, false))
         }
 
-        return object : AbstractQuery<PsiElement>() {
-            override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                return queries.all { it.forEach(consumer) }
-            }
-        }
+        return queries
     }
 }
