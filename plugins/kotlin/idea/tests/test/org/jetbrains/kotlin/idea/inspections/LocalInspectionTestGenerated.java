@@ -4788,6 +4788,159 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/enumValuesSoftDeprecate")
+    public static class EnumValuesSoftDeprecate extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("arrayAccessOperator.kt")
+        public void testArrayAccessOperator() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/arrayAccessOperator.kt");
+        }
+
+        @TestMetadata("arrayAccessOperatorInBinaryExpression.kt")
+        public void testArrayAccessOperatorInBinaryExpression() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/arrayAccessOperatorInBinaryExpression.kt");
+        }
+
+        @TestMetadata("arrayAssignOperator.kt")
+        public void testArrayAssignOperator() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/arrayAssignOperator.kt");
+        }
+
+        @TestMetadata("arrayGetMethod.kt")
+        public void testArrayGetMethod() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/arrayGetMethod.kt");
+        }
+
+        @TestMetadata("arrayMethodNonSuitableForList.kt")
+        public void testArrayMethodNonSuitableForList() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/arrayMethodNonSuitableForList.kt");
+        }
+
+        @TestMetadata("arraySizeMethod.kt")
+        public void testArraySizeMethod() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/arraySizeMethod.kt");
+        }
+
+        @TestMetadata("asListCall.kt")
+        public void testAsListCall() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/asListCall.kt");
+        }
+
+        @TestMetadata("callInsideEnumWithCast.kt")
+        public void testCallInsideEnumWithCast() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/callInsideEnumWithCast.kt");
+        }
+
+        @TestMetadata("callInsideEnumWithoutCast.kt")
+        public void testCallInsideEnumWithoutCast() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/callInsideEnumWithoutCast.kt");
+        }
+
+        @TestMetadata("callWithQualifiedClassName.kt")
+        public void testCallWithQualifiedClassName() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/callWithQualifiedClassName.kt");
+        }
+
+        @TestMetadata("equalsCheck.kt")
+        public void testEqualsCheck() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/equalsCheck.kt");
+        }
+
+        @TestMetadata("explicitTypeInGeneric.kt")
+        public void testExplicitTypeInGeneric() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/explicitTypeInGeneric.kt");
+        }
+
+        @TestMetadata("extensionMethodNonSutableForList.kt")
+        public void testExtensionMethodNonSutableForList() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/extensionMethodNonSutableForList.kt");
+        }
+
+        @TestMetadata("extensionMethodSuitableForList.kt")
+        public void testExtensionMethodSuitableForList() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/extensionMethodSuitableForList.kt");
+        }
+
+        @TestMetadata("featureDisabled.kt")
+        public void testFeatureDisabled() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/featureDisabled.kt");
+        }
+
+        @TestMetadata("forLoop.kt")
+        public void testForLoop() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/forLoop.kt");
+        }
+
+        @TestMetadata("functionWithGenericArg.kt")
+        public void testFunctionWithGenericArg() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithGenericArg.kt");
+        }
+
+        @TestMetadata("functionWithOverrideForList.kt")
+        public void testFunctionWithOverrideForList() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithOverrideForList.kt");
+        }
+
+        @TestMetadata("functionWithoutOverrideForList.kt")
+        public void testFunctionWithoutOverrideForList() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithoutOverrideForList.kt");
+        }
+
+        @TestMetadata("methodReferenceNonSuitableForList.kt")
+        public void testMethodReferenceNonSuitableForList() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/methodReferenceNonSuitableForList.kt");
+        }
+
+        @TestMetadata("methodReferenceSuitableForList.kt")
+        public void testMethodReferenceSuitableForList() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/methodReferenceSuitableForList.kt");
+        }
+
+        @TestMetadata("noOptIn.kt")
+        public void testNoOptIn() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/noOptIn.kt");
+        }
+
+        @TestMetadata("objectMethod.kt")
+        public void testObjectMethod() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/objectMethod.kt");
+        }
+
+        @TestMetadata("propertyAssignment.kt")
+        public void testPropertyAssignment() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/propertyAssignment.kt");
+        }
+
+        @TestMetadata("qualifiedCallNoContext.kt")
+        public void testQualifiedCallNoContext() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/qualifiedCallNoContext.kt");
+        }
+
+        @TestMetadata("staticImport.kt")
+        public void testStaticImport() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/staticImport.kt");
+        }
+
+        @TestMetadata("staticImportReplaceWithoutCast.kt")
+        public void testStaticImportReplaceWithoutCast() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/staticImportReplaceWithoutCast.kt");
+        }
+
+        @TestMetadata("staticImportWithAlias.kt")
+        public void testStaticImportWithAlias() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/staticImportWithAlias.kt");
+        }
+
+        @TestMetadata("valuesMethodReference.kt")
+        public void testValuesMethodReference() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/valuesMethodReference.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/equalsBetweenInconvertibleTypes")
     public static class EqualsBetweenInconvertibleTypes extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

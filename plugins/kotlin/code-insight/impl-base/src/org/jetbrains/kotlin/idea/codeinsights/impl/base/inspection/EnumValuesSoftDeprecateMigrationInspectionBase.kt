@@ -5,15 +5,20 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -21,9 +26,7 @@ import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.psi.*
 
 /**
  * Common logic for K1 and K2 for inspection which checks that `values()` method call in enum classes
@@ -47,11 +50,14 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
                     if (!isOptInAllowed(callExpression, EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
                         return
                     }
-                    if (isEnumValuesMethod(callExpression)) {
+                    val resolvedCall = callExpression.resolveCall().successfulFunctionCallOrNull() ?: return
+                    val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
+                    if (isEnumValuesMethod(resolvedCallSymbol)) {
+                        val quickFix = createQuickFix(callExpression, resolvedCallSymbol) ?: return
                         holder.registerProblem(
                             callExpression,
                             KotlinBundle.message("inspection.enum.values.method.soft.deprecate.migration.display.name"),
-                            ReplaceFix()
+                            quickFix
                         )
                     }
                 }
@@ -61,10 +67,8 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
     protected abstract fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 
     private fun KtAnalysisSession.isEnumValuesMethod(
-        call: KtCallExpression
+        symbol: KtFunctionLikeSymbol
     ): Boolean {
-        val functionCall = call.resolveCall().successfulFunctionCallOrNull() ?: return false
-        val symbol = functionCall.partiallyAppliedSymbol.symbol
         // TODO: extract common logic when KTIJ-23315 merged
         return KtClassKind.ENUM_CLASS == (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind &&
                 VALUES_METHOD_NAME == symbol.callableIdIfNonLocal?.callableName &&
@@ -72,17 +76,106 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
                 symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
     }
 
-    private class ReplaceFix : LocalQuickFix {
+    private fun KtAnalysisSession.createQuickFix(callExpression: KtCallExpression, symbol: KtFunctionLikeSymbol): LocalQuickFix? {
+        val enumClassSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
+        val enumClassQualifiedName = enumClassSymbol?.classIdIfNonLocal?.asFqNameString() ?: return null
+        return createQuickFix(isCastToArrayNeeded(callExpression), enumClassQualifiedName)
+    }
+
+    protected open fun createQuickFix(castToArrayNeeded: Boolean, enumClassQualifiedName: String): LocalQuickFix {
+        return ReplaceFix(castToArrayNeeded, enumClassQualifiedName)
+    }
+
+    private fun KtAnalysisSession.isCastToArrayNeeded(callExpression: KtCallExpression): Boolean {
+        val qualifiedOrSimpleCall = callExpression.qualifiedOrSimpleValuesCall()
+        val parent = qualifiedOrSimpleCall.parent
+        // Special handling for most popular use cases where `entries` can be used without cast to Array
+        when {
+            // values()[index]
+            parent is KtArrayAccessExpression && parent.parent !is KtBinaryExpression -> return false
+
+            // for (v in values())
+            parent is KtContainerNode && parent.parent is KtForExpression -> return false
+
+            // values().someMethod()
+            parent is KtDotQualifiedExpression -> {
+                val callableIdString = getCallableMethodIdString(parent)
+                return callableIdString !in METHOD_IDS_SUITABLE_FOR_LIST
+            }
+        }
+        return true
+    }
+
+    private fun KtAnalysisSession.getCallableMethodIdString(expression: KtDotQualifiedExpression): String? {
+        val resolvedCall = expression.selectorExpression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
+        return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableIdIfNonLocal?.toString()
+    }
+
+    protected open class ReplaceFix(private val castToArrayNeeded: Boolean,
+                                    private val enumClassQualifiedName: String) : LocalQuickFix {
         override fun getFamilyName(): String = KotlinBundle.message("replace.with.0", "Enum.entries")
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            descriptor.psiElement.replace(KtPsiFactory(project).createExpression("entries"))
-            // TODO: handle cases when Array type expected in next commits
+            val qualifiedOrSimpleCall = descriptor.psiElement.qualifiedOrSimpleValuesCall()
+            val entriesCallStr = if (castToArrayNeeded) "entries.toTypedArray()" else "entries"
+            val replaced = qualifiedOrSimpleCall.replace(KtPsiFactory(project).createExpression("$enumClassQualifiedName.$entriesCallStr"))
+            if (replaced is KtElement) {
+                shortenReferences(replaced)
+            }
+        }
+
+        protected open fun shortenReferences(element: KtElement) {
+            ShortenReferencesFacility.getInstance().shorten(element)
         }
     }
 
     private companion object {
         private val EXPERIMENTAL_ANNOTATION_CLASS_ID = ClassId.fromString("kotlin/ExperimentalStdlibApi")
         private val VALUES_METHOD_NAME = Name.identifier("values")
+
+        // We hardcode here most popular methods used with values() because it's easier than
+        // programmatically search method overload suitable for use with List.
+        // These are not all the collections methods, but only methods which chosen based on usages found in intellij and kotlin repositories.
+        private val METHOD_IDS_SUITABLE_FOR_LIST = setOf(
+            "kotlin/Array.size",
+            "kotlin/Array.get",
+            "kotlin/Array.iterator",
+            "kotlin/collections/any",
+            "kotlin/collections/asIterable",
+            "kotlin/collections/asSequence",
+            "kotlin/collections/associate",
+            "kotlin/collections/associateBy",
+            "kotlin/collections/associateWith",
+            "kotlin/collections/filter",
+            "kotlin/collections/filterNot",
+            "kotlin/collections/find",
+            "kotlin/collections/first",
+            "kotlin/collections/firstNotNullOfOrNull",
+            "kotlin/collections/firstOrNull",
+            "kotlin/collections/flatMap",
+            "kotlin/collections/forEach",
+            "kotlin/collections/forEachIndexed",
+            "kotlin/collections/getOrNull",
+            "kotlin/collections/groupBy",
+            "kotlin/collections/indexOf",
+            "kotlin/collections/joinToString",
+            "kotlin/collections/last",
+            "kotlin/collections/map",
+            "kotlin/collections/mapNotNull",
+            "kotlin/collections/mapTo",
+            "kotlin/collections/maxByOrNull",
+            "kotlin/collections/reversed",
+            "kotlin/collections/single",
+            "kotlin/collections/singleOrNull",
+            "kotlin/collections/sortedBy",
+            "kotlin/collections/toList",
+            "kotlin/collections/toMutableList",
+            "kotlin/collections/toSet",
+            "kotlin/collections/withIndex",
+        )
+
+        private fun PsiElement.qualifiedOrSimpleValuesCall() =
+            if (parent is KtDotQualifiedExpression) parent // EnumClass.values()
+            else this                                      // values()
     }
 }
