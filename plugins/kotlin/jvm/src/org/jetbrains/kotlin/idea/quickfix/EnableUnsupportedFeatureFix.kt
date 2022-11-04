@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.projectConfiguration.checkUpdateRuntime
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 
 sealed class EnableUnsupportedFeatureFix(

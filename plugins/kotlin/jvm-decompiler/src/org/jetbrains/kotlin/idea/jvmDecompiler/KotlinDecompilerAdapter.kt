@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
 import org.jetbrains.kotlin.idea.highlighter.isKotlinDecompiledFile
 import org.jetbrains.kotlin.idea.internal.DecompileFailedException
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinBytecodeDecompilerTask(private val file: KtFile) : Task.Backgroundable(

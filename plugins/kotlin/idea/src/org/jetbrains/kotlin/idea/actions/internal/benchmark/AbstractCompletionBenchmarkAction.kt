@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
 import javax.swing.JFileChooser

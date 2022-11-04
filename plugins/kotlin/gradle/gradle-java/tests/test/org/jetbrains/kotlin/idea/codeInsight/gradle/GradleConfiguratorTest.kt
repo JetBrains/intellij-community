@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConf
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinJsGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions

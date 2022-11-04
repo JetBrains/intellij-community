@@ -7,7 +7,7 @@ import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 
 import org.jetbrains.kotlin.psi.KtModifierListOwner

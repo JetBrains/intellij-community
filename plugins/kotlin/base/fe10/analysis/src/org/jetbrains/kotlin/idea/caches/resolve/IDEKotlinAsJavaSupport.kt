@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
 import org.jetbrains.kotlin.idea.stubindex.*
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm

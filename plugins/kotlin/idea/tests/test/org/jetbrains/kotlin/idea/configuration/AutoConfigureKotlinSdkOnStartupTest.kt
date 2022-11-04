@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

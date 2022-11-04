@@ -33,8 +33,8 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinDirecto
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement

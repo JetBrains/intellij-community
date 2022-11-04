@@ -12,7 +12,7 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinTypeParameterFindUsagesDialog
 import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtTypeParameter
 
 class KotlinTypeParameterFindUsagesHandler(

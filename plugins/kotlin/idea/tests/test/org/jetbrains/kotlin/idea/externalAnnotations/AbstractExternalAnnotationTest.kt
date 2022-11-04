@@ -12,7 +12,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import java.io.File
 
 abstract class AbstractExternalAnnotationTest: KotlinLightCodeInsightFixtureTestCase()  {
