@@ -326,15 +326,18 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
 
     private static Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
-      int resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
-      if (locationOnScreen != null) {
-        final Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
+      int resultHeight;
+      if (locationOnScreen == null) {
+        resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
+      }
+      else {
+        Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
         resultHeight = Math.min(ofContent.height, r.height - (r.height / 4));
       }
 
       int resultWidth = Math.min(ofContent.width, MAX_SIZE.width);
 
-      if (ofContent.height > MAX_SIZE.height) {
+      if (ofContent.height > resultHeight) {
         resultWidth += ScrollPaneFactory.createScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
       }
 
