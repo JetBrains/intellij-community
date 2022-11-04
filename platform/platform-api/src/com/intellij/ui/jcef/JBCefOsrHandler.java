@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -213,7 +213,18 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
     myImage = image;
     myVolatileImage = volatileImage;
-    SwingUtilities.invokeLater(() -> myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect)));
+    SwingUtilities.invokeLater(() -> {
+        JRootPane root = myComponent.getRootPane();
+        RepaintManager rm = RepaintManager.currentManager(root);
+        Rectangle dirtySrc = new Rectangle(0, 0, myComponent.getWidth(), myComponent.getHeight());
+        Rectangle dirtyDst = SwingUtilities.convertRectangle(myComponent, dirtySrc, root);
+        int dx = 1;
+        // NOTE: should mark area outside browser (otherwise background component won't be repainted)
+        rm.addDirtyRegion(root, dirtyDst.x - dx, dirtyDst.y - dx, dirtyDst.width + dx*2, dirtyDst.height + dx*2);
+
+        myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect));
+      }
+    );
   }
 
   @Override
