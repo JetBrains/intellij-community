@@ -121,7 +121,9 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   private ImplementationViewSession createNewSession(ImplementationViewSessionFactory factory,
                                                      ImplementationViewSession session,
                                                      Object lookupItemObject) {
-    return factory.createSessionForLookupElement(session.getProject(), session.getEditor(), session.getFile(), lookupItemObject,
+    VirtualFile file = session.getFile();
+    VirtualFile validFile = file != null && file.isValid() ? file : null;
+    return factory.createSessionForLookupElement(session.getProject(), session.getEditor(), validFile, lookupItemObject,
                                                  isSearchDeep(), isIncludeAlwaysSelf());
   }
 
