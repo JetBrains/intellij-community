@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("UiUtils")
+@file:Suppress("SameParameterValue")
 
 package com.intellij.openapi.ui
 
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -155,4 +157,72 @@ fun getPresentablePath(path: @NonNls String): @NlsSafe String {
 @JvmOverloads
 fun getCanonicalPath(path: @NonNls String, removeLastSlash: Boolean = true): @NonNls String {
   return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
+}
+
+fun JComponent.getTextWidth(text: @NlsSafe String): Int {
+  return getFontMetrics(font).stringWidth(text)
+}
+
+fun shortenTextWithEllipsis(
+  text: String,
+  maxWidth: Int,
+  getTextWidth: (String) -> Int,
+  getFullText: (String) -> String = { it },
+  useEllipsisSymbol: Boolean = false
+): String {
+  val symbol = when (useEllipsisSymbol) {
+    true -> StringUtil.ELLIPSIS
+    else -> StringUtil.THREE_DOTS
+  }
+  return shortenText(
+    text = text,
+    maxWidth = maxWidth,
+    getFullText = getFullText,
+    getTextWidth = getTextWidth,
+    getShortenText = { it, length ->
+      val maxLength = maxOf(length, symbol.length + 2)
+      val suffixLength = maxOf(1, (0.7 * (maxLength - symbol.length)).toInt())
+      StringUtil.shortenTextWithEllipsis(it, maxLength, suffixLength, symbol)
+    }
+  )
+}
+
+private fun shortenText(
+  text: String,
+  maxWidth: Int,
+  getFullText: (String) -> String,
+  getTextWidth: (String) -> Int,
+  getShortenText: (String, Int) -> String
+): @NlsSafe String {
+  val length = binarySearch(0, text.length) {
+    val shortenText = getShortenText(text, it)
+    getTextWidth(getFullText(shortenText)) <= maxWidth
+  }
+  return getFullText(getShortenText(text, length ?: 0))
+}
+
+private fun binarySearch(
+  startIndex: Int,
+  finishIndex: Int,
+  isOk: (Int) -> Boolean
+): Int? {
+  if (!isOk(startIndex)) {
+    return null
+  }
+  if (isOk(finishIndex)) {
+    return finishIndex
+  }
+
+  var leftIndex = startIndex
+  var rightIndex = finishIndex
+  while (leftIndex + 1 < rightIndex) {
+    val index = (leftIndex + rightIndex) / 2
+    if (isOk(index)) {
+      leftIndex = index
+    }
+    else {
+      rightIndex = index
+    }
+  }
+  return leftIndex
 }

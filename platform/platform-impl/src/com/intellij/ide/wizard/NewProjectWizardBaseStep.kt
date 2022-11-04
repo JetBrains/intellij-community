@@ -11,24 +11,20 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.observable.util.joinCanonicalPath
-import com.intellij.openapi.observable.util.toUiPathProperty
-import com.intellij.openapi.observable.util.transform
-import com.intellij.openapi.observable.util.trim
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.ui.getTextWidth
+import com.intellij.openapi.ui.shortenTextWithEllipsis
 import com.intellij.openapi.ui.validation.*
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.applyIf
-import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.nio.file.Path
 
@@ -105,8 +101,6 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
       }.bottomGap(BottomGap.SMALL)
 
       val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
-        val commentProperty = pathProperty.joinCanonicalPath(nameProperty)
-          .transform { getPathComment(it) }
         val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
         val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
@@ -114,9 +108,24 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
           .bindText(pathProperty.toUiPathProperty())
           .align(AlignX.FILL)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
-          .comment(commentProperty.get(), 100)
-          .apply { commentProperty.afterChange { comment?.text = it } }
           .whenTextChangedFromUi { logLocationChanged() }
+          .comment("", MAX_LINE_LENGTH_NO_WRAP)
+          .also { textField ->
+            val comment = textField.comment!!
+            val locationProperty = pathProperty.joinCanonicalPath(nameProperty)
+            val widthProperty = textField.component.widthProperty
+            val commentProperty = operation(locationProperty, widthProperty) { path, width ->
+              shortenTextWithEllipsis(
+                text = getPresentablePath(path),
+                maxWidth = ((0.9) * width).toInt(),
+                getTextWidth = { comment.getTextWidth(it) },
+                getFullText = {
+                  UIBundle.message("label.project.wizard.new.project.path.description", context.isCreatingNewProjectInt, it)
+                }
+              )
+            }
+            textField.bindCommentText(commentProperty)
+          }
       }
 
       if (bottomGap) {
@@ -128,11 +137,6 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
         context.setProjectFileDirectory(Path.of(path, name), false)
       }
     }
-  }
-
-  private fun getPathComment(canonicalPath: @NonNls String): @NlsContexts.DetailedDescription String {
-    val shortPath = StringUtil.shortenPathWithEllipsis(getPresentablePath(canonicalPath), 60)
-    return UIBundle.message("label.project.wizard.new.project.path.description", context.isCreatingNewProjectInt, shortPath)
   }
 
   override fun setupProject(project: Project) {

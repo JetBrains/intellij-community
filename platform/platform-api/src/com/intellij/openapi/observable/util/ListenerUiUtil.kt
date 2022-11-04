@@ -16,6 +16,7 @@ import com.intellij.util.ui.TableViewModel
 import com.intellij.util.ui.tree.TreeModelAdapter
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.ItemSelectable
 import java.awt.event.*
 import javax.swing.*
@@ -152,6 +153,12 @@ fun Component.whenKeyReleased(parentDisposable: Disposable? = null, listener: (K
   })
 }
 
+fun JComponent.whenSizeChanged(parentDisposable: Disposable? = null, listener: (Dimension) -> Unit) {
+  addComponentListener(parentDisposable, object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent) = listener(size)
+  })
+}
+
 fun ItemSelectable.addItemListener(parentDisposable: Disposable? = null, listener: ItemListener) {
   addItemListener(listener)
   parentDisposable?.whenDisposed {
@@ -219,6 +226,13 @@ fun Component.addKeyListener(parentDisposable: Disposable? = null, listener: Key
   addKeyListener(listener)
   parentDisposable?.whenDisposed {
     removeKeyListener(listener)
+  }
+}
+
+fun Component.addComponentListener(parentDisposable: Disposable? = null, listener: ComponentListener) {
+  addComponentListener(listener)
+  parentDisposable?.whenDisposed {
+    removeComponentListener(listener)
   }
 }
 
