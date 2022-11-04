@@ -7,10 +7,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mermaid.MermaidBundle
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.WHITE_SPACES_WITHOUT_EOL
 import com.intellij.mermaid.lang.lexer.MermaidTokens
-import com.intellij.mermaid.lang.psi.MermaidComplexIdentifier
-import com.intellij.mermaid.lang.psi.MermaidElementFactory
-import com.intellij.mermaid.lang.psi.MermaidStateDocument
-import com.intellij.mermaid.lang.psi.MermaidVertex
+import com.intellij.mermaid.lang.psi.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -60,7 +57,11 @@ class UnrenderableSpacesAnnotator : Annotator {
 
     override fun getText() = MermaidBundle.message("fix.change.space.symbol")
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement) = true
+    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
+      val prevLeaf = element.prevLeaf() ?: return false
+      val nextLeaf = element.nextLeaf() ?: return false
+      return prevLeaf.hasType(MermaidTokens.ID) && nextLeaf.hasType(MermaidTokens.ID)
+    }
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
       val prevLeaf = element.prevLeaf() ?: return
@@ -79,7 +80,11 @@ class UnrenderableSpacesAnnotator : Annotator {
 
     override fun getText() = MermaidBundle.message("fix.remove.space")
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement) = true
+    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
+      val prevLeaf = element.prevLeaf() ?: return false
+      val nextLeaf = element.nextLeaf() ?: return false
+      return prevLeaf.hasType(MermaidTokens.ID) && nextLeaf.hasType(MermaidTokens.ID)
+    }
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
       val prevLeaf = element.prevLeaf() ?: return
