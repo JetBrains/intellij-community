@@ -52,7 +52,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
       }).applyToComponent { emptyText.text = PyBundle.message("python.add.sdk.panel.path.to.conda.field") }
         .bindText(model.condaPathTextBoxRwProp)
         .columns(COLUMNS_LARGE)
-        .trimmedTextValidation(CHECK_NON_EMPTY)
+        .trimmedTextValidation(model.condaPathValidator)
 
       button(PyBundle.message("python.add.sdk.panel.load.envs")) {
         runBlockingModal(model.project, PyBundle.message("python.sdk.conda.getting.list.envs")) {

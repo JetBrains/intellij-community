@@ -107,8 +107,12 @@ class PyAddCondaPanelModelTest {
     Assert.assertNotNull("No validation error, even though path not set", model.getValidationError())
 
     Assert.assertFalse(model.showCondaPathSetOkButtonRoProp.get())
-    model.condaPathTextBoxRwProp.set("Some random path that doesn't exist")
-    Assert.assertTrue(model.showCondaPathSetOkButtonRoProp.get())
+    model.condaPathTextBoxRwProp.set("Some random path that doesn't exist and doesn't contain conda")
+    Assert.assertFalse("Wrong path, but button not disabled", model.showCondaPathSetOkButtonRoProp.get())
+
+    model.condaPathTextBoxRwProp.set("foo/conda")
+    Assert.assertTrue("Path that passes regex, but button disabled", model.showCondaPathSetOkButtonRoProp.get())
+
     model.onLoadEnvsClicked(coroutineContext)
     Assert.assertNotNull("No validation error, but path is incorrect", model.getValidationError())
 
