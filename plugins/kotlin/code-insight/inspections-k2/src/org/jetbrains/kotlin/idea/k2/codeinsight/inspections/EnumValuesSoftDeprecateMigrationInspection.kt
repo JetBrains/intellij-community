@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.base.fir.codeInsight.isOptInAllowed
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection.EnumValuesSoftDeprecateMigrationInspectionBase
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -10,7 +12,6 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 internal class EnumValuesSoftDeprecateMigrationInspection : EnumValuesSoftDeprecateMigrationInspectionBase() {
 
     override fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {
-        // TODO: add check for opt-in in next commits
-        return true
+        return isOptInAllowed(element, annotationClassId, element.languageVersionSettings)
     }
 }
