@@ -3,6 +3,7 @@ package git4idea.branch
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -142,7 +143,11 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   }
 
   private fun validateBranchName(onApply: Boolean): ValidationInfoBuilder.(TextFieldWithCompletion) -> ValidationInfo? = {
-    it.cleanBranchNameAndAdjustCursorIfNeeded()
+    // Do not change Document inside DocumentListener callback
+    invokeLater {
+      it.cleanBranchNameAndAdjustCursorIfNeeded()
+    }
+
     val branchName = validator.cleanUpBranchName(it.text).trim()
     val errorInfo = (if (onApply) checkRefNameEmptyOrHead(branchName) else null)
                     ?: conflictsWithRemoteBranch(repositories, branchName)
@@ -165,6 +170,8 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   }
 
   private fun TextFieldWithCompletion.cleanBranchNameAndAdjustCursorIfNeeded() {
+    if (isDisposed) return
+
     val initialText = text
     val initialCaret = caretModel.offset
 
