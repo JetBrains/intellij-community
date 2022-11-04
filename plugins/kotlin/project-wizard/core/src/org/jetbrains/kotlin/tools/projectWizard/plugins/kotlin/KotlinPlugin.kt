@@ -221,7 +221,7 @@ enum class ProjectKind(
     Multiplatform(KotlinNewProjectWizardBundle.message("project.kind.multiplatform"), supportedBuildSystems = BuildSystemType.ALL_GRADLE),
     Android(KotlinNewProjectWizardBundle.message("project.kind.android"), supportedBuildSystems = BuildSystemType.ALL_GRADLE),
     Js(KotlinNewProjectWizardBundle.message("project.kind.kotlin.js"), supportedBuildSystems = BuildSystemType.ALL_GRADLE),
-    KMM(KotlinNewProjectWizardBundle.message("project.king.kmm"), supportedBuildSystems = BuildSystemType.ALL_GRADLE)
+    KMM(KotlinNewProjectWizardBundle.message("project.kind.kmm"), supportedBuildSystems = BuildSystemType.ALL_GRADLE)
 }
 
 fun List<Module>.withAllSubModules(includeSourcesets: Boolean = false): List<Module> = buildList {
