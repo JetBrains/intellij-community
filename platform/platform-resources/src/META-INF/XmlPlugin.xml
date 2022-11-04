@@ -513,12 +513,6 @@
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
-      <className>com.intellij.codeInsight.daemon.impl.analysis.XmlChangeAttributeValueIntentionFix</className>
-    </intentionAction>
-    <intentionAction>
-      <language>XML</language>
-      <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveTagAndPromoteChildrenIntentionAction</className>
     </intentionAction>
     <intentionAction>
