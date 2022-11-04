@@ -50,7 +50,10 @@ public class PackageScope extends GlobalSearchScope {
                               : packageIndex.getDirsByPackageName(myPackageQualifiedName, true);
 
     myDirs = VfsUtilCore.createCompactVirtualFileSet();
-    dirs.forEach(myDirs::add);
+    dirs.forEach(e -> {
+      myDirs.add(e);
+      return true;
+    });
 
     myIncludeLibraries = includeLibraries;
 
