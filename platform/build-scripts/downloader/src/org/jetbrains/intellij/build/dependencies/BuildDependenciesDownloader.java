@@ -369,30 +369,8 @@ public final class BuildDependenciesDownloader {
   }
 
   private static void tryToDownloadFile(URI uri, Path tempFile, String bearerToken) throws Exception {
-    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-      .GET()
-      .uri(uri)
-      .setHeader("User-Agent", "Build Script Downloader");
-    if (bearerToken != null) {
-      requestBuilder = requestBuilder.setHeader("Authorization", "Bearer " + bearerToken);
-    }
-    HttpRequest request = requestBuilder.build();
-
-    HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+    HttpResponse<Path> response = getResponseFollowingRedirects(uri, tempFile, bearerToken);
     int statusCode = response.statusCode();
-
-    if (statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308) {
-      Optional<String> locationHeader = response.headers().firstValue("Location");
-      if (locationHeader.isPresent()) {
-        requestBuilder = HttpRequest.newBuilder()
-          .GET()
-          .uri(new URI(locationHeader.get()))
-          .setHeader("User-Agent", "Build Script Downloader");
-        request = requestBuilder.build();
-        response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
-        statusCode = response.statusCode();
-      }
-    }
 
     if (statusCode != 200) {
       StringBuilder builder = new StringBuilder("Cannot download\n");
@@ -427,6 +405,42 @@ public final class BuildDependenciesDownloader {
                                       "': expected length " + contentLength +
                                       "from Content-Length header, but got " + fileSize + " on disk");
     }
+  }
+
+  private static HttpResponse<Path> getResponseFollowingRedirects(URI uri, Path tempFile, String bearerToken) throws Exception {
+    HttpRequest request = createBuildScriptDownloaderRequest(uri, bearerToken);
+    HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+
+    int REDIRECT_LIMIT = 10;
+    for (int i = 0; i < REDIRECT_LIMIT; i++) {
+      int statusCode = response.statusCode();
+      if (!(statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308))
+        return response;
+
+      Optional<String> locationHeader = response.headers().firstValue("Location");
+      if (locationHeader.isEmpty()) {
+        locationHeader = response.headers().firstValue("location");
+        if (locationHeader.isEmpty())
+          return response;
+      }
+
+      request = createBuildScriptDownloaderRequest(new URI(locationHeader.get()), bearerToken);
+      response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+    }
+
+    return response;
+  }
+
+  private static HttpRequest createBuildScriptDownloaderRequest(URI uri, String bearerToken) {
+    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+      .GET()
+      .uri(uri)
+      .setHeader("User-Agent", "Build Script Downloader");
+    if (bearerToken != null) {
+      requestBuilder = requestBuilder.setHeader("Authorization", "Bearer " + bearerToken);
+    }
+
+    return requestBuilder.build();
   }
 
   public static final class HttpStatusException extends IllegalStateException {
