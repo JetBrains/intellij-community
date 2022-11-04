@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
+import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -15,6 +16,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -45,7 +48,9 @@ private val LOG = logger<MarketplaceRequests>()
 private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
 
 private val objectMapper by lazy { ObjectMapper() }
-private val pluginManagerUrl by lazy(LazyThreadSafetyMode.PUBLICATION) { ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/') }
+private val pluginManagerUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
+}
 private val compatibleUpdateUrl: String
   get() = "${pluginManagerUrl}/api/search/compatibleUpdates"
 
@@ -214,8 +219,12 @@ class MarketplaceRequests : PluginInfoProvider {
   private val IDE_EXTENSIONS_URL = Urls.newFromEncoded("${pluginManagerUrl}/files/IDE/extensions.json")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
-  private fun createSearchUrl(query: String, count: Int): Url {
-    return Urls.newFromEncoded("$pluginManagerUrl/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count")
+  private fun createSearchUrl(query: String, count: Int, includeIncompatible: Boolean): Url {
+    val url = Urls.newFromEncoded("$pluginManagerUrl/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count")
+    if (includeIncompatible) {
+      return url.addParameters(mapOf("all" to "true"))
+    }
+    return url
   }
 
   private fun createFeatureUrl(param: Map<String, String>): Url {
@@ -305,8 +314,18 @@ class MarketplaceRequests : PluginInfoProvider {
 
   @Throws(IOException::class)
   fun searchPlugins(query: String, count: Int): List<PluginNode> {
+    return searchPlugins(query, count, false)
+  }
+
+  @Throws(IOException::class)
+  fun searchPlugins(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): List<PluginNode> {
+    val activeProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+    val suggestedIdeCode = PluginAdvertiserService.getSuggestedCommercialIdeCode(activeProductCode)
+
+    val includeIncompatible = includeUpgradeToCommercialIde && suggestedIdeCode != null
+
     val marketplaceSearchPluginData = HttpRequests
-      .request(createSearchUrl(query, count))
+      .request(createSearchUrl(query, count, includeIncompatible))
       .setHeadersViaTuner()
       .throwStatusCodeException(false)
       .connect {
@@ -316,7 +335,33 @@ class MarketplaceRequests : PluginInfoProvider {
         )
       }
     // Marketplace Search Service can produce objects without "externalUpdateId". It means that an update is not in the search index yet.
-    return marketplaceSearchPluginData.filter { it.externalUpdateId != null }.map { it.toPluginNode() }
+    return marketplaceSearchPluginData
+      .filter {
+        it.externalUpdateId != null
+        || it.nearestUpdate?.compatible == true
+        || includeIncompatible && it.nearestUpdate?.supports(suggestedIdeCode) == true
+      }
+      .map {
+        val pluginNode = it.toPluginNode()
+
+        if (it.externalUpdateId == null
+            && it.nearestUpdate != null
+            && !it.nearestUpdate.compatible
+            && !it.nearestUpdate.supports(activeProductCode)
+            && it.nearestUpdate.supports(suggestedIdeCode)) {
+          pluginNode.suggestedCommercialIde = suggestedIdeCode
+          pluginNode.tags = ((pluginNode.tags ?: emptyList()) + Tags.Ultimate.name).distinct()
+        }
+
+        pluginNode
+      }
+  }
+
+  private fun NearestUpdate.supports(productCode: String?): Boolean {
+    if (productCode == null) return false
+    val product = marketplaceIdeCodes[productCode] ?: return false
+
+    return products.contains(product)
   }
 
   fun getAllPluginsVendors(): List<String> {
@@ -411,6 +456,8 @@ class MarketplaceRequests : PluginInfoProvider {
         rating = pluginNode.rating
         downloads = pluginNode.downloads
         date = pluginNode.date
+        suggestedCommercialIde = pluginNode.suggestedCommercialIde
+        tags = ((this.tags ?: emptyList()) + (pluginNode.tags ?: emptyList())).distinct()
       }
     }
     catch (e: IOException) {

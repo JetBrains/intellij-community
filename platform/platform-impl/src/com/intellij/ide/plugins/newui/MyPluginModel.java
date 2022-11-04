@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.CommonBundle;
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.ide.IdeBundle;
@@ -22,7 +23,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -345,6 +350,31 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                              @NotNull IdeaPluginDescriptor descriptor,
                              @Nullable IdeaPluginDescriptor updateDescriptor,
                              @NotNull ModalityState modalityState) {
+    if (descriptor instanceof PluginNode) {
+      String suggestedCommercialIde = ((PluginNode)descriptor).getSuggestedCommercialIde();
+      SuggestedIde ideSuggestion = PluginAdvertiserService.Companion.getIde(suggestedCommercialIde);
+
+      if (ideSuggestion != null) {
+        String ultimateSuggestionName = ideSuggestion.getName();
+
+        @Nullable Icon icon = Messages.getWarningIcon();
+        int result = MessageDialogBuilder.okCancel(
+            IdeBundle.message("plugins.upgrade.required"),
+            IdeBundle.message("dialog.message.plugin.only.supported.in", descriptor.getName(), ultimateSuggestionName))
+                       .yesText(IdeBundle.message("plugins.advertiser.action.try.ultimate", ultimateSuggestionName))
+                       .noText(CommonBundle.getCancelButtonText())
+                       .icon(icon)
+                       .ask(getProject()) ? Messages.OK : Messages.CANCEL;
+
+        FUSEventSource.SEARCH.logInstallPlugins(List.of(descriptor.getPluginId().getIdString()));
+        if (result == Messages.OK) {
+          FUSEventSource.SEARCH.openDownloadPageAndLog(ideSuggestion.getDownloadUrl());
+        }
+
+        return;
+      }
+    }
+
     boolean isUpdate = updateDescriptor != null;
     IdeaPluginDescriptor actionDescriptor = isUpdate ? updateDescriptor : descriptor;
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of(actionDescriptor))) {

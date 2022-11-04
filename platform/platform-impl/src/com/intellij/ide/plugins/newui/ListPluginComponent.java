@@ -178,7 +178,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void createNotAvailableMarker(boolean compatible) {
-    myInstallButton = new InstallButton(false);
+    myInstallButton = createInstallButton();
     if (!compatible) {
       setupNotCompatibleMarkerButton();
     }
@@ -226,7 +226,7 @@ public final class ListPluginComponent extends JPanel {
 
         boolean showInstall = installedDescriptorForMarketplace == null;
 
-        myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
+        myLayout.addButtonComponent(myInstallButton = createInstallButton());
 
         myInstallButton.addActionListener(
           e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
@@ -265,7 +265,7 @@ public final class ListPluginComponent extends JPanel {
     else {
       if (NewUiUtil.isDeleted(myPlugin)) {
         if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)) {
-          myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
+          myLayout.addButtonComponent(myInstallButton = createInstallButton());
           myInstallButton.setVisible(true);
           myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
           myAfterUpdate = true;
@@ -297,6 +297,11 @@ public final class ListPluginComponent extends JPanel {
       });
       myAlignButton.setOpaque(false);
     }
+  }
+
+  private @NotNull InstallButton createInstallButton() {
+    boolean upgradeRequired = myPlugin instanceof PluginNode && ((PluginNode)myPlugin).getSuggestedCommercialIde() != null;
+    return new InstallButton(false, upgradeRequired);
   }
 
   private void createEnableDisableButton(@NotNull Supplier<IdeaPluginDescriptor> descriptorFunction) {
@@ -791,7 +796,7 @@ public final class ListPluginComponent extends JPanel {
 
     if (!needRestartForUninstall &&
         InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(getDescriptorForActions().getPluginId())) {
-      myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
+      myLayout.addButtonComponent(myInstallButton = createInstallButton());
       myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
     }
   }

@@ -19,6 +19,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
@@ -31,6 +33,50 @@ sealed interface PluginAdvertiserService {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
+
+    internal fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
+      return when (activeProductCode) {
+        "IC", "IE", "AS" -> "IU"
+        "PC", "PE" -> "PY"
+        else -> null
+      }
+    }
+
+    fun getIde(ideCode: String?): SuggestedIde? = ides[ideCode]
+
+    @Suppress("HardCodedStringLiteral")
+    val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
+
+    @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
+    internal val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
+
+    @Suppress("HardCodedStringLiteral")
+    internal val ides: Map<String, SuggestedIde> = linkedMapOf(
+      "WS" to SuggestedIde("WebStorm", "https://www.jetbrains.com/webstorm/download/"),
+      "RM" to SuggestedIde("RubyMine", "https://www.jetbrains.com/ruby/download/"),
+      "PY" to pyCharmProfessional,
+      "PS" to SuggestedIde("PhpStorm", "https://www.jetbrains.com/phpstorm/download/"),
+      "GO" to SuggestedIde("GoLand", "https://www.jetbrains.com/go/download/"),
+      "CL" to SuggestedIde("CLion", "https://www.jetbrains.com/clion/download/"),
+      "RD" to SuggestedIde("Rider", "https://www.jetbrains.com/rider/download/"),
+      "OC" to SuggestedIde("AppCode", "https://www.jetbrains.com/objc/download/"),
+      "IU" to ideaUltimate
+    )
+
+    internal val marketplaceIdeCodes: Map<String, String> = linkedMapOf(
+      "IU" to "idea",
+      "IC" to "idea_ce",
+      "IE" to "idea_edu",
+      "PY" to "pycharm",
+      "PC" to "pycharm_ce",
+      "PE" to "pycharm_edu",
+      "WS" to "webstorm",
+      "GO" to "go",
+      "CL" to "clion",
+      "RD" to "rider",
+      "RM" to "ruby",
+      "AS" to "androidstudio"
+    )
   }
 
   suspend fun run(
@@ -50,7 +96,6 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
                                                                        Disposable {
 
   companion object {
-
     private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
   }
 
@@ -211,8 +256,8 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
         bundledPlugins.joinToString()
       ) to listOf(
         NotificationAction.createSimpleExpiring(
-          IdeBundle.message("plugins.advertiser.action.try.ultimate", PluginAdvertiserEditorNotificationProvider.ideaUltimate.name)) {
-          FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, PluginAdvertiserEditorNotificationProvider.ideaUltimate.downloadUrl)
+          IdeBundle.message("plugins.advertiser.action.try.ultimate", ideaUltimate.name)) {
+          FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, ideaUltimate.downloadUrl)
         },
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
           FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)
@@ -401,3 +446,5 @@ open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
 
   final override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {}
 }
+
+data class SuggestedIde(@NlsContexts.DialogMessage val name: String, val downloadUrl: String)

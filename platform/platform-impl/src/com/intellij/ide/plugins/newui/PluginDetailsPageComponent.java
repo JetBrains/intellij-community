@@ -878,6 +878,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     showPlugin();
 
     select(0, true);
+
+    if (myPlugin instanceof PluginNode) {
+      if (((PluginNode)myPlugin).getSuggestedCommercialIde() != null) {
+        myInstallButton.setText(IdeBundle.message("action.AnActionButton.text.upgrade"));
+      }
+    }
   }
 
   private enum EmptyState {

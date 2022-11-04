@@ -724,7 +724,7 @@ public final class PluginManagerConfigurable
                   return;
                 }
 
-                List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000);
+                List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000, true);
                 // compare plugin versions between marketplace & custom repositories
                 List<PluginNode> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
                 Collection<PluginNode> plugins = RepositoryHelper.mergePluginsFromRepositories(pluginsFromMarketplace,
