@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -103,6 +104,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun migrateFromOldStorage(migration: SettingsSyncMigration) {
+    TemplateSettings.getInstance() // Required for live templates to be migrated correctly, see IDEA-303831
     val migrationSnapshot = migration.getLocalDataIfAvailable(appConfigPath)
     if (migrationSnapshot != null) {
       settingsLog.applyIdeState(migrationSnapshot, "Migrate from old settings sync")
