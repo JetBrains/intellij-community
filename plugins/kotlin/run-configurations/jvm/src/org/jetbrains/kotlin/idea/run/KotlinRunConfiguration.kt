@@ -300,8 +300,10 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         override fun createJavaParameters(): JavaParameters {
             val params = JavaParameters()
             val module = myConfiguration.configurationModule
-            val classPathType = DumbService.getInstance(module!!.project).computeWithAlternativeResolveEnabled<Int, Exception> {
-                getClasspathType(module)
+            val classPathType = runReadAction {
+                DumbService.getInstance(module!!.project).computeWithAlternativeResolveEnabled<Int, Exception> {
+                    getClasspathType(module)
+                }
             }
             val jreHome = if (myConfiguration.isAlternativeJrePathEnabled) myConfiguration.alternativeJrePath else null
             runReadAction { JavaParametersUtil.configureModule(module, params, classPathType, jreHome) }
