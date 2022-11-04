@@ -57,16 +57,13 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
     settingsLog.initialize()
 
-    if (initMode.shouldEnableSync()) { // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
-      SettingsSyncEvents.getInstance().addSettingsChangedListener(settingsChangeListener)
-      ideMediator.activateStreamProvider()
-    }
+    // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
+    SettingsSyncEvents.getInstance().addSettingsChangedListener(settingsChangeListener)
+    ideMediator.activateStreamProvider()
 
     applyInitialChanges(initMode)
 
-    if (initMode.shouldEnableSync()) {
-      queue.activate()
-    }
+    queue.activate()
   }
 
   private fun saveIdeSettings() {
@@ -122,14 +119,12 @@ class SettingsSyncBridge(parentDisposable: Disposable,
         pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
       }
       else {
-        if (migration.shouldEnableNewSync()) {
-          forcePushToCloud(masterPosition) // otherwise we place our migrated data to the cloud
-        }
+        // otherwise we place our migrated data to the cloud
+        forcePushToCloud(masterPosition)
 
         pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
         migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
         saveIdeSettings()
-        migration.executeAfterApplying()
       }
       settingsLog.setCloudPosition(masterPosition)
     }
@@ -149,15 +144,8 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   internal sealed class InitMode {
     object JustInit : InitMode()
     class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange) : InitMode()
+    class MigrateFromOldStorage(val migration: SettingsSyncMigration) : InitMode()
     object PushToServer : InitMode()
-
-    class MigrateFromOldStorage(val migration: SettingsSyncMigration) : InitMode() {
-      override fun shouldEnableSync(): Boolean {
-        return migration.shouldEnableNewSync()
-      }
-    }
-
-    open fun shouldEnableSync(): Boolean = true
   }
 
   @RequiresBackgroundThread

@@ -19,13 +19,4 @@ interface SettingsSyncMigration {
 
   fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings)
 
-  /**
-   * Returns true if the new Settings Sync should be switched on, if this migration is applied.
-   */
-  fun shouldEnableNewSync(): Boolean
-
-  /**
-   * This code is run after the migration have been applied.
-   */
-  fun executeAfterApplying() {}
 }

@@ -235,8 +235,6 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {
         syncSettings.setCategoryEnabled(SettingsCategory.UI, false)
       }
-
-      override fun shouldEnableNewSync(): Boolean = false
     }
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
 
@@ -384,7 +382,6 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       }
     }
     override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {}
-    override fun shouldEnableNewSync(): Boolean = false
   }
 
   private fun assertFileWithContent(expectedContent: String, file: Path) {
