@@ -36,6 +36,19 @@ fun <T> Sequence<T>.takeWhileInclusive(predicate: (T) -> Boolean): Sequence<T> =
     }
 
 /**
+ * Returns a [List] containing the first elements satisfying [predicate], as well as the subsequent first element for which [predicate] is
+ * not satisfied (if such an element exists).
+ */
+fun <T> List<T>.takeWhileInclusive(predicate: (T) -> Boolean): List<T> {
+    val inclusiveIndex = indexOfFirst { !predicate(it) }
+    if (inclusiveIndex == -1) {
+        // Needs to return a defensive copy because `takeWhile` is expected to return a new list.
+        return toList()
+    }
+    return slice(0..inclusiveIndex)
+}
+
+/**
  * Sorted by [selector] or preserves the order for elements where [selector] returns the same result
  */
 @ApiStatus.Internal

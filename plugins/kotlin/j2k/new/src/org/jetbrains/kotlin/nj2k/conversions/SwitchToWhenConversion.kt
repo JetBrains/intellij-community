@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.runExpression
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.util.takeWhileInclusive
 
 
 class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
@@ -85,9 +86,6 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
         isSwitchBreak(statement) -> null
         else -> statement.copyTreeAndDetach()
     }
-
-    private fun <T> List<T>.takeWhileInclusive(predicate: (T) -> Boolean): List<T> =
-        takeWhile(predicate) + listOfNotNull(find { !predicate(it) })
 
     private fun List<JKStatement>.singleBlockOrWrapToRun(): JKStatement =
         singleOrNull() ?: blockStatement(map { statement ->

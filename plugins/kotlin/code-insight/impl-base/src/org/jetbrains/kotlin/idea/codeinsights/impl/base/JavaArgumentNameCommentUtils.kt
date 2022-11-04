@@ -12,12 +12,12 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.idea.codeinsight.utils.takeWhileInclusive
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.util.takeWhileInclusive
 
 fun hasArgumentNameComments(element: KtCallElement): Boolean = checkApplicability(element, shouldHaveArgumentNameComments = true)
 
