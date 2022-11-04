@@ -43,7 +43,8 @@
             const actualContent = decodeBase64(block.getAttribute("data-actual-fence-content"));
             const promise = renderBlock(block, cacheId, actualContent).then(generated => {
                 if (generated != null) {
-                    window.__IntelliJTools.messagePipe.post("storeMermaidFile", `${cacheId};${generated}`);
+                    let serialized = new XMLSerializer().serializeToString(generated);
+                    window.__IntelliJTools.messagePipe.post("storeMermaidFile", `${cacheId};${serialized}`);
                 }
             });
             promises.push(promise);
