@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.find.ngrams.TrigramIndex
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
@@ -21,8 +22,10 @@ class KotlinNonSourceRootIndexFilter: GlobalIndexFilter {
                 !virtualFile.isDirectory &&
                 affectsIndex(indexId) &&
                 virtualFile.isKotlinFileType() &&
-                ProjectRootManager.getInstance(project).fileIndex.getOrderEntriesForFile(virtualFile).isEmpty() &&
-                !ProjectFileIndex.getInstance(project).isInLibrary(virtualFile)
+                runReadAction {
+                    ProjectRootManager.getInstance(project).fileIndex.getOrderEntriesForFile(virtualFile).isEmpty() &&
+                            !ProjectFileIndex.getInstance(project).isInLibrary(virtualFile)
+                }
 
     override fun getVersion(): Int = 0
 
