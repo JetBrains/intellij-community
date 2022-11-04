@@ -27,7 +27,7 @@ internal class TipsOrderUtil {
     FeatureUsageTracker.getInstance()  // instantiate just to load statistics of feature usage
     val tipsUsageManager = TipsUsageManager.getInstance()
     val allFeatures = registry.featureIds.map { registry.getFeatureDescriptor(it) }
-    val tipInfoList = tips.map { tip ->
+    val tipInfoList = tips.shuffled().map { tip ->
       val features = allFeatures.filter { it.tipId == tip.id }
       val lastTimeShown = tipsUsageManager.getLastTimeShown(tip.id)
       if (features.isNotEmpty()) {
