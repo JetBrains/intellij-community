@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
 
-interface MultiplatformProjectTemplatesProvider {
+interface ProjectTemplatesProvider {
     companion object {
-        val EP_NAME = ExtensionPointName<MultiplatformProjectTemplatesProvider>("org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.multiplatformProjectTemplatesProvider")
+        val EP_NAME = ExtensionPointName<ProjectTemplatesProvider>("org.jetbrains.kotlin.idea.projectTemplatesProvider")
     }
 
-    fun addTemplate(result: MutableList<ProjectTemplate>)
+    fun getTemplates(): List<ProjectTemplate>
 }

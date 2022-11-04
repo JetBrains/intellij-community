@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
-import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.MultiplatformProjectTemplatesProvider
+import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesProvider
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
@@ -84,7 +84,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
 
         private val extensionTemplates: List<ProjectTemplate>
             get() = mutableListOf<ProjectTemplate>().also { list ->
-                MultiplatformProjectTemplatesProvider.EP_NAME.forEachExtensionSafe { it.addTemplate(list) }
+                ProjectTemplatesProvider.EP_NAME.forEachExtensionSafe { list.addAll(it.getTemplates()) }
             }
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {
