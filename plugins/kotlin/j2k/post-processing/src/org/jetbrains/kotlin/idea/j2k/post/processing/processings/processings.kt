@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
 import org.jetbrains.kotlin.idea.j2k.post.processing.FileBasedPostProcessing
 import org.jetbrains.kotlin.idea.j2k.post.processing.GeneralPostProcessing
 import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.j2k.JKPostProcessingTarget
 import org.jetbrains.kotlin.j2k.elements
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext

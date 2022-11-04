@@ -10,7 +10,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert

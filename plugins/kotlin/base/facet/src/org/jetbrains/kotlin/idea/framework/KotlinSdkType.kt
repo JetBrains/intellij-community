@@ -12,7 +12,7 @@ import org.jdom.Element
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.facet.KotlinBaseFacetBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import javax.swing.JComponent
 
 class KotlinSdkType : SdkType("KotlinSDK") {

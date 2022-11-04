@@ -12,7 +12,7 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
 import org.jetbrains.kotlin.idea.debugger.base.util.isInlineFrameLineNumber
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.lang.Math.max
 import java.util.regex.Pattern

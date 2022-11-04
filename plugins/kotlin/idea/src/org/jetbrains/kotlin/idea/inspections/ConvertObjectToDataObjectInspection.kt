@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.inspections.VirtualFunction.*
 import org.jetbrains.kotlin.idea.inspections.VirtualFunction.Function
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name

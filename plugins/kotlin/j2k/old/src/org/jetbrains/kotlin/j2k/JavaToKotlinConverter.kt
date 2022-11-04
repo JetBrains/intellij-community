@@ -15,7 +15,7 @@ import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.refactoring.suggested.range
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.j2k.ast.Element
 import org.jetbrains.kotlin.j2k.usageProcessing.ExternalCodeProcessor
 import org.jetbrains.kotlin.j2k.usageProcessing.UsageProcessing

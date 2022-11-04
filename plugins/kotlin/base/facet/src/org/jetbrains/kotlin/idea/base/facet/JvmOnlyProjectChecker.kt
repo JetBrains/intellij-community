@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedValueCache
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 @Service(Service.Level.PROJECT)

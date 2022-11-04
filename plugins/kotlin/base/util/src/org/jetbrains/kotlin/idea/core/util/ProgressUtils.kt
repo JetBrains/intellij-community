@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 
 fun <T : Any> runInReadActionWithWriteActionPriorityWithPCE(f: () -> T): T =
     runInReadActionWithWriteActionPriority(f) ?: throw ProcessCanceledException()
