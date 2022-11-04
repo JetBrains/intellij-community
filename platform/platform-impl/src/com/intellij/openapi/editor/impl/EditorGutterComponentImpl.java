@@ -1805,10 +1805,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   int getRightFreePaintersAreaWidth() {
+    if (myRightFreePaintersAreaShown && myForcedRightFreePaintersAreaWidth >= 0) {
+      return myForcedRightFreePaintersAreaWidth;
+    }
+
     int width = 0;
     if (myRightFreePaintersAreaShown) {
-     width = myForcedRightFreePaintersAreaWidth < 0 ? /*ExperimentalUI.isNewUI() ? 0 :*/ FREE_PAINTERS_RIGHT_AREA_WIDTH.get()
-                                                    : myForcedRightFreePaintersAreaWidth;
+      width = myForcedRightFreePaintersAreaWidth < 0 ? /*ExperimentalUI.isNewUI() ? 0 :*/ FREE_PAINTERS_RIGHT_AREA_WIDTH.get()
+                                                     : myForcedRightFreePaintersAreaWidth;
     }
     if (ExperimentalUI.isNewUI()) {
       if (width == 0) return 0;
