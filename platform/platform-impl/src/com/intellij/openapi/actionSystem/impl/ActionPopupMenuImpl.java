@@ -153,7 +153,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     @Override
     public void addNotify() {
       super.addNotify();
-      long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
+      long startedTime = IdeEventQueue.getInstance().getPopupTriggerTime();
+      long time = (startedTime > 0) ? System.currentTimeMillis() - startedTime : -1;
       PsiFile psiFile = (PsiFile)Utils.getRawDataIfCached(myContext, CommonDataKeys.PSI_FILE.getName());
       Language language = psiFile == null ? null : psiFile.getLanguage();
       boolean coldStart = SEEN_ACTION_GROUPS.add(Objects.hash(myGroup, language));

@@ -911,9 +911,11 @@ public final class IdeEventQueue extends EventQueue {
   private void defaultDispatchEvent(@NotNull AWTEvent e) {
     try {
       maybeReady();
+      MouseEvent me = e instanceof MouseEvent ? (MouseEvent)e : null;
       KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
       boolean consumed = ke == null || ke.isConsumed();
-      if (e instanceof MouseEvent && (((MouseEvent)e).isPopupTrigger() || e.getID() == MouseEvent.MOUSE_PRESSED)) {
+      if (me != null && (me.isPopupTrigger() || e.getID() == MouseEvent.MOUSE_PRESSED) ||
+          ke != null && ke.getKeyCode() == KeyEvent.VK_CONTEXT_MENU) {
         myPopupTriggerTime = System.currentTimeMillis();
       }
       super.dispatchEvent(e);
