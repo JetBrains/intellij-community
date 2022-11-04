@@ -95,25 +95,6 @@ private class JUnitMalformedSignatureVisitor(
     return true
   }
 
-  private fun checkMalformedNestedClass(aClass: UClass) {
-    val javaClass = aClass.javaPsi
-    val containingClass = javaClass.containingClass
-    if (containingClass == null || !javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)) return
-    val problems = mutableListOf<JvmModifier>()
-    if (aClass.isStatic) problems.add(JvmModifier.STATIC)
-    if (aClass.visibility == UastVisibility.PRIVATE) problems.add(JvmModifier.PRIVATE)
-    if (problems.isEmpty()) return
-    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.nested.class.descriptor",
-      problems.size,
-      problems.first().nonMessage(),
-      problems.last().nonMessage()
-    )
-    val fix = ClassSignatureQuickFix(aClass.javaPsi.name ?: return, false, aClass.visibility == UastVisibility.PRIVATE)
-    holder.registerUProblem(aClass, message, fix)
-  }
-
-  fun JvmModifier.nonMessage() = "non-${toString().lowercase()}"
-
   private val dataPoint = AnnotatedSignatureProblem(
     annotations = listOf(ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINT, ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINTS),
     shouldBeStatic = true,
@@ -212,6 +193,8 @@ private class JUnitMalformedSignatureVisitor(
     }
   )
 
+  fun JvmModifier.nonMessage() = "non-${toString().lowercase()}"
+
   private val PsiAnnotation.shortName get() = qualifiedName?.substringAfterLast(".")
 
   private fun notPrivate(method: UDeclaration): UastVisibility? =
@@ -239,6 +222,23 @@ private class JUnitMalformedSignatureVisitor(
       }
     }
     return false
+  }
+
+  private fun checkMalformedNestedClass(aClass: UClass) {
+    val javaClass = aClass.javaPsi
+    val containingClass = javaClass.containingClass
+    if (containingClass == null || !javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)) return
+    val problems = mutableListOf<JvmModifier>()
+    if (aClass.isStatic) problems.add(JvmModifier.STATIC)
+    if (aClass.visibility == UastVisibility.PRIVATE) problems.add(JvmModifier.PRIVATE)
+    if (problems.isEmpty()) return
+    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.nested.class.descriptor",
+                                            problems.size,
+                                            problems.first().nonMessage(),
+                                            problems.last().nonMessage()
+    )
+    val fix = ClassSignatureQuickFix(aClass.javaPsi.name ?: return, false, aClass.visibility == UastVisibility.PRIVATE)
+    holder.registerUProblem(aClass, message, fix)
   }
 
   private fun checkMalformedExtension(field: UField) {
