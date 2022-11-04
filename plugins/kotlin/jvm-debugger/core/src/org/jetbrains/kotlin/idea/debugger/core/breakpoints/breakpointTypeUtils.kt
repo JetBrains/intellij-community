@@ -96,9 +96,10 @@ inline fun <reified T : PsiElement> getElementsAtLineIfAny(file: KtFile, line: I
     return findElementsOfClassInRange(file, start, end, T::class.java).filterIsInstance<T>()
 }
 
-fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> =
-    getElementsAtLineIfAny<KtFunction>(file, line)
-        .filter { it is KtFunctionLiteral || it.name == null }
+fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
+    return getElementsAtLineIfAny<KtFunction>(file, line)
+        .filter { (it is KtFunctionLiteral || it.name == null) && it.getLineNumber() == line }
+}
 
 fun KtCallableDeclaration.isInlineOnly(): Boolean {
     if (!hasModifier(KtTokens.INLINE_KEYWORD)) {

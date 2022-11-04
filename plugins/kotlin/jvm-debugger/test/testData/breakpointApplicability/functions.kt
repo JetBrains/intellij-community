@@ -42,3 +42,13 @@ fun foo10(a: () -> Unit = { println() }) { /// *, L, M, λ
 // If a default parameter value is not just a lambda, but a function call with a lambda argument,
 // there should be a line breakpoint as well
 fun foo11(a: String = run { "foo" }) = a /// *, L, M, λ
+
+// Lambda breakpoints should be accessible on lines where the lambda expression starts
+fun foo12() { /// M
+    listOf(1, 2, 3, 4, 5) /// L
+        .filter { it % 2 == 0 } /// *, L, λ
+        .map { /// *, L, λ
+            it * 2 /// L
+        } /// L
+        .joinToString() /// L
+} /// L
