@@ -24,7 +24,7 @@ internal class InconsistentCommentForJavaParameterInspection: LocalInspectionToo
         override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry) = annotationEntry.check()
 
         private fun KtCallElement.check() {
-            if (!hasArgumentNameComments(this)) return
+            if (!hasArgumentNameComments()) return
 
             analyze(this) {
                 val expectedNameComments = getArgumentNameComments(this@check) ?: return
@@ -42,7 +42,7 @@ internal class InconsistentCommentForJavaParameterInspection: LocalInspectionToo
         }
     }
 
-    class CorrectNamesInCommentsToJavaCallArgumentsFix(private val commentedParameterName: String) : LocalQuickFix {
+    private class CorrectNamesInCommentsToJavaCallArgumentsFix(private val commentedParameterName: String) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("intention.name.use.correct.parameter.name")
         override fun getFamilyName() = name
 

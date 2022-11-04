@@ -25,12 +25,13 @@ class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtC
     KotlinBundle.lazyMessage("add.names.in.comment.to.call.arguments")
 ) {
     override fun isApplicableTo(element: KtCallElement, caretOffset: Int): Boolean =
-        resolveValueParameterDescriptors(element, anyBlockCommentsWithName = true) != null
+        resolveValueParameterDescriptors(element, canAddNameComments = true) != null
 
     override fun applyTo(element: KtCallElement, editor: Editor?) {
         val resolvedCall = element.resolveToCall() ?: return
         val psiFactory = KtPsiFactory(element)
         for ((argument, parameter) in element.valueArguments.filterIsInstance<KtValueArgument>().resolve(resolvedCall)) {
+            if (argument.hasBlockCommentWithName()) continue
             val parent = argument.parent
             parent.addBefore(psiFactory.createComment(parameter.toParameterNameComment()), argument)
             parent.addBefore(psiFactory.createWhiteSpace(), argument)
@@ -41,12 +42,12 @@ class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtC
     companion object {
         fun resolveValueParameterDescriptors(
             element: KtCallElement,
-            anyBlockCommentsWithName: Boolean
+            canAddNameComments: Boolean
         ): List<Pair<KtValueArgument, ValueParameterDescriptor>>? {
             val arguments = element.valueArguments.filterIsInstance<KtValueArgument>().filterNot { it is KtLambdaArgument }
             if (arguments.isEmpty() || arguments.any { it.isNamed() } ||
-                (anyBlockCommentsWithName && arguments.any { it.hasBlockCommentWithName() }) ||
-                (!anyBlockCommentsWithName && arguments.none { it.hasBlockCommentWithName() })
+                (canAddNameComments && arguments.all { it.hasBlockCommentWithName() }) ||
+                (!canAddNameComments && arguments.none { it.hasBlockCommentWithName() })
             ) return null
             val resolvedCall = element.resolveToCall() ?: return null
             val descriptor = resolvedCall.candidateDescriptor

@@ -1940,6 +1940,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithVararg.kt");
         }
 
+        @TestMetadata("partialNameComments.kt")
+        public void testPartialNameComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/partialNameComments.kt");
+        }
+
+        @TestMetadata("partialNameComments2.kt")
+        public void testPartialNameComments2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/partialNameComments2.kt");
+        }
+
         @TestMetadata("superTypeCall.kt")
         public void testSuperTypeCall() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/superTypeCall.kt");

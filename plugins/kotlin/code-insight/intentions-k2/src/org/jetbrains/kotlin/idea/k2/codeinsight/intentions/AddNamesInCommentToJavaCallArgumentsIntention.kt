@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.NameCommentsByArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canAddArgumentNameCommentsByPsi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.getArgumentNameComments
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasBlockCommentWithName
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -26,7 +27,7 @@ internal class AddNamesInCommentToJavaCallArgumentsIntention
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallElement> = ApplicabilityRanges.CALL_EXCLUDING_LAMBDA_ARGUMENT
 
-    override fun isApplicableByPsi(element: KtCallElement): Boolean = canAddArgumentNameCommentsByPsi(element)
+    override fun isApplicableByPsi(element: KtCallElement): Boolean = element.canAddArgumentNameCommentsByPsi()
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallElement): Context? = getArgumentNameComments(element)?.let { Context(it) }
@@ -35,6 +36,10 @@ internal class AddNamesInCommentToJavaCallArgumentsIntention
         val nameCommentsMap = context.nameCommentsByArgument.dereferenceValidKeys()
         val psiFactory = KtPsiFactory(element)
         element.valueArguments.filterIsInstance<KtValueArgument>().forEach { argument ->
+            // If the argument already has a name comment (regardless of whether it has the correct argument name), don't add another
+            // comment to it. Note that wrong argument names are covered by `InconsistentCommentForJavaParameterInspection`.
+            if (argument.hasBlockCommentWithName()) return@forEach
+
             val comment = nameCommentsMap[argument]?.comment ?: return@forEach
             val parent = argument.parent
             parent.addBefore(psiFactory.createComment(comment), argument)

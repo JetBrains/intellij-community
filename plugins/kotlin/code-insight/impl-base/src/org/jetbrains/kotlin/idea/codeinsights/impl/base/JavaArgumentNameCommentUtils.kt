@@ -19,18 +19,14 @@ import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.util.takeWhileInclusive
 
-fun hasArgumentNameComments(element: KtCallElement): Boolean = checkApplicability(element, shouldHaveArgumentNameComments = true)
+fun KtCallElement.hasArgumentNameComments(): Boolean = getApplicableArguments()?.any { it.hasBlockCommentWithName() } == true
 
-fun canAddArgumentNameCommentsByPsi(element: KtCallElement): Boolean = checkApplicability(element, shouldHaveArgumentNameComments = false)
+fun KtCallElement.canAddArgumentNameCommentsByPsi(): Boolean = getApplicableArguments()?.any { !it.hasBlockCommentWithName() } == true
 
-private fun checkApplicability(element: KtCallElement, shouldHaveArgumentNameComments: Boolean): Boolean {
-    val arguments = element.getNonLambdaArguments()
-    return arguments.isNotEmpty() &&
-            arguments.none { it.isNamed() } &&
-            arguments.any { it.hasBlockCommentWithName() } == shouldHaveArgumentNameComments
-}
+private fun KtCallElement.getApplicableArguments(): List<KtValueArgument>? =
+    getNonLambdaArguments().takeIf { arguments -> arguments.isNotEmpty() && arguments.none { it.isNamed() } }
 
-private fun KtValueArgument.hasBlockCommentWithName(): Boolean = getBlockCommentWithName() != null
+fun KtValueArgument.hasBlockCommentWithName(): Boolean = getBlockCommentWithName() != null
 
 fun KtValueArgument.getBlockCommentWithName(): PsiComment? =
     siblings(forward = false, withSelf = false)
