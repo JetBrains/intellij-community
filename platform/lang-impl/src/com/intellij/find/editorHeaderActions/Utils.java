@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.ui.popup.AlignedPopup;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -53,12 +54,8 @@ public final class Utils {
     }
 
     if (popupState != null) popupState.prepareToShow(popup);
-    if (toolbarComponent != null) {
-      popup.showUnderneathOf(toolbarComponent);
-    }
-    else {
-      popup.showUnderneathOf(textField);
-    }
+    JComponent parent = toolbarComponent != null ? toolbarComponent : textField;
+    AlignedPopup.showUnderneathWithoutAlignment(popup, parent);
   }
 
   public static void setSmallerFont(final JComponent component) {
