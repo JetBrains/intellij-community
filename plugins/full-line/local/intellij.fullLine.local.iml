@@ -59,7 +59,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="kinference.ndarray.jvm" type="repository">
+      <library name="kinference.ndarray.core.jvm" type="repository">
         <properties include-transitive-deps="false" maven-id="io.kinference:ndarray-core-jvm:0.2.0" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.0/ndarray-core-jvm-0.2.0.jar!/" />
@@ -103,18 +103,6 @@
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.0/serializer-protobuf-jvm-0.2.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="kinference.api.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:inference-api-jvm:0.2.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.0/inference-api-jvm-0.2.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.0/inference-api-jvm-0.2.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
