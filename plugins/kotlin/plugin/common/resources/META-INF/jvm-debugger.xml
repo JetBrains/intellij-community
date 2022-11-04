@@ -16,6 +16,12 @@
     </action>
   </actions>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.debugger.kotlinStackFrameValueContributor"
+                    interface="org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrameValueContributor" dynamic="true"/>
+  </extensionPoints>
+
+
   <extensions defaultExtensionNs="com.intellij">
     <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
 

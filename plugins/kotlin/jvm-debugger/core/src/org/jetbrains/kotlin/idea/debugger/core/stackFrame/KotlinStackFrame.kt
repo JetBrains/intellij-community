@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 
-import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -61,8 +60,12 @@ open class KotlinStackFrame(
         if (!removeSyntheticThisObject(evaluationContext, children, existingVariables) && thisVariables.isNotEmpty()) {
             remapThisObjectForOuterThis(evaluationContext, children, existingVariables)
         }
-
         children.add(evaluationContext, thisVariables, otherVariables)
+        for (contributor in KotlinStackFrameValueContributor.EP.extensions) {
+            for (value in contributor.contributeValues(this, evaluationContext, variables)) {
+                children.add(value)
+            }
+        }
     }
 
     private fun XValueChildrenList.add(
