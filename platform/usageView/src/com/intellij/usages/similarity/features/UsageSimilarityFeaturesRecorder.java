@@ -15,21 +15,21 @@ import java.util.Arrays;
 
 public class UsageSimilarityFeaturesRecorder {
   private final @NotNull Bag myFeatures;
-  private final @Nullable PsiElement myInitialElement;
-  private final PsiElement myUsage;
+  private final @Nullable PsiElement myInitialContext;
+  private final @NotNull PsiElement myUsage;
 
   public UsageSimilarityFeaturesRecorder(@Nullable PsiElement initialContext, @NotNull PsiElement usage) {
     myUsage = usage;
     myFeatures = new Bag();
-    myInitialElement = initialContext;
+    myInitialContext = initialContext;
   }
 
   private boolean isInSameTreeAsUsage(@NotNull PsiElement expression) {
     return PsiTreeUtil.findFirstParent(
       expression,
-      false, element -> element == myUsage || element == myInitialElement) == myUsage || PsiTreeUtil.findFirstParent(
+      false, element -> element == myUsage || element == myInitialContext) == myUsage || PsiTreeUtil.findFirstParent(
       myUsage,
-      false, element -> element == expression || element == myInitialElement) == expression;
+      false, element -> element == expression || element == myInitialContext) == expression;
   }
 
   public @NotNull Bag getFeatures() {
@@ -48,23 +48,24 @@ public class UsageSimilarityFeaturesRecorder {
       tokenFeature = (isInSameTreeAsUsage(element) ? "USAGE: " : "CONTEXT: ") + tokenFeature;
     }
     myFeatures.add(tokenFeature);
-    if (element != myInitialElement) {
-      addStructuralFeatures(element, tokenFeature);
+    if (element == myInitialContext) {
+      return;
     }
+    PsiElement parent = element.getParent();
+    if (parent != myInitialContext) {
+      addParentFeatures(parent, tokenFeature, "GP:");
+    }
+    addParentFeatures(element, tokenFeature, "P:");
+    addSiblingFeatures(element, tokenFeature);
   }
 
-  private void addParentFeatures(@NotNull PsiElement element, @Nullable String tokenFeature) {
+  private void addParentFeatures(@NotNull PsiElement element, @Nullable String tokenFeature, @NotNull String prefix) {
     if (!Registry.is("similarity.find.usages.use.parent.features")) {
       return;
     }
     PsiElement parent = element.getParent();
-    PsiElement grandParent;
     if (parent != null) {
-      grandParent = parent.getParent();
-      myFeatures.add(tokenFeature +" P: "+ PsiUtilCore.getElementType(parent) + " " + getChildNumber(parent, element));
-      if (grandParent != null) {
-        myFeatures.add(tokenFeature + " GP: " + PsiUtilCore.getElementType(grandParent) + " " + getChildNumber(grandParent, parent));
-      }
+      myFeatures.add(tokenFeature + " " + prefix + " " + PsiUtilCore.getElementType(parent) + " " + getChildNumber(parent, element));
     }
   }
 
@@ -74,11 +75,6 @@ public class UsageSimilarityFeaturesRecorder {
     }
     myFeatures.add(tokenFeature + " PREV: " + getPrevMeaningfulSibling(element));
     myFeatures.add(tokenFeature + " NEXT: " + getNextMeaningfulSibling(element));
-  }
-
-  public void addStructuralFeatures(@NotNull PsiElement element, @NotNull String tokenFeature) {
-    addParentFeatures(element, tokenFeature);
-    addSiblingFeatures(element, tokenFeature);
   }
 
   private static int getChildNumber(@NotNull PsiElement parent, @NotNull PsiElement child) {
