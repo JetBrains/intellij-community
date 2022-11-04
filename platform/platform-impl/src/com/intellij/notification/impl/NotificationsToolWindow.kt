@@ -917,6 +917,7 @@ private class NotificationComponent(val project: Project,
           button.addActionListener {
             runAction(actions[0], it.source)
           }
+          Notification.setDataProvider(notification, button)
           actionPanel.add(button)
 
           if (actionsSize == 2) {
@@ -1071,6 +1072,9 @@ private class NotificationComponent(val project: Project,
   private fun createAction(action: AnAction): JComponent {
     return object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon,
                                         { link, _action -> runAction(_action, link) }, action) {
+      init {
+        Notification.setDataProvider(myNotificationWrapper.notification!!, this)
+      }
       override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
   }

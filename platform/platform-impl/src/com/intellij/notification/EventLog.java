@@ -197,6 +197,9 @@ public final class EventLog {
           if (context != null) {
             project = context.getData(CommonDataKeys.PROJECT);
           }
+          if (source instanceof JComponent component) {
+            Notification.setDataProvider(notification, component);
+          }
           NotificationCollector.getInstance()
             .logNotificationActionInvoked(project, notification, action, NotificationCollector.NotificationPlace.EVENT_LOG);
           Notification.fire(notification, action, context);
