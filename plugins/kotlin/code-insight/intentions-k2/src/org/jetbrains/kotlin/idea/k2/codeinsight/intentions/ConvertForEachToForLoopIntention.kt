@@ -70,10 +70,10 @@ internal class ConvertForEachToForLoopIntention
     private fun computeReturnsToReplace(element: KtCallExpression): ReturnsToReplace? {
         val lambda = element.getSingleLambdaArgument() ?: return null
         val lambdaBody = lambda.bodyExpression ?: return null
-        val functionLiteral = lambda.functionLiteral
+        val functionLiteralSymbol = lambda.functionLiteral.getSymbol()
         return buildList {
             lambdaBody.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
-                if (returnExpression.getReturnTargetSymbol() == functionLiteral.getSymbol()) {
+                if (returnExpression.getReturnTargetSymbol() == functionLiteralSymbol) {
                     add(returnExpression.createSmartPointer())
                 }
             }
