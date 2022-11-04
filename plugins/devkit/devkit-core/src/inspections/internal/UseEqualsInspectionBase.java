@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -15,6 +15,9 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 public abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
 
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends UElement>[] HINTS = new Class[]{UBinaryExpression.class};
+
   @Override
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {
     return super.isAllowed(holder) &&
@@ -22,41 +25,21 @@ public abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
              .findClass(getTargetClass().getName(), holder.getFile().getResolveScope()) != null;
   }
 
-  @Override
-  protected final @NotNull PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder,
-                                                                  boolean isOnTheFly) {
-    //noinspection unchecked
-    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(),
-                                           new AbstractUastNonRecursiveVisitor() {
-
-                                             @Override
-                                             public boolean visitBinaryExpression(@NotNull UBinaryExpression binaryExpression) {
-                                               PsiElement sourcePsi = isEqualityExpression(binaryExpression) ?
-                                                                      binaryExpression.getSourcePsi() :
-                                                                      null;
-                                               if (sourcePsi != null) {
-                                                 holder.registerProblem(sourcePsi,
-                                                                        DevKitBundle.message("inspections.use.equals.description",
-                                                                                             getTargetClass().getSimpleName()));
-                                               }
-
-                                               return true;
-                                             }
-                                           },
-                                           new Class[]{UBinaryExpression.class});
-  }
-
   protected abstract @NotNull Class<?> getTargetClass();
 
-  protected boolean isExcluded(@NotNull UExpression operand) {
-    return operand instanceof ULiteralExpression ||
-           operand instanceof UThisExpression;
-  }
+  @Override
+  protected final @NotNull PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
 
-  private boolean hasTargetType(@NotNull UExpression operand) {
-    return operand.getSourcePsi() != null &&
-           InheritanceUtil.isInheritor(operand.getExpressionType(),
-                                       getTargetClass().getName());
+      @Override
+      public boolean visitBinaryExpression(@NotNull UBinaryExpression binaryExpression) {
+        PsiElement sourcePsi = isEqualityExpression(binaryExpression) ? binaryExpression.getSourcePsi() : null;
+        if (sourcePsi != null) {
+          holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.use.equals.description", getTargetClass().getSimpleName()));
+        }
+        return true;
+      }
+    }, HINTS);
   }
 
   private boolean isEqualityExpression(@NotNull UBinaryExpression binaryExpression) {
@@ -77,5 +60,15 @@ public abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
     }
 
     return hasTargetType(leftOperand) || hasTargetType(rightOperand);
+  }
+
+  protected boolean isExcluded(@NotNull UExpression operand) {
+    return operand instanceof ULiteralExpression ||
+           operand instanceof UThisExpression;
+  }
+
+  private boolean hasTargetType(@NotNull UExpression operand) {
+    return operand.getSourcePsi() != null &&
+           InheritanceUtil.isInheritor(operand.getExpressionType(), getTargetClass().getName());
   }
 }
