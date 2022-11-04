@@ -23,12 +23,14 @@ import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
+ *
+ * @deprecated Use ordinary {@link AnAction} and {@link ToolbarDecorator#addExtraAction(AnAction)}
  */
+@Deprecated
 public abstract class AnActionButton extends AnAction implements ShortcutProvider {
   private static final Logger LOG = Logger.getInstance(AnActionButton.class);
   private boolean myEnabled = true;
   private boolean myVisible = true;
-  private ShortcutSet myShortcut;
   private JComponent myContextComponent;
   private Set<AnActionButtonUpdater> myUpdaters;
   private final List<ActionButtonListener> myListeners = new ArrayList<>();
@@ -126,11 +128,11 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   @Override
   public ShortcutSet getShortcut() {
-    return myShortcut;
+    return getShortcutSet();
   }
 
-  public void setShortcut(ShortcutSet shortcut) {
-    myShortcut = shortcut;
+  public void setShortcut(@NotNull ShortcutSet shortcut) {
+    setShortcutSet(shortcut);
   }
 
   public void setContextComponent(JComponent contextComponent) {
