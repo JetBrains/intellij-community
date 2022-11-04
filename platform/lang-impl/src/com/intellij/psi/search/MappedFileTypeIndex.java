@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -238,6 +239,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           myDataBuffer.flip();
           return myDataBuffer.getShort();
         }
+        catch (ClosedChannelException cce) {
+          return 0;
+        }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
         }
@@ -253,6 +257,10 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           while (bytesWritten < ELEMENT_BYTES) {
             bytesWritten += myFileChannel.write(myDataBuffer, offsetInFile(inputId) + bytesWritten);
           }
+        }
+        catch (ClosedChannelException cce) {
+          LOG.warn("set() after close()", cce);
+          return;
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -277,6 +285,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
               myElementsCount += zeroBufSize / ELEMENT_BYTES;
             }
           }
+        }
+        catch (ClosedChannelException cce) {
+          LOG.warn("ensureCapacity() after close()", cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -324,6 +335,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           myElementsCount = 0;
           //noinspection NonAtomicOperationOnVolatileField
           myModificationsCounter++;
+        }
+        catch (ClosedChannelException cce) {
+          LOG.warn("clear() after close()", cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
