@@ -345,9 +345,10 @@ public class Menu extends MenuItem {
   private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker) {
     try {
       Class<?> toolkitClass = Class.forName("sun.lwawt.macosx.LWCToolkit");
-      Method invokeMethod = ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeAndWait", Runnable.class, Component.class);
+      Method invokeMethod = ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeAndWait", Runnable.class, Component.class, boolean.class, int.class);
       if (invokeMethod != null) {
         try {
+          invokeMethod.invoke(toolkitClass, r, invoker, true, -1);
           invokeMethod.invoke(toolkitClass, r, invoker);
         }
         catch (Exception e) {
