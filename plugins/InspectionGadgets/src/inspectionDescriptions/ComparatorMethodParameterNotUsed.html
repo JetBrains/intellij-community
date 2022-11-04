@@ -12,13 +12,13 @@ Reports problems in <code>Comparator.compare()</code> and <code>Comparable.compa
     and can produce unpredictable results when equal elements are encountered. In particular,
     sorting may fail with an exception on some data.</li>
   <li>
-    Comparison method never returns positive or negative value. To fulfill the contract, if comparison method returns positive values,
+    The comparison method never returns positive or negative value. To fulfill the contract, if the comparison method returns positive values,
     it should also return negative ones if arguments are supplied in reversed order.
   </li>
   <li>
-    Comparison method returns <code>Integer.MIN_VALUE</code>. While allowed by contract, it may be error-prone, as some call sites
-    may incorrectly invert the return value of comparison method using unary minus. In this case, <code>Integer.MIN_VALUE</code>
-    will stay negative.
+    The comparison method returns <code>Integer.MIN_VALUE</code>. While allowed by the contract, it may be error-prone, as some call sites
+    may incorrectly try to invert the return value of the comparison method using the unary minus operator.
+    The negated value of <code>Integer.MIN_VALUE</code> is <code>Integer.MIN_VALUE</code>.
   </li>
 </ul>
 <p><b>Example:</b></p>
