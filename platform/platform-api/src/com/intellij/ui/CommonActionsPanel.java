@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -96,19 +97,19 @@ public final class CommonActionsPanel extends JPanel {
     }
   }
 
-  private final Map<Buttons, AnActionButton> myButtons = new HashMap<>();
-  private final AnActionButton[] myActions;
+  private final Map<Buttons, AnAction> myButtons = new HashMap<>();
+  private final AnAction[] myActions;
   private EnumMap<Buttons, ShortcutSet> myCustomShortcuts;
 
   CommonActionsPanel(@NotNull ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
-                     AnActionButton @Nullable [] additionalActions, @Nullable Comparator<? super AnActionButton> buttonComparator,
+                     AnAction @Nullable [] additionalActions, @Nullable Comparator<? super AnAction> buttonComparator,
                      @NlsContexts.Button String addName, @NlsContexts.Button String removeName,
                      @NlsContexts.Button String moveUpName, @NlsContexts.Button String moveDownName, @NlsContexts.Button String editName,
                      Icon addIcon, Buttons @NotNull ... buttons) {
     super(new BorderLayout());
     myPosition = position;
     final Listener listener = factory.createListener(this);
-    AnActionButton[] actions = new AnActionButton[buttons.length + (additionalActions == null ? 0 : additionalActions.length)];
+    AnAction[] actions = new AnAction[buttons.length + (additionalActions == null ? 0 : additionalActions.length)];
     for (int i = 0; i < buttons.length; i++) {
       Buttons button = buttons[i];
       String name = switch (button) {
@@ -124,13 +125,15 @@ public final class CommonActionsPanel extends JPanel {
     }
     if (additionalActions != null && additionalActions.length > 0) {
       int i = buttons.length;
-      for (AnActionButton button : additionalActions) {
+      for (AnAction button : additionalActions) {
         actions[i++] = button;
       }
     }
     myActions = actions;
-    for (AnActionButton action : actions) {
-      action.setContextComponent(contextComponent);
+    for (AnAction action : actions) {
+      if (action instanceof AnActionButton anActionButton) {
+        anActionButton.setContextComponent(contextComponent);
+      }
     }
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
@@ -164,7 +167,23 @@ public final class CommonActionsPanel extends JPanel {
     else add(myToolbar.getComponent(), BorderLayout.CENTER);
   }
 
-  public AnActionButton getAnActionButton(Buttons button) {
+  /**
+   * Returns the AnActionButton corresponding to the given button, if any.
+   * @deprecated returns {@code null} if an ordinary {@code AnAction} corresponds to the given button, use {@link #getAnAction(Buttons)} instead
+   * @param button one of the standard buttons
+   * @return the {@code AnActionButton} if the corresponding action exists and is an instance of {@code AnActionButton}
+   */
+  @Deprecated
+  public @Nullable AnActionButton getAnActionButton(@NotNull Buttons button) {
+    return ObjectUtils.tryCast(myButtons.get(button), AnActionButton.class);
+  }
+
+  /**
+   * Returns the AnAction corresponding to the given button, if any.
+   * @param button one of the standard buttons
+   * @return the {@code AnAction} if the corresponding action exists
+   */
+  public @Nullable AnAction getAnAction(@NotNull Buttons button) {
     return myButtons.get(button);
   }
 
@@ -173,19 +192,17 @@ public final class CommonActionsPanel extends JPanel {
     if (getBackground() != null && !getBackground().equals(UIUtil.getPanelBackground())) {
       SwingUtilities.updateComponentTreeUI(this.getParent());
     }
-    for (AnActionButton button : myActions) {
-      ShortcutSet shortcut = button.getShortcut();
-      if (shortcut != null) {
-        if (button instanceof MyActionButton && myCustomShortcuts != null ) {
-          ShortcutSet customShortCut = myCustomShortcuts.get(((MyActionButton)button).myButton);
-          if (customShortCut != null) {
-            shortcut = customShortCut;
-          }
+    for (AnAction button : myActions) {
+      ShortcutSet shortcut = button.getShortcutSet();
+      if (button instanceof MyActionButton && myCustomShortcuts != null) {
+        ShortcutSet customShortCut = myCustomShortcuts.get(((MyActionButton)button).myButton);
+        if (customShortCut != null) {
+          shortcut = customShortCut;
         }
-        button.registerCustomShortcutSet(shortcut, button.getContextComponent());
-        if (button instanceof RemoveButton) {
-          registerDeleteHook((MyActionButton)button);
-        }
+      }
+      button.registerCustomShortcutSet(shortcut, myToolbar.getTargetComponent());
+      if (button instanceof RemoveButton) {
+        registerDeleteHook((MyActionButton)button);
       }
     }
 
@@ -195,7 +212,7 @@ public final class CommonActionsPanel extends JPanel {
   @Override
   public void removeNotify() {
     final JRootPane pane = getRootPane();
-    for (AnActionButton button : myActions) {
+    for (AnAction button : myActions) {
       if (button instanceof AddButton && UIUtil.isDialogRootPane(pane)) {
         button.unregisterCustomShortcutSet(pane);
       }
@@ -238,9 +255,9 @@ public final class CommonActionsPanel extends JPanel {
   }
 
   public void setEnabled(Buttons button, boolean enabled) {
-    AnActionButton b = myButtons.get(button);
-    if (b != null) {
-      b.setEnabled(enabled);
+    AnAction b = myButtons.get(button);
+    if (b instanceof AnActionButton anActionButton) {
+      anActionButton.setEnabled(enabled);
     }
   }
 

@@ -46,7 +46,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   protected boolean myRemoveActionEnabled;
   protected boolean myUpActionEnabled;
   protected boolean myDownActionEnabled;
-  private final List<AnActionButton> myExtraActions = new SmartList<>();
+  private final List<AnAction> myExtraActions = new SmartList<>();
   private ActionToolbarPosition myToolbarPosition;
   protected AnActionButtonRunnable myAddAction;
   protected AnActionButtonRunnable myEditAction;
@@ -66,7 +66,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   private Dimension myPreferredSize;
   private Dimension myMinimumSize;
   private CommonActionsPanel myActionsPanel;
-  private Comparator<? super AnActionButton> myButtonComparator;
+  private Comparator<? super AnAction> myButtonComparator;
   private Icon myAddIcon;
   private boolean myForcedDnD;
 
@@ -76,9 +76,9 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   protected abstract void updateButtons();
 
   protected void updateExtraElementActions(boolean someElementSelected) {
-    for (AnActionButton action : myExtraActions) {
-      if (action instanceof ElementActionButton) {
-        action.setEnabled(someElementSelected);
+    for (AnAction action : myExtraActions) {
+      if (action instanceof ElementActionButton elementActionButton) {
+        elementActionButton.setEnabled(someElementSelected);
       }
     }
   }
@@ -206,12 +206,27 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
+  /**
+   * Does nothing.
+   *
+   * @deprecated  Use {@link #setButtonComparator(String...)} instead
+   * @param buttonComparator ignored
+   * @return this ToolbarDecorator
+   */
+  @Deprecated(forRemoval = true)
   @NotNull
   public ToolbarDecorator setButtonComparator(Comparator<? super AnActionButton> buttonComparator) {
-    myButtonComparator = buttonComparator;
     return this;
   }
 
+  /**
+   * Sorts actions according to the given order.
+   * <p>
+   * Must be called before {@link #createPanel()}.
+   *</p>
+   * @param actionNames ordered action names corresponding to the value of the {@code text} property of the action's template presentation
+   * @return this ToolbarDecorator
+   */
   @NotNull
   public ToolbarDecorator setButtonComparator(@Nls String @NotNull ... actionNames) {
     final List<String> names = Arrays.asList(actionNames);
@@ -229,12 +244,52 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
+  /**
+   * Adds an extra action to the toolbar.
+   * @param action the action to add
+   * @return this ToolbarDecorator
+   */
+  @NotNull
+  public ToolbarDecorator addExtraAction(@NotNull AnAction action) {
+    myExtraActions.add(action);
+    return this;
+  }
+
+  /**
+   * Adds an extra action to the toolbar.
+   * @deprecated use {@link #addExtraAction(AnAction)} instead
+   * @param action the action to add
+   * @return this ToolbarDecorator
+   */
+  @Deprecated
   @NotNull
   public ToolbarDecorator addExtraAction(@NotNull AnActionButton action) {
     myExtraActions.add(action);
     return this;
   }
 
+  /**
+   * Adds extra actions to the toolbar.
+   * @param actions the actions to add
+   * @return this ToolbarDecorator
+   */
+  @NotNull
+  public ToolbarDecorator addExtraActions(AnAction @NotNull ... actions) {
+    for (AnAction action : actions) {
+      if (action != null) {
+        addExtraAction(action);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Adds extra actions to the toolbar.
+   * @deprecated use {@link #addExtraActions(AnAction...)} instead
+   * @param actions the actions to add
+   * @return this ToolbarDecorator
+   */
+  @Deprecated
   @NotNull
   public ToolbarDecorator addExtraActions(AnActionButton @NotNull ... actions) {
     for (AnActionButton action : actions) {
@@ -396,7 +451,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     UIUtil.putClientProperty(contextComponent, JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY, true);
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
                                             myToolbarPosition,
-                                            myExtraActions.toArray(new AnActionButton[0]),
+                                            myExtraActions.toArray(new AnAction[0]),
                                             myButtonComparator,
                                             myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                                             myAddIcon, buttons);
@@ -464,20 +519,24 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   private void installUpdaters() {
-    if (myAddActionEnabled && myAddAction != null && myAddActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.ADD).addCustomUpdater(myAddActionUpdater);
-    }
-    if (myEditActionEnabled && myEditAction != null && myEditActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.EDIT).addCustomUpdater(myEditActionUpdater);
-    }
-    if (myRemoveActionEnabled && myRemoveAction != null && myRemoveActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.REMOVE).addCustomUpdater(myRemoveActionUpdater);
-    }
-    if (myUpActionEnabled && myUpAction != null && myMoveUpActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.UP).addCustomUpdater(myMoveUpActionUpdater);
-    }
-    if (myDownActionEnabled && myDownAction != null && myMoveDownActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.DOWN).addCustomUpdater(myMoveDownActionUpdater);
+    installUpdater(myAddActionEnabled, myAddAction, myAddActionUpdater, CommonActionsPanel.Buttons.ADD);
+    installUpdater(myEditActionEnabled, myEditAction, myEditActionUpdater, CommonActionsPanel.Buttons.EDIT);
+    installUpdater(myRemoveActionEnabled, myRemoveAction, myRemoveActionUpdater, CommonActionsPanel.Buttons.REMOVE);
+    installUpdater(myUpActionEnabled, myUpAction, myMoveUpActionUpdater, CommonActionsPanel.Buttons.UP);
+    installUpdater(myDownActionEnabled, myDownAction, myMoveDownActionUpdater, CommonActionsPanel.Buttons.DOWN);
+  }
+
+  private void installUpdater(
+    boolean isEnabled,
+    @Nullable AnActionButtonRunnable anActionButtonRunnable,
+    @Nullable AnActionButtonUpdater updater,
+    CommonActionsPanel.Buttons button
+  ) {
+    if (isEnabled && anActionButtonRunnable != null && updater != null) {
+      final var anActionButton = myActionsPanel.getAnActionButton(button);
+      if (anActionButton != null) {
+        anActionButton.addCustomUpdater(updater);
+      }
     }
   }
 
