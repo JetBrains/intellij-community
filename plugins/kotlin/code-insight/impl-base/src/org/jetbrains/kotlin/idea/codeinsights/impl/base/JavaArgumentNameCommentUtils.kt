@@ -50,10 +50,12 @@ typealias NameCommentsByArgument = Map<SmartPsiElementPointer<KtValueArgument>, 
 context(KtAnalysisSession)
 fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
     val arguments = element.getNonLambdaArguments()
-
     val resolvedCall = element.resolveCall().successfulFunctionCallOrNull() ?: return null
+
+    // Use `originalOverriddenSymbol` to handle `SUBSTITUTION_OVERRIDE` and `INTERSECTION_OVERRIDE` callee symbols. Also see the test
+    // `genericSuperTypeMethodCall.kt`.
     val calleeSymbol = resolvedCall.partiallyAppliedSymbol.symbol
-    if (calleeSymbol.origin != KtSymbolOrigin.JAVA) return null
+    if (calleeSymbol.originalOverriddenSymbol?.origin != KtSymbolOrigin.JAVA) return null
 
     return arguments
         .mapNotNull { argument ->

@@ -1403,9 +1403,19 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/constructorCall.kt");
         }
 
+        @TestMetadata("genericSuperTypeMethodCall.kt")
+        public void testGenericSuperTypeMethodCall() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/genericSuperTypeMethodCall.kt");
+        }
+
         @TestMetadata("kotlinFunctionCall.kt")
         public void testKotlinFunctionCall() throws Exception {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/kotlinFunctionCall.kt");
+        }
+
+        @TestMetadata("kotlinMethodCallOverridingJavaMethod.kt")
+        public void testKotlinMethodCallOverridingJavaMethod() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/kotlinMethodCallOverridingJavaMethod.kt");
         }
 
         @TestMetadata("methodCall.kt")
