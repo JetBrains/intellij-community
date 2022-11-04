@@ -14,6 +14,8 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -54,8 +56,33 @@ private class CommitProperty<T>(private val key: Key<T>, private val defaultValu
   override fun setValue(thisRef: CommitContext, property: KProperty<*>, value: T) = thisRef.putUserData(key, value)
 }
 
+private val COMMIT_EXECUTOR_PROPERTY_MAP = Key.create<UserDataHolder>("Vcs.Commit.ExecutorPropertyMap")
+internal fun CommitContext.cleanCommitExecutorProperties() {
+  putUserData(COMMIT_EXECUTOR_PROPERTY_MAP, null)
+}
+
+private class CommitExecutorProperty<T>(private val key: Key<T>, private val defaultValue: T) : ReadWriteProperty<CommitContext, T> {
+  override fun getValue(thisRef: CommitContext, property: KProperty<*>): T {
+    return thisRef.getUserData(COMMIT_EXECUTOR_PROPERTY_MAP)?.getUserData(key) ?: defaultValue
+  }
+
+  override fun setValue(thisRef: CommitContext, property: KProperty<*>, value: T) {
+    var map: UserDataHolder? = thisRef.getUserData(COMMIT_EXECUTOR_PROPERTY_MAP)
+    if (map == null) {
+      map = UserDataHolderBase()
+      thisRef.putUserData(COMMIT_EXECUTOR_PROPERTY_MAP, map)
+    }
+    map.putUserData(key, value)
+  }
+}
+
 fun commitProperty(key: Key<Boolean>): ReadWriteProperty<CommitContext, Boolean> = commitProperty(key, false)
-fun <T> commitProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitContext, T> = CommitProperty(key, defaultValue)
+fun <T> commitProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitContext, T> =
+  CommitProperty(key, defaultValue)
+
+fun commitExecutorProperty(key: Key<Boolean>): ReadWriteProperty<CommitContext, Boolean> = commitExecutorProperty(key, false)
+fun <T> commitExecutorProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitContext, T> =
+  CommitExecutorProperty(key, defaultValue)
 
 val CommitInfo.isPostCommitCheck: Boolean get() = this is PostCommitInfo
 
@@ -63,7 +90,7 @@ private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCo
 var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)
 
 private val IS_CLEANUP_COMMIT_MESSAGE_KEY = Key.create<Boolean>("Vcs.Commit.IsCleanupCommitMessage")
-var CommitContext.isCleanupCommitMessage: Boolean by commitProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
+var CommitContext.isCleanupCommitMessage: Boolean by commitExecutorProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
 
 interface CommitWorkflowListener : EventListener {
   fun vcsesChanged() = Unit
@@ -169,6 +196,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
     isExecuting = false
     eventDispatcher.multicaster.executionEnded()
+    commitContext.cleanCommitExecutorProperties()
   }
 
   fun addListener(listener: CommitWorkflowListener, parent: Disposable) =

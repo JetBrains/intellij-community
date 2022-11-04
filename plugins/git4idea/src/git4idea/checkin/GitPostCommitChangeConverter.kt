@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.PostCommitChangeConverter
 import com.intellij.util.CollectConsumer
-import com.intellij.vcs.commit.commitProperty
+import com.intellij.vcs.commit.commitExecutorProperty
 import com.intellij.vcs.log.Hash
 import git4idea.GitCommit
 import git4idea.GitUtil
@@ -66,7 +66,7 @@ class GitPostCommitChangeConverter(private val project: Project) : PostCommitCha
   companion object {
     private val GIT_POST_COMMIT_HASHES_KEY = Key.create<MutableMap<GitRepository, Hash>>("Git.Post.Commit.Hash")
 
-    private var CommitContext.postCommitHashes: MutableMap<GitRepository, Hash>? by commitProperty(GIT_POST_COMMIT_HASHES_KEY, null)
+    private var CommitContext.postCommitHashes: MutableMap<GitRepository, Hash>? by commitExecutorProperty(GIT_POST_COMMIT_HASHES_KEY, null)
 
     @JvmStatic
     fun markRepositoryCommit(commitContext: CommitContext, repository: GitRepository) {
