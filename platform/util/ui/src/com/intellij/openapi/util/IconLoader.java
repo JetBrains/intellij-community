@@ -695,10 +695,7 @@ public final class IconLoader {
     return new FilteredIcon(icon, filterSupplier);
   }
 
-  @NotNull
-  static JBImageIcon renderFilteredIcon(@NotNull Icon icon,
-                                        @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
-                                        @Nullable Component ancestor) {
+  static double getScaleToRenderIcon(@NotNull Icon icon, @Nullable Component ancestor) {
     double scale;
     ScaleContextSupport ctxSupport = getScaleContextSupport(icon);
     if (ctxSupport == null) {
@@ -707,6 +704,14 @@ public final class IconLoader {
     else {
       scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? ctxSupport.getScale(ScaleType.SYS_SCALE) : 1.0f;
     }
+    return scale;
+  }
+
+  @NotNull
+  static JBImageIcon renderFilteredIcon(@NotNull Icon icon,
+                                        double scale,
+                                        @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
+                                        @Nullable Component ancestor) {
     @SuppressWarnings("UndesirableClassUsage")
     BufferedImage image =
       new BufferedImage((int)(scale * icon.getIconWidth()), (int)(scale * icon.getIconHeight()), BufferedImage.TYPE_INT_ARGB);

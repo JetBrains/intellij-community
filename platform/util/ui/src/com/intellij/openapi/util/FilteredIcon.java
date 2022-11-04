@@ -18,7 +18,9 @@ class FilteredIcon implements ReplaceableIcon {
   private @NotNull final Icon baseIcon;
   private @NotNull final Supplier<? extends RGBImageFilter> filterSupplier;
 
+  // IconLoader.CachedImageIcon uses ScaledIconCache to support several scales simultaneously. Not sure, it is needed here.
   private @Nullable Icon iconToPaint;
+  private double currentScale = 1;
 
   FilteredIcon(@NotNull Icon icon, @NotNull Supplier<? extends RGBImageFilter> filterSupplier) {
     baseIcon = icon;
@@ -27,6 +29,7 @@ class FilteredIcon implements ReplaceableIcon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
+    double scale = IconLoader.getScaleToRenderIcon(baseIcon, c);
     Icon toPaint = iconToPaint;
     if (toPaint == null || modificationCount != -1) {
       long currentModificationCount = calculateModificationCount();
@@ -35,8 +38,12 @@ class FilteredIcon implements ReplaceableIcon {
         toPaint = null;
       }
     }
+    if (scale != currentScale) {
+      toPaint = null;
+    }
     if (toPaint == null) { // try to postpone rendering until it is really needed
-      toPaint = IconLoader.renderFilteredIcon(baseIcon, filterSupplier, c);
+      toPaint = IconLoader.renderFilteredIcon(baseIcon, scale, filterSupplier, c);
+      currentScale = scale;
       iconToPaint = toPaint;
     }
     if (c != null) {
