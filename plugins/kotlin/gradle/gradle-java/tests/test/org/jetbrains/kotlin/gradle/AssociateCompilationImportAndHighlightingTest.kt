@@ -6,14 +6,14 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleI
 import org.jetbrains.kotlin.idea.codeInsight.gradle.facetSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
+import java.io.PrintStream
 
 class AssociateCompilationImportAndHighlightingTest3 : MultiplePluginVersionGradleImportingTestCase() {
     @Test
-    @PluginTargetVersions(pluginVersion = "1.4+")
+    @PluginTargetVersions(pluginVersion = "1.8.20-dev-1816+")
     fun testAssociateCompilationIntegrationTest() {
         configureByFiles()
         importProject(false)
-        val highlightingCheck = createHighlightingCheck(testLineMarkers = false)
 
         facetSettings("project.p1.integrationTest").run {
             assertEquals(
@@ -28,6 +28,8 @@ class AssociateCompilationImportAndHighlightingTest3 : MultiplePluginVersionGrad
                 additionalVisibleModuleNames
             )
         }
+
+        val highlightingCheck = createHighlightingCheck(testLineMarkers = false)
 
         checkProjectStructure(false, false, false) {
 
@@ -207,4 +209,6 @@ class AssociateCompilationImportAndHighlightingTest3 : MultiplePluginVersionGrad
             moduleDependency("root.p6.linuxMain", DependencyScope.TEST)
         }
     }
+
+    override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
 }
