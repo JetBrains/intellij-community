@@ -139,7 +139,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
-      ChildInfo childInfo = ourPersistence.findChildInfo(this, name, fs);
+      ChildInfo childInfo = getPersistence().findChildInfo(this, name, fs);
       if (childInfo == null) {
         myData.addAdoptedName(name, isCaseSensitive);
         return null;
@@ -157,8 +157,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       int nameId = childInfo.getNameId(); // the name can change if file record was created
       int id = childInfo.getId();
-      int attributes = ourPersistence.getFileAttributes(id);
-      boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !ourPersistence.mayHaveChildren(id);
+      int attributes = getPersistence().getFileAttributes(id);
+      boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !getPersistence().mayHaveChildren(id);
 
       child = createChild(id, nameId, attributes, isEmptyDirectory);
 
@@ -345,11 +345,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @SuppressWarnings("SpellCheckingInspection")
   public @NotNull Iterable<VirtualFile> iterInDbChildren() {
-    if (!ourPersistence.wereChildrenAccessed(this)) {
+    if (!getPersistence().wereChildrenAccessed(this)) {
       return Collections.emptyList();
     }
 
-    if (ourPersistence.areChildrenLoaded(this)) {
+    if (getPersistence().areChildrenLoaded(this)) {
       return Arrays.asList(getChildren()); // may load VFS from other projects
     }
 
@@ -361,17 +361,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @SuppressWarnings("SpellCheckingInspection")
   public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
-    if (!ourPersistence.wereChildrenAccessed(this)) {
+    if (!getPersistence().wereChildrenAccessed(this)) {
       return Collections.emptyList();
     }
-    if (!ourPersistence.areChildrenLoaded(this)) {
+    if (!getPersistence().areChildrenLoaded(this)) {
       loadPersistedChildren();
     }
     return getCachedChildren();
   }
 
   private void loadPersistedChildren() {
-    String[] names = ourPersistence.listPersisted(this);
+    String[] names = getPersistence().listPersisted(this);
     NewVirtualFileSystem fs = getFileSystem();
     for (String name : names) {
       findChild(name, false, false, fs);
@@ -392,8 +392,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private VirtualFile @NotNull [] loadAllChildren() {
     boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
-      boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
-      List<? extends ChildInfo> children = ourPersistence.listAll(this);
+      boolean wasChildrenLoaded = getPersistence().areChildrenLoaded(this);
+      List<? extends ChildInfo> children = getPersistence().listAll(this);
       int[] result = ArrayUtil.newIntArray(children.size());
       VirtualFile[] files;
       if (children.isEmpty()) {
@@ -408,7 +408,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           int cmp = compareNames(name1, name2, isCaseSensitive);
           if (cmp == 0 && name1 != name2) {
             if (errorCount[0]++ == 0) {
-              LOG.error(ourPersistence + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
+              LOG.error(getPersistence() + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
                         " caseSensitive: " + isCaseSensitive +
                         " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
                         " isCaseSensitive(): " + isCaseSensitive +
@@ -437,8 +437,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           prevChildren.remove(id);
           VirtualFileSystemEntry file = vfsData.getFileById(id, this, true);
           if (file == null) {
-            int attributes = ourPersistence.getFileAttributes(id);
-            boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !ourPersistence.mayHaveChildren(id);
+            int attributes = getPersistence().getFileAttributes(id);
+            boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !getPersistence().mayHaveChildren(id);
             file = createChild(id, child.getNameId(), attributes, isEmptyDirectory);
           }
           files[i] = file;
@@ -531,7 +531,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return fileById;
     }
 
-    String name = ourPersistence.getName(id);
+    String name = getPersistence().getName(id);
     VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
     if (fileByName != null && fileByName.getId() != id) {
       // a child with the same name and different ID was recreated after a refresh session -
