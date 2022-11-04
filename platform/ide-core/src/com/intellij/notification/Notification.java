@@ -270,7 +270,7 @@ public class Notification {
   }
 
   public static void fire(final @NotNull Notification notification, @NotNull AnAction action) {
-    fire(notification, action, null);
+    fire(notification, action, dataId -> KEY.is(dataId) ? notification : null);
   }
 
   public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
