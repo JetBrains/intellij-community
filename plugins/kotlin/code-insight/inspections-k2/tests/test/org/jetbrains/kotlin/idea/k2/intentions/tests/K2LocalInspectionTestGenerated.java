@@ -925,6 +925,200 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn")
+    public static class IfToReturn extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("cascadeIf.kt")
+        public void testCascadeIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/cascadeIf.kt");
+        }
+
+        @TestMetadata("ifElseIf.kt")
+        public void testIfElseIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/ifElseIf.kt");
+        }
+
+        @TestMetadata("ifElseIfElse.kt")
+        public void testIfElseIfElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/ifElseIfElse.kt");
+        }
+
+        @TestMetadata("ifElseIfElseInconsistent.kt")
+        public void testIfElseIfElseInconsistent() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/ifElseIfElseInconsistent.kt");
+        }
+
+        @TestMetadata("ifVeryLong.kt")
+        public void testIfVeryLong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/ifVeryLong.kt");
+        }
+
+        @TestMetadata("innerIfTransformed.kt")
+        public void testInnerIfTransformed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/innerIfTransformed.kt");
+        }
+
+        @TestMetadata("onReturn.kt")
+        public void testOnReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/onReturn.kt");
+        }
+
+        @TestMetadata("onReturn2.kt")
+        public void testOnReturn2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/onReturn2.kt");
+        }
+
+        @TestMetadata("simpleIf.kt")
+        public void testSimpleIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/simpleIf.kt");
+        }
+
+        @TestMetadata("simpleIfWithBlocks.kt")
+        public void testSimpleIfWithBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToReturn/simpleIfWithBlocks.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn")
+    public static class TryToReturn extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn/basic.kt");
+        }
+
+        @TestMetadata("block.kt")
+        public void testBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn/block.kt");
+        }
+
+        @TestMetadata("cascade.kt")
+        public void testCascade() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn/cascade.kt");
+        }
+
+        @TestMetadata("finally.kt")
+        public void testFinally() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn/finally.kt");
+        }
+
+        @TestMetadata("finallyWithCascadeReturn.kt")
+        public void testFinallyWithCascadeReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn/finallyWithCascadeReturn.kt");
+        }
+
+        @TestMetadata("finallyWithReturn.kt")
+        public void testFinallyWithReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn/finallyWithReturn.kt");
+        }
+
+        @TestMetadata("inner.kt")
+        public void testInner() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn/inner.kt");
+        }
+
+        @TestMetadata("onReturn.kt")
+        public void testOnReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn/onReturn.kt");
+        }
+
+        @TestMetadata("withoutReturn.kt")
+        public void testWithoutReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToReturn/withoutReturn.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn")
+    public static class WhenToReturn extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("cascadeWhen.kt")
+        public void testCascadeWhen() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/cascadeWhen.kt");
+        }
+
+        @TestMetadata("innerWhenTransformed.kt")
+        public void testInnerWhenTransformed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/innerWhenTransformed.kt");
+        }
+
+        @TestMetadata("insideLoop.kt")
+        public void testInsideLoop() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/insideLoop.kt");
+        }
+
+        @TestMetadata("localReturns.kt")
+        public void testLocalReturns() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/localReturns.kt");
+        }
+
+        @TestMetadata("onReturn.kt")
+        public void testOnReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/onReturn.kt");
+        }
+
+        @TestMetadata("onReturn2.kt")
+        public void testOnReturn2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/onReturn2.kt");
+        }
+
+        @TestMetadata("otherReturns.kt")
+        public void testOtherReturns() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/otherReturns.kt");
+        }
+
+        @TestMetadata("simpleWhen.kt")
+        public void testSimpleWhen() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/simpleWhen.kt");
+        }
+
+        @TestMetadata("simpleWhenWithBlocks.kt")
+        public void testSimpleWhenWithBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/simpleWhenWithBlocks.kt");
+        }
+
+        @TestMetadata("whenHasMissingCase.kt")
+        public void testWhenHasMissingCase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/whenHasMissingCase.kt");
+        }
+
+        @TestMetadata("whenHasNoMissingCase.kt")
+        public void testWhenHasNoMissingCase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/whenHasNoMissingCase.kt");
+        }
+
+        @TestMetadata("whenHasNoMissingCaseWithElse.kt")
+        public void testWhenHasNoMissingCaseWithElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/whenHasNoMissingCaseWithElse.kt");
+        }
+
+        @TestMetadata("whenOneReturn.kt")
+        public void testWhenOneReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/whenOneReturn.kt");
+        }
+
+        @TestMetadata("whenThrowOnly.kt")
+        public void testWhenThrowOnly() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/whenThrowOnly.kt");
+        }
+
+        @TestMetadata("whenWithLambda.kt")
+        public void testWhenWithLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToReturn/whenWithLambda.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

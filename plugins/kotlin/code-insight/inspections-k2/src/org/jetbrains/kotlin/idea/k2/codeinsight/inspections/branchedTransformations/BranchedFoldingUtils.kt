@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -122,7 +123,7 @@ object BranchedFoldingUtils {
             is KtWhenExpression -> {
                 val entries = e.entries
                 // When the KtWhenExpression has missing cases with an else branch, we cannot fold it.
-                if (!KtPsiUtil.checkWhenExpressionHasSingleElse(e) && e.getMissingCases().isNotEmpty()) false
+                if (e.hasMissingCases()) false
                 else entries.isNotEmpty() && entries.all { entry ->
                     val assignment = getFoldableBranchedAssignment(entry.expression)?.run { assignments.add(this) }
                     assignment != null || collectAssignmentsAndCheck(entry.expression?.lastBlockStatementOrThis())
@@ -224,4 +225,139 @@ object BranchedFoldingUtils {
         return nonNullableRightTypeOfFirst isEqualTo nonNullableRightTypeOfSecond ||
                 (first.operationToken == KtTokens.EQ && nonNullableRightTypeOfSecond isSubTypeOf leftType)
     }
+
+    /**
+     * A function to lift `return` from return expressions in branches of if, when, or try [expression].
+     */
+    fun foldToReturn(expression: KtExpression): KtExpression {
+        fun KtReturnExpression.replaceWithReturned() {
+            returnedExpression?.let { replace(it) }
+        }
+
+        fun lift(e: KtExpression?) {
+            when (e) {
+                is KtWhenExpression -> e.entries.forEach { entry ->
+                    val entryExpr = entry.expression
+                    getFoldableBranchedReturn(entryExpr)?.replaceWithReturned() ?: lift(entryExpr?.lastBlockStatementOrThis())
+                }
+                is KtIfExpression -> e.branches.forEach { branch ->
+                    getFoldableBranchedReturn(branch)?.replaceWithReturned() ?: lift(branch?.lastBlockStatementOrThis())
+                }
+                is KtTryExpression -> e.tryBlockAndCatchBodies().forEach {
+                    getFoldableBranchedReturn(it)?.replaceWithReturned() ?: lift(it?.lastBlockStatementOrThis())
+                }
+            }
+        }
+        lift(expression)
+        return expression.replaced(KtPsiFactory(expression).createExpressionByPattern("return $0", expression))
+    }
+
+    /**
+     * Returns a return-expression inside [branch] or itself when the returned expression in the return-expression can be lifted.
+     * Otherwise, returns null.
+     *
+     * For example,
+     *     if (foo) {
+     *       return bar   // can be lifted -> this function will return `return bar`
+     *     } else {
+     *       return       // cannot be lifted because of the null returned expression -> this function will return `null`
+     *     }
+     */
+    private fun getFoldableBranchedReturn(branch: KtExpression?): KtReturnExpression? =
+        (branch?.lastBlockStatementOrThis() as? KtReturnExpression)?.takeIf {
+            it.returnedExpression != null &&
+                    it.returnedExpression !is KtLambdaExpression &&
+                    it.getTargetLabel() == null
+        }
+
+    data class FoldableReturns(val returnExpressions : List<KtReturnExpression>, val isFoldable : Boolean) {
+        fun isNotEmpty(): Boolean = isFoldable && returnExpressions.isNotEmpty()
+
+        companion object {
+            val NotFoldable = FoldableReturns(emptyList(), false)
+        }
+    }
+
+    /**
+     * Returns a list of return-expressions inside expressions [branches] that are branches of a if, when, or try expression.
+     * If there is any branch that we cannot lift its returned expression, this function returns an empty list with 'false' for
+     * `isFoldable`.
+     *
+     * For example, it returns `return bar` and `return zoo` expressions for the following code:
+     *     if (foo) {
+     *       return bar
+     *     } else {
+     *       return zoo
+     *     }
+     *
+     * It returns an empty list with 'false' for `isFoldable` for the following code because we cannot lift the return expression in the
+     * else-branch:
+     *     if (foo) {
+     *       return bar   // can be lifted
+     *     } else {
+     *       return       // cannot be lifted because of the null returned expression
+     *     }
+     */
+    private fun KtAnalysisSession.getFoldableReturnsFromBranches(branches: List<KtExpression?>): FoldableReturns {
+        val foldableReturns = mutableListOf<KtReturnExpression>()
+        for (branch in branches) {
+            val foldableBranchedReturn = getFoldableBranchedReturn(branch)
+            if (foldableBranchedReturn != null) {
+                foldableReturns.add(foldableBranchedReturn)
+            } else {
+                val currReturns = branch?.lastBlockStatementOrThis()?.let { getFoldableReturnsFromBranches(it) }
+                    ?: return FoldableReturns.NotFoldable
+                if (!currReturns.isFoldable) return FoldableReturns.NotFoldable
+                foldableReturns += currReturns.returnExpressions
+            }
+        }
+        return FoldableReturns(foldableReturns, true)
+    }
+
+    /**
+     * Returns a list of return-expressions that can be lifted from if, when, or try expression [expression].
+     *
+     * It returns an empty list with `isFoldable = false` if [expression] is one of if, when, and try expressions and
+     *  - [expression] doesn't have an else-branch, and it has a missing case, or
+     *  - there is any branch that we cannot lift its returned expression
+     *
+     * It returns an empty list with `isFoldable = true` if [expression] is one of [KtBreakExpression], [KtContinueExpression],
+     * [KtThrowExpression], and [KtCallExpression].
+     */
+    fun KtAnalysisSession.getFoldableReturnsFromBranches(expression: KtExpression): FoldableReturns = when (expression) {
+        is KtWhenExpression -> {
+            val entries = expression.entries
+            when {
+                expression.hasMissingCases() -> FoldableReturns.NotFoldable
+                entries.isEmpty() -> FoldableReturns.NotFoldable
+                else -> getFoldableReturnsFromBranches(entries.map { it.expression })
+            }
+        }
+        is KtIfExpression -> {
+            val branches = expression.branches
+            when {
+                branches.isEmpty() -> FoldableReturns.NotFoldable
+                branches.lastOrNull()?.getStrictParentOfType<KtIfExpression>()?.`else` == null -> FoldableReturns.NotFoldable
+                else -> getFoldableReturnsFromBranches(branches)
+            }
+        }
+        is KtTryExpression -> {
+            if (expression.finallyBlock?.finalExpression?.let { getFoldableReturnsFromBranches(listOf(it)) }?.isNotEmpty() == true)
+                FoldableReturns.NotFoldable
+            else
+                getFoldableReturnsFromBranches(expression.tryBlockAndCatchBodies())
+        }
+        is KtCallExpression -> {
+            if (expression.getKtType()?.isNothing == true) FoldableReturns(emptyList(), true) else FoldableReturns.NotFoldable
+        }
+        is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> FoldableReturns(emptyList(), true)
+        else -> FoldableReturns.NotFoldable
+    }
+
+    /**
+     * Returns true if the when-expression has a missing case with else-branch.
+     */
+    context(KtAnalysisSession)
+    private fun KtWhenExpression.hasMissingCases(): Boolean =
+        !KtPsiUtil.checkWhenExpressionHasSingleElse(this) && getMissingCases().isNotEmpty()
 }

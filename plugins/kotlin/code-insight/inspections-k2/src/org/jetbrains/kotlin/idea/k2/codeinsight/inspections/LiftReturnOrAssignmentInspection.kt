@@ -12,9 +12,12 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getFoldableReturnsFromBranches
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getNumberOfFoldableAssignmentsOrNull
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
@@ -54,10 +57,9 @@ private const val LINES_LIMIT = 15
  *       2 -> 3
  *       else -> 4
  *     }
- *
- * TODO: Handle the lift-return case.
  */
-class LiftReturnOrAssignmentInspection : AbstractKotlinInspection() {
+class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val skipLongExpressions: Boolean = true) :
+    AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         object : KtVisitorVoid() {
@@ -69,16 +71,27 @@ class LiftReturnOrAssignmentInspection : AbstractKotlinInspection() {
 
                 // This inspection targets only return and assignment within expressions with branches.
                 // Their values must not be used by other expressions.
-                if (analyze(expression) { expression.isUsedAsExpression() }) return
+                if (expression.parent !is KtBlockExpression && analyze(expression) { expression.isUsedAsExpression() }) return
 
                 states.forEach { state ->
+                    val problemMessage = KotlinBundle.message(
+                        "0.1.be.lifted.out.of.2",
+                        when (state.liftType) {
+                            LiftType.LIFT_RETURN_OUT -> KotlinBundle.message("text.Return")
+                            LiftType.LIFT_ASSIGNMENT_OUT -> KotlinBundle.message("text.Assignment")
+                        },
+                        state.keyword.text,
+                    )
+
                     registerProblem(
                         expression,
                         state.keyword,
                         state.isSerious,
                         when (state.liftType) {
+                            LiftType.LIFT_RETURN_OUT -> LiftReturnOutFix(state.keyword.text)
                             LiftType.LIFT_ASSIGNMENT_OUT -> LiftAssignmentOutFix(state.keyword.text)
                         },
+                        problemMessage,
                         state.highlightElement,
                         state.highlightType,
                     )
@@ -90,21 +103,28 @@ class LiftReturnOrAssignmentInspection : AbstractKotlinInspection() {
                 keyword: PsiElement,
                 isSerious: Boolean,
                 fix: LocalQuickFix,
+                message: String,
                 highlightElement: PsiElement = keyword,
                 highlightType: ProblemHighlightType = if (isSerious) GENERIC_ERROR_OR_WARNING else INFORMATION,
             ) {
-                val subject = KotlinBundle.message("text.Assignment")
                 holder.registerProblemWithoutOfflineInformation(
-                    expression,
-                    KotlinBundle.message("0.1.be.lifted.out.of.2", subject, keyword.text),
-                    isOnTheFly,
-                    highlightType,
-                    highlightElement.textRange?.shiftRight(-expression.startOffset),
-                    fix
+                    expression, message, isOnTheFly, highlightType, highlightElement.textRange?.shiftRight(-expression.startOffset), fix
                 )
             }
 
         }
+
+    private class LiftReturnOutFix(private val keyword: String) : LocalQuickFix {
+        override fun getName() = KotlinBundle.message("lift.return.out.fix.text.0", keyword)
+
+        override fun getFamilyName() = name
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val element = descriptor.psiElement as? KtExpression ?: return
+            val replaced = BranchedFoldingUtils.foldToReturn(element)
+            replaced.findExistingEditor()?.caretModel?.moveToOffset(replaced.startOffset)
+        }
+    }
 
     private class LiftAssignmentOutFix(private val keyword: String) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("lift.assignment.out.fix.text.0", keyword)
@@ -112,13 +132,24 @@ class LiftReturnOrAssignmentInspection : AbstractKotlinInspection() {
         override fun getFamilyName() = name
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            BranchedFoldingUtils.tryFoldToAssignment(descriptor.psiElement as KtExpression)
+            val element = descriptor.psiElement as? KtExpression ?: return
+            BranchedFoldingUtils.tryFoldToAssignment(element)
         }
     }
 
     private fun KtAnalysisSession.getStateForWhenOrTry(expression: KtExpression, keyword: PsiElement): List<LiftState>? {
-        if (expression.getLineCount() > LINES_LIMIT) return null
+        if (skipLongExpressions && expression.getLineCount() > LINES_LIMIT) return null
         if (expression.parent.node.elementType == KtNodeTypes.ELSE) return null
+
+        val foldableReturns = getFoldableReturnsFromBranches(expression)
+        if (foldableReturns.isNotEmpty()) {
+            val returns = foldableReturns.returnExpressions
+            val hasOtherReturns = expression.anyDescendantOfType<KtReturnExpression> { it !in returns }
+            val isSerious = !hasOtherReturns && returns.size > 1
+            return returns.map {
+                LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT, it, INFORMATION)
+            } + LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT)
+        }
 
         val assignmentNumber = getNumberOfFoldableAssignmentsOrNull(expression) ?: return null
         if (assignmentNumber > 0) {
@@ -140,13 +171,9 @@ class LiftReturnOrAssignmentInspection : AbstractKotlinInspection() {
         }
     }
 
-    /**
-     * Types of lift.
-     *
-     * TODO: Add LIFT_RETURN_OUT and handle the lift-return case.
-     */
     enum class LiftType {
-        LIFT_ASSIGNMENT_OUT
+        LIFT_RETURN_OUT,
+        LIFT_ASSIGNMENT_OUT,
     }
 
     data class LiftState(
