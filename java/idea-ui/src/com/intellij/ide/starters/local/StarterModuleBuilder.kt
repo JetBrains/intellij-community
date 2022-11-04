@@ -2,7 +2,6 @@ package com.intellij.ide.starters.local
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.StarterProjectConfigurator
 import com.intellij.ide.projectWizard.ProjectSettingsStep
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
@@ -68,10 +67,6 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z\\d_.]")
 
     @JvmStatic
-    private val CONFIGURATOR_EP_NAME: ExtensionPointName<StarterProjectConfigurator> =
-      ExtensionPointName.create("com.intellij.starter.projectConfigurator")
-
-    @JvmStatic
     private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> =
       ExtensionPointName.create("com.intellij.starter.moduleImporter")
 
@@ -95,7 +90,6 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     @JvmStatic
     fun setupProject(project: Project) {
       ExternalProjectsManagerImpl.setupCreatedProject(project)
-      CONFIGURATOR_EP_NAME.extensions.forEach { it.configureCreatedProject(project) }
     }
 
     @JvmStatic
@@ -217,7 +211,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
   override fun createProject(name: String?, path: String?): Project? {
     val project = super.createProject(name, path)
-    project?.let { StarterModuleBuilder.setupProject(it) }
+    project?.let { setupProject(it) }
     return project
   }
 

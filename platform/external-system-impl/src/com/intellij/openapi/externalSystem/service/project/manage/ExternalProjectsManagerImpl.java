@@ -10,6 +10,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -50,6 +51,9 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
 @State(name = "ExternalProjectsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
+
+  private static final ExtensionPointName<ExternalSystemProjectSetupExtension> PROJECT_SETUP_EXTENSION_EP
+    = ExtensionPointName.create("com.intellij.openapi.externalSystem.projectSetupExtension");
 
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
   private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
@@ -105,6 +109,9 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   public static Project setupCreatedProject(@Nullable Project project) {
     if (project != null) {
       getInstance(project).setStoreExternally(true);
+      for (ExternalSystemProjectSetupExtension each : PROJECT_SETUP_EXTENSION_EP.getExtensionList()) {
+        each.setupCreatedProject(project);
+      }
     }
     return project;
   }
