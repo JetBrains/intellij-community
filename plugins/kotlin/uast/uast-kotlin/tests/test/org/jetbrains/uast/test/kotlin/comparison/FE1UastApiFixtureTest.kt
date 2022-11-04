@@ -39,4 +39,8 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkCallKindOfSamConstructor(myFixture)
     }
 
+    fun testExpressionTypeFromIncorrectObject() {
+        checkExpressionTypeFromIncorrectObject(myFixture)
+    }
+
 }
