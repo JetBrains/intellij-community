@@ -195,7 +195,10 @@ def _internal_patch_qt(QtCore, qt_support_mode='auto'):
                 self.original_started.connect(self._signal)
 
         def connect(self, func, *args, **kwargs):
-            if qt_support_mode in ('pyside', 'pyside2', 'pyside6'):
+            _is_signal_instance = False
+            if hasattr(QtCore, 'SignalInstance'):
+                _is_signal_instance = isinstance(func, QtCore.SignalInstance)
+            if qt_support_mode in ('pyside', 'pyside2', 'pyside6') and not _is_signal_instance:
                 return self._signal.connect(FuncWrapper(func), *args, **kwargs)
             else:
                 return self._signal.connect(func, *args, **kwargs)

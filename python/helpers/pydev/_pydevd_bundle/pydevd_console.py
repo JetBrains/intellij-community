@@ -137,7 +137,7 @@ class DebugConsole(InteractiveConsole, BaseCodeExecutor):
 
     @overrides(BaseCodeExecutor.do_add_exec)
     def do_add_exec(self, line):
-        return InteractiveConsole.push(self, line)
+        return InteractiveConsole.push(self, line), False
 
 
     @overrides(InteractiveConsole.runcode)
