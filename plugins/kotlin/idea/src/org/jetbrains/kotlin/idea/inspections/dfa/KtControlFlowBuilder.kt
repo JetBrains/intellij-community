@@ -424,6 +424,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(expr.leftHandSide)
         val type = getTypeCheckDfType(expr.typeReference)
         if (type == DfType.TOP) {
+            addInstruction(PopInstruction())
             pushUnknown()
         } else {
             addInstruction(PushValueInstruction(type))
