@@ -7,9 +7,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.scale.JBUIScale
-import java.awt.Dimension
-import javax.swing.Box
 import javax.swing.JRadioButton
 
 class MinimapConfigurable : Configurable {
@@ -33,25 +30,20 @@ class MinimapConfigurable : Configurable {
 
   override fun getDisplayName() = MiniMessagesBundle.message("settings.name")
 
-  private fun createHorizontalStrut(width: Int) = Box.Filler(Dimension(width, 0), Dimension(width, 0),
-                                                             Dimension(width, Short.MAX_VALUE.toInt()))
-
   override fun createComponent() = panel {
     row { cell(enabled) }
-    buttonsGroup {
-      row {
-        cell(createHorizontalStrut(JBUIScale.scale(10)))
-        label(MiniMessagesBundle.message("settings.enable.scope")).widthGroup("group1")
-        cell(enableForAll)
-        cell(enableForZeppelin)
+    indent {
+      buttonsGroup {
+        row(MiniMessagesBundle.message("settings.enable.scope")) {
+          cell(enableForAll)
+          cell(enableForZeppelin)
+        }
       }
-    }
-    buttonsGroup {
-      row {
-        cell(createHorizontalStrut(JBUIScale.scale(10)))
-        label(MiniMessagesBundle.message("settings.alignment")).widthGroup("group1")
-        cell(alignmentLeft)
-        cell(alignmentRight)
+      buttonsGroup {
+        row(MiniMessagesBundle.message("settings.alignment")) {
+          cell(alignmentLeft)
+          cell(alignmentRight)
+        }
       }
     }
   }
