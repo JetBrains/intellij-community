@@ -1,0 +1,14 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <fenceLanguageProvider implementation="com.intellij.mermaid.jcef.MermaidCodeFenceLanguageProvider"
+                           order="before DefaultMermaidCodeFenceLanguageProvider"/>
+
+    <browserPreviewExtensionProvider implementation="com.intellij.mermaid.jcef.MermaidBrowserExtension$Provider"
+                                     order="before DefaultMermaidBrowserExtensionProvider"/>
+
+    <!--suppress PluginXmlValidity -->
+    <fenceGeneratingProvider implementation="com.intellij.mermaid.jcef.MermaidCodeGeneratingProviderExtension"
+                             order="before DefaultMermaidCodeGeneratingProviderExtension"/>
+
+  </extensions>
+</idea-plugin>
