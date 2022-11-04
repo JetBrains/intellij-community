@@ -40,20 +40,20 @@ abstract class MacDistributionCustomizer(
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
    * Example:
-   * <pre>
-   * &lt;dict&gt;
-   *   &lt;key&gt;CFBundleTypeExtensions&lt;/key&gt;
-   *   &lt;array&gt;
-   *     &lt;string&gt;extension&lt;/string&gt;
-   *   &lt;/array&gt;
-   *   &lt;key&gt;CFBundleTypeIconFile&lt;/key&gt;
-   *   &lt;string&gt;path_to_icons.icns&lt;/string&gt;
-   *   &lt;key&gt;CFBundleTypeName&lt;/key&gt;
-   *   &lt;string&gt;File type description&lt;/string&gt;
-   *   &lt;key&gt;CFBundleTypeRole&lt;/key&gt;
-   *   &lt;string&gt;Editor&lt;/string&gt;
-   * &lt;/dict&gt;
-   * </pre>
+   * ```
+   * <dict>
+   *   <key>CFBundleTypeExtensions</key>
+   *   <array>
+   *     <string>extension</string>
+   *   </array>
+   *   <key>CFBundleTypeIconFile</key>
+   *   <string>path_to_icons.icns</string>
+   *   <key>CFBundleTypeName</key>
+   *   <string>File type description</string>
+   *   <key>CFBundleTypeRole</key>
+   *   <string>Editor</string>
+   * </dict>
+   * ```
    */
   var additionalDocTypes = ""
 
