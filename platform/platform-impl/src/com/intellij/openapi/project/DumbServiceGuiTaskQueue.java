@@ -8,15 +8,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Consumer;
 
 final class DumbServiceGuiTaskQueue {
   private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
@@ -58,6 +59,49 @@ final class DumbServiceGuiTaskQueue {
           taskIndicator.removeStateDelegate(relayToVisibleIndicator);
         }
       }
+    }
+  }
+
+  public void runBackgroundProcess(ProgressIndicator visibleIndicator, DumbServiceHeavyActivities heavyActivities) {
+    try {
+      ((ProgressManagerImpl)ProgressManager.getInstance()).markProgressSafe((UserDataHolder)visibleIndicator);
+    }
+    catch (Throwable throwable) {
+      // PCE is not expected
+      LOG.error(throwable);
+    }
+
+    // Only one thread can execute this method at the same time at this point. // TODO
+
+    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
+      heavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
+      DumbModeProgressTitle.getInstance(myProject).attachDumbModeProgress(visibleIndicator);
+
+      StructuredIdeActivity activity = IndexingStatisticsCollector.INDEXING_ACTIVITY.started(myProject);
+
+      ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
+        try {
+          DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
+          processTasksWithProgress(activity, suspender, visibleIndicator);
+        }
+        catch (Throwable unexpected) {
+          LOG.error(unexpected);
+        }
+        finally {
+          DumbModeProgressTitle.getInstance(myProject).removeDumpModeProgress(visibleIndicator);
+
+          IndexingStatisticsCollector.logProcessFinished(activity, suspender.isClosed()
+                                                                   ? IndexingStatisticsCollector.IndexingFinishType.TERMINATED
+                                                                   : IndexingStatisticsCollector.IndexingFinishType.FINISHED);
+        }
+      });
+    }
+    finally {
+      // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
+      // got suspended after the last dumb task finished (or even after the last check cancelled call). This case is handled by
+      // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
+      // previously installed.
+      heavyActivities.resetCurrentSuspender();
     }
   }
 

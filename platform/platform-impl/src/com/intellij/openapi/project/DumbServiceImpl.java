@@ -592,48 +592,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void runBackgroundProcess(final @NotNull ProgressIndicator visibleIndicator) {
-    try {
-      ((ProgressManagerImpl)ProgressManager.getInstance()).markProgressSafe((UserDataHolder)visibleIndicator);
-
-      if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
-    }
-    catch (Throwable throwable) {
-      // PCE is not expected
-      LOG.error(throwable);
-    }
+    if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
     // Only one thread can execute this method at the same time at this point.
 
-    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
-      myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
-      DumbModeProgressTitle.getInstance(myProject).attachDumbModeProgress(visibleIndicator);
-
-      StructuredIdeActivity activity = IndexingStatisticsCollector.INDEXING_ACTIVITY.started(myProject);
-
-      ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
-        try {
-          DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
-          myGuiDumbTaskRunner.processTasksWithProgress(activity, suspender, visibleIndicator);
-        }
-        catch (Throwable unexpected) {
-          LOG.error(unexpected);
-        }
-        finally {
-          DumbModeProgressTitle.getInstance(myProject).removeDumpModeProgress(visibleIndicator);
-
-          IndexingStatisticsCollector.logProcessFinished(activity, suspender.isClosed()
-                                                                   ? IndexingStatisticsCollector.IndexingFinishType.TERMINATED
-                                                                   : IndexingStatisticsCollector.IndexingFinishType.FINISHED);
-        }
-      });
-    }
-    finally {
-      // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
-      // got suspended after the last dumb task finished (or even after the last check cancelled call). This case is handled by
-      // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
-      // previously installed.
-      myHeavyActivities.resetCurrentSuspender();
-
+    try {
+      myGuiDumbTaskRunner.runBackgroundProcess(visibleIndicator, myHeavyActivities);
+    } finally {
       //this used to be called in EDT from getNextTask(), but moved it here to simplify
       queueUpdateFinished();
     }
