@@ -251,7 +251,11 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    */
   @NotNull
   public ToolbarDecorator addExtraAction(@NotNull AnAction action) {
-    myExtraActions.add(action);
+    if (action instanceof ActionGroup actionGroup) {
+      addExtraActions(new AnActionButton.GroupPopupWrapper(actionGroup));
+    } else {
+      myExtraActions.add(action);
+    }
     return this;
   }
 
