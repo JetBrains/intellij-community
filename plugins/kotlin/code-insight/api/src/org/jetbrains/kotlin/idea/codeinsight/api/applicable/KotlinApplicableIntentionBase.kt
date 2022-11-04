@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -18,24 +17,8 @@ import kotlin.reflect.KClass
  */
 sealed class KotlinApplicableIntentionBase<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
-) : SelfTargetingIntention<ELEMENT>(elementType.java, { "" }) {
-    /**
-     * @see com.intellij.codeInsight.intention.IntentionAction.getFamilyName
-     */
+) : SelfTargetingIntention<ELEMENT>(elementType.java, { "" }), KotlinApplicableToolBase<ELEMENT> {
     abstract override fun getFamilyName(): @IntentionFamilyName String
-
-    /**
-     * The [KotlinApplicabilityRange] determines whether the intention is available in a range *after* [isApplicableByPsi] has been checked.
-     *
-     * The default applicability range is equivalent to `ApplicabilityRanges.SELF`. Configuration of the applicability range might be as
-     * simple as choosing an existing one from `ApplicabilityRanges`.
-     */
-    open fun getApplicabilityRange(): KotlinApplicabilityRange<ELEMENT> = applicabilityTarget { it }
-
-    /**
-     * Whether this intention is applicable to [element] by PSI only. May not use the Analysis API due to performance concerns.
-     */
-    abstract fun isApplicableByPsi(element: ELEMENT): Boolean
 
     /**
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange]. An override must invoke
