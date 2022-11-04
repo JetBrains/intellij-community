@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.util
 
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
+import kotlin.reflect.KClass
+import kotlin.reflect.cast
 
 inline fun <T, R> Collection<T>.mapAll(transform: (T) -> R?): List<R>? {
     val result = ArrayList<R>(this.size)
@@ -56,3 +58,19 @@ fun <T, R : Comparable<R>> Sequence<T>.sortedConservativelyBy(selector: (T) -> R
     withIndex()
         .sortedWith(compareBy({ (_, value) -> selector(value) }, IndexedValue<T>::index))
         .map(IndexedValue<T>::value)
+
+@ApiStatus.Internal
+fun <T> Sequence<T>.cycle(): Sequence<T> = sequence { while (true) yieldAll(this@cycle) }
+
+/**
+ * Matches types of the first N elements of the [Sequence].
+ *
+ * @return `null` if one of the types didn't match; otherwise, returns the last matched element.
+ */
+@ApiStatus.Internal
+fun <T : Any> Sequence<Any>.match(vararg expectedTypes: KClass<*>, last: KClass<T>): T? =
+    (expectedTypes.asSequence() + last).zip(this + sequenceOf(null).cycle())
+        .map { (expectedType, parent) -> parent?.takeIf(expectedType::isInstance) }
+        .takeWhileInclusive { it != null }
+        .lastOrNull()
+        ?.let(last::cast)

@@ -1,8 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -11,9 +15,9 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class AddLoopLabelFix(
     loop: KtLoopExpression,
-    private val jumpExpression: KtExpressionWithLabel
-) : KotlinQuickFixAction<KtLoopExpression>(loop) {
-
+    jumpExpression: KtExpressionWithLabel
+) : KotlinQuickFixAction<KtLoopExpression>(loop), LocalQuickFix {
+    private val jumpExpressionPointer: SmartPsiElementPointer<KtExpressionWithLabel> = SmartPointerManager.createPointer(jumpExpression)
     private val existingLabelName = (loop.parent as? KtLabeledExpression)?.getLabelName()
 
     @Nls
@@ -31,15 +35,18 @@ class AddLoopLabelFix(
 
     override fun getText() = description
     override fun getFamilyName() = text
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) = applyFix()
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) = applyFix()
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+    private fun applyFix() {
         val element = element ?: return
         val labelName = existingLabelName ?: getUniqueLabelName(element)
 
-        jumpExpression.replace(KtPsiFactory(project).createExpression(jumpExpression.text + "@" + labelName))
+        val jumpExpression = jumpExpressionPointer.element
+        jumpExpression?.replace(KtPsiFactory(element.project).createExpression(jumpExpression.text + "@" + labelName))
 
         if (existingLabelName == null) {
-            element.replace(KtPsiFactory(project).createExpressionByPattern("$0@ $1", labelName, element, reformat = false))
+            element.replace(KtPsiFactory(element.project).createExpressionByPattern("$0@ $1", labelName, element, reformat = false))
         }
 
         // TODO(yole) We should initiate in-place rename for the label here, but in-place rename for labels is not yet implemented
