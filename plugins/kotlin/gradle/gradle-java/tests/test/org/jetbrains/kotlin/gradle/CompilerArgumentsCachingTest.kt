@@ -326,7 +326,6 @@ class CompilerArgumentsCachingTest {
         typedArrays = Random.nextBoolean()
         friendModulesDisabled = Random.nextBoolean()
         metadataOnly = Random.nextBoolean()
-        enableJsScripting = Random.nextBoolean()
         fakeOverrideValidator = Random.nextBoolean()
         wasm = Random.nextBoolean()
 
@@ -604,7 +603,6 @@ class CompilerArgumentsCachingTest {
             "typedArrays",
             "friendModulesDisabled",
             "metadataOnly",
-            "enableJsScripting",
             "fakeOverrideValidator",
             "wasm"
         )
