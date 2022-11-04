@@ -14,30 +14,18 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.base.util.caching.*
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsTracker
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker.Companion.isKotlinFacet
 
 class KotlinFacetSettingsProviderImpl(project: Project) :
     SynchronizedFineGrainedEntityCache<Module, KotlinFacetSettings>(project),
     WorkspaceModelChangeListener,
+    KotlinCompilerSettingsListener,
     KotlinFacetSettingsProvider {
-
-    private var actualKotlinCompilerSettingsModCount: Long = 0L
 
     override fun getSettings(module: Module) = KotlinFacet.get(module)?.configuration?.settings
 
     override fun getInitializedSettings(module: Module): KotlinFacetSettings = get(module)
-
-    override fun get(key: Module): KotlinFacetSettings {
-        useCache { cache ->
-            val modificationCount = KotlinCompilerSettingsTracker.getInstance(project).modificationCount
-            if (actualKotlinCompilerSettingsModCount != modificationCount) {
-                cache.clear()
-                actualKotlinCompilerSettingsModCount = modificationCount
-            }
-        }
-        return super.get(key)
-    }
 
     override fun calculate(key: Module): KotlinFacetSettings {
         val kotlinFacetSettings = getSettings(key) ?: KotlinFacetSettings()
@@ -46,13 +34,19 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     }
 
     override fun subscribe() {
-        project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, this)
+        val busConnection = project.messageBus.connect(this)
+        busConnection.subscribe(WorkspaceModelTopics.CHANGED, this)
+        busConnection.subscribe(KotlinCompilerSettingsListener.TOPIC, this)
     }
 
     override fun checkKeyValidity(key: Module) {
         if (key.isDisposed) {
             throw AlreadyDisposedException("Module '${key.name}' is already disposed")
         }
+    }
+
+    override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
+        invalidate()
     }
 
     override fun beforeChanged(event: VersionedStorageChange) {
@@ -80,7 +74,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
             }
         }
 
-        invalidateEntries(condition = { key, _ -> key in outdated })
+        invalidateKeys(outdated)
     }
 
 }
