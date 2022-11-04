@@ -66,7 +66,7 @@ import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
-public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
+public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup {
   @NonNls public static final String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time
@@ -513,7 +513,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    int x = Registry.is("ide.popup.align.by.content") ? calcHorizontalAlignment(aComponent) : JBUIScale.scale(2);
+    showUnderneathOf(aComponent, true);
+  }
+
+  @Override
+  public void showUnderneathOf(@NotNull Component aComponent, boolean useAlignment) {
+    int x = Registry.is("ide.popup.align.by.content") && useAlignment
+            ? calcHorizontalAlignment(aComponent)
+            : JBUIScale.scale(2);
     show(new RelativePoint(aComponent, new Point(x, aComponent.getHeight())));
   }
 
@@ -521,7 +528,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (!(comp instanceof JComponent jcomp)) return JBUIScale.scale(2);
     if (comp instanceof ActionButton) return JBUIScale.scale(2);
     if (comp instanceof ComboBoxWithWidePopup<?>) return JBUIScale.scale(2);
-    if (comp instanceof JBPanel<?>) return JBUIScale.scale(2);
 
     int componentLeftInset = jcomp.getInsets().left;
     int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.AlignedPopup;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
@@ -401,7 +402,7 @@ public class SearchTextField extends JPanel {
         .setMovable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(chooseRunnable).createPopup();
-      myPopup.showUnderneathOf(getPopupLocationComponent());
+      AlignedPopup.showUnderneathWithoutAlignment(myPopup, getPopupLocationComponent());
     }
   }
 
