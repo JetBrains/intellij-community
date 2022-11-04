@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.settingsSync.migration.SettingsRepositoryToSettingsSyncMigration
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -40,9 +41,10 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
       if (migration != null) {
         LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}")
         executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
-        if (migration.shouldEnableNewSync()) {
-          SettingsSyncSettings.getInstance().syncEnabled = true
-        }
+        SettingsSyncSettings.getInstance().syncEnabled = true
+      }
+      else {
+        SettingsRepositoryToSettingsSyncMigration.migrateIfNeeded(executorService)
       }
     }
   }

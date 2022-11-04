@@ -1,14 +1,18 @@
 package com.intellij.settingsSync.migration
 
+import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ConfigBackup
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.*
-import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.util.io.isFile
 import java.nio.file.FileVisitResult
@@ -17,18 +21,21 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
+import java.util.*
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 
 private const val SETTINGS_REPOSITORY_ID = "org.jetbrains.settingsRepository"
 
-internal class SettingsRepositoryToSettingsSyncMigration : SettingsSyncMigration {
-  override fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot? {
+internal class SettingsRepositoryToSettingsSyncMigration {
+  fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot? {
     return processLocalData(appConfigDir) { path ->
       readLocalData(path)
     }
   }
 
-  override fun isLocalDataAvailable(appConfigDir: Path): Boolean {
+  fun isLocalDataAvailable(appConfigDir: Path): Boolean {
     if (PluginManager.isPluginInstalled(PluginId.getId(SETTINGS_REPOSITORY_ID))) {
       return false
     }
@@ -80,21 +87,7 @@ internal class SettingsRepositoryToSettingsSyncMigration : SettingsSyncMigration
     return SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, plugins = null)
   }
 
-  override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {
-    syncSettings.setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID, false)
-  }
-
-  override fun shouldEnableNewSync(): Boolean {
-    return false
-  }
-
-  override fun executeAfterApplying() {
-    if (!PluginManager.isPluginInstalled(PluginId.getId(SETTINGS_REPOSITORY_ID))) {
-      showNotificationAboutUnbundling()
-    }
-  }
-
-  private fun showNotificationAboutUnbundling() {
+  private fun showNotificationAboutUnbundling(executorService: ScheduledExecutorService) {
     val installOldPluginAction = NotificationAction.createSimpleExpiring(
       @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
       SettingsSyncBundle.message("settings.repository.unbundled.notification.action.install.settings.repository")) {
@@ -104,6 +97,9 @@ internal class SettingsRepositoryToSettingsSyncMigration : SettingsSyncMigration
       @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
       SettingsSyncBundle.message("settings.repository.unbundled.notification.action.use.new.settings.sync")) {
       SettingsSyncSettings.getInstance().syncEnabled = true
+      executorService.submit {
+        SettingsSyncMain.getInstance().controls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
+      }
     }
     NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
       .createNotification(
@@ -116,9 +112,9 @@ internal class SettingsRepositoryToSettingsSyncMigration : SettingsSyncMigration
   }
 
   internal companion object {
-    val LOG = logger<SettingsRepositoryToSettingsSyncMigration>()
+    private val LOG = logger<SettingsRepositoryToSettingsSyncMigration>()
 
-    val SPECIAL_FILES = listOf(".git", "config.json")
+    private val SPECIAL_FILES = listOf(".git", "config.json")
 
     private val OS_PREFIXES = listOf(
       "_mac" to "mac",
@@ -127,5 +123,34 @@ internal class SettingsRepositoryToSettingsSyncMigration : SettingsSyncMigration
       "_freebsd" to "freebsd",
       "_unix" to "unix"
     )
+
+    fun migrateIfNeeded(executorService: ScheduledExecutorService) {
+      if (PluginManager.isPluginInstalled(PluginId.getId(SETTINGS_REPOSITORY_ID))) {
+        return
+      }
+
+      val settingsRepositoryMigration = SettingsRepositoryToSettingsSyncMigration()
+      if (settingsRepositoryMigration.isLocalDataAvailable(PathManager.getConfigDir())) {
+        LOG.info("Migrating from the Settings Repository")
+        executorService.schedule(Runnable {
+          val snapshot = settingsRepositoryMigration.getLocalDataIfAvailable(PathManager.getConfigDir())
+          if (snapshot != null) {
+            backupCurrentConfig()
+
+            SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
+                                        PathManager.getConfigDir(), { false }).applyToIde(snapshot)
+            settingsRepositoryMigration.showNotificationAboutUnbundling(executorService)
+          }
+        }, 0, TimeUnit.SECONDS)
+      }
+    }
+
+    private fun backupCurrentConfig() {
+      val configDir = PathManager.getConfigDir()
+      val tempBackupDir = FileUtil.createTempDirectory(configDir.fileName.toString(), "-backup-" + UUID.randomUUID())
+      LOG.info("Backup config from $configDir to $tempBackupDir")
+      FileUtil.copyDir(configDir.toFile(), tempBackupDir)
+      ConfigBackup(PathManager.getConfigDir()).moveToBackup(tempBackupDir)
+    }
   }
 }
