@@ -22,6 +22,8 @@ class CompilerInternalErrorTests {
             )
             assertEquals(causeMessage, kotlinCompilerCrash.cause!!.message,
             "expected cause message: \n$causeMessage but got \n${kotlinCompilerCrash.cause?.message}")
+            assertEquals("Unknown", kotlinCompilerCrash.version,
+                         "expected kotlin version: \n Unknown but got \n${kotlinCompilerCrash.version}")
         }
         assertTrue { wasCalled }
     }
@@ -43,6 +45,18 @@ class CompilerInternalErrorTests {
                 "expected message prefix: \n$expectedMessage\n but got \n${kotlinCompilerCrash.message}"
             )
             assertContains(listOf(firstAttachmentMessage, secondAttachmentMessage), kotlinCompilerCrash.cause!!.message)
+        }
+        assertTrue { wasCalled }
+    }
+
+    @Test
+    fun `parse file with kotlin version`() {
+        var wasCalled = false
+        val kotlinVersion = "1.8.255-SNAPSHOT"
+        KotlinGradleBuildErrorsChecker.readErrorFileAndProcessEvent(File("resources/errors-kotlinVersion.log")) { kotlinCompilerCrash, _ ->
+            wasCalled = true
+            assertEquals(kotlinVersion, kotlinCompilerCrash.version,
+                         "expected kotlin version: \n$kotlinVersion but got \n${kotlinCompilerCrash.version}")
         }
         assertTrue { wasCalled }
     }
