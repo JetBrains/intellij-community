@@ -144,6 +144,11 @@ interface CommitProblem {
 
 @ApiStatus.Experimental
 interface CommitProblemWithDetails : CommitProblem {
+  /**
+   * If null, [text] will be used instead.
+   */
+  val showDetailsLink: @NlsContexts.LinkLabel String? get() = null
+
   val showDetailsAction: @NlsContexts.NotificationContent String
 
   /**

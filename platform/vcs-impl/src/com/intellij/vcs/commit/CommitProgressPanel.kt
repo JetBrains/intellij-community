@@ -22,6 +22,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsBundle.messagePointer
 import com.intellij.openapi.vcs.changes.InclusionListener
@@ -280,6 +281,7 @@ sealed class CommitCheckFailure {
   open class WithDescription(val text: @NlsContexts.NotificationContent String) : CommitCheckFailure()
 
   class WithDetails(text: @NlsContexts.NotificationContent String,
+                    val viewDetailsLinkText: @NlsContexts.NotificationContent String?,
                     val viewDetailsActionText: @NlsContexts.NotificationContent String,
                     val viewDetails: () -> Unit) : WithDescription(text)
 }
@@ -352,7 +354,15 @@ private class FailuresDescriptionPanel : HtmlPanel() {
 
     val failureLinks = formatNarrowAndList(failures.mapNotNull {
       when (val failure = it.value) {
-        is CommitCheckFailure.WithDetails -> HtmlChunk.link(it.key.toString(), failure.text)
+        is CommitCheckFailure.WithDetails -> {
+          if (failure.viewDetailsLinkText != null) {
+            HtmlChunk.text(failure.text).plus(HtmlChunk.nbsp())
+              .plus(HtmlChunk.link(it.key.toString(), failure.viewDetailsLinkText))
+          }
+          else {
+            HtmlChunk.link(it.key.toString(), failure.text)
+          }
+        }
         is CommitCheckFailure.WithDescription -> HtmlChunk.text(failure.text)
         else -> null
       }

@@ -2,6 +2,7 @@
 package git4idea.checkin
 
 import com.intellij.CommonBundle
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
@@ -9,7 +10,6 @@ import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Couple
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -250,51 +250,102 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
     val detachedRoot = getDetachedRoot(commitInfo)
     if (detachedRoot == null) return null
 
-    val rootPath = HtmlChunk.text(detachedRoot.root.presentableUrl).bold()
-    val title: @NlsContexts.DialogTitle String
-    val message: @NlsContexts.DialogMessage HtmlBuilder = HtmlBuilder()
     if (detachedRoot.isDuringRebase) {
-      title = GitBundle.message("warning.title.commit.with.unfinished.rebase")
-      message
-        .appendRaw(GitBundle.message("warning.message.commit.with.unfinished.rebase", rootPath.toString()))
-        .br()
-        .appendLink("https://git-scm.com/docs/git-rebase",
-                    GitBundle.message("link.label.commit.with.unfinished.rebase.read.more"))
+      return GitRebaseCommitProblem(detachedRoot.root)
     }
     else {
-      title = GitBundle.message("warning.title.commit.with.detached.head")
-      message
-        .appendRaw(GitBundle.message("warning.message.commit.with.detached.head", rootPath.toString()))
-        .br()
-        .appendLink("https://git-scm.com/docs/git-checkout#_detached_head",
-                    GitBundle.message("link.label.commit.with.detached.head.read.more"))
+      return GitDetachedRootCommitProblem(detachedRoot.root)
     }
-
-    val dontAskAgain: DoNotAskOption = object : DoNotAskOption.Adapter() {
-      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-        GitVcsSettings.getInstance(project).setWarnAboutDetachedHead(!isSelected)
-      }
-
-      override fun getDoNotShowMessage(): String {
-        return GitBundle.message("checkbox.dont.warn.again")
-      }
-    }
-    val commit = MessageDialogBuilder.okCancel(title, message.wrapWithHtmlBody().toString())
-      .yesText(commitInfo.commitActionText)
-      .icon(Messages.getWarningIcon())
-      .doNotAsk(dontAskAgain)
-      .ask(project)
-    if (commit) return null
-
-    return GitDetachedRootCommitProblem()
   }
 
-  private class GitDetachedRootCommitProblem : CommitProblem {
+  companion object {
+    private const val DETACHED_HEAD_HELP_LINK = "https://git-scm.com/docs/git-checkout#_detached_head"
+    private const val REBASE_HELP_LINK = "https://git-scm.com/docs/git-rebase"
+
+    private fun detachedHeadDoNotAsk(project: Project): DoNotAskOption {
+      return object : DoNotAskOption.Adapter() {
+        override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+          GitVcsSettings.getInstance(project).setWarnAboutDetachedHead(!isSelected)
+        }
+
+        override fun getDoNotShowMessage(): String {
+          return GitBundle.message("checkbox.dont.warn.again")
+        }
+      }
+    }
+  }
+
+  private class GitRebaseCommitProblem(val root: VirtualFile) : CommitProblemWithDetails {
     override val text: String
-      get() = GitBundle.message("commit.check.warning.title.commit.with.detached.head")
+      get() = GitBundle.message("commit.check.warning.title.commit.during.rebase", root.presentableUrl)
 
     override fun showModalSolution(project: Project, commitInfo: CommitInfo): ReturnResult {
-      return ReturnResult.CLOSE_WINDOW // dialog was already shown
+      val title = GitBundle.message("warning.title.commit.with.unfinished.rebase")
+      val message = HtmlBuilder()
+        .appendRaw(GitBundle.message("warning.message.commit.with.unfinished.rebase",
+                                     HtmlChunk.text(root.presentableUrl).bold().toString()))
+        .br()
+        .appendLink(REBASE_HELP_LINK, GitBundle.message("link.label.commit.with.unfinished.rebase.read.more"))
+
+      val commit = MessageDialogBuilder.okCancel(title, message.wrapWithHtmlBody().toString())
+        .yesText(commitInfo.commitActionText)
+        .icon(Messages.getWarningIcon())
+        .doNotAsk(detachedHeadDoNotAsk(project))
+        .ask(project)
+
+      if (commit) {
+        return ReturnResult.COMMIT
+      }
+      else {
+        return ReturnResult.CLOSE_WINDOW
+      }
+    }
+
+    override val showDetailsLink: String?
+      get() = GitBundle.message("commit.check.warning.title.commit.during.rebase.details")
+
+    override val showDetailsAction: String
+      get() = GitBundle.message("commit.check.warning.title.commit.during.rebase.details")
+
+    override fun showDetails(project: Project) {
+      BrowserUtil.browse(REBASE_HELP_LINK)
+    }
+  }
+
+  private class GitDetachedRootCommitProblem(val root: VirtualFile) : CommitProblemWithDetails {
+    override val text: String
+      get() = GitBundle.message("commit.check.warning.title.commit.with.detached.head", root.presentableUrl)
+
+    override fun showModalSolution(project: Project, commitInfo: CommitInfo): ReturnResult {
+      val title = GitBundle.message("warning.title.commit.with.detached.head")
+      val message = HtmlBuilder()
+        .appendRaw(GitBundle.message("warning.message.commit.with.detached.head",
+                                     HtmlChunk.text(root.presentableUrl).bold().toString()))
+        .br()
+        .appendLink(DETACHED_HEAD_HELP_LINK, GitBundle.message("link.label.commit.with.detached.head.read.more"))
+
+      val commit = MessageDialogBuilder.okCancel(title, message.wrapWithHtmlBody().toString())
+        .yesText(commitInfo.commitActionText)
+        .icon(Messages.getWarningIcon())
+        .doNotAsk(detachedHeadDoNotAsk(project))
+        .ask(project)
+
+      if (commit) {
+        return ReturnResult.COMMIT
+      }
+      else {
+        return ReturnResult.CLOSE_WINDOW
+      }
+    }
+
+    override val showDetailsLink: String?
+      get() = GitBundle.message("commit.check.warning.title.commit.with.detached.head.details")
+
+    override val showDetailsAction: String
+      get() = GitBundle.message("commit.check.warning.title.commit.with.detached.head.details")
+
+    override fun showDetails(project: Project) {
+      BrowserUtil.browse(DETACHED_HEAD_HELP_LINK)
     }
   }
 
