@@ -165,10 +165,6 @@ internal class NotificationContent(val project: Project,
     for (notification in newNotifications) {
       add(notification)
     }
-
-    ApplicationManager.getApplication().invokeLater {
-      autoProportionController.update()
-    }
   }
 
   private fun createSearchComponent(): SearchTextField {
@@ -505,6 +501,10 @@ private class AutoProportionController(private val splitter: MySplitter,
   }
 
   fun update() {
+    ApplicationManager.getApplication().invokeLater(::doUpdate)
+  }
+
+  private fun doUpdate() {
     if (!myEnabled || suggestions.isEmpty() || timeline.isEmpty()) {
       return
     }
@@ -514,10 +514,10 @@ private class AutoProportionController(private val splitter: MySplitter,
       return
     }
 
-    val firstHeight = suggestions.preferredSize.height
+    val firstHeight = suggestions.preferredSize.height + JBUI.scale(10)
 
     if (firstHeight < height / 2) {
-      setProportion((firstHeight + JBUI.scale(10)) / height.toFloat())
+      setProportion(firstHeight / height.toFloat())
     }
     else {
       setProportion(0.5f)
