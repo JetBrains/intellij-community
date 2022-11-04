@@ -1201,9 +1201,6 @@
           <abbreviation value="uii"/>
           <mouse-shortcut keymap="$default" keystroke="control alt button1"/>
         </action>
-        <action class="com.intellij.internal.inspector.ShowGopher" text="Test Gopher" internal="true"/>
-        <action class="com.intellij.internal.inspector.GlobalZoomInAction" text="Global Zoom In" internal="true"/>
-        <action class="com.intellij.internal.inspector.GlobalZoomOutAction" text="Global Zoom Out" internal="true"/>
         <action id="CopyUiLabel" internal="true" class="com.intellij.internal.inspector.CopyUiLabelAction">
           <mouse-shortcut keymap="$default" keystroke="control alt button3"/>
           <mouse-shortcut keymap="$default" keystroke="control alt shift button3"/>
