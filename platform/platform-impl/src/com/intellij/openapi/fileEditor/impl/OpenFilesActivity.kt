@@ -48,7 +48,7 @@ internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl
   }
 
   project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
-    LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime))
+    LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow())
   }
 }
 
