@@ -32,7 +32,7 @@ class KotlinGradleBuildErrorsChecker : StartupActivity.DumbAware, Runnable {
             var message: String? = null
             var stackTrace = ArrayList<String>()
             val timeInMillis = file.nameWithoutExtension.substring(BUILD_ERROR_REPORTS_FILE_PREFIX.length)
-            var kotlinVersion = "Kotlin version does not set"
+            var kotlinVersion = "Unknown"
             fun crashException() {
                 message?.also {
                     val logMessage = "$it: $timeInMillis"
@@ -81,12 +81,11 @@ class KotlinGradleBuildErrorsChecker : StartupActivity.DumbAware, Runnable {
                         val ideaEvent =
                             IdeaLoggingEvent(logMessage, RuntimeException("Kotlin build exception: $it"), logEvent.data)
 
-                        //ideaEvent.log(EventFields.PluginInfo.with(KotlinIdePlugin.getPluginInfo()), *eventPairs)
                         MessagePool.getInstance().addIdeFatalMessage(ideaEvent)
                     }
                     it.delete()
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    throw Exception("Could not parse build error file", e)
                 }
             }
 
