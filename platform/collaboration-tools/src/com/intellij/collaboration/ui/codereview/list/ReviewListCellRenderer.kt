@@ -184,7 +184,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     comments.apply {
       val counter = presentation.commentsCounter
-      icon = CollaborationToolsIcons.Review.Comment
+      icon = CollaborationToolsIcons.Comment
       text = counter?.count.toString()
       toolTipText = counter?.tooltip
       isVisible = counter != null
