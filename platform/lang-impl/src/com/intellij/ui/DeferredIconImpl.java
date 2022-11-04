@@ -269,6 +269,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
           TreeUtil.invalidateCacheAndRepaint(((JTree)actualTarget).getUI());
         }
 
+        //System.err.println("Repaint rectangle " + repaintRequest.getPaintingParentRec());
         ourRepaintScheduler.scheduleRepaint(repaintRequest, getIconWidth(), getIconHeight(), false);
       }
     }, ModalityState.any());
@@ -397,7 +398,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   /**
    * Later it may be needed to implement more interfaces here. Ideally the same as in the DeferredIconImpl itself.
    */
-  private static class DeferredIconAfterReplace<T> implements ReplaceableIcon {
+  private static class DeferredIconAfterReplace<T> implements ReplaceableIcon, UpdatableIcon {
     private final @NotNull DeferredIconImpl<T> myOriginal;
     private @NotNull Icon myOriginalEvaluatedIcon;
     private final @NotNull IconReplacer myReplacer;
@@ -434,6 +435,16 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
     @Override
     public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
       return replacer.replaceIcon(myOriginal);
+    }
+
+    @Override
+    public long getModificationCount() {
+      return myOriginal.getModificationCount();
+    }
+
+    @Override
+    public void notifyPaint(@NotNull Component c, int x, int y) {
+      myOriginal.notifyPaint(c, x, y);
     }
   }
 }
