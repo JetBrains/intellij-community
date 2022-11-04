@@ -279,13 +279,13 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   private void doRenameAndRefreshTest(boolean full) throws IOException {
     assertFalse(ApplicationManager.getApplication().isDispatchThread());
 
-    File testFile = tempDir.newFile("test/child");
+    File testFile = tempDir.newFile("test/child.txt");
     VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile.getParentFile());
     assertNotNull(parent);
     if (full) {
       assertEquals(1, parent.getChildren().length);
     }
-    VirtualFile child = parent.findChild("child");
+    VirtualFile child = parent.findChild(testFile.getName());
     assertNotNull(child);
 
     ApplicationManagerEx.setInStressTest(true);
@@ -298,7 +298,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         LocalFileSystem.getInstance().refreshFiles(files, true, true, semaphore::up);
 
         assertTrue(child.isValid());
-        String newName = "name" + i;
+        String newName = "name" + i + ".txt";
         WriteAction.runAndWait(() -> child.rename(this, newName));
         assertTrue(child.isValid());
 
