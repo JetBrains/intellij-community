@@ -47,8 +47,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
         addBrowseFolderListener(PyBundle.message("python.add.sdk.panel.path.to.conda.field"),
                                 model.project,
                                 model.targetConfiguration,
-                                model.condaPathFileChooser,
-                                TargetBrowserHints(false))
+                                TargetBrowserHints(false, model.condaPathFileChooser))
 
       }).applyToComponent { emptyText.text = PyBundle.message("python.add.sdk.panel.path.to.conda.field") }
         .bindText(model.condaPathTextBoxRwProp)
