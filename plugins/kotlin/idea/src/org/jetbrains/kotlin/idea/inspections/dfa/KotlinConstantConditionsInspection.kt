@@ -287,9 +287,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
     companion object {
         private fun areEquivalent(e1: KtElement, e2: KtElement): Boolean {
-            return PsiEquivalenceUtil.areElementsEquivalent(e1, e2,
-                                                            {ref1, ref2 -> ref1.element.text.compareTo(ref2.element.text)},
-                                                            null, null, false)
+            return PsiEquivalenceUtil.areEquivalent(e1, e2,
+                                                    {ref1, ref2 -> ref1.element.text.equals(ref2.element.text)},
+                                                    null, null, false)
         }
 
         private tailrec fun isOppositeCondition(candidate: KtExpression?, template: KtBinaryExpression, expression: KtExpression): Boolean {
