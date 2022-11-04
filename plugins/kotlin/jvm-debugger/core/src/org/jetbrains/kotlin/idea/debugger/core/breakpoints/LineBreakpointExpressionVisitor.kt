@@ -138,7 +138,6 @@ class LineBreakpointExpressionVisitor private constructor(
         visitChildren(function.valueParameters, data).handle()?.let { return it }
 
         return function.bodyExpression?.accept(this, data)
-            ?.acceptIfMultiLineParent(function)
             ?: ApplicabilityResult.UNKNOWN
     }
 

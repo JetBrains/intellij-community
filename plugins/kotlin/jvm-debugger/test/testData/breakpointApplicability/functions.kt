@@ -1,6 +1,5 @@
-// Simple one-liners should have only method breakpoint
-// Simple = no lambdas on a line
-fun foo1() = println() /// M
+// One-liners should have a method breakpoint and a line breakpoint
+fun foo1() = println() /// L, M
 
 fun foo2() {} /// M
 
