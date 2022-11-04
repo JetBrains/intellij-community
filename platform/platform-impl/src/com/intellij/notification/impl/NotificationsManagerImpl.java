@@ -257,6 +257,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
                 if (action != null) {
                   Object source = e.getSource();
                   DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
+                  if (source instanceof JComponent component) {
+                    Notification.setDataProvider(notification, component);
+                  }
                   Notification.fire(notification, action, context);
                   NotificationCollector.getInstance()
                     .logNotificationActionInvoked(project, notification, action, NotificationCollector.NotificationPlace.TOOL_WINDOW);
@@ -768,6 +771,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.BALLOON);
           Notification.fire(notification, action, DataManager.getInstance().getDataContext(button));
         });
+        Notification.setDataProvider(notification, button);
 
         actionPanel.checkActionWidth = actionsSize > 1;
 
@@ -835,6 +839,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         .logNotificationActionInvoked(null, notification, _action, NotificationCollector.NotificationPlace.BALLOON);
       Notification.fire(notification, _action, DataManager.getInstance().getDataContext(link));
     }, action) {
+      {
+        Notification.setDataProvider(notification, this);
+      }
       @Override
       protected Color getTextColor() {
         return NotificationsUtil.getLinkButtonForeground();
