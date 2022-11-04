@@ -103,6 +103,13 @@
             implementation="org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenUnresolvedReferenceQuickFixProvider" />
 
     <moduleService serviceImplementation="org.jetbrains.kotlin.idea.maven.KotlinImporterComponent"/>
+
+    <notificationGroup
+            id="Kotlin/JS compiler Maven"
+            displayType="STICKY_BALLOON"
+            key="notification.text.kotlin.js.compiler.maven.notification.group.name"
+            bundle="messages.KotlinMavenBundle"
+    />
   </extensions>
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.maven.KotlinMavenImportListener"

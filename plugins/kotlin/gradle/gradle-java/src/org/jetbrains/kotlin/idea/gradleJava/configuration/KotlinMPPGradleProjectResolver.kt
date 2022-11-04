@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.build.events.MessageEvent
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.*
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
@@ -11,6 +13,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizeP
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.toCanonicalPath
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
@@ -35,13 +39,12 @@ import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetH
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.*
-import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.getCompilations
-import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesByCompilations
-import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.calculateRunTasks
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getGradleModuleQualifiedName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
+import org.jetbrains.kotlin.idea.gradleJava.notification.KOTLIN_JS_COMPILER_SHOULD_BE_NOTIFIED
+import org.jetbrains.kotlin.idea.gradleJava.notification.IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
@@ -118,6 +121,16 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             if (!kotlinJsInspectionPackAdvertised && mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
                 kotlinJsInspectionPackAdvertised = true
                 suggestKotlinJsInspectionPackPlugin(resolverCtx.projectPath)
+            }
+            if (mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
+                val projectManager = ProjectManager.getInstance()
+                val project: Project = projectManager.openProjects.firstOrNull { it.basePath == resolverCtx.projectPath } ?: return
+                mppModel.kotlinGradlePluginVersion?.let { version ->
+                    showDeprecatedKotlinJsCompilerWarning(
+                        project,
+                        version,
+                    )
+                }
             }
             if (!resolverCtx.isResolveModulePerSourceSet && !KotlinPlatformUtils.isAndroidStudio && !PlatformUtils.isMobileIde() &&
                 !PlatformUtils.isAppCode()
@@ -607,6 +620,19 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 .map { it.absolutePath }
 
             ideModule.kotlinGradleProjectDataOrFail.pureKotlinSourceFolders.addAll(mppModelPureKotlinSourceFolders)
+        }
+
+        fun showDeprecatedKotlinJsCompilerWarning(
+            project: Project,
+            kotlinGradlePluginVersion: KotlinGradlePluginVersion,
+        ) {
+            kotlinGradlePluginVersion.invokeWhenAtLeast("1.7.0") {
+                if (
+                    !PropertiesComponent.getInstance(project).getBoolean(IGNORE_KOTLIN_JS_COMPILER_NOTIFICATION, false)
+                ) {
+                    PropertiesComponent.getInstance(project).setValue(KOTLIN_JS_COMPILER_SHOULD_BE_NOTIFIED, true)
+                }
+            }
         }
 
         internal data class CompilationWithDependencies(
