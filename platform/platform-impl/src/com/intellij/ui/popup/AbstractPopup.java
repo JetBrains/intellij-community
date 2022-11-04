@@ -518,16 +518,24 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent, boolean useAlignment) {
-    int x = Registry.is("ide.popup.align.by.content") && useAlignment
+    int x = Registry.is("ide.popup.align.by.content") && useAlignment && isComponentSupportsAlignment(aComponent)
             ? calcHorizontalAlignment(aComponent)
             : JBUIScale.scale(2);
     show(new RelativePoint(aComponent, new Point(x, aComponent.getHeight())));
   }
 
+  private boolean isComponentSupportsAlignment(Component c) {
+    if (!(c instanceof JComponent)
+        || (c instanceof ActionButton)
+        || (c instanceof ComboBoxWithWidePopup<?>)) {
+      return false;
+    }
+
+    return true;
+  }
+
   private static int calcHorizontalAlignment(@NotNull Component comp) {
     if (!(comp instanceof JComponent jcomp)) return JBUIScale.scale(2);
-    if (comp instanceof ActionButton) return JBUIScale.scale(2);
-    if (comp instanceof ComboBoxWithWidePopup<?>) return JBUIScale.scale(2);
 
     int componentLeftInset = jcomp.getInsets().left;
     int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
