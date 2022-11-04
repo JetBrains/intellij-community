@@ -248,10 +248,10 @@ final class ActionUpdater {
       return computeOnEdt(Context.current().wrapSupplier(supplier));
     }
     finally {
-      if (myCurEDTWaitMillis > 200) {
+      if (myCurEDTWaitMillis > 300) {
         LOG.warn(myCurEDTWaitMillis + " ms to grab EDT for " + operationName);
       }
-      if (myCurEDTPerformMillis > 200) {
+      if (myCurEDTPerformMillis > 300) {
         Throwable throwable = PluginException.createByClass(
           elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass());
         FList<Throwable> edtTraces = edtTracesRef.get();
@@ -486,9 +486,8 @@ final class ActionUpdater {
   }
 
   private void logTimeProblemForPreCached(@NotNull Object action, String operationName, long elapsed) {
-    if (elapsed > 200 && ActionPlaces.isShortcutPlace(myPlace)) {
-      LOG.error(
-        PluginException.createByClass(elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass()));
+    if (elapsed > 300 && ActionPlaces.isShortcutPlace(myPlace)) {
+      LOG.error(PluginException.createByClass(elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass()));
     }
     else if (elapsed > 3000) {
       LOG.warn(elapsedReport(elapsed, false, operationName));
