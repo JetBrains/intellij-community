@@ -287,6 +287,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     myTabsHandler.appClosing();
   }
 
+  @Override
+  public boolean isTabbedWindow() {
+    return MergeAllWindowsAction.isTabbedWindow(myFrame);
+  }
+
   private interface FSListener extends FullScreenListener, EventListener {
   }
 

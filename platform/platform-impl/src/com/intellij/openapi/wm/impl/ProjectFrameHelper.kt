@@ -476,4 +476,6 @@ open class ProjectFrameHelper(
       RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(it, currentTimeMillis)
     }
   }
+
+  fun isTabbedWindow() = frameDecorator?.isTabbedWindow ?: false
 }

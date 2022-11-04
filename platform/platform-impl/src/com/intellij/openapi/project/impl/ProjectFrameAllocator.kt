@@ -177,7 +177,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
                                      frameHelper: ProjectFrameHelper,
                                      project: Project): Job {
     val reopeningEditorJob = launchAndMeasure("editor reopening") {
-      restoreOpenedFiles(fileEditorManager, editorSplitters, project)
+      restoreOpenedFiles(fileEditorManager, editorSplitters, project, frameHelper)
     }
 
     launchAndMeasure("tool window pane creation") {
