@@ -3,21 +3,14 @@
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection.EnumValuesSoftDeprecateMigrationInspectionBase
-import org.jetbrains.kotlin.idea.migration.MigrationInfo
-import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
-import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed
 
-internal class EnumValuesSoftDeprecateMigrationInspection : EnumValuesSoftDeprecateMigrationInspectionBase(), MigrationFix {
-    override fun isApplicable(migrationInfo: MigrationInfo): Boolean {
-        return migrationInfo.isLanguageVersionUpdate(LanguageVersion.KOTLIN_1_8, LanguageVersion.KOTLIN_1_9)
-    }
+internal class EnumValuesSoftDeprecateMigrationInspection : EnumValuesSoftDeprecateMigrationInspectionBase() {
 
     override fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {
         return element.isOptInAllowed(annotationClassId.asSingleFqName(), element.languageVersionSettings, element.analyze())

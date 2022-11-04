@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection.EnumValuesSof
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 
-// TODO: make visible in migrations in next commits
 internal class EnumValuesSoftDeprecateMigrationInspection : EnumValuesSoftDeprecateMigrationInspectionBase() {
 
     override fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {

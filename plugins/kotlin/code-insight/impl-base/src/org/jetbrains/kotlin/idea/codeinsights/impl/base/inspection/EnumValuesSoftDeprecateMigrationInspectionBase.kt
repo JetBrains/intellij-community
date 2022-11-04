@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
+import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -29,7 +31,13 @@ import org.jetbrains.kotlin.psi.callExpressionVisitor
  *
  * See [KTIJ-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
  */
-abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinInspection() {
+abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinInspection(), MigrationFix {
+
+    final override fun isApplicable(migrationInfo: MigrationInfo): Boolean {
+        val sinceVersion = LanguageFeature.EnumEntries.sinceVersion ?: return false
+        return migrationInfo.oldLanguageVersion < sinceVersion && migrationInfo.newLanguageVersion >= sinceVersion
+    }
+
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         if (!holder.file.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)) {
             PsiElementVisitor.EMPTY_VISITOR
