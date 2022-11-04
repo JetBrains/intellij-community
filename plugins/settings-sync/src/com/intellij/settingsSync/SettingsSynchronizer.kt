@@ -42,6 +42,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
         LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}")
         executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
         SettingsSyncSettings.getInstance().syncEnabled = true
+        SettingsSyncEventsStatistics.MIGRATED_FROM_OLD_PLUGIN.log()
       }
       else {
         SettingsRepositoryToSettingsSyncMigration.migrateIfNeeded(executorService)

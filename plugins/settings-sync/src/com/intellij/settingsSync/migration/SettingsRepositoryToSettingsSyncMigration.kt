@@ -13,6 +13,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.*
+import com.intellij.settingsSync.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.INSTALL_SETTINGS_REPOSITORY
+import com.intellij.settingsSync.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.USE_NEW_SETTINGS_SYNC
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.util.io.isFile
 import java.nio.file.FileVisitResult
@@ -92,6 +94,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
       @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
       SettingsSyncBundle.message("settings.repository.unbundled.notification.action.install.settings.repository")) {
       PluginManagerProxy.getInstance().createInstaller(notifyErrors = true).installPlugins(listOf(PluginId.getId(SETTINGS_REPOSITORY_ID)))
+      SettingsSyncEventsStatistics.SETTINGS_REPOSITORY_NOTIFICATION_ACTION.log(INSTALL_SETTINGS_REPOSITORY)
     }
     val useNewSettingsSyncAction = NotificationAction.createSimpleExpiring(
       @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
@@ -100,6 +103,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
       executorService.submit {
         SettingsSyncMain.getInstance().controls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
       }
+      SettingsSyncEventsStatistics.SETTINGS_REPOSITORY_NOTIFICATION_ACTION.log(USE_NEW_SETTINGS_SYNC)
     }
     NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
       .createNotification(
@@ -140,6 +144,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
             SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
                                         PathManager.getConfigDir(), { false }).applyToIde(snapshot)
             settingsRepositoryMigration.showNotificationAboutUnbundling(executorService)
+            SettingsSyncEventsStatistics.MIGRATED_FROM_SETTINGS_REPOSITORY.log()
           }
         }, 0, TimeUnit.SECONDS)
       }
