@@ -125,12 +125,14 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             }
             if (mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
                 val projectManager = ProjectManager.getInstance()
-                val project: Project = projectManager.openProjects.firstOrNull { it.basePath == resolverCtx.projectPath } ?: return
-                mppModel.kotlinGradlePluginVersion?.let { version ->
-                    showDeprecatedKotlinJsCompilerWarning(
-                        project,
-                        version,
-                    )
+                val project = projectManager.openProjects.firstOrNull { it.basePath == resolverCtx.projectPath }
+                if (project != null) {
+                    mppModel.kotlinGradlePluginVersion?.let { version ->
+                        showDeprecatedKotlinJsCompilerWarning(
+                            project,
+                            version,
+                        )
+                    }
                 }
             }
             if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde() &&
