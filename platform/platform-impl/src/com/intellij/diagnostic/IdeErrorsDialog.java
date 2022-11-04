@@ -97,7 +97,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private AttachmentList myAttachmentList;
   private JTextArea myAttachmentArea;
   private JPanel myAssigneePanel;
-  private PrivacyNoticeComponent myPrivacyNotice;
+  private PrivacyNotice myPrivacyNotice;
   private ComboBox<Developer> myAssigneeCombo;
   private JTextComponent myCredentialLabel;
 
@@ -301,7 +301,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myCredentialLabel.setBorder(JBUI.Borders.emptyTop(topOffset));
     }
 
-    myPrivacyNotice = new PrivacyNoticeComponent(DiagnosticBundle.message("error.dialog.notice.label"), DiagnosticBundle.message("error.dialog.notice.label.expanded"));
+    myPrivacyNotice = new PrivacyNotice(DiagnosticBundle.message("error.dialog.notice.label"),
+                                        DiagnosticBundle.message("error.dialog.notice.label.expanded"));
 
     JPanel commentPanel = new JPanel(new BorderLayout());
     commentPanel.setBorder(JBUI.Borders.emptyTop(5));
@@ -319,7 +320,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       accountRow.add(myAssigneePanel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBInsets.emptyInsets(), 0, 0));
     JPanel bottomRow = new JPanel(new BorderLayout());
     bottomRow.add(accountRow, BorderLayout.NORTH);
-    bottomRow.add(myPrivacyNotice, BorderLayout.CENTER);
+    bottomRow.add(myPrivacyNotice.panel, BorderLayout.CENTER);
+    bottomRow.setBorder(JBUI.Borders.emptyBottom(6));
 
     JPanel rootPanel = new JPanel(new BorderLayout());
     rootPanel.setPreferredSize(JBUI.size(800, 400));
@@ -445,7 +447,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myInfoLabel.setText(t.getMessage());
       myDetailsLabel.setVisible(false);
       myForeignPluginWarningLabel.setVisible(false);
-      myPrivacyNotice.setVisible(false);
+      myPrivacyNotice.panel.setVisible(false);
       return;
     }
 
@@ -525,13 +527,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     String notice = submitter != null ? submitter.getPrivacyNoticeText() : null;
     if (notice != null) {
-      myPrivacyNotice.setVisible(true);
+      myPrivacyNotice.panel.setVisible(true);
       String hash = Integer.toHexString(StringUtil.stringHashCodeIgnoreWhitespaces(notice));
       myPrivacyNotice.setExpanded(!myAcceptedNotices.contains(hash));
       myPrivacyNotice.setPrivacyPolicy(notice);
     }
     else {
-      myPrivacyNotice.setVisible(false);
+      myPrivacyNotice.panel.setVisible(false);
     }
   }
 
