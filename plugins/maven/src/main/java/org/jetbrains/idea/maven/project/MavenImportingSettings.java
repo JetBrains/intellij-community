@@ -47,7 +47,7 @@ public class MavenImportingSettings implements Cloneable {
   public static final String DEFAULT_DEPENDENCY_TYPES =
     "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
 
-  private boolean useWorkspaceImport = false;
+  private boolean useWorkspaceImport = true;
   @Deprecated
   private boolean importToTreeStructure = false;
 
