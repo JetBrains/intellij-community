@@ -3,8 +3,8 @@ package com.intellij.designer.componentTree;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -17,12 +17,10 @@ import java.util.List;
 public class ExpandStateHandler implements TreeExpansionListener {
   private final ComponentTree myTree;
   private final DesignerEditorPanel myDesigner;
-  private final AbstractTreeBuilder myTreeBuilder;
 
-  public ExpandStateHandler(ComponentTree tree, DesignerEditorPanel designer, AbstractTreeBuilder treeBuilder) {
+  public ExpandStateHandler(ComponentTree tree, DesignerEditorPanel designer) {
     myTree = tree;
     myDesigner = designer;
-    myTreeBuilder = treeBuilder;
   }
 
   public void hookListener() {
@@ -39,7 +37,7 @@ public class ExpandStateHandler implements TreeExpansionListener {
   }
 
   private void setExpanded() {
-    List<Object> elements = myTreeBuilder.getUi().getExpandedElements();
+    List<Object> elements = TreeUtil.collectExpandedUserObjects(myTree);
     // remove root Object
     for (Iterator<Object> I = elements.iterator(); I.hasNext(); ) {
       Object element = I.next();
