@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.settings
 
 import com.intellij.ide.highlighter.HighlighterFactory
+import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -96,6 +97,11 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       row {
         checkBox(MarkdownBundle.message("markdown.settings.show.problems"))
           .bindSelected(settings::showProblemsInCodeBlocks)
+      }
+      row {
+        checkBox(MarkdownBundle.message("markdown.settings.group.documents.in.project.tree"))
+          .bindSelected(settings::isFileGroupingEnabled)
+          .onApply { ProjectView.getInstance(project).refresh() }
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text")).apply {
