@@ -544,8 +544,8 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     val file1 = tempDir.newFile("top/1.txt")
     val file2 = tempDir.newFile("top/root/2.txt")
     refresh(top)
-    val fsRoot = top.toPath().root.toFile()
-    assertTrue("can't guess root of $top", fsRoot.exists())
+    val fsRoot = top.toPath().root
+    assertTrue("can't guess root of $top", Files.exists(fsRoot))
 
     val request = watch(root)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
@@ -647,6 +647,13 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
   private fun watch(file: File, recursive: Boolean = true, checkRoots: Boolean = true): LocalFileSystem.WatchRequest {
     val request = FileWatcherTestUtil.watch(watcher, file, recursive)
     assertThat(watcher.manualWatchRoots).let { if (checkRoots) it.doesNotContain(file.path) else it.contains(file.path) }
+    return request
+  }
+
+  private fun watch(file: Path, recursive: Boolean = true, checkRoots: Boolean = true): LocalFileSystem.WatchRequest {
+    val request = LocalFileSystem.getInstance().addRootToWatch(file.toString(), recursive)!!
+    wait { watcher.isSettingRoots }
+    assertThat(watcher.manualWatchRoots).let { if (checkRoots) it.doesNotContain(file.toString()) else it.contains(file.toString()) }
     return request
   }
 
