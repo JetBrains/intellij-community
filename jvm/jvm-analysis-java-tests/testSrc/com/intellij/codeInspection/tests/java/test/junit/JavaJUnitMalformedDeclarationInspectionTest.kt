@@ -14,12 +14,21 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent())
   }
-  fun `test malformed extension highlighting`() {
+  fun `test malformed extension subtype highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class A {
         @org.junit.jupiter.api.extension.RegisterExtension
-        Rule5 <warning descr="'A.Rule5' should implement 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = new Rule5();
+        Rule5 <warning descr="Field 'myRule5' annotated with '@RegisterExtension' should be of type 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = new Rule5();
         class Rule5 { }
+      }
+    """.trimIndent())
+  }
+  fun `test malformed private highlighting`() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      class A {
+        @org.junit.jupiter.api.extension.RegisterExtension
+        private Rule5 <warning descr="Field 'myRule5' annotated with '@RegisterExtension' should be public">myRule5</warning> = new Rule5();
+        class Rule5 implements org.junit.jupiter.api.extension.Extension { }
       }
     """.trimIndent())
   }

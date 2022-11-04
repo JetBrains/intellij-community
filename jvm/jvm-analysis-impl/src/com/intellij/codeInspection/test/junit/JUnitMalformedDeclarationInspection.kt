@@ -69,10 +69,11 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   override fun visitField(node: UField): Boolean {
-    checkMalformedExtension(node)
+    checkMalformedCallbackExtension(node)
     dataPoint.report(holder, node)
     ruleSignatureProblem.report(holder, node)
     classRuleSignatureProblem.report(holder, node)
+    registeredExtensionProblem.report(holder, node)
     return true
   }
 
@@ -106,6 +107,12 @@ private class JUnitMalformedSignatureVisitor(
     shouldBeStatic = false,
     shouldBeSubTypeOf = listOf(ORG_JUNIT_RULES_TEST_RULE, ORG_JUNIT_RULES_METHOD_RULE),
     validVisibility = { UastVisibility.PUBLIC }
+  )
+
+  private val registeredExtensionProblem = AnnotatedSignatureProblem(
+    annotations = listOf(ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION),
+    shouldBeSubTypeOf = listOf(ORG_JUNIT_JUPITER_API_EXTENSION),
+    validVisibility = ::notPrivate
   )
 
   private val classRuleSignatureProblem = AnnotatedSignatureProblem(
@@ -241,25 +248,16 @@ private class JUnitMalformedSignatureVisitor(
     holder.registerUProblem(aClass, message, fix)
   }
 
-  private fun checkMalformedExtension(field: UField) {
+  private fun checkMalformedCallbackExtension(field: UField) {
     val javaField = field.javaPsi?.asSafely<PsiField>() ?: return
-    val type = javaField.type
-    if (javaField.hasAnnotation(ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION)) {
-      if (!type.isInheritorOf(ORG_JUNIT_JUPITER_API_EXTENSION)) {
-        val message = JvmAnalysisBundle.message(
-          "jvm.inspections.junit.malformed.extension.registration.descriptor",
-          javaField.type.canonicalText, ORG_JUNIT_JUPITER_API_EXTENSION
-        )
-        holder.registerUProblem(field, message)
-      }
-      else if (!field.isStatic && (type.isInheritorOf(ORG_JUNIT_JUPITER_API_EXTENSION_BEFORE_ALL_CALLBACK)
-                                   || type.isInheritorOf(ORG_JUNIT_JUPITER_API_EXTENSION_AFTER_ALL_CALLBACK))) {
-        val message = JvmAnalysisBundle.message(
-          "jvm.inspections.junit.malformed.extension.class.level.descriptor", javaField.type.presentableText
-        )
-        val fixes = createModifierQuickfixes(field, modifierRequest(JvmModifier.STATIC, shouldBePresent = true)) ?: return
-        holder.registerUProblem(field, message, *fixes)
-      }
+    val type = field.javaPsi?.asSafely<PsiField>()?.type ?: return
+    if (!field.isStatic
+        && javaField.hasAnnotation(ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION)
+        && type.isInheritorOf(ORG_JUNIT_JUPITER_API_EXTENSION_BEFORE_ALL_CALLBACK, ORG_JUNIT_JUPITER_API_EXTENSION_AFTER_ALL_CALLBACK)
+    ) {
+      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.extension.class.level.descriptor", type.presentableText)
+      val fixes = createModifierQuickfixes(field, modifierRequest(JvmModifier.STATIC, shouldBePresent = true)) ?: return
+      holder.registerUProblem(field, message, *fixes)
     }
   }
 
@@ -751,7 +749,7 @@ private class JUnitMalformedSignatureVisitor(
 
   class AnnotatedSignatureProblem(
     private val annotations: List<String>,
-    private val shouldBeStatic: Boolean,
+    private val shouldBeStatic: Boolean? = null,
     private val shouldBeInTestInstancePerClass: Boolean = false,
     private val shouldBeVoidType: Boolean? = null,
     private val shouldBeSubTypeOf: List<String>? = null,
@@ -763,8 +761,8 @@ private class JUnitMalformedSignatureVisitor(
     ): List<@NlsSafe String> {
       val problems = mutableListOf<String>()
       if (shouldBeInTestInstancePerClass) { if (!isStatic && !isInstancePerClass) problems.add("static") }
-      else if (shouldBeStatic && !isStatic) problems.add("static")
-      else if (!shouldBeStatic && isStatic) problems.add("non-static")
+      else if (shouldBeStatic == true && !isStatic) problems.add("static")
+      else if (shouldBeStatic == false && isStatic) problems.add("non-static")
       if (validVisibility != null && validVisibility != decVisibility) problems.add(validVisibility.text)
       return problems
     }
@@ -1003,7 +1001,7 @@ private class JUnitMalformedSignatureVisitor(
 
   private class FieldSignatureQuickfix(
     private val name: @NlsSafe String,
-    private val makeStatic: Boolean,
+    private val makeStatic: Boolean?,
     private val newVisibility: JvmModifier? = null
   ) : LocalQuickFix {
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.field.signature")
@@ -1021,9 +1019,11 @@ private class JUnitMalformedSignatureVisitor(
           }
         }
       }
-      declPtr.element?.asSafely<JvmModifiersOwner>()?.let { jvmMethod ->
-        createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
-          it.invoke(project, null, containingFile)
+      if (makeStatic != null) {
+        declPtr.element?.asSafely<JvmModifiersOwner>()?.let { jvmMethod ->
+          createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
+            it.invoke(project, null, containingFile)
+          }
         }
       }
     }
@@ -1031,7 +1031,7 @@ private class JUnitMalformedSignatureVisitor(
 
   private class MethodSignatureQuickfix(
     private val name: @NlsSafe String,
-    private val makeStatic: Boolean,
+    private val makeStatic: Boolean?,
     private val shouldBeVoidType: Boolean? = null,
     private val newVisibility: JvmModifier? = null,
     @SafeFieldForPreview private val inCorrectParams: Map<String, JvmType>? = null
@@ -1065,9 +1065,11 @@ private class JUnitMalformedSignatureVisitor(
           }
         }
       }
-      declPtr.element?.let { jvmMethod ->
-        createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
-          it.invoke(project, null, containingFile)
+      if (makeStatic != null) {
+        declPtr.element?.let { jvmMethod ->
+          createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
+            it.invoke(project, null, containingFile)
+          }
         }
       }
     }

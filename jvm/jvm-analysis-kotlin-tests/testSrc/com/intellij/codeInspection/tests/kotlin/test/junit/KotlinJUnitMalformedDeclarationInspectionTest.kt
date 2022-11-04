@@ -23,20 +23,38 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed extension no highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
+        @JvmField
         @org.junit.jupiter.api.extension.RegisterExtension
         val myRule5 = Rule5()
         class Rule5 : org.junit.jupiter.api.extension.Extension { }
       }
     """.trimIndent())
   }
-  fun `test malformed extension highlighting`() {
+  fun `test malformed extension subtype highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
+        @JvmField
         @org.junit.jupiter.api.extension.RegisterExtension
-        val <warning descr="'A.Rule5' should implement 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = Rule5()
+        val <warning descr="Field 'myRule5' annotated with '@RegisterExtension' should be of type 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = Rule5()
         class Rule5 { }
       }
     """.trimIndent())
+  }
+  fun `test malformed extension make public quickfix`() {
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      class A {
+        @org.junit.jupiter.api.extension.RegisterExtension
+        val myRule<caret>5 = Rule5()
+        class Rule5 { }
+      }
+    """.trimIndent(), """
+      class A {
+        @JvmField
+        @org.junit.jupiter.api.extension.RegisterExtension
+        val myRule5 = Rule5()
+        class Rule5 { }
+      }
+    """.trimIndent(), "Fix 'myRule5' field signature")
   }
 
   /* Malformed nested class */
