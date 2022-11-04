@@ -43,7 +43,9 @@
                               Settings the value to 0 or less disables syncing by timer."/>
 
     <settingsEntryPointIconCustomizer implementation="com.intellij.settingsSync.config.SettingsSyncStatusAction$IconCustomizer"/>
-  </extensions>
+    <statistics.applicationUsagesCollector implementation="com.intellij.settingsSync.SettingsSyncStateStatistics"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.settingsSync.SettingsSyncEventsStatistics"/>
+    </extensions>
 
   <applicationListeners>
     <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.openapi.application.ApplicationActivationListener"

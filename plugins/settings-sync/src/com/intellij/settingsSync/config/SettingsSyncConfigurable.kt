@@ -169,15 +169,28 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   private fun showEnableSyncDialog(remoteSettingsFound: Boolean) {
-    EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)?.let {
+    val dialogResult = EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)
+    if (dialogResult != null) {
       reset()
-      when (it) {
-        EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> syncEnabler.getSettingsFromServer()
+      when (dialogResult) {
+        EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> {
+          syncEnabler.getSettingsFromServer()
+          SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.GET_FROM_SERVER)
+        }
         EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
           SettingsSyncSettings.getInstance().syncEnabled = true
           syncEnabler.pushSettingsToServer()
+          if (remoteSettingsFound) {
+            SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL)
+          }
+          else {
+            SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL_WAS_ONLY_WAY)
+          }
         }
       }
+    }
+    else {
+      SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.CANCELED)
     }
   }
 
@@ -211,8 +224,15 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       RESULT_DISABLE -> {
         SettingsSyncSettings.getInstance().syncEnabled = false
         updateStatusInfo()
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.DisabledMethod.DISABLED_ONLY)
       }
-      RESULT_REMOVE_DATA_AND_DISABLE -> disableAndRemoveData()
+      RESULT_REMOVE_DATA_AND_DISABLE -> {
+        disableAndRemoveData()
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.DisabledMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
+      }
+      RESULT_CANCEL -> {
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.DisabledMethod.CANCEL)
+      }
     }
   }
 
