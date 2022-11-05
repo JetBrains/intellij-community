@@ -112,6 +112,7 @@ fun detectSystemWideSdks(module: Module?,
     .asSequence()
     .flatMap { it.suggestLocalHomePaths(module, context).asSequence() }
     .mapNotNull {
+      // If module sits on target, this target maps its path.
       if (targetModuleSitsOn == null) it.pathString else targetModuleSitsOn.getTargetPathIfLocalPathIsOnTarget(it)
     }
     .filter { TargetAndPath(targetModuleSitsOn?.asTargetConfig, it) !in existingPaths }

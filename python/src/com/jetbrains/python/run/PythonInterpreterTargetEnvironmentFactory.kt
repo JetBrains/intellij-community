@@ -19,6 +19,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PythonInterpreterTargetEnvironmentFactory {
+  /**
+   * Docker target may also access WSL, hence returns WSL here.
+   * Note, that you shouldn't return [getTargetType] here, since WSL can't run another WSL (you need to check distro),
+   * but Docker can run any WSL (depending on its config)
+   */
+  val canProbablyRunCodeForeignTypes: List<Class<out TargetEnvironmentType<*>>> get() = emptyList()
+
   fun getPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest?
 
   fun getTargetType(): TargetEnvironmentType<*>
@@ -127,6 +134,7 @@ interface PythonInterpreterTargetEnvironmentFactory {
     /**
      * Module may be not local but resided on target (like wsl)
      */
+    @JvmStatic
     fun getTargetModuleResidesOn(module: Module): TargetConfigurationWithLocalFsAccess? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getTargetModuleResidesOnImpl(module) }
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -10,6 +9,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Comparing;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
+import com.jetbrains.python.run.TargetConfigurationWithLocalFsAccessExKt;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -55,21 +55,20 @@ public class PyConfigurableInterpreterList {
    * @param module if not null and module resides on certain target, returns only SDKs for this target
    */
   public List<Sdk> getAllPythonSdks(@Nullable final Project project, @Nullable Module module) {
-    TargetEnvironmentConfiguration targetModuleSitsOn = null;
-    if (module != null) {
-      var targetWithLocalFs = PythonInterpreterTargetEnvironmentFactory.Companion.getTargetModuleResidesOn(module);
-      if (targetWithLocalFs != null) {
-        targetModuleSitsOn = targetWithLocalFs.getAsTargetConfig();
-      }
-    }
+    var targetModuleSitsOn = (module != null)
+                             ? PythonInterpreterTargetEnvironmentFactory.Companion.getTargetModuleResidesOn(module)
+                             : null;
+
     List<Sdk> result = new ArrayList<>();
     for (Sdk sdk : getModel().getSdks()) {
-      if (sdk.getSdkType() instanceof PythonSdkType) {
-        if (targetModuleSitsOn != null && ! targetModuleSitsOn.equals(PySdkExtKt.getTargetEnvConfiguration(sdk))) {
+      if (!(sdk.getSdkType() instanceof PythonSdkType)) continue;
+      if (targetModuleSitsOn != null) {
+        var sdkConfig = PySdkExtKt.getTargetEnvConfiguration(sdk);
+        if (!TargetConfigurationWithLocalFsAccessExKt.codeCouldProbablyBeRunWithConfig(targetModuleSitsOn, sdkConfig)) {
           continue;
         }
-        result.add(sdk);
       }
+      result.add(sdk);
     }
     result.sort(new PyInterpreterComparator(project));
     return result;

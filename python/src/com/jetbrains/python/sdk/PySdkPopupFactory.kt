@@ -21,6 +21,7 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
 
 class PySdkPopupFactory(val project: Project, val module: Module) {
 
@@ -73,7 +74,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
                        .getValue(type)
                        .filter {
                          targetModuleSitsOn == null ||
-                         it.targetAdditionalData?.targetEnvironmentConfiguration == targetModuleSitsOn
+                         targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(it.targetAdditionalData?.targetEnvironmentConfiguration)
                        }
                        .mapNotNull { model.findSdk(it) }
                        .map { SwitchToSdkAction(it, currentSdk) })
