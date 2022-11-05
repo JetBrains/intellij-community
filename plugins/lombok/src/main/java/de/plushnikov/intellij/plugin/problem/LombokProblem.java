@@ -9,10 +9,6 @@ import java.util.function.Supplier;
 public interface LombokProblem {
   LombokProblem BLACKHOLE = new LombokProblem() {
     @Override
-    public void withLocalQuickFixes(LocalQuickFix... quickFixes) {
-    }
-
-    @Override
     public void withLocalQuickFixes(Supplier<LocalQuickFix>... quickFixSuppliers) {
     }
 
@@ -31,8 +27,6 @@ public interface LombokProblem {
       return null;
     }
   };
-
-  void withLocalQuickFixes(LocalQuickFix... quickFixes);
 
   void withLocalQuickFixes(Supplier<LocalQuickFix>... quickFixSuppliers);
 

@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 /**
  * Base lombok processor class for field annotations
@@ -66,6 +65,10 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return true;
   }
 
+  protected abstract void generatePsiElements(@NotNull PsiField psiField,
+                                              @NotNull PsiAnnotation psiAnnotation,
+                                              @NotNull List<? super PsiElement> target);
+
   @NotNull
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
@@ -98,33 +101,32 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   protected void validateOnXAnnotations(@NotNull PsiAnnotation psiAnnotation,
                                         @NotNull PsiField psiField,
-                                        @NotNull ProblemSink builder,
+                                        @NotNull ProblemSink problemSink,
                                         @NotNull String parameterName) {
-    final @NotNull List<PsiAnnotation> copyableAnnotations = copyableAnnotations(psiField, LombokCopyableAnnotations.BASE_COPYABLE);
+    if(problemSink.deepValidation()) {
+      final @NotNull List<PsiAnnotation> copyableAnnotations =
+        LombokCopyableAnnotations.collectCopyableAnnotations(psiField, LombokCopyableAnnotations.BASE_COPYABLE);
 
-    if (!copyableAnnotations.isEmpty()) {
-      final Iterable<String> onXAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, parameterName);
-      List<String> copyableAnnotationsFQNs = ContainerUtil.map(copyableAnnotations, PsiAnnotation::getQualifiedName);
-      for (String copyableAnnotationFQN : copyableAnnotationsFQNs) {
-        for (String onXAnnotation : onXAnnotations) {
-          if (onXAnnotation.startsWith(copyableAnnotationFQN)) {
-            builder.addErrorMessage("inspection.message.annotation.copy.duplicate", copyableAnnotationFQN);
+      if (!copyableAnnotations.isEmpty()) {
+        final Iterable<String> onXAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, parameterName);
+        List<String> copyableAnnotationsFQNs = ContainerUtil.map(copyableAnnotations, PsiAnnotation::getQualifiedName);
+        for (String copyableAnnotationFQN : copyableAnnotationsFQNs) {
+          for (String onXAnnotation : onXAnnotations) {
+            if (onXAnnotation.startsWith(copyableAnnotationFQN)) {
+              problemSink.addErrorMessage("inspection.message.annotation.copy.duplicate", copyableAnnotationFQN);
+            }
           }
         }
       }
-    }
 
-    if (psiField.isDeprecated()) {
-      final Iterable<String> onMethodAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, "onMethod");
-      if (StreamSupport.stream(onMethodAnnotations.spliterator(), false).anyMatch(CommonClassNames.JAVA_LANG_DEPRECATED::equals)) {
-        builder.addErrorMessage("inspection.message.annotation.copy.duplicate", CommonClassNames.JAVA_LANG_DEPRECATED);
+      if (psiField.isDeprecated()) {
+        final Iterable<String> onMethodAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, "onMethod");
+        if (ContainerUtil.exists(onMethodAnnotations, CommonClassNames.JAVA_LANG_DEPRECATED::equals)) {
+          problemSink.addErrorMessage("inspection.message.annotation.copy.duplicate", CommonClassNames.JAVA_LANG_DEPRECATED);
+        }
       }
     }
   }
-
-  protected abstract void generatePsiElements(@NotNull PsiField psiField,
-                                              @NotNull PsiAnnotation psiAnnotation,
-                                              @NotNull List<? super PsiElement> target);
 
   protected boolean validateExistingMethods(@NotNull PsiField psiField,
                                             @NotNull ProblemSink builder,

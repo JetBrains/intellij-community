@@ -54,8 +54,8 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     if (result && lazy) {
       if (!psiField.hasModifierProperty(PsiModifier.FINAL) || !psiField.hasModifierProperty(PsiModifier.PRIVATE)) {
         builder.addErrorMessage("inspection.message.lazy.requires.field.to.be.private.final")
-          .withLocalQuickFixes(PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
-                               PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
+          .withLocalQuickFixes(()->PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
+                               ()->PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
         result = false;
       }
       if (!psiField.hasInitializer()) {
@@ -116,9 +116,9 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
 
     final LombokLightModifierList modifierList = methodBuilder.getModifierList();
 
-    copyCopyableAnnotations(psiField, modifierList, LombokCopyableAnnotations.BASE_COPYABLE);
+    LombokCopyableAnnotations.copyCopyableAnnotations(psiField, modifierList, LombokCopyableAnnotations.BASE_COPYABLE);
     PsiAnnotation fieldGetterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.GETTER);
-    copyOnXAnnotations(fieldGetterAnnotation, modifierList, "onMethod");
+    LombokCopyableAnnotations.copyOnXAnnotations(fieldGetterAnnotation, modifierList, "onMethod");
     if (psiField.isDeprecated()) {
       modifierList.addAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
     }

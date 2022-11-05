@@ -116,12 +116,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       if (null != existedStaticMethod) {
         if (paramTypes.isEmpty()) {
           builder.addErrorMessage("inspection.message.method.s.matched.static.constructor.name.already.defined", staticConstructorName)
-            .withLocalQuickFixes(new SafeDeleteFix(existedStaticMethod));
+            .withLocalQuickFixes(()->new SafeDeleteFix(existedStaticMethod));
         }
         else {
           builder.addErrorMessage("inspection.message.method.s.with.d.parameters.matched.static.constructor.name.already.defined",
                                   staticConstructorName, paramTypes.size())
-            .withLocalQuickFixes(new SafeDeleteFix(existedStaticMethod));
+            .withLocalQuickFixes(()->new SafeDeleteFix(existedStaticMethod));
         }
         result = false;
       }
@@ -147,13 +147,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     final PsiMethod existedMethod = findExistedMethod(definedConstructors, constructorName, paramTypes);
     if (null != existedMethod) {
-      final SafeDeleteFix safeDeleteFix = new SafeDeleteFix(existedMethod);
       if (paramTypes.isEmpty()) {
-        builder.addErrorMessage("inspection.message.constructor.without.parameters.already.defined").withLocalQuickFixes(safeDeleteFix);
+        builder.addErrorMessage("inspection.message.constructor.without.parameters.already.defined")
+          .withLocalQuickFixes(()-> new SafeDeleteFix(existedMethod));
       }
       else {
         builder.addErrorMessage("inspection.message.constructor.with.d.parameters.already.defined", paramTypes.size())
-          .withLocalQuickFixes(safeDeleteFix);
+          .withLocalQuickFixes(()->new SafeDeleteFix(existedMethod));
       }
       result = false;
     }
@@ -303,7 +303,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       .withNavigationElement(psiAnnotation)
       .withModifier(modifier);
 
-    copyOnXAnnotations(psiAnnotation, constructorBuilder.getModifierList(), "onConstructor");
+    LombokCopyableAnnotations.copyOnXAnnotations(psiAnnotation, constructorBuilder.getModifierList(), "onConstructor");
 
     if (useJavaDefaults) {
       final StringBuilder blockText = new StringBuilder();
@@ -345,7 +345,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterField.getType(), constructorBuilder);
         parameter.setNavigationElement(parameterField);
         constructorBuilder.withParameter(parameter);
-        copyCopyableAnnotations(parameterField, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
+        LombokCopyableAnnotations.copyCopyableAnnotations(parameterField, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
 
         blockText.append(String.format("this.%s = %s;\n", parameterField.getName(), parameterName));
       }
@@ -393,7 +393,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterType, methodBuilder);
         parameter.setNavigationElement(psiField);
         methodBuilder.withParameter(parameter);
-        copyCopyableAnnotations(psiField, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
+        LombokCopyableAnnotations.copyCopyableAnnotations(psiField, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
       }
     }
 

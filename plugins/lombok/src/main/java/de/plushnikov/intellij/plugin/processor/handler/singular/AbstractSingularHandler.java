@@ -7,6 +7,7 @@ import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
+import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
@@ -60,6 +61,9 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withAnnotations(info.getAnnotations());
 
     addOneMethodParameter(oneAddMethodBuilder, info.getFieldType(), singularName);
+    if(info.getVariable() instanceof PsiField psiField) {
+      LombokCopyableAnnotations.copyCopyableAnnotations(psiField, oneAddMethodBuilder.getModifierList(), LombokCopyableAnnotations.COPY_TO_BUILDER_SINGULAR_SETTER);
+    }
 
     final String oneMethodBody = getOneMethodBody(singularName, info);
     oneAddMethodBuilder.withBodyText(oneMethodBody);
@@ -75,6 +79,9 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withAnnotations(info.getAnnotations());
 
     addAllMethodParameter(allAddMethodBuilder, info.getFieldType(), fieldName);
+    if(info.getVariable() instanceof PsiField psiField) {
+      LombokCopyableAnnotations.copyCopyableAnnotations(psiField, allAddMethodBuilder.getModifierList(), LombokCopyableAnnotations.COPY_TO_SETTER);
+    }
 
     final String allMethodBody = getAllMethodBody(fieldName, info);
     allAddMethodBuilder.withBodyText(allMethodBody);

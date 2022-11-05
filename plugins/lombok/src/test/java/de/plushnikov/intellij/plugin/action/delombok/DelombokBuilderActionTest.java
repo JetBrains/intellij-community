@@ -46,4 +46,8 @@ public class DelombokBuilderActionTest extends LombokLightActionTestCase {
   public void testBuilderSimpleWithSetterPrefix() throws Exception {
     doTest();
   }
+
+  public void testBuilderCopyableAnnotations() throws Exception {
+    doTest();
+  }
 }

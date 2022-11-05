@@ -5,6 +5,7 @@ import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
+import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,9 @@ class NonSingularHandler implements BuilderElementHandler {
       .withModifier(info.getVisibilityModifier())
       .withAnnotations(info.getAnnotations())
       .withBodyText(blockText);
+    if(info.getVariable() instanceof PsiField psiField) {
+      LombokCopyableAnnotations.copyCopyableAnnotations(psiField, methodBuilder.getModifierList(), LombokCopyableAnnotations.COPY_TO_SETTER);
+    }
     return Collections.singleton(methodBuilder);
   }
 

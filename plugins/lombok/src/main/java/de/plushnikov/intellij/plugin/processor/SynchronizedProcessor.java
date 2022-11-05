@@ -48,7 +48,7 @@ public class SynchronizedProcessor extends AbstractProcessor {
         else {
           if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
             problemBuilder.addErrorMessage("inspection.message.synchronized.legal.only.on.concrete.methods")
-              .withLocalQuickFixes(PsiQuickFixFactory.createModifierListFix(psiMethod, PsiModifier.ABSTRACT, false, false));
+              .withLocalQuickFixes(() -> PsiQuickFixFactory.createModifierListFix(psiMethod, PsiModifier.ABSTRACT, false, false));
           }
           else {
             validateReferencedField(problemBuilder, psiAnnotation, psiMethod, containingClass);
@@ -70,7 +70,7 @@ public class SynchronizedProcessor extends AbstractProcessor {
       if (null != lockField) {
         if (isStatic && !lockField.hasModifierProperty(PsiModifier.STATIC)) {
           problemNewBuilder.addErrorMessage("inspection.message.synchronized.field.is.not.static", lockFieldName)
-            .withLocalQuickFixes(PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.STATIC, true, false));
+            .withLocalQuickFixes(() -> PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.STATIC, true, false));
         }
       }
       else {
@@ -85,8 +85,8 @@ public class SynchronizedProcessor extends AbstractProcessor {
           modifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.FINAL};
         }
         problemNewBuilder.addErrorMessage("inspection.message.field.s.does.not.exist", lockFieldName)
-          .withLocalQuickFixes(
-            PsiQuickFixFactory.createNewFieldFix(containingClass, lockFieldName, javaLangObjectType, "new Object()", modifiers));
+          .withLocalQuickFixes(() -> PsiQuickFixFactory.createNewFieldFix(containingClass, lockFieldName, javaLangObjectType,
+                                                                          "new Object()", modifiers));
       }
     }
   }

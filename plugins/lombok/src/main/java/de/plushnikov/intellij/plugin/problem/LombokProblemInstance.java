@@ -25,13 +25,8 @@ public class LombokProblemInstance implements LombokProblem {
   }
 
   @Override
-  public void withLocalQuickFixes(LocalQuickFix... quickFixes) {
-    this.quickFixes = quickFixes;
-  }
-
-  @Override
   public void withLocalQuickFixes(Supplier<LocalQuickFix>... quickFixSuppliers) {
-    withLocalQuickFixes(ContainerUtil.map2Array(quickFixSuppliers, LocalQuickFix.class, Supplier<LocalQuickFix>::get));
+    this.quickFixes = ContainerUtil.map2Array(quickFixSuppliers, LocalQuickFix.class, Supplier<LocalQuickFix>::get);
   }
 
   @Override

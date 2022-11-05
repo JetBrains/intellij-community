@@ -79,7 +79,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
   private static boolean validNonStatic(@NotNull PsiField psiField, @NotNull final ProblemSink builder) {
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
       builder.addWarningMessage("inspection.message.not.generating.wither")
-        .withLocalQuickFixes(PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.STATIC, false, false));
+        .withLocalQuickFixes(()->PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.STATIC, false, false));
       return false;
     }
     return true;
@@ -91,7 +91,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
         psiField.hasModifierProperty(PsiModifier.FINAL) && !PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE) &&
         psiField.hasInitializer() && !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokClassNames.BUILDER_DEFAULT)) {
       builder.addWarningMessage("inspection.message.not.generating.wither.for.this.field.withers.cannot.be.generated")
-        .withLocalQuickFixes(PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
+        .withLocalQuickFixes(()->PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       return false;
     }
     return true;
@@ -193,14 +193,14 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
       }
 
       PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
-      copyOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
+      LombokCopyableAnnotations.copyOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
 
       final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, methodBuilder);
       methodBuilder.withParameter(methodParameter);
 
       LombokLightModifierList methodParameterModifierList = methodParameter.getModifierList();
-      copyCopyableAnnotations(psiField, methodParameterModifierList, LombokCopyableAnnotations.BASE_COPYABLE);
-      copyOnXAnnotations(witherAnnotation, methodParameterModifierList, "onParam");
+      LombokCopyableAnnotations.copyCopyableAnnotations(psiField, methodParameterModifierList, LombokCopyableAnnotations.BASE_COPYABLE);
+      LombokCopyableAnnotations.copyOnXAnnotations(witherAnnotation, methodParameterModifierList, "onParam");
 
       if (psiFieldContainingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         methodBuilder.withModifier(PsiModifier.ABSTRACT);

@@ -12,6 +12,7 @@ import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToString
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -241,7 +242,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     LombokLightParameter parameter = methodBuilder.getParameterList().getParameter(0);
     if (null != parameter) {
       PsiModifierList methodParameterModifierList = parameter.getModifierList();
-      copyOnXAnnotations(psiAnnotation, methodParameterModifierList, "onParam");
+      LombokCopyableAnnotations.copyOnXAnnotations(psiAnnotation, methodParameterModifierList, "onParam");
     }
   }
 

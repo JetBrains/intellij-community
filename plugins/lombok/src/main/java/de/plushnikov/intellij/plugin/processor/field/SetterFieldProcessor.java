@@ -65,7 +65,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     boolean result = true;
     if (psiField.hasModifierProperty(PsiModifier.FINAL) && null != LombokProcessorUtil.getMethodModifier(psiAnnotation)) {
       builder.addWarningMessage("inspection.message.not.generating.setter.for.this.field.setters")
-        .withLocalQuickFixes(PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
+        .withLocalQuickFixes(() -> PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       result = false;
     }
     return result;
@@ -120,13 +120,13 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     LombokLightParameter setterParameter = methodBuilder.getParameterList().getParameter(0);
     if (null != setterParameter) {
       LombokLightModifierList methodParameterModifierList = setterParameter.getModifierList();
-      copyCopyableAnnotations(psiField, methodParameterModifierList, LombokCopyableAnnotations.BASE_COPYABLE);
-      copyOnXAnnotations(setterAnnotation, methodParameterModifierList, "onParam");
+      LombokCopyableAnnotations.copyCopyableAnnotations(psiField, methodParameterModifierList, LombokCopyableAnnotations.BASE_COPYABLE);
+      LombokCopyableAnnotations.copyOnXAnnotations(setterAnnotation, methodParameterModifierList, "onParam");
     }
 
     final LombokLightModifierList modifierList = methodBuilder.getModifierList();
-    copyCopyableAnnotations(psiField, modifierList, LombokCopyableAnnotations.COPY_TO_SETTER);
-    copyOnXAnnotations(setterAnnotation, modifierList, "onMethod");
+    LombokCopyableAnnotations.copyCopyableAnnotations(psiField, modifierList, LombokCopyableAnnotations.COPY_TO_SETTER);
+    LombokCopyableAnnotations.copyOnXAnnotations(setterAnnotation, modifierList, "onMethod");
     if (psiField.isDeprecated()) {
       modifierList.addAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
     }

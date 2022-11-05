@@ -83,7 +83,7 @@ public class StandardExceptionProcessor extends AbstractClassProcessor {
     final PsiClassType javaLangStringType = PsiType.getJavaLangString(psiManager, psiClassResolveScope);
     final PsiClassType javaLangThrowableType = PsiType.getJavaLangThrowable(psiManager, psiClassResolveScope);
     final boolean addConstructorProperties =
-      ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.STANDARD_EXCEPTION_ADD_CONSTRUCTOR_PROPERTIES, psiClass);
+      ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.ANYCONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES, psiClass);
 
     // message constructor
     if (noConstructorWithParamsOfTypesDefined(existedConstructors, javaLangStringType)) {
