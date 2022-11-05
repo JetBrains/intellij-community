@@ -41,7 +41,7 @@ public class Version implements Comparable<Version>, Serializable {
   }
 
   public boolean supportsRegexLiterals() {
-    return isOrGreaterThan(6);
+    return isOrGreaterThan(5, 7);
   }
 
   private static int parseNumber(String num, int def) {
