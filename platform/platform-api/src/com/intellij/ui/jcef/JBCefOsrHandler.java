@@ -214,17 +214,17 @@ class JBCefOsrHandler implements CefRenderHandler {
     myImage = image;
     myVolatileImage = volatileImage;
     SwingUtilities.invokeLater(() -> {
-        JRootPane root = myComponent.getRootPane();
-        RepaintManager rm = RepaintManager.currentManager(root);
-        Rectangle dirtySrc = new Rectangle(0, 0, myComponent.getWidth(), myComponent.getHeight());
-        Rectangle dirtyDst = SwingUtilities.convertRectangle(myComponent, dirtySrc, root);
-        int dx = 1;
-        // NOTE: should mark area outside browser (otherwise background component won't be repainted)
-        rm.addDirtyRegion(root, dirtyDst.x - dx, dirtyDst.y - dx, dirtyDst.width + dx*2, dirtyDst.height + dx*2);
+      if (!myComponent.isShowing()) return;
+      JRootPane root = myComponent.getRootPane();
+      RepaintManager rm = RepaintManager.currentManager(root);
+      Rectangle dirtySrc = new Rectangle(0, 0, myComponent.getWidth(), myComponent.getHeight());
+      Rectangle dirtyDst = SwingUtilities.convertRectangle(myComponent, dirtySrc, root);
+      int dx = 1;
+      // NOTE: should mark area outside browser (otherwise background component won't be repainted)
+      rm.addDirtyRegion(root, dirtyDst.x - dx, dirtyDst.y - dx, dirtyDst.width + dx * 2, dirtyDst.height + dx * 2);
 
-        myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect));
-      }
-    );
+      myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect));
+    });
   }
 
   @Override
