@@ -1517,9 +1517,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * This method is used to scale editors elements such as gutter icons, folding elements, and others
    */
   public float getScale() {
-    if (!Registry.is("editor.scale.gutter.icons")) return 1.0f;
-    float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
-    return normLineHeight / JBUIScale.scale(16.0f);
+    if (Registry.is("editor.scale.gutter.icons")) {
+      float newUInormLineHeight = (float)Registry.doubleValue("ide.new.ui.editor.normalized.line.height");
+      float standardNormalizedLineHeight = ExperimentalUI.isNewUI() ? newUInormLineHeight : 16.0f;
+      float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
+      return normLineHeight / JBUIScale.scale((float)standardNormalizedLineHeight);
+    }
+    return 1.0f;
   }
 
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
