@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
-import static com.intellij.codeInspection.dataFlow.MethodContract.singleConditionContract;
-import static com.intellij.codeInspection.dataFlow.MethodContract.trivialContract;
+import static com.intellij.codeInspection.dataFlow.MethodContract.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.createConstraintArray;
 import static com.intellij.psi.CommonClassNames.*;
@@ -150,6 +149,42 @@ public final class HardcodedContracts {
               (call, paramCount) -> Arrays.asList(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), returnNull()), trivialContract(returnAny())))
+    .register(instanceCall(JAVA_TIME_LOCAL_DATE, "isAfter"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.GT, SpecialField.LOCAL_DATE_EPOCH_DAYS)))
+    .register(instanceCall(JAVA_TIME_LOCAL_TIME, "isAfter"),
+              ((call, paramCount) -> javaTimeCompare(RelationType.GT, SpecialField.LOCAL_TIME_DAY_NANOSECONDS)))
+    .register(instanceCall(JAVA_TIME_OFFSET_TIME, "isAfter"),
+              ((call, paramCount) -> javaTimeCompare(RelationType.GT, null)))
+    .register(instanceCall(JAVA_TIME_OFFSET_DATE_TIME, "isAfter"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.GT, null)))
+    .register(instanceCall("java.time.chrono.ChronoZonedDateTime", "isAfter"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.GT, null)))
+    .register(instanceCall(JAVA_TIME_LOCAL_DATE_TIME, "isAfter"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.GT, SpecialField.LOCAL_DATE_TIME_COMPARE_VALUE)))
+    .register(instanceCall(JAVA_TIME_LOCAL_DATE, "isBefore"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.LT, SpecialField.LOCAL_DATE_EPOCH_DAYS)))
+    .register(instanceCall(JAVA_TIME_LOCAL_TIME, "isBefore"),
+              ((call, paramCount) -> javaTimeCompare(RelationType.LT, SpecialField.LOCAL_TIME_DAY_NANOSECONDS)))
+    .register(instanceCall(JAVA_TIME_OFFSET_TIME, "isBefore"),
+              ((call, paramCount) -> javaTimeCompare(RelationType.LT, null)))
+    .register(instanceCall(JAVA_TIME_OFFSET_DATE_TIME, "isBefore"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.LT, null)))
+    .register(instanceCall("java.time.chrono.ChronoZonedDateTime", "isBefore"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.LT, null)))
+    .register(instanceCall(JAVA_TIME_LOCAL_DATE_TIME, "isBefore"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.LT, SpecialField.LOCAL_DATE_TIME_COMPARE_VALUE)))
+    .register(instanceCall(JAVA_TIME_LOCAL_DATE, "isEqual", "equals"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.EQ, SpecialField.LOCAL_DATE_EPOCH_DAYS)))
+    .register(instanceCall(JAVA_TIME_LOCAL_TIME, "isEqual", "equals"),
+              ((call, paramCount) -> javaTimeCompare(RelationType.EQ, SpecialField.LOCAL_TIME_DAY_NANOSECONDS)))
+    .register(instanceCall(JAVA_TIME_OFFSET_TIME, "isEqual", "equals"),
+              ((call, paramCount) -> javaTimeCompare(RelationType.EQ, null)))
+    .register(instanceCall(JAVA_TIME_OFFSET_DATE_TIME, "isEqual", "equals"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.EQ, null)))
+    .register(instanceCall("java.time.chrono.ChronoZonedDateTime", "isEqual", "equals"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.EQ, null)))
+    .register(instanceCall(JAVA_TIME_LOCAL_DATE_TIME, "isEqual", "equals"),
+              ((call, paramCount) -> javaTimeCompareWithCheckType(RelationType.EQ, SpecialField.LOCAL_DATE_TIME_COMPARE_VALUE)))
     .register(anyOf(staticCall(JAVA_LANG_MATH, "max").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_MATH, "max").parameterTypes("long", "long"),
                     staticCall(JAVA_LANG_INTEGER, "max").parameterTypes("int", "int"),
@@ -187,10 +222,6 @@ public final class HardcodedContracts {
     .register(staticCall("java.lang.System", "arraycopy"), expression -> getArraycopyContract())
     .register(anyOf(
       instanceCall("java.util.Date", "before", "after"),
-      instanceCall("java.time.LocalDate", "isBefore", "isAfter"),
-      instanceCall("java.time.LocalDateTime", "isBefore", "isAfter"),
-      instanceCall("java.time.LocalTime", "isBefore", "isAfter"),
-      instanceCall("java.time.ZonedDateTime", "isBefore", "isAfter"),
       instanceCall("java.time.Year", "isBefore", "isAfter"),
       instanceCall("java.time.YearMonth", "isBefore", "isAfter")
     ), ContractProvider.of(
@@ -317,6 +348,42 @@ public final class HardcodedContracts {
     return Arrays.asList(singleConditionContract(
       ContractValue.argument(0), isMax ? RelationType.GT : RelationType.LT, ContractValue.argument(1), returnParameter(0)),
                          trivialContract(returnParameter(1)));
+  }
+
+  private static List<MethodContract> javaTimeCompareWithCheckType(RelationType relationType, @Nullable SpecialField specialField) {
+    ContractValue argument = ContractValue.argument(0);
+    ContractValue qualifier = ContractValue.qualifier();
+
+    if (specialField != null) {
+      qualifier = qualifier.specialField(specialField);
+      argument = argument.specialField(specialField);
+    }
+
+    return Arrays.asList(
+      multipleConditionContract(
+        List.of(
+          ContractValue.condition(qualifier, relationType, argument),
+          ContractValue.condition(argument, RelationType.IS, qualifier)),
+        returnBoolean(true)),
+      multipleConditionContract(
+        List.of(
+          ContractValue.condition(qualifier, relationType.getNegated(), argument),
+          ContractValue.condition(argument, RelationType.IS, qualifier)),
+        returnBoolean(false)));
+  }
+
+  private static List<MethodContract> javaTimeCompare(RelationType relationType, @Nullable SpecialField specialField) {
+    ContractValue qualifier = ContractValue.qualifier();
+    ContractValue argument = ContractValue.argument(0);
+
+    if (specialField != null) {
+      qualifier = qualifier.specialField(specialField);
+      argument = argument.specialField(specialField);
+    }
+
+    return Arrays.asList(
+      singleConditionContract(qualifier, relationType, argument, returnBoolean(true)),
+      trivialContract(returnBoolean(false)));
   }
 
   private static List<MethodContract> equalsContracts(PsiMethodCallExpression call) {

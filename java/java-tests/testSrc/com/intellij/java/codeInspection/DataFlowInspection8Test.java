@@ -386,4 +386,123 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testConsumedStream() { doTest(); }
   public void testConsumedStreamDifferentMethods() { doTest(); }
   public void testConsumedStreamWithoutInline()  { doTest(); }
+  @SuppressWarnings({"override", "MethodOverloadsMethodOfSuperclass"})
+  public void testDateTimeTracking()  {
+    myFixture.addClass("""
+                         package java.time.chrono;
+                         public interface ChronoLocalDate { }""");
+    myFixture.addClass("""
+                         package java.time.chrono;
+                         public interface ChronoLocalDateTime<T> { }""");
+    myFixture.addClass("""
+                         package java.time.chrono;
+                         public interface ChronoZonedDateTime<T> {
+                           default boolean isBefore(ChronoZonedDateTime<?> offsetTime2) { return false; }
+                           default boolean isAfter(ChronoZonedDateTime<?> offsetTime2) { return false; }
+                           default boolean isEqual(ChronoZonedDateTime<?> offsetTime2) { return false; }
+                         }""");
+    myFixture.addClass("""
+                         package java.time;
+                         public enum ZoneOffset {UTC}""");
+    myFixture.addClass("""
+                         package java.time;
+                         public enum Month {JANUARY, FEBRUARY, MARCH, APRIL}""");
+    myFixture.addClass("""
+                         package java.time.temporal;
+                         public interface TemporalUnit{}""");
+    myFixture.addClass("""
+                         package java.time.temporal;
+                         public public enum ChronoUnit implements TemporalUnit{NANOS, MICROS, MILLIS, SECONDS, MINUTES, HOURS, HALF_DAYS,
+                         DAYS, WEEKS, MONTHS, YEARS}""");
+    myFixture.addClass("""
+                         package java.time;
+                         import java.util.Random;
+                         public final class OffsetDateTime {
+                           public static OffsetDateTime of(LocalDate localDate, LocalTime localTime, ZoneOffset zoneOffset) {
+                               return new OffsetDateTime();
+                           }
+                           public boolean isBefore(OffsetDateTime offsetDateTime2) { return new Random().nextBoolean(); }
+                           public boolean isEqual(OffsetDateTime offsetDateTime2) { return new Random().nextBoolean(); }
+                         }""");
+    myFixture.addClass("""
+                         package java.time;
+                         import java.time.temporal.TemporalUnit;
+                         public final class OffsetTime {
+                            public static OffsetTime of(LocalTime localTime, ZoneOffset zoneOffset) {
+                                return new OffsetTime();
+                           }
+                           public boolean isBefore(OffsetTime offsetTime2) { return false; }
+                           public boolean isAfter(OffsetTime offsetTime2) { return false; }
+                           public boolean isEqual(OffsetTime offsetTime2) { return false; }
+                           public OffsetTime plusHours(long amountToAdd) { return new OffsetTime(); }
+                           public OffsetTime plus(long amountToAdd, TemporalUnit unit) { return new OffsetTime(); }
+                         }""");
+    myFixture.addClass("""
+                         package java.time;
+                         import java.time.chrono.ChronoZonedDateTime;
+                         public final class ZonedDateTime implements ChronoZonedDateTime<LocalDate> {
+                            public static ZonedDateTime of(LocalDateTime localDateTime, ZoneOffset zoneOffset) {
+                                return new ZonedDateTime();
+                           }
+                         }""");
+
+    myFixture.addClass("""
+                        package java.time;
+                        import java.time.chrono.ChronoLocalDate;
+                        import java.time.temporal.TemporalUnit;
+                        public final class LocalDate implements ChronoLocalDate {
+                          public static LocalDate of(int year, int month, int day) { return new LocalDate(); }
+                          public static LocalDate of(int year, Month month, int day) { return new LocalDate(); }
+                          public static LocalDate now() { return new LocalDate(); }
+                          public static LocalDate ofYearDay(int year, int dayOfYear) { return new LocalDate(); }
+                          public boolean isBefore(ChronoLocalDate localDate2) { return true; }
+                          public boolean isAfter(ChronoLocalDate localDate2) { return true; }
+                          public boolean isEqual(ChronoLocalDate localDate2) { return true; }
+                          public boolean equals(Object localDate2) { return true; }
+                          public LocalDate plus(long amountToAdd, TemporalUnit unit) { return new LocalDate(); }
+                          public LocalDate plusYears(long amountToAdd) { return new LocalDate(); }
+                          public LocalDate minusYears(long amountToAdd) { return new LocalDate(); }
+                          public int getYear() { return 0; }
+                          public int getMonthValue() { return 0; }
+                          public LocalDate minus(long amountToAdd, TemporalUnit unit) { return new LocalDate(); }
+                         }""");
+    myFixture.addClass("""
+                        package java.time;
+                        import java.time.temporal.TemporalUnit;
+                        public final class LocalTime {
+                          public static LocalTime of(int hours, int minutes, int seconds) {  return new LocalTime(); }
+                          public static LocalTime of(int hours, int minutes, int seconds, int nanos) {  return new LocalTime(); }
+                          public static LocalTime now() { return new LocalTime(); }
+                          public boolean isBefore(LocalTime localTime) { return false; }
+                          public boolean isAfter(LocalTime localTime) { return false; }
+                          public boolean equals(Object localTime) { return true; }
+                          public LocalTime plus(long amountToAdd, TemporalUnit unit) { return new LocalTime(); }
+                          public LocalTime plusHours(long amountToAdd) { return new LocalTime(); }
+                          public LocalTime minusHours(long amountToAdd) { return new LocalTime(); }
+                          public LocalTime minus(long amountToAdd, TemporalUnit unit) { return new LocalTime(); }
+                          public LocalTime withHour(int hour) { return new LocalTime(); }
+                          public int getHour() { return 0; }
+                         }""");
+    myFixture.addClass("""
+                        package java.time;
+                        import java.time.chrono.ChronoLocalDateTime;
+                        import java.time.temporal.TemporalUnit;
+                        public final class LocalDateTime implements ChronoLocalDateTime<LocalDate> {
+                          public static LocalDateTime now() { return new LocalDateTime(); }
+                          public static LocalDateTime of(int years, int month, int day, int hour, int minutes) {
+                              return new LocalDateTime();
+                          }
+                          public static LocalDateTime of(int years, Month month, int day, int hour, int minutes, int seconds) {
+                              return new LocalDateTime();
+                          }
+                          public boolean isBefore(ChronoLocalDateTime<LocalDate> localDateTime2) { return false; }
+                          public boolean isAfter(ChronoLocalDateTime<LocalDate> localDateTime2) { return false; }
+                          public boolean isEqual(ChronoLocalDateTime<LocalDate> localDateTime2) { return false; }
+                          public boolean equals(Object localDateTime2) { return true; }
+                          public LocalDateTime plus(long amountToAdd, TemporalUnit unit) { return new LocalDateTime(); }
+                          public LocalDateTime minus(long amountToAdd, TemporalUnit unit) { return new LocalDateTime(); }
+                          public LocalDateTime plusHours(long hour) { return new LocalDateTime(); }
+                          public int getHour() { return 0; }
+                         }""");
+    doTest(); }
 }

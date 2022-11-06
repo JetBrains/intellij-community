@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -92,6 +93,21 @@ public abstract class MethodContract {
       @Override
       public List<ContractValue> getConditions() {
         return Collections.singletonList(condition);
+      }
+    };
+  }
+
+  @NotNull
+  public static MethodContract multipleConditionContract(List<ContractValue> condition, ContractReturnValue returnValue) {
+    return new MethodContract(returnValue) {
+      @Override
+      String getArgumentsPresentation() {
+        return StreamEx.of(condition).map(t-> "(" + t + ")").joining(",") ;
+      }
+
+      @Override
+      public List<ContractValue> getConditions() {
+        return condition;
       }
     };
   }

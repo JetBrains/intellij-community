@@ -28,10 +28,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Locale;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.Month;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.*;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
@@ -65,7 +68,25 @@ public final class CustomMethodHandlers {
     exactInstanceCall(JAVA_LANG_BYTE, "toString").parameterCount(0),
     exactInstanceCall(JAVA_LANG_SHORT, "toString").parameterCount(0),
     exactInstanceCall(JAVA_LANG_CHARACTER, "toString").parameterCount(0),
-    exactInstanceCall(JAVA_LANG_BOOLEAN, "toString").parameterCount(0)
+    exactInstanceCall(JAVA_LANG_BOOLEAN, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_TIME_LOCAL_DATE, "getYear", "getMonthValue", "getDayOfMonth", "getDayOfYear",
+                      "isLeapYear", "lengthOfMonth", "lengthOfYear", "atTime",
+                      "withYear", "withMonth", "withDayOfMonth", "withDayOfYear",
+                      "plusYears", "plusMonths", "plusWeeks", "plusDays",
+                      "minusYears", "minusMonths", "minusWeeks", "minusDays"),
+    staticCall(JAVA_TIME_LOCAL_DATE, "ofEpochDay", "ofYearDay"),
+    exactInstanceCall(JAVA_TIME_LOCAL_DATE, "atStartOfDay").parameterCount(0),
+    exactInstanceCall(JAVA_TIME_LOCAL_TIME, "getHour", "getMinute", "getSecond", "getNano",
+                      "toSecondOfDay", "toNanoOfDay", "atDate",
+                      "withHour", "withMinute", "withSecond", "withNano",
+                      "plusHours", "plusMinutes", "plusSeconds", "plusNanos",
+                      "minusHours", "minusMinutes", "minusSeconds", "minusNanos"),
+    staticCall(JAVA_TIME_LOCAL_TIME, "ofSecondOfDay", "ofNanoOfDay"),
+    exactInstanceCall(JAVA_TIME_LOCAL_DATE_TIME, "toLocalDate", "getYear", "getMonthValue", "getMonth",
+                      "getDayOfYear", "getDayOfMonth", "toLocalTime", "getHour", "getMinute", "getSecond", "getNano",
+                      "withYear", "withMonth", "withDayOfMonth", "withDayOfYear", "withHour", "withMinute", "withSecond", "withNano",
+                      "plusYears", "plusMonths", "plusWeeks", "plusDays", "plusHours", "plusMinutes", "plusSeconds", "plusNanos",
+                      "minusYears", "minusMonths", "minusWeeks", "minusDays", "minusHours", "minusMinutes", "minusSeconds", "minusNanos")
   );
   public static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
 
@@ -177,6 +198,16 @@ public final class CustomMethodHandlers {
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterCount(0), CustomMethodHandlers::collectionToArray)
     .register(instanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0), CustomMethodHandlers::stringToCharArray)
     .register(exactInstanceCall(JAVA_LANG_OBJECT, "getClass").parameterCount(0), toValue(CustomMethodHandlers::objectGetClass))
+    .register(anyOf(
+      staticCall(JAVA_TIME_LOCAL_DATE, "of"),
+      staticCall(JAVA_TIME_LOCAL_DATE_TIME, "of"),
+      staticCall(JAVA_TIME_LOCAL_TIME, "of")
+    ), toValue((args, state, factory, method) -> javaTimeLocalOf(args, state, method)))
+    .register(anyOf(
+                instanceCall(JAVA_TIME_LOCAL_DATE, "plus", "minus").parameterTypes("long", "java.time.temporal.TemporalUnit"),
+                instanceCall(JAVA_TIME_LOCAL_DATE_TIME, "plus", "minus").parameterTypes("long", "java.time.temporal.TemporalUnit"),
+                instanceCall(JAVA_TIME_LOCAL_TIME, "plus", "minus").parameterTypes("long", "java.time.temporal.TemporalUnit")),
+              toValue((args, state, factory, method) -> javaTimeLocalPlusMinus(args, state, method)))
     .register(anyOf(staticCall(JAVA_LANG_MATH, "random").parameterCount(0),
                     instanceCall("java.util.Random", "nextDouble").parameterCount(0),
                     instanceCall("java.util.SplittableRandom", "nextDouble").parameterCount(0)), 
@@ -194,6 +225,157 @@ public final class CustomMethodHandlers {
                 staticCall("com.google.common.collect.Maps", "newHashMap", "newLinkedHashMap", "newIdentityHashMap",
                            "newConcurrentHashMap", "newTreeMap").parameterCount(0)),
               toValue((arguments, state, factory, method) -> COLLECTION_SIZE.asDfType(intValue(0)).meet(LOCAL_OBJECT)));
+
+  @NotNull
+  private static DfType javaTimeLocalPlusMinus(DfaCallArguments arguments, DfaMemoryState state, PsiMethod method) {
+    final PsiType returnType = method.getReturnType();
+    if (returnType == null) {
+      return DfType.TOP;
+    }
+
+    Object qualifier = getConstantValue(state, arguments.myQualifier);
+    if (!(qualifier instanceof LocalTime) && !(qualifier instanceof LocalDateTime) && !(qualifier instanceof LocalDate)) {
+      return DfType.TOP;
+    }
+    Object valueObject = getConstantValue(state, arguments.getArguments()[0]);
+    long value;
+    if (valueObject instanceof Long l) {
+      value = l;
+    }else if(valueObject instanceof Integer i){
+      value = i.longValue();
+    }else{
+      return DfType.TOP;
+    }
+
+    Object temporalUnitObject = getConstantValue(state, arguments.getArguments()[1]);
+    if (!(temporalUnitObject instanceof PsiEnumConstant chronoUnit
+          &&  chronoUnit.getContainingClass() != null
+          && "java.time.temporal.ChronoUnit".equals(chronoUnit.getContainingClass().getQualifiedName()))) {
+      return DfType.TOP;
+    }
+    String temporalUnitName = chronoUnit.getName();
+    ChronoUnit temporalUnit;
+    try {
+      temporalUnit = ChronoUnit.valueOf(temporalUnitName);
+    }
+    catch (IllegalArgumentException e) {
+      return DfType.TOP;
+    }
+    final String name = method.getName();
+    int sign = 1;
+    if ("minus".equals(name)) {
+      sign = -1;
+    }
+    if (qualifier instanceof LocalDate) {
+      return switch (temporalUnit) {
+        case DAYS, WEEKS, MONTHS, YEARS, DECADES, CENTURIES, MILLENNIA, ERAS ->
+          referenceConstant(((LocalDate)qualifier).plus(value * sign, temporalUnit), returnType);
+        default -> DfType.BOTTOM;
+      };
+    }
+    if (qualifier instanceof LocalTime) {
+      return switch (temporalUnit) {
+        case NANOS, MICROS, MILLIS, SECONDS, MINUTES, HOURS, HALF_DAYS ->
+          referenceConstant(((LocalTime)qualifier).plus(value * sign, temporalUnit), returnType);
+        default -> DfType.BOTTOM;
+      };
+    }
+    return switch (temporalUnit) {
+      case DAYS, WEEKS, MONTHS, YEARS, DECADES, CENTURIES, MILLENNIA, ERAS, NANOS, MICROS, MILLIS, SECONDS, MINUTES, HOURS, HALF_DAYS ->
+        referenceConstant(((LocalDateTime)qualifier).plus(value * sign, temporalUnit), returnType);
+      default -> DfType.BOTTOM;
+    };
+  }
+
+  @NotNull
+  private static DfType javaTimeLocalOf(DfaCallArguments arguments, DfaMemoryState state, PsiMethod method) {
+    final PsiType returnType = method.getReturnType();
+    if (returnType == null) {
+      return DfType.TOP;
+    }
+    List<Integer> args = new ArrayList<>();
+    DfaValue[] myArguments = arguments.myArguments;
+    for (int i = 0; i < myArguments.length; i++) {
+      DfaValue argument = myArguments[i];
+      Object argumentValue = getConstantValue(state, argument);
+      if (argumentValue == null) return DfType.TOP;
+      if (argumentValue instanceof Integer) {
+        args.add((Integer)argumentValue);
+      }
+      else if (i == 1
+               && argumentValue instanceof PsiEnumConstant enumConstant
+               && enumConstant.getContainingClass() != null
+               && "java.time.Month".equals(enumConstant.getContainingClass().getQualifiedName())
+               && (returnType.equalsToText(JAVA_TIME_LOCAL_DATE_TIME) || returnType.equalsToText(JAVA_TIME_LOCAL_DATE))) {
+        String name = enumConstant.getName();
+        try {
+          args.add(Month.valueOf(name).getValue());
+        }
+        catch (IllegalArgumentException e) {
+          return DfType.TOP;
+        }
+      }
+      else {
+        return DfType.TOP;
+      }
+    }
+    if (returnType.equalsToText(JAVA_TIME_LOCAL_DATE)) {
+      if (args.size() != 3) {
+        return DfType.TOP;
+      }
+      int year = args.get(0);
+      int month = args.get(1);
+      int day = args.get(2);
+      if (!ChronoField.YEAR.range().isValidValue(year) ||
+          (!ChronoField.MONTH_OF_YEAR.range().isValidValue(month)) ||
+          !ChronoField.DAY_OF_MONTH.range().isValidValue(day)) {
+        return DfType.BOTTOM;
+      }
+      return referenceConstant(LocalDate.of(args.get(0), month, day), returnType);
+    }
+
+    if (returnType.equalsToText(JAVA_TIME_LOCAL_TIME)) {
+      if (args.size() < 2 || args.size() > 4) {
+        return DfType.TOP;
+      }
+      int hour = args.get(0);
+      int minute = args.get(1);
+      int second = args.size() > 2 ? args.get(2) : 0;
+      int nanoOfSecond = args.size() > 3 ? args.get(3) : 0;
+      if (!ChronoField.HOUR_OF_DAY.range().isValidValue(hour) ||
+          !ChronoField.MINUTE_OF_HOUR.range().isValidValue(minute) ||
+          !ChronoField.SECOND_OF_MINUTE.range().isValidValue(second) ||
+          !ChronoField.NANO_OF_SECOND.range().isValidValue(nanoOfSecond)
+      ) {
+        return DfType.BOTTOM;
+      }
+      return referenceConstant(LocalTime.of(hour, minute, second, nanoOfSecond), returnType);
+    }
+    if (returnType.equalsToText(JAVA_TIME_LOCAL_DATE_TIME)) {
+      if (args.size() < 5 || args.size() > 7) {
+        return DfType.TOP;
+      }
+      int year = args.get(0);
+      int month = args.get(1);
+      int day = args.get(2);
+      int hour = args.get(3);
+      int minute = args.get(4);
+      int second = args.size() > 5 ? args.get(5) : 0;
+      int nanoOfSecond = args.size() > 6 ? args.get(6) : 0;
+      if (!ChronoField.YEAR.range().isValidValue(year) ||
+          (!ChronoField.MONTH_OF_YEAR.range().isValidValue(month)) ||
+          !ChronoField.DAY_OF_MONTH.range().isValidValue(day) ||
+          !ChronoField.HOUR_OF_DAY.range().isValidValue(hour) ||
+          !ChronoField.MINUTE_OF_HOUR.range().isValidValue(minute) ||
+          !ChronoField.SECOND_OF_MINUTE.range().isValidValue(second) ||
+          !ChronoField.NANO_OF_SECOND.range().isValidValue(nanoOfSecond)
+      ) {
+        return DfType.BOTTOM;
+      }
+      return referenceConstant(LocalDateTime.of(year, month, day, hour, minute, second, nanoOfSecond), returnType);
+    }
+    return DfType.TOP;
+  }
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;

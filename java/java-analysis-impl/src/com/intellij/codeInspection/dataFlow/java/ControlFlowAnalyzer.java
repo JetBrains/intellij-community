@@ -2479,6 +2479,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     new AssertJInliner(), new OptionalChainInliner(), new LambdaInliner(), new CollectionUpdateInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
-    new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner()
+    new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner(), new JavaTimePlusMinusInliner()
   };
 }

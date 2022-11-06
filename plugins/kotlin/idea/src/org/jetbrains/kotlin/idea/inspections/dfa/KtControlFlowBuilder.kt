@@ -1030,7 +1030,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addInstruction(BooleanAndOrInstruction(false, KotlinForVisitedAnchor(expr)))
                     }
                 }
-                SpecialField.UNBOX, SpecialField.OPTIONAL_VALUE, SpecialField.ENUM_ORDINAL, SpecialField.CONSUMED_STREAM, null -> {}
+                SpecialField.UNBOX, SpecialField.OPTIONAL_VALUE, SpecialField.ENUM_ORDINAL, SpecialField.CONSUMED_STREAM,
+                SpecialField.LOCAL_DATE_EPOCH_DAYS, SpecialField.LOCAL_TIME_DAY_NANOSECONDS, SpecialField.LOCAL_DATE_TIME_COMPARE_VALUE,
+                null -> {}
             }
         }
         addInstruction(PopInstruction())

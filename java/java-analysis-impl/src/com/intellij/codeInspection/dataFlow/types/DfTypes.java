@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Set;
 
@@ -254,6 +255,33 @@ public final class DfTypes {
   public static DfType doubleRange(double min, double max) {
     if (min > max) throw new IllegalArgumentException();
     return DfDoubleRangeType.create(min, max, false, false);
+  }
+
+  /**
+   * @param value BigInteger value
+   * @return a BigInteger constant type that contains a given value
+   */
+  public static DfBigIntConstantType bigInteger(BigInteger value) {
+    return new DfBigIntConstantType(value);
+  }
+
+  /**
+   * @return a BigInteger type that contains all the values
+   */
+  public static DfType bigIntegerInfinite() {
+    return DfBigIntRangeType.create(DfBigIntRangeType.InfBigInteger.NEGATIVE_INFINITY,
+                                    DfBigIntRangeType.InfBigInteger.POSITIVE_INFINITY, false);
+  }
+
+  /**
+   * @param min minimal value (inclusive)
+   * @param max maximal value (inclusive)
+   * @return a BigInteger type that contains all the values between min and max
+   */
+  public static DfType bigIntegerRange(BigInteger min, BigInteger max) {
+    if (min.compareTo(max)>0) throw new IllegalArgumentException();
+    return DfBigIntRangeType.create(DfBigIntRangeType.InfBigInteger.create(min),
+                                    DfBigIntRangeType.InfBigInteger.create(max), false);
   }
 
   /**

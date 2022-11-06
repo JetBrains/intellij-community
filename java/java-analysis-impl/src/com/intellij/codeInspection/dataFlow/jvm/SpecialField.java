@@ -19,7 +19,12 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.*;
 
+import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
@@ -230,6 +235,95 @@ public enum SpecialField implements DerivedVariableDescriptor {
       return false;
     }
   },
+
+  LOCAL_DATE_EPOCH_DAYS("value", "special.field.localdate.value", true) {
+    private final CallMatcher TO_EPOCH_DAY = CallMatcher.instanceCall(JAVA_TIME_LOCAL_DATE, "toEpochDay");
+
+    @NotNull
+    @Override
+    public DfType getDefaultValue() {
+      return DfTypes.longRange(LongRangeSet.range(LocalDate.MIN.toEpochDay(), LocalDate.MAX.toEpochDay()));
+    }
+
+    @Override
+    boolean isMyQualifierType(DfType type) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      return constraint.isExact(JAVA_TIME_LOCAL_DATE);
+    }
+
+    @NotNull
+    @Override
+    public DfType fromConstant(@Nullable Object obj) {
+      return obj instanceof LocalDate ? DfTypes.longValue(((LocalDate)obj).toEpochDay()) : DfType.TOP;
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return accessor instanceof PsiMethod && TO_EPOCH_DAY.methodMatches((PsiMethod)accessor);
+    }
+  },
+
+  LOCAL_TIME_DAY_NANOSECONDS("value", "special.field.localtime.value", true) {
+    private final CallMatcher TO_DAY_NANOSECONDS = CallMatcher.instanceCall(JAVA_TIME_LOCAL_TIME, "toNanoOfDay");
+
+    @NotNull
+    @Override
+    public DfType getDefaultValue() {
+      return DfTypes.longRange(LongRangeSet.range(LocalTime.MIN.toNanoOfDay(), LocalTime.MAX.toNanoOfDay()));
+    }
+
+    @Override
+    boolean isMyQualifierType(DfType type) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      return constraint.isExact(JAVA_TIME_LOCAL_TIME);
+    }
+
+    @NotNull
+    @Override
+    public DfType fromConstant(@Nullable Object obj) {
+      return obj instanceof LocalTime ? DfTypes.longValue(((LocalTime)obj).toNanoOfDay()) : DfType.TOP;
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return accessor instanceof PsiMethod && TO_DAY_NANOSECONDS.methodMatches((PsiMethod)accessor);
+    }
+  },
+
+  LOCAL_DATE_TIME_COMPARE_VALUE("value", "special.field.localdatetime.value", true) {
+
+    private final BigInteger MIN = toBigInteger(LocalDateTime.MIN);
+
+    private final BigInteger MAX = toBigInteger(LocalDateTime.MAX);
+
+
+    @NotNull
+    @Override
+    public DfType getDefaultValue() {
+      return DfTypes.bigIntegerRange(MIN, MAX);
+    }
+
+    @Override
+    boolean isMyQualifierType(DfType type) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      return constraint.isExact(JAVA_TIME_LOCAL_DATE_TIME);
+    }
+
+    @NotNull
+    @Override
+    public DfType fromConstant(@Nullable Object obj) {
+      if (!(obj instanceof final LocalDateTime localDateTime)) {
+        return DfType.TOP;
+      }
+      return DfTypes.bigInteger(SpecialField.toBigInteger(localDateTime));
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return false;
+    }
+  },
+
   ENUM_ORDINAL("ordinal", "special.field.enum.ordinal", true) {
     private final CallMatcher ENUM_ORDINAL_METHOD = CallMatcher.instanceCall(JAVA_LANG_ENUM, "ordinal").parameterCount(0);
 
@@ -491,5 +585,12 @@ public enum SpecialField implements DerivedVariableDescriptor {
   @Override
   public String toString() {
     return myTitle;
+  }
+
+  @NotNull
+  private static BigInteger toBigInteger(LocalDateTime localDateTime) {
+    return BigInteger.valueOf(localDateTime.toLocalDate().toEpochDay())
+      .multiply(BigInteger.valueOf(TimeUnit.DAYS.toNanos(1)))
+      .add(BigInteger.valueOf(localDateTime.toLocalTime().toNanoOfDay()));
   }
 }
