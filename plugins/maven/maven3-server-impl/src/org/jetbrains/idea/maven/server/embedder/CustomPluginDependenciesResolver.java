@@ -9,21 +9,26 @@ import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.DependencyFilter;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * @author Edoardo Luppi
  */
-public class CustomPluginDependencyResolver implements PluginDependenciesResolver {
+public class CustomPluginDependenciesResolver implements PluginDependenciesResolver {
   private final PluginDependenciesResolver myDelegate;
 
-  public CustomPluginDependencyResolver(final PluginDependenciesResolver delegate) {
+  public CustomPluginDependenciesResolver(@NotNull final PluginDependenciesResolver delegate) {
     myDelegate = delegate;
   }
 
   @Override
-  public Artifact resolve(Plugin plugin, List<RemoteRepository> list, RepositorySystemSession session) throws PluginResolutionException {
+  public Artifact resolve(
+    final Plugin plugin,
+    final List<RemoteRepository> list,
+    final RepositorySystemSession session
+  ) throws PluginResolutionException {
     return myDelegate.resolve(plugin, list, session);
   }
 

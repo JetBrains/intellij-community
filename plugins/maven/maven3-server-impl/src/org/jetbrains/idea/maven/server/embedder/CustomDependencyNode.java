@@ -8,6 +8,7 @@ import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.version.Version;
 import org.eclipse.aether.version.VersionConstraint;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 class CustomDependencyNode implements DependencyNode {
   private final DependencyNode myDelegate;
 
-  CustomDependencyNode(final DependencyNode delegate) {
+  CustomDependencyNode(@NotNull final DependencyNode delegate) {
     myDelegate = delegate;
   }
 

@@ -192,12 +192,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         });
 
         try {
-          final PluginDependenciesResolver delegateResolver = container.lookup(PluginDependenciesResolver.class);
-          final PluginDependenciesResolver resolver = new CustomPluginDependencyResolver(delegateResolver);
+          final PluginDependenciesResolver delegate = container.lookup(PluginDependenciesResolver.class);
+          final PluginDependenciesResolver resolver = new CustomPluginDependenciesResolver(delegate);
           container.addComponent(resolver, PluginDependenciesResolver.class, "default");
         }
-        catch (ComponentLookupException e) {
-          throw new RuntimeException(e);
+        catch (final ComponentLookupException e) {
+          throw new IllegalStateException(e);
         }
       }
     };
@@ -304,7 +304,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private PersistedToolchains buildToolchains(final MavenServerSettings serverSettings) {
+  private PersistedToolchains buildToolchains(@NotNull final MavenServerSettings serverSettings) {
     final ToolchainsBuilder toolchainsBuilder = getComponent(ToolchainsBuilder.class);
     final ToolchainsBuildingRequest toolchainsBuildingRequest = new DefaultToolchainsBuildingRequest();
     final String localRepositoryPath = serverSettings.getLocalRepositoryPath();
@@ -1895,4 +1895,3 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return myLocalRepository;
   }
 }
-
