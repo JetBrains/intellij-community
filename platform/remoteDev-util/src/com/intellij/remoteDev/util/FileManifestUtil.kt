@@ -250,7 +250,7 @@ object FileManifestUtil {
       }
 
       if (!destinationPath.exists()) {
-        logger.info("Destination does not exist, returning $destinationPath")
+        logger.info("Destination extract directory path does not exist: '$destinationPath'. Use this path.")
         return ExtractDirectory(destinationPath, false)
       }
 
