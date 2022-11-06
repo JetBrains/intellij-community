@@ -22,6 +22,11 @@ interface ScriptElementBuilder {
   fun code(text: List<String>): CodeElement
   fun code(vararg text: String): CodeElement
 
+  fun assign(left: Expression, right: Expression): AssignElement
+  fun assign(left: Expression, right: String): AssignElement
+  fun assign(left: Expression, right: Int): AssignElement
+  fun assign(left: Expression, right: Boolean): AssignElement
+
   fun assign(name: String, value: Expression): AssignElement
   fun assign(name: String, value: String): AssignElement
   fun assign(name: String, value: Int): AssignElement

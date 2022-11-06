@@ -34,7 +34,7 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         super.tearDown()
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testAddParameter() {
         ignoreErrorsAfter = true

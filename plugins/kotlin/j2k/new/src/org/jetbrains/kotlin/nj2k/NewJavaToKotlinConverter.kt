@@ -84,7 +84,11 @@ class NewJavaToKotlinConverter(
         }
     }
 
-    fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor, bodyFilter: ((PsiElement) -> Boolean)?): Result {
+    fun elementsToKotlin(
+        inputElements: List<PsiElement>,
+        processor: WithProgressProcessor,
+        bodyFilter: ((PsiElement) -> Boolean)?
+    ): Result {
         val phaseDescription = KotlinNJ2KBundle.message("phase.converting.j2k")
         val contextElement = inputElements.firstOrNull() ?: return Result(emptyList(), null, null)
         val resolver = JKResolver(project, targetModule, contextElement)

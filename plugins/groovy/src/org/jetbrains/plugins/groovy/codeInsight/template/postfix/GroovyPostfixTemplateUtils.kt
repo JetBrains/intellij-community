@@ -46,7 +46,7 @@ object GroovyPostfixTemplateUtils {
 
   private fun nullableTypeCondition(expr: GrExpression): Boolean = expr.type !is PsiPrimitiveType
 
-  fun getGenericExpressionSelector(onlyLast: Boolean, condition: Condition<in GrExpression>)
+  private fun getGenericExpressionSelector(onlyLast: Boolean, condition: Condition<in GrExpression>)
   = object : PostfixTemplateExpressionSelectorBase({ it is GrExpression && condition.value(it) }) {
 
     override fun getNonFilteredExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> {

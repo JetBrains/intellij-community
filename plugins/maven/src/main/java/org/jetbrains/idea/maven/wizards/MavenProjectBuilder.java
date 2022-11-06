@@ -11,7 +11,6 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
@@ -40,8 +39,8 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
+import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
-import org.jetbrains.idea.maven.project.importing.RootPath;
 import org.jetbrains.idea.maven.server.MavenWrapperSupport;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -138,7 +137,8 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
                              ModifiableArtifactModel artifactModel) {
     boolean isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
     if (isVeryNewProject) {
-      ExternalStorageConfigurationManager.getInstance(project).setEnabled(true);
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
+      MavenProjectsManager.setupCreatedMavenProject(getImportingSettings());
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -193,13 +193,12 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
 
     if (MavenUtil.isLinearImportEnabled()) {
-      VirtualFile rootPath = LocalFileSystem.getInstance().findFileByNioFile(getRootPath());
       Module dummy = MavenImportingManager.getInstance(project).openProjectAndImport(
-        new RootPath(rootPath),
+        new FilesList(MavenUtil.collectFiles(getParameters().mySelectedProjects)),
         getImportingSettings(),
         getGeneralSettings(),
         MavenImportSpec.EXPLICIT_IMPORT
-      ).getDummyModulesCreated();
+      ).getPreviewModulesCreated();
 
       if (dummy != null) {
         return Collections.singletonList(dummy);
@@ -210,9 +209,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     }
 
     if (isVeryNewProject && Registry.is("maven.create.dummy.module.on.first.import")) {
-      Module dummyModule = createDummyModule(project);
-      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, dummyModule);
-      return Collections.singletonList(dummyModule);
+      Module previewModule = createPreviewModule(project);
+      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, previewModule);
+      return Collections.singletonList(previewModule);
     }
     else {
       manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, null);
@@ -242,13 +241,13 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     return manager.importProjects();
   }
 
-  private @Nullable Module createDummyModule(Project project) {
+  private @Nullable Module createPreviewModule(Project project) {
     if (ModuleManager.getInstance(project).getModules().length == 0) {
       MavenProject root = ContainerUtil.getFirstItem(getParameters().mySelectedProjects);
       if (root == null) return null;
       VirtualFile contentRoot = root.getDirectoryFile();
 
-      return MavenImportUtil.createDummyModule(project, contentRoot);
+      return MavenImportUtil.createPreviewModule(project, contentRoot);
     }
     return null;
   }
@@ -450,7 +449,13 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
+      MavenProjectsManager.setupCreatedMavenProject(project);
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
+    }
+    return project;
   }
 
   @NotNull

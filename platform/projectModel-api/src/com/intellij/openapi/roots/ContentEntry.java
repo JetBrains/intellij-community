@@ -132,8 +132,9 @@ public interface ContentEntry extends Synthetic {
    * Adds a source root of the given type with the given properties. This method may be called only on an instance obtained from
    * {@link ModifiableRootModel}.
    */
-  @NotNull <P extends JpsElement>
-  SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull P properties);
 
   /**
    * Adds a source root of the given type with the default properties. This method may be called only on an instance obtained from
@@ -156,15 +157,36 @@ public interface ContentEntry extends Synthetic {
    * Adds a source root of the given type with the default properties. This method may be called only on an instance obtained from
    * {@link ModifiableRootModel}.
    */
-  @NotNull <P extends JpsElement>
-  SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type);
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type);
+  /**
+   * Adds a source root of the given type with the default properties. This method may be called only on an instance obtained from
+   * Also method defines an external source
+   * {@link ModifiableRootModel}.
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull ProjectModelExternalSource externalSource);
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               boolean useSourceOfContentRoot);
 
   /**
    * Adds a source root of the given type with given properties. This method may be called only on an instance obtained from
    * {@link ModifiableRootModel}.
    */
-  @NotNull <P extends JpsElement>
-  SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull P properties);
+
+  /**
+   * Adds a source root of the given type with given properties. This method may be called only on an instance obtained from
+   * Also method defines an external source
+   * {@link ModifiableRootModel}.
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull P properties,
+                                                               @Nullable ProjectModelExternalSource externalSource);
 
   /**
    * Removes a source or test source root from this content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
@@ -195,6 +217,7 @@ public interface ContentEntry extends Synthetic {
    */
   @NotNull
   ExcludeFolder addExcludeFolder(@NotNull String url);
+  ExcludeFolder addExcludeFolder(@NotNull String url, ProjectModelExternalSource source);
 
   /**
    * Removes an exclude root from this content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.

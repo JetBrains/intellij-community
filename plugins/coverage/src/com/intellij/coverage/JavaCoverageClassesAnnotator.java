@@ -98,9 +98,9 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
                              final GlobalSearchScope scope,
                              final String rootPackageVMName,
                              final boolean isTestSource,
-                             final Set<VirtualFile> productionRootsSet) {
+                             final Set<VirtualFile> seenRoots) {
     myFlattenDirectories = new ConcurrentHashMap<>();
-    super.visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, productionRootsSet);
+    super.visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, seenRoots);
 
     final List<VirtualFile> sourceRoots = ContainerUtil.filter(prepareRoots(module, rootPackageVMName, isTestSource), Objects::nonNull);
     final Map<VirtualFile, PackageAnnotator.DirCoverageInfo> directories = new HashMap<>();

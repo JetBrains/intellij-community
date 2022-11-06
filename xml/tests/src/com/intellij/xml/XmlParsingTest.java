@@ -111,7 +111,11 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testNewParsing13() throws Exception {
-    doTestXml("<a><b><c>\n" + "xxx \n" + "xxxx\n" + "<</b></a>");
+    doTestXml("""
+                <a><b><c>
+                xxx\s
+                xxxx
+                <</b></a>""");
   }
 
   public void testNewParsing14() throws Exception {
@@ -129,7 +133,13 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testNewParsing20() throws Exception {
-    doTestXml("<!DOCTYPE root [\n" + "<!\n" + "]>\n" + "<root>\n" + "\n" + "</root>");
+    doTestXml("""
+                <!DOCTYPE root [
+                <!
+                ]>
+                <root>
+
+                </root>""");
   }
 
   public void testEntityInAttr() throws Exception {
@@ -330,8 +340,12 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testElements4() throws Exception {
-    doTestXml("<project name=\"IDEA_ZKM\">\n" + "<!-- set global properties for this build -->\n" + "<property value=\"off\" />\n" +
-              "</project>\n");
+    doTestXml("""
+                <project name="IDEA_ZKM">
+                <!-- set global properties for this build -->
+                <property value="off" />
+                </project>
+                """);
   }
 
   public void testElements5() throws Exception {
@@ -515,8 +529,10 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   public void testAllWhitespaces() throws Exception {
-    doTestXml("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
-              "<Root><page><content><locatieblok><locatie label=\"Locatie\">EXAMPLE</locatie>\u2029<straat label=\"Straat\">EXAMPLE</straat>\u2029<postcode label=\"Postcode\">EXAMPLE</postcode> <plaats label=\"Plaats\">EXAMPLE</plaats>\u2029\u2029<telomschrijving label=\"Telefoon omschrijving\">T.</telomschrijving> <telefoon label=\"Telefoon\">EXAMPLE</telefoon>\u2029\u2029<internet label=\"Internet\">EXAMPLE</internet></locatieblok><naamblok><aanhefnaam label=\"Aanhef Naam Achternaam\">Aanhef Naam Achternaam</aanhefnaam>\u2029<functie label=\"Functie\">Functie</functie>\u2029<mobielomschr label=\"Mobiel omschrijving\">M.</mobielomschr>\t<mobiel label=\"Mobiel\">EXAMPLE</mobiel>\u2029<emailomschr label=\"Email omschrijving\">E.</emailomschr>\t<email label=\"Email\">EXAMPLE</email></naamblok></content></page></Root>\n");
+    doTestXml("""
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <Root><page><content><locatieblok><locatie label="Locatie">EXAMPLE</locatie>\u2029<straat label="Straat">EXAMPLE</straat>\u2029<postcode label="Postcode">EXAMPLE</postcode> <plaats label="Plaats">EXAMPLE</plaats>\u2029\u2029<telomschrijving label="Telefoon omschrijving">T.</telomschrijving> <telefoon label="Telefoon">EXAMPLE</telefoon>\u2029\u2029<internet label="Internet">EXAMPLE</internet></locatieblok><naamblok><aanhefnaam label="Aanhef Naam Achternaam">Aanhef Naam Achternaam</aanhefnaam>\u2029<functie label="Functie">Functie</functie>\u2029<mobielomschr label="Mobiel omschrijving">M.</mobielomschr>\t<mobiel label="Mobiel">EXAMPLE</mobiel>\u2029<emailomschr label="Email omschrijving">E.</emailomschr>\t<email label="Email">EXAMPLE</email></naamblok></content></page></Root>
+                """);
   }
 
   public void testCustomMimeType() throws Exception {

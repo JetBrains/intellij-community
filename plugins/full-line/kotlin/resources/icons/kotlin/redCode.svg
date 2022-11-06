@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+<defs>
+    <linearGradient id="kotlin-a" x1="-16.836%" x2="76.219%" y1="91.94%" y2="-1.116%">
+        <stop offset="10.75%" stop-color="#FF676C"/>
+        <stop offset="21.38%" stop-color="#FF706A"/>
+        <stop offset="42.54%" stop-color="#FF826C"/>
+        <stop offset="60.48%" stop-color="#FF8E6F"/>
+        <stop offset="74.3%" stop-color="#FF9663"/>
+        <stop offset="82.32%" stop-color="#FF9969"/>
+    </linearGradient>
+</defs>
+<g fill="none" fill-rule="evenodd">
+    <polygon fill="#F88868" points="1 15 8.023 7.977 15 15"/>
+    <polygon fill="#FE8469" points="1 1 8.023 1 1 8.583"/>
+    <path fill="url(#kotlin-a)" d="M8.02333333,1 L15,1 L8.02333333,7.97666667 L1,15 L1,8.39666667 L8.02333333,1 Z"/>
+</g>
+</svg>

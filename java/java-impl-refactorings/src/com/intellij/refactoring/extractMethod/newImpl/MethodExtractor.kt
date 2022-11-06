@@ -109,7 +109,7 @@ class MethodExtractor {
   val ExtractOptions.targetClass: PsiClass
     get() = anchor.containingClass ?: throw IllegalStateException()
 
-  fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
+  private fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
     val unsafeNames = guessMethodName(options)
     val safeNames = unsafeNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }
     if (safeNames.isNotEmpty()) return safeNames
@@ -126,7 +126,7 @@ class MethodExtractor {
     return ! conflicts.isEmpty
   }
 
-  fun createInplaceSettingsPopup(options: ExtractOptions): ExtractMethodPopupProvider {
+  private fun createInplaceSettingsPopup(options: ExtractOptions): ExtractMethodPopupProvider {
     val isStatic = options.isStatic
     val analyzer = CodeFragmentAnalyzer(options.elements)
     val optionsWithStatic = ExtractMethodPipeline.withForcedStatic(analyzer, options)

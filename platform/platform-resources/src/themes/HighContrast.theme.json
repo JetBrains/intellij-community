@@ -386,12 +386,6 @@
       "endBackground": "#FFD333FF"
     },
 
-    "SpeedSearch": {
-      "foreground": "#000000",
-      "borderColor": "#000000",
-      "background": "#1AEBFF"
-    },
-
     "StatusBar.borderColor": "#b3b3b3",
 
     "TabbedPane": {
@@ -514,7 +508,16 @@
 
     "Window.border" : "1,1,1,1,E6E6E6",
 
-    "textInactiveText" : "#E0861F"
+    "textInactiveText" : "#E0861F",
+
+    "RunWidget" : {
+      "foreground": "#ffffff",
+      "background": "#3369d6",
+      "runningBackground": "#599e5e",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
+    }
   },
 
   "icons": {

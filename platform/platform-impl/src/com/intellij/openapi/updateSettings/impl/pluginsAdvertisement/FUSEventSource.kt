@@ -76,7 +76,8 @@ private val IGNORE_UNKNOWN_FEATURES_EVENT = GROUP.registerEvent(
 
 enum class FUSEventSource {
   EDITOR,
-  NOTIFICATION;
+  NOTIFICATION,
+  SEARCH;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
     isIgnoreIdeSuggestion = true

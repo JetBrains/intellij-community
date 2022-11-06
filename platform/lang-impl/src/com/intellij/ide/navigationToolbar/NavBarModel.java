@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -37,7 +37,9 @@ import static com.intellij.util.concurrency.SequentialTaskExecutor.createSequent
 /**
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class NavBarModel {
 
   private static final ExecutorService ourExecutor = createSequentialApplicationPoolExecutor("Navbar model builder");
@@ -79,15 +81,17 @@ public class NavBarModel {
   }
 
   @Nullable
-  public Object getSelectedValue() {
-    return getElement(mySelectedIndex);
+  public Object getElement(int index) {
+    Object raw = getRawElement(index);
+    if (raw == null) return null;
+    return unwrapRaw(raw);
   }
 
   @Nullable
-  public Object getElement(int index) {
+  public Object getRawElement(int index) {
     List<Object> model = myModel;
     if (index != -1 && index < model.size()) {
-      return get(model, index);
+      return model.get(index);
     }
     return null;
   }

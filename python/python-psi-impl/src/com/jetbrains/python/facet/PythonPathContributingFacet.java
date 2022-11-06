@@ -18,7 +18,7 @@ package com.jetbrains.python.facet;
 import java.util.List;
 
 
-@Deprecated(forRemoval = true)
+@Deprecated
 public interface PythonPathContributingFacet {
   List<String> getAdditionalPythonPath();
   boolean acceptRootAsTopLevelPackage();

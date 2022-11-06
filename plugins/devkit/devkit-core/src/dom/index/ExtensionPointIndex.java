@@ -13,8 +13,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
@@ -28,9 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -70,6 +70,18 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
   @Override
   public int getVersion() {
     return 0;
+  }
+
+  @NotNull
+  public static List<ExtensionPoint> getExtensionPointCandidates(Project project, GlobalSearchScope scope) {
+    CommonProcessors.CollectProcessor<String> epNamesProcessor = new CommonProcessors.CollectProcessor<>();
+    FileBasedIndex.getInstance().processAllKeys(NAME, epNamesProcessor, scope, null);
+
+    List<ExtensionPoint> result = new ArrayList<>();
+    for (String epName : epNamesProcessor.getResults()) {
+      ContainerUtil.addIfNotNull(result, findExtensionPoint(project, scope, epName));
+    }
+    return result;
   }
 
   @Nullable

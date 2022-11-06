@@ -4,11 +4,9 @@ package com.intellij.coverage;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -72,6 +70,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     final ProjectData projectData = suite.getCoverageData();
     if (projectData == null) return;
     final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
+    IDEACoverageRunner.setExcludeAnnotations(project, projectData);
     SaveHook.appendUnloadedFullAnalysis(projectData, new IdeaClassFinder(project, suite), false, !suite.isTracingEnabled(), optionsProvider.ignoreEmptyPrivateConstructors());
 
     final long generationStartNs = System.nanoTime();

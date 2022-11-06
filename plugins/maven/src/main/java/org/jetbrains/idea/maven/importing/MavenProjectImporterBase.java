@@ -5,20 +5,17 @@ import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.statistics.MavenImportCollector;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
@@ -47,14 +44,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     myImportingSettings = importingSettings;
 
     myIdeModifiableModelsProvider = modelsProvider;
-
-    if (MavenUtil.newModelEnabled(myProject) && modelsProvider instanceof IdeModifiableModelsProviderImpl) {
-      myModelsProvider =
-        new ModifiableModelsProviderProxyImpl(myProject, ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder());
-    }
-    else {
-      myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
-    }
+    myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
   }
 
   protected Set<MavenProject> selectProjectsToImport(Collection<MavenProject> originalProjects) {
@@ -124,10 +114,10 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     // I couldn't manage to write a test for this since behaviour of VirtualFileManager
     // and FileWatcher differs from real-life execution.
 
-    Set<File> files = FileCollectionFactory.createCanonicalFileSet();
+    HashSet<File> files = new HashSet<>();
     for (MavenProject project : projectsToRefresh) {
       for (MavenArtifact dependency : project.getDependencies()) {
-        if (MavenArtifactUtilKt.resolved(dependency)) files.add(dependency.getFile());
+        files.add(dependency.getFile());
       }
     }
 

@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 /**
@@ -15,19 +16,22 @@ import java.util.logging.Logger;
  * It's currently fixed here to be the same on all build agents and also in Docker images
  */
 public final class JdkDownloader {
-  private static final Logger LOG = Logger.getLogger(JdkDownloader.class.getName());
-  public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot) {
+  public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, Consumer<String> infoLog) {
     OS os = OS.getCurrent();
     Arch arch = Arch.getCurrent();
-    return getJdkHome(communityRoot, os, arch);
+    return getJdkHome(communityRoot, os, arch, infoLog);
   }
 
-  static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, OS os, Arch arch) {
+  public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot) {
+    return getJdkHome(communityRoot, Logger.getLogger(JdkDownloader.class.getName())::info);
+  }
+
+  static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, OS os, Arch arch, Consumer<String> infoLog) {
     URI jdkUrl = getUrl(communityRoot, os, arch);
 
     Path jdkArchive = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, jdkUrl);
     Path jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, jdkArchive, BuildDependenciesExtractOptions.STRIP_ROOT);
-    LOG.info("jps-bootstrap JDK is at " + jdkExtracted);
+    infoLog.accept("jps-bootstrap JDK is at " + jdkExtracted);
 
     Path jdkHome;
     if (os == OS.MACOSX) {
@@ -38,7 +42,7 @@ public final class JdkDownloader {
     }
 
     Path executable = getJavaExecutable(jdkHome);
-    LOG.info("JDK home is at " + jdkHome + ", executable at " + executable);
+    infoLog.accept("JDK home is at " + jdkHome + ", executable at " + executable);
 
     return jdkHome;
   }
@@ -54,6 +58,8 @@ public final class JdkDownloader {
     throw new IllegalStateException("No java executables were found under " + jdkHome);
   }
 
+  // TODO: convert to enhanced switch when build level is fixed
+  @SuppressWarnings("EnhancedSwitchMigration")
   private static URI getUrl(BuildDependenciesCommunityRoot communityRoot, OS os, Arch arch) {
     String archString;
     String osString;

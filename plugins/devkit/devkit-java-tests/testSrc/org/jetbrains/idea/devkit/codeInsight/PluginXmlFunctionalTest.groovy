@@ -4,7 +4,9 @@ package org.jetbrains.idea.devkit.codeInsight
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInspection.LocalInspectionEP
@@ -108,9 +110,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     String ideCore = PathUtil.getJarPathForClass(Configurable.class)
     moduleBuilder.addLibrary("ide-core", ideCore)
     String ideCoreImpl = PathUtil.getJarPathForClass(NotificationGroupEP.class)
-    moduleBuilder.addLibrary("ide-core-impl", ideCoreImpl);
+    moduleBuilder.addLibrary("ide-core-impl", ideCoreImpl)
 
-    moduleBuilder.addLibrary("util-ui", PathUtil.getJarPathForClass(AllIcons.class));
+    moduleBuilder.addLibrary("util-ui", PathUtil.getJarPathForClass(AllIcons.class))
   }
 
   // Gradle-like setup, but JBList not in Library
@@ -230,9 +232,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     String moduleDescriptorFilename = name+ ".xml"
     VirtualFile moduleRoot = myFixture.tempDirFixture.findOrCreateDir(name)
     VirtualFile file = myFixture.copyFileToProject(moduleDescriptorFilename, "/" + name + "/" + moduleDescriptorFilename)
-    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, name, moduleRoot);
-    ModuleRootModificationUtil.setModuleSdk(dependencyModule, IdeaTestUtil.getMockJdk17());
-    ModuleRootModificationUtil.addDependency(getModule(), dependencyModule);
+    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, name, moduleRoot)
+    ModuleRootModificationUtil.setModuleSdk(dependencyModule, IdeaTestUtil.getMockJdk17())
+    ModuleRootModificationUtil.addDependency(getModule(), dependencyModule)
     return file
   }
 
@@ -689,28 +691,6 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   @SuppressWarnings("ComponentNotRegistered")
-  void testActionHighlighting() {
-    configureByFile()
-    myFixture.copyFileToProject("MyBundle.properties")
-    myFixture.copyFileToProject("AnotherBundle.properties")
-    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
-    myFixture.addClass("""package foo; class PackagePrivateActionBase extends com.intellij.openapi.actionSystem.AnAction {
-                                        PackagePrivateActionBase() {}
-                                    } """)
-    myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase { }")
-    myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }")
-    myFixture.addClass("package foo.bar; import org.jetbrains.annotations.NotNull;" +
-                       "public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
-                       "    @Override " +
-                       "    public boolean canBePerformed(@NotNull com.intellij.openapi.actionSystem.DataContext context) {" +
-                       "    return true;" +
-                       "  }" +
-                       "}")
-    myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap/>")
-    myFixture.testHighlighting()
-  }
-
-  @SuppressWarnings("ComponentNotRegistered")
   void testActionCompletion() {
     configureByFile()
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
@@ -810,10 +790,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     assertSize(5, highlightInfos)
 
     for (info in highlightInfos) {
-      def ranges = info.quickFixActionRanges
-      assertNotNull(ranges)
+
+      def ranges = actions(info)
       assertSize(1, ranges)
-      def quickFix = ranges.get(0).getFirst().getAction()
+      def quickFix = ranges.get(0)
       myFixture.launchAction(quickFix)
     }
 
@@ -824,6 +804,15 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                 "registrationCheck/module/MainModulePlugin_after.xml",
                                 true)
   }
+  static List<IntentionAction> actions(HighlightInfo info) {
+    List<IntentionAction> result = new ArrayList<IntentionAction>()
+    info.findRegisteredQuickFix((descriptor,range) -> {
+      result.add(descriptor.getAction())
+      return null
+    })
+    return result
+  }
+
 
   void testValuesMaxLengths() {
     doHighlightingTest("ValuesMaxLengths.xml")
@@ -868,10 +857,6 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testRedundantComponentInterfaceClass() {
     doHighlightingTest("redundantComponentInterfaceClass.xml")
-  }
-
-  void testRedundantServiceInterfaceClass() {
-    doHighlightingTest("redundantServiceInterfaceClass.xml")
   }
 
   private void doHighlightingTest(String... filePaths) {

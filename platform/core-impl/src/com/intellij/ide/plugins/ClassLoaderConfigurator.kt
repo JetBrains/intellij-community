@@ -67,10 +67,10 @@ class ClassLoaderConfigurator(
     mainDescriptor: IdeaPluginDescriptorImpl,
     moduleDescriptor: IdeaPluginDescriptorImpl,
   ): Boolean {
-    assert(mainDescriptor != moduleDescriptor)
+    assert(mainDescriptor != moduleDescriptor) { "$mainDescriptor != $moduleDescriptor" }
 
     val pluginId = mainDescriptor.pluginId
-    assert(pluginId == moduleDescriptor.pluginId)
+    assert(pluginId == moduleDescriptor.pluginId) { "pluginId '$pluginId' != moduleDescriptor.pluginId '${moduleDescriptor.pluginId}'"}
 
     val mainClassLoader = mainDescriptor.pluginClassLoader as PluginClassLoader
     mainToClassPath[pluginId] = MainInfo(mainClassLoader)

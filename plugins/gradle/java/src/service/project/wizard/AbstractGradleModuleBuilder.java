@@ -202,17 +202,13 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     GradleSettings settings = GradleSettings.getInstance(project);
     GradleProjectSettings projectSettings = getExternalProjectSettings();
-    // TODO: replace with isCreatingNewLinkedProject when GradleModuleBuilder will be removed
-    if (myParentProject == null) {
+
+    if (isCreatingNewLinkedProject) {
       GradleProjectImportUtil.setupGradleSettings(settings);
       GradleProjectImportUtil.setupGradleProjectSettings(projectSettings, project, rootProjectPath);
-    }
-    if (isCreatingNewLinkedProject) {
       GradleJvmResolutionUtil.setupGradleJvm(project, projectSettings, gradleVersion);
       GradleJvmValidationUtil.validateJavaHome(project, rootProjectPath, gradleVersion);
-    }
-    // TODO: replace with isCreatingNewLinkedProject when GradleModuleBuilder will be removed
-    if (myParentProject == null) {
+
       settings.linkProject(projectSettings);
     }
     if (isCreatingNewProject) {
@@ -489,7 +485,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   public void setParentProject(@Nullable ProjectData parentProject) {
     myParentProject = parentProject;
-    isCreatingNewLinkedProject = myParentProject == null;
+    isCreatingNewLinkedProject = parentProject == null;
   }
 
   public boolean isInheritGroupId() {

@@ -16,6 +16,13 @@
 
     <intentionAction>
       <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ConvertToForEachFunctionCallIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveBracesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
@@ -24,6 +31,13 @@
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveBracesFromAllBranchesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>

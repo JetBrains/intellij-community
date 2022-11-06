@@ -21,9 +21,10 @@ public class MarkupWrapTest extends AbstractWrapTest {
         "12345",
         "<my-tag-with-long-name attr='this.is.my.attribute.that.is.already.<caret>rather.long'>\n" +
         "</my-tag-with-long-name>",
-        "<my-tag-with-long-name \n" +
-        "        attr='this.is.my.attribute.that.is.already.12345<caret>rather.long'>\n" +
-        "</my-tag-with-long-name>"
+        """
+          <my-tag-with-long-name\s
+                  attr='this.is.my.attribute.that.is.already.12345<caret>rather.long'>
+          </my-tag-with-long-name>"""
       );
     }
   }

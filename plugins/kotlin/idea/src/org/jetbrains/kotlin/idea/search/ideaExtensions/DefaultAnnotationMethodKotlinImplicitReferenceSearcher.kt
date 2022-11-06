@@ -14,7 +14,7 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch

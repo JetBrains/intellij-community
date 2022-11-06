@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.config
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
@@ -10,6 +11,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
+import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.Cell
@@ -17,6 +19,8 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JLabel
@@ -119,7 +123,10 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       row {
         cell(categoriesPanel)
           .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
-          .onApply { categoriesPanel.apply() }
+          .onApply {
+            categoriesPanel.apply()
+            SettingsSyncEvents.getInstance().fireCategoriesChanged()
+          }
           .onReset { categoriesPanel.reset() }
           .onIsModified { categoriesPanel.isModified() }
       }
@@ -134,13 +141,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     return configPanel
   }
 
-  override fun serverStateCheckFinished(state: ServerState) {
-    when (state) {
-      ServerState.FileNotExists -> showEnableSyncDialog(false)
-      ServerState.UpToDate, ServerState.UpdateNeeded -> showEnableSyncDialog(true)
-      is ServerState.Error -> {
-        if (state != SettingsSyncEnabler.State.CANCELLED) {
-          showError(message("notification.title.update.error"), state.message)
+  override fun serverStateCheckFinished(updateResult: UpdateResult) {
+    when (updateResult) {
+      NoFileOnServer, FileDeletedFromServer  -> showEnableSyncDialog(false)
+      is Success -> showEnableSyncDialog(true)
+      is Error -> {
+        if (updateResult != SettingsSyncEnabler.State.CANCELLED) {
+          showError(message("notification.title.update.error"), updateResult.message)
         }
       }
     }
@@ -148,13 +155,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   override fun updateFromServerFinished(result: UpdateResult) {
     when (result) {
-      is UpdateResult.Success -> {
+      is Success -> {
         SettingsSyncSettings.getInstance().syncEnabled = true
       }
-      UpdateResult.NoFileOnServer -> {
+      NoFileOnServer, FileDeletedFromServer -> {
         showError(message("notification.title.update.error"), message("notification.title.update.no.such.file"))
       }
-      is UpdateResult.Error -> {
+      is Error -> {
         showError(message("notification.title.update.error"), result.message)
       }
     }
@@ -162,15 +169,28 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   private fun showEnableSyncDialog(remoteSettingsFound: Boolean) {
-    EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)?.let {
+    val dialogResult = EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)
+    if (dialogResult != null) {
       reset()
-      when (it) {
-        EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> syncEnabler.getSettingsFromServer()
+      when (dialogResult) {
+        EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> {
+          syncEnabler.getSettingsFromServer()
+          SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.GET_FROM_SERVER)
+        }
         EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
           SettingsSyncSettings.getInstance().syncEnabled = true
           syncEnabler.pushSettingsToServer()
+          if (remoteSettingsFound) {
+            SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL)
+          }
+          else {
+            SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL_WAS_ONLY_WAY)
+          }
         }
       }
+    }
+    else {
+      SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.CANCELED)
     }
   }
 
@@ -204,26 +224,38 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       RESULT_DISABLE -> {
         SettingsSyncSettings.getInstance().syncEnabled = false
         updateStatusInfo()
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.DisabledMethod.DISABLED_ONLY)
       }
-      RESULT_REMOVE_DATA_AND_DISABLE -> disableAndRemoveData()
+      RESULT_REMOVE_DATA_AND_DISABLE -> {
+        disableAndRemoveData()
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.DisabledMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
+      }
+      RESULT_CANCEL -> {
+        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.DisabledMethod.CANCEL)
+      }
     }
   }
 
   private fun disableAndRemoveData() {
-    val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
     object : Task.Modal(null, message("disable.remove.data.title"), false) {
-
       override fun run(indicator: ProgressIndicator) {
-        SettingsSyncSettings.getInstance().syncEnabled = false
-        remoteCommunicator.delete()
-      }
-
-      override fun onThrowable(error: Throwable) {
-        showError(message("disable.remove.data.failure"), error.localizedMessage)
-      }
-
-      override fun onSuccess() {
-        updateStatusInfo()
+        val cdl = CountDownLatch(1)
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData { result ->
+          cdl.countDown()
+          when (result) {
+            is DeleteServerDataResult.Error -> {
+              runInEdt {
+                showError(message("disable.remove.data.failure"), result.error)
+              }
+            }
+            DeleteServerDataResult.Success -> {
+              runInEdt {
+                updateStatusInfo()
+              }
+            }
+          }
+        })
+        cdl.await(1, TimeUnit.MINUTES)
       }
     }.queue()
   }

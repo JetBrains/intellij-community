@@ -20,9 +20,7 @@ import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
-import org.jetbrains.kotlin.idea.debugger.*
 import org.jetbrains.kotlin.idea.debugger.base.util.*
-import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.KotlinDebuggerEvaluator
 import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
 
 @Suppress("EqualsOrHashCode")
@@ -31,13 +29,6 @@ open class KotlinStackFrame(
     visibleVariables: List<LocalVariableProxyImpl>
 ) : JavaStackFrame(StackFrameDescriptorImpl(frame, MethodsTracker()), true) {
     private val kotlinVariableViewService = ToggleKotlinVariablesState.getService()
-
-    private val kotlinEvaluator by lazy {
-        val debugProcess = descriptor.debugProcess as DebugProcessImpl // Cast as in JavaStackFrame
-        KotlinDebuggerEvaluator(debugProcess, this@KotlinStackFrame)
-    }
-
-    override fun getEvaluator() = kotlinEvaluator
 
     override fun buildLocalVariables(
         evaluationContext: EvaluationContextImpl,
@@ -62,17 +53,6 @@ open class KotlinStackFrame(
         children: XValueChildrenList,
         variables: List<LocalVariableProxyImpl>
     ) {
-        val nodeManager = evaluationContext.debugProcess.xdebugProcess?.nodeManager
-
-        fun addItem(variable: LocalVariableProxyImpl) {
-            if (nodeManager == null) {
-                return
-            }
-
-            val variableDescriptor = nodeManager.getLocalVariableDescriptor(null, variable)
-            children.add(JavaValue.create(null, variableDescriptor, evaluationContext, nodeManager, false))
-        }
-
         val (thisVariables, otherVariables) = variables
             .partition { it.name() == THIS || it is ThisLocalVariable }
 
@@ -82,8 +62,31 @@ open class KotlinStackFrame(
             remapThisObjectForOuterThis(evaluationContext, children, existingVariables)
         }
 
+        children.add(evaluationContext, thisVariables, otherVariables)
+    }
+
+    private fun XValueChildrenList.add(
+        evaluationContext: EvaluationContextImpl,
+        thisVariables: List<LocalVariableProxyImpl>,
+        otherVariables: List<LocalVariableProxyImpl>
+    ) {
+        val nodeManager = evaluationContext.debugProcess.xdebugProcess?.nodeManager ?: return
+
+        fun addItem(variable: LocalVariableProxyImpl) {
+            val variableDescriptor = nodeManager.getLocalVariableDescriptor(null, variable)
+            add(JavaValue.create(null, variableDescriptor, evaluationContext, nodeManager, false))
+        }
+
         thisVariables.forEach(::addItem)
-        otherVariables.forEach(::addItem)
+        otherVariables.forEach {
+            if (it.name().startsWith(AsmUtil.CAPTURED_PREFIX)) {
+                val valueData = CapturedAsLocalVariableValueData(it.name().drop(1), it)
+                val variableDescriptor = nodeManager.getDescriptor(null, valueData)
+                add(JavaValue.create(null, variableDescriptor, evaluationContext, nodeManager, false))
+            } else {
+                addItem(it)
+            }
+        }
     }
 
     private fun removeSyntheticThisObject(

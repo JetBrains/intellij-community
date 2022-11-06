@@ -4,9 +4,8 @@ import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.language.preferences.IndentationRules;
-import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
-import org.jetbrains.plugins.textmate.language.preferences.TextMateSnippet;
+import org.jetbrains.plugins.textmate.language.preferences.*;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
@@ -117,5 +116,31 @@ public final class PreferencesReadUtil {
       getPattern(Constants.INDENT_NEXT_LINE_PATTERN, rules),
       getPattern(Constants.UNINDENTED_LINE_PATTERN, rules)
     );
+  }
+
+  @NotNull
+  public static TextMateCommentPrefixes readCommentPrefixes(@NotNull final ShellVariablesRegistry registry,
+                                                                      @NotNull final TextMateScope scope) {
+
+    String lineCommentPrefix = null;
+    TextMateBlockCommentPair blockCommentPair = null;
+    int index = 1;
+    while (lineCommentPrefix == null || blockCommentPair == null) {
+      String variableSuffix = index > 1 ? "_" + index : "";
+      TextMateShellVariable start = registry.getVariableValue(Constants.COMMENT_START_VARIABLE + variableSuffix, scope);
+      TextMateShellVariable end = registry.getVariableValue(Constants.COMMENT_END_VARIABLE + variableSuffix, scope);
+
+      index++;
+
+      if (start == null) break;
+      if ((end == null || !end.scopeName.equals(start.scopeName)) && lineCommentPrefix == null) {
+        lineCommentPrefix = start.value;
+      }
+      if ((end != null && end.scopeName.equals(start.scopeName)) && blockCommentPair == null) {
+        blockCommentPair = new TextMateBlockCommentPair(start.value, end.value);
+      }
+    }
+
+    return new TextMateCommentPrefixes(lineCommentPrefix, blockCommentPair);
   }
 }

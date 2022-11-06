@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.*
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile

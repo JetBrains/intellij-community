@@ -67,14 +67,6 @@ public abstract class PostfixTemplate {
     this(id, name, "." + name, example, provider);
   }
 
-  /**
-   * @deprecated use {@link #PostfixTemplate(String, String, String, String, PostfixTemplateProvider)}
-   */
-  @Deprecated(forRemoval = true)
-  protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
-    this(null, name, key, example, null);
-  }
-
   protected PostfixTemplate(@Nullable String id,
                             @NotNull String name,
                             @NotNull String key,

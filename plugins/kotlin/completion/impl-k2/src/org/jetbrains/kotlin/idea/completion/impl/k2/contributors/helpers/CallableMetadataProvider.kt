@@ -151,10 +151,8 @@ internal object CallableMetadataProvider {
         }
         if (symbol !is KtClassLikeSymbol) return null
         return buildClassType(symbol) {
-            if (symbol is KtSymbolWithTypeParameters) {
-                repeat(symbol.typeParameters.size) {
-                    argument(KtStarProjectionTypeArgument(token))
-                }
+            repeat(symbol.typeParameters.size) {
+                argument(KtStarProjectionTypeArgument(token))
             }
         }
     }

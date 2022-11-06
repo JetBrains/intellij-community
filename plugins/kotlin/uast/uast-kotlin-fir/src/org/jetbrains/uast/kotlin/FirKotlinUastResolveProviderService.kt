@@ -6,16 +6,12 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMemberImpl
 import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
@@ -26,7 +22,6 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
@@ -511,37 +506,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
         }
         if (psiElement is KtCallableDeclaration) {
-            psiElement.typeReference?.let { typeReference ->
-                analyzeForUast(typeReference) {
-                    nullability(typeReference.getKtType())?.let { return it }
-                }
+            analyzeForUast(psiElement) {
+                nullability(psiElement)?.let { return it }
             }
         }
-        if (psiElement is KtProperty) {
-            psiElement.initializer?.let { propertyInitializer ->
-                analyzeForUast(propertyInitializer) {
-                    nullability(propertyInitializer.getKtType())?.let { return it }
-                }
-            }
-            psiElement.delegateExpression?.let { delegatedExpression ->
-                analyzeForUast(delegatedExpression) {
-                    val typeArgument = (delegatedExpression.getKtType() as? KtNonErrorClassType)?.typeArguments?.firstOrNull()
-                    nullability((typeArgument as? KtTypeArgumentWithVariance)?.type)?.let { return it }
-                }
+        if (psiElement is KtDestructuringDeclaration) {
+            analyzeForUast(psiElement) {
+                nullability(psiElement)?.let { return it }
             }
         }
-        psiElement.getParentOfType<KtProperty>(false)?.let { property ->
-            property.typeReference?.let { typeReference ->
-                analyzeForUast(typeReference) {
-                    nullability(typeReference.getKtType())
-                }
-            } ?:
-            property.initializer?.let { propertyInitializer ->
-                analyzeForUast(propertyInitializer) {
-                    nullability(propertyInitializer.getKtType())
-                }
-            }
-        }?.let { return it }
         return null
     }
 

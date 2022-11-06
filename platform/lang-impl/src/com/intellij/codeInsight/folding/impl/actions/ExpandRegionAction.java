@@ -39,23 +39,32 @@ public class ExpandRegionAction extends EditorAction {
   private static void expandRegionAtCaret(final Project project, @Nullable final Editor editor) {
     if (editor == null) return;
 
-    expandRegionAtOffset(project, editor, editor.getCaretModel().getOffset());
+    final int[] offsets = editor.getCaretModel().getAllCarets().stream()
+      .mapToInt(Caret::getOffset)
+      .toArray();
+    expandRegionAtOffsets(editor, offsets);
   }
 
   public static void expandRegionAtOffset(@NotNull Project project, @NotNull final Editor editor, final int offset) {
-    final int line = editor.getDocument().getLineNumber(offset);
+    expandRegionAtOffsets(editor, new int[offset]);
+  }
+
+  public static void expandRegionAtOffsets(@NotNull final Editor editor, final int[] offsets) {
     Runnable processor = () -> {
-      FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, line);
-      if (region != null && !region.isExpanded()){
-        region.setExpanded(true);
-      }
-      else{
-        FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
-        for(int i = regions.length - 1; i >= 0; i--){
-          region = regions[i];
-          if (!region.isExpanded()){
-            region.setExpanded(true);
-            break;
+      for (int offset : offsets) {
+        final int line = editor.getDocument().getLineNumber(offset);
+        FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, line);
+        if (region != null && !region.isExpanded()) {
+          region.setExpanded(true);
+        }
+        else {
+          FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
+          for (int i = regions.length - 1; i >= 0; i--) {
+            region = regions[i];
+            if (!region.isExpanded()) {
+              region.setExpanded(true);
+              break;
+            }
           }
         }
       }

@@ -1,14 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.advertiser
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-private class OnDemandDependencyFeatureCollector : ProjectPostStartupActivity {
+private class OnDemandDependencyFeatureCollector : AppLifecycleListener {
 
   init {
     if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) {
@@ -16,7 +15,7 @@ private class OnDemandDependencyFeatureCollector : ProjectPostStartupActivity {
     }
   }
 
-  override suspend fun execute(project: Project) {
+  override fun appFrameCreated(commandLineArgs: List<String>) {
     val featureMap = LinkedHashMap<String, FeaturePluginData>()
 
     PluginManagerCore.getPluginSet()

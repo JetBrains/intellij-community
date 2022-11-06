@@ -40,9 +40,6 @@ import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 public class JavaNoVariantsDelegator extends CompletionContributor implements DumbAware {
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {

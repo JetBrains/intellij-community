@@ -39,19 +39,12 @@ public final class JsonPathPsiUtils {
         }
         char next = text.charAt(pos + 1);
         switch (next) {
-          case '"':
-          case '\\':
-          case '/':
-          case 'b':
-          case 'f':
-          case 'n':
-          case 'r':
-          case 't':
+          case '"', '\\', '/', 'b', 'f', 'n', 'r', 't' -> {
             final int idx = ourEscapesTable.indexOf(next);
             result.add(Pair.create(new TextRange(pos, pos + 2), ourEscapesTable.substring(idx + 1, idx + 2)));
             pos += 2;
-            break;
-          case 'u':
+          }
+          case 'u' -> {
             int i = pos + 2;
             for (; i < pos + 6; i++) {
               if (i == length || !StringUtil.isHexDigit(text.charAt(i))) {
@@ -60,10 +53,11 @@ public final class JsonPathPsiUtils {
             }
             result.add(Pair.create(new TextRange(pos, i), text.substring(pos, i)));
             pos = i;
-            break;
-          default:
+          }
+          default -> {
             result.add(Pair.create(new TextRange(pos, pos + 2), text.substring(pos, pos + 2)));
             pos += 2;
+          }
         }
         unescapedSequenceStart = pos;
       }

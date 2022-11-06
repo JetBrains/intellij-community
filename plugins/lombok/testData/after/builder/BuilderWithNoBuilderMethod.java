@@ -26,7 +26,7 @@ class BuilderWithNoBuilderMethod {
 
 		@java.lang.SuppressWarnings("all")
 		public BuilderWithNoBuilderMethod build() {
-			return new BuilderWithNoBuilderMethod(a);
+			return new BuilderWithNoBuilderMethod(this.a);
 		}
 
 		@java.lang.Override

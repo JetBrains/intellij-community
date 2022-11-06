@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.handler.singular;
 
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public final class SingularHandlerFactory {
   }
 
   private static boolean containsOrAnyEndsWith(@NotNull Set<String> elements, @NotNull String className) {
-    return elements.contains(className) || elements.stream().anyMatch(t -> t.endsWith("." + className));
+    return elements.contains(className) || ContainerUtil.exists(elements, t -> t.endsWith("." + className));
   }
 
   @NotNull

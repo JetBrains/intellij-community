@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*
+import org.jetbrains.kotlin.backend.common.descriptors.synthesizedString
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.getCapturedFieldName
 import org.jetbrains.kotlin.codegen.AsmUtil.getLabeledThisName
@@ -15,9 +16,9 @@ import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAM
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
@@ -136,6 +137,9 @@ class VariableFinder(val context: ExecutionContext) {
 
         // Local variables – direct search
         findLocalVariable(variables, kind, kind.name)?.let { return it }
+
+        // Local variables - synthetic captured local variable (IR Backend)
+        findLocalVariable(variables, kind, kind.name.synthesizedString)?.let { return it }
 
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }

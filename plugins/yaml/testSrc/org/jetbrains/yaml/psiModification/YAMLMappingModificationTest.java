@@ -97,9 +97,10 @@ public class YAMLMappingModificationTest extends BasePlatformTestCase {
   }
   
   public void testReplaceValueScalarCompound() {
-    doValueTest("someKey:\n" +
-                "- bla\n" +
-                "- bla");
+    doValueTest("""
+                  someKey:
+                  - bla
+                  - bla""");
   }
   
   public void testSetValueScalar() {
@@ -107,9 +108,10 @@ public class YAMLMappingModificationTest extends BasePlatformTestCase {
   }
   
   public void testSetValueCompound() {
-    doValueTest("someKey:\n" +
-                "- bla\n" +
-                "- bla");
+    doValueTest("""
+                  someKey:
+                  - bla
+                  - bla""");
   }
   
   private void doValueTest(final String valueText) {

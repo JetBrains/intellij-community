@@ -15,12 +15,17 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/addNameToArgument", pattern = pattern)
             model("${idea}intentions/addNamesToCallArguments", pattern = pattern)
             model("${idea}intentions/addNamesToFollowingArguments", pattern = pattern)
+            model("${idea}intentions/addOpenModifier", pattern = pattern)
             model("${idea}intentions/addPropertyAccessors", pattern = pattern)
             model("${idea}intentions/specifyTypeExplicitly", pattern = pattern)
             model("${idea}intentions/importAllMembers", pattern = pattern)
             model("${idea}intentions/importMember", pattern = pattern)
+            model("${idea}intentions/convertConcatenationToBuildString", pattern = pattern)
+            model("${idea}intentions/convertStringTemplateToBuildString", pattern = pattern)
             model("${idea}intentions/convertToBlockBody", pattern = pattern)
             model("${idea}intentions/addWhenRemainingBranches", pattern = pattern)
+            model("${idea}intentions/convertToConcatenatedString", pattern = pattern)
+            model("${idea}intentions/removeExplicitType", pattern = pattern)
             model("code-insight/intentions-k2/tests/testData/intentions", pattern = pattern)
         }
     }

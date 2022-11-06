@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 
@@ -23,4 +24,11 @@ interface VcsCodeVisionLanguageContext {
   fun isAccepted(element: PsiElement): Boolean
 
   fun handleClick(mouseEvent: MouseEvent, editor: Editor, element: PsiElement)
+
+  /**
+   * When file's language differs from the language of this extension, this method tells in which files elements still need to be searched.
+   * It is done for optimization to avoid walking the whole file if it's known that it doesn't contain supported languages.
+   */
+  @ApiStatus.Experimental
+  fun isCustomFileAccepted(file: PsiFile): Boolean = false
 }

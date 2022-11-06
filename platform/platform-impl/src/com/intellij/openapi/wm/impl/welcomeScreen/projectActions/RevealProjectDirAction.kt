@@ -8,24 +8,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase.Companion.getSelectedItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
-import java.io.File
+import java.nio.file.Path
 
-/**
- * @author Konstantin Bulenkov
- */
 class RevealProjectDirAction : DumbAwareAction(RevealFileAction.getActionName()), LightEditCompatible {
-  override fun actionPerformed(e: AnActionEvent) {
-    val item = getSelectedItem(e) as RecentProjectItem
-    val path = item.projectPath
-    RevealFileAction.selectDirectory(File(path))
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
-
   override fun update(e: AnActionEvent) {
     val item = getSelectedItem(e)
     e.presentation.isEnabledAndVisible = item is RecentProjectItem
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val item = getSelectedItem(e) as RecentProjectItem
+    RevealFileAction.openFile(Path.of(item.projectPath))
   }
 }

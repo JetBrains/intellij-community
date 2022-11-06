@@ -5,6 +5,7 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -23,6 +24,7 @@ import com.intellij.structuralsearch.impl.matcher.JavaMatchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
+import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,9 +71,28 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     @Override
     public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       final String word = reference.getReferenceName();
-      if (!handleWord(word, CODE, myCompilingVisitor.getContext())) return;
-      if (reference.isQualified() && isClassFromJavaLangPackage(reference.resolve())) return;
-      super.visitReferenceElement(reference);
+      final PsiElement target = reference.resolve();
+      if (target == null && Strings.isCapitalized(word)) {
+        return;
+      }
+      if (handleWord(word, CODE, myCompilingVisitor.getContext())) {
+        if (!isStaticAccessibleFromSubclass(target) && (!reference.isQualified() || !isClassFromJavaLangPackage(target))) {
+          super.visitReferenceElement(reference);
+        }
+      }
+    }
+
+    private static boolean isStaticAccessibleFromSubclass(PsiElement element) {
+      if (!(element instanceof PsiMember member) || !member.hasModifierProperty(PsiModifier.STATIC)) {
+        return false;
+      }
+      final PsiClass aClass = member.getContainingClass();
+      return aClass == null || (!aClass.isInterface() && !aClass.hasModifierProperty(PsiModifier.FINAL));
+    }
+
+    @Override
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
     }
 
     private static boolean isClassFromJavaLangPackage(PsiElement target) {
@@ -507,6 +528,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private void createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText, boolean classQualifier) {
     final SubstitutionHandler substitutionHandler =
       new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, true);
+    if (classQualifier) substitutionHandler.setSubtype(true);
     final boolean caseSensitive = myCompilingVisitor.getContext().getOptions().isCaseSensitiveMatch();
     substitutionHandler.setPredicate(new RegExpPredicate(MatchUtil.shieldRegExpMetaChars(referenceText),
                                                          caseSensitive, null, false, false));
@@ -525,12 +547,14 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       final PsiElement reference = expressionStatement.getFirstChild();
       final MatchingHandler referenceHandler = pattern.getHandler(reference);
 
-      if (referenceHandler instanceof SubstitutionHandler && (reference instanceof PsiReferenceExpression)) {
+      if (referenceHandler instanceof SubstitutionHandler substitutionHandler &&
+          substitutionHandler.findPredicate(ExprTypePredicate.class) == null &&
+          reference instanceof PsiReferenceExpression) {
         // symbol
         pattern.setHandler(expressionStatement, referenceHandler);
         referenceHandler.setFilter(SymbolNodeFilter.getInstance());
 
-        myCompilingVisitor.setHandler(expressionStatement, new SymbolHandler((SubstitutionHandler)referenceHandler));
+        myCompilingVisitor.setHandler(expressionStatement, new SymbolHandler(substitutionHandler));
       }
       else if (reference instanceof PsiLiteralExpression) {
         final MatchingHandler handler = new ExpressionHandler();

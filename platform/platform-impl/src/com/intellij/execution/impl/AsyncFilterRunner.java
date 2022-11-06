@@ -28,9 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
 class AsyncFilterRunner {
   private static final Logger LOG = Logger.getInstance(AsyncFilterRunner.class);
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Console Filters");

@@ -28,7 +28,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -108,6 +107,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   private final Executor myTreeUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
   private volatile boolean myUpdating;
+  private volatile boolean myFixesAvailable;
 
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
@@ -185,7 +185,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     } else {
       InspectionProfileImpl profile = getCurrentProfile();
       String toolId = Objects.requireNonNull(profile.getSingleTool());
-      InspectionToolWrapper tool = Objects.requireNonNull(profile.getInspectionTool(toolId, getProject()));
+      InspectionToolWrapper<?,?> tool = Objects.requireNonNull(profile.getInspectionTool(toolId, getProject()));
       JComponent toolPanel = tool.getTool().createOptionsPanel();
       mySettingsEnabled = toolPanel != null;
     }
@@ -302,6 +302,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   public void syncRightPanel() {
+    myFixesAvailable = false;
     final Editor oldEditor = myPreviewEditor;
     try {
       if (myLoadingProgressPreview != null) {
@@ -309,7 +310,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         myLoadingProgressPreview = null;
       }
       if (myApplyingFix) {
-        final InspectionToolWrapper wrapper = myTree.getSelectedToolWrapper(true);
+        final InspectionToolWrapper<?,?> wrapper = myTree.getSelectedToolWrapper(true);
         LOG.assertTrue(wrapper != null);
         mySplitter.setSecondComponent(InspectionResultsViewUtil.getApplyingFixLabel(wrapper));
       }
@@ -380,7 +381,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     editorPanel.add(actionsPanel, BorderLayout.NORTH);
     final int problemCount = myTree.getSelectedProblemCount();
     JComponent previewPanel = null;
-    final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
+    final InspectionToolWrapper<?,?> tool = myTree.getSelectedToolWrapper(true);
     if (tool != null) {
       final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
       final TreePath path = myTree.getSelectionPath();
@@ -494,7 +495,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myPreviewEditor != null && !myPreviewEditor.isDisposed() && myPreviewEditor.getDocument() == document;
   }
 
-  private void addTool(@NotNull final InspectionToolWrapper toolWrapper,
+  private void addTool(@NotNull final InspectionToolWrapper<?,?> toolWrapper,
                        HighlightDisplayLevel errorLevel,
                        boolean groupedBySeverity,
                        boolean isSingleInspectionRun) {
@@ -523,7 +524,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   @Nullable
-  public String getCurrentProfileName() {
+  private String getCurrentProfileName() {
     return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
   }
 
@@ -531,7 +532,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myInspectionProfile;
   }
 
-  void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
+  void addProblemDescriptors(InspectionToolWrapper<?,?> wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
     updateTree(() -> ReadAction.run(() -> {
       if (!isDisposed()) {
         final AnalysisUIOptions uiOptions = myGlobalInspectionContext.getUIOptions();
@@ -571,16 +572,11 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   public void update() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final Application app = ApplicationManager.getApplication();
     Collection<Tools> tools = new ArrayList<>(myGlobalInspectionContext.getTools().values());
-    if (app.isUnitTestMode()) {
-      updateResults(tools);
-    } else {
-      updateTree(() -> updateResults(tools));
-    }
+    updateTree(() -> updateResults(tools));
   }
 
-  public void updateResults(Collection<Tools> tools) {
+  public void updateResults(@NotNull Collection<? extends Tools> tools) {
     try {
       setUpdating(true);
       myTree.removeAllNodes();
@@ -608,16 +604,16 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     updateTree(() -> addToolsSynchronously(tools));
   }
 
-  private void addToolsSynchronously(Collection<? extends Tools> tools) {
+  private void addToolsSynchronously(@NotNull Collection<? extends Tools> tools) {
     if (isDisposed()) return;
     InspectionProfileImpl profile = myInspectionProfile;
     boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
     boolean singleInspectionRun = isSingleInspectionRun();
     for (Tools currentTools : tools) {
-      InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+      InspectionToolWrapper<?,?> defaultToolWrapper = currentTools.getDefaultState().getTool();
       final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
       for (ScopeToolState state : myProvider.getTools(currentTools)) {
-        InspectionToolWrapper toolWrapper = state.getTool();
+        InspectionToolWrapper<?,?> toolWrapper = state.getTool();
         if (ReadAction.compute(() -> myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper))) {
           addTool(toolWrapper,
                   profile.getErrorLevel(key, state.getScope(getProject()), getProject()),
@@ -719,8 +715,16 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                               getCurrentProfileName(), myScope.getShortenName());
   }
 
+  void setFixesAvailable(boolean available) {
+    myFixesAvailable = available;
+  }
+
+  public boolean areFixesAvailable() {
+    return myFixesAvailable;
+  }
+
   @Nullable
-  public static Navigatable getSelectedNavigatable(final CommonProblemDescriptor descriptor) {
+  static Navigatable getSelectedNavigatable(final CommonProblemDescriptor descriptor) {
     return getSelectedNavigatable(descriptor,
                                   descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null);
   }
@@ -768,10 +772,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myProvider;
   }
 
-  public boolean isSingleToolInSelection() {
-    return myTree.getSelectedToolWrapper(true) != null;
-  }
-
   public boolean isRerun() {
     boolean rerun = myRerun;
     myRerun = false;
@@ -814,7 +814,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                     @NotNull InspectionRVContentProvider contentProvider) {
     for (Tools currentTools : tools) {
       for (ScopeToolState state : contentProvider.getTools(currentTools)) {
-        InspectionToolWrapper toolWrapper = state.getTool();
+        InspectionToolWrapper<?,?> toolWrapper = state.getTool();
         ThreeState hasReportedProblems = context.getPresentation(toolWrapper).hasReportedProblems();
         if (hasReportedProblems == ThreeState.NO) continue;
         if (hasReportedProblems == ThreeState.YES || ReadAction.compute(() -> contentProvider.checkReportedProblems(context, toolWrapper))) {

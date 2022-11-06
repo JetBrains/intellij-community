@@ -58,7 +58,7 @@ public class MavenProjectResolver {
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    resolve(project, Collections.singletonList(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(), process);
+    resolve(project, Collections.singletonList(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(myTree), process);
   }
 
   public void resolve(@NotNull Project project,
@@ -317,7 +317,7 @@ public class MavenProjectResolver {
       mavenProjectCandidate
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
       if (result.nativeMavenProject != null) {
-        PluginFeatureEnabler.getInstance(myProject).enableSuggestedHelper();
+        PluginFeatureEnabler.getInstance(myProject).scheduleEnableSuggested();
 
         for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);

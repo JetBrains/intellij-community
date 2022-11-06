@@ -2,7 +2,6 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -13,6 +12,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
@@ -723,5 +723,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       return counterMap.getOrDefault(counter, null);
     }
     return null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

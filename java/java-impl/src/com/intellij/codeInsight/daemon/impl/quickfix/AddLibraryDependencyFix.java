@@ -41,7 +41,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
                           boolean exported) {
     super(reference);
     myCurrentModule = currentModule;
-    myLibraries = libraries;
+    myLibraries = ContainerUtil.<Library, String>immutableMapBuilder().putAll(libraries).build();
     myScope = scope;
     myExported = exported;
   }
@@ -115,8 +115,8 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     return new IntentionPreviewInfo.Html(
       HtmlChunk.text(JavaBundle.message("adds.library.preview",
                                          myLibraries.size(),
-                                         firstItem.getName(),
-                                         NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getName() + "'")),
+                                         firstItem.getPresentableName(),
+                                         NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'")),
                                          myCurrentModule.getName(),
                                          refName)));
   }

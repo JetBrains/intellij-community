@@ -73,7 +73,7 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection impl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression literalExpression = (PsiExpression)descriptor.getPsiElement();
       final String text = literalExpression.getText();
       final String newText = getCanonicalForm(text);

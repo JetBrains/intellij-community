@@ -17,12 +17,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.ui.dsl.builder.bind
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.not
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
@@ -35,6 +32,8 @@ import com.jetbrains.python.sdk.add.ExistingPySdkComboBoxItem
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.add.addInterpretersAsync
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import icons.PythonIcons
@@ -118,18 +117,18 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
         }.bind(getter = { isCreateNewVirtualenv }, setter = { isCreateNewVirtualenv = it })
       }
       else {
-        newEnvironmentModeSelected = ConstantComponentPredicate.FALSE
+        newEnvironmentModeSelected = ComponentPredicate.FALSE
       }
 
       row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) {
-        cell(interpreterCombobox).horizontalAlign(HorizontalAlign.FILL)
+        cell(interpreterCombobox).align(AlignX.FILL)
       }.visibleIf(newEnvironmentModeSelected.not())
 
       row(PyBundle.message("sdk.create.venv.dialog.location.label")) {
-        cell(locationField).horizontalAlign(HorizontalAlign.FILL)
+        cell(locationField).align(AlignX.FILL)
       }.visibleIf(newEnvironmentModeSelected)
       row(PyBundle.message("sdk.create.venv.dialog.base.interpreter.label")) {
-        cell(baseInterpreterCombobox).horizontalAlign(HorizontalAlign.FILL)
+        cell(baseInterpreterCombobox).align(AlignX.FILL)
       }.visibleIf(newEnvironmentModeSelected)
       row {
         checkBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
@@ -159,7 +158,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     else {
       config.pythonInterpreterPath.let { introspectedPythonPath ->
         if (introspectedPythonPath.isNotBlank()) {
-          baseInterpreterCombobox.addSdkItem(createDetectedSdk(introspectedPythonPath, isLocal = false))
+          baseInterpreterCombobox.addSdkItem(createDetectedSdk(introspectedPythonPath, targetEnvironmentConfiguration))
         }
       }
     }
@@ -201,7 +200,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       installSdkIfNeeded(baseSelectedSdk, module, existingSdks, context) ?: return null
     }
     else {
-      val sdkAdditionalData = PyTargetAwareAdditionalData(virtualEnvSdkFlavor)
+      val sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, virtualEnvSdkFlavor))
       sdkAdditionalData.targetEnvironmentConfiguration = targetEnvironmentConfiguration
       val homePath = baseSelectedSdk.homePath ?: return null
       // suggesting the proper name for the base SDK fixes the problem with clashing caching key of Python package manager
@@ -269,16 +268,6 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
     if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
-  }
-
-  private class ConstantComponentPredicate(private val value: Boolean) : ComponentPredicate() {
-    override fun addListener(listener: (Boolean) -> Unit) = Unit
-
-    override fun invoke(): Boolean = value
-
-    companion object {
-      val FALSE = ConstantComponentPredicate(value = false)
-    }
   }
 
   companion object {

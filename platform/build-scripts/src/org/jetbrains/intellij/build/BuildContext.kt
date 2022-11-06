@@ -1,20 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
-interface BuildContext: CompilationContext {
+interface BuildContext : CompilationContext {
   val productProperties: ProductProperties
   val windowsDistributionCustomizer: WindowsDistributionCustomizer?
   val linuxDistributionCustomizer: LinuxDistributionCustomizer?
-  val macDistributionCustomizer: MacDistributionCustomizer?
   val proprietaryBuildTools: ProprietaryBuildTools
 
   val applicationInfo: ApplicationInfoProperties
+
+  /**
+   * Relative paths to files in distribution which should take 'executable' permissions.
+   * No need to add *.sh.
+   */
+  fun addExtraExecutablePattern(os: OsFamily, pattern: String)
+
+  fun getExtraExecutablePattern(os: OsFamily): List<String>
 
   /**
    * Build number without product code (e.g. '162.500.10')
@@ -50,9 +59,9 @@ interface BuildContext: CompilationContext {
   /**
    * Add file to be copied into application.
    */
-  fun addDistFile(file: Map.Entry<Path, String>)
+  fun addDistFile(file: DistFile)
 
-  fun getDistFiles(): Collection<Map.Entry<Path, String>>
+  fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile>
 
   fun includeBreakGenLibraries(): Boolean
 
@@ -62,7 +71,7 @@ interface BuildContext: CompilationContext {
    * Unlike VM options produced by {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator},
    * these are hard-coded into launchers and aren't supposed to be changed by a user.
    */
-  fun getAdditionalJvmArguments(os: OsFamily): List<String>
+  fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean = false, isPortableDist: Boolean = false): List<String>
 
   fun notifyArtifactBuilt(artifactPath: Path)
 
@@ -70,7 +79,9 @@ interface BuildContext: CompilationContext {
 
   fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
 
-  fun signFiles(files: List<Path>, options: Map<String, String> = emptyMap())
+  suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
+    proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
+  }
 
   /**
    * Execute a build step or skip it if {@code stepId} is included in {@link BuildOptions#buildStepsToSkip}
@@ -85,13 +96,12 @@ interface BuildContext: CompilationContext {
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
 }
 
-inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, step: () -> Unit) {
-  if (options.buildStepsToSkip.contains(stepId)) {
+suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend () -> Unit) {
+  if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip").end()
   }
   else {
-    // we cannot flush tracing after "throw e" as we have to end the current span before that
-    spanBuilder.useWithScope { step() }
+    spanBuilder.useWithScope2 { step() }
   }
 }
 
@@ -100,3 +110,8 @@ data class BuiltinModulesFileData(
   val modules: List<String>,
   val fileExtensions: List<String>,
 )
+
+data class DistFile(@JvmField val file: Path,
+                    @JvmField val relativePath: String,
+                    @JvmField val os: OsFamily? = null,
+                    @JvmField val arch: JvmArchitecture? = null)

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
@@ -22,7 +23,7 @@ public class IndentTransferableData implements TextBlockTransferableData, Serial
   }
 
   @Override
-  public DataFlavor getFlavor() {
+  public @Nullable DataFlavor getFlavor() {
     return getDataFlavorStatic();
   }
 
@@ -37,21 +38,6 @@ public class IndentTransferableData implements TextBlockTransferableData, Serial
       return null;
     }
     return ourFlavor;
-  }
-
-  @Override
-  public int getOffsetCount() {
-    return 0;
-  }
-
-  @Override
-  public int getOffsets(int[] offsets, int index) {
-    return index;
-  }
-
-  @Override
-  public int setOffsets(int[] offsets, int index) {
-    return index;
   }
 
   @Override

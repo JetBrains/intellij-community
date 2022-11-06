@@ -9,7 +9,6 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,9 +29,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
+
 /**
+ * @deprecated This class and all its inheritors are deprecated. Everything should work via {@link PyTargetEnvironmentPackageManager}
  * @author vlan
  */
+@Deprecated
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
   private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv.pyz";
 
@@ -188,7 +191,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       getPythonProcessResult(Objects.requireNonNull(getHelperPath(VIRTUALENV_ZIPAPP_NAME)), args, false, true, null, List.of("-S"));
     }
     catch (ExecutionException e) {
-      throw new ExecutionException(PySdkBundle.message("python.creating.venv.failed.sentence"), e);
+      showSdkExecutionException(sdk, e, PySdkBundle.message("python.creating.venv.failed.title"));
     }
 
     final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
@@ -259,6 +262,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       final GeneralCommandLine commandLine =
         new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(PySdkUtil.activateVirtualEnv(getSdk()));
       final Map<String, String> environment = commandLine.getEnvironment();
+      PySdkUtil.configureCharset(commandLine);
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
       PythonEnvUtil.resetHomePathChanges(homePath, environment);

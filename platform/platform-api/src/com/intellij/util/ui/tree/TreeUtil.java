@@ -1845,18 +1845,15 @@ public final class TreeUtil {
       TreePath path = getVisiblePathWithValidation(tree, row, count);
       if (parent == null || !parent.isDescendant(path)) {
         switch (visitor.visit(path)) {
-          case INTERRUPT:
+          case INTERRUPT -> {
             return path; // path is found
-          case CONTINUE:
-            parent = null;
-            break;
-          case SKIP_CHILDREN:
-            parent = path;
-            break;
-          case SKIP_SIBLINGS:
+          }
+          case CONTINUE -> parent = null;
+          case SKIP_CHILDREN -> parent = path;
+          case SKIP_SIBLINGS -> {
             parent = path.getParentPath();
             if (parent == null) return null;
-            break;
+          }
         }
       }
     }

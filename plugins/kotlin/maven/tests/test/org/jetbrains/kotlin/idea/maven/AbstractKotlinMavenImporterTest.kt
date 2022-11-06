@@ -25,9 +25,9 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.additionalArgumentsAsList
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
@@ -666,7 +666,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
                 Assert.assertEquals("foobar.jar", (compilerArguments as K2JVMCompilerArguments).classpath)
                 Assert.assertEquals(
-                    "-version",
+                    "",
                     compilerSettings!!.additionalArguments
                 )
             }
@@ -985,7 +985,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
                 Assert.assertEquals("foobar.jar", (compilerArguments as K2JVMCompilerArguments).classpath)
-                Assert.assertEquals("-version", compilerSettings!!.additionalArguments)
+                Assert.assertEquals("", compilerSettings!!.additionalArguments)
             }
         }
     }
@@ -1755,7 +1755,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             with(facetSettings) {
                 Assert.assertEquals(
-                    "-version",
+                    "",
                     compilerSettings!!.additionalArguments
                 )
                 Assert.assertEquals(
@@ -2089,7 +2089,11 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
     }
 
     class JpsCompilerMultiModule : AbstractKotlinMavenImporterTest() {
-        @Test
+      override fun runInDispatchThread(): Boolean {
+        return false
+      }
+
+      @Test
         fun testJpsCompilerMultiModule() {
             createProjectSubDirs(
                 "src/main/kotlin",
@@ -3221,7 +3225,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             with(facetSettings) {
                 Assert.assertEquals(
-                    "-version",
+                    "",
                     compilerSettings!!.additionalArguments
                 )
                 Assert.assertEquals(
@@ -3487,7 +3491,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             )
 
             Assert.assertEquals(
-                "-version",
+                "",
                 facetSettings.compilerSettings!!.additionalArguments
             )
             assertModules("project")

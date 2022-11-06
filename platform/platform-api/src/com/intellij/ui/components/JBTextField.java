@@ -40,7 +40,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   }
 
   private void init() {
-    UIUtil.addUndoRedoActions(this);
+    SwingUndoUtil.addUndoRedoActions(this);
     myEmptyText = new TextComponentEmptyText(this, true) {
       @Override
       protected Rectangle getTextComponentBound() {
@@ -61,7 +61,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   public void setText(String t) {
     if (Objects.equals(t, getText())) return;
     super.setText(t);
-    UIUtil.resetUndoRedoActions(this);
+    SwingUndoUtil.resetUndoRedoActions(this);
   }
 
   @Override

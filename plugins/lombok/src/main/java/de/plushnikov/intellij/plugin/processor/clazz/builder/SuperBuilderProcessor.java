@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
@@ -36,7 +36,7 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     // we skip validation here, because it will be validated by other BuilderClassProcessor
     return true;//builderHandler.validate(psiClass, psiAnnotation, builder);
   }
@@ -47,7 +47,7 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);
     final PsiClass builderBaseClass = psiClass.findInnerClassByName(builderClassName, false);
     if (null != builderBaseClass) {
-      final PsiClassType psiTypeBaseWithGenerics = builderHandler.getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
+      final PsiClassType psiTypeBaseWithGenerics = SuperBuilderHandler.getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
 
       builderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation, psiTypeBaseWithGenerics)
         .ifPresent(target::add);
@@ -61,7 +61,7 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
           builderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
 
-          builderHandler.createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
+          SuperBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
         }
       }

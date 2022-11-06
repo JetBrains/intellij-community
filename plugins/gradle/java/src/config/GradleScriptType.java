@@ -27,9 +27,6 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * @author peter
- */
 public final class GradleScriptType extends GroovyRunnableScriptType {
 
   public static final GradleScriptType INSTANCE = new GradleScriptType();

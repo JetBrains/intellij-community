@@ -14,4 +14,4 @@ class MyMap extends LinkedHashMap<String, String> {
     return true;
   }
 }
-class <warning descr="Class 'MyDeque' explicitly extends 'java.util.ArrayDeque'">MyDeque</warning> extends ArrayDeque {}
+class <warning descr="Class 'MyDeque' explicitly extends 'java.util.ArrayDeque'">My<caret>Deque</warning> extends ArrayDeque {}

@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.FocusEvent;
@@ -197,8 +196,10 @@ public class TitledSeparator extends JPanel {
       }
 
       int arcSize = JBUIScale.scale(Registry.intValue("ide.link.button.focus.round.arc", 4));
-      return new CompoundBorder(new EmptyBorder(getOutsideFrameInsets()), new CompoundBorder(
-        new RoundedLineBorder(JBUI.CurrentTheme.Link.FOCUSED_BORDER_COLOR, arcSize, FOCUS_THICKNESS), new EmptyBorder(getInsideFrameInsets())));
+      return JBUI.Borders.compound(
+        new EmptyBorder(getOutsideFrameInsets()),
+        new RoundedLineBorder(JBUI.CurrentTheme.Link.FOCUSED_BORDER_COLOR, arcSize, FOCUS_THICKNESS),
+        new EmptyBorder(getInsideFrameInsets()));
     }
 
     private static void add(Insets destInsets, Insets insetsToAdd) {

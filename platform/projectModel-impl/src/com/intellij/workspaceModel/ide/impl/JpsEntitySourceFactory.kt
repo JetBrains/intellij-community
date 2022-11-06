@@ -6,36 +6,52 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 object JpsEntitySourceFactory {
   fun createEntitySourceForModule(project: Project,
                                   baseModuleDir: VirtualFileUrl,
-                                  externalSource: ProjectModelExternalSource?): EntitySource {
-    val internalSource = createInternalEntitySourceForModule(project, baseModuleDir)
+                                  externalSource: ProjectModelExternalSource?,
+                                  fileInDirectoryNames: FileInDirectorySourceNames? = null,
+                                  moduleFileName: String? = null): EntitySource {
+    val internalSource = if (fileInDirectoryNames != null && moduleFileName != null) {
+      fileInDirectoryNames.findSource(ModuleEntity::class.java, moduleFileName) ?: createInternalEntitySourceForModule(project, baseModuleDir)
+    } else {
+      createInternalEntitySourceForModule(project, baseModuleDir)
+    }
     return createImportedEntitySource(project, externalSource, internalSource)
   }
 
-  fun createImportedEntitySource(project: Project,
-                                 externalSource: ProjectModelExternalSource?,
-                                 internalSource: JpsFileEntitySource?): EntitySource {
+  private fun createImportedEntitySource(project: Project,
+                                         externalSource: ProjectModelExternalSource?,
+                                         internalSource: JpsFileEntitySource?): EntitySource {
     val internalFile = internalSource ?: return NonPersistentEntitySource
     if (externalSource == null) return internalFile
     return JpsImportedEntitySource(internalFile, externalSource.id, project.isExternalStorageEnabled)
   }
 
-  fun createInternalEntitySourceForModule(project: Project,
-                                          baseModuleDir: VirtualFileUrl): JpsFileEntitySource? {
+  private fun createInternalEntitySourceForModule(project: Project,
+                                                  baseModuleDir: VirtualFileUrl): JpsFileEntitySource? {
     val location = getJpsProjectConfigLocation(project) ?: return null
     return JpsFileEntitySource.FileInDirectory(baseModuleDir, location)
   }
 
-  fun createEntitySourceForProjectLibrary(project: Project, externalSource: ProjectModelExternalSource?): EntitySource {
-    val internalEntitySource = createInternalEntitySourceForProjectLibrary(project)
+  fun createEntitySourceForProjectLibrary(project: Project,
+                                          externalSource: ProjectModelExternalSource?,
+                                          fileInDirectoryNames: FileInDirectorySourceNames? = null,
+                                          fileName: String? = null): EntitySource {
+    val internalEntitySource: JpsFileEntitySource? = if (fileInDirectoryNames != null && fileName != null) {
+      fileInDirectoryNames.findSource(LibraryEntity::class.java, fileName) ?: createInternalEntitySourceForProjectLibrary(project)
+    }
+    else {
+      createInternalEntitySourceForProjectLibrary(project)
+    }
     return createImportedEntitySource(project, externalSource, internalEntitySource)
   }
 
-  fun createInternalEntitySourceForProjectLibrary(project: Project): JpsFileEntitySource? {
+  private fun createInternalEntitySourceForProjectLibrary(project: Project): JpsFileEntitySource? {
     val location = getJpsProjectConfigLocation(project) ?: return null
     return createJpsEntitySourceForProjectLibrary(location)
   }

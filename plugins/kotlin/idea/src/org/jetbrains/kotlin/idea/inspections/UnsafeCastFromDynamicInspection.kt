@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
@@ -41,7 +42,7 @@ class UnsafeCastFromDynamicInspection : AbstractKotlinInspection() {
         })
 }
 
-private class CastExplicitlyFix(private val type: KotlinType) : LocalQuickFix {
+private class CastExplicitlyFix(@SafeFieldForPreview private val type: KotlinType) : LocalQuickFix {
     override fun getName() = KotlinBundle.message("cast.explicitly.fix.text")
 
     override fun getFamilyName() = name

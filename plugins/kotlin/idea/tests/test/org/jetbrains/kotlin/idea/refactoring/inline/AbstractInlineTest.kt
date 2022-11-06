@@ -11,8 +11,9 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import java.io.File
 
 abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -43,8 +44,12 @@ abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
                 null
 
             val expectedErrors = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// ERROR: ")
+            val inlinePropertyKeepValue = InTextDirectivesUtils.getPrefixedBoolean(myFixture.file.text, "// INLINE_PROPERTY_KEEP: ")
+            val settings = KotlinRefactoringSettings.instance
+            val oldInlinePropertyKeepValue = settings.INLINE_PROPERTY_KEEP
             if (handler != null) {
                 try {
+                    inlinePropertyKeepValue?.let { settings.INLINE_PROPERTY_KEEP = it }
                     runWriteAction { handler.inlineElement(project, editor, targetElement) }
                     for ((extraPsiFile, extraFile) in allFiles) {
                         KotlinTestUtils.assertEqualsToFile(File("${extraFile.path}.after"), extraPsiFile.text)
@@ -57,6 +62,8 @@ abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
                     TestCase.assertFalse("Conflicts: ${e.message}", afterFileExists)
                     TestCase.assertEquals("Expected errors", 1, expectedErrors.size)
                     TestCase.assertEquals("Error message", expectedErrors[0].replace("\\n", "\n"), e.message)
+                } finally {
+                    settings.INLINE_PROPERTY_KEEP = oldInlinePropertyKeepValue
                 }
             } else {
                 TestCase.assertFalse("No refactoring handler available", afterFileExists)
@@ -64,7 +71,7 @@ abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }
 
 abstract class AbstractInlineTestWithSomeDescriptors : AbstractInlineTest() {

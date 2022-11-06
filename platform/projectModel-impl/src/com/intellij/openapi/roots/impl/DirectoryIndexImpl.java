@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -86,7 +87,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     });
   }
 
-  private static boolean shouldResetOnEvents(@NotNull List<? extends VFileEvent> events) {
+  public static boolean shouldResetOnEvents(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       // VFileCreateEvent.getFile() is expensive
       if (event instanceof VFileCreateEvent) {
@@ -102,7 +103,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     return false;
   }
 
-  private static boolean isIgnoredFileCreated(@NotNull VFileEvent event) {
+  public static boolean isIgnoredFileCreated(@NotNull VFileEvent event) {
     return event instanceof VFileMoveEvent && FileTypeRegistry.getInstance().isFileIgnored(((VFileMoveEvent)event).getNewParent()) ||
            event instanceof VFilePropertyChangeEvent &&
            ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME) &&
@@ -149,8 +150,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     Pair<Long, RootIndex> pair = branch.getUserData(BRANCH_ROOT_INDEX);
     long modCount = branch.getBranchedVfsStructureModificationCount();
     if (pair == null || pair.first != modCount) {
-      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)
-      ));
+      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)));
+      branch.putUserData(BRANCH_ROOT_INDEX, pair);
     }
     return pair.second;
   }
@@ -221,6 +222,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   private void checkAvailability() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (myDisposed) {
       ProgressManager.checkCanceled();
       LOG.error("Directory index is already disposed for " + myProject);

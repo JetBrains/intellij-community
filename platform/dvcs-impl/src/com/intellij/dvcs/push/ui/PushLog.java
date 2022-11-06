@@ -142,7 +142,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
       @Override
       protected void installSpeedSearch() {
-        new TreeSpeedSearch(this, path -> {
+        new TreeSpeedSearch(this, false, path -> {
           Object pathComponent = path.getLastPathComponent();
           if (pathComponent instanceof RepositoryNode) {
             return ((RepositoryNode)pathComponent).getRepositoryName();
@@ -288,7 +288,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
     setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     setLayout(new BorderLayout());
-    add(splitter);
+    add(splitter, BorderLayout.CENTER);
     myTree.setRowHeight(0);
   }
 

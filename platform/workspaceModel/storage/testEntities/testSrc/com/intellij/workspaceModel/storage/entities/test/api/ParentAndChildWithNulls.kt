@@ -6,7 +6,7 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
@@ -20,7 +20,7 @@ interface ParentWithNulls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentWithNulls, ModifiableWorkspaceEntity<ParentWithNulls>, ObjBuilder<ParentWithNulls> {
+  interface Builder : ParentWithNulls, WorkspaceEntity.Builder<ParentWithNulls>, ObjBuilder<ParentWithNulls> {
     override var entitySource: EntitySource
     override var parentData: String
     override var child: ChildWithNulls?
@@ -49,7 +49,7 @@ interface ChildWithNulls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildWithNulls, ModifiableWorkspaceEntity<ChildWithNulls>, ObjBuilder<ChildWithNulls> {
+  interface Builder : ChildWithNulls, WorkspaceEntity.Builder<ChildWithNulls>, ObjBuilder<ChildWithNulls> {
     override var entitySource: EntitySource
     override var childData: String
   }

@@ -32,30 +32,46 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   public void testClassInitializationBlockIndentation() {
     // Checking that initialization block body is correctly indented.
     doMethodTest(
-      "checking(new Expectations() {{\n" +
-      "one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining(\"a-c\")));\n" +
-      "}});",
-      "checking(new Expectations() {{\n" +
-      "    one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining(\"a-c\")));\n" +
-      "}});"
+      """
+        checking(new Expectations() {{
+        one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining("a-c")));
+        }});""",
+      """
+        checking(new Expectations() {{
+            one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining("a-c")));
+        }});"""
     );
 
     // Checking that closing curly brace of initialization block that is not the first block on a line is correctly indented.
-    doTextTest("class Class {\n" + "    private Type field; {\n" + "    }\n" + "}",
-               "class Class {\n" + "    private Type field;\n\n    {\n" + "    }\n" + "}");
+    doTextTest("""
+                 class Class {
+                     private Type field; {
+                     }
+                 }""",
+               """
+                 class Class {
+                     private Type field;
+
+                     {
+                     }
+                 }""");
     doTextTest(
-      "class T {\n" +
-      "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
-      "        fmt.setGroupingUsed(false);\n" +
-      "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-      "    }\n" +
-      "}",
-      "class T {\n" +
-      "    private final DecimalFormat fmt = new DecimalFormat();\n\n    {\n" +
-      "        fmt.setGroupingUsed(false);\n" +
-      "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-      "    }\n" +
-      "}"
+      """
+        class T {
+            private final DecimalFormat fmt = new DecimalFormat(); {
+                fmt.setGroupingUsed(false);
+                fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
+            }
+        }""",
+      """
+        class T {
+            private final DecimalFormat fmt = new DecimalFormat();
+
+            {
+                fmt.setGroupingUsed(false);
+                fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
+            }
+        }"""
     );
   }
 
@@ -65,26 +81,28 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 4;
 
     doMethodTest(
-      "BigDecimal.ONE\n" +
-      "      .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE\n" +
-      ".add(BigDecimal.ONE\n" +
-      " .add(BigDecimal.ONE\n" +
-      "  .add(BigDecimal.ONE\n" +
-      " .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE)))))))));",
-      "BigDecimal.ONE\n" +
-      "    .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE\n" +
-      "            .add(BigDecimal.ONE\n" +
-      "                .add(BigDecimal.ONE\n" +
-      "                    .add(BigDecimal.ONE\n" +
-      "                        .add(BigDecimal.ONE\n" +
-      "                            .add(BigDecimal.ONE\n" +
-      "                                .add(BigDecimal.ONE\n" +
-      "                                    .add(BigDecimal.ONE)))))))));"
+      """
+        BigDecimal.ONE
+              .add(BigDecimal.ONE
+                .add(BigDecimal.ONE
+                .add(BigDecimal.ONE
+                .add(BigDecimal.ONE
+        .add(BigDecimal.ONE
+         .add(BigDecimal.ONE
+          .add(BigDecimal.ONE
+         .add(BigDecimal.ONE
+                .add(BigDecimal.ONE)))))))));""",
+      """
+        BigDecimal.ONE
+            .add(BigDecimal.ONE
+                .add(BigDecimal.ONE
+                    .add(BigDecimal.ONE
+                        .add(BigDecimal.ONE
+                            .add(BigDecimal.ONE
+                                .add(BigDecimal.ONE
+                                    .add(BigDecimal.ONE
+                                        .add(BigDecimal.ONE
+                                            .add(BigDecimal.ONE)))))))));"""
     );
   }
 
@@ -93,37 +111,39 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     getSettings().ELSE_ON_NEW_LINE = true;
     getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
     doMethodTest(
-      "long a = System.currentTimeMillis();\n" +
-      "    if (a == 0){\n" +
-      "   }else if (a > 1){\n" +
-      "  }else if (a > 2){\n" +
-      " }else if (a > 3){\n" +
-      "     }else if (a > 4){\n" +
-      "      }else if (a > 5){\n" +
-      "       }else{\n" +
-      "        }",
-      "long a = System.currentTimeMillis();\n" +
-      "if (a == 0)\n" +
-      "    {\n" +
-      "    }\n" +
-      "else if (a > 1)\n" +
-      "    {\n" +
-      "    }\n" +
-      "else if (a > 2)\n" +
-      "    {\n" +
-      "    }\n" +
-      "else if (a > 3)\n" +
-      "    {\n" +
-      "    }\n" +
-      "else if (a > 4)\n" +
-      "    {\n" +
-      "    }\n" +
-      "else if (a > 5)\n" +
-      "    {\n" +
-      "    }\n" +
-      "else\n" +
-      "    {\n" +
-      "    }"
+      """
+        long a = System.currentTimeMillis();
+            if (a == 0){
+           }else if (a > 1){
+          }else if (a > 2){
+         }else if (a > 3){
+             }else if (a > 4){
+              }else if (a > 5){
+               }else{
+                }""",
+      """
+        long a = System.currentTimeMillis();
+        if (a == 0)
+            {
+            }
+        else if (a > 1)
+            {
+            }
+        else if (a > 2)
+            {
+            }
+        else if (a > 3)
+            {
+            }
+        else if (a > 4)
+            {
+            }
+        else if (a > 5)
+            {
+            }
+        else
+            {
+            }"""
     );
   }
 
@@ -133,80 +153,97 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
     // Inspired by IDEA-54671
     doTextTest(
-      "class Test {\n" +
-      "    public void foo() {\n" +
-      "        test(11\n" +
-      "                     + 12\n" +
-      "                     + 13,\n" +
-      "             21\n" +
-      "                     + 22\n" +
-      "                     + 23\n" +
-      "        )" +
-      "    }\n" +
-      "}",
+      """
+        class Test {
+            public void foo() {
+                test(11
+                             + 12
+                             + 13,
+                     21
+                             + 22
+                             + 23
+                )    }
+        }""",
 
-      "class Test {\n" +
-      "    public void foo() {\n" +
-      "        test(11\n" +
-      "                     + 12\n" +
-      "                     + 13,\n" +
-      "             21\n" +
-      "                     + 22\n" +
-      "                     + 23\n" +
-      "        )\n" +
-      "    }\n" +
-      "}"
+      """
+        class Test {
+            public void foo() {
+                test(11
+                             + 12
+                             + 13,
+                     21
+                             + 22
+                             + 23
+                )
+            }
+        }"""
     );
   }
 
   public void testEnumIndentation() throws IncorrectOperationException {
     // Inspired by IDEADEV-2840
-    doTextTest("enum Xyz {\n" + "FOO,\n" + "BAR,\n" + "}", "enum Xyz {\n" + "    FOO,\n" + "    BAR,\n" + "}");
+    doTextTest("""
+                 enum Xyz {
+                 FOO,
+                 BAR,
+                 }""", """
+                 enum Xyz {
+                     FOO,
+                     BAR,
+                 }""");
   }
 
   public void testFirstColumnComment() throws IncorrectOperationException {
     // Inspired by IDEADEV-14116
     getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
 
-    doTextTest("class Foo{\n" + "private int foo;     // this is a foo\n" + "}",
-               "class Foo {\n" + "    private int foo;     // this is a foo\n" + "}");
+    doTextTest("""
+                 class Foo{
+                 private int foo;     // this is a foo
+                 }""",
+               """
+                 class Foo {
+                     private int foo;     // this is a foo
+                 }""");
   }
 
   public void testCaseFromSwitch() throws IncorrectOperationException {
     // Inspired by IDEADEV-22920
     getSettings().INDENT_CASE_FROM_SWITCH = false;
     doTextTest(
-      "class Foo{\n" +
-      "void foo () {\n" +
-      "switch(someValue) {\n" +
-      " // This comment is correctly not-indented\n" +
-      " case 1:\n" +
-      "    doSomething();\n" +
-      "    break;\n" +
-      "\n" +
-      " // This comment should not be indented, but it is\n" +
-      " case 2:\n" +
-      "    doSomethingElse();\n" +
-      "    break;\n" +
-      "}\n" +
-      "}\n" +
-      "}",
+      """
+        class Foo{
+        void foo () {
+        switch(someValue) {
+         // This comment is correctly not-indented
+         case 1:
+            doSomething();
+            break;
 
-      "class Foo {\n" +
-      "    void foo() {\n" +
-      "        switch (someValue) {\n" +
-      "        // This comment is correctly not-indented\n" +
-      "        case 1:\n" +
-      "            doSomething();\n" +
-      "            break;\n" +
-      "\n" +
-      "        // This comment should not be indented, but it is\n" +
-      "        case 2:\n" +
-      "            doSomethingElse();\n" +
-      "            break;\n" +
-      "        }\n" +
-      "    }\n" +
-      "}");
+         // This comment should not be indented, but it is
+         case 2:
+            doSomethingElse();
+            break;
+        }
+        }
+        }""",
+
+      """
+        class Foo {
+            void foo() {
+                switch (someValue) {
+                // This comment is correctly not-indented
+                case 1:
+                    doSomething();
+                    break;
+
+                // This comment should not be indented, but it is
+                case 2:
+                    doSomethingElse();
+                    break;
+                }
+            }
+        }""");
   }
 
   public void testBinaryExpressionsWithRelativeIndents() {
@@ -215,63 +252,65 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     getIndentOptions().CONTINUATION_INDENT_SIZE = 4;
 
     doTextTest(
-      "public class FormattingTest {\n" +
-      "\n" +
-      "    public boolean test1(int a, int b, int c, int d) {\n" +
-      "        return a == 1 &&\n" +
-      "      b == 2;\n" +
-      "    }\n" +
-      "\n" +
-      "    public boolean multilineSignOnCurrent(int a, int b, int c, int d) {\n" +
-      "        return a == 0 &&\n" +
-      "                                  (b == 0 ||\n" +
-      "     c == 0) &&\n" +
-      "  d == 0;\n" +
-      "    }\n" +
-      "\n" +
-      "    public boolean multilineSignOnNext(int a, int b, int c, int d) {\n" +
-      "        return a == 0\n" +
-      "       && (b == 0\n" +
-      "                                     || c == 0)\n" +
-      "   && d == 0;\n" +
-      "    }\n" +
-      "\n" +
-      "    public boolean expectedMultilineSignOnNext(int a, int b, int c, int d) {\n" +
-      "        return a == 0\n" +
-      "    && (b == 0\n" +
-      "     || c == 0)\n" +
-      "                       && d == 0;\n" +
-      "    }\n" +
-      "}",
+      """
+        public class FormattingTest {
 
-      "public class FormattingTest {\n" +
-      "\n" +
-      "    public boolean test1(int a, int b, int c, int d) {\n" +
-      "        return a == 1 &&\n" +
-      "                   b == 2;\n" +
-      "    }\n" +
-      "\n" +
-      "    public boolean multilineSignOnCurrent(int a, int b, int c, int d) {\n" +
-      "        return a == 0 &&\n" +
-      "                   (b == 0 ||\n" +
-      "                        c == 0) &&\n" +
-      "                   d == 0;\n" +
-      "    }\n" +
-      "\n" +
-      "    public boolean multilineSignOnNext(int a, int b, int c, int d) {\n" +
-      "        return a == 0\n" +
-      "                   && (b == 0\n" +
-      "                           || c == 0)\n" +
-      "                   && d == 0;\n" +
-      "    }\n" +
-      "\n" +
-      "    public boolean expectedMultilineSignOnNext(int a, int b, int c, int d) {\n" +
-      "        return a == 0\n" +
-      "                   && (b == 0\n" +
-      "                           || c == 0)\n" +
-      "                   && d == 0;\n" +
-      "    }\n" +
-      "}"
+            public boolean test1(int a, int b, int c, int d) {
+                return a == 1 &&
+              b == 2;
+            }
+
+            public boolean multilineSignOnCurrent(int a, int b, int c, int d) {
+                return a == 0 &&
+                                          (b == 0 ||
+             c == 0) &&
+          d == 0;
+            }
+
+            public boolean multilineSignOnNext(int a, int b, int c, int d) {
+                return a == 0
+               && (b == 0
+                                             || c == 0)
+           && d == 0;
+            }
+
+            public boolean expectedMultilineSignOnNext(int a, int b, int c, int d) {
+                return a == 0
+            && (b == 0
+             || c == 0)
+                               && d == 0;
+            }
+        }""",
+
+      """
+        public class FormattingTest {
+
+            public boolean test1(int a, int b, int c, int d) {
+                return a == 1 &&
+                           b == 2;
+            }
+
+            public boolean multilineSignOnCurrent(int a, int b, int c, int d) {
+                return a == 0 &&
+                           (b == 0 ||
+                                c == 0) &&
+                           d == 0;
+            }
+
+            public boolean multilineSignOnNext(int a, int b, int c, int d) {
+                return a == 0
+                           && (b == 0
+                                   || c == 0)
+                           && d == 0;
+            }
+
+            public boolean expectedMultilineSignOnNext(int a, int b, int c, int d) {
+                return a == 0
+                           && (b == 0
+                                   || c == 0)
+                           && d == 0;
+            }
+        }"""
     );
   }
   
@@ -280,29 +319,32 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     
     String precededByJavadoc =
-      "/**\n" +
-      " * test\n" +
-      " */\n" +
-      "public int getFoo()\n" +
-      "    {\n" +
-      "    return foo;\n" +
-      "    }";
+      """
+        /**
+         * test
+         */
+        public int getFoo()
+            {
+            return foo;
+            }""";
     
     String precededBySingleLineComment =
-      "// test\n" +
-      "public int getFoo()\n" +
-      "    {\n" +
-      "    return foo;\n" +
-      "    }";
+      """
+        // test
+        public int getFoo()
+            {
+            return foo;
+            }""";
 
     String precededByMultiLineComment =
-      "/*\n" +
-      "test\n" +
-      "*/\n" +
-      "public int getFoo()\n" +
-      "    {\n" +
-      "    return foo;\n" +
-      "    }";
+      """
+        /*
+        test
+        */
+        public int getFoo()
+            {
+            return foo;
+            }""";
     
     doClassTest(precededByJavadoc, precededByJavadoc);
     doClassTest(precededBySingleLineComment, precededBySingleLineComment);
@@ -313,62 +355,68 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     // Inspired by IDEA-65987
     
     doMethodTest(
-      "foo(\"long string as the first argument\", new Runnable() {\n" +
-      "public void run() {                         \n" +
-      "}                                        \n" +
-      "},                                            \n" +
-      "new Runnable() {                         \n" +
-      "public void run() {                 \n" +
-      "}                                          \n" +
-      "}                                             \n" +
-      ");                                                       ",
-      "foo(\"long string as the first argument\", new Runnable() {\n" +
-      "            public void run() {\n" +
-      "            }\n" +
-      "        },\n" +
-      "        new Runnable() {\n" +
-      "            public void run() {\n" +
-      "            }\n" +
-      "        }\n" +
-      ");"
+      """
+        foo("long string as the first argument", new Runnable() {
+        public void run() {                        \s
+        }                                       \s
+        },                                           \s
+        new Runnable() {                        \s
+        public void run() {                \s
+        }                                         \s
+        }                                            \s
+        );                                                      \s""",
+      """
+        foo("long string as the first argument", new Runnable() {
+                    public void run() {
+                    }
+                },
+                new Runnable() {
+                    public void run() {
+                    }
+                }
+        );"""
     );
     
     doMethodTest(
-      "foo(1,\n" +
-      "2, new Runnable() {\n" +
-      "@Override\n" +
-      "public void run() {\n" +
-      "}\n" +
-      "});",
-      "foo(1,\n" +
-      "        2, new Runnable() {\n" +
-      "            @Override\n" +
-      "            public void run() {\n" +
-      "            }\n" +
-      "        });"
+      """
+        foo(1,
+        2, new Runnable() {
+        @Override
+        public void run() {
+        }
+        });""",
+      """
+        foo(1,
+                2, new Runnable() {
+                    @Override
+                    public void run() {
+                    }
+                });"""
     );
     
     doMethodTest(
-      "foo(new Runnable() {\n" +
-      "@Override\n" +
-      "public void run() {\n" +
-      "}\n" +
-      "},\n" +
-      "new Runnable() {\n" +
-      "@Override\n" +
-      "public void run() {\n" +
-      "}\n" +
-      "});",
-      "foo(new Runnable() {\n" +
-      "        @Override\n" +
-      "        public void run() {\n" +
-      "        }\n" +
-      "    },\n" +
-      "        new Runnable() {\n" +
-      "            @Override\n" +
-      "            public void run() {\n" +
-      "            }\n" +
-      "        });"
+      """
+        foo(new Runnable() {
+        @Override
+        public void run() {
+        }
+        },
+        new Runnable() {
+        @Override
+        public void run() {
+        }
+        });""",
+      """
+        foo(new Runnable() {
+                @Override
+                public void run() {
+                }
+            },
+                new Runnable() {
+                    @Override
+                    public void run() {
+                    }
+                });"""
     );
   }
 
@@ -376,173 +424,188 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
     doMethodTest(
-      "foo(new Runnable() {\n" +
-      "@Override\n" +
-      "public void run() {\n" +
-      "}\n" +
-      "},\n" +
-      "new Runnable() {\n" +
-      "@Override\n" +
-      "public void run() {\n" +
-      "}\n" +
-      "});",
-      "foo(new Runnable() {\n" +
-      "        @Override\n" +
-      "        public void run() {\n" +
-      "        }\n" +
-      "    },\n" +
-      "    new Runnable() {\n" +
-      "        @Override\n" +
-      "        public void run() {\n" +
-      "        }\n" +
-      "    });"
+      """
+        foo(new Runnable() {
+        @Override
+        public void run() {
+        }
+        },
+        new Runnable() {
+        @Override
+        public void run() {
+        }
+        });""",
+      """
+        foo(new Runnable() {
+                @Override
+                public void run() {
+                }
+            },
+            new Runnable() {
+                @Override
+                public void run() {
+                }
+            });"""
     );
 
     doMethodTest(
-      "foo(123456789, new Runnable() {\n" +
-      "@Override\n" +
-      "public void run() {\n" +
-      "}\n" +
-      "},\n" +
-      "new Runnable() {\n" +
-      "@Override\n" +
-      "public void run() {\n" +
-      "}\n" +
-      "});",
-      "foo(123456789, new Runnable() {\n" +
-      "        @Override\n" +
-      "        public void run() {\n" +
-      "        }\n" +
-      "    },\n" +
-      "    new Runnable() {\n" +
-      "        @Override\n" +
-      "        public void run() {\n" +
-      "        }\n" +
-      "    });"
+      """
+        foo(123456789, new Runnable() {
+        @Override
+        public void run() {
+        }
+        },
+        new Runnable() {
+        @Override
+        public void run() {
+        }
+        });""",
+      """
+        foo(123456789, new Runnable() {
+                @Override
+                public void run() {
+                }
+            },
+            new Runnable() {
+                @Override
+                public void run() {
+                }
+            });"""
     );
 
     doMethodTest(
-      "foo(new Runnable() {\n" +
-      "@Override\n" +
-      "public void run() {\n" +
-      "}" +
-      "}, 1, 2);",
-      "foo(new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "    }\n" +
-      "}, 1, 2);"
+      """
+        foo(new Runnable() {
+        @Override
+        public void run() {
+        }}, 1, 2);""",
+      """
+        foo(new Runnable() {
+            @Override
+            public void run() {
+            }
+        }, 1, 2);"""
     );
   }
 
   public void testAnonymousClassesOnSameLineAtMethodCallExpression() {
     doMethodTest(
-      "foo(new Runnable() {\n" +
-      "        public void run() {\n" +
-      "        }\n" +
-      "    }, new Runnable() {\n" +
-      "               public void run() {\n" +
-      "               }\n" +
-      "              });",
-      "foo(new Runnable() {\n" +
-      "    public void run() {\n" +
-      "    }\n" +
-      "}, new Runnable() {\n" +
-      "    public void run() {\n" +
-      "    }\n" +
-      "});"
+      """
+        foo(new Runnable() {
+                public void run() {
+                }
+            }, new Runnable() {
+                       public void run() {
+                       }
+                      });""",
+      """
+        foo(new Runnable() {
+            public void run() {
+            }
+        }, new Runnable() {
+            public void run() {
+            }
+        });"""
     );
   }
 
   public void testAlignMultipleAnonymousClasses_PassedAsMethodParameters() {
-    String text = "test(new Runnable() {\n" +
-                  "    @Override\n" +
-                  "    public void run() {\n" +
-                  "        System.out.println(\"AAA!\");\n" +
-                  "    }\n" +
-                  "}, new Runnable() {\n" +
-                  "    @Override\n" +
-                  "    public void run() {\n" +
-                  "        System.out.println(\"BBB!\");\n" +
-                  "    }\n" +
-                  "});\n";
+    String text = """
+      test(new Runnable() {
+          @Override
+          public void run() {
+              System.out.println("AAA!");
+          }
+      }, new Runnable() {
+          @Override
+          public void run() {
+              System.out.println("BBB!");
+          }
+      });
+      """;
     doMethodTest(text, text);
   }
 
   public void testAlignmentAdditionalParamsWithMultipleAnonymousClasses_PassedAsMethodParameters() {
-    String text = "foo(1221, new Runnable() {\n" +
-                  "    @Override\n" +
-                  "    public void run() {\n" +
-                  "        System.out.println(\"A\");\n" +
-                  "    }\n" +
-                  "}, new Runnable() {\n" +
-                  "    @Override\n" +
-                  "    public void run() {\n" +
-                  "        System.out.println(\"BB\");\n" +
-                  "    }\n" +
-                  "});";
+    String text = """
+      foo(1221, new Runnable() {
+          @Override
+          public void run() {
+              System.out.println("A");
+          }
+      }, new Runnable() {
+          @Override
+          public void run() {
+              System.out.println("BB");
+          }
+      });""";
     doMethodTest(text, text);
   }
 
   public void testAlignmentMultipleParamsWithAnonymousClass_PassedAsMethodParams() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    String text = "test(1000,\n" +
-                  "     new Runnable() {\n" +
-                  "         @Override\n" +
-                  "         public void run() {\n" +
-                  "             System.out.println(\"BBB\");\n" +
-                  "         }\n" +
-                  "     }\n" +
-                  ");";
+    String text = """
+      test(1000,
+           new Runnable() {
+               @Override
+               public void run() {
+                   System.out.println("BBB");
+               }
+           }
+      );""";
     doMethodTest(text, text);
   }
 
   public void testAlignmentMultipleAnonymousClassesOnNewLines() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    String text = "test(1000,\n" +
-                  "     new Runnable() {\n" +
-                  "         @Override\n" +
-                  "         public void run() {\n" +
-                  "             System.out.println(\"BBB\");\n" +
-                  "         }\n" +
-                  "     },\n" +
-                  "     new Runnable() {\n" +
-                  "         @Override\n" +
-                  "         public void run() {\n" +
-                  "             System.out.println(\"BBB\");\n" +
-                  "         }\n" +
-                  "     }\n" +
-                  ");";
+    String text = """
+      test(1000,
+           new Runnable() {
+               @Override
+               public void run() {
+                   System.out.println("BBB");
+               }
+           },
+           new Runnable() {
+               @Override
+               public void run() {
+                   System.out.println("BBB");
+               }
+           }
+      );""";
     doMethodTest(text, text);
   }
 
   public void testEnforceChildrenIndent_OfAnonymousClasses_IfAnyOfParamsIsLocatedOnNewLine() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    String text = "test(\"Suuuuuuuuuuuuuuuuuper loooooooooooong string\",\n" +
-                  "     \"Next loooooooooooooooooooooong striiiiiiiiiiing\", new Runnable() {\n" +
-                  "            @Override\n" +
-                  "            public void run() {\n" +
-                  "\n" +
-                  "            }\n" +
-                  "        }, new Runnable() {\n" +
-                  "            @Override\n" +
-                  "            public void run() {\n" +
-                  "\n" +
-                  "            }\n" +
-                  "        }\n" +
-                  ");\n";
+    String text = """
+      test("Suuuuuuuuuuuuuuuuuper loooooooooooong string",
+           "Next loooooooooooooooooooooong striiiiiiiiiiing", new Runnable() {
+                  @Override
+                  public void run() {
+
+                  }
+              }, new Runnable() {
+                  @Override
+                  public void run() {
+
+                  }
+              }
+      );
+      """;
     doMethodTest(text, text);
   }
 
   public void testPackagePrivateAnnotation() {
     // Inspired by IDEA-67294
     
-    String text = 
-      "@Retention(RUNTIME)\n" +
-      "@Target({FIELD, PARAMETER, METHOD})\n" +
-      "@interface MyAnnotation {\n" +
-      "\n" +
-      "}";
+    String text =
+      """
+        @Retention(RUNTIME)
+        @Target({FIELD, PARAMETER, METHOD})
+        @interface MyAnnotation {
+
+        }""";
     doTextTest(text, text);
   }
 
@@ -550,75 +613,84 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     // Inspired by IDEA-79836.
 
     doMethodTest(
-      "test(new Runnable() {\n" +
-      "         public void run() {\n" +
-      "         }\n" +
-      "     }, new Runnable() {\n" +
-      "         public void run() {\n" +
-      "         }\n" +
-      "     }, )",
-      "test(new Runnable() {\n" +
-      "    public void run() {\n" +
-      "    }\n" +
-      "}, new Runnable() {\n" +
-      "    public void run() {\n" +
-      "    }\n" +
-      "}, )"
+      """
+        test(new Runnable() {
+                 public void run() {
+                 }
+             }, new Runnable() {
+                 public void run() {
+                 }
+             }, )""",
+      """
+        test(new Runnable() {
+            public void run() {
+            }
+        }, new Runnable() {
+            public void run() {
+            }
+        }, )"""
     );
   }
 
   public void testCStyleCommentIsNotMoved() {
     // IDEA-87087
     doClassTest(
-      "                /*\n" +
-      "                   this is a c-style comment\n" +
-      "                 */\n" +
-      "           // This is a line comment",
-      "            /*\n" +
-      "               this is a c-style comment\n" +
-      "             */\n" +
-      "// This is a line comment"
+      """
+                        /*
+                           this is a c-style comment
+                         */
+                   // This is a line comment\
+        """,
+      """
+                    /*
+                       this is a c-style comment
+                     */
+        // This is a line comment"""
     );
   }
 
   public void testMultilineCommentAtFileStart() {
     // IDEA-90860
     String text =
-      "\n" +
-      "/*\n" +
-      " * comment\n" +
-      " */\n" +
-      "\n" +
-      "class Test {\n" +
-      "}";
+      """
+
+        /*
+         * comment
+         */
+
+        class Test {
+        }""";
     doTextTest(text, text);
   }
 
   public void testMultilineCommentAndTabsIndent() {
     // IDEA-91703
-    String initial = 
-      "\t/*\n" +
-      "\t\t* comment\n" +
-      "\t */\n" +
-      "class Test {\n" +
-      "}";
+    String initial =
+      """
+        \t/*
+        \t\t* comment
+        \t */
+        class Test {
+        }""";
 
     String expected =
-      "/*\n" +
-      " * comment\n" +
-      " */\n" +
-      "class Test {\n" +
-      "}";
+      """
+        /*
+         * comment
+         */
+        class Test {
+        }""";
     
     getIndentOptions().USE_TAB_CHARACTER = true;
     doTextTest(initial, expected);
   }
 
   public void testLambdaIndentation() {
-    String before = "Runnable r = () ->\n" +
-                    "{\n" +
-                    "    System.out.println(\"olo\");\n" +
-                    "};";
+    String before = """
+      Runnable r = () ->
+      {
+          System.out.println("olo");
+      };""";
     doMethodTest(before, before);
   }
   
@@ -628,45 +700,47 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     getSettings().KEEP_LINE_BREAKS = false;
     getSettings().RIGHT_MARGIN = 120;
     getSettings().WRAP_LONG_LINES = true;
-    String before = "public class Formatting {\n" +
-                    "  @RequestMapping(value = \"/\", method = GET)\n" +
-                    "  public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name, @PageableDefault(page = 0, size = 10) Pageable pageable) {\n" +
-                    "    // I'd expect the line above to be indented by 4 spaces\n" +
-                    "    return ResponseEntity.ok(\"Hello \" + name);\n" +
-                    "  }\n" +
-                    "}";
-    String after = "public class Formatting {\n" +
-                   "    @RequestMapping(value = \"/\", method = GET)\n" +
-                   "    public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name,\n" +
-                   "                                         @PageableDefault(page = 0, size = 10) Pageable pageable) {\n" +
-                   "        // I'd expect the line above to be indented by 4 spaces\n" +
-                   "        return ResponseEntity.ok(\"Hello \" + name);\n" +
-                   "    }\n" +
-                   "}";
+    String before = """
+      public class Formatting {
+        @RequestMapping(value = "/", method = GET)
+        public HttpEntity<String> helloWorld(@RequestParam("name") String name, @PageableDefault(page = 0, size = 10) Pageable pageable) {
+          // I'd expect the line above to be indented by 4 spaces
+          return ResponseEntity.ok("Hello " + name);
+        }
+      }""";
+    String after = """
+      public class Formatting {
+          @RequestMapping(value = "/", method = GET)
+          public HttpEntity<String> helloWorld(@RequestParam("name") String name,
+                                               @PageableDefault(page = 0, size = 10) Pageable pageable) {
+              // I'd expect the line above to be indented by 4 spaces
+              return ResponseEntity.ok("Hello " + name);
+          }
+      }""";
     
     doTextTest(before, after);
   }
 
   public void testTextBlock() {
-    String before = "class Formatting {\n" +
-                    "    void test() {\n" +
-                    "        String block = \"\"\"\n" +
-                    "                             \n" +
-                    " text\n" +
-                    "block\"\"\";\n" +
-                    "  " +
-                    "  }\n" +
-                    "}";
+    String before = """
+      class Formatting {
+          void test() {
+              String block = ""\"
+                                  \s
+       text
+      block""\";
+          }
+      }""";
 
-    String after = "class Formatting {\n" +
-                   "    void test() {\n" +
-                   "        String block = \"\"\"\n" +
-                   "                                             \n" +
-                   "                 text\n" +
-                   "                block\"\"\";\n" +
-                   "    " +
-                   "}\n" +
-                   "}";
+    String after = """
+      class Formatting {
+          void test() {
+              String block = ""\"
+                                                  \s
+                       text
+                      block""\";
+          }
+      }""";
     doTextTest(before, after);
   }
 
@@ -677,88 +751,94 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     getSettings().KEEP_BUILDER_METHODS_INDENTS = true;
 
     doTextTest(
-      "class Test {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\")\n" +
-      "            .flowPanel(\"sidebar-offset\")   //content\n" +
-      "              .widget(myReviewHints)\n" +
-      "              .flowPanel(\"island\")          //changes island\n" +
-      "                .flowPanel(\"pane-toolbar pane-toolbar_island clearfix\") //paneToolbar\n" +
-      "                  .flowPanel(\"pane-toolbar__left pane-toolbar__left_header\") //paneToolbarLeft\n" +
-      "                    .widget(reviewStateLabel(reviewDescriptorSignal))\n" +
-      "                    .widget(reviewIdLabel(reviewDescriptorSignal))\n" +
-      "                    .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))\n" +
-      "                  .end()\n" +
-      "                .end()\n" +
-      "                .flowPanel(\"revision-files-standalone\") // review changes view\n" +
-      "                  .widget(myChangesListView)\n" +
-      "                .end()\n" +
-      "              .end()\n" +
-      "              .widget(myReviewFeedView)\n" +
-      "            .end();\n" +
-      "    }\n" +
-      "}",
+      """
+        class Test {
+            public static void main(String[] args) {
+                PanelBuilder.wrap(getCenterPanel(), "review-view")
+                    .flowPanel("sidebar-offset")   //content
+                      .widget(myReviewHints)
+                      .flowPanel("island")          //changes island
+                        .flowPanel("pane-toolbar pane-toolbar_island clearfix") //paneToolbar
+                          .flowPanel("pane-toolbar__left pane-toolbar__left_header") //paneToolbarLeft
+                            .widget(reviewStateLabel(reviewDescriptorSignal))
+                            .widget(reviewIdLabel(reviewDescriptorSignal))
+                            .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))
+                          .end()
+                        .end()
+                        .flowPanel("revision-files-standalone") // review changes view
+                          .widget(myChangesListView)
+                        .end()
+                      .end()
+                      .widget(myReviewFeedView)
+                    .end();
+            }
+        }""",
 
-      "class Test {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\")\n" +
-      "                .flowPanel(\"sidebar-offset\")   //content\n" +
-      "                  .widget(myReviewHints)\n" +
-      "                  .flowPanel(\"island\")          //changes island\n" +
-      "                    .flowPanel(\"pane-toolbar pane-toolbar_island clearfix\") //paneToolbar\n" +
-      "                      .flowPanel(\"pane-toolbar__left pane-toolbar__left_header\") //paneToolbarLeft\n" +
-      "                        .widget(reviewStateLabel(reviewDescriptorSignal))\n" +
-      "                        .widget(reviewIdLabel(reviewDescriptorSignal))\n" +
-      "                        .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))\n" +
-      "                      .end()\n" +
-      "                    .end()\n" +
-      "                    .flowPanel(\"revision-files-standalone\") // review changes view\n" +
-      "                      .widget(myChangesListView)\n" +
-      "                    .end()\n" +
-      "                  .end()\n" +
-      "                  .widget(myReviewFeedView)\n" +
-      "                .end();\n" +
-      "    }\n" +
-      "}"
+      """
+        class Test {
+            public static void main(String[] args) {
+                PanelBuilder.wrap(getCenterPanel(), "review-view")
+                        .flowPanel("sidebar-offset")   //content
+                          .widget(myReviewHints)
+                          .flowPanel("island")          //changes island
+                            .flowPanel("pane-toolbar pane-toolbar_island clearfix") //paneToolbar
+                              .flowPanel("pane-toolbar__left pane-toolbar__left_header") //paneToolbarLeft
+                                .widget(reviewStateLabel(reviewDescriptorSignal))
+                                .widget(reviewIdLabel(reviewDescriptorSignal))
+                                .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))
+                              .end()
+                            .end()
+                            .flowPanel("revision-files-standalone") // review changes view
+                              .widget(myChangesListView)
+                            .end()
+                          .end()
+                          .widget(myReviewFeedView)
+                        .end();
+            }
+        }"""
     );
   }
 
   public void testIdea158691() {
     doMethodTest(
-      "context.start(\n" +
-      "            first,\n" +
-      "            second)\n" +
-      "            .setPriority(1)\n" +
-      "            .build();",
+      """
+        context.start(
+                    first,
+                    second)
+                    .setPriority(1)
+                    .build();""",
 
-      "context.start(\n" +
-      "                first,\n" +
-      "                second)\n" +
-      "        .setPriority(1)\n" +
-      "        .build();"
+      """
+        context.start(
+                        first,
+                        second)
+                .setPriority(1)
+                .build();"""
     );
   }
 
   public void testIdea274755() {
     getSettings().getIndentOptions().USE_RELATIVE_INDENTS = true;
     doMethodTest(
-      "public class Test {\n" +
-      "void test() {\n" +
-      "    final var command = CreateUpload.builder()\n" +
-      ".identityId(userId)\n" +
-      "      .iotId(iotId)\n" +
-      ".build();\n" +
-      "   }\n" +
-      "}",
+      """
+        public class Test {
+        void test() {
+            final var command = CreateUpload.builder()
+        .identityId(userId)
+              .iotId(iotId)
+        .build();
+           }
+        }""",
 
-      "public class Test {\n" +
-      "    void test() {\n" +
-      "        final var command = CreateUpload.builder()\n" +
-      "                                    .identityId(userId)\n" +
-      "                                    .iotId(iotId)\n" +
-      "                                    .build();\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+            void test() {
+                final var command = CreateUpload.builder()
+                                            .identityId(userId)
+                                            .iotId(iotId)
+                                            .build();
+            }
+        }"""
     );
   }
 
@@ -771,23 +851,25 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     try {
       pre212compat.setValue(true);
       doTextTest(
-        "class Foo {\n" +
-        "void foo() {\n" +
-        "LOG.error(DetailsMessage.of(\n" +
-        "\"TITLE\",\n" +
-        "\"LONG MESSAGE TEXT...\")\n" +
-        ".with(\"value\", value));\n" +
-        "}\n" +
-        "}",
+        """
+          class Foo {
+          void foo() {
+          LOG.error(DetailsMessage.of(
+          "TITLE",
+          "LONG MESSAGE TEXT...")
+          .with("value", value));
+          }
+          }""",
 
-        "class Foo {\n" +
-        "   void foo() {\n" +
-        "      LOG.error(DetailsMessage.of(\n" +
-        "         \"TITLE\",\n" +
-        "         \"LONG MESSAGE TEXT...\")\n" +
-        "                              .with(\"value\", value));\n" +
-        "   }\n" +
-        "}"
+        """
+          class Foo {
+             void foo() {
+                LOG.error(DetailsMessage.of(
+                   "TITLE",
+                   "LONG MESSAGE TEXT...")
+                                        .with("value", value));
+             }
+          }"""
       );
     }
     finally {

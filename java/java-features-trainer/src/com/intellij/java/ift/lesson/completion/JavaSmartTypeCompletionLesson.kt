@@ -72,8 +72,6 @@ class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBu
     }
   }
 
-  override val suitableTips = listOf("SmartTypeCompletion", "SmartTypeAfterNew", "SecondSmartCompletionToar")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.code.completion"),
          LessonUtil.getHelpLink("auto-completing-code.html")),

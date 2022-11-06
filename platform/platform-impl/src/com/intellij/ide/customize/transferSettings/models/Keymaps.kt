@@ -17,7 +17,7 @@ interface Keymap {
 class BundledKeymap(override val displayName: @Nls String, val keymap: Keymap, override val demoShortcuts: List<SimpleActionDescriptor>): com.intellij.ide.customize.transferSettings.models.Keymap {
   companion object {
     fun fromManager(keymapName: String, demoShortcuts: List<SimpleActionDescriptor>): BundledKeymap {
-      val keymap = KeymapManagerEx.getInstanceEx().getKeymap(keymapName) ?: error("Keymap was not found")
+      val keymap = KeymapManagerEx.getInstanceEx().getKeymap(keymapName) ?: error("Keymap $keymapName was not found")
 
       return BundledKeymap(keymap.displayName, keymap, demoShortcuts)
     }
@@ -66,7 +66,7 @@ class SimpleActionDescriptor(
   val defaultShortcut: Any // KeyboardShortcut or DummyKeyboardShortcut
 ) {
   companion object {
-    fun fromKeymap(keymap: Keymap, actionIds: List<String>): List<SimpleActionDescriptor> {
+    private fun fromKeymap(keymap: Keymap, actionIds: List<String>): List<SimpleActionDescriptor> {
       return actionIds.map {
         SimpleActionDescriptor(
           it,

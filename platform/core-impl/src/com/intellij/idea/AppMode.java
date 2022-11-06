@@ -122,10 +122,26 @@ public final class AppMode {
 
     @SuppressWarnings("SpellCheckingInspection")
     List<String> headlessCommands = Arrays.asList(
-      "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-      "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme",
+      "ant", "duplocate", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
+      "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "invalidateCaches", "warmup", "buildEventsScheme",
       "inspectopedia-generator", "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler",
-      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit");
+      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit", "qodanaExcludedPlugins");
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDevServer() {
+    return Boolean.getBoolean("idea.use.dev.build.server");
+  }
+
+  @ApiStatus.Internal
+  public static String getDevBuildRunDirName(@NotNull String platformPrefix) {
+    String result = System.getProperty("dev.build.dir");
+    if (result == null) {
+      return platformPrefix.equals("Idea") ? "idea-community" : platformPrefix;
+    }
+    else {
+      return result;
+    }
   }
 }

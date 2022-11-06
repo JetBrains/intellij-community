@@ -36,7 +36,7 @@ object AccessibilityUtils {
   }
 
   @JvmStatic
-  fun isScreenReaderDetected(): Boolean {
+  private fun isScreenReaderDetected(): Boolean {
     return when {
       SystemInfoRt.isWindows -> isWindowsScreenReaderEnabled()
       SystemInfoRt.isMac -> isMacVoiceOverEnabled()

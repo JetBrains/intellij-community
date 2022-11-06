@@ -14,9 +14,6 @@ import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location) {

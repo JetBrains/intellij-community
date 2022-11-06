@@ -311,24 +311,6 @@ class MetricEventTest : BasePlatformTestCase() {
     }
   }
 
-  @Test
-  fun `test add count not default metric with data`() {
-    val result = HashSet<MetricEvent>()
-    val obj = MetricEventTestObj()
-    obj.intValue = 23
-
-    val default = MetricEventTestObj()
-    val data = FeatureUsageData().addPlace("MainMenu")
-
-    addCounterIfDiffers(result, obj, default, { o -> o.intValue }, "metric.count", data)
-    Assert.assertTrue(result.size == 1)
-    for (event in result) {
-      Assert.assertTrue(event.eventId == "metric.count")
-      Assert.assertTrue(event.data.build()["count"] == 23)
-      Assert.assertTrue(event.data.build()["place"] == "MainMenu")
-    }
-  }
-
   class MetricEventTestObj(
     var strValue: String = "default.str",
     var intValue: Int = 10,

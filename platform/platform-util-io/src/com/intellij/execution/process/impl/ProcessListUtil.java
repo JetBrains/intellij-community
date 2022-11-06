@@ -315,19 +315,10 @@ public final class ProcessListUtil {
           return null;
         }
         switch (str.charAt(index + 1)) {
-          case '\\': {
-            builder.append('\\');
-            break;
-          }
-          case 'n': {
-            builder.append('\n');
-            break;
-          }
-          case 'r': {
-            builder.append('\r');
-            break;
-          }
-          default: {
+          case '\\' -> builder.append('\\');
+          case 'n' -> builder.append('\n');
+          case 'r' -> builder.append('\r');
+          default -> {
             logErrorTestSafe("Invalid character after an escape symbol: " + str.charAt(index + 1));
             LOG.debug(str);
             return null;

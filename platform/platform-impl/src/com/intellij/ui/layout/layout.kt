@@ -3,6 +3,7 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.DialogPanel
 
 /**
@@ -23,6 +24,10 @@ inline fun panel(vararg constraints: LCFlags, @NlsContexts.DialogTitle title: St
   builder.init()
 
   val panel = DialogPanel(title, layout = null)
+  val bgcolor = Registry.getColor("ui.kotlin.ui.dsl.deprecated.panel.color", null)
+  bgcolor?.let {
+    panel.background = it
+  }
   builder.builder.build(panel, constraints)
   initPanel(builder, panel)
   return panel

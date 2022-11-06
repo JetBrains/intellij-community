@@ -49,7 +49,7 @@ private fun isPluginCompatible(plugin: PluginDescriptor,
     nonCheckedModules.remove(declaredModule)
   }
   for (requiredDependency in plugin.requiredDependencies) {
-    if (availableModulesAndPlugins.contains(requiredDependency)) {
+    if (availableModulesAndPlugins.contains(requiredDependency) || requiredDependency.startsWith("com.intellij.platform.")) {
       continue
     }
 
@@ -75,7 +75,11 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
                              context: BuildContext): MutableMap<String, PluginDescriptor> {
   val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
   val productLayout = context.productProperties.productLayout
-  val nonTrivialPlugins = productLayout.pluginLayouts.groupBy { it.mainModule }
+  val nonTrivialPlugins = HashMap<String, PluginLayout>(productLayout.pluginLayouts.size)
+  for (pluginLayout in productLayout.pluginLayouts) {
+    nonTrivialPlugins.putIfAbsent(pluginLayout.mainModule, pluginLayout)
+  }
+
   val allBundledPlugins = HashSet(productLayout.bundledPluginModules)
   for (jpsModule in context.project.modules) {
     val moduleName = jpsModule.name
@@ -91,15 +95,15 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
 
     val pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml") ?: continue
 
-    val pluginLayout = nonTrivialPlugins.get(moduleName)?.first() ?: PluginLayout.simplePlugin(moduleName)
+    val pluginLayout = nonTrivialPlugins.get(moduleName) ?: PluginLayout.simplePlugin(moduleName)
     val xml = JDOMUtil.load(pluginXml)
     if (JDOMUtil.isEmpty(xml)) {
       // throws an exception
-      throw IllegalStateException("Module '${moduleName}': '$pluginXml' is empty")
+      throw IllegalStateException("Module '$moduleName': '$pluginXml' is empty")
     }
 
     if (skipImplementationDetailPlugins && xml.getAttributeValue("implementation-detail") == "true") {
-      context.messages.debug("PluginsCollector: skipping module '${moduleName}' since 'implementation-detail' == 'true' in '$pluginXml'")
+      context.messages.debug("PluginsCollector: skipping module '$moduleName' since 'implementation-detail' == 'true' in '$pluginXml'")
       continue
     }
 
@@ -108,7 +112,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     val id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
     if (id == null || id.isEmpty()) {
       // throws an exception
-      context.messages.error("Module '${moduleName}': '$pluginXml' does not contain <id/> element")
+      context.messages.error("Module '$moduleName': '$pluginXml' does not contain <id/> element")
       continue
     }
 
@@ -192,11 +196,8 @@ private class SourcesBasedXIncludeResolver(
 ) : JDOMXIncluder.PathResolver {
   override fun resolvePath(relativePath: String, base: URL?): URL {
     var result: URL? = null
-    for (moduleName in pluginLayout.getIncludedModuleNames()) {
-      val path = context.findFileInModuleSources(moduleName, relativePath)
-      if (path != null) {
-        result = path.toUri().toURL()
-      }
+    for (moduleName in pluginLayout.includedModuleNames) {
+      result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue).toUri().toURL()
     }
     if (result == null) {
       result = if (base == null) URL(relativePath) else URL(base, relativePath)
@@ -214,7 +215,7 @@ private object JDOMXIncluder {
   fun resolveNonXIncludeElement(original: Element,
                                 base: Path,
                                 pathResolver: PathResolver) {
-    LOG.assertTrue(!isIncludeElement(original))
+    check(!isIncludeElement(original))
     val bases = ArrayDeque<URL>()
     bases.push(base.toUri().toURL())
     doResolveNonXIncludeElement(original, bases, pathResolver)

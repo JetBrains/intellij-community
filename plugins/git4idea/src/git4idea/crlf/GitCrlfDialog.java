@@ -76,7 +76,6 @@ public class GitCrlfDialog extends DialogWrapper {
 
     JLabel icon = new JLabel(UIUtil.getWarningIcon(), SwingConstants.LEFT);
     myDontWarn = new JBCheckBox(GitBundle.message("checkbox.dont.warn.again"));
-    myDontWarn.setMnemonic('w');
 
     JPanel rootPanel = new JPanel(new GridBagLayout());
     GridBag g = new GridBag()

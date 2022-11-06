@@ -11,7 +11,8 @@ internal fun createKotlinMPPGradleModel(
     sourceSets: Set<KotlinSourceSet> = emptySet(),
     targets: Iterable<KotlinTarget> = emptyList(),
     extraFeatures: ExtraFeatures = createExtraFeatures(),
-    kotlinNativeHome: String = ""
+    kotlinNativeHome: String = "",
+    kotlinGradlePluginVersion: KotlinGradlePluginVersion? = null
 
 ): KotlinMPPGradleModelImpl {
     return KotlinMPPGradleModelImpl(
@@ -20,7 +21,8 @@ internal fun createKotlinMPPGradleModel(
         targets = targets.toList(),
         extraFeatures = extraFeatures,
         kotlinNativeHome = kotlinNativeHome,
-        cacheAware = CompilerArgumentsCacheAwareImpl()
+        cacheAware = CompilerArgumentsCacheAwareImpl(),
+        kotlinGradlePluginVersion = kotlinGradlePluginVersion
     )
 }
 
@@ -39,6 +41,7 @@ internal fun createKotlinSourceSet(
     declaredDependsOnSourceSets: Set<String> = emptySet(),
     allDependsOnSourceSets: Set<String> = declaredDependsOnSourceSets,
     platforms: Set<KotlinPlatform> = emptySet(),
+    androidSourceSetInfo: KotlinAndroidSourceSetInfo? = null,
 ): KotlinSourceSetImpl = KotlinSourceSetImpl(
     name = name,
     languageSettings = KotlinLanguageSettingsImpl(
@@ -59,6 +62,7 @@ internal fun createKotlinSourceSet(
     allDependsOnSourceSets = allDependsOnSourceSets,
     additionalVisibleSourceSets = emptySet(),
     actualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
+    androidSourceSetInfo = androidSourceSetInfo
 )
 
 @Suppress("DEPRECATION_ERROR")

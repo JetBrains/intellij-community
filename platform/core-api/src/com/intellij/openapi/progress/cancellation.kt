@@ -3,11 +3,14 @@
 
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.withThreadContext
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.coroutines.EmptyCoroutineContext
 
 private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress")
 
@@ -72,10 +75,14 @@ private fun <T> ensureCurrentJobInner(allowOrphan: Boolean, action: (Job) -> T):
 internal fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (currentJob: Job) -> T): T {
   val currentJob = Job(parent = null) // no job parent, the "parent" is the indicator
   val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
+  val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()
+                         ?: EmptyCoroutineContext
   return try {
     ProgressManager.getInstance().silenceGlobalIndicator {
       executeWithJobAndCompleteIt(currentJob) {
-        action(currentJob)
+        withThreadContext(progressModality).use {
+          action(currentJob)
+        }
       }
     }
   }

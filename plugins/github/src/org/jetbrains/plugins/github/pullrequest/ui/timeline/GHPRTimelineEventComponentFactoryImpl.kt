@@ -277,7 +277,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
 
       //language=HTML
       return """<span style='color: #${ColorUtil.toHex(foreground)}; background: #${ColorUtil.toHex(background)}'>
-                  &nbsp;<icon-inline src='icons.CollaborationToolsIcons.Branch'/>$name&nbsp;</span>"""
+                  &nbsp;<icon-inline src='icons.CollaborationToolsIcons.Review.Branch'/>$name&nbsp;</span>"""
     }
 
     private fun StringBuilder.appendParagraph(text: String): StringBuilder {

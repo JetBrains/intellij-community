@@ -3,6 +3,9 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.readableFs.PathInfo;
+import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -13,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
@@ -25,23 +29,61 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 
 
-public abstract class PythonSdkFlavor {
-  public static final ExtensionPointName<PythonSdkFlavor> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
+/**
+ * Flavor is a type of python interpreter stored in {@link PythonSdkAdditionalData}.
+ * Each flavor may have specific {@link PyFlavorData} which could be used to run python interpreter.
+ *
+ * @param <D> is flavor-specific data attached to each SDK.
+ */
+public abstract class PythonSdkFlavor<D extends PyFlavorData> {
+  public static final ExtensionPointName<PythonSdkFlavor<?>> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
 
   private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
 
   /**
-   * @param context used as cache.
-   *                If provided, must have "session"-scope.
-   *                Session could be one dialog or wizard.
+   * To provide <pre>PYCHARM_HOSTED</pre> or not. Some libs assume output is tty when this var set, which may lead to DS-4036
+   */
+  public boolean providePyCharmHosted() {
+    return true;
+  }
+
+  /**
+   * Class of flavor data. Always implement it explicitly
    */
   @NotNull
+  public Class<D> getFlavorDataClass() {
+    return getEmptyFlavorForBackwardCompatibility();
+  }
+
+  /**
+   * Some plugins didn't implement {@link #getFlavorDataClass()}
+   */
+  @SuppressWarnings("unchecked")
+  @NotNull
+  private Class<D> getEmptyFlavorForBackwardCompatibility() {
+    LOG.warn("getFlavorDataClass is not implemented, please implement it");
+    return (Class<D>)PyFlavorData.Empty.class;
+  }
+
+  /**
+   * On local targets some flavours could be detected. It returns path to python interpreters for such cases.
+   */
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+    return ContainerUtil.map(suggestHomePaths(module, context), Path::of);
+  }
+
+  /**
+   * @deprecated use {@link #suggestLocalHomePaths(Module, UserDataHolder)}
+   */
+  @Deprecated
   public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
     return Collections.emptyList();
   }
@@ -50,6 +92,7 @@ public abstract class PythonSdkFlavor {
   /**
    * Flavor is added to result in {@link #getApplicableFlavors()} if this method returns true.
    * If the only condition is independence of platform, then {@link #isPlatformIndependent()} should be used.
+   *
    * @return whether this flavor is applicable
    */
   public boolean isApplicable() {
@@ -58,6 +101,7 @@ public abstract class PythonSdkFlavor {
 
   /**
    * Used for distinguishing platform flavors from platform-independent ones in {@link #getPlatformIndependentFlavors()}.
+   *
    * @return whether the flavor is platform independent
    */
   public boolean isPlatformIndependent() {
@@ -66,21 +110,61 @@ public abstract class PythonSdkFlavor {
 
   /**
    * Some flavors need current folder to be put in its environment variable.
+   *
    * @return name of env variable to contain current folder.
-   *         {@code null} if the flavor doesn't need it
+   * {@code null} if the flavor doesn't need it
    */
   @Nullable
   public String envPathParam() {
     return null;
   }
 
-  public static @NotNull List<PythonSdkFlavor> getApplicableFlavors() {
+  /**
+   * This flavour doesn't need special data and could be used with {@link PyFlavorData.Empty}
+   */
+  public boolean supportsEmptyData() {
+    return true;
+  }
+
+  /**
+   * If method is true, sdk may or may not be usable, but false means SDK is invalid
+   *
+   * @param targetConfig null of local target
+   */
+  public boolean sdkSeemsValid(@NotNull Sdk sdk, @NotNull D flavorData, @Nullable TargetEnvironmentConfiguration targetConfig) {
+    // Most flavours just execute homePath on target, hence file must be executable
+    var path = sdk.getHomePath();
+    if (path == null) {
+      return false;
+    }
+    return isFileExecutable(path, targetConfig);
+  }
+
+  /**
+   * False means file is not executable, but true means it is executable or we do not know.
+   *
+   * @param fullPath full path on target
+   */
+  protected static boolean isFileExecutable(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration targetEnvConfig) {
+    if (targetEnvConfig == null) {
+      // Local
+      return Files.isExecutable(Path.of(fullPath));
+    }
+    if (targetEnvConfig instanceof TargetConfigurationReadableFs) {
+      var fileInfo = ((TargetConfigurationReadableFs)targetEnvConfig).getPathInfo(fullPath);
+      return (fileInfo instanceof PathInfo.RegularFile) && (((PathInfo.RegularFile)fileInfo).getExecutable());
+    }
+    // We can't be sure if file is executable or not
+    return true;
+  }
+
+  public static @NotNull List<PythonSdkFlavor<?>> getApplicableFlavors() {
     return getApplicableFlavors(true);
   }
 
-  public static @NotNull List<PythonSdkFlavor> getApplicableFlavors(boolean addPlatformIndependent) {
-    List<PythonSdkFlavor> result = new ArrayList<>();
-    for (PythonSdkFlavor flavor : EP_NAME.getExtensionList()) {
+  public static @NotNull List<PythonSdkFlavor<?>> getApplicableFlavors(boolean addPlatformIndependent) {
+    List<PythonSdkFlavor<?>> result = new ArrayList<>();
+    for (PythonSdkFlavor<?> flavor : EP_NAME.getExtensionList()) {
       if (flavor.isApplicable() || (addPlatformIndependent && flavor.isPlatformIndependent())) {
         result.add(flavor);
       }
@@ -91,10 +175,10 @@ public abstract class PythonSdkFlavor {
     return result;
   }
 
-  public static @NotNull List<PythonSdkFlavor> getPlatformFlavorsFromExtensions(boolean isIndependent) {
-    List<PythonSdkFlavor> result = new ArrayList<>();
+  public static @NotNull List<PythonSdkFlavor<?>> getPlatformFlavorsFromExtensions(boolean isIndependent) {
+    List<PythonSdkFlavor<?>> result = new ArrayList<>();
     for (PythonFlavorProvider provider : PythonFlavorProvider.EP_NAME.getExtensionList()) {
-      PythonSdkFlavor flavor = provider.getFlavor(isIndependent);
+      PythonSdkFlavor<?> flavor = provider.getFlavor(isIndependent);
       if (flavor != null) {
         result.add(flavor);
       }
@@ -102,9 +186,9 @@ public abstract class PythonSdkFlavor {
     return result;
   }
 
-  public static @NotNull List<PythonSdkFlavor> getPlatformIndependentFlavors() {
-    List<PythonSdkFlavor> result = new ArrayList<>();
-    for (PythonSdkFlavor flavor : EP_NAME.getExtensionList()) {
+  public static @NotNull List<PythonSdkFlavor<?>> getPlatformIndependentFlavors() {
+    List<PythonSdkFlavor<?>> result = new ArrayList<>();
+    for (PythonSdkFlavor<?> flavor : EP_NAME.getExtensionList()) {
       if (flavor.isPlatformIndependent()) {
         result.add(flavor);
       }
@@ -114,13 +198,10 @@ public abstract class PythonSdkFlavor {
   }
 
   @Nullable
-  public static PythonSdkFlavor getFlavor(@NotNull final Sdk sdk) {
+  public static PythonSdkFlavor<?> getFlavor(@NotNull final Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof PythonSdkAdditionalData) {
-      PythonSdkFlavor flavor = ((PythonSdkAdditionalData)data).getFlavor();
-      if (flavor != null) {
-        return flavor;
-      }
+      return ((PythonSdkAdditionalData)data).getFlavor();
     }
     if (data instanceof PyRemoteSdkAdditionalDataMarker) {
       return null;
@@ -128,29 +209,15 @@ public abstract class PythonSdkFlavor {
     return getFlavor(sdk.getHomePath());
   }
 
+  /**
+   * @deprecated SDK path is not enough to get flavor, use {@link #getFlavor(Sdk)} instead
+   */
+  @Deprecated
   @Nullable
-  public static PythonSdkFlavor getFlavor(@Nullable String sdkPath) {
+  public static PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
     if (sdkPath == null) return null;
 
-    for (PythonSdkFlavor flavor : getApplicableFlavors()) {
-      if (flavor.isValidSdkHome(sdkPath)) {
-        return flavor;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PythonSdkFlavor getPlatformIndependentFlavor(@Nullable final String sdkPath) {
-    if (sdkPath == null) return null;
-
-    for (PythonSdkFlavor flavor : getPlatformIndependentFlavors()) {
-      if (flavor.isValidSdkHome(sdkPath)) {
-        return flavor;
-      }
-    }
-
-    for (PythonSdkFlavor flavor: getPlatformFlavorsFromExtensions(true)) {
+    for (PythonSdkFlavor<?> flavor : getApplicableFlavors()) {
       if (flavor.isValidSdkHome(sdkPath)) {
         return flavor;
       }
@@ -159,16 +226,44 @@ public abstract class PythonSdkFlavor {
   }
 
   /**
-   * Checks if the path is the name of a Python interpreter of this flavor.
-   *
+   * @deprecated SDK path is not enough to get flavor, use {@link #getFlavor(Sdk)} instead
+   */
+  @Deprecated
+  @Nullable
+  public static PythonSdkFlavor<?> getPlatformIndependentFlavor(@Nullable final String sdkPath) {
+    if (sdkPath == null) return null;
+
+    for (PythonSdkFlavor<?> flavor : getPlatformIndependentFlavors()) {
+      if (flavor.isValidSdkHome(sdkPath)) {
+        return flavor;
+      }
+    }
+
+    for (PythonSdkFlavor<?> flavor : getPlatformFlavorsFromExtensions(true)) {
+      if (flavor.isValidSdkHome(sdkPath)) {
+        return flavor;
+      }
+    }
+    return null;
+  }
+
+
+  /**
    * @param path path to check.
    * @return true if paths points to a valid home.
+   * Checks if the path is the name of a Python interpreter of this flavor.
+   * @deprecated path is not enough, use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)}
    */
+  @Deprecated
   public boolean isValidSdkHome(@NotNull String path) {
     File file = new File(path);
     return file.isFile() && isValidSdkPath(file);
   }
 
+
+  /**
+   * It only validates path for local target, hence use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)} instead
+   */
   public boolean isValidSdkPath(@NotNull File file) {
     return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).startsWith("python");
   }
@@ -220,6 +315,14 @@ public abstract class PythonSdkFlavor {
   @NotNull
   public abstract String getName();
 
+  /**
+   * Unique flavor name to be stored in persistence storage. Do not change value not to break compatibility.
+   */
+  @NotNull
+  public String getUniqueId() {
+    return getClass().getSimpleName();
+  }
+
   @NotNull
   public LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
     return getLanguageLevelFromVersionString(sdk.getVersionString());
@@ -261,5 +364,24 @@ public abstract class PythonSdkFlavor {
    * there could be new data provided by a flavor.
    */
   public void dropCaches() {
+  }
+
+  public final static class UnknownFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
+
+    public static final UnknownFlavor INSTANCE = new UnknownFlavor();
+
+    private UnknownFlavor() {
+
+    }
+
+    @Override
+    public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+      return PyFlavorData.Empty.class;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return "";
+    }
   }
 }

@@ -4,26 +4,11 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.contextModality
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
-import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
-
-internal class ModalityStateElement(
-  val modalityState: ModalityState,
-) : AbstractCoroutineContextElement(ModalityStateElement) {
-
-  companion object : CoroutineContext.Key<ModalityStateElement>
-}
-
-@VisibleForTesting
-@Internal
-fun CoroutineContext.contextModality(): ModalityState? {
-  return this[ModalityStateElement]?.modalityState
-}
 
 @Internal
 suspend fun <X> withModalContext(

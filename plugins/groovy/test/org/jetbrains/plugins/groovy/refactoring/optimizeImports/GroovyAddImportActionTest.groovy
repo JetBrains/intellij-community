@@ -6,9 +6,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
-/**
- * @author peter
- */
 class GroovyAddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK

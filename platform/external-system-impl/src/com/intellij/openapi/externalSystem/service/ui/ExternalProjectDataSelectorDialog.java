@@ -196,7 +196,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
           new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
+              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject);
             }
           }.queue();
         });

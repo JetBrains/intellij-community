@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
@@ -12,9 +10,9 @@ import org.jetbrains.kotlin.builtins.isKSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -38,13 +36,6 @@ import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.OperatorChecks
 import org.jetbrains.kotlin.util.OperatorNameConventions
-
-
-
-fun KtCallExpression.isMethodCall(fqMethodName: String): Boolean {
-    val resolvedCall = this.resolveToCall() ?: return false
-    return resolvedCall.resultingDescriptor.fqNameUnsafe.asString() == fqMethodName
-}
 
 // returns assignment which replaces initializer
 fun splitPropertyDeclaration(property: KtProperty): KtBinaryExpression? {
@@ -90,10 +81,14 @@ fun KtQualifiedExpression.isReceiverExpressionWithValue(): Boolean {
     return analyze().getType(receiver) != null
 }
 
+fun KtExpression.isBooleanExpression(): Boolean {
+    val bindingContext = analyze(BodyResolveMode.PARTIAL)
+    val type = bindingContext.getType(this) ?: return false
+    return KotlinBuiltIns.isBoolean(type)
+}
+
 fun KtExpression.negate(reformat: Boolean = true): KtExpression {
-    val specialNegation = specialNegation(reformat)
-    if (specialNegation != null) return specialNegation
-    return KtPsiFactory(this).createExpressionByPattern("!$0", this, reformat = reformat)
+    return negate(reformat) { it.isBooleanExpression() }
 }
 
 fun KtExpression?.hasResultingIfWithoutElse(): Boolean = when (this) {
@@ -103,78 +98,6 @@ fun KtExpression?.hasResultingIfWithoutElse(): Boolean = when (this) {
     is KtUnaryExpression -> baseExpression.hasResultingIfWithoutElse()
     is KtBlockExpression -> statements.lastOrNull().hasResultingIfWithoutElse()
     else -> false
-}
-
-private fun KtExpression.specialNegation(reformat: Boolean): KtExpression? {
-    val factory = KtPsiFactory(this)
-    when (this) {
-        is KtPrefixExpression -> {
-            if (operationReference.getReferencedName() == "!") {
-                val baseExpression = baseExpression
-                if (baseExpression != null) {
-                    val bindingContext = baseExpression.analyze(BodyResolveMode.PARTIAL)
-                    val type = bindingContext.getType(baseExpression)
-                    if (type != null && KotlinBuiltIns.isBoolean(type)) {
-                        return KtPsiUtil.safeDeparenthesize(baseExpression)
-                    }
-                }
-            }
-        }
-
-        is KtBinaryExpression -> {
-            val operator = operationToken
-            if (operator !in NEGATABLE_OPERATORS) return null
-            val left = left ?: return null
-            val right = right ?: return null
-            return factory.createExpressionByPattern(
-                "$0 $1 $2", left, getNegatedOperatorText(operator), right,
-                reformat = reformat
-            )
-        }
-
-        is KtIsExpression -> {
-            return factory.createExpressionByPattern(
-                "$0 $1 $2",
-                leftHandSide,
-                if (isNegated) "is" else "!is",
-                typeReference ?: return null,
-                reformat = reformat
-            )
-        }
-
-        is KtConstantExpression -> {
-            return when (text) {
-                "true" -> factory.createExpression("false")
-                "false" -> factory.createExpression("true")
-                else -> null
-            }
-        }
-    }
-    return null
-}
-
-private val NEGATABLE_OPERATORS = setOf(
-    KtTokens.EQEQ, KtTokens.EXCLEQ, KtTokens.EQEQEQ,
-    KtTokens.EXCLEQEQEQ, KtTokens.IS_KEYWORD, KtTokens.NOT_IS, KtTokens.IN_KEYWORD,
-    KtTokens.NOT_IN, KtTokens.LT, KtTokens.LTEQ, KtTokens.GT, KtTokens.GTEQ
-)
-
-private fun getNegatedOperatorText(token: IElementType): String {
-    return when (token) {
-        KtTokens.EQEQ -> KtTokens.EXCLEQ.value
-        KtTokens.EXCLEQ -> KtTokens.EQEQ.value
-        KtTokens.EQEQEQ -> KtTokens.EXCLEQEQEQ.value
-        KtTokens.EXCLEQEQEQ -> KtTokens.EQEQEQ.value
-        KtTokens.IS_KEYWORD -> KtTokens.NOT_IS.value
-        KtTokens.NOT_IS -> KtTokens.IS_KEYWORD.value
-        KtTokens.IN_KEYWORD -> KtTokens.NOT_IN.value
-        KtTokens.NOT_IN -> KtTokens.IN_KEYWORD.value
-        KtTokens.LT -> KtTokens.GTEQ.value
-        KtTokens.LTEQ -> KtTokens.GT.value
-        KtTokens.GT -> KtTokens.LTEQ.value
-        KtTokens.GTEQ -> KtTokens.LT.value
-        else -> throw IllegalArgumentException("The token $token does not have a negated equivalent.")
-    }
 }
 
 internal fun KotlinType.isFlexibleRecursive(): Boolean {
@@ -207,6 +130,7 @@ fun KtExpression?.receiverTypeIfSelectorIsSizeOrLength(): KotlinType? {
                     KotlinBuiltIns.isCollectionOrNullableCollection(type) ||
                     KotlinBuiltIns.isMapOrNullableMap(type)
         }
+
         "length" -> KotlinBuiltIns::isCharSequenceOrNullableCharSequence
         else -> return null
     }
@@ -225,28 +149,6 @@ fun KtExpression.isCountCall(predicate: (KtCallExpression) -> Boolean = { true }
         ?: return false
     if (!predicate(callExpression)) return false
     return callExpression.isCalling(COUNT_FUNCTIONS)
-}
-
-fun KtDotQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
-    (receiverExpression as? KtDotQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
-
-fun KtDotQualifiedExpression.replaceFirstReceiver(
-    factory: KtPsiFactory,
-    newReceiver: KtExpression,
-    safeAccess: Boolean = false
-): KtExpression {
-    val replaced = (if (safeAccess) {
-        this.replaced(factory.createExpressionByPattern("$0?.$1", receiverExpression, selectorExpression!!))
-    } else this) as KtQualifiedExpression
-    when (val receiver = replaced.receiverExpression) {
-        is KtDotQualifiedExpression -> {
-            receiver.replace(receiver.replaceFirstReceiver(factory, newReceiver, safeAccess))
-        }
-        else -> {
-            receiver.replace(newReceiver)
-        }
-    }
-    return replaced
 }
 
 fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {
@@ -307,15 +209,6 @@ val FunctionDescriptor.isOperatorOrCompatible: Boolean
         return isOperator
     }
 
-fun KtPsiFactory.appendSemicolonBeforeLambdaContainingElement(element: PsiElement) {
-    val previousElement = KtPsiUtil.skipSiblingsBackwardByPredicate(element) {
-        it!!.node.elementType in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
-    }
-    if (previousElement != null && previousElement is KtExpression) {
-        previousElement.parent.addAfter(createSemicolon(), previousElement)
-    }
-}
-
 internal fun Sequence<PsiElement>.lastWithPersistedElementOrNull(elementShouldPersist: KtExpression): PsiElement? {
     var lastElement: PsiElement? = null
     var checked = false
@@ -353,14 +246,17 @@ fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
                         it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS, context) && it.isUsedAsExpression(context)
                     }
                 }
+
                 else -> false
             }
         }
+
         is KtQualifiedExpression -> {
             var target: KtQualifiedExpression = this
             while (target.callExpression == null) target = target.parent as? KtQualifiedExpression ?: break
             target.callExpression?.calleeExpression?.text in ENUM_STATIC_METHODS
         }
+
         is KtCallExpression -> this.calleeExpression?.text in ENUM_STATIC_METHODS
         is KtCallableReferenceExpression -> this.callableReference.text in ENUM_STATIC_METHODS
         else -> false
@@ -413,12 +309,6 @@ private val rangeTypes = setOf(
 
 fun ClassDescriptor.isRange(): Boolean {
     return rangeTypes.any { this.fqNameUnsafe.asString() == it }
-}
-
-fun KtTypeReference.isAnnotatedDeep(): Boolean {
-    if (annotationEntries.isNotEmpty()) return true
-    if (typeArguments().any { it.typeReference?.isAnnotatedDeep() == true }) return true
-    return false
 }
 
 fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {

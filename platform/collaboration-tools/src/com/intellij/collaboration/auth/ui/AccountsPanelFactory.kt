@@ -1,22 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth.ui
 
-import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountManager
-import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
+import com.intellij.collaboration.auth.DefaultAccountHolder
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.findIndex
-import com.intellij.collaboration.ui.items
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
@@ -24,64 +21,43 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
-import java.util.concurrent.CompletableFuture
 import javax.swing.*
-import javax.swing.event.ListDataEvent
-import javax.swing.event.ListDataListener
-import kotlin.properties.Delegates.observable
 
 class AccountsPanelFactory<A : Account, Cred>
-private constructor(disposable: Disposable,
-                    private val accountManager: AccountManager<A, Cred>,
-                    private val defaultAccountHolder: PersistentDefaultAccountHolder<A>?,
+private constructor(private val accountManager: AccountManager<A, Cred>,
+                    private val defaultAccountHolder: DefaultAccountHolder<A>?,
                     private val accountsModel: AccountsListModel<A, Cred>,
-                    private val detailsLoader: AccountsDetailsLoader<A, *>) {
+                    private val scope: CoroutineScope) {
 
-  constructor(accountManager: AccountManager<A, Cred>,
-              defaultAccountHolder: PersistentDefaultAccountHolder<A>,
-              accountsModel: AccountsListModel.WithDefault<A, Cred>,
-              detailsLoader: AccountsDetailsLoader<A, *>,
-              disposable: Disposable) : this(disposable, accountManager, defaultAccountHolder, accountsModel, detailsLoader)
+  constructor(scope: CoroutineScope,
+              accountManager: AccountManager<A, Cred>,
+              defaultAccountHolder: DefaultAccountHolder<A>,
+              accountsModel: AccountsListModel.WithDefault<A, Cred>) : this(accountManager, defaultAccountHolder, accountsModel, scope)
 
-  constructor(accountManager: AccountManager<A, Cred>,
-              accountsModel: AccountsListModel<A, Cred>,
-              detailsLoader: AccountsDetailsLoader<A, *>,
-              disposable: Disposable) : this(disposable, accountManager, null, accountsModel, detailsLoader)
+  constructor(scope: CoroutineScope,
+              accountManager: AccountManager<A, Cred>,
+              accountsModel: AccountsListModel<A, Cred>) : this(accountManager, null, accountsModel, scope)
 
-  init {
-    accountManager.addListener(disposable, object : AccountsListener<A> {
-      override fun onAccountCredentialsChanged(account: A) {
-        if (!isModified()) reset()
-      }
-    })
-  }
+  fun accountsPanelCell(row: Row,
+                        detailsProvider: LoadingAccountsDetailsProvider<A, *>,
+                        actionsController: AccountsPanelActionsController<A>): Cell<JComponent> {
 
-  fun accountsPanelCell(row: Row, needAddBtnWithDropdown: Boolean, defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
-    val detailsMap = mutableMapOf<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>()
-    val detailsProvider = LoadedAccountsDetailsProvider { account: A ->
-      detailsMap[account]?.getNow(null)
-    }
-    val avatarIconsProvider = LoadingAvatarIconsProvider(detailsLoader, defaultAvatarIcon) { account: A ->
-      val result = detailsMap[account]?.getNow(null) as? AccountsDetailsLoader.Result.Success
-      result?.details?.avatarUrl
+    val accountsList = createList(actionsController, detailsProvider) {
+      SimpleAccountsListCellRenderer({ (accountManager is AccountsListModel.WithDefault<*, *>) && it == accountManager.defaultAccount },
+                                     detailsProvider, actionsController)
     }
 
-    val accountsList = createList {
-      SimpleAccountsListCellRenderer(accountsModel, detailsProvider, avatarIconsProvider)
-    }
-    loadAccountsDetails(accountsList, detailsLoader, detailsMap)
-
-    val component = wrapWithToolbar(accountsList, needAddBtnWithDropdown)
+    val component = wrapWithToolbar(accountsList, actionsController)
 
     return row.cell(component)
       .onIsModified(::isModified)
       .onReset(::reset)
-      .onApply(::apply)
+      .onApply { apply(component) }
   }
 
   private fun isModified(): Boolean {
@@ -91,42 +67,64 @@ private constructor(disposable: Disposable,
     else false
 
     return accountsModel.newCredentials.isNotEmpty()
-           || accountsModel.accounts != accountManager.accounts
+           || accountsModel.accounts != accountManager.accountsState.value
            || defaultModified
   }
 
   private fun reset() {
-    accountsModel.accounts = accountManager.accounts
+    accountsModel.accounts = accountManager.accountsState.value
     if (defaultAccountHolder != null && accountsModel is AccountsListModel.WithDefault) {
       accountsModel.defaultAccount = defaultAccountHolder.account
     }
     accountsModel.clearNewCredentials()
   }
 
-  private fun apply() {
-    val newTokensMap = mutableMapOf<A, Cred?>()
-    newTokensMap.putAll(accountsModel.newCredentials)
-    for (account in accountsModel.accounts) {
-      newTokensMap.putIfAbsent(account, null)
-    }
-    accountManager.updateAccounts(newTokensMap)
-    accountsModel.clearNewCredentials()
+  private fun apply(component: JComponent) {
+    try {
+      val newTokensMap = mutableMapOf<A, Cred?>()
+      newTokensMap.putAll(accountsModel.newCredentials)
+      for (account in accountsModel.accounts) {
+        newTokensMap.putIfAbsent(account, null)
+      }
+      runBlockingModal(ModalTaskOwner.component(component), CollaborationToolsBundle.message("accounts.saving.credentials")) {
+        accountManager.updateAccounts(newTokensMap)
+      }
+      accountsModel.clearNewCredentials()
 
-    if (defaultAccountHolder != null && accountsModel is AccountsListModel.WithDefault) {
-      val defaultAccount = accountsModel.defaultAccount
-      defaultAccountHolder.account = defaultAccount
+      if (defaultAccountHolder != null && accountsModel is AccountsListModel.WithDefault) {
+        val defaultAccount = accountsModel.defaultAccount
+        defaultAccountHolder.account = defaultAccount
+      }
+    }
+    catch (_: Exception) {
     }
   }
 
-  private fun <R> createList(listCellRendererFactory: () -> R): JBList<A> where R : ListCellRenderer<A>, R : JComponent {
+  private fun <R> createList(actionsController: AccountsPanelActionsController<A>,
+                             detailsLoadingVm: LoadingAccountsDetailsProvider<A, *>,
+                             listCellRendererFactory: () -> R)
+    : JBList<A> where R : ListCellRenderer<A>, R : JComponent {
 
     val accountsList = JBList(accountsModel.accountsListModel).apply {
       val renderer = listCellRendererFactory()
       cellRenderer = renderer
-      JListHoveredRowMaterialiser.install(this, listCellRendererFactory())
       UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
       selectionMode = ListSelectionModel.SINGLE_SELECTION
+    }
+    val rowMaterialiser = JListHoveredRowMaterialiser.install(accountsList, listCellRendererFactory())
+
+    scope.launch {
+      detailsLoadingVm.loadingState.collect {
+        accountsList.setPaintBusy(it)
+      }
+    }
+
+    scope.launch {
+      detailsLoadingVm.loadingCompletionFlow.collect {
+        repaint(accountsList, it)
+        rowMaterialiser.update()
+      }
     }
 
     accountsList.addListSelectionListener { accountsModel.selectedAccount = accountsList.selectedValue }
@@ -136,19 +134,26 @@ private constructor(disposable: Disposable,
       appendSecondaryText(CollaborationToolsBundle.message("accounts.add.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
         val event = it.source
         val relativePoint = if (event is MouseEvent) RelativePoint(event) else null
-        accountsModel.addAccount(accountsList, relativePoint)
+        actionsController.addAccount(accountsList, relativePoint)
       }
       appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
     }
     return accountsList
   }
 
-  private fun wrapWithToolbar(accountsList: JBList<A>, needAddBtnWithDropdown: Boolean): JPanel {
-    val addIcon: Icon = if (needAddBtnWithDropdown) LayeredIcon.ADD_WITH_DROPDOWN else AllIcons.General.Add
+  private fun repaint(list: JList<A>, account: A): Boolean {
+    val idx = list.model.findIndex(account).takeIf { it >= 0 } ?: return true
+    val cellBounds = list.getCellBounds(idx, idx)
+    list.repaint(cellBounds)
+    return false
+  }
+
+  private fun wrapWithToolbar(accountsList: JBList<A>, actionsController: AccountsPanelActionsController<A>): JPanel {
+    val addIcon: Icon = if (actionsController.isAddActionWithPopup) LayeredIcon.ADD_WITH_DROPDOWN else AllIcons.General.Add
 
     val toolbar = ToolbarDecorator.createDecorator(accountsList)
       .disableUpDownActions()
-      .setAddAction { accountsModel.addAccount(accountsList, it.preferredPopupPoint) }
+      .setAddAction { actionsController.addAccount(accountsList, it.preferredPopupPoint) }
       .setAddIcon(addIcon)
 
     if (accountsModel is AccountsListModel.WithDefault) {
@@ -169,50 +174,5 @@ private constructor(disposable: Disposable,
     }
 
     return toolbar.createPanel()
-  }
-
-  private fun <A : Account> loadAccountsDetails(accountsList: JBList<A>,
-                                                detailsLoader: AccountsDetailsLoader<A, *>,
-                                                resultsMap: MutableMap<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>) {
-
-    val listModel = accountsList.model
-    listModel.addListDataListener(object : ListDataListener {
-      private var loadingCount by observable(0) { _, _, newValue ->
-        accountsList.setPaintBusy(newValue != 0)
-      }
-
-      override fun intervalAdded(e: ListDataEvent) = loadDetails(e.index0, e.index1)
-      override fun contentsChanged(e: ListDataEvent) = loadDetails(e.index0, e.index1)
-
-      override fun intervalRemoved(e: ListDataEvent) {
-        val accounts = listModel.items.toSet()
-        for (account in resultsMap.keys - accounts) {
-          resultsMap.remove(account)?.cancel(true)
-        }
-      }
-
-      private fun loadDetails(startIdx: Int, endIdx: Int) {
-        if (startIdx < 0 || endIdx < 0) return
-
-        for (i in startIdx..endIdx) {
-          val account = listModel.getElementAt(i)
-          resultsMap[account]?.cancel(true)
-          loadingCount++
-          val detailsLoadingResult = detailsLoader.loadDetailsAsync(account).asCompletableFuture()
-          detailsLoadingResult.handleOnEdt(ModalityState.any()) { _, _ ->
-            loadingCount--
-            repaint(account)
-          }
-          resultsMap[account] = detailsLoadingResult
-        }
-      }
-
-      private fun repaint(account: A): Boolean {
-        val idx = listModel.findIndex(account).takeIf { it >= 0 } ?: return true
-        val cellBounds = accountsList.getCellBounds(idx, idx)
-        accountsList.repaint(cellBounds)
-        return false
-      }
-    })
   }
 }

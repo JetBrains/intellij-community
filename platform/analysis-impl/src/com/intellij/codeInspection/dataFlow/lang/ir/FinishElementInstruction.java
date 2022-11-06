@@ -12,9 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class FinishElementInstruction extends Instruction {
   private final Set<DfaVariableValue> myVarsToFlush = new HashSet<>();
   private final PsiElement myElement;

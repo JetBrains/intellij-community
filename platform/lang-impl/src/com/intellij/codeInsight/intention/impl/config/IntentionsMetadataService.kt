@@ -13,13 +13,19 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.containers.Interner
 import java.util.*
 
+private typealias MetaDataKey = Pair<String, String>
+
 @Service(Service.Level.APP)
 internal class IntentionsMetadataService {
-  private class MetaDataKey(categoryNames: Array<String>, familyName: String) :
-    AbstractMap.SimpleImmutableEntry<String?, String?>(categoryNames.joinToString(separator = ":"), interner.intern(familyName)) {
-    companion object {
-      private val interner = Interner.createWeakInterner<String>()
-    }
+  companion object {
+    @JvmStatic
+    fun getInstance(): IntentionsMetadataService = service()
+
+    private val interner = Interner.createWeakInterner<String>()
+  }
+
+  private fun metaDataKey(categoryNames: Array<String>, familyName: String): MetaDataKey {
+    return Pair(categoryNames.joinToString(separator = ":"), interner.intern(familyName))
   }
 
   // guarded by this
@@ -53,13 +59,15 @@ internal class IntentionsMetadataService {
     val categories = extension.categories ?: return
     val instance = IntentionActionWrapper(extension)
     val descriptionDirectoryName = extension.getDescriptionDirectoryName() ?: instance.descriptionDirectoryName
-    try {
-      val metadata = IntentionActionMetaData(instance, extension.loaderForClass, categories, descriptionDirectoryName)
-      synchronized(this) {
-        extensionMetaMap.put(extension, metadata)
-      }
+    val metadata = try {
+      IntentionActionMetaData(instance, extension.loaderForClass, categories, descriptionDirectoryName)
     }
     catch (ignore: ExtensionNotApplicableException) {
+      return
+    }
+
+    synchronized(this) {
+      extensionMetaMap.put(extension, metadata)
     }
   }
 
@@ -90,13 +98,16 @@ internal class IntentionsMetadataService {
   fun getUniqueMetadata(): List<IntentionActionMetaData> {
     val allIntentions = getMetaData()
     val unique = LinkedHashMap<MetaDataKey, IntentionActionMetaData>(allIntentions.size)
-
     for (metadata in allIntentions) {
-      val key = MetaDataKey(metadata.myCategory, metadata.family)
+      val key = try {
+        metaDataKey(metadata.myCategory, metadata.family)
+      }
+      catch (ignore: ExtensionNotApplicableException) {
+        continue
+      }
       unique[key] = metadata
     }
-
-    return allIntentions
+    return unique.values.toList()
   }
 
   @Synchronized
@@ -109,10 +120,5 @@ internal class IntentionsMetadataService {
   @Synchronized
   private fun unregisterMetaDataForEP(extension: IntentionActionBean) {
     extensionMetaMap.remove(extension)
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(): IntentionsMetadataService = service()
   }
 }

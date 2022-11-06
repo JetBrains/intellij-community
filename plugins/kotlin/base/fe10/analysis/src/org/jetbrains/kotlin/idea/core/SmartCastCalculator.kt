@@ -27,11 +27,11 @@ private operator fun <T> Tuple2<T, *>.component1(): T = _1()
 private operator fun <T> Tuple2<*, T>.component2(): T = _2()
 
 class SmartCastCalculator(
-    val bindingContext: BindingContext,
-    val containingDeclarationOrModule: DeclarationDescriptor,
-    contextElement: PsiElement,
-    receiver: KtExpression?,
-    resolutionFacade: ResolutionFacade
+  val bindingContext: BindingContext,
+  private val containingDeclarationOrModule: DeclarationDescriptor,
+  contextElement: PsiElement,
+  receiver: KtExpression?,
+  resolutionFacade: ResolutionFacade
 ) {
     private val dataFlowValueFactory = resolutionFacade.dataFlowValueFactory
 

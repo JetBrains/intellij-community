@@ -137,8 +137,9 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         }
 
         // apply quick fixes for all diagnostics grouping by element
-        highlightInfoByDiagnostic.keys.groupBy { it.psiElement }.forEach {
-            annotateQuickFixes(it.key, it.value, highlightInfoByDiagnostic)
+        highlightInfoByDiagnostic.keys
+            .groupBy { it.psiElement }
+            .forEach { annotateQuickFixes(it.key, it.value, highlightInfoByDiagnostic)
         }
     }
 
@@ -185,7 +186,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
     private fun annotateQuickFixes(
         element: PsiElement,
         diagnostics: List<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
+        highlightInfoByDiagnostic: Map<Diagnostic, HighlightInfo>
     ) {
         if (diagnostics.isEmpty()) return
 

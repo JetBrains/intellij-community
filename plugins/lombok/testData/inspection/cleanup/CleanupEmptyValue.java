@@ -8,6 +8,6 @@ import java.io.InputStream;
 
 public class CleanupEmptyValue {
   public static void main(String[] args) throws IOException {
-    <error descr="'@Cleanup': value cannot be the empty string">@Cleanup(value = "")</error> InputStream in = new FileInputStream(args[0]);
+    <error descr="@Cleanup: value cannot be the empty string">@Cleanup(value = "")</error> InputStream in = new FileInputStream(args[0]);
   }
 }

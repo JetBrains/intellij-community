@@ -5,7 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +46,8 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    return getHandler().validate(psiMethod, psiAnnotation, builder);
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemSink problemSink) {
+    return getHandler().validate(psiMethod, psiAnnotation, problemSink);
   }
 
   @Override
@@ -59,7 +59,7 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
     }
   }
 
-  private BuilderHandler getHandler() {
+  private static BuilderHandler getHandler() {
     return new BuilderHandler();
   }
 }

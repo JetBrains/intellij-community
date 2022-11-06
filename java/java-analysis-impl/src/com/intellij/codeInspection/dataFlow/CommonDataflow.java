@@ -3,12 +3,11 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaDfaAnchor;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceArgumentAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.*;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -220,6 +219,12 @@ public final class CommonDataflow {
       return point == null ? DfType.TOP : point.myDfType;
     }
 
+    @NotNull
+    public DfType getDfTypeNoAssertions(@NotNull JavaDfaAnchor anchor) {
+      DataflowPoint point = myDataAssertionsDisabled.get(anchor);
+      return point == null ? DfType.TOP : point.myDfType;
+    }
+
     /**
      * @param expression an expression to infer the DfType, must be deparenthesized.
      * @return DfType for that expression, assuming assertions are disabled.
@@ -315,9 +320,20 @@ public final class CommonDataflow {
    */
   @NotNull
   public static DfType getDfType(PsiExpression expression) {
+    return getDfType(expression, false);
+  }
+
+  /**
+   * @param expression an expression to infer the DfType
+   * @param ignoreAssertions whether to ignore assertion statement during the analysis
+   * @return DfType for that expression. May return {@link DfType#TOP} if no information from dataflow is known about this expression
+   */
+  @NotNull
+  public static DfType getDfType(PsiExpression expression, boolean ignoreAssertions) {
     DataflowResult result = getDataflowResult(expression);
     if (result == null) return DfType.TOP;
-    return result.getDfType(PsiUtil.skipParenthesizedExprDown(expression));
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    return ignoreAssertions ? result.getDfTypeNoAssertions(expression) : result.getDfType(expression);
   }
 
   /**
@@ -371,10 +387,15 @@ public final class CommonDataflow {
     }
 
     @Override
-    public void beforeMethodReferenceArgumentPush(@NotNull DfaValue value,
-                                                  @NotNull PsiMethodReferenceExpression expression,
-                                                  @NotNull DfaMemoryState state) {
-      myResult.add(new JavaMethodReferenceArgumentAnchor(expression), state, value);
+    public void beforePush(@NotNull DfaValue @NotNull [] args,
+                           @NotNull DfaValue value,
+                           @NotNull DfaAnchor anchor,
+                           @NotNull DfaMemoryState state) {
+      JavaDfaListener.super.beforePush(args, value, anchor, state);
+      if (anchor instanceof JavaMethodReferenceArgumentAnchor || anchor instanceof JavaPolyadicPartAnchor ||
+          anchor instanceof JavaMethodReferenceReturnAnchor) {
+        myResult.add((JavaDfaAnchor)anchor, state, value);
+      }
     }
 
     @Override

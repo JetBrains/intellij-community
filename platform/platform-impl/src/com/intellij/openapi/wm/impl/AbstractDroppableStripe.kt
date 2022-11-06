@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.StripeButtonManager
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.paint.RectanglePainter
@@ -72,7 +71,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   protected var dropRectangle: Rectangle = Rectangle(-1, -1)
   protected val drawRectangle = Rectangle()
   private var dragButtonImage: JComponent? = null
-  protected var isFinishingDrop = false
+  private var isFinishingDrop = false
   private var lastLayoutData: LayoutData? = null
 
   private val buttons: MutableList<StripeButtonManager> = mutableListOf()
@@ -187,6 +186,10 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   }
 
   override fun doLayout() {
+    doLayout(size)
+  }
+
+  protected open fun doLayout(size: Dimension) {
     if (!isFinishingDrop) {
       lastLayoutData = recomputeBounds(setBounds = true, toFitWith = size, noDrop = false)
     }

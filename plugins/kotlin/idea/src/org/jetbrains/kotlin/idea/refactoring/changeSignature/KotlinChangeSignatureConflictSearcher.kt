@@ -234,7 +234,7 @@ class KotlinChangeSignatureConflictSearcher(
             val psiFactory = KtPsiFactory(callable.project)
             val tempFile = (callable.containingFile as KtFile).createTempCopy()
             val functionWithReceiver = tempFile.findElementAt(callable.textOffset)?.getNonStrictParentOfType<KtNamedFunction>() ?: return
-            val receiverTypeRef = psiFactory.createType(newReceiverInfo.currentTypeInfo.render())
+            val receiverTypeRef = psiFactory.createType(newReceiverInfo.currentTypeInfo.getReceiverTypeText())
             functionWithReceiver.setReceiverTypeReference(receiverTypeRef)
             val newContext = functionWithReceiver.bodyExpression!!.analyze(BodyResolveMode.FULL)
 

@@ -52,9 +52,10 @@ public class RenameMethodMultiTest extends LightMultiFileTestCase {
       doTest("p.B", "void method()", "finalMethod");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("Method finalMethod() will override \n" +
-                          "a method of the base class <b><code>p.A</code></b>\n" +
-                          "Renaming method will override final \"method <b><code>A.finalMethod()</code></b>\"", e.getMessage());
+      Assert.assertEquals("""
+                            Method finalMethod() will override\s
+                            a method of the base class <b><code>p.A</code></b>
+                            Renaming method will override final "method <b><code>A.finalMethod()</code></b>\"""", e.getMessage());
       return;
     }
     fail("Conflicts were not found");

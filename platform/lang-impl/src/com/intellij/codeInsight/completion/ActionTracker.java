@@ -22,9 +22,6 @@ import java.util.List;
 
 import static com.intellij.codeWithMe.ClientIdKt.isOnGuest;
 
-/**
- * @author peter
- */
 final class ActionTracker {
   private final @NotNull MessageBusConnection myConnection;
   private @NotNull List<Integer> myCaretOffsets;

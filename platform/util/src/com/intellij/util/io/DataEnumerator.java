@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public interface DataEnumerator<Data> {
   int enumerate(@Nullable Data value) throws IOException;
 

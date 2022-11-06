@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.processor.modifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemValidationSink;
 import de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
     if (modifierListParent instanceof PsiClass) {
       PsiClass parentClass = (PsiClass) modifierListParent;
       if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, LombokClassNames.UTILITY_CLASS)) {
-        return UtilityClassProcessor.validateOnRightType(parentClass, new ProblemNewBuilder());
+        return UtilityClassProcessor.validateOnRightType(parentClass, new ProblemValidationSink());
       }
     }
 
@@ -31,7 +31,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
 
     PsiClass searchableClass = PsiTreeUtil.getParentOfType(modifierListParent, PsiClass.class, true);
 
-    return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, LombokClassNames.UTILITY_CLASS) && UtilityClassProcessor.validateOnRightType(searchableClass, new ProblemNewBuilder());
+    return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, LombokClassNames.UTILITY_CLASS) && UtilityClassProcessor.validateOnRightType(searchableClass, new ProblemValidationSink());
   }
 
   @Override

@@ -1,93 +1,130 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullUtils;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToGrayQuickFix;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
+import org.jetbrains.uast.generate.UastElementFactory;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
+
+import java.awt.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UseGrayInspection extends DevKitInspectionBase {
+public class UseGrayInspection extends DevKitUastInspectionBase {
+
+  private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
+  private static final String GRAY_CLASS_NAME = Gray.class.getName();
+
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class};
 
   @Override
-  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+  @NotNull
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
-      public void visitNewExpression(@NotNull PsiNewExpression expression) {
-        final ProblemDescriptor descriptor = checkNewExpression(expression, holder.getManager(), isOnTheFly);
-        if (descriptor != null) {
-          holder.registerProblem(descriptor);
+      public boolean visitCallExpression(@NotNull UCallExpression expression) {
+        if (expression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+          if (isAwtRgbColorConstructor(expression)) {
+            Integer grayValue = getGrayValue(expression);
+            if (grayValue != null) {
+              PsiElement sourcePsi = expression.getSourcePsi();
+              if (sourcePsi != null && grayClassAccessible(sourcePsi)) {
+                holder.registerProblem(sourcePsi,
+                                       DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
+                                       new ConvertToGrayQuickFix(grayValue));
+              }
+            }
+          }
         }
+        return super.visitCallExpression(expression);
       }
-    };
+    }, HINTS);
+  }
+
+  private static boolean isAwtRgbColorConstructor(@NotNull UCallExpression constructorCall) {
+    List<UExpression> constructorParams = constructorCall.getValueArguments();
+    if (constructorParams.size() != 3) return false;
+    PsiMethod constructor = constructorCall.resolve();
+    if (constructor == null) return false;
+    PsiClass constructorClass = constructor.getContainingClass();
+    if (constructorClass == null) return false;
+    return AWT_COLOR_CLASS_NAME.equals(constructorClass.getQualifiedName());
   }
 
   @Nullable
-  private static ProblemDescriptor checkNewExpression(PsiNewExpression expression, InspectionManager manager, boolean isOnTheFly) {
-    final Project project = manager.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiClass grayClass = facade.findClass(Gray.class.getName(), GlobalSearchScope.allScope(project));
-    final PsiType type = expression.getType();
-    if (type != null && grayClass != null) {
-      final PsiExpressionList arguments = expression.getArgumentList();
-      if (arguments != null) {
-        final PsiExpression[] expressions = arguments.getExpressions();
-        if (expressions.length == 3 && "java.awt.Color".equals(type.getCanonicalText())) {
-          if (! facade.getResolveHelper().isAccessible(grayClass, expression, grayClass)) return null;
-          final PsiExpression r = expressions[0];
-          final PsiExpression g = expressions[1];
-          final PsiExpression b = expressions[2];
-          if (r instanceof PsiLiteralExpression
-            && g instanceof PsiLiteralExpression
-            && b instanceof PsiLiteralExpression) {
-            final Object red = JavaConstantExpressionEvaluator.computeConstantExpression(r, false);
-            final Object green = JavaConstantExpressionEvaluator.computeConstantExpression(g, false);
-            final Object blue = JavaConstantExpressionEvaluator.computeConstantExpression(b, false);
-            if (NullUtils.notNull(red, green, blue)) {
-              try {
-                int rr = Integer.parseInt(red.toString());
-                int gg = Integer.parseInt(green.toString());
-                int bb = Integer.parseInt(blue.toString());
-                if (rr == gg && gg == bb && 0 <= rr && rr < 256) {
-                  return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.gray.convert", rr), new ConvertToGrayQuickFix(rr), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-                }
-              } catch (Exception ignore){}
-            }
-          }
-        } else if (expressions.length == 1 && "com.intellij.ui.Gray".equals(type.getCanonicalText())) {
-          final PsiExpression e = expressions[0];
-          if (e instanceof PsiLiteralExpression) {
-            final Object literal = JavaConstantExpressionEvaluator.computeConstantExpression(e, false);
-            if (literal != null) {
-              try {
-                int num = Integer.parseInt(literal.toString());
-                if (0 <= num && num < 256) {
-                  return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.gray.convert", num), new ConvertToGrayQuickFix(num), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-                }
-              } catch (Exception ignore){}
-            }
-          }
-        }
-      }
+  private static Integer getGrayValue(@NotNull UCallExpression constructorCall) {
+    List<UExpression> constructorParams = constructorCall.getValueArguments();
+    UExpression redParam = constructorParams.get(0);
+    Integer red = evaluateColorValue(redParam);
+    if (red == null) return null;
+    UExpression greenParam = constructorParams.get(1);
+    UExpression blueParam = constructorParams.get(2);
+    return 0 <= red && red < 256 && red.equals(evaluateColorValue(greenParam)) && red.equals(evaluateColorValue(blueParam)) ? red : null;
+  }
+
+  @Nullable
+  private static Integer evaluateColorValue(@NotNull UExpression expression) {
+    Object evaluatedExpression = expression.evaluate();
+    if (evaluatedExpression instanceof Integer value) {
+      return value;
     }
     return null;
+  }
+
+  private static boolean grayClassAccessible(@NotNull PsiElement checkedPlace) {
+    return JavaPsiFacade.getInstance(checkedPlace.getProject()).findClass(GRAY_CLASS_NAME, checkedPlace.getResolveScope()) != null;
   }
 
   @NotNull
   @Override
   public String getShortName() {
     return "InspectionUsingGrayColors";
+  }
+
+  private static class ConvertToGrayQuickFix implements LocalQuickFix {
+    private final int myGrayValue;
+
+    private ConvertToGrayQuickFix(int grayValue) {
+      myGrayValue = grayValue;
+    }
+
+    @Override
+    public @IntentionName @NotNull String getName() {
+      return DevKitBundle.message("inspections.use.gray.fix.convert.name", myGrayValue);
+    }
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.use.gray.fix.convert.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      UCallExpression awtGrayColorConstructor = UastContextKt.toUElement(element, UCallExpression.class);
+      if (awtGrayColorConstructor == null) return;
+      UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(element.getLanguage());
+      if (generationPlugin == null) return;
+      UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
+      String grayConstant = Gray.class.getName() + "._" + myGrayValue;
+      UQualifiedReferenceExpression grayConstantReference = pluginElementFactory.createQualifiedReference(grayConstant, element);
+      if (grayConstantReference == null) return;
+      generationPlugin.replace(awtGrayColorConstructor, grayConstantReference, UQualifiedReferenceExpression.class);
+    }
   }
 }

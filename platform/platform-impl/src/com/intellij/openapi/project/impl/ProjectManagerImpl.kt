@@ -9,8 +9,8 @@ import com.intellij.conversion.CannotConvertException
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.opentelemetry.TraceManager
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.*
@@ -64,8 +64,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.context.Context
-import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -338,7 +336,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (save) {
       // HeadlessSaveAndSyncHandler doesn't save, but if `save` is requested,
       // it means that we must save in any case (for example, see GradleSourceSetsTest)
@@ -412,6 +410,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (project is ComponentManagerImpl) {
       (project as ComponentManagerImpl).stopServicePreloading()
     }
+    closePublisher.projectClosingBeforeSave(project)
     publisher.projectClosingBeforeSave(project)
     if (saveProject) {
       FileDocumentManager.getInstance().saveAllDocuments()
@@ -496,11 +495,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       LOG.debug("enter: canClose()")
     }
 
-    for (handler in CLOSE_HANDLER_EP.iterable) {
-      if (handler == null) {
-        break
-      }
-
+    for (handler in CLOSE_HANDLER_EP.lazySequence()) {
       try {
         if (!handler.canClose(project)) {
           LOG.debug("close canceled by $handler")
@@ -556,6 +551,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   final override fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
+    @Suppress("DEPRECATION")
     return runUnderModalProgressIfIsEdt { openProjectAsync(projectStoreBaseDir, options) }
   }
 
@@ -642,6 +638,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     var module: Module? = null
     var result: Project? = null
     var reopeningEditorJob: Deferred<Job?>? = null
+    var projectOpenActivity: Activity? = null
     try {
       frameAllocator.run { saveTemplateJob ->
         activity.end()
@@ -666,20 +663,18 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
         }
 
-        reopeningEditorJob = async {
-          service<StartUpPerformanceService>().addActivityListener(project)
-          frameAllocator.projectLoaded(project)
-        }
+        reopeningEditorJob = with(frameAllocator) { projectLoaded(project) }
 
         if (!addToOpened(project)) {
           throw CancellationException("project is already opened")
         }
 
-        tracer.spanBuilder("open project")
-          .setAttribute(AttributeKey.stringKey("project"), project.name)
-          .useWithScope {
-            runInitProjectActivities(project)
-          }
+        projectOpenActivity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("project opening") else null
+        runActivity("project startup") {
+          tracer.spanBuilder("open project")
+            .setAttribute(AttributeKey.stringKey("project"), project.name)
+          runInitProjectActivities(project)
+        }
       }
     }
     catch (e: CancellationException) {
@@ -720,6 +715,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     finally {
       disableAutoSaveToken.finish()
+
+      projectOpenActivity?.end()
     }
 
     val project = result!!
@@ -790,6 +787,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project = instantiateProject(file, options)
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
+      @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt {
         initProject(
           file = file,
@@ -969,18 +967,17 @@ private fun message(e: Throwable): String {
 @Internal
 @VisibleForTesting
 fun CoroutineScope.runInitProjectActivities(project: Project) {
-  val traceContext = Context.current()
-  launch(traceContext.asContextElement()) {
-    (StartupManager.getInstance(project) as StartupManagerImpl).initProject(null)
+  launch {
+    (StartupManager.getInstance(project) as StartupManagerImpl).initProject()
   }
 
   val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
   launchAndMeasure("projectOpened event executing", Dispatchers.EDT) {
     waitEdtActivity.end()
-      tracer.spanBuilder("projectOpened event executing").setParent(traceContext).useWithScope {
-        @Suppress("DEPRECATION", "removal")
-        ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-      }
+    tracer.spanBuilder("projectOpened event executing").useWithScope2 {
+      @Suppress("DEPRECATION", "removal")
+      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+    }
   }
 
   @Suppress("DEPRECATION")
@@ -1022,6 +1019,8 @@ private fun getListeners(project: Project): List<ProjectManagerListener> {
 
 private val publisher: ProjectManagerListener
   get() = ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC)
+private val closePublisher: ProjectCloseListener
+  get() = ApplicationManager.getApplication().messageBus.syncPublisher(ProjectCloseListener.TOPIC)
 
 private fun handleListenerError(e: Throwable, listener: ProjectManagerListener) {
   if (e is ProcessCanceledException || e is CancellationException) {
@@ -1037,8 +1036,10 @@ private fun fireProjectClosing(project: Project) {
     LOG.debug("enter: fireProjectClosing()")
   }
   try {
+    closePublisher.projectClosing(project)
     publisher.projectClosing(project)
-  } catch (e: Throwable) {
+  }
+  catch (e: Throwable) {
     LOG.warn("Failed to publish projectClosing(project) event", e)
   }
 }
@@ -1049,6 +1050,7 @@ private fun fireProjectClosed(project: Project) {
   }
 
   LifecycleUsageTriggerCollector.onProjectClosed(project)
+  closePublisher.projectClosed(project)
   publisher.projectClosed(project)
   @Suppress("DEPRECATION")
   val projectComponents = (project as ComponentManagerImpl)
@@ -1214,10 +1216,10 @@ private suspend fun initProject(file: Path,
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
-      preloadServicesAndCreateComponents(project, preloadServices)
       projectInitListeners {
-        it.containerConfigured(project)
+        it.execute(project)
       }
+      preloadServicesAndCreateComponents(project, preloadServices)
 
       if (!isTrusted.await()) {
         throw CancellationException("not trusted")
@@ -1252,27 +1254,25 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
       IdeBundle.message("prompt.open.project.with.name.in.new.frame", options.projectName)
     }
 
-    mode = withContext(Dispatchers.EDT) {
-      if (options.isNewProject) {
-        val openInExistingFrame = MessageDialogBuilder.yesNo(IdeCoreBundle.message("title.new.project"), message)
+    val openInExistingFrame = withContext(Dispatchers.EDT) {
+      if (options.isNewProject)
+        MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.new.project"), message)
           .yesText(IdeBundle.message("button.existing.frame"))
           .noText(IdeBundle.message("button.new.frame"))
           .doNotAsk(ProjectNewWindowDoNotAskOption())
           .guessWindowAndAsk()
-        if (openInExistingFrame) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-      }
-      else {
-        val exitCode = MessageDialogBuilder.yesNoCancel(IdeBundle.message("title.open.project"), message)
+      else
+        MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.open.project"), message)
           .yesText(IdeBundle.message("button.existing.frame"))
           .noText(IdeBundle.message("button.new.frame"))
           .doNotAsk(ProjectNewWindowDoNotAskOption())
           .guessWindowAndAsk()
-        when (exitCode) {
-          Messages.YES -> GeneralSettings.OPEN_PROJECT_SAME_WINDOW
-          Messages.NO -> GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-          else -> Messages.CANCEL
-        }
-      }
+    }
+
+    mode = when (openInExistingFrame) {
+      Messages.YES -> GeneralSettings.OPEN_PROJECT_SAME_WINDOW
+      Messages.NO -> GeneralSettings.OPEN_PROJECT_NEW_WINDOW
+      else -> Messages.CANCEL
     }
     if (mode != Messages.CANCEL) {
       LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
@@ -1323,7 +1323,7 @@ interface ProjectServiceContainerInitializedListener {
   /**
    * Invoked after container configured.
    */
-  suspend fun containerConfigured(project: Project)
+  suspend fun execute(project: Project)
 }
 
 @TestOnly

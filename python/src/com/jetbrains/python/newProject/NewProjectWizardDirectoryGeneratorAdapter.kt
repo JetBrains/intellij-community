@@ -50,7 +50,7 @@ open class NewProjectWizardDirectoryGeneratorAdapter<T>(val wizard: GeneratorNew
  * A wizard-enabled project settings step that you should use for your [projectGenerator] in your
  * [AbstractNewProjectStep.Customization.createProjectSpecificSettingsStep] to provide the project wizard UI and actions.
  */
-class NewProjectWizardProjectSettingsStep<T>(val projectGenerator: NewProjectWizardDirectoryGeneratorAdapter<T>)
+class NewProjectWizardProjectSettingsStep<T>(private val projectGenerator: NewProjectWizardDirectoryGeneratorAdapter<T>)
   : ProjectSettingsStepBase<T>(projectGenerator, null) {
 
   init {

@@ -6,9 +6,14 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.MessageEventImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.replaceService
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import junit.framework.AssertionFailedError
+import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.applySuggestedScriptConfiguration
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -16,6 +21,8 @@ import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptC
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.areSimilar
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.ucache.listDependencies
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -40,10 +47,59 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
 
     val projectDir: File get() = File(GradleSettings.getInstance(myProject).linkedProjectsSettings.first().externalProjectPath)
 
-    private val scriptConfigurationManager: CompositeScriptConfigurationManager
+    internal val scriptConfigurationManager: CompositeScriptConfigurationManager
         get() = ScriptConfigurationManager.getInstance(myProject) as CompositeScriptConfigurationManager
 
     override fun testDataDirName(): String = "gradleKtsImportTest"
+
+
+    class WorkspaceModelSyncTest : GradleKtsImportTest() {
+
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testWorkspaceModelInSyncAfterImport() {
+            Registry.get("kotlin.scripts.as.entities").setValue(true)
+
+            configureByFiles()
+            importProject()
+
+            checkEquivalence("build.gradle.kts")
+            checkEquivalence("settings.gradle.kts")
+        }
+
+        private fun checkEquivalence(fileName: String) {
+            val ktsFile = KtsFixture(fileName).virtualFile
+
+            val (managerClassFiles, managerSourceFiles) = getDependenciesFromManager(ktsFile)
+            val (sdkClasses, sdkSources) = getSdkDependencies(ktsFile)
+
+            val entityStorage = WorkspaceModel.getInstance(myProject).entityStorage.current
+            val scriptEntity = entityStorage.entities(KotlinScriptEntity::class.java).find { it.path.contains(fileName) }
+                ?: error("Workspace model is unaware of script $fileName")
+
+            val entityClassFiles = scriptEntity.listDependencies(LibraryRootTypeId.COMPILED)
+            val entitySourceFiles = scriptEntity.listDependencies(LibraryRootTypeId.SOURCES)
+
+            assertEquals("Class dependencies for $fileName are not equivalent", entityClassFiles, managerClassFiles + sdkClasses)
+            assertEquals("Source dependencies for $fileName are not equivalent", entitySourceFiles, managerSourceFiles + sdkSources)
+        }
+
+        // classes, sources
+        private fun getDependenciesFromManager(file: VirtualFile): Pair<Collection<VirtualFile>, Collection<VirtualFile>> {
+            val managerClassFiles = scriptConfigurationManager.getScriptDependenciesClassFiles(file)
+            val managerSourceFiles = scriptConfigurationManager.getScriptDependenciesSourceFiles(file)
+            return Pair(managerClassFiles, managerSourceFiles)
+        }
+
+        // classes, sources
+        private fun getSdkDependencies(file: VirtualFile): Pair<Collection<VirtualFile>, Collection<VirtualFile>> {
+            val managerClassFiles = scriptConfigurationManager.getScriptSdkDependenciesClassFiles(file)
+            val managerSourceFiles = scriptConfigurationManager.getScriptSdkDependenciesSourceFiles(file)
+            return Pair(managerClassFiles, managerSourceFiles)
+        }
+    }
+
+
 
     class Empty : GradleKtsImportTest() {
         @Test
@@ -144,7 +200,7 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    inner class KtsFixture(val fileName: String) {
+    inner class KtsFixture(fileName: String) {
         val file = projectDir.resolve(fileName)
 
         val virtualFile get() = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!

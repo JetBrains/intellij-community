@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
@@ -122,18 +122,23 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
     override fun isValidForClass(targetClass: KtClassOrObject): Boolean =
         targetClass is KtClass && !targetClass.isAnnotation() && !targetClass.isInterface()
 
-    override fun prepareMembersInfo(klass: KtClassOrObject, project: Project, editor: Editor?): Info? {
+    public override fun prepareMembersInfo(klass: KtClassOrObject, project: Project, editor: Editor?): Info? {
+        return prepareMembersInfo(klass, project, true)
+    }
+
+    fun prepareMembersInfo(klass: KtClassOrObject, project: Project, askDetails: Boolean): Info? {
         if (klass !is KtClass) throw AssertionError("Not a class: ${klass.getElementTextWithContext()}")
 
         val context = klass.analyzeWithContent()
         val classDescriptor = context.get(BindingContext.CLASS, klass) ?: return null
 
-        classDescriptor.findDeclaredToString(false)?.let {
-            if (!confirmMemberRewrite(klass, it)) return null
+        val existingToString = classDescriptor.findDeclaredToString(false)
+        if (existingToString != null && askDetails) {
+            if (!confirmMemberRewrite(klass, existingToString)) return null
 
             runWriteAction {
                 try {
-                    it.source.getPsi()?.delete()
+                    existingToString.source.getPsi()?.delete()
                 } catch (e: IncorrectOperationException) {
                     LOG.error(e)
                 }
@@ -144,7 +149,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
         val allowSuperCall = !superToString.builtIns.isMemberOfAny(superToString)
 
         val properties = getPropertiesToUseInGeneratedMember(klass)
-        if (isUnitTestMode()) {
+        if (isUnitTestMode() || !askDetails) {
             val info = Info(
                 classDescriptor,
                 properties.map { context[BindingContext.DECLARATION_TO_DESCRIPTOR, it] as VariableDescriptor },
@@ -176,11 +181,11 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
                     project)
     }
 
-    private fun generateToString(targetClass: KtClassOrObject, info: Info): KtNamedFunction {
+    fun generateToString(targetClass: KtClassOrObject, info: Info): KtNamedFunction {
         val superToString = info.classDescriptor.getSuperClassOrAny().findDeclaredToString(true)!!
         return generateFunctionSkeleton(superToString, targetClass).apply {
             replaceBody {
-                KtPsiFactory(targetClass).createExpression("{\n${info.generator.generate(info)}\n}")
+                KtPsiFactory(targetClass).createBlock(info.generator.generate(info))
             }
         }
     }

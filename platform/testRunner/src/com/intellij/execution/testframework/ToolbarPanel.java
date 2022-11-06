@@ -160,6 +160,11 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     add(actionToolbar.getComponent(), BorderLayout.CENTER);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myOccurenceNavigator.getActionUpdateThread();
+  }
+
   public void setModel(final TestFrameworkRunningModel model) {
     TestFrameworkActions.installFilterAction(model);
     myScrollToSource.setModel(model);

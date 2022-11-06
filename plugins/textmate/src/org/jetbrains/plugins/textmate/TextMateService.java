@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.PreferencesRegistry;
+import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.SnippetsRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter;
@@ -42,6 +43,16 @@ public abstract class TextMateService {
   @Nullable
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);
 
+  @NotNull
+  public abstract ShellVariablesRegistry getShellVariableRegistry();
+
+  /**
+   * @deprecated Please use {@link org.jetbrains.plugins.textmate.TextMateService#getShellVariableRegistry()} instead
+   * to query the ShellVariablesRegistry directly.
+   * You may use {@link org.jetbrains.plugins.textmate.editor.TextMateEditorUtils#getCurrentScopeSelector(com.intellij.openapi.editor.ex.EditorEx)}
+   * to construct the TextMateScope based on editor's caret state.
+   */
+  @Deprecated(forRemoval = true)
   @Nullable
   public abstract TextMateShellVariable getVariable(@NotNull String name, @NotNull EditorEx editor);
 

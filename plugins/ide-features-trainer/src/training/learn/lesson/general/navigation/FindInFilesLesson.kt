@@ -58,6 +58,8 @@ class FindInFilesLesson(override val sampleFilePath: String)
     task {
       val wholeWordsButtonText = FindBundle.message("find.whole.words").dropMnemonic()
       text(LessonsBundle.message("find.in.files.whole.words",
+                                 code("apple"),
+                                 code("pineapple"),
                                  icon(AllIcons.Actions.Words),
                                  LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.ALT_DOWN_MASK))))
       highlightAndTriggerWhenButtonSelected(wholeWordsButtonText)
@@ -224,8 +226,6 @@ class FindInFilesLesson(override val sampleFilePath: String)
   }
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(10)
-
-  override val suitableTips = listOf("FindReplaceToggle", "FindInPath")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("find.in.files.help.link"),

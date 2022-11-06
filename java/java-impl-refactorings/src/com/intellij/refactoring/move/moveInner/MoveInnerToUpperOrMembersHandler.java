@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.move.moveInner;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmLanguage;
@@ -69,7 +68,6 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (isStaticInnerClass(element) && !JavaMoveClassesOrPackagesHandler.isReferenceInAnonymousClass(reference)) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
       final PsiElement targetContainer = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
       PsiClass aClass = (PsiClass)element;
       SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog(aClass, project);

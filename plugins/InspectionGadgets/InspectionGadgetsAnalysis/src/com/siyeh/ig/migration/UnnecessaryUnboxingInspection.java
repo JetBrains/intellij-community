@@ -88,7 +88,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {

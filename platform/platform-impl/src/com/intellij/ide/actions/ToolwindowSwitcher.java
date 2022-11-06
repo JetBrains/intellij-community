@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,14 +44,15 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
     Project project = e.getProject();
     assert project != null;
     ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
-    invokePopup(project, new ToolWindowsComparator(toolWindowManager.getRecentToolWindows()), e.getDataContext(), null, null);
+    invokePopup(project, new ToolWindowsComparator(toolWindowManager.getRecentToolWindows()), e.getDataContext(), null, null, null);
   }
 
   public static void invokePopup(Project project,
                                  @NotNull Comparator<? super ToolWindow> comparator,
                                  @NotNull DataContext dataContext,
                                  @Nullable Predicate<? super ToolWindow> filter,
-                                 @Nullable RelativePoint point) {
+                                 @Nullable RelativePoint point,
+                                 @Nullable Component invokingButton) {
     if (filter == null) {
       filter = Predicates.alwaysTrue();
     }
@@ -73,6 +75,7 @@ public final class ToolwindowSwitcher extends DumbAwareAction {
     popup.setMinimumSize(new Dimension(300, -1));
 
     Disposer.register(popup, () -> popup = null);
+    PopupImplUtil.setPopupToggleButton(popup, invokingButton);
     if (point == null) {
       popup.showCenteredInCurrentWindow(project);
     }

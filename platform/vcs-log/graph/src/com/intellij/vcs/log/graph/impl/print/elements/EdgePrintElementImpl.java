@@ -26,17 +26,10 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
 
   @NotNull
   public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdgeType edgeType) {
-    switch (edgeType) {
-      case USUAL:
-      case NOT_LOAD_COMMIT:
-        return EdgePrintElement.LineStyle.SOLID;
-      case DOTTED:
-      case DOTTED_ARROW_UP:
-      case DOTTED_ARROW_DOWN:
-        return EdgePrintElement.LineStyle.DASHED;
-      default:
-        throw new IllegalStateException("Edge type not supported: " + edgeType);
-    }
+    return switch (edgeType) {
+      case USUAL, NOT_LOAD_COMMIT -> LineStyle.SOLID;
+      case DOTTED, DOTTED_ARROW_UP, DOTTED_ARROW_DOWN -> LineStyle.DASHED;
+    };
   }
 
   @NotNull private final Type myType;

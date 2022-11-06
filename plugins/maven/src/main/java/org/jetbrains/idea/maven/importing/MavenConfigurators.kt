@@ -9,7 +9,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
@@ -22,35 +22,33 @@ interface MavenWorkspaceConfigurator {
 
   /**
    * Called for each imported project in order to add
-   * [com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
+   * [com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
    *
    * * Called on a background thread.
    * * Side-effects are not allowed.
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun getAdditionalSourceFolders(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
 
   /**
    * Called for each imported project in order to add
-   * [com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
+   * [com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
    *
    * * Called on a background thread.
    * * Side-effects are not allowed.
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun getAdditionalTestSourceFolders(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
 
   /**
    * Called for each imported project.
-   * Implement this method to prevent creation of [com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity]-es in the corresponding [ModuleEntity]-es.
+   * Implement this method to prevent creation of [com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es in the corresponding [ModuleEntity]-es.
    * These folders are also marked as 'excluded' in the corresponding [Module]. See [com.intellij.openapi.roots.ExcludeFolder].
    *
    *
@@ -59,7 +57,6 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun getFoldersToExclude(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
@@ -70,15 +67,15 @@ interface MavenWorkspaceConfigurator {
 
   /**
    * Called for each imported project. Order of projects is not defined.
-   * [ModuleEntity]-es are already created and filled with folders and dependencies,
+   * Corresponding [ModuleEntity] is already created and filled with folders and dependencies,
    * but not yet applied to [com.intellij.workspaceModel.ide.WorkspaceModel].
+   * Other Modules are not accessible.
    *
    * * Called on a background thread.
    * * WriteActions are not allowed.
    * * Side-effects other than changing [ModuleEntity]-related entities are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun configureMavenProject(context: MutableMavenProjectContext) {
   }
 
@@ -92,7 +89,6 @@ interface MavenWorkspaceConfigurator {
    * * Side-effects other than changing [MutableEntityStorage] are not allowed
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun beforeModelApplied(context: MutableModelContext) {
   }
 
@@ -108,7 +104,6 @@ interface MavenWorkspaceConfigurator {
    * * Necessary preparations must be done in [beforeModelApplied] or [configureMavenProject]. Data can be passed context as [UserDataHolder].
    */
   @RequiresWriteLock
-  @JvmDefault
   fun afterModelApplied(context: AppliedModelContext) {
   }
 

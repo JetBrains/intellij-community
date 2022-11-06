@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.quickfix;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,7 +22,7 @@ import java.util.List;
 /**
  * @author Plushnikov Michail
  */
-public class CreateFieldQuickFix extends LocalQuickFixOnPsiElement implements IntentionAction {
+public class CreateFieldQuickFix extends LocalQuickFixOnPsiElement {
   private final String myName;
   private final PsiType myType;
   private final String myInitializerText;
@@ -48,16 +47,6 @@ public class CreateFieldQuickFix extends LocalQuickFixOnPsiElement implements In
   @NotNull
   public String getFamilyName() {
     return getText();
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return isAvailable();
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    applyFix();
   }
 
   @Override

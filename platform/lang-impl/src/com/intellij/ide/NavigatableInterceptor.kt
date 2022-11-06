@@ -5,7 +5,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.pom.NavigatableWithText
 import com.intellij.util.containers.map2Array
 
-class NavigatableInterceptor(val baseNavigatable: Navigatable, val callback: (Navigatable, Boolean) -> Unit) : NavigatableWithText {
+class NavigatableInterceptor(private val baseNavigatable: Navigatable, val callback: (Navigatable, Boolean) -> Unit) : NavigatableWithText {
   override fun navigate(requestFocus: Boolean) {
     callback(baseNavigatable, requestFocus)
     baseNavigatable.navigate(requestFocus)

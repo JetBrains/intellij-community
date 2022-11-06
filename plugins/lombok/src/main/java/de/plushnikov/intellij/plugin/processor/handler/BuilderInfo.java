@@ -9,6 +9,7 @@ import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
+import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -49,6 +50,7 @@ public class BuilderInfo {
   private String viaMethodName;
   private boolean viaStaticCall;
   private String instanceVariableName = "this";
+  private CapitalizationStrategy capitalizationStrategy;
 
   public static BuilderInfo fromPsiParameter(@NotNull PsiParameter psiParameter) {
     final BuilderInfo result = new BuilderInfo();
@@ -60,6 +62,7 @@ public class BuilderInfo {
     result.hasBuilderDefaultAnnotation = false;
 
     result.fieldInBuilderName = psiParameter.getName();
+    result.capitalizationStrategy = CapitalizationStrategy.defaultValue();
 
     result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, LombokClassNames.SINGULAR);
     result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiParameter, null!=result.singularAnnotation);
@@ -80,8 +83,9 @@ public class BuilderInfo {
     result.fieldInitializer = psiField.getInitializer();
     result.hasBuilderDefaultAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, BUILDER_DEFAULT_ANNOTATION);
 
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     result.fieldInBuilderName = accessorsInfo.removePrefix(psiField.getName());
+    result.capitalizationStrategy = accessorsInfo.getCapitalizationStrategy();
 
     result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SINGULAR);
     result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiField, null!=result.singularAnnotation);
@@ -192,6 +196,10 @@ public class BuilderInfo {
     return fieldInBuilderName;
   }
 
+  public CapitalizationStrategy getCapitalizationStrategy() {
+    return capitalizationStrategy;
+  }
+
   public PsiType getFieldType() {
     return fieldInBuilderType;
   }
@@ -288,12 +296,12 @@ public class BuilderInfo {
     return builderElementHandler.renderBuildPrepare(this);
   }
 
-  public String renderSuperBuilderConstruction() {
-    return builderElementHandler.renderSuperBuilderConstruction(variableInClass, fieldInBuilderName);
+  public String renderBuildCall() {
+    return builderElementHandler.renderBuildCall(this);
   }
 
-  public String renderBuildCall() {
-    return renderFieldName();
+  public String renderSuperBuilderConstruction() {
+    return builderElementHandler.renderSuperBuilderConstruction(variableInClass, fieldInBuilderName);
   }
 
   public String renderFieldName() {

@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
@@ -12,15 +11,16 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.util.function.BiConsumer
 
-class ProductModulesLayout {
-  companion object {
-    @JvmField
-    val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
-      "intellij.platform.images",
-      "intellij.dev",
-    )
-  }
+/**
+ * Default bundled plugins for all products.
+ * See also [JB_BUNDLED_PLUGINS].
+ */
+val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
+  "intellij.platform.images",
+  "intellij.dev",
+)
 
+class ProductModulesLayout {
   /**
    * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
    */
@@ -54,25 +54,22 @@ class ProductModulesLayout {
     }
 
   /**
-   * Describes layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
+   * Describes layout of non-trivial plugins which may be included into the product. The actual list of the plugins need to be bundled
    * with the product is specified by {@link [bundledPluginModules]}, the actual list of plugins which need to be prepared for publishing
    * is specified by {@link [pluginModulesToPublish]}.
-   *
-   * For trivial plugins, i.e. for plugins which include an output of a single module and its module libraries, it's enough to use
-   * [org.jetbrains.intellij.build.impl.PluginLayout.Companion.simplePlugin] as layout.
    */
   var pluginLayouts: PersistentList<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
     set(value) {
       val nameGuard = createPluginLayoutSet(value.size)
       for (layout in value) {
-        if (!nameGuard.add(layout)) {
+        check(nameGuard.add(layout)) {
           val bundlingRestrictionsAsString = if (layout.bundlingRestrictions == PluginBundlingRestrictions.NONE) {
             ""
           }
           else {
             ", bundlingRestrictions=${layout.bundlingRestrictions}"
           }
-          throw IllegalStateException("PluginLayout(mainModule=${layout.mainModule}$bundlingRestrictionsAsString) is duplicated")
+          "PluginLayout(mainModule=${layout.mainModule}$bundlingRestrictionsAsString) is duplicated"
         }
       }
       field = value
@@ -93,7 +90,7 @@ class ProductModulesLayout {
    * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
    * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
    */
-  val moduleExcludes: MultiValuesMap<String, String> = MultiValuesMap<String, String>(true)
+  internal val moduleExcludes: MutableMap<String, MutableList<String>> = LinkedHashMap()
 
   /**
    * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
@@ -102,6 +99,14 @@ class ProductModulesLayout {
 
   fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
     platformLayoutCustomizers = platformLayoutCustomizers.add(customizer)
+  }
+
+  fun excludeModuleOutput(module: String, path: String) {
+    moduleExcludes.computeIfAbsent(module) { mutableListOf() }.add(path)
+  }
+
+  fun excludeModuleOutput(module: String, path: Collection<String>) {
+    moduleExcludes.computeIfAbsent(module) { mutableListOf() }.addAll(path)
   }
 
   /**
@@ -121,7 +126,7 @@ class ProductModulesLayout {
   var prepareCustomPluginRepositoryForPublishedPlugins = true
 
   /**
-   * If {@code true} then all plugins that compatible with an IDE will be built. By default these plugins will be placed to "auto-uploading"
+   * If {@code true} then all plugins that compatible with an IDE will be built. By default, these plugins will be placed to "auto-uploading"
    * subdirectory and may be automatically uploaded to plugins.jetbrains.com.
    * <br>
    * If {@code false} only plugins from {@link #setPluginModulesToPublish} will be considered.
@@ -131,7 +136,7 @@ class ProductModulesLayout {
   /**
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
    */
-  var compatiblePluginsToIgnore: List<String> = emptyList()
+  var compatiblePluginsToIgnore: PersistentList<String> = persistentListOf()
 
   /**
    * Module names which should be excluded from this product.
@@ -148,7 +153,7 @@ class ProductModulesLayout {
     result.addAll(enabledPluginModules)
     pluginLayouts.asSequence()
       .filter { enabledPluginModules.contains(it.mainModule) }
-      .flatMapTo(result) { it.getIncludedModuleNames() }
+      .flatMapTo(result) { it.includedModuleNames }
     return result
   }
 
@@ -156,7 +161,7 @@ class ProductModulesLayout {
    * Map name of JAR to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
    */
   fun withAdditionalPlatformJar(jarName: String, vararg moduleNames: String) {
-    additionalPlatformJars.putValues(jarName, moduleNames.toList())
+    additionalPlatformJars.putValues(jarName, moduleNames.asList())
   }
 
   fun withoutAdditionalPlatformJar(jarName: String, moduleName: String) {
@@ -165,7 +170,7 @@ class ProductModulesLayout {
 }
 
 internal fun createPluginLayoutSet(expectedSize: Int): MutableSet<PluginLayout> {
-  return ObjectLinkedOpenCustomHashSet<PluginLayout>(expectedSize, object : Hash.Strategy<PluginLayout?> {
+  return ObjectLinkedOpenCustomHashSet(expectedSize, object : Hash.Strategy<PluginLayout?> {
     override fun hashCode(layout: PluginLayout?): Int {
       if (layout == null) {
         return 0

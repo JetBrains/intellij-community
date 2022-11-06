@@ -75,7 +75,8 @@
 
     "ComboBoxButton": {
       "arrowIcon": "/icons/comboDropTriangle.svg",
-      "arrowIconDisabled": "/icons/comboDropTriangleDisabled.svg"
+      "arrowIconDisabled": "/icons/comboDropTriangleDisabled.svg",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI"
     },
 
     "CompletionPopup.nonFocusedState": true,
@@ -363,6 +364,16 @@
       "focusedBorderColor": "#0784de",
       "hoverBorderColor": "#a1a1a1",
       "UI": "com.intellij.laf.win10.WinIntelliJTextFieldUI"
+    },
+
+    "SearchFieldWithExtension": {
+      "background": "#ffffff",
+      "border": "com.intellij.laf.win10.WinIntelliJTextBorder",
+      "borderColor": "#bdbdbd",
+      "disabledBackground": "#ededed",
+      "focusedBorderColor": "#0784de",
+      "hoverBorderColor": "#a1a1a1",
+      "UI": "com.intellij.laf.win10.WinIntelliSearchFieldWithExtensionUI"
     },
 
     "TitledBorder.titleColor": "#000000",

@@ -6,10 +6,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.Navigatable;
@@ -94,6 +91,11 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myTable.getSelectedRowCount() == 1);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

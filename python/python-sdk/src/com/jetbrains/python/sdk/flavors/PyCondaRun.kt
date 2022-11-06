@@ -19,11 +19,13 @@ import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.PySdkUtil
 
+@Deprecated("Use Sdk.configureBuilderToRunPythonOnTarget")
 @Throws(ExecutionException::class)
 fun runConda(condaExecutable: String, arguments: List<String>): ProcessOutput {
   return run(condaExecutable, arguments, readCondaEnv(condaExecutable))
 }
 
+@Deprecated("Use Sdk.configureBuilderToRunPythonOnTarget")
 @Throws(ExecutionException::class)
 fun runConda(sdk: Sdk?, arguments: List<String>): ProcessOutput {
   val condaExecutable = findCondaExecutable(sdk)
@@ -36,6 +38,8 @@ fun runConda(sdk: Sdk?, arguments: List<String>): ProcessOutput {
   return run(condaExecutable, arguments, environment)
 }
 
+
+@Deprecated("Use Sdk.configureBuilderToRunPythonOnTarget")
 @Throws(ExecutionException::class)
 fun runCondaPython(condaPythonExecutable: String, arguments: List<String>): ProcessOutput {
   return run(condaPythonExecutable, arguments, PySdkUtil.activateVirtualEnv(condaPythonExecutable))
@@ -73,14 +77,7 @@ private fun ProcessOutput.checkExitCode(executable: String, arguments: List<Stri
   }
 }
 
-@Throws(ExecutionException::class, JsonSyntaxException::class)
-fun listCondaEnvironments(sdk: Sdk?): List<String> {
-  val output = runConda(sdk, listOf("env", "list", "--json"))
-  val text = output.stdout
-  val envList = Gson().fromJson(text, CondaEnvironmentsList::class.java)
-  return envList.envs
-}
-
+@Deprecated("Use PyCondaEnv")
 @Throws(ExecutionException::class, JsonSyntaxException::class)
 fun listCondaEnvironments(condaExecutable: String): List<String> {
   val output = runConda(condaExecutable, listOf("env", "list", "--json"))

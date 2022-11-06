@@ -102,13 +102,14 @@ public abstract class RunLineMarkerContributor {
       TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
       if (magnitude != null) {
         switch (magnitude) {
-          case ERROR_INDEX:
-          case FAILED_INDEX:
+          case ERROR_INDEX, FAILED_INDEX -> {
             return AllIcons.RunConfigurations.TestState.Red2;
-          case PASSED_INDEX:
-          case COMPLETE_INDEX:
+          }
+          case PASSED_INDEX, COMPLETE_INDEX -> {
             return AllIcons.RunConfigurations.TestState.Green2;
-          default:
+          }
+          default -> {
+          }
         }
       }
     }

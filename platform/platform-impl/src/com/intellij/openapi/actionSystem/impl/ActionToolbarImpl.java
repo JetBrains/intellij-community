@@ -34,7 +34,6 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.animation.AlphaAnimationContext;
-import com.intellij.util.animation.ShowHideAnimator;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -70,6 +69,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static final String SUPPRESS_TARGET_COMPONENT_WARNING = "ActionToolbarImpl.suppressTargetComponentWarning";
   public static final String DO_NOT_ADD_CUSTOMIZATION_HANDLER = "ActionToolbarImpl.suppressTargetComponentWarning";
   public static final String SUPPRESS_FAST_TRACK = "ActionToolbarImpl.suppressFastTrack";
+
+  /**
+   * Put {@code TRUE} into {@link #putClientProperty(Object, Object)} to mark that toolbar
+   * should not be hidden by {@link com.intellij.ide.actions.ToggleToolbarAction}.
+   */
+  public static final String IMPORTANT_TOOLBAR_KEY = "ActionToolbarImpl.importantToolbar";
 
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
@@ -317,13 +322,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
+  @Override
   public @NotNull ActionGroup getActionGroup() {
     return myActionGroup;
   }
 
   @Override
-  public @NotNull ShowHideAnimator getAlphaAnimator() {
-    return myAlphaContext.getAnimator();
+  public @NotNull AlphaAnimationContext getAlphaContext() {
+    return myAlphaContext;
   }
 
   @Override
@@ -1091,6 +1097,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return image;
   }
 
+  protected static boolean isSeparator(Component component) {
+    return component instanceof MySeparator;
+  }
+
   private final class MySeparator extends JComponent {
     private final String myText;
 
@@ -1389,7 +1399,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Component result = ObjectUtils.chooseNotNull(getParent(), this);
     Dimension availSize = result.getSize();
     for (Component cur = result.getParent(); cur != null; cur = cur.getParent()) {
-      if (cur instanceof JRootPane || cur instanceof JLayeredPane) break;
+      if (cur instanceof JRootPane) break;
+      if (cur instanceof JLayeredPane && cur.getParent() instanceof JRootPane) break;
       Dimension size = cur.getSize();
       if (myOrientation == SwingConstants.HORIZONTAL && size.height - availSize.height > 8 ||
           myOrientation == SwingConstants.VERTICAL && size.width - availSize.width > 8) {
@@ -1397,7 +1408,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         break;
       }
       result = cur;
-      availSize = result.getSize();
+      availSize = cur.getSize();
     }
     return result;
   }

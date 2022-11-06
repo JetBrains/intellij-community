@@ -1,6 +1,7 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.UUID
@@ -9,7 +10,7 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import java.util.*
 
@@ -26,7 +27,7 @@ interface SampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SampleEntity, ModifiableWorkspaceEntity<SampleEntity>, ObjBuilder<SampleEntity> {
+  interface Builder : SampleEntity, WorkspaceEntity.Builder<SampleEntity>, ObjBuilder<SampleEntity> {
     override var entitySource: EntitySource
     override var booleanProperty: Boolean
     override var stringProperty: String
@@ -72,7 +73,7 @@ interface ChildSampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSampleEntity, ModifiableWorkspaceEntity<ChildSampleEntity>, ObjBuilder<ChildSampleEntity> {
+  interface Builder : ChildSampleEntity, WorkspaceEntity.Builder<ChildSampleEntity>, ObjBuilder<ChildSampleEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var parentEntity: SampleEntity?
@@ -117,7 +118,7 @@ interface SecondSampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SecondSampleEntity, ModifiableWorkspaceEntity<SecondSampleEntity>, ObjBuilder<SecondSampleEntity> {
+  interface Builder : SecondSampleEntity, WorkspaceEntity.Builder<SecondSampleEntity>, ObjBuilder<SecondSampleEntity> {
     override var entitySource: EntitySource
     override var intProperty: Int
   }
@@ -146,7 +147,7 @@ interface SourceEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceEntity, ModifiableWorkspaceEntity<SourceEntity>, ObjBuilder<SourceEntity> {
+  interface Builder : SourceEntity, WorkspaceEntity.Builder<SourceEntity>, ObjBuilder<SourceEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var children: List<ChildSourceEntity>
@@ -176,7 +177,7 @@ interface ChildSourceEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSourceEntity, ModifiableWorkspaceEntity<ChildSourceEntity>, ObjBuilder<ChildSourceEntity> {
+  interface Builder : ChildSourceEntity, WorkspaceEntity.Builder<ChildSourceEntity>, ObjBuilder<ChildSourceEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var parentEntity: SourceEntity
@@ -200,22 +201,22 @@ fun MutableEntityStorage.modifyEntity(entity: ChildSourceEntity, modification: C
   ChildSourceEntity.Builder::class.java, entity, modification)
 //endregion
 
-interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
+interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   val data: String
-  override val persistentId: LinkedListEntityId
+  override val symbolicId: LinkedListEntityId
     get() {
       return LinkedListEntityId(data)
     }
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : PersistentIdEntity, ModifiableWorkspaceEntity<PersistentIdEntity>, ObjBuilder<PersistentIdEntity> {
+  interface Builder : SymbolicIdEntity, WorkspaceEntity.Builder<SymbolicIdEntity>, ObjBuilder<SymbolicIdEntity> {
     override var entitySource: EntitySource
     override var data: String
   }
 
-  companion object : Type<PersistentIdEntity, Builder>() {
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): PersistentIdEntity {
+  companion object : Type<SymbolicIdEntity, Builder>() {
+    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SymbolicIdEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -228,7 +229,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: PersistentIdEntity, modification: PersistentIdEntity.Builder.() -> Unit) = modifyEntity(
-  PersistentIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SymbolicIdEntity, modification: SymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
+  SymbolicIdEntity.Builder::class.java, entity, modification)
 //endregion
 

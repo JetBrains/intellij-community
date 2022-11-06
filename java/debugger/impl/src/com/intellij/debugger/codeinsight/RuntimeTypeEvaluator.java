@@ -28,9 +28,6 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiType> {
   public RuntimeTypeEvaluator(@Nullable Editor editor, PsiElement expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
     super(editor, expression, context, indicator);

@@ -28,8 +28,6 @@ import java.util.List;
  * while this class has no mutable state, thus it's thread-safe, subclasses may not be thread safe.
  * It's a responsibility of subclasses to synchronize properly.
  * Please don't call superclass methods like addElement under the lock.
- *
- * @author peter
  */
 public abstract class Classifier<T> {
   protected final Classifier<T> myNext;

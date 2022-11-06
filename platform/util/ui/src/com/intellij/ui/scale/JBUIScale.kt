@@ -70,7 +70,7 @@ object JBUIScale {
 
   @JvmStatic
   fun removeUserScaleChangeListener(listener: PropertyChangeListener) {
-    PROPERTY_CHANGE_SUPPORT.removePropertyChangeListener(listener)
+    PROPERTY_CHANGE_SUPPORT.removePropertyChangeListener(USER_SCALE_FACTOR_PROPERTY, listener)
   }
 
   private var systemFontData = SynchronizedClearableLazy<Pair<String?, Int>> {
@@ -374,6 +374,14 @@ object JBUIScale {
     }
     return computeSystemFontData(uiDefaults).also { systemFontData.value = it }
   }
+
+  /**
+   * Returns the system scale factor, corresponding to the graphics.
+   * This is a convenience method allowing to avoid casting to `Graphics2D`
+   * on the calling side.
+   */
+  @JvmStatic
+  fun sysScale(g: Graphics?): Float = sysScale(g as? Graphics2D?)
 
   /**
    * Returns the system scale factor, corresponding to the graphics.

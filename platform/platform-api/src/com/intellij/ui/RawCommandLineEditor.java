@@ -15,9 +15,11 @@
  */
 package com.intellij.ui;
 
+import com.intellij.execution.ui.FragmentWrapper;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +30,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.util.List;
 
-public class RawCommandLineEditor extends JPanel implements TextAccessor {
+public class RawCommandLineEditor extends JPanel implements TextAccessor, FragmentWrapper {
   private final ExpandableTextField myEditor;
   private String myDialogCaption = "";
 
@@ -41,6 +43,7 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
     myEditor = new ExpandableTextField(lineParser, lineJoiner);
     add(myEditor, BorderLayout.CENTER);
     setDescriptor(null);
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEditor);
   }
 
   public void setDescriptor(FileChooserDescriptor descriptor) {
@@ -102,5 +105,10 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
   public @NotNull RawCommandLineEditor withMonospaced(boolean monospaced) {
     myEditor.setMonospaced(monospaced);
     return this;
+  }
+
+  @Override
+  public JComponent getComponentToRegister() {
+    return getEditorField();
   }
 }

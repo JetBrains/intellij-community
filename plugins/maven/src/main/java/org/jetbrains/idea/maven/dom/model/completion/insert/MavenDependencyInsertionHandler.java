@@ -22,6 +22,8 @@ import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.onlinecompletion.MavenScopeTable;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
+import static org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionTrackerKt.logMavenDependencyInsertion;
+
 public class MavenDependencyInsertionHandler implements InsertHandler<LookupElement> {
 
   public static final InsertHandler<LookupElement> INSTANCE = new MavenDependencyInsertionHandler();
@@ -50,6 +52,8 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
       return;
     }
     setDependency(context, completionItem, (XmlFile)contextFile, domCoordinates);
+
+    logMavenDependencyInsertion(context, item, completionItem);
   }
 
 

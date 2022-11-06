@@ -23,7 +23,7 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
   }
 
   /**
-   * Here: identificator means [hashCode] or ([PersistentEntityId] in case it exists)
+   * Here: identificator means [hashCode] or ([SymbolicEntityId] in case it exists)
    *
    * Plan of [replaceBySource]:
    *  - Traverse all entities of the current builder and save the matched (by [entityFilter]) to map by identificator.
@@ -37,7 +37,7 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
    *        has a reference to an entity that doesn't exist in current builder.
    *  - Restore references between matched entities.
    */
-  internal fun replaceBySourceAsGraph(
+  private fun replaceBySourceAsGraph(
     thisStorage: MutableEntityStorageImpl,
     replaceWithStorage: AbstractEntityStorage,
     entityFilter: (EntitySource) -> Boolean,
@@ -60,12 +60,12 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
 
     LOG.debug { "Performing replace by source" }
 
-    // Map of entities in THIS builder with the entitySource that matches the predicate. Key is either hashCode or PersistentId
+    // Map of entities in THIS builder with the entitySource that matches the predicate. Key is either hashCode or SymbolicId
     val localMatchedEntities = HashMultimap.create<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, ThisEntityId>>()
     // List of entities in replaceWith store with the entitySource that matches the predicate.
     val orderedListOfMatchedEntities = arrayListOf<NotThisEntityId>()
 
-    // Map of entities in THIS builder that have a reference to matched entity. Key is either hashCode or PersistentId
+    // Map of entities in THIS builder that have a reference to matched entity. Key is either hashCode or SymbolicId
     val localUnmatchedReferencedNodes = HashMultimap.create<Any, ThisEntityId>()
 
     // Association of the EntityId in THIS store to the EntityId in the remote store
@@ -141,7 +141,7 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
           replaceMap[localNodeEntityId] = matchedEntityId
           val dataDiffersByProperties = !localNode.equalsIgnoringEntitySource(matchedEntityData)
           val dataDiffersByEntitySource = localNode.entitySource != matchedEntityData.entitySource
-          if (localNode.hasPersistentId(
+          if (localNode.hasSymbolicId(
               thisStorage) && (dataDiffersByEntitySource || dataDiffersByProperties) && matchedEntityData.entitySource !is DummyParentEntitySource) {
             // Entity exists in local store, but has changes. Generate replace operation
             replaceOperation(thisStorage, matchedEntityData, replaceWithStorage, localNode, matchedEntityId, dataDiffersByProperties,
@@ -165,9 +165,9 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
         else {
           // This is a new entity for this store. Perform add operation
 
-          val persistentId = matchedEntityData.persistentId()
-          if (persistentId != null) {
-            val existingEntityId = thisStorage.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.asThis()
+          val symbolicId = matchedEntityData.symbolicId()
+          if (symbolicId != null) {
+            val existingEntityId = thisStorage.indexes.symbolicIdIndex.getIdsByEntry(symbolicId)?.asThis()
             if (existingEntityId != null) {
               // Bad news, we have this persistent id already. CPP-22547
               // This may happened if local entity has entity source and remote entity has a different entity source
@@ -202,8 +202,8 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
           replaceWithStorage.indexes.entitySourceIndex.getEntryById(matchedEntityId.id)?.also {
             thisStorage.indexes.entitySourceIndex.index(newEntityId.id, it)
           }
-          replaceWithStorage.indexes.persistentIdIndex.getEntryById(matchedEntityId.id)?.also {
-            thisStorage.indexes.persistentIdIndex.index(newEntityId.id, it)
+          replaceWithStorage.indexes.symbolicIdIndex.getEntryById(matchedEntityId.id)?.also {
+            thisStorage.indexes.symbolicIdIndex.index(newEntityId.id, it)
           }
           thisStorage.indexes.updateExternalMappingForEntityId(matchedEntityId.id, newEntityId.id, replaceWithStorage.indexes)
           if (newEntity is SoftLinkable) thisStorage.indexes.updateSoftLinksIndex(newEntity)
@@ -384,13 +384,13 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
   }
 
   private fun WorkspaceEntityData<*>.identificator(): Any {
-    return this.persistentId() ?: this.hashCode()
+    return this.symbolicId() ?: this.hashCode()
   }
 
   private fun <T> HashMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, T>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>): Pair<WorkspaceEntityData<out WorkspaceEntity>, T>? {
     val possibleValues = this[entity.identificator()]
-    val persistentId = entity.persistentId()
-    return if (persistentId != null) {
+    val symbolicId = entity.symbolicId()
+    return if (symbolicId != null) {
       possibleValues.singleOrNull()
     }
     else {
@@ -398,9 +398,9 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
     }
   }
 
-  private fun WorkspaceEntityData<*>.hasPersistentId(thisBuilder: MutableEntityStorageImpl): Boolean {
+  private fun WorkspaceEntityData<*>.hasSymbolicId(thisBuilder: MutableEntityStorageImpl): Boolean {
     val entity = this.createEntity(thisBuilder)
-    return entity is WorkspaceEntityWithPersistentId
+    return entity is WorkspaceEntityWithSymbolicId
   }
 
   private fun replaceOperation(thisBuilder: MutableEntityStorageImpl,
@@ -412,12 +412,12 @@ internal class ReplaceBySourceAsGraph : ReplaceBySourceOperation {
                                dataDiffersByEntitySource: Boolean,
                                originalEntitySource: EntitySource) {
     val clonedEntity = matchedEntityData.clone() as WorkspaceEntityData<WorkspaceEntity>
-    val persistentIdBefore = matchedEntityData.persistentId() ?: error("PersistentId expected for $matchedEntityData")
+    val symbolicIdBefore = matchedEntityData.symbolicId() ?: error("SymbolicId expected for $matchedEntityData")
     clonedEntity.id = localNode.id
     val clonedEntityId = matchedEntityId.id.copy(arrayId = clonedEntity.id)
     thisBuilder.entitiesByType.replaceById(clonedEntity, clonedEntityId.clazz)
 
-    thisBuilder.indexes.updatePersistentIdIndexes(thisBuilder, clonedEntity.createEntity(thisBuilder), persistentIdBefore, clonedEntity)
+    thisBuilder.indexes.updateSymbolicIdIndexes(thisBuilder, clonedEntity.createEntity(thisBuilder), symbolicIdBefore, clonedEntity)
     thisBuilder.indexes.virtualFileIndex.updateIndex(matchedEntityId.id, clonedEntityId, replaceWith.indexes.virtualFileIndex)
     replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId.id)
       ?.also { thisBuilder.indexes.entitySourceIndex.index(clonedEntityId, it) }

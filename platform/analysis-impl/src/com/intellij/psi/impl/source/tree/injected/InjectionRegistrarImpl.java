@@ -832,7 +832,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
             prevHostEndOffset = shredEndOffset;
           }
           ProperTextRange rangeInHost = new ProperTextRange(start, end);
-          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum, iterator.getTextAttributes(),
+          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum,
                                                             iterator.getTextAttributesKeys()));
         }
         range = spilled;

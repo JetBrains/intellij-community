@@ -34,7 +34,7 @@ public class BuilderSimpleWithSetterPrefix {
     }
 
     public BuilderSimpleWithSetterPrefix build() {
-      return new BuilderSimpleWithSetterPrefix(myInt, myString);
+      return new BuilderSimpleWithSetterPrefix(this.myInt, this.myString);
     }
 
     public String toString() {

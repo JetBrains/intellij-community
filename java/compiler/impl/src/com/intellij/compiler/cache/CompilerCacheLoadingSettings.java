@@ -9,6 +9,7 @@ public class CompilerCacheLoadingSettings {
 
   private static final String FORCE_UPDATE = "JpsOutputLoaderManager.forceUpdate";
   private static final String DISABLE_UPDATE = "JpsOutputLoaderManager.disableUpdate";
+  private static final String CLEANUP_ASYNCHRONOUSLY = "JpsOutputLoaderManager.cleanupAsynchronously";
   private static final String MAX_DOWNLOAD_DURATION = "JpsOutputLoaderManager.maxDownloadDuration";
   private static final String APPROXIMATE_DELETION_SPEED = "JpsOutputLoaderManager.deletionBytesPerSec";
   private static final String APPROXIMATE_DECOMPRESSION_SPEED = "JpsOutputLoaderManager.decompressionBytesPerSec";
@@ -33,6 +34,17 @@ public class CompilerCacheLoadingSettings {
     boolean disableUpdate = PropertiesComponent.getInstance().getBoolean(DISABLE_UPDATE, false);
     LOG.info("Getting disable update value: " + disableUpdate);
     return disableUpdate;
+  }
+
+  public static void saveCleanupAsynchronouslyValue(boolean cleanupAsynchronously) {
+    PropertiesComponent.getInstance().setValue(CLEANUP_ASYNCHRONOUSLY, cleanupAsynchronously);
+    LOG.info("Saving cleanup asynchronously value: " + cleanupAsynchronously);
+  }
+
+  public static boolean getCleanupAsynchronouslyValue() {
+    boolean cleanupAsynchronously = PropertiesComponent.getInstance().getBoolean(CLEANUP_ASYNCHRONOUSLY, false);
+    LOG.info("Getting cleanup asynchronously value: " + cleanupAsynchronously);
+    return cleanupAsynchronously;
   }
 
   public static void saveMaxDownloadDuration(int maxDownloadDuration) {

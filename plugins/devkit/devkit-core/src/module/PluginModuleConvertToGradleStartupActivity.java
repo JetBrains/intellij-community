@@ -70,8 +70,7 @@ final class PluginModuleConvertToGradleStartupActivity implements StartupActivit
                                                                              .message("convert.devkit.to.gradle.notification.content"), NotificationType.INFORMATION)
       .addAction(NotificationAction.createSimpleExpiring(
         DevKitBundle.message("convert.devkit.to.gradle.notification.link.title"),
-        () -> BrowserUtil.browse("https://plugins.jetbrains.com/docs/intellij/gradle-prerequisites.html?from=DevkitConvertToGradleNotification" +
-                                 "#adding-gradle-support-to-an-existing-devkit-based-intellij-platform-plugin")))
+        () -> BrowserUtil.browse("https://plugins.jetbrains.com/docs/intellij/migrating-plugin-devkit-to-gradle.html?from=DevkitConvertToGradleNotification")))
       .addAction(NotificationAction.createSimpleExpiring(DevKitBundle.message("convert.devkit.to.gradle.notification.do.not.show.again"), () -> propertiesComponent.setValue(DO_NOT_SHOW_AGAIN_SETTING, true)))
       .setIcon(AllIcons.Nodes.Plugin)
       .setSuggestionType(true)

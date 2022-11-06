@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.TitledSeparator
@@ -55,7 +56,7 @@ private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
  */
 private const val FAIL_ON_WARN = false
 
-private val LOG = Logger.getInstance("Jetbrains UI DSL")
+private val LOG = Logger.getInstance("JetBrains UI DSL")
 
 /**
  * Components that can have assigned labels
@@ -73,10 +74,14 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
 
 internal val JComponent.origin: JComponent
   get() {
+    // todo Move into components implementation
     return when (this) {
       is TextFieldWithBrowseButton -> textField
       is ComponentWithBrowseButton<*> -> childComponent
-      else -> this
+      else -> {
+        val interactiveComponent = getClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT) as JComponent?
+        interactiveComponent ?: this
+      }
     }
   }
 
@@ -138,14 +143,42 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
   return result
 }
 
-internal fun isAllowedLabel(cell: CellBaseImpl<*>?): Boolean {
-  return cell is CellImpl<*> && ALLOWED_LABEL_COMPONENTS.any { clazz -> clazz.isInstance(cell.component.origin) }
+internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
+  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text)
+  val mnemonicExists = label.displayedMnemonic != 0 || label.displayedMnemonicIndex >= 0 || mnemonic?.hasMnemonic() == true
+  if (cell !is CellImpl<*>) {
+    if (mnemonicExists) {
+      warn("Cannot assign mnemonic to Panel and other non-component cells, label '${label.text}'")
+    }
+    return
+  }
+
+  val component = getLabelComponentFor(cell.component.origin)
+  if (component == null) {
+    if (mnemonicExists) {
+      warn("Unsupported labeled component ${cell.component.javaClass.name}, label '${label.text}'")
+    }
+    return
+  }
+
+  label.labelFor = component
 }
 
-internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
-  if (isAllowedLabel(cell)) {
-    label.labelFor = (cell as CellImpl<*>).component.origin
+private fun getLabelComponentFor(component: JComponent): JComponent? {
+  val labelFor = component.getClientProperty(DslComponentProperty.LABEL_FOR)
+  if (labelFor != null) {
+    if (labelFor is JComponent) {
+      return labelFor
+    }
+    else {
+      throw UiDslException("LABEL_FOR must be a JComponent: ${labelFor::class.java.name}")
+    }
   }
+
+  if (ALLOWED_LABEL_COMPONENTS.any { clazz -> clazz.isInstance(component) }) {
+    return component
+  }
+  return null
 }
 
 internal fun warn(message: String) {

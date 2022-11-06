@@ -23,8 +23,6 @@ import java.lang.annotation.Target;
 /**
  * Annotates 'primary key' methods. Elements whose primary key methods return the same
  * will be merged together in collection getters of elements merged with {@link ModelMerger}
- *
- * @author peter
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

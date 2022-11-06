@@ -17,7 +17,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunConfigurationStartHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.ui.ToolbarSettings;
@@ -43,10 +45,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.SpinningProgressIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -64,6 +69,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   public static final String RUNNERS_GROUP = "RunnerActions";
   public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
   public static final String RUN_CONTEXT_GROUP_MORE = "RunContextGroupMore";
+
+  private static final Key<SpinningProgressIcon> spinningIconKey = Key.create("spinning-icon-key");
 
   private final Set<String> myContextActionIdSet = new HashSet<>();
   private final Map<String, AnAction> myIdToAction = new HashMap<>();
@@ -86,7 +93,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }, null);
   }
 
-  final static class ExecutorRegistryActionConfigurationTuner implements ActionConfigurationCustomizer {
+  static final class ExecutorRegistryActionConfigurationTuner implements ActionConfigurationCustomizer {
     @Override
     public void customize(@NotNull ActionManager manager) {
       if (Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
@@ -187,13 +194,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  @NonNls
-  private static String newConfigurationContextActionId(@NotNull Executor executor) {
+  private static @NonNls String newConfigurationContextActionId(@NotNull Executor executor) {
     return "newConfiguration" + executor.getContextActionId();
   }
 
   private static boolean isExecutorInMainGroup(@NotNull Executor executor) {
-    return !Registry.is("executor.actions.submenu") || executor.getId().equals(ToolWindowId.RUN) || executor.getId().equals(ToolWindowId.DEBUG);
+    String id = executor.getId();
+    return id.equals(ToolWindowId.RUN) || id.equals(ToolWindowId.DEBUG) || !Registry.is("executor.actions.submenu", true);
   }
 
   private static void registerActionInGroup(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
@@ -201,11 +208,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     ((DefaultActionGroup)actionManager.getAction(groupId)).add(action, actionManager);
   }
 
-  @NotNull
-  private static AnAction registerAction(@NotNull ActionManager actionManager,
-                                         @NotNull String actionId,
-                                         @NotNull AnAction anAction,
-                                         @NotNull Map<String, AnAction> map) {
+  private static @NotNull AnAction registerAction(@NotNull ActionManager actionManager,
+                                                  @NotNull String actionId,
+                                                  @NotNull AnAction anAction,
+                                                  @NotNull Map<String, AnAction> map) {
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
       actionManager.registerAction(actionId, anAction);
@@ -322,6 +328,27 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           return;
         }
 
+        // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
+        if (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+          RunConfigurationStartHistory startHistory = RunConfigurationStartHistory.getInstance(project);
+
+          boolean isLoading = startHistory.firstOrNull(selectedSettings, it ->
+            (it.getExecutorId().equals(myExecutor.getId()) && it.getState() == RunState.SCHEDULED)
+          ) != null;
+          if (isLoading) {
+            SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
+            if (spinningIcon == null) {
+              spinningIcon = new SpinningProgressIcon();
+              spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.FOREGROUND);
+              presentation.putClientProperty(spinningIconKey, spinningIcon);
+            }
+            presentation.setDisabledIcon(spinningIcon);
+          } else {
+            presentation.putClientProperty(spinningIconKey, null);
+            presentation.setDisabledIcon(null);
+          }
+        }
+
         presentation.setIcon(getInformativeIcon(project, selectedSettings));
         RunConfiguration configuration = selectedSettings.getConfiguration();
         if (!isSuppressed(project)) {
@@ -339,7 +366,19 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
         }
-        text = myExecutor.getStartActionText(configuration.getName());
+
+        if (ExperimentalUI.isNewUI() &&
+            needRerunPresentation(selectedSettings.getConfiguration(), getRunningDescriptors(project, selectedSettings))) {
+          if (myExecutor.getId().equals(DefaultRunExecutor.EXECUTOR_ID)) {
+            text = ExecutionBundle.message("run.toolbar.widget.rerun.text", configuration);
+          }
+          else {
+            text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+          }
+        }
+        else {
+          text = myExecutor.getStartActionText(configuration.getName());
+        }
       }
       else {
         if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
@@ -436,7 +475,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return RunCurrentFileActionStatus.createEnabled(myExecutor.getStartActionText(psiFile.getName()), icon, runnableConfigs);
     }
 
-    private static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
+    @ApiStatus.Internal
+    public static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
       if (resetCache) {
         psiFile.putUserData(CURRENT_FILE_RUN_CONFIGS_KEY, null);
       }
@@ -492,7 +532,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     protected Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
-      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
       RunConfiguration configuration = selectedConfiguration.getConfiguration();
       if (configuration instanceof RunnerIconProvider) {
         RunnerIconProvider provider = (RunnerIconProvider)configuration;
@@ -502,12 +541,15 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       }
 
-      List<RunContentDescriptor> runningDescriptors =
-        executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
-      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
+      List<RunContentDescriptor> runningDescriptors = getRunningDescriptors(project, selectedConfiguration);
 
-      if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
-        return AllIcons.Actions.Restart;
+      if (needRerunPresentation(configuration, runningDescriptors)) {
+        if (ExperimentalUI.isNewUI() && myExecutor.getIcon() != myExecutor.getRerunIcon()) {
+          return myExecutor.getRerunIcon();
+        }
+        if (DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
+          return AllIcons.Actions.Restart;
+        }
       }
       if (runningDescriptors.isEmpty()) {
         return myExecutor.getIcon();
@@ -519,6 +561,20 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       else {
         return IconUtil.addText(myExecutor.getIcon(), Integer.toString(runningDescriptors.size()));
       }
+    }
+
+    private static boolean needRerunPresentation(RunConfiguration configuration, List<RunContentDescriptor> runningDescriptors) {
+      return !configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty();
+    }
+
+    @NotNull
+    private List<RunContentDescriptor> getRunningDescriptors(@NotNull Project project,
+                                                      @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
+      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
+      List<RunContentDescriptor> runningDescriptors =
+        executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
+      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
+      return runningDescriptors;
     }
 
     protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {

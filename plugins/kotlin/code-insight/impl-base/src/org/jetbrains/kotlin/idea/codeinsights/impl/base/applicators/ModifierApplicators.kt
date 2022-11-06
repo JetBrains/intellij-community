@@ -7,7 +7,8 @@ import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.with
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 
 import org.jetbrains.kotlin.psi.KtModifierListOwner
@@ -27,6 +28,11 @@ object ModifierApplicators {
             }
         }
     }
+
+    fun removeRedundantModifierApplicator(modifier: TokenSet, familyName: () -> String) =
+        removeModifierApplicator(modifier, familyName).with {
+            actionName { _, (modifier) -> KotlinBundle.message("remove.redundant.0.modifier", modifier.value) }
+        }
 
     class Modifier(val modifier: KtModifierKeywordToken) : KotlinApplicatorInput {
         override fun isValidFor(psi: PsiElement): Boolean {

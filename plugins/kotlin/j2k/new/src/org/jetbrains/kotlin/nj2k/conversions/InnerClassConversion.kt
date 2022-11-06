@@ -3,36 +3,33 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.isLocalClass
 import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.JKOtherModifierElement
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
-import org.jetbrains.kotlin.nj2k.tree.OtherModifier
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.INNER
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STATIC
+import org.jetbrains.kotlin.nj2k.tree.elementByModifier
 
-class InnerClassConversion(context : NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
-    override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        if (element !is JKClass) return recurse(element)
-        return recurseArmed(element, element)
-    }
+class InnerClassConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+    override fun applyToElement(element: JKTreeElement): JKTreeElement =
+        if (element is JKClass) recurseArmed(element, outerClass = element) else recurse(element)
 
-    private fun recurseArmed(element: JKTreeElement, outer: JKClass): JKTreeElement {
-        return applyRecursive(element, outer, ::applyArmed)
-    }
+    private fun recurseArmed(element: JKTreeElement, outerClass: JKClass): JKTreeElement =
+        applyRecursive(element, outerClass) { elem, outer -> elem.applyArmed(outer) }
 
-    private fun applyArmed(element: JKTreeElement, outer: JKClass): JKTreeElement {
-        if (element !is JKClass) return recurseArmed(element, outer)
-        if (element.classKind == JKClass.ClassKind.COMPANION) return recurseArmed(element, outer)
-        if (element.isLocalClass()) return recurseArmed(element, outer)
+    private fun JKTreeElement.applyArmed(outerClass: JKClass): JKTreeElement {
+        if (this !is JKClass || classKind == COMPANION || isLocalClass()) return recurseArmed(this, outerClass)
+        val static = elementByModifier(STATIC)
+        when {
+            static != null ->
+                otherModifierElements -= static
 
-        val static = element.otherModifierElements.find { it.otherModifier == OtherModifier.STATIC }
-        if (static != null) {
-            element.otherModifierElements -= static
-        } else if (element.classKind != JKClass.ClassKind.INTERFACE &&
-            outer.classKind != JKClass.ClassKind.INTERFACE &&
-            element.classKind != JKClass.ClassKind.ENUM
-        ) {
-            element.otherModifierElements += JKOtherModifierElement(OtherModifier.INNER)
+            outerClass.classKind != INTERFACE && classKind != INTERFACE && classKind != ENUM && classKind != RECORD ->
+                otherModifierElements += JKOtherModifierElement(INNER)
         }
-        return recurseArmed(element, element)
+        return recurseArmed(this, outerClass = this)
     }
 }

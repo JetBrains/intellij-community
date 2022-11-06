@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
@@ -311,8 +312,18 @@ interface BaseKotlinConverter {
         requiredTypes: Array<out Class<out UElement>>
     ): Sequence<UElement> {
         return requiredTypes.accommodate(
-            *convertToPropertyAlternatives(LightClassUtil.getLightClassPropertyMethods(property), givenParent)
+            *convertToPropertyAlternatives(LightClassUtil.getLightClassPropertyMethods(property).withInterfaceFallBack(property), givenParent)
         )
+    }
+
+    // a workaround for KT-54679
+    private fun LightClassUtil.PropertyAccessorsPsiMethods.withInterfaceFallBack(property: KtProperty): LightClassUtil.PropertyAccessorsPsiMethods {
+        if (backingField != null) return this
+        val psiField =
+            property.containingClassOrObject?.toLightClass()?.fields?.find { it is KtLightField && it.kotlinOrigin === property }
+                ?: return this
+
+        return LightClassUtil.PropertyAccessorsPsiMethods(getter, setter, psiField, emptyList())
     }
 
     fun convertJvmStaticMethod(

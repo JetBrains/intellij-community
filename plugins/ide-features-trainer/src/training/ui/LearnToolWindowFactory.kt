@@ -25,7 +25,7 @@ internal class LearnToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun getAnchor(): ToolWindowAnchor? {
     // calling LangManager can slow down start-up - measure it
     runActivity("learn tool window anchor setting") {
-      return LangManager.getInstance().getLangSupport()?.getToolWindowAnchor()
+      return LangManager.getInstance().getLangSupportBean()?.getLearnToolWindowAnchor()
     }
   }
 

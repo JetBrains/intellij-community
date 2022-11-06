@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
-import com.intellij.application.options.RegistryManager
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
@@ -63,6 +62,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -111,7 +111,7 @@ object DynamicPlugins {
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
+  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>): Boolean {
     return updateDescriptorsWithoutRestart(descriptors, load = true) {
       loadPlugin(it, checkImplementationDetailDependencies = true)
     }
@@ -121,7 +121,7 @@ object DynamicPlugins {
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
   fun unloadPlugins(
-    descriptors: Collection<IdeaPluginDescriptor>,
+    descriptors: Collection<IdeaPluginDescriptorImpl>,
     project: Project? = null,
     parentComponent: JComponent? = null,
     options: UnloadPluginOptions = UnloadPluginOptions(disable = true),
@@ -132,7 +132,7 @@ object DynamicPlugins {
   }
 
   private fun updateDescriptorsWithoutRestart(
-    plugins: Collection<IdeaPluginDescriptor>,
+    plugins: Collection<IdeaPluginDescriptorImpl>,
     load: Boolean,
     executor: (IdeaPluginDescriptorImpl) -> Boolean,
   ): Boolean {
@@ -141,8 +141,11 @@ object DynamicPlugins {
     }
 
     val pluginSet = PluginManagerCore.getPluginSet()
-    @Suppress("UNCHECKED_CAST")
-    val descriptors = (plugins as Collection<IdeaPluginDescriptorImpl>).filter { pluginSet.isPluginEnabled(it.pluginId) != load }
+    val descriptors = plugins
+      .asSequence()
+      .distinctBy { it.pluginId }
+      .filter { pluginSet.isPluginEnabled(it.pluginId) != load }
+      .toList()
 
     val operationText = if (load) "load" else "unload"
     val message = descriptors.joinToString(prefix = "Plugins to $operationText: [", postfix = "]")
@@ -1043,15 +1046,10 @@ private fun optionalDependenciesOnPlugin(
 private fun loadModules(
   modules: Collection<IdeaPluginDescriptorImpl>,
   app: ApplicationImpl,
-  listenerCallbacks: MutableList<Runnable>,
+  listenerCallbacks: MutableList<in Runnable>,
 ) {
   fun registerComponents(componentManager: ComponentManager) {
-    (componentManager as ComponentManagerImpl).registerComponents(
-      modules = modules.toList(),
-      app = app,
-      precomputedExtensionModel = null,
-      listenerCallbacks = listenerCallbacks,
-    )
+    (componentManager as ComponentManagerImpl).registerComponents(modules.toList(), app, null, listenerCallbacks)
   }
 
   registerComponents(app)
@@ -1068,8 +1066,8 @@ private fun loadModules(
 
 private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
   FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
-    val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, progressIndicator ->
-      AnalyzeClassloaderReferencesGraph(analysisContext, pluginId.idString).analyze(progressIndicator)
+    val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, listProvider, progressIndicator ->
+      AnalyzeClassloaderReferencesGraph(analysisContext, listProvider, pluginId.idString).analyze(progressIndicator).mainReport.toString()
     }
     analysis.onlyStrongReferences = true
     analysis.includeClassesAsRoots = false
@@ -1241,9 +1239,9 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(
       continue
     }
 
-    @Suppress("RemoveExplicitTypeArguments") val ep = app.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-                                                      ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-                                                      ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
+    val ep = app.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+             ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+             ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
     if (ep != null) {
       if (!ep.isDynamic) {
         return getNonDynamicUnloadError(optionalDependencyPluginId)

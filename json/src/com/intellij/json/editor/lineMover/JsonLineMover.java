@@ -99,18 +99,18 @@ public class JsonLineMover extends LineMover {
   public void afterMove(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
     int diff = (info.toMove.endLine - info.toMove.startLine) - (info.toMove2.endLine - info.toMove2.startLine);
     switch (myDirection) {
-      case Same:
+      case Same -> {
         addCommaIfNeeded(editor.getDocument(), down ? info.toMove.endLine - 1 - diff : info.toMove2.endLine - 1 + diff);
         trimCommaIfNeeded(editor.getDocument(), file, down ? info.toMove.endLine : info.toMove2.endLine + diff);
-        break;
-      case Inside:
+      }
+      case Inside -> {
         if (!down) {
           addCommaIfNeeded(editor.getDocument(), info.toMove2.startLine - 1);
         }
         trimCommaIfNeeded(editor.getDocument(), file, down ? info.toMove.startLine : info.toMove2.startLine);
         trimCommaIfNeeded(editor.getDocument(), file, down ? info.toMove.endLine : info.toMove2.endLine + diff);
-        break;
-      case Outside:
+      }
+      case Outside -> {
         addCommaIfNeeded(editor.getDocument(), down ? info.toMove.startLine : info.toMove2.startLine);
         trimCommaIfNeeded(editor.getDocument(), file, down ? info.toMove.endLine : info.toMove2.endLine + diff);
         if (down) {
@@ -118,7 +118,7 @@ public class JsonLineMover extends LineMover {
           addCommaIfNeeded(editor.getDocument(), info.toMove.endLine);
           trimCommaIfNeeded(editor.getDocument(), file, info.toMove.endLine);
         }
-        break;
+      }
     }
   }
 

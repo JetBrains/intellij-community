@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -17,13 +17,14 @@ import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.references.fe10.KtFe10SimpleNameReference
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.references.fe10.KtFe10SimpleNameReference
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
@@ -91,11 +92,52 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     }
 
     override fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression? {
-        val ktQualifiedExpression = reference.sourcePsi?.castSafelyTo<KtDotQualifiedExpression>() ?: return null
+        val ktQualifiedExpression = reference.sourcePsi?.asSafely<KtDotQualifiedExpression>() ?: return null
         val selector = ktQualifiedExpression.selectorExpression ?: return null
         val ptr = SmartPointerManager.createPointer(selector)
         ImportAllMembersIntention().applyTo(ktQualifiedExpression, null)
         return ptr.element?.toUElementOfType()
+    }
+
+    override fun initializeField(uField: UField, uParameter: UParameter) {
+        val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return
+        val sourcePsi = uMethod.sourcePsi ?: return
+        if (sourcePsi is KtPrimaryConstructor) {
+            if (uField.name == uParameter.name) {
+                val psiElement = uParameter.sourcePsi ?: return
+                val ktParameter = KtPsiFactory(psiElement.project).createParameter(uField.sourcePsi?.text ?: return)
+                ktParameter.modifierList?.getModifier(KtTokens.FINAL_KEYWORD)?.delete()
+                ktParameter.defaultValue?.delete()
+                ktParameter.equalsToken?.delete()
+                val psiField = uField.sourcePsi
+                if (psiField != null) {
+                    val nextSibling = psiField.nextSibling
+                    if (nextSibling is PsiWhiteSpace) {
+                        nextSibling.delete()
+                    }
+                    psiField.delete()
+                }
+                psiElement.replace(ktParameter)
+            }
+            else {
+                val property = uField.sourcePsi as? KtProperty ?: return
+                property.initializer = KtPsiFactory(property.project).createExpression(uParameter.name)
+            }
+            return
+        }
+
+        val body = (sourcePsi as? KtDeclarationWithBody)?.bodyBlockExpression ?: return
+        val ktPsiFactory = KtPsiFactory(sourcePsi)
+        val assigmentExpression = ktPsiFactory.buildExpression {
+            if (uField.name == uParameter.name) {
+                appendFixedText("this.")
+            }
+            appendName(Name.identifier(uField.name))
+            appendFixedText(" = ")
+            appendName(Name.identifier(uParameter.name))
+        }
+
+        body.addBefore(assigmentExpression, body.rBrace)
     }
 }
 

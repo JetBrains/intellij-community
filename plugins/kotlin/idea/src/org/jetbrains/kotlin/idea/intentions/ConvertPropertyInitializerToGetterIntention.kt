@@ -10,14 +10,11 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.isError
 
 class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<KtProperty>(
@@ -32,7 +29,20 @@ class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<
             element.hasJvmFieldAnnotation() ||
             element.hasModifier(KtTokens.CONST_KEYWORD)
         ) return null
+
+        if (initializer.hasReferenceToPrimaryConstructorParameter()) return null
+
         return TextRange(nameIdentifier.startOffset, initializer.endOffset)
+    }
+
+    private fun KtExpression.hasReferenceToPrimaryConstructorParameter(): Boolean {
+        val primaryConstructorParameters = containingClass()?.primaryConstructor?.valueParameters.orEmpty()
+            .filterNot { it.hasValOrVar() }.associateBy { it.name }.ifEmpty { return false }
+
+        return anyDescendantOfType<KtNameReferenceExpression> {
+            val parameter = primaryConstructorParameters[it.text]
+            parameter != null && parameter == it.mainReference.resolve()
+        }
     }
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean {
@@ -62,6 +72,7 @@ class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<
                     val notImplementedSetter = KtPsiFactory(property).createPropertySetter(notImplemented)
                     property.add(notImplementedSetter)
                 }
+
                 else -> property.add(getter)
             }
 

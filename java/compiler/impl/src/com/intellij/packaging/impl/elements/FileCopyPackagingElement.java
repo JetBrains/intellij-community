@@ -18,7 +18,7 @@ import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.FileCopyPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.FileCopyPackagingElementEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;

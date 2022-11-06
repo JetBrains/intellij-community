@@ -2,6 +2,7 @@
 package com.intellij.execution.jshell.frontend;
 
 import com.intellij.execution.jshell.protocol.*;
+import jdk.jshell.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

@@ -4,7 +4,7 @@ import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
 import org.jetbrains.protocolReader.TextOutput
 
-internal class TypeDescriptor(val type: BoxableType, val descriptor: ItemDescriptor, private val asRawString: Boolean = false) {
+internal class TypeDescriptor(val type: BoxableType, private val descriptor: ItemDescriptor, private val asRawString: Boolean = false) {
   private val optional = descriptor is ItemDescriptor.Named && descriptor.optional
 
   fun writeAnnotations(out: TextOutput) {

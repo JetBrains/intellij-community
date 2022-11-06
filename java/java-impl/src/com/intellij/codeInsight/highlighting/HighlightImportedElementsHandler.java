@@ -254,7 +254,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     }
   }
 
-  static class PsiMemberComparator implements Comparator<PsiMember> {
+  private static class PsiMemberComparator implements Comparator<PsiMember> {
 
     @Override
     public int compare(PsiMember member1, PsiMember member2) {

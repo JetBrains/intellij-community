@@ -177,16 +177,11 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
   @Override
   public Dimension getPreferredSize() {
-    Dimension emptyTextSize = getEmptyText().getPreferredSize();
-    JBInsets.addTo(emptyTextSize, getInsets());
+    Dimension s = getEmptyText().getPreferredSize();
+    JBInsets.addTo(s, getInsets());
     Dimension size = super.getPreferredSize();
-
-    int newWidth = size.width;
-    if (getModel().getSize() == 0 && !StringUtil.isEmpty(getEmptyText().getText())) {
-      newWidth = Math.max(newWidth, emptyTextSize.width);
-    }
-
-    return new Dimension(newWidth, Math.max(emptyTextSize.height, size.height));
+    return new Dimension(Math.max(s.width, size.width),
+                         Math.max(s.height, size.height));
   }
 
   protected final Dimension super_getPreferredSize() {
@@ -195,7 +190,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
   private void init() {
     setSelectionBackground(UIUtil.getListSelectionBackground(true));
-    setSelectionForeground(UIUtil.getListSelectionForeground(true));
+    setSelectionForeground(NamedColorUtil.getListSelectionForeground(true));
     installDefaultCopyAction();
 
     myEmptyText = new StatusText(this) {
@@ -241,7 +236,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
-  private @Nullable String itemToText(int index, E value) {
+  protected @Nullable String itemToText(int index, E value) {
     ListCellRenderer<? super E> renderer = getCellRenderer();
     Component c = renderer == null ? null : renderer.getListCellRendererComponent(this, value, index, true, true);
     if (c != null) {

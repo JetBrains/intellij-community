@@ -115,7 +115,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     @Override
     public @Nullable Object getData(@NotNull String dataId) {
       if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(dataId);
+        return (DataProvider)slowId -> getSlowData(slowId);
       }
       return null;
     }

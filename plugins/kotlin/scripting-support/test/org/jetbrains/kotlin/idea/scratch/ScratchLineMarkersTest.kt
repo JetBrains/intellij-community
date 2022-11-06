@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.codeInsight.AbstractLineMarkersTest
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest.Companion.configureOptions
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 

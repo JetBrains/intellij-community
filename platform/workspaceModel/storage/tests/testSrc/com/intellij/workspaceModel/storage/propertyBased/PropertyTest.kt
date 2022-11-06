@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.propertyBased
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.createBuilderFrom
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.entities.test.api.AnotherSource
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
@@ -17,7 +14,6 @@ import junit.framework.TestCase
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Ignore
 import org.junit.Test
 import kotlin.reflect.full.memberProperties
 
@@ -28,7 +24,8 @@ class PropertyTest {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
-        env.executeCommands(getEntityManipulation(workspace))
+        val detachedEntities = ArrayList<WorkspaceEntity>()
+        env.executeCommands(getEntityManipulation(workspace, detachedEntities))
         workspace.assertConsistency()
       }
     }
@@ -46,7 +43,6 @@ class PropertyTest {
   }
 
   @Test
-  @Ignore("Baga in code generation detected")
   fun testAddDiff() {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
@@ -142,13 +138,13 @@ private fun MutableEntityStorageImpl.restoreFromBackup(backup: EntityStorage) {
   indexes.softLinks.clear()
   indexes.virtualFileIndex.clear()
   indexes.entitySourceIndex.clear()
-  indexes.persistentIdIndex.clear()
+  indexes.symbolicIdIndex.clear()
   indexes.externalMappings.clear()
 
   indexes.softLinks.copyFrom(backupBuilder.indexes.softLinks)
   indexes.virtualFileIndex.copyFrom(backupBuilder.indexes.virtualFileIndex)
   indexes.entitySourceIndex.copyFrom(backupBuilder.indexes.entitySourceIndex)
-  indexes.persistentIdIndex.copyFrom(backupBuilder.indexes.persistentIdIndex)
+  indexes.symbolicIdIndex.copyFrom(backupBuilder.indexes.symbolicIdIndex)
   indexes.externalMappings.putAll(indexes.externalMappings)
   // Just checking that all properties have been asserted
   TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)

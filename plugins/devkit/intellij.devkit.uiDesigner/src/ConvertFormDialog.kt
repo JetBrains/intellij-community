@@ -6,9 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.EditorTextFieldWithBrowseButton
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.selected
 import javax.swing.JComponent
 
 
@@ -36,12 +34,12 @@ class ConvertFormDialog(private val project: Project, var className: String) : D
       row(DevKitUIDesignerBundle.message("convert.form.dialog.label.bound.instance.type")) {
         cell(EditorTextFieldWithBrowseButton(project, true))
           .bind(EditorTextFieldWithBrowseButton::getText, EditorTextFieldWithBrowseButton::setText, ::boundInstanceType.toMutableProperty())
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row(DevKitUIDesignerBundle.message("convert.form.dialog.label.bound.instance.expression")) {
         textField()
           .bindText(::boundInstanceExpression)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       group(DevKitUIDesignerBundle.message("convert.form.dialog.base.class.separator")) {
         buttonsGroup {

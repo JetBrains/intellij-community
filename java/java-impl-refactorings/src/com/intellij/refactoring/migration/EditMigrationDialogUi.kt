@@ -3,13 +3,7 @@ package com.intellij.refactoring.migration
 
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.DropDownLink
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.rows
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.containers.mapSmart
 import javax.swing.JPanel
 import javax.swing.JTextArea
@@ -38,7 +32,7 @@ class EditMigrationDialogUi(migrationMapSet: MigrationMapSet,
           lineWrap = true
           wrapStyleWord = true
         }
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .component
       bottomGap(BottomGap.MEDIUM)
     }
@@ -46,8 +40,7 @@ class EditMigrationDialogUi(migrationMapSet: MigrationMapSet,
     row {
       cell(tablePanel)
         .validationOnApply { dialog.validateTable() }
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
     }
   }
 }

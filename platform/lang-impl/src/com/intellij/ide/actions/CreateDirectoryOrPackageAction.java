@@ -55,10 +55,11 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
-  private static final ExtensionPointName<CreateDirectoryCompletionContributor> EP = new ExtensionPointName<>("com.intellij.createDirectoryCompletionContributor");
+  public static final ExtensionPointName<CreateDirectoryCompletionContributor> EP = new ExtensionPointName<>("com.intellij.createDirectoryCompletionContributor");
 
   @TestOnly
   public static final DataKey<String> TEST_DIRECTORY_NAME_KEY = DataKey.create("CreateDirectoryOrPackageAction.testName");
@@ -166,7 +167,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
   }
 
-  private static JBPopup createLightWeightPopup(@Nullable Project project,
+  private JBPopup createLightWeightPopup(@Nullable Project project,
                                                 @NlsContexts.PopupTitle String title,
                                                 String initialText,
                                                 @NotNull PsiDirectory directory,
@@ -230,7 +231,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   @NotNull
-  private static List<CompletionItem> collectSuggestedDirectories(@NotNull PsiDirectory directory) {
+  protected List<CompletionItem> collectSuggestedDirectories(@NotNull PsiDirectory directory) {
     List<CompletionItem> variants = new ArrayList<>();
 
     VirtualFile vDir = directory.getVirtualFile();
@@ -255,7 +256,10 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
         Icon icon = handler == null ? null : handler.getRootIcon();
         if (icon == null) icon = AllIcons.Nodes.Folder;
 
-        variants.add(new CompletionItem(contributor, relativePath, icon, variant.rootType));
+        CompletionItem completionItem = new CompletionItem(contributor, relativePath, icon, variant.rootType);
+        if (!variants.contains(completionItem)) {
+          variants.add(completionItem);
+        }
       }
     }
 
@@ -274,14 +278,14 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     List<PsiElement> createdDirectories = new ArrayList<>(toCreate.size());
 
     // first, check that we can create all requested directories
-    if (!ContainerUtil.all(toCreate, dir -> validator.checkInput(dir.first))) return null;
+    if (!ContainerUtil.all(toCreate, dir -> !dir.first.isEmpty() && validator.checkInput(dir.first))) return null;
 
     List<Pair<PsiFileSystemItem, JpsModuleSourceRootType<?>>> toMarkAsRoots = new ArrayList<>(toCreate.size());
 
     // now create directories one by one
     for (Pair<String, JpsModuleSourceRootType<?>> dir : toCreate) {
       // this call creates a directory
-      if (!validator.canClose(dir.first)) continue;
+      if (!validator.canClose(dir.first)) return null;
       PsiFileSystemItem element = validator.getCreatedElement();
       if (element == null) continue;
 
@@ -325,7 +329,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     return createdDirectories;
   }
 
-  private static final class CompletionItem {
+  protected static final class CompletionItem {
     @NotNull final CreateDirectoryCompletionContributor contributor;
 
     @NotNull final String relativePath;
@@ -345,6 +349,23 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
       this.displayText = FileUtil.toSystemDependentName(relativePath);
       this.icon = icon;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      CompletionItem that = (CompletionItem)o;
+      return contributor.equals(that.contributor) &&
+             relativePath.equals(that.relativePath) &&
+             Objects.equals(rootType, that.rootType) &&
+             displayText.equals(that.displayText) &&
+             Objects.equals(icon, that.icon);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(contributor, relativePath, rootType, displayText, icon);
     }
   }
 

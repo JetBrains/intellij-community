@@ -20,9 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
-/**
- * @author peter
- */
 public class PlaceContextFilter implements ContextFilter {
   private final ElementPattern<PsiElement> myPattern;
 

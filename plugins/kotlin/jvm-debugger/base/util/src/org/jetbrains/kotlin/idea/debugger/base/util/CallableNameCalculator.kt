@@ -17,7 +17,7 @@ object CallableNameCalculator {
             override fun matches(name: String) = name == this.name
         }
 
-        class Mangled(val prefix: String, val postfix: String?) : CallableName() {
+        class Mangled(val prefix: String, private val postfix: String?) : CallableName() {
             override fun matches(name: String) = name.startsWith(prefix) && (postfix == null || name.endsWith(postfix))
         }
 

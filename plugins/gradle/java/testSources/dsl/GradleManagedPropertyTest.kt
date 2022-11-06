@@ -85,7 +85,7 @@ class GradleManagedPropertyTest : GradleCodeInsightTestCase() {
         |  }
         |}
       """.trimMargin())
-      withBuildFile("project.extensions.create('myExt', pkg.MyExtension)")
+      withBuildFile(content = "project.extensions.create('myExt', pkg.MyExtension)")
       withSettingsFile {
         setProjectName("GradleManagedPropertyTest")
       }

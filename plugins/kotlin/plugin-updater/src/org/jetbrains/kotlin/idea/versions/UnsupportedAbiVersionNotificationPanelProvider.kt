@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -32,7 +33,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppres
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.updateLibraries
 import org.jetbrains.kotlin.idea.update.KotlinPluginUpdaterBundle
-import org.jetbrains.kotlin.idea.util.application.invokeLater
+import com.intellij.openapi.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion

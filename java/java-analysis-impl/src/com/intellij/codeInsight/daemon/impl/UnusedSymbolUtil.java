@@ -79,17 +79,6 @@ public final class UnusedSymbolUtil {
     return EntryPointsManager.getInstance(project).isImplicitWrite(element);
   }
 
-  /**
-   * @deprecated pass inspection's shortName to provide correct inspection description
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
-                                                     @NotNull @NlsContexts.DetailedDescription String message,
-                                                     @NotNull final HighlightInfoType highlightInfoType) {
-    return createUnusedSymbolInfo(element, message, highlightInfoType, null);
-  }
-
   @Nullable
   public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
                                                      @NotNull @NlsContexts.DetailedDescription String message,

@@ -17,6 +17,15 @@ public class LocalMavenRemoteProcessSupportFactory implements MavenRemoteProcess
   }
 
   @Override
+  public MavenRemoteProcessSupport createIndexerSupport(Sdk jdk,
+                                                         String vmOptions,
+                                                         MavenDistribution distribution,
+                                                         Integer debugPort) {
+    return new LocalMavenIndexServerRemoteProcessSupport(jdk, vmOptions, distribution, debugPort);
+
+  }
+
+  @Override
   public boolean isApplicable(Project project) {
     return false;
   }

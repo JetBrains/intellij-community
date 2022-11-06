@@ -9,97 +9,76 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.actions.PerformFixesTask
 import com.intellij.codeInspection.ex.CleanupProblems
-import com.intellij.codeInspection.ex.GlobalInspectionContextBase
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressWrapper
-import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.util.SequentialModalProgressTask
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
 
 class CodeCleanupCheckinHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = CodeCleanupCheckinHandler(panel)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    return CodeCleanupCheckinHandler(panel.project)
+  }
 }
 
-private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) :
+private class CodeCleanupCheckinHandler(private val project: Project) :
   CheckinHandler(),
-  CheckinMetaHandler,
-  CommitCheck<CommitProblem> {
+  CommitCheck {
 
-  private val project = panel.project
   private val settings get() = VcsConfiguration.getInstance(project)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    ProfileChooser(panel, settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT,
+    ProfileChooser(project,
+                   settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT,
                    settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_LOCAL,
                    settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE,
                    "before.checkin.cleanup.code",
                    "before.checkin.cleanup.code.profile")
 
-  /**
-   * Won't be called for Commit Tool Window as [CommitCheck] is implemented.
-   *
-   * @see com.intellij.vcs.commit.NonModalCommitWorkflow.runMetaHandler
-   */
-  override fun runCheckinHandlers(runnable: Runnable) {
-    if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
-      val filesToProcess = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
-      val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextBase
-      val profile = getProfile()
-
-      globalContext.codeCleanup(AnalysisScope(project, filesToProcess), profile, null, runnable, true)
-    }
-    else {
-      runnable.run()
-    }
-  }
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT
 
-  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
-    indicator.text = message("progress.text.inspecting.code")
-    val cleanupProblems = findProblems(indicator)
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+    val sink = coroutineContext.progressSink
+    sink?.text(message("progress.text.inspecting.code"))
+    val cleanupProblems = findProblems(commitInfo.committedVirtualFiles)
 
-    indicator.text = message("progress.text.applying.fixes")
-    indicator.text2 = ""
-    applyFixes(cleanupProblems, indicator)
+    sink?.text(message("progress.text.applying.fixes"))
+    sink?.details("")
+    applyFixes(cleanupProblems)
 
     return null
   }
 
-  /**
-   * Does nothing as no problem is reported in [runCheck].
-   */
-  override fun showDetails(problem: CommitProblem) = Unit
-
-  private suspend fun findProblems(indicator: ProgressIndicator): CleanupProblems {
-    val files = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
+  private suspend fun findProblems(committedFiles: List<VirtualFile>): CleanupProblems {
+    val files = filterOutGeneratedAndExcludedFiles(committedFiles, project)
     val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextImpl
     val profile = getProfile()
     val scope = AnalysisScope(project, files)
-    val wrapper = TextToText2Indicator(ProgressWrapper.wrap(indicator))
-
-    return withContext(Dispatchers.Default) {
-      ProgressManager.getInstance().runProcess(
-        Computable { globalContext.findProblems(scope, profile, wrapper) { true } },
-        wrapper
-      )
+    return withContext(Dispatchers.Default + textToDetailsSinkContext(coroutineContext.progressSink)) {
+      runUnderIndicator {
+        val indicator = ProgressManager.getGlobalProgressIndicator()
+        globalContext.findProblems(scope, profile, indicator) { true }
+      }
     }
   }
 
@@ -108,13 +87,13 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
     if (cleanupProfile != null) {
       val profileManager = if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_LOCAL) InspectionProfileManager.getInstance()
       else InspectionProjectProfileManager.getInstance(project)
-      
+
       return profileManager.getProfile(cleanupProfile)
     }
     return InspectionProjectProfileManager.getInstance(project).currentProfile
   }
 
-  private suspend fun applyFixes(cleanupProblems: CleanupProblems, indicator: ProgressIndicator) {
+  private suspend fun applyFixes(cleanupProblems: CleanupProblems) {
     if (cleanupProblems.files.isEmpty()) return
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(cleanupProblems.files)) return
 
@@ -122,12 +101,16 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
     commandProcessor.executeCommand {
       if (cleanupProblems.isGlobalScope) commandProcessor.markCurrentCommandAsGlobal(project)
 
+      val sink = coroutineContext.progressSink
       val runner = SequentialModalProgressTask(project, "", true)
       runner.setMinIterationTime(200)
-      runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors, indicator))
+      runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors, sink))
 
-      withContext(Dispatchers.IO) {
-        runner.doRun(NoTextIndicator(indicator))
+      withContext(Dispatchers.IO + noTextSinkContext(sink)) {
+        runUnderIndicator {
+          // TODO get rid of SequentialModalProgressTask
+          runner.doRun(ProgressManager.getGlobalProgressIndicator())
+        }
       }
     }
   }
@@ -143,10 +126,10 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
   }
 }
 
-private class ApplyFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, private val indicator: ProgressIndicator) :
+private class ApplyFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, private val sink: ProgressSink?) :
   PerformFixesTask(project, descriptors, null) {
 
   override fun beforeProcessing(descriptor: CommonProblemDescriptor) {
-    indicator.text2 = getPresentableText(descriptor)
+    sink?.update(details = getPresentableText(descriptor))
   }
 }

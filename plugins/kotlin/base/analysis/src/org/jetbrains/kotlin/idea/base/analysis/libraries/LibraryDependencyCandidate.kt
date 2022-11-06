@@ -1,10 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis.libraries
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -15,22 +12,21 @@ sealed class LibraryDependencyCandidate {
     abstract val libraries: List<LibraryInfo>
 
     companion object {
-        fun fromLibraryOrNull(project: Project, library: Library): LibraryDependencyCandidate? {
-            val libraryInfos = LibraryInfoCache.getInstance(project)[library]
+        fun fromLibraryOrNull(libraryInfos: List<LibraryInfo>): LibraryDependencyCandidate? {
             val libraryInfo = libraryInfos.firstOrNull() ?: return null
-            if(libraryInfo is AbstractKlibLibraryInfo) {
-                return KlibLibraryDependencyCandidate(
+            return if (libraryInfo is AbstractKlibLibraryInfo) {
+                KlibLibraryDependencyCandidate(
                     platform = libraryInfo.platform,
                     libraries = libraryInfos,
                     uniqueName = libraryInfo.uniqueName,
                     isInterop = libraryInfo.isInterop
                 )
+            } else {
+                DefaultLibraryDependencyCandidate(
+                    platform = libraryInfo.platform,
+                    libraries = libraryInfos
+                )
             }
-
-            return DefaultLibraryDependencyCandidate(
-                platform = libraryInfo.platform,
-                libraries = libraryInfos
-            )
         }
     }
 }

@@ -24,6 +24,7 @@
 
   <content>
     <module name="intellij.notebooks.visualization"/>
+    <module name="intellij.notebooks.ui"/>
     <module name="intellij.platform.images.copyright"/>
   </content>
 </idea-plugin>

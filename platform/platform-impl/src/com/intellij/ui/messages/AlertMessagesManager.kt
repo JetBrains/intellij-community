@@ -207,6 +207,16 @@ private class AlertDialog(project: Project?,
         }
       }.start()
     }
+
+    if (WindowRoundedCornersManager.isAvailable()) {
+      if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+        WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true))
+        rootPane.border = PopupBorder.Factory.createEmpty()
+      }
+      else {
+        WindowRoundedCornersManager.setRoundedCorners(window)
+      }
+    }
   }
 
   override fun getInitialSize(): Dimension {
@@ -309,7 +319,7 @@ private class AlertDialog(project: Project?,
       val title = UIUtil.replaceMnemonicAmpersand(myTitle!!).replace(BundleBase.MNEMONIC_STRING, "")
       val titleComponent = createTextComponent(JEditorPane(), StringUtil.trimLog(title, 100))
       titleComponent.font = JBFont.h4()
-      textPanel.add(titleComponent, BorderLayout.NORTH)
+      textPanel.add(wrapWithMinWidth(titleComponent), BorderLayout.NORTH)
       singleSelectionHandler.add(titleComponent, false)
     }
 
@@ -336,11 +346,7 @@ private class AlertDialog(project: Project?,
         scrollPane.isOpaque = false
         scrollPane.viewport.isOpaque = false
       }
-      textPanel.add(object : Wrapper(scrollPane) {
-        override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
-          super.setBounds(x, y, min(width, JBUI.scale(450)), height)
-        }
-      })
+      textPanel.add(wrapWithMinWidth(scrollPane))
     }
 
     textPanel.add(mySouthPanel, BorderLayout.SOUTH)
@@ -390,6 +396,12 @@ private class AlertDialog(project: Project?,
     singleSelectionHandler.start()
 
     return dialogPanel
+  }
+
+  private fun wrapWithMinWidth(scrollPane: JComponent) = object : Wrapper(scrollPane) {
+    override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+      super.setBounds(x, y, min(width, JBUI.scale(450)), height)
+    }
   }
 
   private fun createTextComponent(component: JEditorPane, message: @Nls String?): JEditorPane {

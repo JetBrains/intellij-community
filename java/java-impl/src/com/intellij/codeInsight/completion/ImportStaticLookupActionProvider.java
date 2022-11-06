@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public class ImportStaticLookupActionProvider implements LookupActionProvider {
   @Override
   public void fillActions(final @NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer) {

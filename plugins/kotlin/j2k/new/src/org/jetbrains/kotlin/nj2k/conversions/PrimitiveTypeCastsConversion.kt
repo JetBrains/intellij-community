@@ -2,9 +2,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.callOn
-import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -55,7 +53,8 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
 
                 if (expressionTypeAsPrimitive.isNumberType()
                     && toTypeAsPrimitive.isNumberType()
-                    && toTypeAsPrimitive.isStrongerThan(expressionTypeAsPrimitive)) {
+                    && toTypeAsPrimitive.isStrongerThan(expressionTypeAsPrimitive)
+                ) {
                     return JKLiteralExpression(
                         expression.literal,
                         expectedType

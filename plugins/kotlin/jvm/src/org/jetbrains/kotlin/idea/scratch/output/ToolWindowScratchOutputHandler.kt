@@ -21,7 +21,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
-import org.jetbrains.kotlin.idea.util.application.invokeLater
+import com.intellij.openapi.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtPsiFactory
 

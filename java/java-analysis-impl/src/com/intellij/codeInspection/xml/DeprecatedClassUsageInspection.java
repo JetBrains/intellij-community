@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.xml;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
@@ -46,7 +45,7 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
       PsiElement resolved = last.resolve();
       if (resolved instanceof PsiModifierListOwner) {
         DeprecationInspectionBase.checkDeprecated((PsiModifierListOwner)resolved, psiElement, last.getRangeInElement(), false, false, true, false,
-                                                  holder, false, ProblemHighlightType.LIKE_DEPRECATED);
+                                                  holder, false);
       }
     }
   }

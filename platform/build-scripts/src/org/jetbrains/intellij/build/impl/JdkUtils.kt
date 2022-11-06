@@ -4,24 +4,26 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.io.URLUtil
-import org.jetbrains.intellij.build.BuildMessages
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.exists
-import kotlin.io.path.inputStream
 
-object JdkUtils {
-  fun defineJdk(global: JpsGlobal, jdkName: String, jdkHomePath: String, messages: BuildMessages) {
-    val sdk = JpsJavaExtensionService.getInstance().addJavaSdk(global, jdkName, jdkHomePath)
-    val toolsJar = File(jdkHomePath, "lib/tools.jar")
-    if (toolsJar.exists()) {
-      sdk.addRoot(toolsJar, JpsOrderRootType.COMPILED)
+internal object JdkUtils {
+  fun defineJdk(global: JpsGlobal, jdkName: String, homeDir: Path) {
+    val sdk = JpsJavaExtensionService.getInstance().addJavaSdk(global,
+                                                               jdkName,
+                                                               FileUtilRt.toSystemIndependentName(homeDir.toFile().canonicalPath))
+    val toolsJar = homeDir.resolve("lib/tools.jar")
+    if (Files.exists(toolsJar)) {
+      sdk.addRoot(toolsJar.toFile(), JpsOrderRootType.COMPILED)
     }
-    messages.info("'$jdkName' Java SDK set to $jdkHomePath")
+    Span.current().addEvent("'$jdkName' JDK set", Attributes.of(AttributeKey.stringKey("jdkHomePath"), homeDir.toString()))
   }
 
   /**
@@ -29,14 +31,16 @@ object JdkUtils {
    */
   fun readModulesFromReleaseFile(jbrBaseDir: Path): List<String> {
     val releaseFile = jbrBaseDir.resolve("release")
-    if (!releaseFile.exists()) {
-      throw IllegalStateException("JRE release file is missing: $releaseFile")
+    check(Files.exists(releaseFile)) {
+      "JRE release file is missing: $releaseFile"
     }
 
-    releaseFile.inputStream().use { stream ->
+    Files.newInputStream(releaseFile).use { stream ->
       val p = Properties()
       p.load(stream)
-      val jbrBaseUrl = "${URLUtil.JRT_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}${FileUtilRt.toSystemIndependentName(jbrBaseDir.toAbsolutePath().toString())}${URLUtil.JAR_SEPARATOR}"
+      val jbrBaseUrl = "${URLUtil.JRT_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}${
+        FileUtilRt.toSystemIndependentName(jbrBaseDir.toAbsolutePath().toString())
+      }${URLUtil.JAR_SEPARATOR}"
       val modules = p.getProperty("MODULES") ?: return emptyList()
       return StringUtilRt.unquoteString(modules).split(' ').map { jbrBaseUrl + it }
     }

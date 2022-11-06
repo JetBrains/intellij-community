@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.observable.util.transform
@@ -41,10 +40,6 @@ const val COLUMNS_MEDIUM = 25
 
 const val COLUMNS_LARGE = 36
 
-@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
-
 fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
   installValidationRequestor(property)
   return applyToComponent { bind(property) }
@@ -62,15 +57,16 @@ fun <T : JTextComponent> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T
   return bind(JTextComponent::getText, JTextComponent::setText, prop)
 }
 
-@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> = bindIntText(property)
-
 fun <T : JTextComponent> Cell<T>.bindIntText(property: ObservableMutableProperty<Int>): Cell<T> {
   installValidationRequestor(property)
   return applyToComponent {
     bind(property.transform({ it.toString() }, { component.getValidatedIntValue(it) }))
   }
+}
+
+fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
+  return bindText({ prop.get().toString() },
+                  { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
 }
 
 fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {
@@ -127,11 +123,6 @@ private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
       }
     }
   }
-}
-
-private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
-  return bindText({ prop.get().toString() },
-                  { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
 }
 
 fun <T : JTextComponent> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =

@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiFile
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -16,7 +18,9 @@ interface Fe10QuickFixProvider {
         fun getInstance(project: Project): Fe10QuickFixProvider = project.service()
     }
 
-    fun createQuickFixes(diagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction>
+    fun createQuickFixes(sameTypeDiagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction>
+
+    fun createUnresolvedReferenceQuickFixes(sameTypeDiagnostics: Collection<Diagnostic>): MultiMap<Diagnostic, IntentionAction>
 
     fun createSuppressFix(element: KtElement, suppressionKey: String, hostKind: AnnotationHostKind): SuppressIntentionAction
 }
@@ -31,3 +35,15 @@ class AnnotationHostKind(
     /** True if the annotation needs to be added to a separate line. */
     val newLineNeeded: Boolean
 )
+
+object RegisterQuickFixesLaterIntentionAction : IntentionAction {
+    override fun getText(): String = ""
+
+    override fun getFamilyName(): String = ""
+
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = false
+
+    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) = Unit
+
+    override fun startInWriteAction(): Boolean = false
+}

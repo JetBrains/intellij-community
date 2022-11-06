@@ -90,6 +90,8 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     listener.providerAvailabilityChanged(id, isEnabled)
   }
 
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
   fun getAnchorLimit(position: CodeVisionAnchorKind): Int {
     return when (position) {
       CodeVisionAnchorKind.Top -> visibleMetricsAboveDeclarationCount
@@ -99,6 +101,8 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     }
   }
 
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
   fun setAnchorLimit(defaultPosition: CodeVisionAnchorKind, i: Int) {
     when (defaultPosition) {
       CodeVisionAnchorKind.Top -> visibleMetricsAboveDeclarationCount = i

@@ -4,12 +4,9 @@ package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
-import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
-import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
@@ -17,7 +14,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.mpp.MobileMppTemplate
 
 abstract class ProjectTemplate : DisplayableSettingItem {
@@ -75,9 +71,6 @@ abstract class ProjectTemplate : DisplayableSettingItem {
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
-            ComposeDesktopApplicationProjectTemplate,
-            ComposeMultiplatformApplicationProjectTemplate,
-            ComposeWebApplicationProjectTemplate,
             ConsoleApplicationProjectTemplateWithSample
         )
 
@@ -90,6 +83,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
 private infix fun <V : Any, T : SettingType<V>> PluginSettingReference<V, T>.withValue(value: V): SettingWithValue<V, T> =
     SettingWithValue(this, value)
 
+@Suppress("unused")
 private inline infix fun <V : Any, reified T : SettingType<V>> PluginSetting<V, T>.withValue(value: V): SettingWithValue<V, T> =
     SettingWithValue(reference, value)
 
@@ -337,153 +331,6 @@ object NodeJsApplicationProjectTemplate : ProjectTemplate() {
                         Sourceset(type, dependencies = emptyList())
                     },
                     subModules = emptyList()
-                )
-            )
-        )
-}
-
-object ComposeDesktopApplicationProjectTemplate : ProjectTemplate() {
-    override val title = KotlinNewProjectWizardBundle.message("project.template.compose.desktop.title")
-    override val description = KotlinNewProjectWizardBundle.message("project.template.compose.desktop.description")
-    override val id = "composeDesktopApplication"
-
-    @NonNls
-    override val suggestedProjectName = "myComposeDesktopApplication"
-    override val projectKind = ProjectKind.COMPOSE
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            GradlePlugin.gradleVersion withValue Versions.GRADLE_VERSION_FOR_COMPOSE,
-            StructurePlugin.version withValue "1.0",
-        )
-
-    override val setsModules: List<Module>
-        get() = listOf(
-            Module(
-                "compose",
-                JvmSinglePlatformModuleConfigurator,
-                template = ComposeJvmDesktopTemplate(),
-                sourceSets = SourcesetType.ALL.map { type ->
-                    Sourceset(type, dependencies = emptyList())
-                },
-                subModules = emptyList()
-            ).withConfiguratorSettings<JvmSinglePlatformModuleConfigurator> {
-                JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
-            }
-        )
-}
-
-object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
-    override val title = KotlinNewProjectWizardBundle.message("project.template.compose.multiplatform.title")
-    override val description = KotlinNewProjectWizardBundle.message("project.template.compose.multiplatform.description")
-    override val id = "composeMultiplatformApplication"
-
-    @NonNls
-    override val suggestedProjectName = "myComposeMultiplatformApplication"
-    override val projectKind = ProjectKind.COMPOSE
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            GradlePlugin.gradleVersion withValue Versions.GRADLE_VERSION_FOR_COMPOSE,
-            StructurePlugin.version withValue "1.0",
-        )
-
-    override val setsModules: List<Module>
-        get() = buildList {
-            val common = MultiplatformModule(
-                "common",
-                template = ComposeMppModuleTemplate(),
-                listOf(
-                    ModuleType.common.createDefaultTarget().withConfiguratorSettings<CommonTargetConfigurator> {
-                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                    },
-                    Module(
-                        "android",
-                        AndroidTargetConfigurator,
-                        template = ComposeCommonAndroidTemplate(),
-                        sourceSets = createDefaultSourceSets(),
-                        subModules = emptyList()
-                    ).withConfiguratorSettings<AndroidTargetConfigurator> {
-                        configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
-                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                    },
-                    Module(
-                        "desktop",
-                        JvmTargetConfigurator,
-                        template = ComposeCommonDesktopTemplate(),
-                        sourceSets = createDefaultSourceSets(),
-                        subModules = emptyList()
-                    ).withConfiguratorSettings<JvmTargetConfigurator> {
-                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                        JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
-                    }
-                )
-            )
-            +Module(
-                "android",
-                AndroidSinglePlatformModuleConfigurator,
-                template = ComposeAndroidTemplate(),
-                sourceSets = createDefaultSourceSets(),
-                subModules = emptyList(),
-                dependencies = mutableListOf(ModuleReference.ByModule(common))
-            ).withConfiguratorSettings<AndroidSinglePlatformModuleConfigurator> {
-                JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-            }
-            +Module(
-                "desktop",
-                MppModuleConfigurator,
-                template = ComposeCommonDesktopTemplate(),
-                sourceSets = createDefaultSourceSets(),
-                subModules = listOf(
-                    Module(
-                        "jvm",
-                        JvmTargetConfigurator,
-                        template = ComposeJvmDesktopTemplate(),
-                        sourceSets = createDefaultSourceSets(),
-                        subModules = emptyList(),
-                        dependencies = mutableListOf(ModuleReference.ByModule(common))
-                    ).withConfiguratorSettings<JvmTargetConfigurator> {
-                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                        JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
-                    }
-                ),
-            )
-            +common
-        }
-}
-
-object ComposeWebApplicationProjectTemplate : ProjectTemplate() {
-    override val title = KotlinNewProjectWizardBundle.message("project.template.compose.web.title")
-    override val description = KotlinNewProjectWizardBundle.message("project.template.compose.web.description")
-    override val id = "composeWebApplication"
-
-    @NonNls
-    override val suggestedProjectName = "myComposeWebApplication"
-    override val projectKind = ProjectKind.COMPOSE
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            GradlePlugin.gradleVersion withValue Versions.GRADLE_VERSION_FOR_COMPOSE,
-            StructurePlugin.version withValue "1.0",
-        )
-
-    override val setsModules: List<Module>
-        get() = listOf(
-            Module(
-                "web",
-                MppModuleConfigurator,
-                template = null,
-                sourceSets = createDefaultSourceSets(),
-                subModules = listOf(
-                    Module(
-                        "js",
-                        JsComposeMppConfigurator,
-                        template = ComposeWebModuleTemplate,
-                        permittedTemplateIds = setOf(ComposeWebModuleTemplate.id),
-                        sourceSets = createDefaultSourceSets(),
-                        subModules = emptyList()
-                    )
                 )
             )
         )

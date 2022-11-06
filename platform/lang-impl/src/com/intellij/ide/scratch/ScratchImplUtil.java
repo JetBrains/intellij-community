@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -291,6 +292,7 @@ final class ScratchImplUtil {
     return component instanceof JTextComponent ? new TextComponentExtractor((JTextComponent)component) :
            component instanceof JList ? new ListExtractor((JList<?>)component) :
            component instanceof JTree ? new TreeExtractor((JTree)component) :
+           component instanceof JTable ? new TableExtractor((JTable)component) :
            TerminalUtils.isTerminalComponent(component) ? new TerminalExtractor(component) :
            null;
   }
@@ -365,6 +367,7 @@ final class ScratchImplUtil {
       StringBuilder sb = new StringBuilder();
       for (Object value : values) {
         append(sb, value, renderer.getListCellRendererComponent(comp, value, -1, false, false));
+        sb.append("\n");
       }
       return sb.toString();
     }
@@ -405,6 +408,36 @@ final class ScratchImplUtil {
         //noinspection StringRepeatCanBeUsed
         for (int i = 0; i < depth; i++) sb.append("  ");
         append(sb, value, renderer.getTreeCellRendererComponent(comp, value, false, false, false, -1, false));
+        sb.append("\n");
+      }
+      return sb.toString();
+    }
+  }
+
+  private static class TableExtractor implements TextExtractor {
+    final JTable comp;
+
+    TableExtractor(@NotNull JTable component) { comp = component; }
+
+    @Override
+    public boolean hasSelection() {
+      return comp.getSelectionModel().getSelectedItemsCount() > 1;
+    }
+
+    @Override
+    public String extractText() {
+      int[] rows = comp.getSelectionModel().getSelectedIndices();
+      int[] cols = comp.getColumnModel().getSelectionModel().getSelectedIndices();
+      StringBuilder sb = new StringBuilder();
+      int lastCol = cols.length == 0 ? -1 : cols[cols.length - 1];
+      for (int row : rows) {
+        for (int col : cols) {
+          Object value = comp.getModel().getValueAt(comp.convertRowIndexToModel(row), comp.convertColumnIndexToModel(col));
+          TableCellRenderer renderer = comp.getCellRenderer(row, col);
+          append(sb, value, renderer.getTableCellRendererComponent(comp, value, false, false, row, col));
+          if (col != lastCol) sb.append("    ");
+        }
+        sb.append("\n");
       }
       return sb.toString();
     }
@@ -423,7 +456,6 @@ final class ScratchImplUtil {
     else if (!appendSimple(sb, renderer)) {
       sb.append(TreeUtil.getUserObject(value));
     }
-    sb.append("\n");
     // replace various space chars like `FontUtil#thinSpace` with just space
     for (int i = length, len = sb.length(); i < len; i++) {
       char c = sb.charAt(i);

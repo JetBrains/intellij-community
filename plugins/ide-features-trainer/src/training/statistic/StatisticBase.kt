@@ -58,7 +58,7 @@ import training.statistic.FeatureUsageStatisticConsts.START
 import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import training.statistic.FeatureUsageStatisticConsts.STOPPED
 import training.statistic.FeatureUsageStatisticConsts.TASK_ID
-import training.statistic.FeatureUsageStatisticConsts.TIP_FILENAME
+import training.statistic.FeatureUsageStatisticConsts.TIP_ID
 import java.awt.event.KeyEvent
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JOptionPane
@@ -96,7 +96,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 18)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 19)
 
     var isLearnProjectCloseLogged = false
 
@@ -115,7 +115,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val reasonField = EventFields.Enum<LessonStopReason>(REASON)
     private val newLessonsCount = EventFields.Int(NEW_LESSONS_COUNT)
     private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
-    private val tipFilenameField = EventFields.StringValidatedByCustomRule(TIP_FILENAME, TipInfoValidationRule::class.java)
+    private val tipIdField = EventFields.StringValidatedByCustomRule(TIP_ID, TipInfoValidationRule::class.java)
     private val lessonStartingWayField = EventFields.Enum<LessonStartingWay>(LESSON_STARTING_WAY)
     private val feedbackEntryPlace = EventFields.Enum<FeedbackEntryPlace>(FEEDBACK_ENTRY_PLACE)
     private val feedbackHasBeenSent = EventFields.Boolean(FEEDBACK_HAS_BEEN_SENT)
@@ -164,7 +164,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val internalProblem =
       GROUP.registerEvent(INTERNAL_PROBLEM, internalProblemField, lessonIdField, languageField)
 
-    private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
+    private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipIdField)
     private val helpLinkClicked = GROUP.registerEvent(HELP_LINK_CLICKED, lessonIdField, languageField)
 
     private val onboardingFeedbackNotificationShown = GROUP.registerEvent(ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN,
@@ -248,8 +248,8 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     fun logLearnProjectOpenedForTheFirstTime(way: LearnProjectOpeningWay) {
       val langManager = LangManager.getInstance()
-      val langSupport = langManager.getLangSupport() ?: return
-      if (langManager.getLearningProjectPath(langSupport) == null) {
+      val languageId = langManager.getLanguageId() ?: return
+      if (langManager.getLearningProjectPath(languageId) == null) {
         LearnProjectState.instance.firstTimeOpenedWay = way
         learnProjectOpenedFirstTimeEvent.log(way, courseLanguage())
       }
@@ -271,8 +271,8 @@ internal class StatisticBase : CounterUsagesCollector() {
       needShowNewLessonsNotifications.log(newLessonsCount, previousOpenedVersion?.asString(), showNewLessons)
     }
 
-    fun logLessonLinkClickedFromTip(lessonId: String, tipFilename: String) {
-      lessonLinkClickedFromTip.log(lessonId, courseLanguage(), tipFilename)
+    fun logLessonLinkClickedFromTip(lessonId: String, tipId: String) {
+      lessonLinkClickedFromTip.log(lessonId, courseLanguage(), tipId)
     }
 
     fun logHelpLinkClicked(lessonId: String) {

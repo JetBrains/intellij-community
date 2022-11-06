@@ -60,7 +60,7 @@ public class ExtendsObjectInspection extends BaseInspection implements CleanupLo
     }
 
     @Override
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement extendClassIdentifier = descriptor.getPsiElement();
       final PsiClass element = (PsiClass)extendClassIdentifier.getParent();
       if (element == null) {

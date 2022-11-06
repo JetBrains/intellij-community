@@ -1,9 +1,10 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <name>Settings Sync</name>
   <id>com.intellij.settingsSync</id>
   <category>IDE Settings</category>
   <description><![CDATA[
-  <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
+    <p>Synchronizes settings across all JetBrains IDE instances using your JetBrains account.
+    The list of synced settings is customizable and includes UI, keymaps, code style, plugins, and much more.</p>
   ]]></description>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.SettingsSyncBundle</resource-bundle>
@@ -11,6 +12,8 @@
   <content>
     <module name="intellij.settingsSync.git"/>
   </content>
+
+  <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncMain"/>
@@ -38,7 +41,11 @@
     <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="60"
                  description="Settings will be automatically synced with the server every N seconds.
                               Settings the value to 0 or less disables syncing by timer."/>
-  </extensions>
+
+    <settingsEntryPointIconCustomizer implementation="com.intellij.settingsSync.config.SettingsSyncStatusAction$IconCustomizer"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.settingsSync.SettingsSyncStateStatistics"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.settingsSync.SettingsSyncEventsStatistics"/>
+    </extensions>
 
   <applicationListeners>
     <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.openapi.application.ApplicationActivationListener"

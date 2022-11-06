@@ -17,7 +17,6 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -72,10 +71,5 @@ public class PyForceStepIntoAction extends ForceStepIntoAction {
   @Override
   protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
     return myPyForceStepIntoHandler;
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
   }
 }

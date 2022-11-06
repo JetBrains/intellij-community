@@ -2,7 +2,7 @@
 
 class Test {
   String foo1(char c) {
-    return new String(new char[] { c })<caret>;
+    return new <caret>String(new char[] { c });
   }
 
   String foo2(Character character) {

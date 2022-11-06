@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -108,10 +109,19 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return document.getLineNumber(startOffset);
   }
 
+  private Color computeBackgroundColor() {
+    VirtualFile file = getFile();
+    if (file == null) {
+      return null;
+    }
+
+    return EditorTabPresentationUtil.getFileBackgroundColor(getProject(), file);
+  }
+
   private TextChunk @NotNull [] computeText() {
     TextChunk[] chunks;
-    VirtualFile file = getFile();
-    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+    PsiFile psiFile = getPsiFile();
+    boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
 
     PsiElement element = getElement();
     if (element != null && isNullOrBinary) {
@@ -123,7 +133,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       };
     }
     else {
-      PsiFile psiFile = getPsiFile();
       Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       if (document == null) {
         // element over light virtual file
@@ -347,8 +356,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       List<SyntheticLibrary> list = new ArrayList<>();
       for (AdditionalLibraryRootsProvider e : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
-          if (library.getSourceRoots().contains(sourcesRoot) && !library.isExcludedByConditions(virtualFile)) {
-            list.add(library);
+          if (library.getSourceRoots().contains(sourcesRoot)) {
+            Condition<VirtualFile> excludeFileCondition = library.getUnitedExcludeCondition();
+            if (excludeFileCondition == null || !excludeFileCondition.value(virtualFile)) {
+              list.add(library);
+            }
           }
         }
       }
@@ -392,7 +404,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myMergedUsageInfos = myUsageInfo;
-    myCachedPresentation = new SoftReference<>(new UsageNodePresentation(computeIcon(), computeText()));
+    myCachedPresentation = new SoftReference<>(new UsageNodePresentation(computeIcon(), computeText(), computeBackgroundColor()));
   }
 
   @Override
@@ -469,7 +481,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
     if (cachedPresentation == null || isModified && isValid()) {
-      UsageNodePresentation presentation = new UsageNodePresentation(computeIcon(), computeText());
+      UsageNodePresentation presentation = new UsageNodePresentation(computeIcon(), computeText(), computeBackgroundColor());
       myCachedPresentation = new SoftReference<>(presentation);
       myModificationStamp = currentModificationStamp;
       return presentation;
@@ -496,8 +508,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @NotNull
   public String getPlainText() {
     PsiElement element = getElement();
-    VirtualFile file = getFile();
-    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+    PsiFile psiFile = getPsiFile();
+    boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
     if (element != null && isNullOrBinary) {
       return clsType(element) + " " + clsName(element);
     }
@@ -521,6 +533,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       }
     }
     return UsageViewBundle.message("node.invalid");
+  }
+
+  @Override
+  public @Nullable Color getBackgroundColor() {
+    return doUpdateCachedPresentation().getBackgroundColor();
   }
 
   @Override

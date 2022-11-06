@@ -21,7 +21,7 @@ import java.nio.file.Path;
  *
  * @deprecated processes are killed softly on Windows be default now, see {@link KillableProcessHandler#canTerminateGracefullyWithWinP()}
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public final class WinRunnerMediator {
   private static final Logger LOG = Logger.getInstance(WinRunnerMediator.class);
 

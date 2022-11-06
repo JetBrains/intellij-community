@@ -13,9 +13,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class DomImplementationClassEP implements PluginAware {
   static final ExtensionPointName<DomImplementationClassEP> EP_NAME = new ExtensionPointName<>("com.intellij.dom.implementation");
   static final ExtensionPointName<DomImplementationClassEP> CONVERTER_EP_NAME = new ExtensionPointName<>("com.intellij.dom.converter");

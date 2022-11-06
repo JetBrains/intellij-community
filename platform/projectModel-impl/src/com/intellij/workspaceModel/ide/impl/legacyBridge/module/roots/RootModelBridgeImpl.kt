@@ -14,14 +14,14 @@ import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*
@@ -54,7 +54,9 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
     val moduleEntity = moduleEntity ?: return@lazy emptyList<ContentEntryBridge>()
     val contentEntries = moduleEntity.contentRoots.toMutableList()
 
-    contentEntries.sortBy { it.url.url }
+    // We used to sort content roots previously, but this affects performance too much
+    // Please process unordered list of content roots, or perform the sorting on your side
+    //contentEntries.sortBy { it.url.url }
     contentEntries.map { contentRoot ->
       ContentEntryBridge(rootModel, contentRoot.sourceRoots.toList(), contentRoot, updater)
     }
@@ -123,7 +125,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
         it.createExtension(module, storage, diff)
       }
 
-      val moduleEntity = storage.current.findModuleEntity(module)
+      val moduleEntity = module.findModuleEntity(storage.current)
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
       for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(module)) {

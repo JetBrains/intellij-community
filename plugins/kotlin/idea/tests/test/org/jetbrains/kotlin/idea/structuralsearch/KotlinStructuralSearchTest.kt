@@ -29,7 +29,7 @@ abstract class KotlinStructuralSearchTest : BasePlatformTestCase() {
         matchOptions.setFileType(KotlinFileType.INSTANCE)
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     override fun setUp() {
         super.setUp()

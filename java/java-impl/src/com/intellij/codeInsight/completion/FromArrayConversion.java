@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.createExpression;
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 
-/**
- * @author peter
- */
 final class FromArrayConversion {
   static void addConversions(final PsiElement element,
                              final String prefix,

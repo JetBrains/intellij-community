@@ -11,7 +11,7 @@ import org.intellij.plugins.markdown.ui.split.SplitTextEditorProvider
 import org.jdom.DataConversionException
 import org.jdom.Element
 
-class MarkdownSplitEditorProvider: SplitTextEditorProvider(PsiAwareTextEditorProvider(), MarkdownPreviewFileEditorProvider()) {
+internal class MarkdownSplitEditorProvider: SplitTextEditorProvider(PsiAwareTextEditorProvider(), MarkdownPreviewFileEditorProvider()) {
   override fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor {
     require(firstEditor is TextEditor) { "Main editor should be TextEditor" }
     require(secondEditor is MarkdownPreviewFileEditor) { "Secondary editor should be MarkdownPreviewFileEditor" }

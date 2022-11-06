@@ -13,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Factory for {@link PsiElement}, {@link PomTarget}, {@link IElementType} and {@link VirtualFile}-based patterns.
- *
- * @author peter
  */
 public class PlatformPatterns extends StandardPatterns {
 

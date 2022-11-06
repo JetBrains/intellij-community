@@ -210,7 +210,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
       CommentTracker ct = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, ct);

@@ -1,0 +1,3 @@
+// "Remove inapplicable @ExtensionFunctionType annotation" "true"
+// WITH_STDLIB
+fun bar(f: () -> Int): Int = TODO()

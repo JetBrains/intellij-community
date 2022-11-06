@@ -16,12 +16,22 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-// Assigns / store unique integral id for Data instances.
-// Btree stores mapping between integer hash code into integer that interpreted in following way:
-// Positive value is address in myFile with unique key record.
-// When there is hash value collisions the value is negative and it is -address of collision list (keyAddress, nextCollisionAddress)+
-// It is possible to directly associate non-negative int or long with Data instances when Data is integral value and represent it's own hash code
-// e.g. Data are integers and hash code for them are values themselves
+/**
+ * Assigns & store unique integral id for {@link Data} instances.
+ * <br/>
+ * Generally, 3 files are used to support the mapping: <code>.keystream</code>, <code>.storage</code>, and <code>.storage_i</code>.
+ * Data instance is stored in a <code>.keystream</code>, file, and record offset is converted to its id. Mapping
+ * <code>(hashCode(Data) -> id)</code> is stored in a BTree (<code>.storage_i</code>), and <code>.storage</code> file is used to
+ * resolve hashcode collisions.
+ * <br/>
+ * How are collisions resolved: if there are >1 id for the same hashCode, then collided ids are written into the <code>.storage</code>
+ * file as pairs <code>(id, nextPairOffset)</code>, and BTree keeps mapping <code>(hashCode -> -offset)</code> there 'offset' is the
+ * offset of the first such pair in a <code>.storage</code> file.
+ * <br/>
+ * In some cases collisions are impossible -- e.g. if {@link Data} itself is basically an int, or could be serialized to an int, so
+ * there is a bijection between {@link Data} and its hashcode. In such cases {@link #myInlineKeysNoMapping} param allows to skip
+ * collision resolution paths altogether.
+ */
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int BTREE_PAGE_SIZE;
   private static final int DEFAULT_BTREE_PAGE_SIZE = 32768;

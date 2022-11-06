@@ -5,6 +5,11 @@ class X {
     System.out.println(s.trim());
   }
 
+  void ifParenthesizedPattern(Object obj) {
+    if (!(obj instanceof ((String s)))) return;
+    System.out.println(s.trim());
+  }
+
   void ifElse(Object obj) {
     if (!(obj instanceof String s)) return;
     else {

@@ -56,7 +56,7 @@ public class ToggleLineBreakpointAction extends XDebuggerActionBase implements D
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT;
   }
 
   private static boolean hasLineBreakpoint(@NotNull AnActionEvent e) {

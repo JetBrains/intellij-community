@@ -16,19 +16,19 @@
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="commons-logging" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module-library">
-      <library name="org.apache.commons:commons-text:1.8" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-text:1.8" />
+      <library name="commons-text" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-text:1.10.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.8/commons-text-1.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.8/commons-text-1.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
@@ -40,24 +40,24 @@
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
-      <library name="org.languagetool:languagetool-core:5.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.7" />
+      <library name="org.languagetool:languagetool-core" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.8" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.7/languagetool-core-5.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.8/languagetool-core-5.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.languagetool:language-en:5.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.7" />
+      <library name="org.languagetool:language-en" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.8" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.7/language-en-5.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.8/language-en-5.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.7/language-en-5.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.8/language-en-5.8-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -74,26 +74,26 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.carrot2:morfologik-stemming:2.1.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-stemming:2.1.7" />
+      <library name="org.carrot2:morfologik-stemming" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-stemming:2.1.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.7/morfologik-stemming-2.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.9/morfologik-stemming-2.1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.7/morfologik-stemming-2.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.9/morfologik-stemming-2.1.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.carrot2:morfologik-speller:2.1.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-speller:2.1.7" />
+      <library name="org.carrot2:morfologik-speller" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-speller:2.1.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.7/morfologik-speller-2.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.9/morfologik-speller-2.1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.7/morfologik-speller-2.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.9/morfologik-speller-2.1.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -108,26 +108,26 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.carrot2:morfologik-fsa-builders:2.1.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa-builders:2.1.7" />
+      <library name="org.carrot2:morfologik-fsa-builders" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa-builders:2.1.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.7/morfologik-fsa-builders-2.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.9/morfologik-fsa-builders-2.1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.7/morfologik-fsa-builders-2.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.9/morfologik-fsa-builders-2.1.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.carrot2:morfologik-fsa:2.1.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa:2.1.7" />
+      <library name="org.carrot2:morfologik-fsa" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa:2.1.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.7/morfologik-fsa-2.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.9/morfologik-fsa-2.1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.7/morfologik-fsa-2.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.9/morfologik-fsa-2.1.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -214,98 +214,122 @@
     <orderEntry type="library" name="lucene-core" level="project" />
     <orderEntry type="library" name="lucene-analyzers-common" level="project" />
     <orderEntry type="module-library">
-      <library name="ai.grazie.spell.gec.local.engine" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-local-engine-jvm:0.2.27" />
+      <library name="ai.grazie.spell.gec.engine.local" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local-jvm:0.2.63" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-local-engine-jvm/0.2.27/gec-spell-local-engine-jvm-0.2.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.2.63/gec-spell-engine-local-jvm-0.2.63.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-local-engine-jvm/0.2.27/gec-spell-local-engine-jvm-0.2.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.2.63/gec-spell-engine-local-jvm-0.2.63-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.utils.common" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-common-jvm:0.2.27" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-common-jvm:0.2.63" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.2.27/utils-common-jvm-0.2.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.2.63/utils-common-jvm-0.2.63.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.2.27/utils-common-jvm-0.2.27-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="ai.grazie.nlp.tokenizer" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-tokenizer-jvm:0.2.27" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.2.27/nlp-tokenizer-jvm-0.2.27.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.2.27/nlp-tokenizer-jvm-0.2.27-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="ai.grazie.nlp.common" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common-jvm:0.2.27" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.2.27/nlp-common-jvm-0.2.27.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.2.27/nlp-common-jvm-0.2.27-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="ai.grazie.nlp.detect" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-detect-jvm:0.2.27" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.2.27/nlp-detect-jvm-0.2.27.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.2.27/nlp-detect-jvm-0.2.27-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="ai.grazie.nlp.langs" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-langs-jvm:0.2.27" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.2.27/nlp-langs-jvm-0.2.27.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.2.27/nlp-langs-jvm-0.2.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.2.63/utils-common-jvm-0.2.63-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.utils.json" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-json-jvm:0.2.27" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-json-jvm:0.2.63" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-json-jvm/0.2.27/utils-json-jvm-0.2.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-json-jvm/0.2.63/utils-json-jvm-0.2.63.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-json-jvm/0.2.27/utils-json-jvm-0.2.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-json-jvm/0.2.63/utils-json-jvm-0.2.63-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp.common" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common-jvm:0.2.63" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.2.63/nlp-common-jvm-0.2.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.2.63/nlp-common-jvm-0.2.63-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp.tokenizer" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-tokenizer-jvm:0.2.63" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.2.63/nlp-tokenizer-jvm-0.2.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.2.63/nlp-tokenizer-jvm-0.2.63-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp.langs" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-langs-jvm:0.2.63" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.2.63/nlp-langs-jvm-0.2.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.2.63/nlp-langs-jvm-0.2.63-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp.patterns" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-patterns-jvm:0.2.63" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.2.63/nlp-patterns-jvm-0.2.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.2.63/nlp-patterns-jvm-0.2.63-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp.detect" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-detect-jvm:0.2.63" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.2.63/nlp-detect-jvm-0.2.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.2.63/nlp-detect-jvm-0.2.63-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.model.text" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-text-jvm:0.2.27" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-text-jvm:0.2.63" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.2.27/model-text-jvm-0.2.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.2.63/model-text-jvm-0.2.63.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.2.27/model-text-jvm-0.2.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.2.63/model-text-jvm-0.2.63-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.model.common" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-common-jvm:0.2.63" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.2.63/model-common-jvm-0.2.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.2.63/model-common-jvm-0.2.63-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -20,7 +20,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ListActions;
+import com.intellij.ui.MouseMovementTracker;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
@@ -30,7 +33,6 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,6 +128,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   public void goBack() {
     myList.clearSelection();
     super.goBack();
+  }
+
+  /**
+   * @return index of the selected item, regardless of the applied filter
+   */
+  public int getOriginalSelectedIndex() {
+    int index = myList.getSelectedIndex();
+    return index == -1 ? -1 : myListModel.getOriginalIndex(index);
   }
 
   @Override
@@ -629,8 +639,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Object selectedValue = myListModel.getElementAt(forIndex);
       if (withTimer) {
         myShowSubmenuTimer = new Timer(250, e -> {
-          if (!isDisposed() && myLastSelectedIndex == forIndex)
+          if (!isDisposed() && myLastSelectedIndex == forIndex) {
+            disposeChildren();
             showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+          }
         });
         myShowSubmenuTimer.setRepeats(false);
         myShowSubmenuTimer.start();
@@ -842,6 +854,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
+  public void selectAndExpandValue(Object value) {
+    if (myListModel.isVisible(value) && isSelectable(value)) {
+      myList.setSelectedValue(value, true);
+      disposeChildren();
+      ListPopupStep<Object> listStep = getListStep();
+      showNextStepPopup(listStep.onChosen(value, false), value);
+    }
+  }
+
   @Override
   public void setHandleAutoSelectionBeforeShow(boolean autoHandle) {
     myAutoHandleBeforeShow = autoHandle;
@@ -902,13 +923,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private Insets getListInsets() {
-    if (!ExperimentalUI.isNewUI()) {
-      return UIUtil.getListViewportPadding(isAdVisible());
-    }
-
-    boolean isTitleAvailable = getStep().getTitle() != null;
-    int topInset = isTitleAvailable ? 0 : JBUI.CurrentTheme.Popup.bodyTopInsetNoHeader();
-    int bottomInset = isAdVisible() ? JBUI.CurrentTheme.Popup.bodyBottomInsetBeforeAd() : JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd();
-    return new JBInsets(topInset, 0, bottomInset, 0);
+    return PopupUtil.getListInsets(StringUtil.isNotEmpty(getStep().getTitle()), isAdVisible());
   }
 }

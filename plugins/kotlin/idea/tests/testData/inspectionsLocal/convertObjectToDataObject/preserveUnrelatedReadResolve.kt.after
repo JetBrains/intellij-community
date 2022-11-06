@@ -1,0 +1,4 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
+data object<caret> Foo {
+    fun readResolve(): Any = Foo
+}

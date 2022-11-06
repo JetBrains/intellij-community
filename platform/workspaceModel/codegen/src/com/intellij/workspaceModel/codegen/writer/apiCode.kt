@@ -25,10 +25,8 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
 val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
-                                              ReferableWorkspaceEntity::class.simpleName,
-                                              ModifiableWorkspaceEntity::class.simpleName,
-                                              ModifiableReferableWorkspaceEntity::class.simpleName,
-                                              WorkspaceEntityWithPersistentId::class.simpleName)
+                                              WorkspaceEntity.Builder::class.simpleName,
+                                              WorkspaceEntityWithSymbolicId::class.simpleName)
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)
@@ -38,10 +36,10 @@ fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString { 
     ", ${it.name}.Builder<$typeParameter>"
   }
-  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${ModifiableWorkspaceEntity::class.fqn}<$typeParameter>, ${ObjBuilder::class.fqn}<$typeParameter>"
+  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder::class.fqn}<$typeParameter>, ${ObjBuilder::class.fqn}<$typeParameter>"
 
   section(header) {
-    list(allFields.noPersistentId()) {
+    list(allFields.noSymbolicId()) {
       checkProperty(this, reporter)
       wsBuilderApi
     }
@@ -67,10 +65,6 @@ private fun checkProperty(objProperty: ObjProperty<*, *>, reporter: ProblemRepor
 }
 
 fun checkInheritance(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
-  if (objProperty.name == "entitySource" && objProperty.receiver.javaFullName.decoded == ModifiableWorkspaceEntity::class.java.name) {
-    //ignore until ModifiableWorkspaceEntity is renamed to WorkspaceModel.Builder (IDEA-299150)
-    return
-  }
   objProperty.receiver.allSuperClasses.mapNotNull { it.fieldsByName[objProperty.name] }.forEach { overriddenField -> 
     if (!overriddenField.open) {
       reporter.reportProblem(
@@ -123,7 +117,7 @@ private val keepUnknownFields: Boolean
 private val knownInterfaces = setOf(
   VirtualFileUrl::class.qualifiedName!!,
   EntitySource::class.qualifiedName!!,
-  PersistentEntityId::class.qualifiedName!!,
+  SymbolicEntityId::class.qualifiedName!!,
 )
 
 fun ObjClass<*>.generateCompanionObject(): String = lines {
@@ -167,7 +161,7 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
 }
 
 fun List<OwnProperty<*, *>>.mandatoryFields(): List<ObjProperty<*, *>> {
-  var fields = this.noRefs().noOptional().noPersistentId().noDefaultValue()
+  var fields = this.noRefs().noOptional().noSymbolicId().noDefaultValue()
   if (fields.isNotEmpty()) {
     fields = fields.noEntitySource() + fields.single { it.name == "entitySource" }
   }

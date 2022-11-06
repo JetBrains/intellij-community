@@ -433,24 +433,8 @@ public final class UpdateHighlightersUtil {
       GutterMark renderer = info.getGutterIconRenderer();
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
-      ranges2markersCache.put(finalInfoRange, info.getHighlighter());
-      if (info.quickFixActionRanges != null) {
-        List<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>> list =
-          new ArrayList<>(info.quickFixActionRanges.size());
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          TextRange textRange = pair.second;
-          RangeMarker marker = getOrCreate(document, ranges2markersCache, textRange);
-          list.add(Pair.create(pair.first, marker));
-        }
-        info.quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(list);
-      }
-      ProperTextRange fixRange = info.getFixTextRange();
-      if (TextRangeScalarUtil.equalsToRange(fixRange, finalInfoRange)) {
-        info.fixMarker = null; // null means it the same as highlighter's range
-      }
-      else {
-        info.fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
-      }
+      ranges2markersCache.put(finalInfoRange, finalHighlighter);
+      info.updateQuickFixFields(document, ranges2markersCache, finalInfoRange);
     };
 
     if (highlighter == null) {
@@ -473,6 +457,9 @@ public final class UpdateHighlightersUtil {
   }
 
   private static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
+    if (info instanceof InternalLayerSupplier) {
+      return ((InternalLayerSupplier)info).getLayer();
+    }
     HighlightSeverity severity = info.getSeverity();
     int layer;
     if (severityRegistrar.compare(severity, HighlightSeverity.ERROR) >= 0) {
@@ -500,11 +487,6 @@ public final class UpdateHighlightersUtil {
       layer = HighlighterLayer.ADDITIONAL_SYNTAX;
     }
     return layer;
-  }
-
-  @NotNull
-  private static RangeMarker getOrCreate(@NotNull Document document, @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache, @NotNull TextRange textRange) {
-    return ranges2markersCache.computeIfAbsent(TextRangeScalarUtil.toScalarRange(textRange), __ -> document.createRangeMarker(textRange));
   }
 
   private static final Key<Boolean> TYPING_INSIDE_HIGHLIGHTER_OCCURRED = Key.create("TYPING_INSIDE_HIGHLIGHTER_OCCURRED");

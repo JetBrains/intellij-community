@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.lang.Language;
@@ -11,6 +11,7 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.directClassInheritorsSearch");
@@ -53,6 +54,11 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
 
     public boolean includeAnonymous() {
       return myIncludeAnonymous;
+    }
+
+    @Nullable
+    public ClassInheritorsSearch.SearchParameters getOriginalParameters() {
+      return null;
     }
 
     @ApiStatus.Experimental

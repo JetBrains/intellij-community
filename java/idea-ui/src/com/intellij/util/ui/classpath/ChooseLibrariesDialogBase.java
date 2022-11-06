@@ -6,7 +6,6 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -29,20 +28,21 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,6 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -64,9 +63,9 @@ import java.util.*;
  */
 public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private final SimpleTree myTree = new SimpleTree();
-  private AbstractTreeBuilder myBuilder;
   private List<Library> myResult;
   private final Map<Object, Object> myParentsMap = new HashMap<>();
+  private StructureTreeModel<?> myModel;
 
   protected ChooseLibrariesDialogBase(final JComponent parentComponent, final @NlsContexts.DialogTitle String title) {
     super(parentComponent, false);
@@ -122,11 +121,12 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   }
 
   protected void queueUpdateAndSelect(@NotNull final Library library) {
-    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.select(library));
+    myModel.select(library, myTree, path -> {});
   }
 
   private boolean processSelection(final Processor<? super Library> processor) {
-    for (Object element : myBuilder.getSelectedElements()) {
+    DefaultMutableTreeNode[] nodes = myTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
+    for (Object element : ContainerUtil.map(nodes, node -> ((NodeDescriptor<?>)node.getUserObject()).getElement())) {
       if (element instanceof Library) {
         if (!processor.process((Library)element)) return false;
       }
@@ -153,12 +153,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    myBuilder = new SimpleTreeBuilder(myTree, new DefaultTreeModel(new DefaultMutableTreeNode()),
-                                        new MyStructure(getProject()),
-                                        WeightBasedComparator.FULL_INSTANCE) {
-      // unique class to simplify search through the logs
-    };
-    myBuilder.initRootNode();
+    myModel = new StructureTreeModel<>(new MyStructure(getProject()), WeightBasedComparator.FULL_INSTANCE, myDisposable);
+    myTree.setModel(new AsyncTreeModel(myModel, myDisposable));
 
     myTree.setDragEnabled(false);
 
@@ -222,12 +218,6 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
         }
       }
     }
-  }
-
-  @Override
-  protected void dispose() {
-    Disposer.dispose(myBuilder);
-    super.dispose();
   }
 
   protected static class LibrariesTreeNodeBase<T> extends SimpleNode {
@@ -335,8 +325,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
   public boolean isEmpty() {
     List<Object> children = new ArrayList<>();
-    final AbstractTreeStructure structure = myBuilder.getTreeStructure();
-    if (structure != null) collectChildren(structure.getRootElement(), children);
+    collectChildren(myModel.getTreeStructure().getRootElement(), children);
     return children.isEmpty();
   }
 

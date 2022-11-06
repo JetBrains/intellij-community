@@ -9,7 +9,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
-import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
+import com.intellij.execution.target.value.targetPath
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
@@ -62,6 +62,7 @@ import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import java.nio.file.Path
 import java.util.regex.Matcher
 
 fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
@@ -324,7 +325,7 @@ data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target")
     when (targetType) {
       PyRunTargetVariant.CUSTOM -> emptyList()
       PyRunTargetVariant.PYTHON -> getArgumentsForPythonTarget(configuration).map(::constant)
-      PyRunTargetVariant.PATH -> listOf(constant("--path"), request.getTargetEnvironmentValueForLocalPath(target.trim()))
+      PyRunTargetVariant.PATH -> listOf(constant("--path"), targetPath(Path.of(target.trim())))
     }
 
   private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> = runReadAction ra@{

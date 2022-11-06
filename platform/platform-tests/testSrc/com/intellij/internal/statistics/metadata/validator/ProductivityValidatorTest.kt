@@ -58,8 +58,8 @@ class ProductivityValidatorTest : ProductivityFeaturesTest() {
 
 class TestProductivityFeatureProvider : ProductivityFeaturesProvider() {
   override fun getFeatureDescriptors(): Array<FeatureDescriptor> {
-    val withGroup = FeatureDescriptor("testFeatureId", "testFeatureGroup", "TestTip.html", "test", 0, 0, null, 0, this)
-    val noGroup = FeatureDescriptor("secondTestFeatureId", null, "TestTip.html", "test", 0, 0, null, 0, this)
+    val withGroup = FeatureDescriptor("testFeatureId", "testFeatureGroup", "TestTip", "test", 0, 0, null, 0, this)
+    val noGroup = FeatureDescriptor("secondTestFeatureId", null, "TestTip", "test", 0, 0, null, 0, this)
     return arrayOf(withGroup, noGroup)
   }
 

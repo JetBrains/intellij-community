@@ -19,12 +19,14 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +58,14 @@ public final class PySdkUtil {
 
   private PySdkUtil() {
     // explicitly none
+  }
+
+  public static void configureCharset(@NotNull GeneralCommandLine commandLine) {
+    var charset = commandLine.getCharset();
+    if ( charset != Charsets.UTF_8) {
+      LOG.warn("Charset " + charset  + " is not UTF-8, which is likely lead to troubles");
+    }
+    PythonEnvUtil.setupEncodingEnvs(commandLine.getEnvironment(), charset);
   }
 
   /**
@@ -130,6 +140,7 @@ public final class PySdkUtil {
         cmdLinePatcher.patchCommandLine(cmd);
       }
 
+      PythonEnvUtil.setupEncodingEnvs(commandLine.getEnvironment(), commandLine.getCharset());
       final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
@@ -146,7 +157,9 @@ public final class PySdkUtil {
       if (SwingUtilities.isEventDispatchThread()) {
         final ProgressManager progressManager = ProgressManager.getInstance();
         final Application application = ApplicationManager.getApplication();
-        assert application.isUnitTestMode() || application.isHeadlessEnvironment() || !application.isWriteAccessAllowed() : "Background task can't be run under write action";
+        assert application.isUnitTestMode() ||
+               application.isHeadlessEnvironment() ||
+               !application.isWriteAccessAllowed() : "Background task can't be run under write action";
         return progressManager.runProcessWithProgressSynchronously(() -> processHandler.runProcess(timeout),
                                                                    PySdkBundle.message("python.sdk.run.wait"), false, null);
       }
@@ -201,11 +214,19 @@ public final class PySdkUtil {
     final String sdkHome = sdk.getHomePath();
     if (sdkHome == null) return Collections.emptyMap();
 
+    var additionalData = ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
+    if (additionalData == null) {
+      return Collections.emptyMap();
+    }
     final Map<String, String> environment = activateVirtualEnv(sdkHome);
     sdk.putUserData(ENVIRONMENT_KEY, environment);
     return environment;
   }
 
+  /**
+   * @deprecated doesn't support targets
+   */
+  @Deprecated
   @NotNull
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
     PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
@@ -243,6 +264,7 @@ public final class PySdkUtil {
 
   /**
    * Finds sdk for provided directory. Takes into account both project and module SDK
+   *
    * @param allowRemote - indicates whether remote interpreter is acceptable
    */
   public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, @NotNull Path workingDirectory, boolean allowRemote) {
@@ -257,7 +279,7 @@ public final class PySdkUtil {
     for (Module m : ModuleManager.getInstance(project).getModules()) {
       Sdk sdk = PythonSdkUtil.findPythonSdk(m);
       if (sdk != null && (allowRemote || !PythonSdkUtil.isRemote(sdk))) {
-          return sdk;
+        return sdk;
       }
     }
 

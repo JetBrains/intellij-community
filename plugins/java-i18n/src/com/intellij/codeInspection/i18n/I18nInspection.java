@@ -36,7 +36,6 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
@@ -48,6 +47,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
@@ -453,27 +453,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   @NotNull
   private static LocalQuickFix createIntroduceConstantFix() {
-    return new LocalQuickFix() {
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        return IntroduceConstantHandler.getRefactoringNameText();
-      }
-
-      @Override
-      public boolean startInWriteAction() {
-        return false;
-      }
-
-      @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof PsiExpression)) return;
-
-        PsiExpression[] expressions = {(PsiExpression)element};
-        new IntroduceConstantHandler().invoke(project, expressions);
-      }
-    };
+    return new IntroduceConstantFix();
   }
 
   @Nullable

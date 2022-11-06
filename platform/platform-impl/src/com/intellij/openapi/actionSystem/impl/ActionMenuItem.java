@@ -8,10 +8,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMe
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
@@ -75,7 +72,12 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
           myToggled = !myToggled;
           myScreenMenuItemPeer.setState(myToggled);
         }
-        ApplicationManager.getApplication().invokeLater(() -> performAction(0));
+        SwingUtilities.invokeLater(() -> {
+          if (myAction.getAction().isEnabledInModalContext() ||
+              !Boolean.TRUE.equals(myContext.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT))) {
+            ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> performAction(0));
+          }
+        });
       });
     }
     else {
@@ -235,7 +237,8 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private Icon wrapNullIcon(Icon icon) {
-    if (ActionMenu.isShowNoIcons()) {
+    boolean isMainMenu = ActionPlaces.MAIN_MENU.equals(myPlace);
+    if (ActionMenu.isShowNoIcons() && isMainMenu) {
       return null;
     }
     if (!ActionMenu.isAligned() || !ActionMenu.isAlignedInGroup()) {

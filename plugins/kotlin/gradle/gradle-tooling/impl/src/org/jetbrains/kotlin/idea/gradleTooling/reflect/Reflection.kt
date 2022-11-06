@@ -1,10 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:OptIn(ExperimentalStdlibApi::class)
+@file:Suppress("FunctionName")
 
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -17,9 +19,9 @@ internal fun parameters(vararg parameter: Parameter<*>): ParameterList =
     if (parameter.isEmpty()) ParameterList.empty else ParameterList(parameter.toList())
 
 internal class TypeToken<T> private constructor(
-    val kotlinType: KType?,
-    val kotlinClass: KClass<*>,
-    val isMarkedNullable: Boolean
+  private val kotlinType: KType?,
+  val kotlinClass: KClass<*>,
+  val isMarkedNullable: Boolean
 ) {
     override fun toString(): String {
         return kotlinType?.toString() ?: (kotlinClass.java.name + if (isMarkedNullable) "?" else "")
@@ -69,7 +71,50 @@ internal class ParameterList(private val parameters: List<Parameter<*>>) : List<
     }
 }
 
+internal interface ReflectionReceiver {
+    val receiverClazz: Class<*>
+    fun getMethodOrThrow(methodName: String, vararg parameterTypes: Class<*>): Method
+    fun invokeOrThrow(method: Method, vararg parameters: Any?): Any?
+
+    class Instance(private val instance: Any) : ReflectionReceiver {
+        override val receiverClazz: Class<*> = instance.javaClass
+        override fun getMethodOrThrow(methodName: String, vararg parameterTypes: Class<*>): Method =
+            instance::class.java.getMethod(methodName, *parameterTypes)
+
+        override fun invokeOrThrow(method: Method, vararg parameters: Any?): Any? =
+            method.invoke(instance, *parameters)
+    }
+
+    class Static(private val clazz: Class<*>) : ReflectionReceiver {
+        override val receiverClazz: Class<*> = clazz
+        override fun getMethodOrThrow(methodName: String, vararg parameterTypes: Class<*>): Method =
+            clazz.getMethod(methodName, *parameterTypes)
+
+        override fun invokeOrThrow(method: Method, vararg parameters: Any?): Any? =
+            method.invoke(null, *parameters)
+    }
+}
+
+internal fun Static(clazz: Class<*>) = ReflectionReceiver.Static(clazz)
+
+internal fun Static(className: String, logger: ReflectionLogger): ReflectionReceiver.Static? {
+    return Static(className, logger.javaClass.classLoader, logger)
+}
+
+internal fun Static(className: String, classLoader: ClassLoader, logger: ReflectionLogger): ReflectionReceiver.Static? {
+    return try {
+        Static(Class.forName(className, false, classLoader))
+    } catch (t: Throwable) {
+        logger.logIssue("Failed to find class with name $className", t)
+        null
+    }
+}
+
 internal inline fun <reified T> Any.callReflective(
+    methodName: String, parameters: ParameterList, returnTypeToken: TypeToken<T>, logger: ReflectionLogger
+): T? = ReflectionReceiver.Instance(this).callReflective(methodName, parameters, returnTypeToken, logger)
+
+internal inline fun <reified T> ReflectionReceiver.callReflective(
     methodName: String, parameters: ParameterList, returnTypeToken: TypeToken<T>, logger: ReflectionLogger
 ): T? {
     val parameterClasses = parameters.map { parameter ->
@@ -79,9 +124,9 @@ internal inline fun <reified T> Any.callReflective(
     }
 
     val method = try {
-        this::class.java.getMethod(methodName, *parameterClasses.toTypedArray())
+        this.getMethodOrThrow(methodName, *parameterClasses.toTypedArray())
     } catch (e: Exception) {
-        logger.logIssue("Failed to invoke $methodName on ${this.javaClass.name}", e)
+        logger.logIssue("Failed to invoke $methodName on ${this.receiverClazz.name}", e)
         return null
     }
 
@@ -91,22 +136,22 @@ internal inline fun <reified T> Any.callReflective(
     }
 
     val returnValue = try {
-        method.invoke(this, *parameters.map { it.value }.toTypedArray())
+        this.invokeOrThrow(method, *parameters.map { it.value }.toTypedArray())
     } catch (t: Throwable) {
-        logger.logIssue("Failed to invoke $methodName on ${this.javaClass.name}", t)
+        logger.logIssue("Failed to invoke $methodName on ${this.receiverClazz.name}", t)
         return null
     }
 
     if (returnValue == null) {
         if (!returnTypeToken.isMarkedNullable) {
-            logger.logIssue("Method $methodName on ${this.javaClass.name} unexpectedly returned null (expected $returnTypeToken)")
+            logger.logIssue("Method $methodName on ${this.receiverClazz.name} unexpectedly returned null (expected $returnTypeToken)")
         }
         return null
     }
 
     if (!returnTypeToken.kotlinClass.javaObjectType.isInstance(returnValue)) {
         logger.logIssue(
-            "Method $methodName on ${this.javaClass.name} unexpectedly returned ${returnValue.javaClass.name}, which is " +
+            "Method $methodName on ${this.receiverClazz.name} unexpectedly returned ${returnValue.javaClass.name}, which is " +
                     "not an instance of ${returnTypeToken}"
         )
         return null

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.DialogPanel
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nls
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.reflect.KMutableProperty0
 
+@JvmDefaultWithCompatibility
 interface BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -35,6 +35,7 @@ interface BaseBuilder {
   }
 }
 
+@JvmDefaultWithCompatibility
 interface RowBuilder : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -108,46 +109,6 @@ interface RowBuilder : BaseBuilder {
   fun onGlobalIsModified(callback: () -> Boolean): Row
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
-inline fun <reified T : Any> InnerCell.buttonGroup(prop: KMutableProperty0<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  buttonGroup(prop.toBinding(), init)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
-inline fun <reified T : Any> InnerCell.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  buttonGroup(PropertyBinding(getter, setter), init)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
-inline fun <reified T : Any> InnerCell.buttonGroup(binding: PropertyBinding<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  withButtonGroup(ButtonGroup()) {
-    CellBuilderWithButtonGroupProperty(binding).init()
-  }
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
-inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  buttonGroup(prop.toBinding(), init)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
-inline fun <reified T : Any> RowBuilder.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  buttonGroup(PropertyBinding(getter, setter), init)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
-inline fun <reified T : Any> RowBuilder.buttonGroup(binding: PropertyBinding<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  withButtonGroup(ButtonGroup()) {
-    RowBuilderWithButtonGroupProperty(this, binding).init()
-  }
-}
-
 abstract class Row : Cell(), RowBuilder {
   abstract var enabled: Boolean
 
@@ -198,19 +159,7 @@ abstract class Row : Cell(), RowBuilder {
   @PublishedApi
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  internal abstract fun createRow(label: String?): Row
-
-  @PublishedApi
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)
-
-  // backward compatibility
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
-  operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
-    invoke(constraints = *constraints, growPolicy = growPolicy).withLeftGap(gapLeft)
-  }
 }
 
 enum class GrowPolicy {
@@ -221,13 +170,6 @@ enum class GrowPolicy {
 fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()
   predicate.addListener { enabled = it }
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
-fun Row.enableSubRowsIf(predicate: ComponentPredicate) {
-  subRowsEnabled = predicate()
-  predicate.addListener { subRowsEnabled = it }
 }
 
 fun RowBuilder.fullRow(init: InnerCell.() -> Unit): Row = row { cell(isFullWidth = true, init = init) }

@@ -90,20 +90,21 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     }
     else {
       pendingLayout.set(newLayout)
-      app.invokeLater({
-                        manager.setLayout(pendingLayout.getAndSet(null) ?: return@invokeLater)
-                      }, project.disposed)
+      project.coroutineScope.launch(Dispatchers.EDT) {
+        manager.setLayout(pendingLayout.getAndSet(null) ?: return@launch)
+      }
     }
   }
 
-  suspend fun initUi() {
+  suspend fun initUi(reopeningEditorsJob: Job) {
     try {
       val ref = initFuture.await()
       val tasks = ref.get()
       LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
       ref.set(null)
+      createAndLayoutToolWindows(manager, tasks ?: return, reopeningEditorsJob)
+      // separate EDT task - ensure that more important tasks like editor restoring maybe executed
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        createAndLayoutToolWindows(manager, tasks ?: return@withContext)
         while (true) {
           (pendingTasks.poll() ?: break).run()
         }
@@ -121,60 +122,103 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     }
   }
 
-  // must be executed in EDT
-  private fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl, tasks: List<RegisterToolWindowTask>) {
-    @Suppress("TestOnlyProblems")
-    manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
+  private suspend fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl,
+                                                 tasks: List<RegisterToolWindowTask>,
+                                                 reopeningEditorsJob: Job) {
+    val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+      .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
+    val list = addExtraTasks(tasks, project, ep)
 
-    // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
-    // 1. read action is required to read facet list (might cause a deadlock)
-    // 2. delay between collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
-    val list = addExtraTasks(tasks, project)
-    runActivity("toolwindow creating") {
-      val entries = ArrayList<String>(list.size)
-      for (task in list) {
-        try {
-          val paneId = manager.getLayout().getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
-          val toolWindowPane = manager.getToolWindowPane(paneId)
-          entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
+    val hasSecondaryFrameToolWindows = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      @Suppress("TestOnlyProblems")
+      manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
+
+      val hasSecondaryFrameToolWindows = runActivity("toolwindow creating") {
+        // Register all tool windows for the default tool window pane. If there are any tool windows for other panes, we'll register them
+        // after the reopening editors job has created the panes
+        val registeredAll = registerToolWindows(list, manager) { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+
+        for (toolWindowPane in manager.getToolWindowPanes()) {
+          toolWindowPane.buttonManager.initMoreButton()
+          toolWindowPane.buttonManager.revalidateNotEmptyStripes()
+          toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(toolWindowPane.paneId))
         }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(PluginException("Cannot init toolwindow ${task.contentFactory}", e, task.pluginDescriptor?.pluginId))
-        }
+
+        return@runActivity !registeredAll
       }
+      service<ToolWindowManagerImpl.ToolWindowManagerAppLevelHelper>()
 
-      project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries, manager)
-
-      manager.getToolWindowPanes().forEach {
-        it.buttonManager.initMoreButton()
-        it.buttonManager.revalidateNotEmptyStripes()
-        it.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(it.paneId))
-      }
+      hasSecondaryFrameToolWindows
     }
-    service<ToolWindowManagerImpl.ToolWindowManagerAppLevelHelper>()
 
     registerEpListeners(manager)
+
+    if (hasSecondaryFrameToolWindows) {
+      reopeningEditorsJob.join()
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        runActivity("secondary frames toolwindow creation") {
+          registerToolWindows(list, manager) { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+        }
+      }
+    }
   }
 }
 
-private fun addExtraTasks(tasks: List<RegisterToolWindowTask>, project: Project): List<RegisterToolWindowTask> {
-  val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-    .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
-  if (ep.size() <= 0) {
-    return tasks
-  }
-  val result = tasks.toMutableList()
-  ep.processImplementations(true) { supplier, epPluginDescriptor ->
-    if (epPluginDescriptor.pluginId == PluginManagerCore.CORE_ID) {
-      for (bean in (supplier.get() ?: return@processImplementations).getTasks(project)) {
-        result.addIfNotNull(beanToTask(project, bean))
+private fun registerToolWindows(registerTasks: List<RegisterToolWindowTask>,
+                                manager: ToolWindowManagerImpl,
+                                shouldRegister: (String) -> Boolean): Boolean {
+  val entries = ArrayList<String>(registerTasks.size)
+  for (task in registerTasks) {
+    try {
+      val paneId = manager.getLayout().getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+      if (shouldRegister(paneId)) {
+        val toolWindowPane = manager.getToolWindowPane(paneId)
+        entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
       }
     }
-    else {
-      LOG.error("Only bundled plugin can define registerToolWindowTaskProvider: $epPluginDescriptor")
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(PluginException("Cannot init toolwindow ${task.contentFactory}", e, task.pluginDescriptor?.pluginId))
+    }
+  }
+
+  manager.project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries, manager)
+  return entries.size == registerTasks.size
+}
+
+private suspend fun addExtraTasks(tasks: List<RegisterToolWindowTask>,
+                                  project: Project,
+                                  ep: ExtensionPointImpl<RegisterToolWindowTaskProvider>): List<RegisterToolWindowTask> {
+  if (ep.size() == 0) {
+    return tasks
+  }
+
+  val result = tasks.toMutableList()
+  // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
+  // 1. read action is required to read facet list (might cause a deadlock)
+  // 2. delay between collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
+  for (adapter in ep.sortedAdapters) {
+    val pluginDescriptor = adapter.pluginDescriptor
+    if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
+      LOG.error("Only bundled plugin can define registerToolWindowTaskProvider: $pluginDescriptor")
+      continue
+    }
+
+    val provider = try {
+      adapter.createInstance<RegisterToolWindowTaskProvider>(ApplicationManager.getApplication()) ?: continue
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      continue
+    }
+
+    for (bean in withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) { provider.getTasks(project) }) {
+      beanToTask(project, bean)?.let(result::add)
     }
   }
   return result

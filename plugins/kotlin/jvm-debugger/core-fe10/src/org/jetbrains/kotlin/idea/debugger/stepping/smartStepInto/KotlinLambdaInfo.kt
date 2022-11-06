@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import org.jetbrains.kotlin.coroutines.isSuspendLambda
+import org.jetbrains.kotlin.coroutines.hasSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.resolve.isInlineClass
@@ -31,7 +31,7 @@ data class KotlinLambdaInfo(
             parameterDescriptor.name.asString(),
             callerMethodOrdinal,
             countParameterIndex(callerMethodDescriptor, parameterDescriptor),
-            parameterDescriptor.isSuspendLambda,
+            parameterDescriptor.hasSuspendFunctionType,
             isSam,
             parameterDescriptor.isNoinline,
             isNameMangledInBytecode,

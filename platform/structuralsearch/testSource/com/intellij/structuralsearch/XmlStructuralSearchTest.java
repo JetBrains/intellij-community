@@ -19,13 +19,15 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
 
   public void testHtmlSearch2() throws Exception {
     String content = loadFile("in4.html");
-    String pattern = "<tr><td>Name</td>\n" +
-                     "\n" +
-                     "        <td>Address</td>\n" +
-                     "\n" +
-                     "        <td>Phone</td>\n" +
-                     "\n" +
-                     "    </tr>\n";
+    String pattern = """
+      <tr><td>Name</td>
+
+              <td>Address</td>
+
+              <td>Phone</td>
+
+          </tr>
+      """;
 
     assertEquals("Simple html find", 1, findMatchesCount(content, pattern, HtmlFileType.INSTANCE));
 
@@ -88,9 +90,10 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Simple xml find with typed attr value", 1, findMatchesCount(s1, s2_5, HtmlFileType.INSTANCE));
     assertEquals("Simple xml find with attr without value", 2, findMatchesCount(s1, "<'_ '_+ />", HtmlFileType.INSTANCE));
 
-    String s3 = "<a> content </a>\n" +
-                "<b> another content </b>\n" +
-                "<c>another <aaa>zzz</aaa>content </c>";
+    String s3 = """
+      <a> content </a>
+      <b> another content </b>
+      <c>another <aaa>zzz</aaa>content </c>""";
     String s4 = "<'_tag>'Content+</'_tag>";
     assertEquals("Content match", 6, findMatchesCount(s3, s4, HtmlFileType.INSTANCE));
     assertEquals("Content match", 6, findMatchesCount(s3, s4, XmlFileType.INSTANCE));
@@ -145,21 +148,23 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testCssStyleTag() {
-    String source = "<html>\n" +
-                   "<style type=\"text/css\">\n" +
-                   "    .stretchFormElement { width: auto; }\n" +
-                   "</style>\n" +
-                   "<img src=\"madonna.jpg\" alt='Foligno Madonna, by Raphael' one=\"tro\"/>\n" +
-                   "</html>";
+    String source = """
+      <html>
+      <style type="text/css">
+          .stretchFormElement { width: auto; }
+      </style>
+      <img src="madonna.jpg" alt='Foligno Madonna, by Raphael' one="tro"/>
+      </html>""";
     String pattern = "<'_a type=\"text/css\">'_content*</'_a>";
     assertEquals("find tag with css content", 1, findMatchesCount(source, pattern, HtmlFileType.INSTANCE));
   }
 
   public void testSearchIgnoreComments() {
-    String source = "<user id=\"1\">\n" +
-                    "  <first_name>Max</first_name> <!-- asdf -->\n" +
-                    "  <last_name>Headroom</last_name>\n" +
-                    "</user>";
+    String source = """
+      <user id="1">
+        <first_name>Max</first_name> <!-- asdf -->
+        <last_name>Headroom</last_name>
+      </user>""";
     String pattern = "<first_name>$A$</first_name><last_name>$B$</last_name>";
     assertEquals("find tag ignoring comments", 1, findMatchesCount(source, pattern, XmlFileType.INSTANCE));
   }

@@ -17,10 +17,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
@@ -78,6 +75,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   @NotNull private final SvnVcs myVcs;
 
+  private final VcsShowConfirmationOption myAddConfirmation;
+  private final VcsShowConfirmationOption myDeleteConfirmation;
+
   private final List<AddedFileInfo> myAddedFiles = new ArrayList<>();
   private final List<File> myDeletedFiles = new ArrayList<>();
   private final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
@@ -95,6 +95,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
     LocalFileSystem.getInstance().registerAuxiliaryFileOperationsHandler(this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(CommandListener.TOPIC, this);
+
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(vcs.getProject());
+    myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
+    myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
   }
 
   @Override
@@ -414,7 +418,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     startOperation(file);
     if (SvnUtil.isAdminDirectory(file)) return true;
 
-    final VcsShowConfirmationOption.Value value = myVcs.getDeleteConfirmation().getValue();
+    final VcsShowConfirmationOption.Value value = myDeleteConfirmation.getValue();
     if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(value)) return false;
 
     final File ioFile = getIOFile(file);
@@ -515,7 +519,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
    * anything else: return false.
    */
   private boolean createItem(VirtualFile dir, String name, boolean directory, final boolean recursive) {
-    final VcsShowConfirmationOption.Value value = myVcs.getAddConfirmation().getValue();
+    final VcsShowConfirmationOption.Value value = myAddConfirmation.getValue();
     if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(value)) return false;
 
     if (isUndo() && SvnUtil.isAdminDirectory(dir, name)) {
@@ -666,7 +670,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     final Set<VirtualFile> recursiveItems = new HashSet<>();
     fillAddedFiles(addedVFiles, copyFromMap, recursiveItems);
     if (addedVFiles.isEmpty()) return;
-    final VcsShowConfirmationOption.Value value = myVcs.getAddConfirmation().getValue();
+    final VcsShowConfirmationOption.Value value = myAddConfirmation.getValue();
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       // Current method could be invoked under write action (for instance, during project import). So we explicitly use
       // Application.invokeLater() in such cases to prevent deadlocks (while accessing vcs root mappings) and also not to show dialog under
@@ -769,7 +773,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       filesToProcess = vcsHelper.selectFilesToProcess(addedVFiles, message("confirmation.title.add.multiple.files"),
                                                       null,
                                                       message("confirmation.title.add.file"), singleFilePrompt,
-                                                      myVcs.getAddConfirmation());
+                                                      myAddConfirmation);
     }
     return filesToProcess;
   }
@@ -811,7 +815,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     try {
       fillDeletedFiles(deletedFiles, filesToProcess);
       if (deletedFiles.isEmpty() && filesToProcess.isEmpty() || myUndoingMove) return;
-      final VcsShowConfirmationOption.Value value = myVcs.getDeleteConfirmation().getValue();
+      final VcsShowConfirmationOption.Value value = myDeleteConfirmation.getValue();
       if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
         if (!deletedFiles.isEmpty()) {
           final Collection<FilePath> confirmed = promptAboutDeletion(deletedFiles, value, vcsHelper);
@@ -888,7 +892,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       Collection<FilePath> files = vcsHelper
         .selectFilePathsToProcess(map(deletedFiles, Functions.pairFirst()), message("confirmation.title.delete.multiple.files"),
                                   null, message("confirmation.title.delete.file"), singleFilePrompt,
-                                  myVcs.getDeleteConfirmation());
+                                  myDeleteConfirmation);
       filesToProcess = files == null ? null : new ArrayList<>(files);
     }
     return filesToProcess;

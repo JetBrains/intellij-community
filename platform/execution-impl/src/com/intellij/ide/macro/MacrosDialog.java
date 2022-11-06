@@ -6,6 +6,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Computable;
@@ -13,6 +15,7 @@ import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
@@ -96,6 +99,30 @@ public final class MacrosDialog extends DialogWrapper {
         }
         catch (BadLocationException ignored) {
         }
+      }
+    }
+    IdeFocusManager.findInstance().requestFocus(textComponent, true);
+  }
+
+  public static void show(@NotNull EditorTextField textComponent,
+                          @NotNull Predicate<? super Macro> filter,
+                          @Nullable Map<String, String> userMacros) {
+    MacrosDialog dialog = new MacrosDialog(textComponent, filter, userMacros);
+    if (dialog.showAndGet()) {
+      String macro = dialog.getSelectedMacroName();
+      Editor editor = textComponent.getEditor();
+      if (macro != null && editor != null) {
+        int selectionStart = editor.getSelectionModel().getSelectionStart();
+        int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+        final String nameToInsert = (macro.startsWith("$") || macro.startsWith("%")) ? macro : "$" + macro + "$";
+        int position = selectionStart < selectionEnd ? selectionStart : editor.getCaretModel().getOffset();
+        WriteCommandAction.writeCommandAction(textComponent.getProject()).run(() -> {
+          if (selectionStart < selectionEnd) {
+            editor.getDocument().deleteString(selectionStart, selectionEnd - selectionStart);
+          }
+          textComponent.getDocument().insertString(position, nameToInsert);
+        });
+        textComponent.setCaretPosition(position + nameToInsert.length());
       }
     }
     IdeFocusManager.findInstance().requestFocus(textComponent, true);

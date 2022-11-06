@@ -14,7 +14,6 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
   private var placeholderCellData: PlaceholderCellData? = null
   private var visible = true
   private var enabled = true
-
   private var componentField: JComponent? = null
 
   var component: JComponent?

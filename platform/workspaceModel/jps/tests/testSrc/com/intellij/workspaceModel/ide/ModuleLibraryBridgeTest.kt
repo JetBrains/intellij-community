@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
@@ -13,10 +12,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -65,13 +65,7 @@ class ModuleLibraryBridgeTest {
       module
     }
 
-    runBlocking {
-      saveSettings(project)
-    }
-
     val moduleRootManager = WriteCommandAction.writeCommandAction(project).compute<ModuleRootManager, RuntimeException> {
-      assertTrue(moduleFile.readText().contains(antLibraryName))
-
       val moduleRootManager = ModuleRootManager.getInstance(module)
       moduleRootManager.modifiableModel.let { rootModel ->
         rootModel.moduleLibraryTable.getLibraryByName(antLibraryName)?.modifiableModel?.let {
@@ -84,12 +78,6 @@ class ModuleLibraryBridgeTest {
       moduleRootManager
     }
 
-    runBlocking {
-      saveSettings(project)
-    }
-
-    assertTrue(moduleFile.readText().contains(mavenLibraryName))
-    assertFalse(moduleFile.readText().contains(antLibraryName))
     assertModuleLibraryDependency(moduleRootManager, mavenLibraryName)
   }
 
@@ -110,14 +98,8 @@ class ModuleLibraryBridgeTest {
       ModuleRootModificationUtil.addModuleLibrary(module, antLibraryName, listOf(), emptyList())
       module
     }
-
-    runBlocking {
-      saveSettings(project)
-    }
-
+    
     val moduleRootManager = WriteCommandAction.writeCommandAction(project).compute<ModuleRootManager, RuntimeException> {
-      assertTrue(moduleFile.readText().contains(antLibraryName))
-
       val moduleRootManager = ModuleRootManager.getInstance(module)
       moduleRootManager.modifiableModel.let { rootModel ->
         rootModel.moduleLibraryTable.getLibraryByName(antLibraryName)?.modifiableModel?.let {
@@ -128,14 +110,8 @@ class ModuleLibraryBridgeTest {
       }
       moduleRootManager
     }
-
-    runBlocking {
-      saveSettings(project)
-    }
-
+    
     WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
-      assertTrue(moduleFile.readText().contains(mavenLibraryName))
-      assertFalse(moduleFile.readText().contains(antLibraryName))
       assertModuleLibraryDependency(moduleRootManager, mavenLibraryName)
 
       moduleRootManager.modifiableModel.let { rootModel ->
@@ -147,11 +123,6 @@ class ModuleLibraryBridgeTest {
       }
     }
 
-    runBlocking {
-      saveSettings(project)
-    }
-    assertTrue(moduleFile.readText().contains(antLibraryName))
-    assertFalse(moduleFile.readText().contains(mavenLibraryName))
     assertModuleLibraryDependency(moduleRootManager, antLibraryName)
   }
 
@@ -212,33 +183,6 @@ class ModuleLibraryBridgeTest {
     }
 
     runBlocking {
-      saveSettings(project)
-    }
-
-    val template = "\$MODULE_DIR\$"
-    assertTrue(moduleFile.readText().replace("\r\n", "\n").contains("""<orderEntry type="module-library">
-        <library name="$mavenLibraryName">
-          <CLASSES>
-            <root url="$template/$antLibraryName.jar" />
-          </CLASSES>
-          <JAVADOC />
-          <SOURCES>
-            <root url="$template/$antLibraryName-sources.jar" />
-          </SOURCES>
-        </library>
-      </orderEntry>
-      <orderEntry type="module-library">
-        <library name="$antLibraryName">
-          <CLASSES>
-            <root url="$template/$mavenLibraryName.jar" />
-          </CLASSES>
-          <JAVADOC />
-          <SOURCES>
-            <root url="$template/$mavenLibraryName-sources.jar" />
-          </SOURCES>
-        </library>
-      </orderEntry>"""))
-    runBlocking {
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().runWriteAction {
           rootModel.commit()
@@ -266,14 +210,8 @@ class ModuleLibraryBridgeTest {
       ModuleRootModificationUtil.addModuleLibrary(module, antLibraryName, listOf(), emptyList())
       module
     }
-
-    runBlocking {
-      saveSettings(project)
-    }
-
+    
     WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
-      assertEquals(2, moduleFile.readText().split('\"').groupBy { it }[antLibraryName]?.size ?: 0)
-
       val moduleRootManager = ModuleRootManager.getInstance(module)
       moduleRootManager.modifiableModel.let { rootModel ->
         val libraries = rootModel.moduleLibraryTable.libraries
@@ -302,15 +240,7 @@ class ModuleLibraryBridgeTest {
         rootModel.commit()
       }
     }
-
-    runBlocking {
-      saveSettings(project)
-    }
-
-    assertTrue(moduleFile.readText().contains(mavenLibraryName))
-    assertTrue(moduleFile.readText().contains(gradleLibraryName))
-    assertFalse(moduleFile.readText().contains(antLibraryName))
-
+    
     val libraryDependencies = WorkspaceModel.getInstance(project).entityStorage.current
       .entities(ModuleEntity::class.java).first()
       .dependencies.drop(1)
@@ -348,12 +278,6 @@ class ModuleLibraryBridgeTest {
       }
       moduleRootManager
     }
-
-    runBlocking {
-      saveSettings(project)
-    }
-    assertFalse(moduleFile.readText().contains(mavenLibraryName))
-    assertTrue(moduleFile.readText().contains(antLibraryName))
 
     assertModuleLibraryDependency(moduleRootManager, antLibraryName)
   }
@@ -405,6 +329,61 @@ class ModuleLibraryBridgeTest {
   }
 
   @Test
+  fun `check module library dispose`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val antLibraryName = "ant-lib"
+    val mavenLibraryName = "maven-lib"
+    val gradleLibraryName = "gradle-lib"
+
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+      moduleModel.commit()
+      module
+    }
+    ModuleRootModificationUtil.addModuleLibrary(module, antLibraryName, listOf(), emptyList())
+    ModuleRootModificationUtil.addModuleLibrary(module, mavenLibraryName, listOf(), emptyList())
+    ModuleRootModificationUtil.addModuleLibrary(module, gradleLibraryName, listOf(), emptyList())
+    var moduleLibraryTable = ModuleRootComponentBridge.getInstance(module).getModuleLibraryTable()
+    val antLibraryBridgeOrigin = moduleLibraryTable.getLibraryByName(antLibraryName)
+    val mavenLibraryBridgeOrigin = moduleLibraryTable.getLibraryByName(mavenLibraryName)
+    val gradleLibraryBridgeOrigin = moduleLibraryTable.getLibraryByName(gradleLibraryName)
+
+    val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+    val antLibraryBridgeCopy = rootModel.moduleLibraryTable.getLibraryByName(antLibraryName)
+    rootModel.moduleLibraryTable.removeLibrary(antLibraryBridgeCopy!!)
+
+    val mavenLibraryBridgeCopy = rootModel.moduleLibraryTable.getLibraryByName(mavenLibraryName)
+
+    val gradleLibraryBridgeCopy = rootModel.moduleLibraryTable.getLibraryByName(gradleLibraryName)
+    rootModel.moduleLibraryTable.getLibraryByName(gradleLibraryName)?.modifiableModel?.let {
+      it.name = "New Name"
+      it.commit()
+    }
+    rootModel.commit()
+
+    moduleLibraryTable = ModuleRootComponentBridge.getInstance(module).getModuleLibraryTable()
+
+    // Check both instances of removed library disposed
+    assertNull(moduleLibraryTable.getLibraryByName(antLibraryName))
+    assertTrue(antLibraryBridgeOrigin !== antLibraryBridgeCopy)
+    assertTrue((antLibraryBridgeOrigin as LibraryBridge).isDisposed)
+    assertTrue((antLibraryBridgeCopy as LibraryBridge).isDisposed)
+
+    // Check copy instance is disposed for not modified library
+    val mavenLibraryBridgeTwo = moduleLibraryTable.getLibraryByName(mavenLibraryName)
+    assertTrue(mavenLibraryBridgeTwo === mavenLibraryBridgeOrigin)
+    assertTrue((mavenLibraryBridgeCopy as LibraryBridge).isDisposed)
+    assertFalse((mavenLibraryBridgeOrigin as LibraryBridge).isDisposed)
+
+    // Check origin instance is disposed for modified library
+    val gradleLibraryBridgeTwo = moduleLibraryTable.getLibraryByName("New Name")
+    assertTrue(gradleLibraryBridgeTwo === gradleLibraryBridgeCopy)
+    assertTrue((gradleLibraryBridgeOrigin as LibraryBridge).isDisposed)
+    assertFalse((gradleLibraryBridgeCopy as LibraryBridge).isDisposed)
+  }
+
+  @Test
   fun `test module library remove`() {
     val moduleName = "build"
     val antLibraryName = "ant-lib"
@@ -422,14 +401,8 @@ class ModuleLibraryBridgeTest {
                                                   emptyList())
       module
     }
-
-    runBlocking {
-      saveSettings(project)
-    }
-
+    
     WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
-      assertTrue(moduleFile.readText().contains(antLibraryName))
-
       val moduleRootManager = ModuleRootManager.getInstance(module)
       moduleRootManager.modifiableModel.let { rootModel ->
         rootModel.moduleLibraryTable.getLibraryByName(antLibraryName)?.let {
@@ -438,11 +411,6 @@ class ModuleLibraryBridgeTest {
         rootModel.commit()
       }
     }
-
-    runBlocking {
-      saveSettings(project)
-    }
-    assertTrue(!moduleFile.readText().contains(antLibraryName))
   }
 
   @Test
@@ -465,13 +433,9 @@ class ModuleLibraryBridgeTest {
     }
 
     runBlocking {
-      saveSettings(project)
-      assertTrue(moduleFile.readText().contains(antLibraryName))
-
       withContext(Dispatchers.EDT) {
         ModuleManager.getInstance(project).disposeModule(module)
       }
-      saveSettings(project)
     }
 
     ModuleManager.getInstance(project).modules.forEach { existingModule ->

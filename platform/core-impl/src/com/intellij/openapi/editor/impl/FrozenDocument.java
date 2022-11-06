@@ -15,9 +15,6 @@ import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class FrozenDocument implements DocumentEx {
   private final ImmutableCharSequence myText;
   @Nullable private volatile SoftReference<LineSet> myLineSet;

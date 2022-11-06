@@ -12,14 +12,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
@@ -35,13 +33,18 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.*
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
 import java.awt.Rectangle
 import java.awt.Window
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
@@ -55,7 +58,7 @@ open class ProjectFrameHelper(
   private var frame: IdeFrameImpl?,
   @field:Volatile @field:Suppress("unused") private var selfie: Image?
 ) : IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
-  private var isUpdatingTitle = false
+  private val isUpdatingTitle = AtomicBoolean()
   private var title: String? = null
   private var fileTitle: String? = null
   private var currentFile: Path? = null
@@ -104,12 +107,12 @@ open class ProjectFrameHelper(
       appendTitlePart(sb, s, " \u2013 ")
     }
 
-    private fun appendTitlePart(sb: StringBuilder, s: String?, separator: String) {
+    private fun appendTitlePart(builder: StringBuilder, s: String?, separator: String) {
       if (!s.isNullOrBlank()) {
-        if (sb.isNotEmpty()) {
-          sb.append(separator)
+        if (builder.isNotEmpty()) {
+          builder.append(separator)
         }
-        sb.append(s)
+        builder.append(s)
       }
     }
 
@@ -150,16 +153,6 @@ open class ProjectFrameHelper(
       override fun getProject() = this@ProjectFrameHelper.project
 
       override fun getHelper() = this@ProjectFrameHelper
-
-      override fun setTitle(title: String?) {
-        if (isUpdatingTitle) {
-          frame!!.doSetTitle(title)
-        }
-        else {
-          this@ProjectFrameHelper.title = title
-        }
-        updateTitle()
-      }
     }, frameDecorator)
     balloonLayout = if (ActionCenter.isEnabled()) {
       ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
@@ -171,7 +164,7 @@ open class ProjectFrameHelper(
     rootPane.prepareToolbar()
   }
 
-  protected open fun createIdeRootPane(): IdeRootPane = IdeRootPane(frame!!, this, this)
+  protected open fun createIdeRootPane(): IdeRootPane = IdeRootPane(frame = frame!!, frameHelper = this, parentDisposable = this)
 
   fun releaseFrame() {
     rootPane!!.removeToolbar()
@@ -182,9 +175,13 @@ open class ProjectFrameHelper(
 
   // purpose of delayed init - to show project frame as early as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
-  fun init() {
+  fun init(installPainters: Boolean = true) {
     if (!isInitialized.compareAndSet(false, true)) {
       return
+    }
+
+    if (installPainters) {
+      installPainters()
     }
 
     rootPane!!.createAndConfigureStatusBar(this, this)
@@ -198,7 +195,12 @@ open class ProjectFrameHelper(
       frame.iconImage = null
     }
     else if (SystemInfoRt.isLinux) {
-      IdeMenuBar.installAppMenuIfNeeded(frame)
+      frame.addComponentListener(object : ComponentAdapter() {
+        override fun componentShown(e: ComponentEvent) {
+          frame.removeComponentListener(this)
+          IdeMenuBar.installAppMenuIfNeeded(frame)
+        }
+      })
       // in production (not from sources) makes sense only on Linux
       AppUIUtil.updateWindowIcon(frame)
     }
@@ -208,6 +210,10 @@ open class ProjectFrameHelper(
       ModalityState.NON_MODAL,
       { this.frame == null }
     )
+  }
+
+  fun installPainters() {
+    (rootPane!!.glassPane as IdeGlassPaneImpl).installPainters()
   }
 
   override fun getComponent(): JComponent? = frame?.rootPane
@@ -229,28 +235,24 @@ open class ProjectFrameHelper(
     })
   }
 
-  protected open fun createCloseProjectWindowHelper(): CloseProjectWindowHelper {
-    return CloseProjectWindowHelper()
-  }
+  protected open fun createCloseProjectWindowHelper(): CloseProjectWindowHelper = CloseProjectWindowHelper()
 
-  override fun getStatusBar(): IdeStatusBarImpl? {
-    return if (rootPane == null) null else rootPane!!.statusBar
-  }
+  override fun getStatusBar(): IdeStatusBarImpl? = rootPane?.statusBar
 
   override fun setFrameTitle(text: String) {
     frame!!.title = text
   }
 
   fun frameReleased() {
-    if (project != null) {
+    project?.let {
       project = null
       // already disposed
-      rootPane?.deinstallNorthComponents()
+      rootPane?.deinstallNorthComponents(it)
     }
     fileTitle = null
     currentFile = null
     title = null
-    frame?.doSetTitle("")
+    frame?.title = ""
   }
 
   override fun setFileTitle(fileTitle: String?, file: Path?) {
@@ -259,48 +261,56 @@ open class ProjectFrameHelper(
     updateTitle()
   }
 
-  override fun getNorthExtension(key: String): IdeRootPaneNorthExtension? = rootPane?.findByName(key)
+  override fun getNorthExtension(key: String): JComponent? = project?.let { rootPane?.findNorthUiComponentByKey(key = key) }
 
   protected open val titleInfoProviders: List<TitleInfoProvider>
     get() = TitleInfoProvider.EP.extensionList
 
+  suspend fun updateTitle(title: String) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      this@ProjectFrameHelper.title = title
+      updateTitle()
+    }
+  }
+
   fun updateTitle() {
-    if (isUpdatingTitle) {
+    if (!isUpdatingTitle.compareAndSet(false, true)) {
       return
     }
-    isUpdatingTitle = true
+
     try {
       if (AdvancedSettings.getBoolean("ide.show.fileType.icon.in.titleBar")) {
-        val ioFile = if (currentFile == null) null else currentFile!!.toFile()
-        frame!!.rootPane.putClientProperty("Window.documentFile", ioFile) // this property requires java.io.File
+        // this property requires java.io.File
+        frame!!.rootPane.putClientProperty("Window.documentFile", currentFile?.toFile())
       }
+
       val builder = StringBuilder()
       appendTitlePart(builder, title)
       appendTitlePart(builder, fileTitle)
       val titleInfoProviders = titleInfoProviders
       if (!titleInfoProviders.isEmpty()) {
-        assert(project != null)
+        val project = project!!
         for (extension in titleInfoProviders) {
-          if (extension.isActive(project!!)) {
-            val it = extension.getValue(project!!)
+          if (extension.isActive(project)) {
+            val it = extension.getValue(project)
             if (!it.isEmpty()) {
-              appendTitlePart(builder, it, " ")
+              appendTitlePart(builder = builder, s = it, separator = " ")
             }
           }
         }
       }
       if (builder.isNotEmpty()) {
-        frame!!.doSetTitle(builder.toString())
+        frame!!.title = builder.toString()
       }
     }
     finally {
-      isUpdatingTitle = false
+      isUpdatingTitle.set(false)
     }
   }
 
   fun updateView() {
-    val rootPane = rootPane
-    rootPane!!.updateToolbar()
+    val rootPane = rootPane!!
+    rootPane.updateToolbar()
     rootPane.updateMainMenuActions()
     rootPane.updateNorthComponents()
   }
@@ -313,11 +323,13 @@ open class ProjectFrameHelper(
       CommonDataKeys.PROJECT.`is`(dataId) -> if (project != null && project.isInitialized) project else null
       IdeFrame.KEY.`is`(dataId) -> this
       PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.`is`(dataId) -> {
-        val manager = if (project != null && project.isInitialized) project.serviceIfCreated<ToolWindowManager>() else null
-        if (manager is ToolWindowManagerImpl) manager.getLastActiveToolWindows().toList().toTypedArray() else null
+        if (project == null || !project.isInitialized) return null
+        val manager = project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl ?: return null
+        manager.getLastActiveToolWindows().toList().toTypedArray()
       }
       PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
-        (if (project != null && project.isInitialized) FileEditorManager.getInstance(project) else null)?.selectedEditor
+        if (project == null || !project.isInitialized) return null
+        FileEditorManagerEx.getInstanceEx(project).currentWindow?.getSelectedComposite(true)?.selectedEditor
       }
       else -> null
     }
@@ -325,21 +337,21 @@ open class ProjectFrameHelper(
 
   override fun getProject() = project
 
+  @RequiresEdt
   fun setProject(project: Project) {
     if (this.project === project) {
       return
     }
 
     this.project = project
-    rootPane?.let { rootPane ->
-      rootPane.setProject(project)
-      rootPane.installNorthComponents(project)
-      rootPane.statusBar?.let {
-        project.messageBus.connect().subscribe(StatusBar.Info.TOPIC, it)
-      }
+    val rootPane = rootPane!!
+    rootPane.setProject(project)
+    rootPane.installNorthComponents(project)
+    rootPane.statusBar?.let {
+      project.messageBus.connect().subscribe(StatusBar.Info.TOPIC, it)
     }
     installDefaultProjectStatusBarWidgets(project)
-    updateTitle()
+
     if (selfie != null) {
       StartupManager.getInstance(project).runAfterOpened { selfie = null }
     }
@@ -353,9 +365,18 @@ open class ProjectFrameHelper(
     project.service<StatusBarWidgetsManager>().installPendingWidgets()
     val statusBar = statusBar!!
     PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
-    val navBar = rootPane!!.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY)
-    if (navBar is StatusBarCentralWidget) {
-      statusBar.setCentralWidget(navBar)
+    val rootPane = rootPane!!
+    val navBar = rootPane.navBarStatusWidgetComponent
+    if (navBar != null) {
+      statusBar.setCentralWidget(object : StatusBarWidget {
+        override fun dispose() {
+        }
+
+        override fun ID(): String = IdeStatusBarImpl.NAVBAR_WIDGET_KEY
+
+        override fun install(statusBar: StatusBar) {
+        }
+      }, navBar)
     }
   }
 
@@ -467,4 +488,6 @@ open class ProjectFrameHelper(
       RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(it, currentTimeMillis)
     }
   }
+
+  fun isTabbedWindow() = frameDecorator?.isTabbedWindow ?: false
 }

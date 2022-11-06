@@ -19,9 +19,11 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import java.io.File
 import kotlin.test.assertNotNull
+
+const val CONFIGURE_LIBRARY_PREFIX = "CONFIGURE_LIBRARY:"
 
 /**
  * Helper for configuring kotlin runtime in tested project.
@@ -36,7 +38,8 @@ object ConfigLibraryUtil {
         "JUnit" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
         "JUnit3" to TestKotlinArtifacts.junit3,
         "JUnit4" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
-        "TestNG" to File(PathUtil.getJarPathForClass(org.testng.annotations.Test::class.java))
+        "TestNG" to File(PathUtil.getJarPathForClass(org.testng.annotations.Test::class.java)),
+        "Coroutines" to File(PathUtil.getJarPathForClass(kotlinx.coroutines.Job::class.java)),
     )
 
     fun configureKotlinRuntimeAndSdk(module: Module, sdk: Sdk) {
@@ -205,12 +208,12 @@ object ConfigLibraryUtil {
     }
 
     fun configureLibrariesByDirective(module: Module, fileText: String) {
-        configureLibraries(module, InTextDirectivesUtils.findListWithPrefixes(fileText, "// CONFIGURE_LIBRARY: "))
+        configureLibraries(module, InTextDirectivesUtils.findListWithPrefixes(fileText, CONFIGURE_LIBRARY_PREFIX))
     }
 
     fun unconfigureLibrariesByDirective(module: Module, fileText: String) {
         val libraryNames =
-            InTextDirectivesUtils.findListWithPrefixes(fileText, "// CONFIGURE_LIBRARY: ") +
+            InTextDirectivesUtils.findListWithPrefixes(fileText, CONFIGURE_LIBRARY_PREFIX) +
             InTextDirectivesUtils.findListWithPrefixes(fileText, "// UNCONFIGURE_LIBRARY: ")
 
         unconfigureLibrariesByName(module, libraryNames.toMutableList())

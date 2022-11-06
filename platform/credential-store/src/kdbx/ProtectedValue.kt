@@ -28,15 +28,19 @@ internal class ProtectedValue(private var encryptedValue: ByteArray,
     val value = encryptedValue
     decryptInto(value)
 
-    position = newStreamCipher.position.toInt()
-    newStreamCipher.processBytes(value, 0, value.size, value, 0)
+    synchronized(newStreamCipher) {
+      position = newStreamCipher.position.toInt()
+      newStreamCipher.processBytes(value, 0, value.size, value, 0)
+    }
     streamCipher = newStreamCipher
   }
 
   @Synchronized
   private fun decryptInto(out: ByteArray) {
-    streamCipher.seekTo(position.toLong())
-    streamCipher.processBytes(encryptedValue, 0, encryptedValue.size, out, 0)
+    synchronized(streamCipher) {
+      streamCipher.seekTo(position.toLong())
+      streamCipher.processBytes(encryptedValue, 0, encryptedValue.size, out, 0)
+    }
   }
 
   override fun getText() = throw IllegalStateException("encodeToBase64 must be used for serialization")
@@ -68,9 +72,11 @@ internal class ProtectedXmlWriter(private val streamCipher: SkippingStreamCipher
       }
       else {
         val bytes = (value as UnsavedProtectedValue).secureString.getAsByteArray()
-        val position = streamCipher.position.toInt()
-        streamCipher.processBytes(bytes, 0, bytes.size, bytes, 0)
-        protectedValue = ProtectedValue(bytes, position, streamCipher)
+        synchronized(streamCipher) {
+          val position = streamCipher.position.toInt()
+          streamCipher.processBytes(bytes, 0, bytes.size, bytes, 0)
+          protectedValue = ProtectedValue(bytes, position, streamCipher)
+        }
         element.setContent(protectedValue)
       }
 

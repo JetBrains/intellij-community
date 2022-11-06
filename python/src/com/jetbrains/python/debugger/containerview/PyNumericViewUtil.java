@@ -23,7 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PyNumericViewUtil {
-  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d^j]*)([+-]?[e.\\d]*j)?");
+  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d]*(?:[eE][+-]?\\d*)?j?)?([+-]?[.\\d]*(?:[eE][+-]?\\d*)?j)?");
 
   /**
    * @return double presentation from [0:1] range
@@ -55,6 +55,9 @@ public class PyNumericViewUtil {
     Pair<Double, Double> med = parsePyComplex(value);
     Pair<Double, Double> max = parsePyComplex(complexMax);
     Pair<Double, Double> min = parsePyComplex(complexMin);
+    if (med == null || min == null || max == null) {
+      return 0;
+    }
     double range = (med.first - min.first) / (max.first - min.first);
     if (max.first.equals(min.first)) {
       range = (med.second - min.second) / (max.second - min.second);
@@ -73,12 +76,13 @@ public class PyNumericViewUtil {
       if (imag == null && real.contains("j")) {
         return new Pair<>(new Double(0.0), Double.parseDouble(real.substring(0, real.length() - 1)));
       }
-      else {
+      else if (imag != null) {
         return new Pair<>(Double.parseDouble(real), Double.parseDouble(imag.substring(0, imag.length() - 1)));
       }
     }
     else {
       throw new IllegalArgumentException("Not a valid python complex value: " + pyComplexValue);
     }
+    return null;
   }
 }

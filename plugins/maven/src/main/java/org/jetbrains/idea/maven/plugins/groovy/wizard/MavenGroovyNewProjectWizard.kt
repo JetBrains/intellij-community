@@ -12,6 +12,7 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bindBooleanStorage
@@ -21,11 +22,11 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.layout.*
-import com.intellij.util.castSafelyTo
+import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.util.asSafely
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
@@ -50,7 +51,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     private val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
-    var addSampleCode by addSampleCodeProperty
+    private var addSampleCode by addSampleCodeProperty
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
@@ -82,6 +83,9 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       }
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
+      MavenProjectsManager.setupCreatedMavenProject(project)
+
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
       builder.commit(project)
     }
 
@@ -106,7 +110,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
                                                 index: Int,
                                                 isSelected: Boolean,
                                                 cellHasFocus: Boolean): Component {
-        val representation = value.castSafelyTo<DistributionInfo>()?.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION // NON-NLS
+        val representation = value.asSafely<DistributionInfo>()?.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION // NON-NLS
         return super.getListCellRendererComponent(list, representation, index, isSelected, cellHasFocus)
       }
     }

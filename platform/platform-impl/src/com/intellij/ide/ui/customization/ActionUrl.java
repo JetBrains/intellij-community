@@ -39,6 +39,8 @@ public final class ActionUrl implements JDOMExternalizable {
   @NonNls private static final String PATH = "path";
   @NonNls private static final String ACTION_TYPE = "action_type";
   @NonNls private static final String POSITION = "position";
+  @NonNls private static final String FORCE_POPUP = "forse_popup";
+
 
   public ActionUrl() {
     myGroupPath = new ArrayList<>();
@@ -128,9 +130,11 @@ public final class ActionUrl implements JDOMExternalizable {
     }
     else if (element.getAttributeValue(IS_GROUP) != null) {
       final AnAction action = ActionManager.getInstance().getAction(attributeValue);
-      myComponent = action instanceof ActionGroup
+      Group group = action instanceof ActionGroup
                     ? ActionsTreeUtil.createGroup((ActionGroup)action, true, null)
                     : new Group(attributeValue, attributeValue, null);
+      group.setForceShowAsPopup(Boolean.parseBoolean(element.getAttributeValue(FORCE_POPUP)));
+      myComponent = group;
     }
     myActionType = Integer.parseInt(element.getAttributeValue(ACTION_TYPE));
     myAbsolutePosition = Integer.parseInt(element.getAttributeValue(POSITION));
@@ -151,12 +155,12 @@ public final class ActionUrl implements JDOMExternalizable {
     else if (myComponent instanceof Separator) {
       element.setAttribute(SEPARATOR, Boolean.TRUE.toString());
     }
-    else if (myComponent instanceof Group) {
-      final String groupId = ((Group)myComponent).getId() != null && ((Group)myComponent).getId().length() != 0
-                             ? ((Group)myComponent).getId()
-                             : ((Group)myComponent).getName();
+    else if (myComponent instanceof Group group) {
+      final String groupId = group.getId() != null && group.getId().length() != 0
+                             ? group.getId() : group.getName();
       element.setAttribute(VALUE, groupId != null ? groupId : "");
       element.setAttribute(IS_GROUP, Boolean.TRUE.toString());
+      element.setAttribute(FORCE_POPUP, Boolean.toString(group.isForceShowAsPopup()));
     }
     element.setAttribute(ACTION_TYPE, Integer.toString(myActionType));
     element.setAttribute(POSITION, Integer.toString(myAbsolutePosition));
@@ -224,9 +228,10 @@ public final class ActionUrl implements JDOMExternalizable {
     }
   }
 
-  public static ArrayList<String> getGroupPath(final TreePath treePath) {
+  public static ArrayList<String> getGroupPath(final TreePath treePath, boolean includeSelf) {
     final ArrayList<String> result = new ArrayList<>();
-    for (int i = 0; i < treePath.getPath().length - 1; i++) {
+    int length = treePath.getPath().length - (includeSelf ? 0 : 1);
+    for (int i = 0; i < length; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
         result.add(((Group)o).getName());

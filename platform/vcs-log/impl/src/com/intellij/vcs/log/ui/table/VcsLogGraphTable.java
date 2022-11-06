@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
@@ -29,6 +30,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle;
@@ -98,10 +100,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                                                                                 UIUtil.getListSelectionBackground(false));
 
   private static final Color SELECTION_FOREGROUND = JBColor.namedColor("VersionControl.Log.Commit.selectionForeground",
-                                                                       UIUtil.getListSelectionForeground(true));
+                                                                       NamedColorUtil.getListSelectionForeground(true));
 
   private static final Color SELECTION_FOREGROUND_INACTIVE = JBColor.namedColor("VersionControl.Log.Commit.selectionInactiveForeground",
-                                                                                UIUtil.getListSelectionForeground(false));
+                                                                                NamedColorUtil.getListSelectionForeground(false));
   @NotNull private final VcsLogData myLogData;
   @NotNull private final String myId;
   @NotNull private final VcsLogUiProperties myProperties;
@@ -622,14 +624,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     rendererComponent.setBackground(style.getBackground());
     rendererComponent.setForeground(style.getForeground());
 
-    switch (style.getTextStyle()) {
-      case BOLD:
-        return SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-      case ITALIC:
-        return SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES;
-      default:
-    }
-    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    return switch (style.getTextStyle()) {
+      case BOLD -> SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+      case ITALIC -> SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES;
+      default -> SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    };
   }
 
   @NotNull
@@ -655,8 +654,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
     if (details != null) {
       int columnModelIndex = convertColumnIndexToModel(column);
-      List<VcsCommitStyle> styles =
-        ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(commitId, details, columnModelIndex, selected));
+      List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {
+          try {
+            return highlighter.getStyle(commitId, details, columnModelIndex, selected);
+          } catch (ProcessCanceledException e) {
+            return VcsCommitStyle.DEFAULT;
+          } catch (Throwable t) {
+            LOG.error("Exception while getting style from highlighter " + highlighter, t);
+            return VcsCommitStyle.DEFAULT;
+          }
+        });
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 

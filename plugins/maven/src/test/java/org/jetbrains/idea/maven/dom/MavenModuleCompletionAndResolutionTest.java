@@ -314,18 +314,19 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     assertCreateModuleFixResult(
       "subDir/newModule/pom.xml",
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-      "    <modelVersion>4.0.0</modelVersion>\n" +
-      "\n" +
-      "    <groupId>test</groupId>\n" +
-      "    <artifactId>newModule</artifactId>\n" +
-      "    <version>1</version>\n" +
-      "\n" +
-      "    \n" +
-      "</project>");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <groupId>test</groupId>
+            <artifactId>newModule</artifactId>
+            <version>1</version>
+
+           \s
+        </project>""");
   }
 
   @Test 
@@ -352,18 +353,19 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     assertCreateModuleFixResult(
       "subDir/newModule.xml",
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-      "    <modelVersion>4.0.0</modelVersion>\n" +
-      "\n" +
-      "    <groupId>test</groupId>\n" +
-      "    <artifactId>subDir</artifactId>\n" +
-      "    <version>1</version>\n" +
-      "\n" +
-      "    \n" +
-      "</project>");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <groupId>test</groupId>
+            <artifactId>subDir</artifactId>
+            <version>1</version>
+
+           \s
+        </project>""");
   }
 
   @Test 
@@ -391,18 +393,19 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     assertCreateModuleFixResult(
       "subDir/newModule.xml/pom.xml",
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-      "    <modelVersion>4.0.0</modelVersion>\n" +
-      "\n" +
-      "    <groupId>test</groupId>\n" +
-      "    <artifactId>newModule.xml</artifactId>\n" +
-      "    <version>1</version>\n" +
-      "\n" +
-      "    \n" +
-      "</project>");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <groupId>test</groupId>
+            <artifactId>newModule.xml</artifactId>
+            <version>1</version>
+
+           \s
+        </project>""");
   }
 
   @Test 
@@ -433,18 +436,19 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-      "    <modelVersion>4.0.0</modelVersion>\n" +
-      "\n" +
-      "    <groupId>parentGroup</groupId>\n" +
-      "    <artifactId>newModule</artifactId>\n" +
-      "    <version>parentVersion</version>\n" +
-      "\n" +
-      "    \n" +
-      "</project>");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <groupId>parentGroup</groupId>
+            <artifactId>newModule</artifactId>
+            <version>parentVersion</version>
+
+           \s
+        </project>""");
   }
 
   @Test 
@@ -497,18 +501,19 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-      "    <modelVersion>4.0.0</modelVersion>\n" +
-      "\n" +
-      "    <groupId>groupId</groupId>\n" +
-      "    <artifactId>newModule</artifactId>\n" +
-      "    <version>version</version>\n" +
-      "\n" +
-      "    \n" +
-      "</project>");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <groupId>groupId</groupId>
+            <artifactId>newModule</artifactId>
+            <version>version</version>
+
+           \s
+        </project>""");
   }
 
   @Test 
@@ -534,24 +539,25 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-      "    <modelVersion>4.0.0</modelVersion>\n" +
-      "\n" +
-      "    <parent>\n" +
-      "        <groupId>test</groupId>\n" +
-      "        <artifactId>project</artifactId>\n" +
-      "        <version>1</version>\n" +
-      "    </parent>\n" +
-      "\n" +
-      "    <groupId>test</groupId>\n" +
-      "    <artifactId>newModule</artifactId>\n" +
-      "    <version>1</version>\n" +
-      "\n" +
-      "    \n" +
-      "</project>");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+            </parent>
+
+            <groupId>test</groupId>
+            <artifactId>newModule</artifactId>
+            <version>1</version>
+
+           \s
+        </project>""");
   }
 
   @Test 
@@ -577,25 +583,26 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     assertCreateModuleFixResult(
       "ppp/newModule/pom.xml",
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-      "    <modelVersion>4.0.0</modelVersion>\n" +
-      "\n" +
-      "    <parent>\n" +
-      "        <groupId>test</groupId>\n" +
-      "        <artifactId>project</artifactId>\n" +
-      "        <version>1</version>\n" +
-      "        <relativePath>../..</relativePath>\n" +
-      "    </parent>\n" +
-      "\n" +
-      "    <groupId>test</groupId>\n" +
-      "    <artifactId>newModule</artifactId>\n" +
-      "    <version>1</version>\n" +
-      "\n" +
-      "    \n" +
-      "</project>");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+                <relativePath>../..</relativePath>
+            </parent>
+
+            <groupId>test</groupId>
+            <artifactId>newModule</artifactId>
+            <version>1</version>
+
+           \s
+        </project>""");
   }
 
   @Test 
@@ -624,25 +631,26 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     assertCreateModuleFixResult(
       "ppp/newModule/pom.xml",
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-      "    <modelVersion>4.0.0</modelVersion>\n" +
-      "\n" +
-      "    <parent>\n" +
-      "        <groupId>test</groupId>\n" +
-      "        <artifactId>project</artifactId>\n" +
-      "        <version>1</version>\n" +
-      "        <relativePath>../../parent</relativePath>\n" +
-      "    </parent>\n" +
-      "\n" +
-      "    <groupId>test</groupId>\n" +
-      "    <artifactId>newModule</artifactId>\n" +
-      "    <version>1</version>\n" +
-      "\n" +
-      "    \n" +
-      "</project>");
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+                <relativePath>../../parent</relativePath>
+            </parent>
+
+            <groupId>test</groupId>
+            <artifactId>newModule</artifactId>
+            <version>1</version>
+
+           \s
+        </project>""");
   }
 
   @Test 

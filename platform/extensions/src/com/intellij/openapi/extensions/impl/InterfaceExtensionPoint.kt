@@ -31,9 +31,9 @@ internal class InterfaceExtensionPoint<T : Any>(
   }
 
   override fun unregisterExtensions(componentManager: ComponentManager,
-                                           pluginDescriptor: PluginDescriptor,
-                                           priorityListenerCallbacks: List<Runnable>,
-                                           listenerCallbacks: List<Runnable>) {
+                                    pluginDescriptor: PluginDescriptor,
+                                    priorityListenerCallbacks: MutableList<in Runnable>,
+                                    listenerCallbacks: MutableList<in Runnable>) {
     unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.pluginDescriptor !== pluginDescriptor }
   }
 }

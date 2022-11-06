@@ -226,7 +226,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection implem
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiCallExpression.class);
       if (call == null) return;
       PsiExpressionList arguments = call.getArgumentList();

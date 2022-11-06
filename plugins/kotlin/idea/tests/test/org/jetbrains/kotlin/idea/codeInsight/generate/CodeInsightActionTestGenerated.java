@@ -43,6 +43,11 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
         runTest("testData/codeInsight/generate/secondaryConstructors/javaSupersWithGenerics.kt");
     }
 
+    @TestMetadata("javaSupersWithKeywords.kt")
+    public void testJavaSupersWithKeywords() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/javaSupersWithKeywords.kt");
+    }
+
     @TestMetadata("primaryExists.kt")
     public void testPrimaryExists() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/primaryExists.kt");
@@ -51,6 +56,11 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
     @TestMetadata("properties.kt")
     public void testProperties() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/properties.kt");
+    }
+
+    @TestMetadata("propertiesWithKeywords.kt")
+    public void testPropertiesWithKeywords() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/propertiesWithKeywords.kt");
     }
 
     @TestMetadata("propertiesWithSupers.kt")

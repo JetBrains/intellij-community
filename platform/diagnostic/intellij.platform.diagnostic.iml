@@ -9,19 +9,15 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="bouncy-castle-provider" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="library" name="opentelemetry-exporter-jaeger" level="project" />
-    <orderEntry type="library" name="opentelemetry-exporter-otlp" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

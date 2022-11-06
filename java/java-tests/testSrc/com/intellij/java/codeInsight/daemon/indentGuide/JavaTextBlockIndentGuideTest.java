@@ -18,95 +18,109 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
 
   public void testOneLiner() {
     doTest(
-      "class Test {\n" +
-      "  void m() {\n" +
-      "  String textBlock = \"\"\"\n" +
-      "                     |block\n" +
-      "                     \"\"\";\n" +
-      "  }\n" +
-      "}\n");
+      """
+        class Test {
+          void m() {
+          String textBlock = ""\"
+                             |block
+                             ""\";
+          }
+        }
+        """);
   }
 
   public void testWithoutIndent() {
     doTest(
-      "class Test {\n" +
-      "  void m() {\n" +
-      "  String textBlock = \"\"\"\n" +
-      "                     zero\n" +
-      "                     indent\n" +
-      "\"\"\";\n" +
-      "  }\n" +
-      "}\n");
+      """
+        class Test {
+          void m() {
+          String textBlock = ""\"
+                             zero
+                             indent
+        ""\";
+          }
+        }
+        """);
   }
 
   public void testEmpty() {
     doTest(
-      "class Test {\n" +
-      "  void m() {\n" +
-      "  String textBlock = \"\"\"\n" +
-      "                     \"\"\";\n" +
-      "  }\n" +
-      "}\n");
+      """
+        class Test {
+          void m() {
+          String textBlock = ""\"
+                             ""\";
+          }
+        }
+        """);
   }
 
   public void testTextOnLastLine() {
     doTest(
-      "class Test {\n" +
-      "  void m() {\n" +
-      "  String textBlock = \"\"\"\n" +
-      "                     |text\n" +
-      "                     | also text\"\"\";\n" +
-      "  }\n" +
-      "}\n");
+      """
+        class Test {
+          void m() {
+          String textBlock = ""\"
+                             |text
+                             | also text""\";
+          }
+        }
+        """);
   }
 
   public void testWithWhitespacesOnly() {
     doTest(
-      "class Test {\n" +
-      "  void m() {\n" +
-      "  String textBlock = \"\"\"\n" +
-      "                     |    \n" +
-      "                     |    \n" +
-      "                     |    \n" +
-      "                     \"\"\";\n" +
-      "  }\n" +
-      "}\n");
+      """
+        class Test {
+          void m() {
+          String textBlock = ""\"
+                             |   \s
+                             |   \s
+                             |   \s
+                             ""\";
+          }
+        }
+        """);
   }
 
   public void testMultipleTextBlocks() {
     doTest(
-      "class Test {\n" +
-      "  void m() {\n" +
-      "  String textBlock = \"\"\"\n" +
-      "                     |block\n" +
-      "                     \"\"\";\n" +
-      "  String oneMore = \"\"\"\n" +
-      "                 |also block\n" +
-      "                   \"\"\";\n" +
-      "  }\n" +
-      "}\n");
+      """
+        class Test {
+          void m() {
+          String textBlock = ""\"
+                             |block
+                             ""\";
+          String oneMore = ""\"
+                         |also block
+                           ""\";
+          }
+        }
+        """);
   }
 
   public void testTabsOnlyIndent() {
-    doTest("public class TextBlock {\n" +
-           "\n" +
-           "  String text = \"\"\"\n" +
-           "		|1\n" +
-           "		|2\n" +
-           "		|3\n" +
-           "		\"\"\";\n" +
-           "}");
+    doTest("""
+             public class TextBlock {
+
+               String text = ""\"
+             		|1
+             		|2
+             		|3
+             		""\";
+             }""");
   }
 
   public void testMixedIndent() {
-    doTest("public class TextBlock {\n" +
-           "\n" +
-           "  String text = \"\"\"\n" +
-           "	1\n" +
-           " 2\n" +
-           "	3\n" +
-           "	\"\"\";\n" +
-           "}");
+    doTest("""
+             public class TextBlock {
+
+               String text = ""\"
+             	1
+              2
+             	3
+             	""\";
+             }""");
   }
 
   private void doTest(@NotNull String text) {

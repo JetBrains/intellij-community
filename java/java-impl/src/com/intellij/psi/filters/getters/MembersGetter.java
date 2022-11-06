@@ -42,7 +42,6 @@ import java.util.*;
 
 /**
  * @author ik
- * @author peter
  */
 public abstract class MembersGetter {
   private static final Map<String, List<String>> COMMON_INHERITORS =

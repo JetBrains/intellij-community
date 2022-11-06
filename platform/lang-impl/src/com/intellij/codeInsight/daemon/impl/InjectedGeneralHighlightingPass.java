@@ -17,15 +17,11 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
@@ -36,10 +32,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLanguageFragmentKey;
 
 public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
+  private final Predicate<PsiFile> myInjectedFilesFilter;
+
   InjectedGeneralHighlightingPass(@NotNull PsiFile file,
                                   @NotNull Document document,
                                   int startOffset,
@@ -47,8 +46,10 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
                                   boolean updateAll,
                                   @NotNull ProperTextRange priorityRange,
                                   @Nullable Editor editor,
-                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+                                  @NotNull HighlightInfoProcessor highlightInfoProcessor,
+                                  @NotNull Predicate<PsiFile> injectedFilesFilter) {
     super(file, document, startOffset, endOffset, updateAll, priorityRange, editor, highlightInfoProcessor);
+    myInjectedFilesFilter = injectedFilesFilter;
   }
 
   @Override
@@ -69,7 +70,6 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
     // all infos for the "injected fragment for the host which is inside" are indeed inside
     // but some infos for the "injected fragment for the host which is outside" can be still inside
     Set<PsiFile> injected = getInjectedPsiFiles(allInsideElements, allOutsideElements, progress);
-
     Set<HighlightInfo> injectedResult = new HashSet<>();
     if (!addInjectedPsiHighlights(injected, progress, Collections.synchronizedSet(injectedResult))) {
       throw new ProcessCanceledException();
@@ -142,7 +142,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
       if (context != null
           && context.isValid()
           && !file.getProject().isDisposed()
-          && (myUpdateAll || myRestrictRange.intersects(context.getTextRange()))) {
+          && (myUpdateAll || myRestrictRange.contains(context.getTextRange()))) { // consider strict if partial update
         hosts.add(context);
       }
     }
@@ -164,6 +164,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
 
     Set<PsiFile> outInjected = new HashSet<>();
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
+      if (!myInjectedFilesFilter.test(injectedPsi)) return;
       synchronized (outInjected) {
         ProgressManager.checkCanceled();
         outInjected.add(injectedPsi);
@@ -242,6 +243,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
       TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
       addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, fixedTextRange, outInfos);
     }
+
     int injectedStart = holder.size();
     highlightInjectedSyntax(injectedPsi, holder);
     for (int i = injectedStart; i < holder.size(); i++) {
@@ -271,6 +273,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
         addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, null, outInfos);
       }
     }
+
     return true;
   }
 
@@ -322,19 +325,19 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
                           info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
                           false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup());
       patched.setHint(info.hasHint());
-
-      if (info.quickFixActionRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          TextRange quickfixTextRange = pair.getSecond();
-          List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);
-          for (TextRange editableRange : editableQF) {
-            HighlightInfo.IntentionActionDescriptor descriptor = pair.getFirst();
-            if (patched.quickFixActionRanges == null) patched.quickFixActionRanges = new ArrayList<>();
-            TextRange hostEditableRange = documentWindow.injectedToHost(editableRange);
-            patched.quickFixActionRanges.add(Pair.create(descriptor, hostEditableRange));
-          }
-        }
+      PsiReference unresolvedReference = info.unresolvedReference;
+      if (unresolvedReference != null) {
+        patched.setUnresolvedReference(unresolvedReference);
       }
+
+      info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
+        List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);
+        for (TextRange editableRange : editableQF) {
+          TextRange hostEditableRange = documentWindow.injectedToHost(editableRange);
+          patched.registerFix(descriptor.getAction(), descriptor.myOptions, descriptor.getDisplayName(), hostEditableRange, descriptor.myKey);
+        }
+        return null;
+      });
       patched.markFromInjection();
       out.add(patched);
     }

@@ -47,7 +47,7 @@ public class MavenImportingSettings implements Cloneable {
   public static final String DEFAULT_DEPENDENCY_TYPES =
     "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
 
-  private boolean useWorkspaceImport = false;
+  private boolean useWorkspaceImport = true;
   @Deprecated
   private boolean importToTreeStructure = false;
 
@@ -96,12 +96,16 @@ public class MavenImportingSettings implements Cloneable {
     }
   }
 
+  @Deprecated
+  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a default option
   @NotNull
   @NlsSafe
   public String getDedicatedModuleDir() {
     return dedicatedModuleDir;
   }
 
+  @Deprecated
+  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a default option
   public void setDedicatedModuleDir(@NotNull String dedicatedModuleDir) {
     this.dedicatedModuleDir = dedicatedModuleDir;
   }
@@ -168,7 +172,9 @@ public class MavenImportingSettings implements Cloneable {
     useWorkspaceImport = enabled;
 
     // make sure workspace import is not re-enabled on restart, because of the enabled tree import
-    importToTreeStructure = enabled;
+    if (!useWorkspaceImport) {
+      importToTreeStructure = false;
+    }
 
     if (changedValue) {
       fireUpdateAllProjectStructure();
@@ -186,7 +192,9 @@ public class MavenImportingSettings implements Cloneable {
   public void setImportToTreeStructure(boolean importToTreeStructure) {
     this.importToTreeStructure = importToTreeStructure;
     // make sure users who enabled tree structure import have workspace import enabled, which supports the tree import.
-    setWorkspaceImportEnabled(importToTreeStructure);
+    if (importToTreeStructure) {
+      setWorkspaceImportEnabled(true);
+    }
   }
 
   public boolean isCreateModuleGroups() {

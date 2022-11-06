@@ -46,9 +46,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
 final class DomCreator {
 
   @Nullable

@@ -9,6 +9,9 @@ import java.util.*;
 /**
  * The same as {@link LinkedHashMap} but adapted to store long keys.
  * Null values are not supported.
+ *
+ * NOTE: not the same as {@link java.util.LinkedHashMap} -- this implementation supports .accessOrder,
+ * which re-orders entries on .get() 
  */
 public class LongLinkedHashMap<V> {
   private static final long NULL_KEY = 0L;

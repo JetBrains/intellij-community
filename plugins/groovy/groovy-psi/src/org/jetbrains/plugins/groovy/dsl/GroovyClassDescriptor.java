@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 import java.util.Set;
 
-/**
-* @author peter
-*/
 public class GroovyClassDescriptor {
   static {
     try {

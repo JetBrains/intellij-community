@@ -300,6 +300,7 @@ final class SearchForUsagesRunnable implements Runnable {
     UsageViewEx usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
     if (myUsageViewRef.compareAndSet(null, usageView)) {
       // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
+      UsageViewStatisticsCollector.logSearchStarted(myProject, usageView, CodeNavigateSource.FindToolWindow);
       usageView.associateProgress(indicator);
       if (myProcessPresentation.isShowFindOptionsPrompt()) {
         openView(usageView);
@@ -391,15 +392,16 @@ final class SearchForUsagesRunnable implements Runnable {
           String scopeText = myPresentation.getScopeText();
           Language language = element == null ? null : element.getLanguage();
 
-          Consumer<UsageLimitUtil.Result> onUserClicked = result -> UsageViewStatisticsCollector.logTooManyDialog(myProject,
-                            result == UsageLimitUtil.Result.ABORT
-                            ? TooManyUsagesUserAction.Aborted
-                            : TooManyUsagesUserAction.Continued,
-                           elementClass, scopeText, language);
+          Consumer<UsageLimitUtil.Result> onUserClicked =
+            result -> UsageViewStatisticsCollector.logTooManyDialog(myProject, myUsageViewRef.get(),
+                                                                    result == UsageLimitUtil.Result.ABORT
+                                                                    ? TooManyUsagesUserAction.Aborted
+                                                                    : TooManyUsagesUserAction.Continued,
+                                                                    elementClass, scopeText, language);
           UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, originalIndicator, usageView,
             () -> UsageViewBundle.message("find.excessive.usage.count.prompt"), onUserClicked);
 
-          UsageViewStatisticsCollector.logTooManyDialog(myProject, TooManyUsagesUserAction.Shown,
+          UsageViewStatisticsCollector.logTooManyDialog(myProject, myUsageViewRef.get(), TooManyUsagesUserAction.Shown,
                                                         elementClass, scopeText, language);
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
@@ -415,7 +417,7 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   private void endSearchForUsages() {
-    assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount == 0) {
       if (myProcessPresentation.isShowNotFoundMessage()) {

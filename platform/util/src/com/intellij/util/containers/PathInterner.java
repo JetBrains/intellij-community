@@ -18,9 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class PathInterner {
   private final HashSetInterner<CharSegment> myInternMap = new HashSetInterner<>();
 

@@ -7,6 +7,7 @@ import com.intellij.ide.customize.transferSettings.db.WindowsEnvVariables
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.providers.vscode.parsers.*
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import java.io.File
 
 class VSCodeSettingsProcessor {
@@ -29,7 +30,7 @@ class VSCodeSettingsProcessor {
     fun getDefaultSettings() = Settings(
       laf = KnownLafs.Darcula,
       syntaxScheme = KnownColorSchemes.Darcula,
-      keymap = KnownKeymaps.VSCode
+      keymap = if (SystemInfoRt.isMac) KnownKeymaps.VSCodeMac else KnownKeymaps.VSCode
     )
   }
 

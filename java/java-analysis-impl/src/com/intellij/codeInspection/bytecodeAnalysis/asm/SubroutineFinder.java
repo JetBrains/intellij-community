@@ -62,18 +62,9 @@ abstract class SubroutineFinder implements Opcodes {
 
       // if insn does not falls through to the next instruction, return.
       switch (node.getOpcode()) {
-        case GOTO:
-        case RET:
-        case TABLESWITCH:
-        case LOOKUPSWITCH:
-        case IRETURN:
-        case LRETURN:
-        case FRETURN:
-        case DRETURN:
-        case ARETURN:
-        case RETURN:
-        case ATHROW:
+        case GOTO, RET, TABLESWITCH, LOOKUPSWITCH, IRETURN, LRETURN, FRETURN, DRETURN, ARETURN, RETURN, ATHROW -> {
           return;
+        }
       }
       insn++;
     }

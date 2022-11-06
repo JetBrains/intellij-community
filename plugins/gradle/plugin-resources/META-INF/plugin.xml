@@ -44,6 +44,8 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName= "org.jetbrains.plugins.gradle.taskResultListener" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskResultListener"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.operationHelperExtension" interface="org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">

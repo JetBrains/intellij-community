@@ -246,69 +246,51 @@ final class GitPushResultNotification extends Notification {
     @NotNull List<String> pushedTags = result.getPushedTags();
     @NotNull String remoteName = result.getTargetRemote();
 
-    @NlsContexts.NotificationContent String description;
-    switch (result.getType()) {
-      case SUCCESS:
+    return switch (result.getType()) {
+      case SUCCESS -> {
         int commitNum = result.getNumberOfPushedCommits();
-        description = selectBundleMessageWithTags(
+        yield selectBundleMessageWithTags(
           pushedTags,
           () -> GitBundle.message("push.notification.description.pushed", commitNum, targetBranch),
-          () -> GitBundle.message("push.notification.description.pushed.with.single.tag", commitNum, targetBranch, tagName(pushedTags), remoteName),
-          () -> GitBundle.message("push.notification.description.pushed.with.many.tags", commitNum, targetBranch, pushedTags.size(), remoteName)
+          () -> GitBundle.message("push.notification.description.pushed.with.single.tag", commitNum, targetBranch, tagName(pushedTags),
+                                  remoteName),
+          () -> GitBundle.message("push.notification.description.pushed.with.many.tags", commitNum, targetBranch, pushedTags.size(),
+                                  remoteName)
         );
-        break;
-      case NEW_BRANCH:
-        description = selectBundleMessageWithTags(
-          pushedTags,
-          () -> GitBundle.message("push.notification.description.new.branch", sourceBranch, targetBranch),
-          () -> GitBundle.message("push.notification.description.new.branch.with.single.tag", sourceBranch, targetBranch, tagName(pushedTags), remoteName),
-          () -> GitBundle.message("push.notification.description.new.branch.with.many.tags", sourceBranch, targetBranch, pushedTags.size(), remoteName)
-        );
-        break;
-      case UP_TO_DATE:
-        description = selectBundleMessageWithTags(
-          pushedTags,
-          () -> GitBundle.message("push.notification.description.up.to.date"),
-          () -> GitBundle.message("push.notification.description.pushed.single.tag", tagName(pushedTags), remoteName),
-          () -> GitBundle.message("push.notification.description.pushed.many.tags", pushedTags.size(), remoteName)
-        );
-        break;
-      case FORCED:
-        description = GitBundle.message("push.notification.description.force.pushed", sourceBranch, targetBranch);
-        break;
-      case REJECTED_NO_FF:
+      }
+      case NEW_BRANCH -> selectBundleMessageWithTags(
+        pushedTags,
+        () -> GitBundle.message("push.notification.description.new.branch", sourceBranch, targetBranch),
+        () -> GitBundle.message("push.notification.description.new.branch.with.single.tag", sourceBranch, targetBranch, tagName(pushedTags),
+                                remoteName),
+        () -> GitBundle.message("push.notification.description.new.branch.with.many.tags", sourceBranch, targetBranch, pushedTags.size(),
+                                remoteName)
+      );
+      case UP_TO_DATE -> selectBundleMessageWithTags(
+        pushedTags,
+        () -> GitBundle.message("push.notification.description.up.to.date"),
+        () -> GitBundle.message("push.notification.description.pushed.single.tag", tagName(pushedTags), remoteName),
+        () -> GitBundle.message("push.notification.description.pushed.many.tags", pushedTags.size(), remoteName)
+      );
+      case FORCED -> GitBundle.message("push.notification.description.force.pushed", sourceBranch, targetBranch);
+      case REJECTED_NO_FF -> {
         GitUpdateResult updateResult = result.getUpdateResult();
-        if (updateResult == null || updateResult == GitUpdateResult.SUCCESS || updateResult == GitUpdateResult.NOTHING_TO_UPDATE) {
-          description = GitBundle.message("push.notification.description.rejected", targetBranch);
-        }
-        else if (updateResult == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
-          description = GitBundle.message("push.notification.description.rejected.and.conflicts");
-        }
-        else if (updateResult == GitUpdateResult.INCOMPLETE) {
-          description = GitBundle.message("push.notification.description.rejected.and.incomplete");
-        }
-        else if (updateResult == GitUpdateResult.CANCEL) {
-          description = GitBundle.message("push.notification.description.rejected.and.cancelled");
-        }
-        else {
-          description = GitBundle.message("push.notification.description.rejected.and.failed");
-        }
-        break;
-      case REJECTED_STALE_INFO:
-        description = GitBundle.message("push.notification.description.push.with.lease.rejected", sourceBranch, targetBranch);
-        break;
-      case REJECTED_OTHER:
-        description = GitBundle.message("push.notification.description.rejected.by.remote", sourceBranch, targetBranch);
-        break;
-      case ERROR:
-        description = XmlStringUtil.escapeString(result.getError());
-        break;
-      default:
+        yield updateResult == null ? GitBundle.message("push.notification.description.rejected", targetBranch) : switch (updateResult) {
+          case SUCCESS, NOTHING_TO_UPDATE -> GitBundle.message("push.notification.description.rejected", targetBranch);
+          case SUCCESS_WITH_RESOLVED_CONFLICTS -> GitBundle.message("push.notification.description.rejected.and.conflicts");
+          case INCOMPLETE -> GitBundle.message("push.notification.description.rejected.and.incomplete");
+          case CANCEL -> GitBundle.message("push.notification.description.rejected.and.cancelled");
+          default -> GitBundle.message("push.notification.description.rejected.and.failed");
+        };
+      }
+      case REJECTED_STALE_INFO -> GitBundle.message("push.notification.description.push.with.lease.rejected", sourceBranch, targetBranch);
+      case REJECTED_OTHER -> GitBundle.message("push.notification.description.rejected.by.remote", sourceBranch, targetBranch);
+      case ERROR -> XmlStringUtil.escapeString(result.getError());
+      default -> {
         LOG.error("Unexpected push result: " + result);
-        description = "";
-        break;
-    }
-    return description;
+        yield "";
+      }
+    };
   }
 
   private static final class ForcePushNotificationAction extends NotificationAction {

@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections
 
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinConstantConditionsInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 
 @TestRoot("idea/tests")
@@ -28,6 +28,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testExclamation() = doTest()
     fun testForLoop() = doTest()
     fun testInRange() = doTest()
+    fun testInIterable() = doTest()
     fun testIncompleteCode1() = doTest()
     fun testInlineLambda() = doTest()
     fun testInlineStandardCalls() = doTest()
@@ -37,6 +38,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testLambda() = doTest()
     fun testLanguageConstructs() = doTest()
     fun testList() = doTest()
+    fun testMapEmpty() = doTest()
     fun testMath() = doTest()
     fun testMembers() = doTest()
     fun testNothingType() = doTest()

@@ -74,7 +74,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement leftBrace = descriptor.getPsiElement();
       final PsiElement parent = leftBrace.getParent();
       if (!(parent instanceof PsiCodeBlock)) {

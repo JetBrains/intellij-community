@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
-import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
@@ -37,23 +37,17 @@ interface CompilationContext {
   /**
    * @return directory with compiled project classes, 'url' attribute value of 'output' tag from .idea/misc.xml by default
    */
-  val projectOutputDirectory: Path
+  val classesOutputDirectory: Path
 
   fun findRequiredModule(name: String): JpsModule
 
   fun findModule(name: String): JpsModule?
 
-  /**
-   * If module {@code newName} was renamed returns its old name and {@code null} otherwise. This method can be used to temporary keep names
-   * of directories and JARs in the product distributions after renaming modules.
-   */
-  fun getOldModuleName(newName: String): String?
-
   fun getModuleOutputDir(module: JpsModule): Path
 
   fun getModuleTestsOutputPath(module: JpsModule): String
 
-  fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String>
+  fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
 
   // "Was" added due to Groovy bug (compilation error - cannot find method with same name but different parameter type)
   fun notifyArtifactWasBuilt(artifactPath: Path)

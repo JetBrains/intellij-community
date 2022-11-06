@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 
 public interface MorePopupAware {
   DataKey<MorePopupAware> KEY = DataKey.create("MorePopupAware");
+  DataKey<MorePopupAware> KEY_TOOLWINDOW_TITLE = DataKey.create("MorePopupAwareToolWindowTitle");
 
   boolean canShowMorePopup();
   void showMorePopup();

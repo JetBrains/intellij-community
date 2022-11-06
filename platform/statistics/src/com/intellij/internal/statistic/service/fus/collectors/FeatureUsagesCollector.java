@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -34,13 +35,23 @@ public abstract class FeatureUsagesCollector {
     return Pattern.compile(GROUP_ID_PATTERN).matcher(getGroupId()).matches();
   }
 
-  protected static <T extends FeatureUsagesCollector> Set<T> getExtensions(@NotNull UsagesCollectorConsumer invoker, ExtensionPointName<T> ep) {
+  protected static <T extends FeatureUsagesCollector> Set<T> getExtensions(@NotNull UsagesCollectorConsumer invoker,
+                                                                           ExtensionPointName<T> ep,
+                                                                           boolean allowedOnStartupOnly) {
     if (invoker.getClass().getClassLoader() instanceof PluginAwareClassLoader) {
       return Collections.emptySet();
     }
 
     Set<T> set = new HashSet<>();
-    for (T t : ep.getExtensionList()) {
+
+    List<T> extensionList;
+    if (allowedOnStartupOnly) {
+      extensionList = ep.findExtensions(AllowedDuringStartupCollector.class);
+    } else {
+      extensionList = ep.getExtensionList();
+    }
+
+    for (T t : extensionList) {
       if (t.isValid()) {
         set.add(t);
       }
@@ -51,6 +62,10 @@ public abstract class FeatureUsagesCollector {
       }
     }
     return set;
+  }
+
+  protected static <T extends FeatureUsagesCollector> Set<T> getExtensions(@NotNull UsagesCollectorConsumer invoker, ExtensionPointName<T> ep) {
+    return getExtensions(invoker, ep, false);
   }
 
   /**

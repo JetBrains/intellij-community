@@ -24,10 +24,7 @@ import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.importing.MavenProjectImporter;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl;
-import org.jetbrains.idea.maven.importing.ModifiableModelsProviderProxyWrapper;
+import org.jetbrains.idea.maven.importing.*;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -214,10 +211,10 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     });
 
     updateTargetFolders();
-    assertEquals(0, count[0]);
+    assertEquals(isWorkspaceImport() ? 0 : 1, count[0]);
   }
 
-  @Test 
+  @Test
   public void testCommitOnlyOnceForAllModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -229,33 +226,37 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
                      "  <module>m2</module>" +
                      "</modules>");
 
-    VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
 
-    VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+    createModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>");
 
     importProject();
 
-    final int[] count = new int[]{0};
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        count[0]++;
-      }
-    });
+    MavenEventsTestHelper eventsTestHelper = new MavenEventsTestHelper();
+    eventsTestHelper.setUp(myProject);
+    try {
+      updateTargetFolders();
+      eventsTestHelper.assertRootsChanged(isWorkspaceImport() ? 0 : 1);
+      eventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 0 : 1);
 
-    new File(myProjectRoot.getPath(), "target/generated-sources/foo/z").mkdirs();
-    new File(m1.getPath(), "target/generated-sources/bar/z").mkdirs();
-    new File(m2.getPath(), "target/generated-sources/baz/z").mkdirs();
+      // let's add some generated folders, what should be picked up on updateTargetFolders
+      new File(myProjectRoot.getPath(), "target/generated-sources/foo/z").mkdirs();
+      new File(myProjectRoot.getPath(), "m1/target/generated-sources/bar/z").mkdirs();
+      new File(myProjectRoot.getPath(), "m2/target/generated-sources/baz/z").mkdirs();
+      updateTargetFolders();
 
-    updateTargetFolders();
-
-    assertEquals(1, count[0]);
+      eventsTestHelper.assertRootsChanged(1);
+      eventsTestHelper.assertWorkspaceModelChanges(1);
+    }
+    finally {
+      eventsTestHelper.tearDown();
+    }
   }
 
   @Test 

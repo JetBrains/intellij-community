@@ -16,15 +16,15 @@ import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
  */
 public class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContributor {
 
-  private static final String CLASS_SOURCE = "class PomElements {\n" +
-                                             "  org.apache.maven.project.MavenProject project;\n" +
-                                             "  org.apache.maven.project.MavenProject pom;\n" +
-                                             "  org.apache.maven.execution.MavenSession session;\n" +
-                                             "  org.apache.maven.settings.Settings settings;\n" +
-                                             "  org.slf4j.Logger log;\n" +
-                                             "  groovy.util.AntBuilder ant;\n" +
-                                             "  public void fail() {}" +
-                                             "}";
+  private static final String CLASS_SOURCE = """
+    class PomElements {
+      org.apache.maven.project.MavenProject project;
+      org.apache.maven.project.MavenProject pom;
+      org.apache.maven.execution.MavenSession session;
+      org.apache.maven.settings.Settings settings;
+      org.slf4j.Logger log;
+      groovy.util.AntBuilder ant;
+      public void fail() {}}""";
 
   @Nullable
   @Override

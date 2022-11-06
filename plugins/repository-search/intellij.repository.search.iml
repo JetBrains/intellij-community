@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlinx.serialization.InternalSerializationApi -opt-in=kotlinx.serialization.ExperimentalSerializationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="apiVersion" arg="1.7" />
+            <stringArg name="languageVersion" arg="1.7" />
+          </stringArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -15,15 +31,21 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.maven.model" exported="" />
+    <orderEntry type="module" module-name="intellij.maven.model" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="library" name="jackson-jr-objects" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="package-search-api-models" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" exported="" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" name="ktor-serialization-kotlinx-json" level="project" />
+    <orderEntry type="library" name="ktor-client-content-negotiation" level="project" />
+    <orderEntry type="library" name="ktor-client-logging" level="project" />
+    <orderEntry type="library" name="ktor-client-cio" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
+    <orderEntry type="library" scope="TEST" name="ktor-client-mock" level="project" />
+    <orderEntry type="library" scope="TEST" name="jetbrains.kotlinx.coroutines.test" level="project" />
   </component>
 </module>

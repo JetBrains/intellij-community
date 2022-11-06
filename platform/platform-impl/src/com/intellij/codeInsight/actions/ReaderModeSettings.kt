@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.Experiments
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -12,19 +15,21 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import kotlinx.coroutines.*
 
 @Service(Service.Level.PROJECT)
 @State(name = "ReaderModeSettings", storages = [
   Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
   Storage(StoragePathMacros.WORKSPACE_FILE, deprecated = true)
 ])
-class ReaderModeSettings : PersistentStateComponentWithModificationTracker<ReaderModeSettings.State> {
+class ReaderModeSettings : PersistentStateComponentWithModificationTracker<ReaderModeSettings.State>, Disposable {
   companion object {
     private val EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")
     private val EP_READER_MODE_MATCHER = ExtensionPointName<ReaderModeMatcher>("com.intellij.readerModeMatcher")
@@ -32,19 +37,63 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
     fun getInstance(project: Project): ReaderModeSettings = project.getService(ReaderModeSettings::class.java)
 
     fun applyReaderMode(project: Project,
-                                 editor: Editor?,
-                                 file: VirtualFile?,
-                                 fileIsOpenAlready: Boolean = false,
-                                 forceUpdate: Boolean = false) {
+                        editor: Editor?,
+                        file: VirtualFile?,
+                        fileIsOpenAlready: Boolean = false,
+                        forceUpdate: Boolean = false) {
       if (editor == null || file == null || PsiManager.getInstance(project).findFile(file) == null) {
         return
       }
 
-      val matchMode = matchMode(project, file, editor)
-      if (matchMode || forceUpdate) {
-        for (provider in EP_READER_MODE_PROVIDER.extensionList) {
-          provider.applyModeChanged(project, editor, getInstance(project).enabled && matchMode, fileIsOpenAlready)
+      if (isBlockingApplication()) {
+        val matchMode = matchMode(project, file, editor)
+        if (matchMode || forceUpdate) {
+          applyModeChanged(project, editor, matchMode, fileIsOpenAlready)
         }
+      }
+      else {
+        // caching is required for instant reopen of file with the previously computed mode without irritating file UI changes
+        val matchCachedValue = file.getMatchModeCached()
+
+        if (!forceUpdate && matchCachedValue != null) {
+          if (matchCachedValue) {
+            applyModeChanged(project, editor, true, fileIsOpenAlready)
+          }
+        }
+        else {
+          getInstance(project).coroutineScope.launch {
+            val matchMode = readAction {
+              val value = matchMode(project, file, editor)
+              file.setMatchModeCached(value)
+              value
+            }
+
+            if (matchMode || forceUpdate) {
+              withContext(Dispatchers.EDT) {
+                applyModeChanged(project, editor, matchMode, fileIsOpenAlready)
+              }
+            }
+          }
+        }
+      }
+    }
+
+    private val MATCHES_READER_MODE_KEY: Key<Boolean> = Key.create("readerMode.matches")
+
+    private fun VirtualFile.getMatchModeCached(): Boolean? {
+      return this.getUserData(MATCHES_READER_MODE_KEY)
+    }
+
+    private fun VirtualFile.setMatchModeCached(value: Boolean) {
+      this.putUserData(MATCHES_READER_MODE_KEY, value)
+    }
+
+    private fun applyModeChanged(project: Project, editor: Editor, matchMode: Boolean, fileIsOpenAlready: Boolean) {
+      if (editor.isDisposed) return
+
+      val modeEnabledForFile = getInstance(project).enabled && matchMode
+      for (provider in EP_READER_MODE_PROVIDER.extensionList) {
+        provider.applyModeChanged(project, editor, modeEnabledForFile, fileIsOpenAlready)
       }
     }
 
@@ -56,30 +105,47 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
     fun matchMode(project: Project?, file: VirtualFile?, editor: Editor? = null): Boolean {
       if (project == null || file == null) return false
+      if (editor != null && editor.isDisposed) return false
+
       return matchMode(project, file, editor, getInstance(project).mode)
     }
 
     private fun matchMode(project: Project, file: VirtualFile, editor: Editor?, mode: ReaderMode): Boolean {
-      for (m in EP_READER_MODE_MATCHER.iterable) {
+      for (m in EP_READER_MODE_MATCHER.lazySequence()) {
         val matched = m.matches(project, file, editor, mode)
-        if (matched != null) return matched
+        if (matched != null) {
+          return matched
+        }
       }
 
       if (ApplicationManager.getApplication().isHeadlessEnvironment) return false
 
-      val inLibraries = FileIndexFacade.getInstance(project).isInLibraryClasses(file)
-                        || FileIndexFacade.getInstance(project).isInLibrarySource(file)
+      val inFileInLibraries by lazy {
+        FileIndexFacade.getInstance(project).isInLibraryClasses(file)
+        || FileIndexFacade.getInstance(project).isInLibrarySource(file)
+      }
       val isWritable = file.isWritable
 
       return when (mode) {
-        ReaderMode.LIBRARIES_AND_READ_ONLY -> inLibraries || !isWritable
-        ReaderMode.LIBRARIES -> inLibraries
+        ReaderMode.LIBRARIES_AND_READ_ONLY -> !isWritable || inFileInLibraries
+        ReaderMode.LIBRARIES -> inFileInLibraries
         ReaderMode.READ_ONLY -> !isWritable
       }
+    }
+
+    private fun isBlockingApplication(): Boolean {
+      val application = ApplicationManager.getApplication()
+      return application.isHeadlessEnvironment || application.isUnitTestMode
     }
   }
 
   private var myState = State()
+
+  private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob())
+
+  override fun dispose() {
+    coroutineScope.cancel()
+  }
 
   class State : BaseState() {
     class SchemeState : BaseState() {

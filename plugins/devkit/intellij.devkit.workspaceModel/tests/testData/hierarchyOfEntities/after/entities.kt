@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
@@ -16,7 +15,7 @@ interface GrandParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : GrandParentEntity> : GrandParentEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+  interface Builder<T : GrandParentEntity> : GrandParentEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var data1: String
   }
@@ -41,7 +40,7 @@ interface ParentEntity : GrandParentEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String
@@ -68,7 +67,7 @@ interface ChildEntity: ParentEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, ModifiableWorkspaceEntity<ChildEntity>, ObjBuilder<ChildEntity> {
+  interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, WorkspaceEntity.Builder<ChildEntity>, ObjBuilder<ChildEntity> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String

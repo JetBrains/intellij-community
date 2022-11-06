@@ -2,19 +2,19 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.runUndoTransparentActionInEdt
+import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class InferenceFacade(
-  private val typeVariablesCollector: ContextCollector,
-  private val constraintsCollectorAggregator: ConstraintsCollectorAggregator,
-  private val boundTypeCalculator: BoundTypeCalculator,
-  private val stateUpdater: StateUpdater,
-  private val defaultStateProvider: DefaultStateProvider,
-  private val renderDebugTypes: Boolean = false,
-  private val printDebugConstraints: Boolean = false
+    private val typeVariablesCollector: ContextCollector,
+    private val constraintsCollectorAggregator: ConstraintsCollectorAggregator,
+    private val boundTypeCalculator: BoundTypeCalculator,
+    private val stateUpdater: StateUpdater,
+    private val defaultStateProvider: DefaultStateProvider,
+    private val renderDebugTypes: Boolean = false,
+    private val printDebugConstraints: Boolean = false
 ) {
     fun runOn(elements: List<KtElement>) {
         val inferenceContext = runReadAction { typeVariablesCollector.collectTypeVariables(elements) }

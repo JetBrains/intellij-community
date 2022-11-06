@@ -42,7 +42,10 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
     }
 
     final override fun getText(): @IntentionName String = textGetter()
-    final override fun getFamilyName(): @IntentionFamilyName String = familyNameGetter()
+
+    // Not final because `KotlinApplicableIntentionBase` redefines `getFamilyName` as an abstract function and disregards
+    // `familyNameGetter`.
+    override fun getFamilyName(): @IntentionFamilyName String = familyNameGetter()
 
     protected fun setFamilyNameGetter(@Nls familyNameGetter: () -> String) {
         this.familyNameGetter = familyNameGetter

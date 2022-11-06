@@ -65,33 +65,34 @@ public class JvmPsiRangeSetUtil {
       return LongRangeSet.all();
     }
     switch (qualifiedName) {
-      case JETBRAINS_RANGE:
-      case CHECKER_RANGE:
+      case JETBRAINS_RANGE, CHECKER_RANGE -> {
         Long from = AnnotationUtil.getLongAttributeValue(annotation, "from");
         Long to = AnnotationUtil.getLongAttributeValue(annotation, "to");
-        if(from != null && to != null && to >= from) {
+        if (from != null && to != null && to >= from) {
           return LongRangeSet.range(from, to);
         }
-        break;
-      case VALIDATION_MIN:
+      }
+      case VALIDATION_MIN -> {
         Long minValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
         if (minValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
           return LongRangeSet.range(minValue, Long.MAX_VALUE);
         }
-        break;
-      case VALIDATION_MAX:
+      }
+      case VALIDATION_MAX -> {
         Long maxValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
         if (maxValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
           return LongRangeSet.range(Long.MIN_VALUE, maxValue);
         }
-        break;
-      case CHECKER_GTE_NEGATIVE_ONE:
+      }
+      case CHECKER_GTE_NEGATIVE_ONE -> {
         return LongRangeSet.range(-1, Long.MAX_VALUE);
-      case JSR305_NONNEGATIVE:
-      case CHECKER_NON_NEGATIVE:
+      }
+      case JSR305_NONNEGATIVE, CHECKER_NON_NEGATIVE -> {
         return LongRangeSet.range(0, Long.MAX_VALUE);
-      case CHECKER_POSITIVE:
+      }
+      case CHECKER_POSITIVE -> {
         return LongRangeSet.range(1, Long.MAX_VALUE);
+      }
     }
     return LongRangeSet.all();
   }

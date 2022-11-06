@@ -58,7 +58,7 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
   private static class SuspiciousIntegerDivAssignmentFix extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiAssignmentExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiAssignmentExpression.class);
       if (expression == null) {
         return;

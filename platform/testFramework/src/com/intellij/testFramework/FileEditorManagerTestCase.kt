@@ -1,12 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ExpandMacroToPathMap
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerExImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.util.Disposer
@@ -15,9 +14,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.io.write
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -26,15 +27,15 @@ import java.util.concurrent.TimeoutException
 abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
   @JvmField
   protected var manager: FileEditorManagerImpl? = null
-  protected @JvmField var initialContainers = 0
 
-  @Throws(Exception::class)
   public override fun setUp() {
     super.setUp()
-    manager = FileEditorManagerExImpl(project)
-    project.registerComponentInstance(FileEditorManager::class.java, manager!!, testRootDisposable)
+    manager = FileEditorManagerImpl(project)
+    project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
-    initialContainers = DockManager.getInstance(project).containers.size
+    check(DockManager.getInstance(project).containers.size == 1) {
+      "The previous test didn't clear the state"
+    }
   }
 
   @Throws(Exception::class)
@@ -48,9 +49,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
       {
         manager = null
         if (project != null) {
-          val dockManager = project.getServiceIfCreated(DockManager::class.java)
-          val containers = dockManager?.containers ?: emptySet()
-          assertSize(initialContainers, containers)
+          assertSize(1, project.serviceIfCreated<DockManager>()?.containers ?: emptySet<DockContainer>())
         }
       },
       { super.tearDown() }
@@ -78,7 +77,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, testDataPath)
     map.substitute(rootElement, true, true)
     manager!!.loadState(rootElement)
-    val future = ApplicationManager.getApplication().executeOnPooledThread { manager!!.mainSplitters.openFiles() }
+    val future = manager!!.mainSplitters.openFilesAsync().asCompletableFuture()
     while (true) {
       try {
         future.get(100, TimeUnit.MILLISECONDS)

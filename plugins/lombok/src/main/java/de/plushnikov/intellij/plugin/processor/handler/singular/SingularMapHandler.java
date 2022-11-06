@@ -24,12 +24,12 @@ class SingularMapHandler extends AbstractSingularHandler {
   }
 
   @NotNull
-  private PsiType getKeyType(PsiManager psiManager, PsiType psiFieldType) {
+  private static PsiType getKeyType(PsiManager psiManager, PsiType psiFieldType) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
   }
 
   @NotNull
-  private PsiType getValueType(PsiManager psiManager, PsiType psiFieldType) {
+  private static PsiType getValueType(PsiManager psiManager, PsiType psiFieldType) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
   }
 
@@ -133,6 +133,11 @@ class SingularMapHandler extends AbstractSingularHandler {
     return renderBuildCode(info.getVariable(), info.getFieldName(), "this");
   }
 
+  @Override
+  public String renderBuildCall(@NotNull BuilderInfo info) {
+    return info.renderFieldName();
+  }
+
   String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType psiFieldType = psiVariable.getType();
@@ -141,27 +146,33 @@ class SingularMapHandler extends AbstractSingularHandler {
 
     final String selectedFormat;
     if (collectionQualifiedName.equals(SingularCollectionClassNames.JAVA_UTIL_SORTED_MAP)) {
-      selectedFormat = "java.util.SortedMap<{1}, {2}> {0} = new java.util.TreeMap<{1}, {2}>();\n" +
-        "      if ({3}.{0}$key != null) for (int $i = 0; $i < ({3}.{0}$key == null ? 0 : {3}.{0}$key.size()); $i++) {0}.put({3}.{0}$key.get($i), ({2}){3}.{0}$value.get($i));\n" +
-        "      {0} = java.util.Collections.unmodifiableSortedMap({0});\n";
+      selectedFormat = """
+        java.util.SortedMap<{1}, {2}> {0} = new java.util.TreeMap<{1}, {2}>();
+              if ({3}.{0}$key != null) for (int $i = 0; $i < ({3}.{0}$key == null ? 0 : {3}.{0}$key.size()); $i++) {0}.put({3}.{0}$key.get($i), ({2}){3}.{0}$value.get($i));
+              {0} = java.util.Collections.unmodifiableSortedMap({0});
+        """;
     } else if (collectionQualifiedName.equals(SingularCollectionClassNames.JAVA_UTIL_NAVIGABLE_MAP)) {
-      selectedFormat = "java.util.NavigableMap<{1}, {2}> {0} = new java.util.TreeMap<{1}, {2}>();\n" +
-        "      if ({3}.{0}$key != null) for (int $i = 0; $i < ({3}.{0}$key == null ? 0 : {3}.{0}$key.size()); $i++) {0}.put({3}.{0}$key.get($i), ({2}){3}.{0}$value.get($i));\n" +
-        "      {0} = java.util.Collections.unmodifiableNavigableMap({0});\n";
+      selectedFormat = """
+        java.util.NavigableMap<{1}, {2}> {0} = new java.util.TreeMap<{1}, {2}>();
+              if ({3}.{0}$key != null) for (int $i = 0; $i < ({3}.{0}$key == null ? 0 : {3}.{0}$key.size()); $i++) {0}.put({3}.{0}$key.get($i), ({2}){3}.{0}$value.get($i));
+              {0} = java.util.Collections.unmodifiableNavigableMap({0});
+        """;
     } else {
-      selectedFormat = "java.util.Map<{1}, {2}> {0};\n" +
-        "  switch ({3}.{0}$key == null ? 0 : {3}.{0}$key.size()) '{'\n" +
-        "    case 0:\n" +
-        "      {0} = java.util.Collections.emptyMap();\n" +
-        "      break;\n" +
-        "    case 1:\n" +
-        "      {0} = java.util.Collections.singletonMap({3}.{0}$key.get(0), {3}.{0}$value.get(0));\n" +
-        "      break;\n" +
-        "    default:\n" +
-        "      {0} = new java.util.LinkedHashMap<{1}, {2}>({3}.{0}$key.size() < 1073741824 ? 1 + {3}.{0}$key.size() + ({3}.{0}$key.size() - 3) / 3 : java.lang.Integer.MAX_VALUE);\n" +
-        "      for (int $i = 0; $i < {3}.{0}$key.size(); $i++) {0}.put({3}.{0}$key.get($i), ({2}){3}.{0}$value.get($i));\n" +
-        "      {0} = java.util.Collections.unmodifiableMap({0});\n" +
-        "  '}'\n";
+      selectedFormat = """
+        java.util.Map<{1}, {2}> {0};
+          switch ({3}.{0}$key == null ? 0 : {3}.{0}$key.size()) '{'
+            case 0:
+              {0} = java.util.Collections.emptyMap();
+              break;
+            case 1:
+              {0} = java.util.Collections.singletonMap({3}.{0}$key.get(0), {3}.{0}$value.get(0));
+              break;
+            default:
+              {0} = new java.util.LinkedHashMap<{1}, {2}>({3}.{0}$key.size() < 1073741824 ? 1 + {3}.{0}$key.size() + ({3}.{0}$key.size() - 3) / 3 : java.lang.Integer.MAX_VALUE);
+              for (int $i = 0; $i < {3}.{0}$key.size(); $i++) {0}.put({3}.{0}$key.get($i), ({2}){3}.{0}$value.get($i));
+              {0} = java.util.Collections.unmodifiableMap({0});
+          '}'
+        """;
     }
     return MessageFormat.format(selectedFormat, fieldName, keyType.getCanonicalText(false),
       valueType.getCanonicalText(false), builderVariable);

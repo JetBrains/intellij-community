@@ -158,14 +158,11 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
                                               baseClassName);
       final int choice = Messages.showYesNoCancelDialog(function.getProject(), message, 
                                                         RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getQuestionIcon());
-      switch (choice) {
-        case Messages.YES:
-          return deepestSuperMethod;
-        case Messages.NO:
-          return function;
-        default:
-          return null;
-      }
+      return switch (choice) {
+        case Messages.YES -> deepestSuperMethod;
+        case Messages.NO -> function;
+        default -> null;
+      };
     }
     return function;
   }

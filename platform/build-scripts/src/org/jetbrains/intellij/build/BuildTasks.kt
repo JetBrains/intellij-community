@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import java.nio.file.Path
 
@@ -14,30 +16,43 @@ interface BuildTasks {
    * Builds archive containing production source roots of the project modules. If `includeLibraries` is `true`, the produced
    * archive also includes sources of project-level libraries on which platform API modules from `modules` list depend on.
    */
-  fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean)
+  suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean)
 
-  fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path) {
+  suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path) {
     zipSourcesOfModules(modules, targetFile, false)
+  }
+
+  fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path) {
+    runBlocking {
+      zipSourcesOfModules(modules, targetFile, includeLibraries = false)
+    }
   }
 
   /**
    * Produces distributions for all operating systems from sources. This includes compiling required modules, packing their output into JAR
    * files accordingly to [ProductProperties.productLayout], and creating distributions and installers for all OS.
    */
-  fun buildDistributions()
+  suspend fun buildDistributions()
 
-  fun compileModulesFromProduct()
+  fun buildDistributionsBlocking() {
+    runBlocking(Dispatchers.Default) {
+      buildDistributions()
+    }
+  }
+
+  suspend fun compileModulesFromProduct()
 
   /**
    * Compiles required modules and builds zip archives of the specified plugins in [artifacts][BuildPaths.artifactDir]/&lt;product-code&gt;-plugins
    * directory.
    */
-  fun buildNonBundledPlugins(mainPluginModules: List<String>)
+  suspend fun buildNonBundledPlugins(mainPluginModules: List<String>)
 
-  /**
-   * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
-   */
-  fun generateProjectStructureMapping(targetFile: Path)
+  fun blockingBuildNonBundledPlugins(mainPluginModules: List<String>) {
+    runBlocking(Dispatchers.Default) {
+      buildNonBundledPlugins(mainPluginModules)
+    }
+  }
 
   fun compileProjectAndTests(includingTestsInModules: List<String>)
 
@@ -52,14 +67,7 @@ interface BuildTasks {
    */
   fun buildFullUpdaterJar()
 
-  /**
-   * Performs a fast dry run to check that the build scripts a properly configured. It'll run compilation, build platform and plugin JAR files,
-   * build searchable options index and scramble the main JAR, but won't produce the product archives and installation files which occupy a lot
-   * of disk space and take a long time to build.
-   */
-  fun runTestBuild()
+  suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 
-  fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
-
-  fun buildDmg(macZipDir: Path)
+  suspend fun buildDmg(macZipDir: Path)
 }

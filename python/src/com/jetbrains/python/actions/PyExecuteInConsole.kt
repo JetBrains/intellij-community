@@ -103,7 +103,7 @@ fun checkIfAvailableAndShowHint(editor: Editor?): Boolean {
   return true
 }
 
-private fun getCustomDescriptor(project: Project, editor: Editor?): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
+fun getCustomDescriptor(project: Project, editor: Editor?): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
   val virtualFile = (editor as? EditorImpl)?.virtualFile ?: return Pair(null, null)
   val executeCustomizer = PyExecuteConsoleCustomizer.instance
   when (executeCustomizer.getCustomDescriptorType(virtualFile)) {
@@ -157,7 +157,7 @@ fun getAllRunningConsoles(project: Project?): List<RunContentDescriptor> {
   else emptyList()
 }
 
-private fun getSelectedPythonConsole(project: Project): RunContentDescriptor? {
+fun getSelectedPythonConsole(project: Project): RunContentDescriptor? {
   val toolWindow = PythonConsoleToolWindow.getInstance(project) ?: return null
   if (!toolWindow.isInitialized) return null
   val consoles = toolWindow.consoleContentDescriptors.filter { isAlive(it) }

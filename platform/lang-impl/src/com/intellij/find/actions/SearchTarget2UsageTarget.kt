@@ -3,7 +3,6 @@
 package com.intellij.find.actions
 
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.model.Pointer
 import com.intellij.navigation.ItemPresentation
@@ -23,10 +22,10 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 @ApiStatus.Internal
-class SearchTarget2UsageTarget<O>(
+class SearchTarget2UsageTarget(
   private val project: Project,
   target: SearchTarget,
-  private val allOptions: AllSearchOptions<O>
+  private val allOptions: AllSearchOptions,
 ) : UsageTarget, DataProvider, ConfigurableUsageTarget {
 
   private val myPointer: Pointer<out SearchTarget> = target.createPointer()
@@ -42,7 +41,7 @@ class SearchTarget2UsageTarget<O>(
   }
 
   private fun getItemPresentation(target: SearchTarget): ItemPresentation {
-    val presentation = target.presentation
+    val presentation = target.presentation()
     return object : ItemPresentation {
       override fun getIcon(unused: Boolean): Icon? = presentation.icon
       override fun getPresentableText(): String = presentation.presentableText
@@ -68,23 +67,21 @@ class SearchTarget2UsageTarget<O>(
 
   override fun getLongDescriptiveName(): @Nls String {
     val target = myPointer.dereference() ?: return UsageViewBundle.message("node.invalid")
-    @Suppress("UNCHECKED_CAST") val usageHandler = target.usageHandler as UsageHandler<O>
     return UsageViewBundle.message(
       "search.title.0.in.1",
-      usageHandler.getSearchString(allOptions),
+      target.usageHandler.getSearchString(allOptions),
       allOptions.options.searchScope.displayName
     )
   }
 
   override fun showSettings() {
     val target = myPointer.dereference() ?: return
-    @Suppress("UNCHECKED_CAST") val usageHandler = target.usageHandler as UsageHandler<O>
-    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, target.showScopeChooser(), true)
+    val dialog = UsageOptionsDialog(project, target.displayString, allOptions, target.showScopeChooser(), true)
     if (!dialog.showAndGet()) {
       return
     }
     val newOptions = dialog.result()
-    findUsages(project, target, usageHandler, newOptions)
+    findUsages(project, target, newOptions)
   }
 
   override fun findUsages(): Unit = error("must not be called")

@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
-/**
- * @author peter
- */
 public class AsyncExecutionServiceImpl extends AsyncExecutionService {
   private static long ourWriteActionCounter;
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.List;
@@ -90,5 +91,9 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   @Override
   public void clearProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
     if (myDelegate != null) myDelegate.clearProblemsFromExternalSource(file, source);
+  }
+  @TestOnly
+  void waitForFilesQueuedForInvalidationAreProcessed() {
+    ((WolfTheProblemSolverImpl)myDelegate).waitForFilesQueuedForInvalidationAreProcessed();
   }
 }

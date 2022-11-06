@@ -10,7 +10,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
@@ -25,7 +25,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
     }
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
 
     protected open fun doTest(path: String) {
         assert(path.endsWith(".kt")) { path }
@@ -106,7 +106,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         }
     }
 
-    override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_NO_SOURCES
+    override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 
     open val refMarkerText: String = "REF"
 

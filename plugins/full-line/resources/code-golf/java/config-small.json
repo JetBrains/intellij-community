@@ -1,0 +1,38 @@
+{
+  "language": "Java",
+  "projectPath": "EVALUATION_PROJECT",
+  "outputDir": "EVALUATION_OUTPUT",
+  "actions": {
+    "evaluationRoots": [
+      "src/java/org/httpkit/timer/CancelableFutureTask.java",
+      "src/java/org/httpkit/DynamicBytes.java",
+      "src/java/org/httpkit/client/Request.java"
+    ],
+    "strategy": {
+      "completeAllTokens": true,
+      "codeGolf": true,
+      "context": "ALL",
+      "prefix": {
+        "name": "NoPrefix"
+      }
+    }
+  },
+  "interpret": {
+    "codeGolfSettings": {
+      "topN": 5,
+      "checkToken": "CHECK_TOKEN",
+      "checkLine": "CHECK_LINE",
+      "source": "SUGGESTION_SOURCE"
+    },
+    "completionType": "EVAL_TYPE",
+    "saveLogs": false,
+    "completeTokenProbability": 1.0,
+    "completeTokenSeed": null,
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "EVAL_TITLE: BS=@beam_size, NI=@num_iterations, DG=@diversity_groups, DS=@diversity_strength, M=@model, OFL=@only_full_lines, LP=@len_power, LB=@len_base",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

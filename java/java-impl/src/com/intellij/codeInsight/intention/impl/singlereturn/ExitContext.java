@@ -45,35 +45,29 @@ class ExitContext {
   }
 
   String generateExitCondition() {
-    switch (myFinishMarkerType) {
-      case BOOLEAN_FALSE:
-        return "!" + myReturnVariable;
-      case BOOLEAN_TRUE:
-        return myReturnVariable;
-      case VALUE_EQUAL:
-        return myReturnVariable + "==" + myReturnVariableDefaultValue.getText();
-      case VALUE_NON_EQUAL:
-        return myReturnVariable + "!=" + myReturnVariableDefaultValue.getText();
-      default:
+    return switch (myFinishMarkerType) {
+      case BOOLEAN_FALSE -> "!" + myReturnVariable;
+      case BOOLEAN_TRUE -> myReturnVariable;
+      case VALUE_EQUAL -> myReturnVariable + "==" + myReturnVariableDefaultValue.getText();
+      case VALUE_NON_EQUAL -> myReturnVariable + "!=" + myReturnVariableDefaultValue.getText();
+      default -> {
         assert myFinishedVariable != null;
-        return myFinishedVariable;
-    }
+        yield myFinishedVariable;
+      }
+    };
   }
 
   String getNonExitCondition() {
-    switch (myFinishMarkerType) {
-      case BOOLEAN_FALSE:
-        return myReturnVariable;
-      case BOOLEAN_TRUE:
-        return "!" + myReturnVariable;
-      case VALUE_EQUAL:
-        return myReturnVariable + "!=" + myReturnVariableDefaultValue.getText();
-      case VALUE_NON_EQUAL:
-        return myReturnVariable + "==" + myReturnVariableDefaultValue.getText();
-      default:
+    return switch (myFinishMarkerType) {
+      case BOOLEAN_FALSE -> myReturnVariable;
+      case BOOLEAN_TRUE -> "!" + myReturnVariable;
+      case VALUE_EQUAL -> myReturnVariable + "!=" + myReturnVariableDefaultValue.getText();
+      case VALUE_NON_EQUAL -> myReturnVariable + "==" + myReturnVariableDefaultValue.getText();
+      default -> {
         assert myFinishedVariable != null;
-        return "!" + myFinishedVariable;
-    }
+        yield "!" + myFinishedVariable;
+      }
+    };
   }
 
   void registerReturnValue(PsiExpression value, List<? super String> replacements) {

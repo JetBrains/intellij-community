@@ -13,6 +13,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -120,9 +121,17 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
                                                        @NotNull Editor editor,
                                                        @NotNull PsiFile file) {
+    PsiFile psiFile = getFile();
+    PsiFile originalFile = file.getOriginalFile();
+    if (originalFile != psiFile && originalFile.isPhysical()) {
+      return myFix.generatePreview(project, myDescriptor);
+    }
     ProblemDescriptor descriptorForPreview;
     try {
       descriptorForPreview = myDescriptor.getDescriptorForPreview(file);
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot create preview descriptor for quickfix " + myFix.getFamilyName() + " (" + myFix.getClass() + ")",

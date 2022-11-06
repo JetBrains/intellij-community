@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -30,9 +30,9 @@ import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.VcsLogStorageImpl;
-import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
 import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.*;
@@ -108,7 +108,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                      VcsLogStorageImpl.VERSION + VERSION);
     myIndexStorage = createIndexStorage(myIndexStorageId, errorHandler, userRegistry);
     if (myIndexStorage != null) {
-      myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myErrorHandler);
+      myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
+                                         myIndexStorage, myStorage, myErrorHandler);
     }
     else {
       myDataGetter = null;
@@ -366,7 +367,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                              AbstractStorage.PAGE_SIZE, indexStorageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(timestamps::close));
 
-        checkConsistency();
+        reportEmpty();
       }
       catch (Throwable t) {
         Disposer.dispose(this);
@@ -374,22 +375,17 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       }
     }
 
-    private void checkConsistency() throws IOException {
-      if (!commits.isEmpty()) {
-        boolean trigramsEmpty = trigrams.isEmpty();
-        boolean usersEmpty = users.isEmpty();
-        boolean pathsEmpty = paths.isEmpty();
-        if (trigramsEmpty || usersEmpty) {
-          IOException exception = new IOException("Broken index maps:\n" +
-                                                  "trigrams empty " + trigramsEmpty + "\n" +
-                                                  "users empty " + usersEmpty + "\n" +
-                                                  "paths empty " + pathsEmpty);
-          LOG.error(exception);
-          throw exception;
-        }
-        if (pathsEmpty) {
-          LOG.warn("Paths map is empty");
-        }
+    private void reportEmpty() throws IOException {
+      if (commits.isEmpty()) return;
+
+      boolean trigramsEmpty = trigrams.isEmpty();
+      boolean usersEmpty = users.isEmpty();
+      boolean pathsEmpty = paths.isEmpty();
+      if (trigramsEmpty || usersEmpty || pathsEmpty) {
+        LOG.warn("Some of the index maps empty:\n" +
+                 "trigrams empty " + trigramsEmpty + "\n" +
+                 "users empty " + usersEmpty + "\n" +
+                 "paths empty " + pathsEmpty);
       }
     }
 

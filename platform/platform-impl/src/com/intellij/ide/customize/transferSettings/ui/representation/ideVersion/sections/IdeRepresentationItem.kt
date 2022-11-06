@@ -7,9 +7,7 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.JBGaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
@@ -20,7 +18,7 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
                                         private val icon: Icon) : TransferSettingsSection {
   protected val _isSelected = AtomicBooleanProperty(prefs[key])
   protected open val disabledCheckboxText: String? = null
-  protected val leftGap = 20
+  private val leftGap = 20
   private var morePanel: JComponent? = null
   private var moreLabel: String = "More.."
 
@@ -37,7 +35,7 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
   final override fun getUI() = panel {
     customizeSpacingConfiguration(EmptySpacingConfiguration()) {
       row {
-        icon(icon).verticalAlign(VerticalAlign.TOP).customize(JBGaps(left = 30, right = 30)).applyToComponent {
+        icon(icon).align(AlignY.TOP).customize(JBGaps(left = 30, right = 30)).applyToComponent {
           _isSelected.afterChange {
             this.icon = if (it) this@IdeRepresentationSection.icon else IconLoader.getDisabledIcon(icon)
           }
@@ -65,7 +63,7 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
           row {
             cell(getContent()).customize(JBGaps(left = leftGap)) // TODO: retrieve size of checkbox and add padding here
           }
-        }.verticalAlign(VerticalAlign.TOP)
+        }.align(AlignY.TOP)
       }
     }
   }
@@ -76,12 +74,12 @@ abstract class IdeRepresentationSection(private val prefs: SettingsPreferences,
     }
   }
 
-  protected fun withMoreLabel(moreLbl: String?, pnl: JComponent) {
+  private fun withMoreLabel(moreLbl: String?, pnl: JComponent) {
     morePanel = pnl
     moreLbl?.apply { moreLabel = this }
   }
 
-  protected fun withMoreLabel(pnl: JComponent) = withMoreLabel(null, pnl)
+  private fun withMoreLabel(pnl: JComponent) = withMoreLabel(null, pnl)
   protected fun withMoreLabel(moreLbl: String?, pnl: () -> JComponent) = withMoreLabel(moreLbl, pnl())
   protected fun withMoreLabel(pnl: (AtomicBooleanProperty) -> JComponent) = withMoreLabel(pnl(_isSelected))
 

@@ -438,20 +438,13 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     UIUtil.invokeLaterIfNeeded(() -> {
       if (!forced && (context != null && context.isDisposed())) return;
 
-      switch (type) {
-        case message:
-          addInfo(text, currentLine, MESSAGE_COLOR, depth);
-          break;
-        case error:
-          addInfo(text, currentLine, ERROR_COLOR, depth);
-          break;
-        case code:
-          addInfo(text, currentLine, CODE_COLOR, depth);
-          break;
-        case test:
-          addInfo(text, currentLine, TEST_COLOR, depth);
-          break;
-      }
+      Color color = switch (type) {
+        case message -> MESSAGE_COLOR;
+        case error -> ERROR_COLOR;
+        case code -> CODE_COLOR;
+        case test -> TEST_COLOR;
+      };
+      addInfo(text, currentLine, color, depth);
     });
   }
 

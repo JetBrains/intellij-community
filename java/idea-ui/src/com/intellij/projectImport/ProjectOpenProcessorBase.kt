@@ -9,9 +9,11 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -25,6 +27,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
@@ -164,12 +168,14 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
         options = options.copy(isNewProject = true)
       }
 
-      if (importToProject) {
-        options = options.copy(beforeOpen = { project -> importToProject(project, projectToClose, wizardContext) })
-      }
-
       try {
-        val project = ProjectManagerEx.getInstanceEx().openProject(pathToOpen, options)
+        @Suppress("DialogTitleCapitalization")
+        val project = runBlockingModal(ModalTaskOwner.guess(), IdeBundle.message("title.open.project")) {
+          if (importToProject) {
+            options = options.copy(beforeOpen = { project -> importToProject(project, projectToClose, wizardContext) })
+          }
+          ProjectManagerEx.getInstanceEx().openProjectAsync(pathToOpen, options)
+        }
         ProjectUtil.updateLastProjectLocation(pathToOpen)
         return project
       }
@@ -184,10 +190,10 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
     return null
   }
 
-  private fun importToProject(projectToOpen: Project, projectToClose: Project?, wizardContext: WizardContext): Boolean {
-    return invokeAndWaitIfNeeded {
+  private suspend fun importToProject(projectToOpen: Project, projectToClose: Project?, wizardContext: WizardContext): Boolean {
+    return withContext(Dispatchers.EDT) {
       if (!builder.validate(projectToClose, projectToOpen)) {
-        return@invokeAndWaitIfNeeded false
+        return@withContext false
       }
 
       ApplicationManager.getApplication().runWriteAction {

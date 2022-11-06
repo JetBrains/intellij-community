@@ -24,9 +24,6 @@ import com.intellij.util.xml.reflect.DomGenericInfo;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomNamespacesTest extends DomTestCase {
 
   public void testUseExistingNamespace() {

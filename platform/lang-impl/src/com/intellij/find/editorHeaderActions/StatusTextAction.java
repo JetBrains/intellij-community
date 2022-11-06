@@ -26,6 +26,7 @@ public class StatusTextAction extends DumbAwareAction implements CustomComponent
     label.setForeground(search == null ?
                         ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground() :
                         search.getComponent().getStatusColor());
+    e.getPresentation().setEnabled(e.isFromActionToolbar());
   }
 
   @Override

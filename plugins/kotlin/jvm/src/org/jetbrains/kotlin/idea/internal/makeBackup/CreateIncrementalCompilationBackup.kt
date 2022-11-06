@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.WaitForProgressToShow
 import com.intellij.util.io.ZipUtil
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat

@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="zstd-jni-windows-aarch64" type="repository">
+    <properties maven-id="org.jetbrains.intellij.deps:zstd-jni-windows-aarch64:1.5.2-5-25" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/zstd-jni-windows-aarch64/1.5.2-5-25/zstd-jni-windows-aarch64-1.5.2-5-25.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

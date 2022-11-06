@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
@@ -15,7 +16,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.LabeledListPanelHandle
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import org.jetbrains.plugins.github.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -85,7 +85,8 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
   }
 
   private fun createUserLabel(user: GHPullRequestRequestedReviewer) = JLabel(user.shortName,
-                                                                             avatarIconsProvider.getIcon(user.avatarUrl),
+                                                                             avatarIconsProvider.getIcon(user.avatarUrl,
+                                                                                                         GHUIUtil.AVATAR_SIZE),
                                                                              SwingConstants.LEFT).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
   }

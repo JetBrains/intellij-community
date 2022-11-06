@@ -7,18 +7,40 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogFileHistoryHandler
 import com.intellij.vcs.log.VcsLogFileHistoryHandler.Rename
 import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitRevisionNumber
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
 
 class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHandler {
+
+  @Throws(VcsException::class)
+  override fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, commitCount: Int): List<VcsFileRevisionEx> {
+    val parser = GitFileHistory.createLogParser(project)
+    val handler = GitLineHandler(project, root, GitCommand.LOG)
+    handler.setStdoutSuppressed(true)
+    handler.addParameters("--name-status", parser.pretty, "--encoding=UTF-8",
+                          hash?.asString() ?: GitRevisionNumber.HEAD.asString(),
+                          "--max-count=$commitCount")
+    handler.endOptions()
+    handler.addRelativePaths(filePath)
+
+    val result = mutableListOf<VcsFileRevisionEx>()
+    val splitter = GitLogOutputSplitter(handler, parser) { record ->
+      result.add(GitFileHistory.createGitFileRevision(project, root, record, filePath))
+    }
+    Git.getInstance().runCommandWithoutCollectingOutput(handler)
+    splitter.reportErrors()
+    return result
+  }
 
   @Throws(VcsException::class)
   override fun getRename(root: VirtualFile, filePath: FilePath, beforeHash: Hash, afterHash: Hash): Rename? {

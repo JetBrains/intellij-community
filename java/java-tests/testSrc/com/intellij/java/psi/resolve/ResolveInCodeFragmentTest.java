@@ -104,11 +104,12 @@ public class ResolveInCodeFragmentTest extends LightResolveTestCase {
 
   public void testClassHierarchyInNonPhysicalFile() {
     PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", JavaFileType.INSTANCE,
-                                                                            "class Parent { void foo( ); }\n" +
-                                                                            "class Child extends Parent { }\n" +
-                                                                            "class User {\n" +
-                                                                            "    void caller() { new Child().foo(); }\n" +
-                                                                            "}", 0, true);
+                                                                               """
+                                                                                 class Parent { void foo( ); }
+                                                                                 class Child extends Parent { }
+                                                                                 class User {
+                                                                                     void caller() { new Child().foo(); }
+                                                                                 }""", 0, true);
     PsiReference ref = file.findReferenceAt(file.getText().indexOf("foo()"));
     assertNotNull(ref);
     assertTrue(ref.getElement().getResolveScope().contains(file.getViewProvider().getVirtualFile()));

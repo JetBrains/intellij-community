@@ -39,8 +39,8 @@ public class MethodCallSelectioner implements ExtendWordSelectionHandler {
       return null;
     }
     else {
-      return Collections.singletonList(new TextRange(referenceNameElement.getTextRange().getStartOffset(), 
-                                                     methodCall.getTextRange().getEndOffset()));
+      return List.of(new TextRange(referenceNameElement.getTextRange().getStartOffset(), methodCall.getTextRange().getEndOffset()),
+                     methodCall.getTextRange());
     }
   }
 }

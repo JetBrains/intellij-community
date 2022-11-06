@@ -53,49 +53,55 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
    JTree tree = new Tree();
    TreeTestUtil.assertTreeUI(tree);
    tree.setModel(model);
-   TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
    PlatformTestUtil.assertTreeEqual(tree,
-                                    "-Root\n" +
-                                    " -structure\n" +
-                                    "  -src\n" +
-                                    "   -package1\n" +
-                                    "    -package2\n" +
-                                    "     -package3\n" +
-                                    "      Test3.java\n" +
-                                    "    Test1.java\n" +
-                                    "   Test.java\n");
+                                    """
+                                      -Root
+                                       -structure
+                                        -src
+                                         -package1
+                                          -package2
+                                           -package3
+                                            Test3.java
+                                          Test1.java
+                                         Test.java
+                                      """);
 
    panelSettings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = true;
    model = FileTreeModelBuilder.createTreeModel(getProject(), false, set, ALL_MARKED, panelSettings);
    tree.setModel(model);
-   TreeUtil.expandAll(tree);
+   PlatformTestUtil.expandAll(tree);
    TreeUtil.traverse((TreeNode)model.getRoot(), node -> {
      ((DefaultMutableTreeNode)node).setUserObject(node.toString());
      return true;
    });
    PlatformTestUtil.assertTreeEqual(tree,
-                                    "-Root\n" +
-                                    " -structure\n" +
-                                    "  -src\n" +
-                                    "   -package1\n" +
-                                    "    -package2/package3\n" +
-                                    "     Test3.java\n" +
-                                    "    Test1.java\n" +
-                                    "   Test.java\n");
+                                    """
+                                      -Root
+                                       -structure
+                                        -src
+                                         -package1
+                                          -package2/package3
+                                           Test3.java
+                                          Test1.java
+                                         Test.java
+                                      """);
 
    panelSettings.UI_FLATTEN_PACKAGES = true;
    model = FileTreeModelBuilder.createTreeModel(getProject(), false, set, ALL_MARKED, panelSettings);
    tree.setModel(model);
-   TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
    PlatformTestUtil.assertTreeEqual(tree,
-                                    "-Root\n" +
-                                    " -structure\n" +
-                                    "  -src\n" +
-                                    "   -package1\n" +
-                                    "    Test1.java\n" +
-                                    "   -package1/package2/package3\n" +
-                                    "    Test3.java\n" +
-                                    "   Test.java\n");
+                                    """
+                                      -Root
+                                       -structure
+                                        -src
+                                         -package1
+                                          Test1.java
+                                         -package1/package2/package3
+                                          Test3.java
+                                         Test.java
+                                      """);
   }
 
   public void testModuleGroups() throws Exception {
@@ -111,15 +117,17 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
     TreeModel model = FileTreeModelBuilder.createTreeModel(getProject(), false, files, ALL_MARKED, settings);
     JTree tree = new Tree(model);
     TreeTestUtil.assertTreeUI(tree);
-    TreeUtil.expandAll(tree);
-    PlatformTestUtil.assertTreeEqual(tree, "-Root\n" +
-                                           " -a\n" +
-                                           "  -b\n" +
-                                           "   -module\n" +
-                                           "    -structure\n" +
-                                           "     -src\n" +
-                                           "      -package1\n" +
-                                           "       Test1.java\n");
+    PlatformTestUtil.expandAll(tree);
+    PlatformTestUtil.assertTreeEqual(tree, """
+      -Root
+       -a
+        -b
+         -module
+          -structure
+           -src
+            -package1
+             Test1.java
+      """);
   }
 
   public void testExternalDependencies() {
@@ -141,19 +149,20 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
     JTree tree = new Tree();
     TreeTestUtil.assertTreeUI(tree);
     tree.setModel(model);
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree,
-                                     "-Root\n" +
-                                     " -structure\n" +
-                                     "  -src\n" +
-                                     "   -package1\n" +
-                                     "    Test1.java\n" +
-                                     " -External Dependencies\n" +
-                                     "  -< java 1.7 >\n" +
-                                     "   -rt.jar\n" +
-                                     "    -java\n" +
-                                     "     -lang\n" +
-                                     "      Object.class");
+                                     """
+                                       -Root
+                                        -structure
+                                         -src
+                                          -package1
+                                           Test1.java
+                                        -External Dependencies
+                                         -< java 1.7 >
+                                          -rt.jar
+                                           -java
+                                            -lang
+                                             Object.class""");
   }
 
   @NotNull

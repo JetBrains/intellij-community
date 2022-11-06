@@ -3,4 +3,9 @@ package training.learn.course
 
 interface LearningCourse {
   fun modules(): Collection<IftModule>
+
+  /**
+   * @return map of lesson id to the list of suitable [com.intellij.ide.util.TipAndTrickBean.getId]
+   */
+  fun getLessonIdToTipsMap(): Map<String, List<String>> = emptyMap()
 }

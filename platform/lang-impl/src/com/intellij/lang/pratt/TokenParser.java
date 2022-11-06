@@ -19,9 +19,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class TokenParser {
 
   public abstract boolean parseToken(PrattBuilder builder);

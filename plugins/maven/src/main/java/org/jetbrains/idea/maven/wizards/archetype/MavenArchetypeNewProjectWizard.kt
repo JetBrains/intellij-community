@@ -18,6 +18,7 @@ import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
@@ -30,7 +31,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.collectionModel
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
@@ -39,9 +42,7 @@ import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.containers.ContainerUtil.putIfNotNull
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -49,6 +50,7 @@ import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
@@ -140,7 +142,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.tooltip") }
           cell(archetypeComboBox)
             .applyToComponent { bindSelectedItem(archetypeItemProperty) }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .resizableColumn()
             .validationOnApply { validateArchetypeId() }
             .gap(RightGap.SMALL)
@@ -166,8 +168,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
               ))
             archetypeDescriptorPanel = archetypeDescriptorTable.component
             cell(archetypeDescriptorPanel)
-              .horizontalAlign(HorizontalAlign.FILL)
-              .verticalAlign(VerticalAlign.FILL)
+              .align(Align.FILL)
               .resizableColumn()
           }.resizableRow()
         }.resizableRow()
@@ -350,6 +351,8 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       }
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
+      MavenProjectsManager.setupCreatedMavenProject(project)
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
       builder.commit(project)
     }
   }

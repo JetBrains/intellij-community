@@ -1,11 +1,12 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -18,7 +19,7 @@ interface AssertConsistencyEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : AssertConsistencyEntity, ModifiableWorkspaceEntity<AssertConsistencyEntity>, ObjBuilder<AssertConsistencyEntity> {
+  interface Builder : AssertConsistencyEntity, WorkspaceEntity.Builder<AssertConsistencyEntity>, ObjBuilder<AssertConsistencyEntity> {
     override var entitySource: EntitySource
     override var passCheck: Boolean
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.RecentProjectsManagerBase;
@@ -36,7 +36,7 @@ import java.lang.reflect.Method;
 /**
  * @author Alexander Lobas
  */
-public class MacWinTabsHandler {
+public final class MacWinTabsHandler {
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
   private static final String CLOSE_MARKER = "TABS_CLOSE_MARKER";
 
@@ -49,12 +49,7 @@ public class MacWinTabsHandler {
   private static Callback myObserverCallback; // don't convert to local var
   private static ID myObserverDelegate;
 
-  @NotNull
-  public static JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
-    if (!JdkEx.isTabbingModeAvailable()) {
-      return northComponent;
-    }
-
+  public static @NotNull JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
     JPanel panel = new NonOpaquePanel(new BorderLayout());
 
     JPanel filler = new OpaquePanel();

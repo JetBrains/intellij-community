@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -21,36 +23,28 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageDataUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class VirtualFileArrayRule implements GetDataRule {
 
-  @Nullable private static Set<VirtualFile> addFiles(@Nullable Set<VirtualFile> set, VirtualFile[] files) {
-    for (VirtualFile file : files) {
-      set = addFile(set, file);
-    }
-    return set;
-  }
-  @Nullable private static Set<VirtualFile> addFile(@Nullable Set<VirtualFile> set, @Nullable VirtualFile file) {
-    if (file == null) return set;
-    if (set == null) set = new LinkedHashSet<>();
-    set.add(file);
-    return set;
-  }
+  private static final Logger LOG = Logger.getInstance(VirtualFileArrayRule.class);
 
   @Override
-  public Object getData(@NotNull final DataProvider dataProvider) {
-    // Try to detect multiselection.
-
+  public Object getData(@NotNull DataProvider dataProvider) {
     Set<VirtualFile> result = null;
 
     FileSystemTree fileSystemTree = FileSystemTree.DATA_KEY.getData(dataProvider);
     if (fileSystemTree != null) {
-      result = addFiles(null, fileSystemTree.getSelectedFiles());
+      LOG.error("VirtualFileArrayRule must not be called when FileSystemTree.DATA_KEY data is present." +
+                "FileSystemTree.DATA_KEY data provider must also provide FileSystemTree#getSelectedFiles() as VIRTUAL_FILE_ARRAY");
+      return null;
     }
     else {
       Project project = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataProvider);
@@ -59,7 +53,7 @@ public class VirtualFileArrayRule implements GetDataRule {
       }
 
       Module[] selectedModules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataProvider);
-      if (selectedModules != null && selectedModules.length > 0) {
+      if (selectedModules != null) {
         for (Module selectedModule : selectedModules) {
           result = addFiles(result, ModuleRootManager.getInstance(selectedModule).getContentRoots());
         }
@@ -71,8 +65,7 @@ public class VirtualFileArrayRule implements GetDataRule {
       }
     }
 
-
-    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
+    PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
     if (psiElements != null) {
       for (PsiElement element : psiElements) {
         result = addFilesFromPsiElement(result, element);
@@ -98,28 +91,38 @@ public class VirtualFileArrayRule implements GetDataRule {
     Usage[] usages = UsageView.USAGES_KEY.getData(dataProvider);
     UsageTarget[] usageTargets = UsageView.USAGE_TARGETS_KEY.getData(dataProvider);
     if (usages != null || usageTargets != null) {
-      for (VirtualFile file : UsageDataUtil.provideVirtualFileArray(usages, usageTargets)) {
+      for (VirtualFile file : Objects.requireNonNull(UsageDataUtil.provideVirtualFileArray(usages, usageTargets))) {
         result = addFile(result, file);
       }
     }
 
     if (result == null) {
-      final Object[] objects = (Object[])dataProvider.getData(PlatformCoreDataKeys.SELECTED_ITEMS.getName());
-      if (objects != null) {
-        final VirtualFile[] files = new VirtualFile[objects.length];
-        for (int i = 0, objectsLength = objects.length; i < objectsLength; i++) {
-          Object object = objects[i];
-          if (!(object instanceof VirtualFile)) return null;
-          files[i] = (VirtualFile)object;
+      Object[] objects = (Object[])dataProvider.getData(PlatformCoreDataKeys.SELECTED_ITEMS.getName());
+      if (objects != null && objects.length != 0) {
+        Object[] unwrapped = ContainerUtil.map2Array(objects, o -> AbstractProjectViewPane.extractValueFromNode(o));
+        if (ContainerUtil.all(unwrapped, o -> o instanceof VirtualFile)) {
+          return Arrays.copyOf(unwrapped, unwrapped.length, VirtualFile[].class);
         }
-
-        return files;
       }
       return null;
     }
     else {
       return VfsUtilCore.toVirtualFileArray(result);
     }
+  }
+
+  private static @Nullable Set<VirtualFile> addFiles(@Nullable Set<VirtualFile> set, VirtualFile[] files) {
+    for (VirtualFile file : files) {
+      set = addFile(set, file);
+    }
+    return set;
+  }
+
+  private static @Nullable Set<VirtualFile> addFile(@Nullable Set<VirtualFile> set, @Nullable VirtualFile file) {
+    if (file == null) return set;
+    if (set == null) set = new LinkedHashSet<>();
+    set.add(file);
+    return set;
   }
 
 

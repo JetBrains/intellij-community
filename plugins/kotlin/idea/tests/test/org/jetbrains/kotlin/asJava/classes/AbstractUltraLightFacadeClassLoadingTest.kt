@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractUltraLightFacadeClassTest15 : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     open fun doTest(testDataPath: String) {
         val testDataFile = File(testDataPath)
@@ -34,11 +34,11 @@ abstract class AbstractUltraLightFacadeClassTest15 : KotlinLightCodeInsightFixtu
     }
 
     protected open fun checkLightFacades(testDataPath: String, facades: Collection<String>, scope: GlobalSearchScope) {
-        for (facadeName in facades) {
-            val ultraLightClass = KotlinK1LightClassFactory.createFacadeNoCache(FqName(facadeName), scope, project)
-            if (ultraLightClass != null) {
-                UltraLightChecker.checkDescriptorsLeak(ultraLightClass)
-            }
+        val support = KotlinAsJavaSupport.getInstance(project)
+        val lightClasses = facades.sorted().flatMap { support.getFacadeClasses(FqName(it), scope) }.filterIsInstance<KtLightClass>()
+
+        for (lightClass in lightClasses) {
+            UltraLightChecker.checkDescriptorsLeak(lightClass)
         }
     }
 }

@@ -7,6 +7,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -152,7 +153,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Can't start find usages from under write action. Please consider Application.invokeLater() it instead.");
     }
-    SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
+    Supplier<SearchScope> scopeSupplier = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     AtomicReference<UsageViewEx> usageViewRef = new AtomicReference<>();
     long start = System.nanoTime();
     AtomicLong firstItemFoundTS = new AtomicLong();
@@ -160,8 +161,17 @@ public class UsageViewManagerImpl extends UsageViewManager {
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        SearchScope searchScopeToWarnOfFallingOutOf = scopeSupplier.get();
         new SearchForUsagesRunnable(UsageViewManagerImpl.this, UsageViewManagerImpl.this.myProject, usageViewRef, presentation, searchFor, searcherFactory,
                                     processPresentation, searchScopeToWarnOfFallingOutOf, listener, firstItemFoundTS, tooManyUsages).run();
+      }
+
+      @Override
+      public void onCancel() {
+        UsageViewEx usageView = usageViewRef.get();
+        int count = usageView == null ? 0 : usageView.getUsagesCount();
+        reportSearchCompletedToFus(count, true);
+        super.onCancel();
       }
 
       @NotNull
@@ -169,49 +179,56 @@ public class UsageViewManagerImpl extends UsageViewManager {
       public NotificationInfo getNotificationInfo() {
         UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
+        long duration = reportSearchCompletedToFus(count, false);
+        String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
+        LOG.debug(notification + " in " + duration + "ms.");
+        return new NotificationInfo("Find Usages", UsageViewBundle.message("notification.title.find.usages.finished"), notification);
+      }
+
+      private long reportSearchCompletedToFus(int count, boolean isCancelled) {
         long currentTS = System.nanoTime();
         long durationFirstResults = TimeUnit.NANOSECONDS.toMillis(firstItemFoundTS.get() - start);
         long duration = TimeUnit.NANOSECONDS.toMillis(currentTS - start);
 
-        String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
-        LOG.debug(notification + " in " + duration + "ms.");
 
-        reportFUS(count, durationFirstResults, duration, tooManyUsages.get());
+        PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
+        if (element != null) {
+          Class<? extends PsiElement> targetClass = element.getClass();
+          Language language = ReadAction.compute(element::getLanguage);
+          SearchScope scope = null;
 
-        return new NotificationInfo("Find Usages",
-                                    UsageViewBundle.message("notification.title.find.usages.finished"), notification);
-      }
-
-      private void reportFUS(int count, long durationFirstResults, long duration, boolean tooManyUsages) {
-          PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
-          if (element != null) {
-            Class<? extends PsiElement> targetClass = element.getClass();
-            Language language = ReadAction.compute(element::getLanguage);
-            SearchScope scope = null;
-
-            if (element instanceof DataProvider) {
-              scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
-            }
-
-            UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language,
-                                                           count, durationFirstResults, duration, tooManyUsages,
-                                                           CodeNavigateSource.FindToolWindow);
+          if (element instanceof DataProvider) {
+            scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
           }
+          if (isCancelled) {
+            UsageViewStatisticsCollector.logSearchCancelled(myProject, targetClass, scope, language, count, durationFirstResults, duration,
+                                                            tooManyUsages.get(), CodeNavigateSource.FindToolWindow, usageViewRef.get());
+          }
+          else {
+            UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language, count, durationFirstResults, duration,
+                                                           tooManyUsages.get(), CodeNavigateSource.FindToolWindow, usageViewRef.get());
+          }
+        }
+        return duration;
       }
     };
     ProgressManager.getInstance().run(task);
     return usageViewRef.get();
   }
 
-  @NotNull
-  SearchScope getMaxSearchScopeToWarnOfFallingOutOf(UsageTarget @NotNull [] searchFor) {
+  @NotNull Supplier<SearchScope> getMaxSearchScopeToWarnOfFallingOutOf(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor.length > 0 ? searchFor[0] : null;
     DataProvider dataProvider = DataManagerImpl.getDataProviderEx(target);
     SearchScope scope = dataProvider != null ? UsageView.USAGE_SCOPE.getData(dataProvider) : null;
     if (scope != null) {
-      return scope;
+      return () -> scope;
     }
-    return GlobalSearchScope.everythingScope(myProject); // by default do not warn of falling out of scope
+    DataProvider bgtProvider = dataProvider != null ? PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(dataProvider) : null;
+    return () -> {
+      SearchScope scope2 = bgtProvider != null ? UsageView.USAGE_SCOPE.getData(bgtProvider) : null;
+      if (scope2 != null) return scope2;
+      return GlobalSearchScope.everythingScope(myProject); // by default do not warn of falling out of scope
+    };
   }
 
   @Override

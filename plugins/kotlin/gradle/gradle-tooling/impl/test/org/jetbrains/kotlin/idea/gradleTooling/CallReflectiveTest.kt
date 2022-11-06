@@ -1,11 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.*
 import org.junit.Test
+import java.net.URLClassLoader
 
 class CallReflectiveTest {
+
+    private object StaticTestObject {
+        @JvmStatic
+        @Suppress("unused") // Used to test static reflection!
+        fun staticTestMethod(x: Int, y: Int) = x + y
+    }
+
     class TestLogger : ReflectionLogger {
         val messages = mutableListOf<String>()
         val exceptions = mutableListOf<Throwable?>()
@@ -88,5 +97,46 @@ class CallReflectiveTest {
         assertEquals("", instance.callReflective("orEmpty", parameters(parameter<String?>(null)), returnType<String>(), logger))
         assertEquals(0, logger.messages.size)
     }
+
+    @Test
+    fun `call static method - using Class reference`() {
+        val static = Static(StaticTestObject.javaClass)
+        assertEquals(
+            5, static.callReflective("staticTestMethod", parameters(parameter(2), parameter(3)), returnType<Int>(), logger)
+        )
+    }
+
+    @Test
+    fun `call static method - non-existing className`() {
+        val static = Static("this.does.not.exist", logger)
+        assertNull(static)
+        assertEquals("Expected single issue being reported", 1, logger.messages.size)
+    }
+
+    @Test
+    fun `call static method - using className`() {
+        val static = Static(StaticTestObject.javaClass.name, logger)
+        assertNotNull(logger.messages.joinToString(), static)
+        static!!
+
+        assertEquals(
+            5, static.callReflective("staticTestMethod", parameters(parameter(2), parameter(3)), returnType<Int>(), logger)
+        )
+    }
+
+    @Test
+    fun `call static method - using custom ClassLoader`() {
+        val thisClassLoader = this.javaClass.classLoader
+        val customClassLoader = URLClassLoader.newInstance(emptyArray(), thisClassLoader)
+
+        val static = Static(StaticTestObject.javaClass.name, customClassLoader, logger)
+        assertNotNull(logger.messages.joinToString(), static)
+        static!!
+
+        assertEquals(
+            5, static.callReflective("staticTestMethod", parameters(parameter(2), parameter(3)), returnType<Int>(), logger)
+        )
+    }
 }
+
 

@@ -23,7 +23,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +129,7 @@ public final class SideEffectChecker {
                                                                  @NotNull Predicate<? super PsiElement> ignoreElement) {
     List<PsiElement> list = new SmartList<>();
     element.accept(new SideEffectsVisitor(list, element, ignoreElement));
-    return StreamEx.of(list).select(PsiExpression.class).toList();
+    return ContainerUtil.filterIsInstance(list, PsiExpression.class);
   }
 
   private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {

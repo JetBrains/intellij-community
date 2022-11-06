@@ -83,7 +83,6 @@ interface GrammarCheckingStrategy {
    *
    * @return name of this strategy
    */
-  @JvmDefault
   @NlsSafe
   fun getName(): String {
     val extension = StrategyUtils.getStrategyExtensionPoint(this)
@@ -97,7 +96,6 @@ interface GrammarCheckingStrategy {
    *
    * @return unique ID
    */
-  @JvmDefault
   fun getID(): String {
     val extension = StrategyUtils.getStrategyExtensionPoint(this)
     return "${extension.pluginDescriptor.pluginId}:${extension.language}"
@@ -117,7 +115,6 @@ interface GrammarCheckingStrategy {
    *
    * @return [TokenSet] of whitespace tokens
    */
-  @JvmDefault
   fun getWhiteSpaceTokens(): TokenSet {
     val extension = StrategyUtils.getStrategyExtensionPoint(this)
     val language = Language.findLanguageByID(extension.language) ?: return TokenSet.WHITE_SPACE
@@ -136,7 +133,6 @@ interface GrammarCheckingStrategy {
    * @param root root element previously selected in [isMyContextRoot]
    * @return list of root elements that should be considered as a continuous text with [getWhiteSpaceTokens] elements
    */
-  @JvmDefault
   fun getRootsChain(root: PsiElement): List<PsiElement> = listOf(root)
 
   /**
@@ -144,7 +140,6 @@ interface GrammarCheckingStrategy {
    *
    * @return true if enabled else false
    */
-  @JvmDefault
   fun isEnabledByDefault(): Boolean = !GraziePlugin.isBundled || ApplicationManager.getApplication()?.isUnitTestMode.orTrue()
 
   /**
@@ -153,7 +148,6 @@ interface GrammarCheckingStrategy {
    * @param root root element previously selected in [isMyContextRoot]
    * @return [TextDomain] for [root] element
    */
-  @JvmDefault
   fun getContextRootTextDomain(root: PsiElement) = StrategyUtils.getTextDomainOrDefault(this, root, default = PLAIN_TEXT)
 
   /**
@@ -195,7 +189,6 @@ interface GrammarCheckingStrategy {
    * @param ruleRange range of elements needed for rule to find typo
    * @return true if typo should be accepted
    */
-  @JvmDefault
   fun isTypoAccepted(parent: PsiElement, roots: List<PsiElement>, typoRange: IntRange, ruleRange: IntRange) = true
 
   /**

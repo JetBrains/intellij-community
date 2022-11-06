@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.browsers.BrowserLauncher;
 import com.intellij.ide.browsers.BrowserLauncherAppless;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
@@ -82,7 +82,7 @@ public final class BrowserUtil {
   }
 
   private static BrowserLauncher getBrowserLauncher() {
-    return ApplicationManager.getApplication() != null ? BrowserLauncher.getInstance() : new BrowserLauncherAppless();
+    return LoadingState.COMPONENTS_LOADED.isOccurred() ? BrowserLauncher.getInstance() : new BrowserLauncherAppless();
   }
 
   public static @NotNull List<String> getOpenBrowserCommand(@NotNull String browserPathOrName,
@@ -124,21 +124,6 @@ public final class BrowserUtil {
     }
 
     return command;
-  }
-
-  public static @NotNull String getDefaultAlternativeBrowserPath() {
-    if (SystemInfo.isWindows) {
-      return "C:\\Program Files\\Internet Explorer\\IExplore.exe";
-    }
-    else if (SystemInfo.isMac) {
-      return "open";
-    }
-    else if (SystemInfo.isUnix) {
-      return "/usr/bin/firefox";
-    }
-    else {
-      return "";
-    }
   }
 
   //<editor-fold desc="Deprecated stuff.">

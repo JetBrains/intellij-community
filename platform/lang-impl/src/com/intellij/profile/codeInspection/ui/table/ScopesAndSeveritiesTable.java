@@ -35,7 +35,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +102,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
               setText((String) value);
             } else {
               setText(LangBundle.message("scopes.table.missing.scope", value));
-              component.setForeground(UIUtil.getErrorForeground());
+              component.setForeground(NamedColorUtil.getErrorForeground());
             }
           }
         }
@@ -328,16 +328,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
     @Nullable
     @Override
     public String getColumnName(final int column) {
-      switch (column) {
-        case SCOPE_NAME_COLUMN:
-          return LangBundle.message("scopes.chooser.scope.column");
-        case SEVERITY_COLUMN:
-          return LangBundle.message("scopes.chooser.scope.severity");
-        case HIGHLIGHTING_COLUMN:
-          return LangBundle.message("scopes.chooser.scope.highlighting");
-        default:
-          return null;
-      }
+      return switch (column) {
+        case SCOPE_NAME_COLUMN -> LangBundle.message("scopes.chooser.scope.column");
+        case SEVERITY_COLUMN -> LangBundle.message("scopes.chooser.scope.severity");
+        case HIGHLIGHTING_COLUMN -> LangBundle.message("scopes.chooser.scope.highlighting");
+        default -> null;
+      };
     }
 
     @Override
@@ -367,18 +363,13 @@ public class ScopesAndSeveritiesTable extends JBTable {
       if (rowIndex < 0) {
         return null;
       }
-      switch (columnIndex) {
-        case SCOPE_ENABLED_COLUMN:
-          return isEnabled(rowIndex);
-        case SCOPE_NAME_COLUMN:
-          return rowIndex == lastRowIndex() ? LangBundle.message("scopes.table.everywhere.else") : getScopeName(rowIndex);
-        case SEVERITY_COLUMN:
-          return getSeverityState(rowIndex);
-        case HIGHLIGHTING_COLUMN:
-          return getAttributesKey(rowIndex);
-        default:
-          throw new IllegalArgumentException("Invalid column index " + columnIndex);
-      }
+      return switch (columnIndex) {
+        case SCOPE_ENABLED_COLUMN -> isEnabled(rowIndex);
+        case SCOPE_NAME_COLUMN -> rowIndex == lastRowIndex() ? LangBundle.message("scopes.table.everywhere.else") : getScopeName(rowIndex);
+        case SEVERITY_COLUMN -> getSeverityState(rowIndex);
+        case HIGHLIGHTING_COLUMN -> getAttributesKey(rowIndex);
+        default -> throw new IllegalArgumentException("Invalid column index " + columnIndex);
+      };
     }
 
     private NamedScope getScope(final int rowIndex) {
@@ -560,7 +551,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       DataContext dataContext = DataManager.getInstance().getDataContext(myTable);
       final ListPopup popup = JBPopupFactory.getInstance()
         .createActionGroupPopup(LangBundle.message("scopes.chooser.popup.title.select.scope.to.change.its.settings"),
-                                scopesChooser.createPopupActionGroup(myTable), dataContext,
+                                scopesChooser.createPopupActionGroup(myTable, dataContext), dataContext,
                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
       final RelativePoint point = new RelativePoint(myTable, new Point(0, 0));
       popup.show(point);

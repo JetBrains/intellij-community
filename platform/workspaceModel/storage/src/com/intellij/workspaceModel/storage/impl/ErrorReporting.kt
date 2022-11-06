@@ -84,7 +84,7 @@ internal fun EntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?)
   if (!isWrapped()) return this
   val builder = MutableEntityStorage.from(this)
   builder.entitiesBySource { true }.flatMap { it.value.flatMap { it.value } }.forEach { entity ->
-    builder.modifyEntity(ModifiableWorkspaceEntity::class.java, entity) {
+    builder.modifyEntity(WorkspaceEntity.Builder::class.java, entity) {
       this.entitySource = entity.entitySource.anonymize(sourceFilter)
     }
   }

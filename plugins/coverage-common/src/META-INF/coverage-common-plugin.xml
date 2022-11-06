@@ -23,7 +23,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.coverage.CoverageLogger"/>
   </extensions>
   <applicationListeners>
-    <listener class="com.intellij.coverage.CoverageDataManagerImpl$CoverageProjectManagerListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.coverage.CoverageDataManagerImpl$CoverageProjectManagerListener" topic="com.intellij.openapi.project.ProjectCloseListener"/>
   </applicationListeners>
   <actions resource-bundle="messages.CoverageBundle">
     <group id="CoverageMenu">

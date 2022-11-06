@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * @author peter
- */
 public class DocumentationProviderEx implements DocumentationProvider {
 
   /**

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.intellij.build.images.ImageExtension.*
 import org.jetbrains.intellij.build.images.ImageType.*
 import org.jetbrains.jps.model.module.JpsModule
@@ -63,7 +64,7 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
       image.files
         .groupBy { ImageExtension.fromFile(it) }
         .all { (ext, files) ->
-          val basicSizes = files.filter { ImageType.fromFile(it) in setOf(BASIC, DARCULA) }.mapNotNull { imageSize(it) }.toSet()
+          val basicSizes = files.filter { ImageType.fromFile(it) in setOf(BASIC, DARCULA, STROKE) }.mapNotNull { imageSize(it) }.toSet()
           val retinaSizes = files.filter { ImageType.fromFile(it) in setOf(RETINA, RETINA_DARCULA) }.mapNotNull { imageSize(it) }.toSet()
 
           if (basicSizes.size > 1 || retinaSizes.size > 1) {
@@ -138,13 +139,18 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
 }
 
 class ImageSanityChecker(projectHome: Path) : ImageSanityCheckerBase(projectHome, false) {
-  private val infos = StringBuilder()
-  private val warnings = StringBuilder()
+  // used with parallelStream()
+  private val infos = ContainerUtil.createConcurrentList<String>()
+  private val warnings = ContainerUtil.createConcurrentList<String>()
 
   fun printWarnings() {
+    //if (infos.isNotEmpty()) {
+    //  println()
+    //  println(infos.joinToString("\n"))
+    //}
     if (warnings.isNotEmpty()) {
       println()
-      println(warnings)
+      println(warnings.joinToString("\n"))
     }
     else {
       println()
@@ -165,10 +171,14 @@ class ImageSanityChecker(projectHome: Path) : ImageSanityCheckerBase(projectHome
     }
 
     if (images.isEmpty()) return
-    logger.append("$prefix $message found in module '${module.name}'\n")
+
+    val lines = mutableListOf<String>()
+    lines += "$prefix $message found in module '${module.name}'"
     images.sortedBy { it.id }.forEach {
-      logger.append("    ${it.id} - ${it.presentablePath}\n")
+      lines += "    ${it.id} - ${it.presentablePath}"
     }
-    logger.append("\n")
+    lines += ""
+
+    logger.addAll(lines)
   }
 }

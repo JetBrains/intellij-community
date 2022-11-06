@@ -4,14 +4,14 @@ package org.jetbrains.plugins.gradle.findUsages
 import com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.Property
-import com.intellij.util.castSafelyTo
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor
+import com.intellij.util.asSafely
+import org.jetbrains.plugins.gradle.service.resolve.gradlePropertiesStream
 
 class GradleImplicitPropertyUsageProvider : ImplicitPropertyUsageProvider {
 
   override fun isUsed(property: Property): Boolean {
-    val containingFile = property.containingFile.castSafelyTo<PropertiesFile>() ?: return false
-    val propertiesFiles = GradleExtensionsContributor.gradlePropertiesStream(property)
+    val containingFile = property.containingFile.asSafely<PropertiesFile>() ?: return false
+    val propertiesFiles = gradlePropertiesStream(property)
     if (containingFile !in propertiesFiles) {
       return false
     }

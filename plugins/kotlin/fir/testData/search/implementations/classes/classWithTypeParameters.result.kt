@@ -1,2 +1,2 @@
-SymbolLightClass: Y
-SymbolLightClass: Z
+KtClass: Y
+KtClass: Z

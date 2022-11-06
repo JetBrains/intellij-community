@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.addOptionTag
-import com.intellij.util.getAttributeBooleanValue
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings.KotlinScriptDefinitionValue.Companion.DEFAULT
@@ -26,6 +25,8 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
     var suppressDefinitionsCheck = false
 
     var showSupportWarning = true
+
+    var decideOnRemainingInSourceRootLater = false
 
     private var scriptDefinitions = linkedMapOf<KotlinScriptDefinitionKey, KotlinScriptDefinitionValue>()
 

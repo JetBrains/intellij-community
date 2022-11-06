@@ -660,9 +660,9 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    * so that listeners can be called later.
    */
   final synchronized boolean unregisterExtensions(boolean stopAfterFirstMatch,
-                                                  @NotNull List<Runnable> priorityListenerCallbacks,
-                                                  @NotNull List<Runnable> listenerCallbacks,
-                                                  @NotNull Predicate<ExtensionComponentAdapter> extensionToKeepFilter) {
+                                                  @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                                  @NotNull List<? super Runnable> listenerCallbacks,
+                                                  @NotNull Predicate<? super ExtensionComponentAdapter> extensionToKeepFilter) {
     ExtensionPointListener<T>[] listeners = this.listeners;
     List<ExtensionComponentAdapter> removedAdapters = null;
     List<ExtensionComponentAdapter> adapters = this.adapters;
@@ -719,8 +719,8 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
                                      @NotNull PluginDescriptor pluginDescriptor,
-                                     @NotNull List<Runnable> priorityListenerCallbacks,
-                                     @NotNull List<Runnable> listenerCallbacks);
+                                     @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                     @NotNull List<? super Runnable> listenerCallbacks);
 
   private void notifyListeners(boolean isRemoved,
                                @NotNull List<? extends ExtensionComponentAdapter> adapters,
@@ -911,7 +911,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    */
   public final synchronized void registerExtensions(@NotNull List<ExtensionDescriptor> extensionElements,
                                                     @NotNull PluginDescriptor pluginDescriptor,
-                                                    @Nullable /* Mutable */ List<Runnable> listenerCallbacks) {
+                                                    @Nullable /* Mutable */ List<? super Runnable> listenerCallbacks) {
     List<ExtensionComponentAdapter> adapters = this.adapters;
     if (adapters == Collections.<ExtensionComponentAdapter>emptyList()) {
       adapters = new ArrayList<>(extensionElements.size());
@@ -954,7 +954,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     }
 
     List<ExtensionComponentAdapter> finalAddedAdapters = addedAdapters;
-    listenerCallbacks.add(() -> notifyListeners(false, finalAddedAdapters, listeners));
+    listenerCallbacks.add((Runnable)() -> notifyListeners(false, finalAddedAdapters, listeners));
   }
 
   @TestOnly
@@ -1015,6 +1015,31 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
       throw componentManager.createError(message, getPluginDescriptor().getPluginId());
     }
     return null;
+  }
+
+  public final <V> @NotNull List<@NotNull T> findExtensions(@NotNull Class<V> aClass) {
+    List<T> extensionsCache = cachedExtensions;
+    if (extensionsCache == null) {
+      List<T> suitableInstances = new ArrayList<>();
+      for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
+        try {
+          // this enables us to not trigger Class initialization for all extensions, but only for those instanceof V
+          if (aClass.isAssignableFrom(adapter.getImplementationClass(componentManager))) {
+            @Nullable T instance = processAdapter(adapter);
+            if (instance != null) {
+              suitableInstances.add(instance);
+            }
+          }
+        }
+        catch (ClassNotFoundException e) {
+          componentManager.logError(e, adapter.pluginDescriptor.getPluginId());
+        }
+      }
+      return suitableInstances;
+    }
+    else {
+      return ContainerUtil.filter(extensionsCache, aClass::isInstance);
+    }
   }
 
   private @Nullable T findExtensionByExactClass(@NotNull Class<? extends T> aClass) {

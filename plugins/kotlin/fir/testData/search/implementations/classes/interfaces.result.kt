@@ -1,3 +1,3 @@
-SymbolLightClass: B
-SymbolLightInterfaceClass: I2
-SymbolLightInterfaceClass: I3
+KtClass: B
+KtClass: I2
+KtClass: I3

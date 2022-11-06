@@ -167,17 +167,12 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
   private ComboBox<LineSeparator> createLineSeparatorComboBox() {
     ComboBox<LineSeparator> comboBox = new ComboBox<>(myLineSeparatorComboBoxModel);
 
-    comboBox.setRenderer(SimpleListCellRenderer.create(message("combobox.crlf.none"), separator -> {
-      switch (separator) {
-        case LF:
-          return ApplicationBundle.message("combobox.crlf.unix");
-        case CRLF:
-          return ApplicationBundle.message("combobox.crlf.windows");
-        case CR:
-          return ApplicationBundle.message("combobox.crlf.mac");
-      }
-      throw new IllegalArgumentException("unknown line separator " + separator);
-    }));
+    comboBox.setRenderer(SimpleListCellRenderer.create(message("combobox.crlf.none"), separator ->
+      ApplicationBundle.message(switch (separator) {
+        case LF -> "combobox.crlf.unix";
+        case CRLF -> "combobox.crlf.windows";
+        case CR -> "combobox.crlf.mac";
+      })));
 
     return comboBox;
   }

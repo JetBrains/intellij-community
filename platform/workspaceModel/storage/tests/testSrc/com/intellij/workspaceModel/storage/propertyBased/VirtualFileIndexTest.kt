@@ -5,7 +5,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.createEntityId

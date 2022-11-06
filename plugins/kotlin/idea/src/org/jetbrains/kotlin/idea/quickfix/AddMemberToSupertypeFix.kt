@@ -15,10 +15,7 @@ import com.intellij.ui.IconManager
 import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -30,11 +27,13 @@ import org.jetbrains.kotlin.idea.quickfix.AddMemberToSupertypeFix.MemberData
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedClassDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.supertypes
@@ -134,16 +133,16 @@ abstract class AddMemberToSupertypeFactory : KotlinSingleIntentionActionFactory(
             memberElement.resolveToDescriptorIfAny(BodyResolveMode.FULL) as? CallableMemberDescriptor ?: return emptyList()
         val containingClass = memberDescriptor.containingDeclaration as? ClassDescriptor ?: return emptyList()
         // TODO: filter out impossible supertypes (for example when argument's type isn't visible in a superclass).
-        return getSuperClasses(containingClass)
-            .asSequence()
-            .filterNot { KotlinBuiltIns.isAnyOrNullableAny(it.defaultType) }
-            .map { generateMemberSignatureForType(memberDescriptor, it) }
-            .toList()
+        return getKotlinSourceSuperClasses(containingClass).map { generateMemberSignatureForType(memberDescriptor, it) }
     }
 
-    private fun getSuperClasses(classDescriptor: ClassDescriptor): List<ClassDescriptor> {
+    private fun getKotlinSourceSuperClasses(classDescriptor: ClassDescriptor): List<ClassDescriptor> {
         val supertypes = classDescriptor.defaultType.supertypes().toMutableList().sortSubtypesFirst()
-        return supertypes.mapNotNull { it.constructor.declarationDescriptor as? ClassDescriptor }
+        return supertypes.mapNotNull { type ->
+            type.constructor.declarationDescriptor.safeAs<ClassDescriptor>().takeIf {
+                it !is JavaClassDescriptor && it !is DeserializedClassDescriptor
+            }
+        }
     }
 
     private fun MutableList<KotlinType>.sortSubtypesFirst(): List<KotlinType> {

@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
+import com.intellij.openapi.application.runReadAction
 
 fun <T : Any> runInReadActionWithWriteActionPriorityWithPCE(f: () -> T): T =
     runInReadActionWithWriteActionPriority(f) ?: throw ProcessCanceledException()
@@ -30,3 +31,12 @@ fun <T : Any> Project.runSynchronouslyWithProgress(@NlsContexts.ProgressTitle pr
     ProgressManager.getInstance().runProcessWithProgressSynchronously({ result = action() }, progressTitle, canBeCanceled, this)
     return result
 }
+
+fun <T : Any> Project.runSynchronouslyWithProgressIfEdt(@NlsContexts.ProgressTitle progressTitle: String, canBeCanceled: Boolean, action: () -> T): T? =
+    if (isDispatchThread()) {
+        runSynchronouslyWithProgress(progressTitle, canBeCanceled) {
+            runReadAction { action() }
+        }
+    } else {
+        action()
+    }

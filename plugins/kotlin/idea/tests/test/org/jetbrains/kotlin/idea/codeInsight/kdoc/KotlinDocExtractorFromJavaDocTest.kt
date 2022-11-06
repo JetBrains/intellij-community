@@ -15,7 +15,7 @@ import java.io.File
 @RunWith(JUnit4::class)
 class KotlinDocExtractorFromJavaDocTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("codeInsight/kdoc")

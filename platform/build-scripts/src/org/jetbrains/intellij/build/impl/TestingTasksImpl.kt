@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
@@ -13,6 +15,8 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.CompilationTasks.Companion.create
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -37,20 +41,27 @@ import java.util.stream.Stream
 
 internal class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
-    val projectHome = context.paths.projectHome
-    val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
-    val configuration = RunConfigurationProperties.getConfiguration(file)
-    return when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
-      JUnitRunConfigurationProperties.TYPE -> {
-        listOf(JUnitRunConfigurationProperties.loadRunConfiguration(file))
+    return try {
+      val projectHome = context.paths.projectHome
+      val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
+      val configuration = RunConfigurationProperties.getConfiguration(file)
+      when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
+        JUnitRunConfigurationProperties.TYPE -> {
+          listOf(JUnitRunConfigurationProperties.loadRunConfiguration(file))
+        }
+        CompoundRunConfigurationProperties.TYPE -> {
+          val runConfiguration = CompoundRunConfigurationProperties.loadRunConfiguration(file)
+          runConfiguration.toRun.flatMap(::loadRunConfigurations)
+        }
+        else -> {
+          throw RuntimeException("Unsupported run configuration type '${type}' in run configuration '${name}' of project '${projectHome}'")
+        }
       }
-      CompoundRunConfigurationProperties.TYPE -> {
-        val runConfiguration = CompoundRunConfigurationProperties.loadRunConfiguration(file)
-        runConfiguration.toRun.flatMap { loadRunConfigurations(it) }
-      }
-      else -> {
-        throw RuntimeException("Unsupported run configuration type '${type}' in run configuration '${name}' of project '${projectHome}'")
-      }
+    }
+    catch (e: Exception) {
+      val description = e.message?.lineSequence()?.first()?.replace("'", "\"")
+      println("##teamcity[buildProblem identity='${name.replace(" ", "_")}' description='$description']")
+      emptyList()
     }
   }
 
@@ -325,14 +336,17 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       messages.info("Tests from bucket ${allSystemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of ${numberOfBuckets} will be executed")
     }
     messages.block("Test classpath and runtime info") {
-      val runtime = runtimeExecutablePath().toString()
-      messages.info("Runtime: ${runtime}")
-      runProcess(listOf(runtime, "-version"), null, messages)
+      runBlocking(Dispatchers.IO) {
+        val runtime = getRuntimeExecutablePath().toString()
+        messages.info("Runtime: ${runtime}")
+        runProcess(args = listOf(runtime, "-version"), inheritOut = true)
+      }
       messages.info("Runtime options: ${allJvmArgs}")
       messages.info("System properties: ${allSystemProperties}")
       messages.info("Bootstrap classpath: ${bootstrapClasspath}")
       messages.info("Tests classpath: ${testClasspath}")
       modulePath?.let { mp ->
+        @Suppress("SpellCheckingInspection")
         messages.info("Tests modulepath: $mp")
       }
       if (!envVariables.isEmpty()) {
@@ -350,7 +364,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private fun runtimeExecutablePath(): Path {
+  private suspend fun getRuntimeExecutablePath(): Path {
     val runtimeDir: Path
     if (options.customRuntimePath != null) {
       runtimeDir = Path.of(options.customRuntimePath)
@@ -363,7 +377,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
 
     var java = runtimeDir.resolve(if (SystemInfoRt.isWindows) "bin/java.exe" else "bin/java")
-    if (SystemInfoRt.isMac && !Files.exists(java)) {
+    if (SystemInfoRt.isMac && Files.notExists(java)) {
       java = runtimeDir.resolve("Contents/Home/bin/java")
     }
     check(Files.exists(java)) { "java executable is missing: ${java}" }
@@ -409,6 +423,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     jvmArgs += options.jvmMemoryOptions?.split(Regex("\\s+")) ?: listOf("-Xms750m", "-Xmx750m")
 
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
+    @Suppress("SpellCheckingInspection")
     mapOf(
       "idea.platform.prefix" to options.platformPrefix,
       "idea.home.path" to context.paths.projectHome.toString(),
@@ -416,7 +431,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       "idea.system.path" to "${tempDir}/system",
       "intellij.build.compiled.classes.archives.metadata" to System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive" to System.getProperty("intellij.build.compiled.classes.archive"),
-      BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "${context.projectOutputDirectory}",
+      BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "${context.classesOutputDirectory}",
       "idea.coverage.enabled.build" to System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName" to System.getProperty("teamcity.buildConfName"),
       "java.io.tmpdir" to tempDir,
@@ -428,11 +443,11 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       "io.netty.leakDetectionLevel" to "PARANOID",
       "kotlinx.coroutines.debug" to "on",
       "sun.io.useCanonCaches" to "false",
-    ).forEach(BiConsumer { k, v ->
+    ).forEach { (k, v) ->
       if (v != null) {
         systemProperties.putIfAbsent(k, v)
       }
-    })
+    }
 
     System.getProperties().forEach(BiConsumer { key, value ->
       if ((key as String).startsWith("pass.")) {
@@ -456,16 +471,16 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
     else if (options.isDebugEnabled) {
       val suspend = if (suspendDebugProcess) "y" else "n"
-      jvmArgs += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspend},address=${options.debugHost}:${options.debugPort}"
+      jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspend},address=${options.debugHost}:${options.debugPort}")
     }
 
     if (options.isEnableCausalProfiling) {
-      val causalProfilingOptions = CausalProfilingOptions.getIMPL()
-      systemProperties["intellij.build.test.patterns"] = causalProfilingOptions.testClass.replace(".", "\\.")
-      jvmArgs += buildCausalProfilingAgentJvmArg(causalProfilingOptions)
+      val causalProfilingOptions = CausalProfilingOptions.IMPL
+      systemProperties.put("intellij.build.test.patterns", causalProfilingOptions.testClass.replace(".", "\\."))
+      jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
     }
 
-    jvmArgs += getCommandLineArgumentsForOpenPackages(context)
+    jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(context))
 
     if (suspendDebugProcess) {
       context.messages.info("""
@@ -492,7 +507,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       .distinct()
       .map { Path.of(it) }
       .toList()
-    val classloader = UrlClassLoader.build().files(classpath).get()
+    val classloader = UrlClassLoader.build().files(classpath).usePersistentClasspathIndexForLocalClassDirectories(false).get()
     val testAnnotation = classloader.loadClass("com.intellij.testFramework.SkipInHeadlessEnvironment")
     return context.project.modules.parallelStream()
       .flatMap { module ->
@@ -660,7 +675,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
 
     val argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
-    val runtime = runtimeExecutablePath().toString()
+    val runtime = runBlocking(Dispatchers.IO) { getRuntimeExecutablePath ().toString() }
     context.messages.info("Starting tests on runtime ${runtime}")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
     builder.environment().putAll(envVariables)
@@ -691,18 +706,14 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
   private fun buildCausalProfilingAgentJvmArg(options: CausalProfilingOptions): List<String> {
     val causalProfilingJvmArgs = ArrayList<String>()
+    @Suppress("SpellCheckingInspection")
     val causalProfilerAgentName = if (SystemInfoRt.isLinux || SystemInfoRt.isMac) "liblagent.so" else null
-    if (causalProfilerAgentName != null) {
-      val agentArgs = options.buildAgentArgsString()
-      if (agentArgs != null) {
-        causalProfilingJvmArgs += "-agentpath:${System.getProperty("teamcity.build.checkoutDir")}/${causalProfilerAgentName}=${agentArgs}"
-      }
-      else {
-        context.messages.info("Could not find agent options")
-      }
+    if (causalProfilerAgentName == null) {
+      context.messages.info("Causal profiling is supported for Linux and Mac only")
     }
     else {
-      context.messages.info("Causal profiling is supported for Linux and Mac only")
+      val agentArgs = options.buildAgentArgsString()
+      causalProfilingJvmArgs += "-agentpath:${System.getProperty("teamcity.build.checkoutDir")}/${causalProfilerAgentName}=${agentArgs}"
     }
     return causalProfilingJvmArgs
   }
@@ -737,6 +748,7 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
       val map = LinkedHashMap<String, String>(7)
       map["teamcity-build-number"] = System.getProperty("build.number")
       map["teamcity-build-type-id"] = System.getProperty("teamcity.buildType.id")
+      @Suppress("SpellCheckingInspection")
       map["teamcity-build-configuration-name"] = System.getenv("TEAMCITY_BUILDCONF_NAME")
       map["teamcity-build-project-name"] = System.getenv("TEAMCITY_PROJECT_NAME")
       map["branch"] = System.getProperty("teamcity.build.branch")?.takeIf(String::isNotEmpty) ?: "master"

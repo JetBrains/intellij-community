@@ -20,17 +20,23 @@ public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper
 
   private static final Logger LOG = Logger.getInstance(WaitForContributorsListenerWrapper.class);
 
-  private static final long TIMEOUT = 3000;
+  private static final long DEFAULT_TIMEOUT = 3000;
 
   private final Map<SearchEverywhereContributor<?>, Boolean> contributorsMap = new HashMap<>();
   private final ScheduledExecutorService executorService = EdtExecutorService.getScheduledExecutorInstance();
   private final SearchListModel listModel;
   private Future<?> flushFuture;
   private boolean useBuffer = true;
+  private final long timeout;
 
-  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model) {
+  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model, long timeout) {
     super(delegate);
     listModel = model;
+    this.timeout = timeout;
+  }
+
+  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model) {
+    this(delegate, model, DEFAULT_TIMEOUT);
   }
 
   @Override
@@ -57,7 +63,9 @@ public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper
   public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
     super.searchStarted(contributors);
     resetState(contributors);
-    flushFuture = scheduleFlash();
+    if (useBuffer) {
+      flushFuture = scheduleFlash();
+    }
   }
 
   @Override
@@ -102,12 +110,12 @@ public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper
       listModel.freezeElements();
     };
 
-    return executorService.schedule(command, TIMEOUT, TimeUnit.MILLISECONDS);
+    return executorService.schedule(command, timeout, TimeUnit.MILLISECONDS);
   }
 
   private void logNonFinished() {
     contributorsMap.forEach((contributor, finished) -> {
-      if (!finished) LOG.warn(String.format("Contributor (%s) did not finish search in timeout (%d). Maybe it should implement PossibleSlowContributor interface", contributor.getSearchProviderId(), TIMEOUT));
+      if (!finished) LOG.warn(String.format("Contributor (%s) did not finish search in timeout (%d). Maybe it should implement PossibleSlowContributor interface", contributor.getSearchProviderId(), timeout));
     });
   }
 
@@ -119,6 +127,6 @@ public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper
       .collect(Collectors.toMap(Function.identity(), c -> false));
     contributorsMap.clear();
     contributorsMap.putAll(map);
-    useBuffer = true;
+    useBuffer = contributors.size() > 1;
   }
 }

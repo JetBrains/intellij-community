@@ -618,31 +618,33 @@ public final class IfHelper {
 
     if (stat.getExprents() == null) {
       switch (stat.type) {
-        case SEQUENCE:
+        case SEQUENCE -> {
           return hasDirectEndEdge(stat.getStats().getLast(), from);
-        case CATCH_ALL:
-        case TRY_CATCH:
+        }
+        case CATCH_ALL, TRY_CATCH -> {
           for (Statement st : stat.getStats()) {
             if (hasDirectEndEdge(st, from)) {
               return true;
             }
           }
-          break;
-        case IF:
+        }
+        case IF -> {
           IfStatement ifstat = (IfStatement)stat;
           if (ifstat.iftype == IfStatement.IFTYPE_IFELSE) {
             return hasDirectEndEdge(ifstat.getIfstat(), from) ||
                    hasDirectEndEdge(ifstat.getElsestat(), from);
           }
-          break;
-        case SYNCHRONIZED:
+        }
+        case SYNCHRONIZED -> {
           return hasDirectEndEdge(stat.getStats().get(1), from);
-        case SWITCH:
+        }
+        case SWITCH -> {
           for (Statement st : stat.getStats()) {
             if (hasDirectEndEdge(st, from)) {
               return true;
             }
           }
+        }
       }
     }
 
@@ -652,11 +654,13 @@ public final class IfHelper {
   private static Statement getNextStatement(Statement stat) {
     Statement parent = stat.getParent();
     switch (parent.type) {
-      case ROOT:
+      case ROOT -> {
         return ((RootStatement)parent).getDummyExit();
-      case DO:
+      }
+      case DO -> {
         return parent;
-      case SEQUENCE:
+      }
+      case SEQUENCE -> {
         SequenceStatement sequence = (SequenceStatement)parent;
         if (sequence.getStats().getLast() != stat) {
           for (int i = sequence.getStats().size() - 1; i >= 0; i--) {
@@ -665,6 +669,7 @@ public final class IfHelper {
             }
           }
         }
+      }
     }
 
     return getNextStatement(parent);

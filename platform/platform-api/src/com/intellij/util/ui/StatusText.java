@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public abstract class StatusText {
@@ -44,6 +46,16 @@ public abstract class StatusText {
       @Override
       protected void revalidateAndRepaint() {
         super.revalidateAndRepaint();
+        updateBounds();
+      }
+
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setOpaque(false);
+        if (myFont == null) {
+          setFont(StartupUiUtil.getLabelFont());
+        }
         updateBounds();
       }
     };
@@ -292,6 +304,21 @@ public abstract class StatusText {
       }
     }
     column.preferredSize.setSize(size);
+  }
+
+  public Iterable<JComponent> getWrappedFragmentsIterable() {
+    return new Iterable<>() {
+      @NotNull
+      @Override
+      public Iterator<JComponent> iterator() {
+        Iterable<JComponent> components = JBIterable.<Fragment>empty()
+          .append(myPrimaryColumn.fragments)
+          .append(mySecondaryColumn.fragments)
+          .map(it -> it.myComponent);
+
+        return components.iterator();
+      }
+    };
   }
 
   private Fragment getOrCreateFragment(boolean isPrimaryColumn, int row) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -62,6 +48,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
 
     if (parent instanceof PsiTypeElement) {
       if (parent.getParent() instanceof PsiReferenceParameterList) return true;
+      if (parent.getParent() instanceof PsiDeconstructionPattern) return true;
 
       while (parent.getParent() instanceof PsiTypeElement){
         parent = parent.getParent();
@@ -152,7 +139,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
       return false;
     }
     final String refName = element.getReferenceName();
-    if (refName == null || 
+    if (refName == null ||
         PsiTreeUtil.getParentOfType(element, PsiTypeElement.class, PsiReferenceList.class) == null && !checkClassName(refName)) return false;
     PsiElement nameElement = element.getReferenceNameElement();
     if (nameElement == null) return false;
@@ -214,7 +201,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
           if (aClass != null) return aClass.getQualifiedName();
         }
       }
-    } else if (ggParent instanceof PsiExpressionList && parent instanceof PsiExpression && 
+    } else if (ggParent instanceof PsiExpressionList && parent instanceof PsiExpression &&
                (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD)) {
       final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, false);
       if (expectedTypes.length == 1) {
@@ -228,5 +215,13 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     }
 
     return superClassName;
+  }
+
+  protected static @Nullable PsiDeconstructionPattern getDeconstructionPattern(@NotNull PsiJavaCodeReferenceElement reference) {
+    if (reference.getParent() instanceof PsiTypeElement typeElement &&
+        typeElement.getParent() instanceof PsiDeconstructionPattern pattern) {
+      return pattern;
+    }
+    return null;
   }
 }

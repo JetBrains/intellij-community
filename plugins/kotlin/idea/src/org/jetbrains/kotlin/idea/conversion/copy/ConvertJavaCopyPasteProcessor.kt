@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -146,7 +146,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             return true
         }
 
-        val textLength = data.startOffsets.indices.sumBy { data.endOffsets[it] - data.startOffsets[it] }
+        val textLength = data.startOffsets.indices.sumOf { data.endOffsets[it] - data.startOffsets[it] }
         // if the text to convert is short enough, try to do conversion without permission from user and skip the dialog if nothing converted
         if (textLength < 1000 && doConversionAndInsertImportsIfUnchanged()) return
 
@@ -331,7 +331,7 @@ internal fun confirmConvertJavaOnPaste(project: Project, isPlainText: Boolean): 
 fun ElementAndTextList.linesCount() =
     toList()
         .filterIsInstance<PsiElement>()
-        .sumBy { StringUtil.getLineBreakCount(it.text) }
+        .sumOf { StringUtil.getLineBreakCount(it.text) }
 
 fun checkUseNewJ2k(targetFile: KtFile): Boolean {
     if (targetFile is KtCodeFragment) return false

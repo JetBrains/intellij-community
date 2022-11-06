@@ -534,9 +534,10 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                   "</build>");
 
     VirtualFile f = createProjectSubFile("res/foo1.properties",
-                                         "foo1=${basedir}\n" +
-                                         "foo2=|pom.baseUri|\n" +
-                                         "foo3=a(ve|rsion]");
+                                         """
+                                           foo1=${basedir}
+                                           foo2=|pom.baseUri|
+                                           foo3=a(ve|rsion]""");
 
     assertNotNull(resolveReference(f, "basedir"));
     assertNotNull(resolveReference(f, "pom.baseUri"));
@@ -584,45 +585,43 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
   @Test
   public void testDoNotAddReferenceToDelimiterDefinition() {
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
-                  "<properties>\n" +
-                  "  <aaa>${zzz}</aaa>\n" +
-                  "</properties>\n" +
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <aaa>${zzz}</aaa>
+                    </properties>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-resources-plugin</artifactId>
+                          <configuration>
+                            <delimiters>
+                              <delimiter>${*}</delimiter>
+                            </delimiters>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>""");
 
-                  "<build>\n" +
-                  "  <plugins>\n" +
-                  "    <plugin>\n" +
-                  "      <artifactId>maven-resources-plugin</artifactId>\n" +
-                  "      <configuration>\n" +
-                  "        <delimiters>\n" +
-                  "          <delimiter>${*}</delimiter>\n" +
-                  "        </delimiters>\n" +
-                  "      </configuration>\n" +
-                  "    </plugin>\n" +
-                  "  </plugins>\n" +
-                  "</build>");
-
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>1</version>\n" +
-                     "<properties>\n" +
-                     "  <aaa>${<error descr=\"Cannot resolve symbol 'zzz'\">zzz</error>}</aaa>" +
-                     "</properties>\n" +
-
-                     "<build>\n" +
-                     "  <plugins>\n" +
-                     "    <plugin>\n" +
-                     "      <artifactId><error descr=\"Plugin 'maven-resources-plugin:' not found\">maven-resources-plugin</error></artifactId>" +
-                     "      <configuration>\n" +
-                     "        <delimiters>\n" +
-                     "          <delimiter>${*}</delimiter>\n" +
-                     "        </delimiters>\n" +
-                     "      </configuration>\n" +
-                     "    </plugin>\n" +
-                     "  </plugins>\n" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <aaa>${<error descr="Cannot resolve symbol 'zzz'">zzz</error>}</aaa></properties>
+                       <build>
+                         <plugins>
+                           <plugin>
+                             <artifactId>maven-resources-plugin</artifactId>      <configuration>
+                               <delimiters>
+                                 <delimiter>${*}</delimiter>
+                               </delimiters>
+                             </configuration>
+                           </plugin>
+                         </plugins>
+                       </build>""");
 
     checkHighlighting();
   }

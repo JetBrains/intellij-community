@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import javax.swing.JComponent
 
 class ProjectToolbarWidgetAction : AnAction(), CustomComponentAction {
@@ -23,7 +24,7 @@ class ProjectToolbarWidgetAction : AnAction(), CustomComponentAction {
     val project = e.project
     val file = project?.let { FileEditorManager.getInstance(it).selectedFiles.firstOrNull() }
     val settings = UISettings.getInstance()
-    val showFileName = settings.editorTabPlacement == UISettings.TABS_NONE && file != null
+    val showFileName = Registry.`is`("ide.experimental.ui.project.widget.show.file") && settings.editorTabPlacement == UISettings.TABS_NONE && file != null
     val maxLength = if (showFileName) 12 else 24
     val projName = project?.name ?: ""
 
@@ -33,9 +34,10 @@ class ProjectToolbarWidgetAction : AnAction(), CustomComponentAction {
       fullName.append(" — ").append(file!!.name)
       cutName.append(" — ").append(cutFile(file.name, maxLength))
     }
-    e.presentation.text = cutName.toString()
+    e.presentation.setText(cutName.toString(), false)
     e.presentation.description = if (cutName.toString() == fullName.toString()) null else fullName.toString()
     e.presentation.putClientProperty(projectKey, project)
+    e.presentation.isEnabled = e.isFromActionToolbar
   }
 
   private fun cutFile(value: String, maxLength: Int): String {

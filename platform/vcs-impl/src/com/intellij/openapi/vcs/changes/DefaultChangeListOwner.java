@@ -11,7 +11,7 @@ import java.util.List;
 public class DefaultChangeListOwner implements ChangeListOwner {
   private final Project myProject;
 
-  public DefaultChangeListOwner(@NotNull Project project) {myProject = project;}
+  public DefaultChangeListOwner(@NotNull Project project) { myProject = project; }
 
   @Override
   public Project getProject() {
@@ -25,6 +25,6 @@ public class DefaultChangeListOwner implements ChangeListOwner {
 
   @Override
   public void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles) {
-    ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, unversionedFiles);
+    ScheduleForAdditionAction.addUnversionedFilesToVcsInBackground(myProject, list, unversionedFiles);
   }
 }

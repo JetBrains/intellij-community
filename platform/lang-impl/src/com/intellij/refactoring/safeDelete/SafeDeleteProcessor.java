@@ -388,6 +388,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
         for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
             delegate.prepareForDeletion(element);
+            break;
           }
         }
       }

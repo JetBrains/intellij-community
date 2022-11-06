@@ -23,11 +23,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.*
@@ -153,7 +149,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
           .applyToComponent {
             text = settings.customStylesheetPath ?: ""
           }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .enabledIf(externalCssCheckBox.selected)
           .applyIfEnabled()
           .validationOnInput(::validateCustomStylesheetPath)
@@ -174,7 +170,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       row {
         val editor = createCustomStylesheetEditor()
         cell(editor.component)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .onApply { settings.customStylesheetText = runReadAction { editor.document.text } }
           .onIsModified { settings.customStylesheetText != runReadAction { editor.document.text.takeIf { it.isNotEmpty() } } }
           .onReset { resetEditorText(settings.customStylesheetText ?: "") }
@@ -195,7 +191,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
     collapsibleGroup(MarkdownBundle.message("markdown.settings.pandoc.name")) {
       row {
         cell(PandocSettingsPanel(project))
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .apply {
             onApply { component.apply() }
             onIsModified { component.isModified() }

@@ -48,8 +48,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchRe
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.matchesCoordinates
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
@@ -61,6 +59,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
 import com.jetbrains.packagesearch.intellij.plugin.util.KotlinPluginStatus
+import com.jetbrains.packagesearch.intellij.plugin.util.PowerSaveModeState
 import com.jetbrains.packagesearch.intellij.plugin.util.hasKotlinModules
 import com.jetbrains.packagesearch.intellij.plugin.util.kotlinPluginStatusFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
@@ -74,15 +73,12 @@ import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCach
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelFilterNot
-import com.jetbrains.packagesearch.intellij.plugin.util.parallelFlatMap
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMapNotNull
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -126,13 +122,10 @@ import kotlin.time.measureTimedValue
 
 internal class PackagesListPanel(
     private val project: Project,
-    private val headerOperationsCache: CoroutineLRUCache<PackagesToUpgrade.PackageUpgradeInfo, List<PackageSearchOperation<*>>> =
-        project.packageSearchProjectCachesService.headerOperationsCache,
     private val searchCache: CoroutineLRUCache<SearchCommandModel, ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> =
         project.packageSearchProjectCachesService.searchCache,
     private val searchPackageModelCache: CoroutineLRUCache<UiPackageModelCacheKey, UiPackageModel.SearchResult> =
         project.packageSearchProjectCachesService.searchPackageModelCache,
-    operationFactory: PackageSearchOperationFactory,
     operationExecutor: OperationExecutor,
     viewModelFlow: Flow<ViewModel>,
     private val dataProvider: ProjectDataProvider
@@ -391,15 +384,11 @@ internal class PackagesListPanel(
                     onComplete = onComplete("tableItemsTime")
                 )
 
-                val headerData = project.lifecycleScope.computeHeaderData(
-                    project = project,
+                val headerData = computeHeaderData(
                     totalItemsCount = tableItems.size,
                     packageUpdateInfos = filteredPackageUpgrades,
                     hasSearchResults = apiSearchResults?.packages?.isNotEmpty() ?: false,
                     targetModules = targetModules,
-                    knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
-                    operationFactory = operationFactory,
-                    cache = headerOperationsCache,
                     onComplete = onComplete("headerDataTime")
                 )
 
@@ -420,7 +409,7 @@ internal class PackagesListPanel(
             .flowOn(project.lifecycleScope.coroutineDispatcher)
             .onEach { (targetModules, headerData, packagesTableViewModel) ->
                 val renderingTime = measureTime {
-                    updateListEmptyState(targetModules)
+                    updateListEmptyState(targetModules, project.packageSearchProjectService.isLoadingFlow.value)
 
                     headerPanel.display(headerData)
 
@@ -459,7 +448,6 @@ internal class PackagesListPanel(
             .onEach {
                 searchPackageModelCache.clear()
                 searchCache.clear()
-                headerOperationsCache.clear()
             }
             .launchIn(project.lifecycleScope)
 
@@ -482,29 +470,50 @@ internal class PackagesListPanel(
             .launchIn(project.lifecycleScope)
     }
 
-    private fun updateListEmptyState(targetModules: TargetModules) {
+    private fun updateListEmptyState(targetModules: TargetModules, loading: Boolean) {
+        listPanel.emptyText.clear()
         when {
+            PowerSaveModeState.getCurrentState() == PowerSaveModeState.ENABLED -> {
+                listPanel.emptyText.appendLine(
+                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.powerSaveMode")
+                )
+            }
             isSearching() -> {
                 listPanel.emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.searching")
             }
-            targetModules is TargetModules.None -> {
-                listPanel.emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.noModule")
+            project.packageSearchProjectService.isComputationAllowed -> when {
+                targetModules is TargetModules.None -> {
+                    listPanel.emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.noModule")
+                }
+                !loading -> {
+                    val targetModuleNames = when (targetModules) {
+                        is TargetModules.All -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.allModules")
+                        is TargetModules.One -> targetModules.module.projectModule.name
+                        is TargetModules.None -> error("No module selected empty state should be handled separately")
+                    }
+                    listPanel.emptyText.appendLine(
+                        PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.packagesOnly", targetModuleNames)
+                    )
+                    listPanel.emptyText.appendLine(
+                        PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.learnMore"),
+                        SimpleTextAttributes.LINK_ATTRIBUTES
+                    ) {
+                        BrowserUtil.browse("https://www.jetbrains.com/help/idea/package-search-build-system-support-limitations.html")
+                    }
+                }
+                else -> listPanel.emptyText.appendLine(
+                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.loading")
+                )
             }
             else -> {
-                val targetModuleNames = when (targetModules) {
-                    is TargetModules.All -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.allModules")
-                    is TargetModules.One -> targetModules.module.projectModule.name
-                    is TargetModules.None -> error("No module selected empty state should be handled separately")
-                }
-                listPanel.emptyText.clear()
                 listPanel.emptyText.appendLine(
-                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.packagesOnly", targetModuleNames)
+                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.interrupted")
                 )
                 listPanel.emptyText.appendLine(
-                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.learnMore"),
+                    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.interrupted.restart"),
                     SimpleTextAttributes.LINK_ATTRIBUTES
                 ) {
-                    BrowserUtil.browse("https://www.jetbrains.com/help/idea/package-search-build-system-support-limitations.html")
+                    project.packageSearchProjectService.resumeComputation()
                 }
             }
         }
@@ -590,15 +599,11 @@ private fun SearchTextField.addOnTextChangedListener(action: (String) -> Unit) =
 internal fun JCheckBox.addSelectionChangedListener(action: (Boolean) -> Unit) =
     addItemListener { e -> action(e.stateChange == ItemEvent.SELECTED) }
 
-private fun CoroutineScope.computeHeaderData(
-    project: Project,
+private fun computeHeaderData(
     totalItemsCount: Int,
     packageUpdateInfos: List<PackagesToUpgrade.PackageUpgradeInfo>,
     hasSearchResults: Boolean,
     targetModules: TargetModules,
-    knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-    operationFactory: PackageSearchOperationFactory,
-    cache: CoroutineLRUCache<PackagesToUpgrade.PackageUpgradeInfo, List<PackageSearchOperation<*>>>,
     onComplete: (Duration) -> Unit = {}
 ): PackagesHeaderData {
     val (result, time) = measureTimedValue {
@@ -613,29 +618,12 @@ private fun CoroutineScope.computeHeaderData(
         } else {
             PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.installedPackages.addedIn", moduleNames)
         }
-        val operations = async {
-            packageUpdateInfos.parallelFlatMap { packageUpdateInfo ->
-                cache.getOrPut(packageUpdateInfo) {
-                    val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
-                        project = project,
-                        packageModel = packageUpdateInfo.packageModel,
-                        selectedVersion = packageUpdateInfo.targetVersion.originalVersion
-                    )
-                    operationFactory.createChangePackageVersionOperations(
-                        packageModel = packageUpdateInfo.packageModel,
-                        newVersion = packageUpdateInfo.targetVersion.originalVersion,
-                        targetModules = targetModules,
-                        repoToInstall = repoToInstall
-                    )
-                }
-            }
-        }
 
         PackagesHeaderData(
             labelText = title,
             count = totalItemsCount.coerceAtLeast(0),
             availableUpdatesCount = packageUpdateInfos.distinctBy { it.packageModel.identifier }.size,
-            updateOperations = operations
+            updateOperations = packageUpdateInfos.flatMap { it.computeUpgradeOperationsForSingleModule }
         )
     }
     onComplete(time)

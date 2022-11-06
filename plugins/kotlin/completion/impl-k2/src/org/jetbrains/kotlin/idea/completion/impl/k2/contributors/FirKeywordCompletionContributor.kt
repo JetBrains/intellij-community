@@ -13,10 +13,12 @@ import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywor
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.SuperKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ThisKeywordHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlers
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
@@ -49,7 +51,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
     }
 
 
-    fun KtAnalysisSession.completeWithResolve(position: PsiElement, expression: KtExpression?) {
+    private fun KtAnalysisSession.completeWithResolve(position: PsiElement, expression: KtExpression?) {
         complete(position) { lookupElement, keyword ->
             val lookups = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
                 ?.createLookups(parameters, expression, lookupElement, project)
@@ -74,6 +76,8 @@ private class ResolveDependentCompletionKeywordHandlerProvider(
 ) : CompletionKeywordHandlerProvider<KtAnalysisSession>() {
     override val handlers = CompletionKeywordHandlers(
         ReturnKeywordHandler,
+        BreakContinueKeywordHandler(KtTokens.CONTINUE_KEYWORD),
+        BreakContinueKeywordHandler(KtTokens.BREAK_KEYWORD),
         OverrideKeywordHandler(basicContext),
         ThisKeywordHandler(basicContext),
         SuperKeywordHandler,

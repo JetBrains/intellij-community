@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 
-internal class RunToolbarAdditionAction(val executorGroup: ExecutorGroup<*>,
+internal class RunToolbarAdditionAction(private val executorGroup: ExecutorGroup<*>,
                                         val process: RunToolbarProcess, val selectedAction: () -> AnAction?) : AnAction() {
 
   init {

@@ -22,8 +22,6 @@ import java.lang.annotation.Target;
 
 /**
  * Specifies name strategy (see {@link DomNameStrategy}) for this type and its subtree in XML
- *
- * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})

@@ -199,9 +199,8 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
     final AnnotationPlace place = myAnnotationPlace == AnnotationPlace.NEED_ASK_USER ?
                                   annotationsManager.chooseAnnotationsPlace(modifierListOwner) : myAnnotationPlace;
     switch (place) {
-      case NOWHERE:
-        return;
-      case EXTERNAL:
+      case NOWHERE -> { }
+      case EXTERNAL -> {
         for (String fqn : myAnnotationsToRemove) {
           annotationsManager.deannotate(modifierListOwner, fqn);
         }
@@ -210,8 +209,8 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
         }
         catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {
         }
-        break;
-      case IN_CODE:
+      }
+      case IN_CODE -> {
         final PsiFile containingFile = modifierListOwner.getContainingFile();
         Runnable command = () -> {
           removePhysicalAnnotations(modifierListOwner, myAnnotationsToRemove);
@@ -230,7 +229,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
         if (containingFile != file) {
           UndoUtil.markPsiFileForUndo(file);
         }
-        break;
+      }
     }
   }
 
@@ -255,14 +254,6 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
       }
     }
     return annotationsManager.chooseAnnotationsPlaceNoUi(modifierListOwner);
-  }
-
-  /**
-   * @deprecated use {@link #addPhysicalAnnotationIfAbsent(String, PsiNameValuePair[], PsiAnnotationOwner)}
-   */
-  @Deprecated(forRemoval = true)
-  public static PsiAnnotation addPhysicalAnnotation(String fqn, PsiNameValuePair[] pairs, PsiModifierList modifierList) {
-    return addPhysicalAnnotationTo(fqn, pairs, modifierList);
   }
 
   /**

@@ -3,60 +3,136 @@
 package org.jetbrains.kotlin.idea.findUsages.similarity
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.usages.similarity.bag.Bag
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder
 import org.jetbrains.kotlin.psi.*
 
-class KotlinSimilarityFeaturesExtractor(context: PsiElement) : KtTreeVisitorVoid() {
-    private val myUsageSimilarityFeaturesRecorder = UsageSimilarityFeaturesRecorder(context)
-    private val myContext = context
+class KotlinSimilarityFeaturesExtractor(element: PsiElement, private val context: PsiElement) : KtTreeVisitorVoid() {
+    private val usageSimilarityFeaturesRecorder = UsageSimilarityFeaturesRecorder(context, element)
+    private val variableNames = HashSet<String>()
 
     fun getFeatures(): Bag {
-        myContext.accept(this)
-        return myUsageSimilarityFeaturesRecorder.features
+        collectVariableNames()
+        context.accept(this)
+        return usageSimilarityFeaturesRecorder.features
     }
 
     override fun visitStringTemplateExpression(expression: KtStringTemplateExpression) {
-        myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, "literal: string")
+        usageSimilarityFeaturesRecorder.addAllFeatures(expression, "literal: string")
         super.visitStringTemplateExpression(expression)
     }
 
     override fun visitProperty(property: KtProperty) {
-        myUsageSimilarityFeaturesRecorder.addAllFeatures(property, "VAR: ")
+        usageSimilarityFeaturesRecorder.addAllFeatures(property, "PROPERTY: ")
         super.visitProperty(property)
     }
 
+    override fun visitCallExpression(expression: KtCallExpression) {
+        val calleeExpression = expression.calleeExpression
+        if (calleeExpression is KtNameReferenceExpression) {
+            usageSimilarityFeaturesRecorder.addAllFeatures(expression, "{CALL: ${calleeExpression.getReferencedName()}}")
+        }
+        super.visitCallExpression(expression)
+    }
+
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
-        myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, expression.operationToken.toString())
+        usageSimilarityFeaturesRecorder.addAllFeatures(expression, expression.operationToken.toString())
         super.visitBinaryExpression(expression)
     }
 
     override fun visitIsExpression(expression: KtIsExpression) {
-        myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, "instanceof")
+        usageSimilarityFeaturesRecorder.addAllFeatures(expression, "instanceof")
         super.visitIsExpression(expression)
     }
 
     override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-        myUsageSimilarityFeaturesRecorder.addAllFeatures(lambdaExpression, "lambda")
+        usageSimilarityFeaturesRecorder.addAllFeatures(lambdaExpression, "lambda")
         super.visitLambdaExpression(lambdaExpression)
     }
 
     override fun visitUnaryExpression(expression: KtUnaryExpression) {
-        myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, expression.operationToken.toString())
+        usageSimilarityFeaturesRecorder.addAllFeatures(expression, expression.operationToken.toString())
         super.visitUnaryExpression(expression)
     }
 
+    override fun visitTypeReference(typeReference: KtTypeReference) {
+        usageSimilarityFeaturesRecorder.addAllFeatures(typeReference, "TYPE: ${typeReference.nameForReceiverLabel()}")
+        super.visitTypeReference(typeReference)
+    }
+
     override fun visitReferenceExpression(expression: KtReferenceExpression) {
-        var feature = "VAR:"
-        if (!theFirstReferenceInQualifiedExpression(expression)) {
-            if (expression is KtNameReferenceExpression) {
-                feature = "{CALL: ${expression.getReferencedName()}}"
-            }
+        val parent = expression.parent
+        val feature = if ((fieldOrMethodReference(expression) || parent is KtUserType) && expression is KtNameReferenceExpression) {
+            "{REFERENCE: ${expression.getReferencedName()}}"
+        } else {
+            "REFERENCE: "
         }
-        myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, feature)
+
+        usageSimilarityFeaturesRecorder.addAllFeatures(expression, feature)
         super.visitReferenceExpression(expression)
     }
 
-    private fun theFirstReferenceInQualifiedExpression(expression: KtReferenceExpression) =
-        (expression.parent is KtQualifiedExpression && expression.parent.firstChild == expression)
+    private fun fieldOrMethodReference(expression: KtReferenceExpression) =
+        expression is KtNameReferenceExpression && expression.getReferencedName() !in variableNames
+
+    private fun collectVariableNames() {
+        var currentElement = context
+        while (currentElement !is PsiFile) {
+            val parent = currentElement.parent ?: break
+            val startOffsetInParent = currentElement.startOffsetInParent
+            when (parent) {
+                is KtBlockExpression -> collectVariableNamesFromBlock(parent, startOffsetInParent)
+                is KtFunction -> collectFunctionParametersNames(parent)
+                is KtWhenExpression -> collectWhenExpressionParameterName(parent)
+                is KtForExpression -> collectForExpressionParameterName(parent)
+            }
+
+            currentElement = parent
+        }
+    }
+
+    private fun collectForExpressionParameterName(forExpression: KtForExpression) {
+        forExpression.loopParameter?.let(::collectParameterNames)
+    }
+
+    private fun collectWhenExpressionParameterName(whenExpression: KtWhenExpression) {
+        val property = whenExpression.subjectExpression as? KtProperty ?: return
+        collectPropertyName(property)
+    }
+
+    private fun collectVariableNamesFromBlock(blockExpression: KtBlockExpression, untilOffset: Int) {
+        for (statement in blockExpression.statements) {
+            if (statement.startOffsetInParent >= untilOffset) break
+            when (statement) {
+                is KtProperty -> collectPropertyName(statement)
+                is KtDestructuringDeclaration -> collectDestructuringDeclarationNames(statement)
+            }
+        }
+    }
+
+    private fun collectDestructuringDeclarationNames(destructuringDeclaration: KtDestructuringDeclaration) {
+        for (entry in destructuringDeclaration.entries) {
+            entry.name?.let(variableNames::add)
+        }
+    }
+
+    private fun collectFunctionParametersNames(function: KtFunction) {
+        if (function is KtFunctionLiteral) {
+            variableNames += "it"
+        }
+
+        for (valueParameter in function.valueParameters) {
+            collectParameterNames(valueParameter)
+        }
+    }
+
+    private fun collectParameterNames(parameter: KtParameter) {
+        parameter.name?.let(variableNames::add)
+        parameter.destructuringDeclaration?.let(::collectDestructuringDeclarationNames)
+    }
+
+    private fun collectPropertyName(property: KtProperty) {
+        property.name?.let(variableNames::add)
+    }
 }

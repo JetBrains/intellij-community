@@ -4,13 +4,14 @@ package com.intellij.packaging.impl.artifacts
 import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactType
-import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge
 
 private class ArtifactTypeFeatureCollector : ProjectPostStartupActivity {
+
   override suspend fun execute(project: Project) {
     PluginFeatureService.instance.collectFeatureMapping(
-      ArtifactManagerBridge.FEATURE_TYPE,
+      ArtifactManager.FEATURE_TYPE,
       ArtifactType.EP_NAME,
       ArtifactType::getId,
       ArtifactType::getPresentableName,

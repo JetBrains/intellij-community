@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
@@ -55,11 +56,14 @@ class RenameKotlinImplicitLambdaParameter : KotlinVariableInplaceRenameHandler()
             val containingDescriptor = target.containingDeclaration ?: return null
             val functionLiteral = DescriptorToSourceUtils.descriptorToDeclaration(containingDescriptor) as? KtFunctionLiteral ?: return null
             val newExpr = KtPsiFactory(itExpression).createExpression("{ it -> }") as KtLambdaExpression
-            functionLiteral.addRangeAfter(
-                newExpr.functionLiteral.valueParameterList,
-                newExpr.functionLiteral.arrow ?: return null,
-                functionLiteral.lBrace,
-            )
+            val arrow = newExpr.functionLiteral.arrow ?: return null
+            runWriteAction {
+                functionLiteral.addRangeAfter(
+                    newExpr.functionLiteral.valueParameterList,
+                    arrow,
+                    functionLiteral.lBrace,
+                )
+            }
 
             PsiDocumentManager.getInstance(itExpression.project).doPostponedOperationsAndUnblockDocument(editor.document)
 

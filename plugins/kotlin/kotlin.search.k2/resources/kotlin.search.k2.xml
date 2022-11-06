@@ -1,0 +1,17 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.inheritorsSearch">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.directKotlinClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <searcher forClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinClassInheritorsSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinClassInheritorsSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinClassInheritorsSearch$SearchParameters" 
+              implementationClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinClassDelegatedSearcher"/>
+    
+    <searcher forClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingCallableSearch$SearchParameters" 
+              implementationClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingMethodSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingCallableSearch$SearchParameters" 
+              implementationClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingMethodDelegatedSearcher"/>
+    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.inheritorsSearch.KotlinFirDefinitionsSearcher"/>
+  </extensions>
+</idea-plugin>

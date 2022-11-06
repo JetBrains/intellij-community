@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
@@ -30,6 +31,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.*;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -183,18 +185,40 @@ final class PaintersHelper implements Painter.Listener {
 
     final Map<GraphicsConfiguration, Cached> cachedMap = new HashMap<>();
 
-    void executePaint(@NotNull Graphics2D g,
-                      @NotNull Component component,
-                      @NotNull Image image,
-                      @NotNull IdeBackgroundUtil.Fill fillType,
-                      @NotNull IdeBackgroundUtil.Anchor anchor,
-                      float alpha,
-                      @NotNull Insets insets) {
-      int cw0 = component.getWidth();
-      int ch0 = component.getHeight();
-      Insets i = JBUI.insets(insets.top * ch0 / 100, insets.left * cw0 / 100, insets.bottom * ch0 / 100, insets.right * cw0 / 100);
-      int cw = cw0 - i.left - i.right;
-      int ch = ch0 - i.top - i.bottom;
+    void executePaint(
+      @NotNull Graphics2D g,
+      @NotNull Component component,
+      @NotNull Image image,
+      @NotNull IdeBackgroundUtil.Fill fillType,
+      @NotNull IdeBackgroundUtil.Anchor anchor,
+      float alpha,
+      @NotNull Insets insets
+    ) {
+      final var ctx = ScaleContext.create(g);
+      // Round up because we'd rather have the image clipped by 1 pixel than leave one pixel without background.
+      final int componentWidth = PaintUtil.alignIntToInt(component.getWidth(), ctx, PaintUtil.RoundingMode.CEIL, null);
+      final int componentHeight = PaintUtil.alignIntToInt(component.getHeight(), ctx, PaintUtil.RoundingMode.CEIL, null);
+      executePaint(g, componentWidth, componentHeight, image, fillType, anchor, alpha, insets);
+    }
+
+    private void executePaint(
+      @NotNull Graphics2D g,
+      int componentWidth,
+      int componentHeight,
+      @NotNull Image image,
+      @NotNull IdeBackgroundUtil.Fill fillType,
+      @NotNull IdeBackgroundUtil.Anchor anchor,
+      float alpha,
+      @NotNull Insets insets
+    ) {
+      Insets i = JBUI.insets(
+        insets.top * componentHeight / 100,
+        insets.left * componentWidth / 100,
+        insets.bottom * componentHeight / 100,
+        insets.right * componentWidth / 100
+      );
+      int cw = componentWidth - i.left - i.right;
+      int ch = componentHeight - i.top - i.bottom;
       int w = image.getWidth(null);
       int h = image.getHeight(null);
       if (w <= 0 || h <= 0) return;
@@ -397,6 +421,7 @@ final class PaintersHelper implements Painter.Listener {
     private final JComponent rootComponent;
     private final String propertyName;
 
+    private ImageLoadSettings imageLoadSettings;
     private Image image;
     private float alpha;
     private Insets insets;
@@ -436,13 +461,21 @@ final class PaintersHelper implements Painter.Listener {
       return image != null;
     }
 
-    private void resetImage(String value, Image newImage, float newAlpha, IdeBackgroundUtil.Fill newFill, IdeBackgroundUtil.Anchor newAnchor) {
+    private void resetImage(
+      String value,
+      ImageLoadSettings newImageLoadSettings,
+      Image newImage,
+      float newAlpha,
+      IdeBackgroundUtil.Fill newFill,
+      IdeBackgroundUtil.Anchor newAnchor
+    ) {
       if (!Objects.equals(current, value)) {
         return;
       }
 
       boolean prevOk = image != null;
       clearImages(-1);
+      imageLoadSettings = newImageLoadSettings;
       image = newImage;
       insets = JBInsets.emptyInsets();
       alpha = newAlpha;
@@ -467,61 +500,94 @@ final class PaintersHelper implements Painter.Listener {
       IdeBackgroundUtil.Anchor newAnchor = StringUtil.parseEnum(parts.length > 3 ? Strings.toUpperCase(parts[3]) : "", IdeBackgroundUtil.Anchor.CENTER, IdeBackgroundUtil.Anchor.class);
       String flip = parts.length > 4 ? parts[4] : "none";
       String filePath = parts[0];
+      boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
+      boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
+      ImageLoadSettings newLoadSettings = new ImageLoadSettings(filePath, flipH, flipV);
 
       if (Strings.isEmpty(filePath)) {
-        resetImage(propertyValue, null, newAlpha, newFillType, newAnchor);
+        resetImage(propertyValue, newLoadSettings, null, newAlpha, newFillType, newAnchor);
+        return;
+      }
+
+      if (Objects.equals(imageLoadSettings, newLoadSettings)) {
+        resetImage(propertyValue, newLoadSettings, image, newAlpha, newFillType, newAnchor);
         return;
       }
 
       ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
-      boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
-      boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        Image image = null;
-        try {
-          InputStream stream;
-          boolean isSvg = filePath.endsWith(".svg");
-          if (filePath.contains("://") && !filePath.startsWith("http")) {
-            stream = new URL(filePath).openStream();
-          }
-          else {
-            Path path = Paths.get(filePath);
-            if (!path.isAbsolute()) {
-              path = PathManager.getConfigDir().resolve(path);
-            }
-            path.normalize();
-            stream = Files.newInputStream(path.normalize());
-          }
-
-          try (stream) {
-            if (isSvg) {
-              image = SVGLoader.load(stream, 1);
-            }
-            else {
-              image = ImageIO.read(new MemoryCacheImageInputStream(stream));
-            }
-          }
-
-          BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-          image = ImageLoader.convertImage(
-            image,
-            flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
-            ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
-            true,
-            !isSvg,
-            1,
-            isSvg);
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-        finally {
-          Image finalImage = image;
-          ApplicationManager.getApplication().invokeLater(() -> {
-            resetImage(propertyValue, finalImage, newAlpha, newFillType, newAnchor);
-          }, modalityState);
-        }
+        Image newImage = filterImage(loadImage(newLoadSettings), newLoadSettings);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          resetImage(propertyValue, newLoadSettings, newImage, newAlpha, newFillType, newAnchor);
+        }, modalityState);
       });
     }
+
+    private static InputStream openImageInputStream(String filePath) throws IOException {
+      InputStream stream;
+      if (filePath.contains("://") && !filePath.startsWith("http")) {
+        stream = new URL(filePath).openStream();
+      }
+      else {
+        Path path = Paths.get(filePath);
+        if (!path.isAbsolute()) {
+          path = PathManager.getConfigDir().resolve(path);
+        }
+        stream = Files.newInputStream(path.normalize());
+      }
+      return stream;
+    }
+
+    private static @Nullable Image loadImage(ImageLoadSettings imageLoadSettings) {
+      String filePath = imageLoadSettings.filePath();
+      try (InputStream stream = openImageInputStream(filePath)) {
+        if (isSvg(filePath)) {
+          return SVGLoader.load(stream, 1);
+        }
+        else {
+          return ImageIO.read(new MemoryCacheImageInputStream(stream));
+        }
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        return null;
+      }
+    }
+
+    private static @Nullable Image filterImage(@Nullable Image image, ImageLoadSettings imageLoadSettings) {
+      if (image == null) {
+        return null;
+      }
+      try {
+        boolean flipV = imageLoadSettings.flipV();
+        boolean flipH = imageLoadSettings.flipH();
+        boolean isSvg = imageLoadSettings.isSvg();
+        BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
+        return ImageLoader.convertImage(
+          image,
+          flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
+          ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
+          false, // we scale and handle HiDPI later
+          false,
+          1,
+          isSvg);
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        return null;
+      }
+    }
+
+    private static boolean isSvg(String filePath) {
+      return filePath.endsWith(".svg");
+    }
+
+    record ImageLoadSettings(String filePath, boolean flipH, boolean flipV) {
+      public boolean isSvg() {
+        return filePath.endsWith(".svg");
+      }
+    }
+
   }
+
 }

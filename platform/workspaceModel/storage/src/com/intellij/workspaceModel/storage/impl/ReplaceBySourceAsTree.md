@@ -18,7 +18,7 @@ Replace With
 
 - Take `[Two]`, get `Root` using links.
 - Find `Root2`
-  - By `PersistentId` (using persistentId index)
+  - By `SymbolicId` (using symbolicId index)
   - Or ???
 - Check if `Root` should be replaced with `Root2` (no)
 - Traverse children.

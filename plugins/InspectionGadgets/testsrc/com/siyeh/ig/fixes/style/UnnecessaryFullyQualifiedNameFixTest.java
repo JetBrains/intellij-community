@@ -18,60 +18,57 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
 
   public void testLeaveFQNamesInJavadoc() {
     doTest(
-      "/**\n"                    +
-      " * @see java.util.List\n" +
-      " */\n"                    +
-      "class X {"                +
-      "  /**/java.util.List l;"  +
-      "}",
+      """
+        /**
+         * @see java.util.List
+         */
+        class X {  /**/java.util.List l;}""",
 
-      "import java.util.List;\n\n" +
-      "/**\n"                      +
-      " * @see java.util.List\n"   +
-      " */\n"                      +
-      "class X {"                  +
-      "  List l;"                  +
-      "}",
+      """
+        import java.util.List;
+
+        /**
+         * @see java.util.List
+         */
+        class X {  List l;}""",
       JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS
     );
   }
 
   public void testReplaceFQNamesInJavadoc() {
     doTest(
-      "/**\n"                    +
-      " * @see java.util.List\n" +
-      " */\n"                    +
-      "class X {"                +
-      "  /**/java.util.List l;"  +
-      "}",
+      """
+        /**
+         * @see java.util.List
+         */
+        class X {  /**/java.util.List l;}""",
 
-      "import java.util.List;\n\n" +
-      "/**\n"                      +
-      " * @see List\n"             +
-      " */\n"                      +
-      "class X {"                  +
-      "  List l;"                  +
-      "}",
+      """
+        import java.util.List;
+
+        /**
+         * @see List
+         */
+        class X {  List l;}""",
       JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
     );
   }
 
   public void testReplaceFQNamesInJavadoc2() {
     doTest(
-      "/**\n"                    +
-      " * @see java.util.List\n" +
-      " */\n"                    +
-      "class X {"                +
-      "  /**/java.util.List l;"  +
-      "}",
+      """
+        /**
+         * @see java.util.List
+         */
+        class X {  /**/java.util.List l;}""",
 
-      "import java.util.List;\n\n" +
-      "/**\n"                      +
-      " * @see List\n"             +
-      " */\n"                      +
-      "class X {"                  +
-      "  List l;"                  +
-      "}",
+      """
+        import java.util.List;
+
+        /**
+         * @see List
+         */
+        class X {  List l;}""",
       JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
     );
   }
@@ -79,19 +76,22 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
   @SuppressWarnings("DanglingJavadoc")
   public void testPackageInfo() {
     doTest(
-      "/**\n" +
-      " * @see javax.annotation.Generated\n" +
-      " */\n" +
-      "@/**/javax.annotation.Generated\n" +
-      "package p;\n",
+      """
+        /**
+         * @see javax.annotation.Generated
+         */
+        @/**/javax.annotation.Generated
+        package p;
+        """,
 
-      "/**\n"                                +
-      " * @see javax.annotation.Generated\n" +
-      " */\n"                                +
-      "@Generated\n"                         +
-      "package p;\n"                         +
-      "\n"                                   +
-      "import javax.annotation.Generated;",
+      """
+        /**
+         * @see javax.annotation.Generated
+         */
+        @Generated
+        package p;
+
+        import javax.annotation.Generated;""",
       JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT, "package-info.java");
   }
 
@@ -160,19 +160,20 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package javax.annotation;\n" +
-      "import java.lang.annotation.*;\n" +
-      "import static java.lang.annotation.ElementType.*;\n" +
-      "import static java.lang.annotation.RetentionPolicy.*;\n" +
-      "@Documented\n" +
-      "@Retention(SOURCE)\n" +
-      "@Target({PACKAGE, TYPE, ANNOTATION_TYPE, METHOD, CONSTRUCTOR, FIELD,\n" +
-      "        LOCAL_VARIABLE, PARAMETER})\n" +
-      "public @interface Generated {\n" +
-      "   String[] value();\n" +
-      "   String date() default \"\";\n" +
-      "   String comments() default \"\";\n" +
-      "}"
+      """
+package javax.annotation;
+import java.lang.annotation.*;
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.*;
+@Documented
+@Retention(SOURCE)
+@Target({PACKAGE, TYPE, ANNOTATION_TYPE, METHOD, CONSTRUCTOR, FIELD,
+        LOCAL_VARIABLE, PARAMETER})
+public @interface Generated {
+   String[] value();
+   String date() default "";
+   String comments() default "";
+}"""
     };
   }
 }

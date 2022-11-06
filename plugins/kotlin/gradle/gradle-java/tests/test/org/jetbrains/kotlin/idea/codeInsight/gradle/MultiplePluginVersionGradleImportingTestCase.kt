@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_4_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_5_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_6_21
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_20
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
@@ -93,12 +94,12 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
             if (!IS_UNDER_SAFE_PUSH) {
                 addVersions("6.8.3", V_1_4_32)
-                addVersions("6.9.2", V_1_5_32)
                 addVersions("7.3.3", V_1_6_21)
+                addVersions("7.4.2", V_1_7_20)
             }
 
             addVersions(
-                "7.4.2", KotlinGradlePluginVersions.latest,
+                "7.5.1", KotlinGradlePluginVersions.latest,
                 "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
             )
 
@@ -108,7 +109,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     val androidProperties: Map<String, String>
         get() = mapOf(
-            "android_gradle_plugin_version" to "7.2.2",
+            "android_gradle_plugin_version" to "7.3.0",
             "compile_sdk_version" to "31",
             "build_tools_version" to "28.0.3",
         )
@@ -184,6 +185,15 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(versionRequirement: String): Boolean {
     return parseKotlinVersionRequirement(versionRequirement).matches(kotlinPluginVersion)
 }
+
+/**
+ * Since 1.8.0, because we no longer support 1.6 jvm target, we are going to merge
+ * kotlin-stdlib-jdk[7|8] into kotlin-stdlib. So we won't add the dependency to -jdk[7|8] by default.
+ * That was implemented in the kotlin/4441033134a383b718 commit, and then, the logic was temporarily reverted
+ * in the kotlin/928e0e7fb8b3 commit
+ */
+fun MultiplePluginVersionGradleImportingTestCase.isStdlibJdk78AddedByDefault() =
+    kotlinPluginVersion >= KotlinToolingVersion("1.5.0-M1")
 
 fun MultiplePluginVersionGradleImportingTestCase.gradleVersionMatches(version: String): Boolean {
     return VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true)

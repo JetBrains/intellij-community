@@ -3,12 +3,19 @@ package com.intellij.idea;
 
 import com.intellij.internal.statistic.utils.DumpLaunchParametersStarter;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-        new DumpLaunchParametersStarter().premain(Arrays.stream(args).toList());
-    }
+  public static void main(String[] args) {
+//     how to fail with SIGSEGV:
+//
+//     Field f = Unsafe.class.getDeclaredField("theUnsafe");
+//     f.setAccessible(true);
+//     Unsafe unsafe = (Unsafe) f.get(null);
+//     unsafe.putAddress(0, 0);
+
+    DumpLaunchParametersStarter starter = new DumpLaunchParametersStarter();
+    starter.premain(Arrays.stream(args).toList());
+  }
 }
 

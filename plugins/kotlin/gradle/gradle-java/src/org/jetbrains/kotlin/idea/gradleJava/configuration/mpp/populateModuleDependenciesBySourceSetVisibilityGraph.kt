@@ -2,25 +2,25 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.openapi.externalSystem.model.DataNode
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
-import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesBySourceSetVisibilityGraph(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
-    for (sourceSet in sourceSetVisibilityGraph.nodes()) {
+    for (sourceSet in mppModel.sourceSetsByName.values) {
         if (shouldDelegateToOtherPlugin(sourceSet)) continue
 
-        val visibleSourceSets = sourceSetVisibilityGraph.successors(sourceSet) - sourceSet
+        val dependsOnSourceSets = mppModel.resolveAllDependsOnSourceSets(sourceSet)
+        val additionalVisibleSourceSets = sourceSet.additionalVisibleSourceSets.mapNotNull(mppModel.sourceSetsByName::get)
+
+        val visibleSourceSets = dependsOnSourceSets + additionalVisibleSourceSets - sourceSet
+
         val fromDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
             ?: continue
 

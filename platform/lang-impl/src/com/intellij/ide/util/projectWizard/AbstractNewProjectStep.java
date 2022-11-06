@@ -10,10 +10,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -241,7 +238,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       String noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
       int result = Messages.showYesNoDialog(options.getProjectToClose(), message, title, yesText, noText, Messages.getQuestionIcon());
       if (result == Messages.NO) {
-        return PlatformProjectOpenProcessor.doOpenProject(location, OpenProjectTask.build());
+        return PlatformProjectOpenProcessor.Companion.doOpenProject(location, OpenProjectTask.build());
       }
     }
 
@@ -272,5 +269,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
   public static boolean created(@NotNull Project project) {
     return Boolean.TRUE.equals(project.getUserData(CREATED_KEY));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -28,6 +28,11 @@ public final class SlowOperations {
   public static final String FAST_TRACK = "  fast track  ";
   public static final String RESET = "  reset  ";
 
+  /**
+   * VM property, set to {@code true} if running in plugin development sandbox.
+   */
+  public static final String IDEA_PLUGIN_SANDBOX_MODE = "idea.plugin.in.sandbox.mode";
+
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
 
@@ -75,16 +80,16 @@ public final class SlowOperations {
     }
     if (isInsideActivity(FAST_TRACK)) {
       if (Cancellation.isInNonCancelableSection()) {
-        LOG.error("Non-cancellable section in FAST_TRACK");
+        reportNonCancellableSectionInFastTrack();
       }
       else {
         throw new ProcessCanceledException();
       }
     }
-    boolean forceAssert = isInsideActivity(FORCE_ASSERT);
-    if (!forceAssert && isAlwaysAllowed()) {
+    if (isAlwaysAllowed()) {
       return;
     }
+    boolean forceAssert = isInsideActivity(FORCE_ASSERT);
     if (!forceAssert && !Registry.is("ide.slow.operations.assertion", true)) {
       return;
     }
@@ -111,6 +116,10 @@ public final class SlowOperations {
     LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
   }
 
+  private static void reportNonCancellableSectionInFastTrack() {
+    LOG.error("Non-cancellable section in FAST_TRACK");
+  }
+
   @ApiStatus.Internal
   public static boolean isInsideActivity(@NotNull String activityName) {
     EDT.assertIsEdt();
@@ -118,7 +127,7 @@ public final class SlowOperations {
       if (RESET.equals(activity)) {
         break;
       }
-      if (activityName == activity) {
+      if (activityName.equals(activity)) {
         return true;
       }
     }
@@ -141,7 +150,8 @@ public final class SlowOperations {
     boolean result = System.getenv("TEAMCITY_VERSION") != null ||
                      application.isUnitTestMode() ||
                      application.isCommandLine() ||
-                     !application.isEAP() && !application.isInternal();
+                     !application.isEAP() && !application.isInternal() && !SystemProperties
+                       .getBooleanProperty(IDEA_PLUGIN_SANDBOX_MODE, false);
     ourAlwaysAllow = result ? 1 : 0;
     return result;
   }

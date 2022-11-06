@@ -61,14 +61,15 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testInspectionSettingsImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    inspections {\n" +
-        "      myInspection { enabled = false }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              inspections {
+                myInspection { enabled = false }
+              }
+            }
+          }""")
     );
 
     final InspectionProfileImpl profile = InspectionProfileManager.getInstance(myProject).getCurrentProfile();
@@ -83,22 +84,23 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       app1(Application) {\n" +
-        "           mainClass = 'my.app.Class'\n" +
-        "           jvmArgs =   '-Xmx1g'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "       }\n" +
-        "       app2(Application) {\n" +
-        "           mainClass = 'my.app.Class2'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 app1(Application) {
+                     mainClass = 'my.app.Class'
+                     jvmArgs =   '-Xmx1g'
+                     moduleName = 'moduleName'
+                 }
+                 app2(Application) {
+                     mainClass = 'my.app.Class2'
+                     moduleName = 'moduleName'
+                 }
+              }
+            }
+          }""")
     );
 
     final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
@@ -160,16 +162,17 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       defaults(Application) {\n" +
-        "           jvmArgs = '-DmyKey=myVal'\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 defaults(Application) {
+                     jvmArgs = '-DmyKey=myVal'
+                 }
+              }
+            }
+          }""")
     );
 
     final RunManager runManager = RunManager.getInstance(myProject);
@@ -188,20 +191,21 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       defaults(Application) {\n" +
-        "           jvmArgs = '-DmyKey=myVal'\n" +
-        "       }\n" +
-        "       'My Run'(Application) {\n" +
-        "           mainClass = 'my.app.Class'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 defaults(Application) {
+                     jvmArgs = '-DmyKey=myVal'
+                 }
+                 'My Run'(Application) {
+                     mainClass = 'my.app.Class'
+                     moduleName = 'moduleName'
+                 }
+              }
+            }
+          }""")
     );
 
     final RunManager runManager = RunManager.getInstance(myProject);
@@ -227,20 +231,21 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       'My Run'(Application) {\n" +
-        "           mainClass = 'my.app.Class'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "           beforeRun {\n" +
-        "               gradle(GradleTask) { task = tasks['projects'] }\n" +
-        "           }\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 'My Run'(Application) {
+                     mainClass = 'my.app.Class'
+                     moduleName = 'moduleName'
+                     beforeRun {
+                         gradle(GradleTask) { task = tasks['projects'] }
+                     }
+                 }
+              }
+            }
+          }""")
     );
 
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
@@ -303,18 +308,19 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea.project.settings {\n" +
-        "  runConfigurations {\n" +
-        "    'jarApp'(JarApplication) {\n" +
-        "      beforeRun {\n" +
-        "        'gradleTask'(GradleTask) {\n" +
-        "          task = tasks['projects']\n" +
-        "        }\n" +
-        "      }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}"
+        """
+          import org.jetbrains.gradle.ext.*
+          idea.project.settings {
+            runConfigurations {
+              'jarApp'(JarApplication) {
+                beforeRun {
+                  'gradleTask'(GradleTask) {
+                    task = tasks['projects']
+                  }
+                }
+              }
+            }
+          }"""
       )
     );
 
@@ -340,24 +346,24 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
                       getTestRootDisposable());
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  module.settings {\n" +
-        "    facets {\n" +
-        "       spring(SpringFacet) {\n" +
-        "         contexts {\n" +
-        "            myParent {\n" +
-        "              file = 'parent_ctx.xml'\n" +
-        "            }\n" +
-        "            myChild {\n" +
-        "              file = 'child_ctx.xml'\n" +
-        "              parent = 'myParent'" +
-        "            }\n" +
-        "         }\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            module.settings {
+              facets {
+                 spring(SpringFacet) {
+                   contexts {
+                      myParent {
+                        file = 'parent_ctx.xml'
+                      }
+                      myChild {
+                        file = 'child_ctx.xml'
+                        parent = 'myParent'            }
+                   }
+                 }
+              }
+            }
+          }""")
     );
 
     final Map<String, Map<String, Object>> facetConfigs = testExtension.getConfigs();
@@ -385,14 +391,15 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testTaskTriggersImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    taskTriggers {\n" +
-        "      beforeSync tasks.getByName('projects'), tasks.getByName('tasks')\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              taskTriggers {
+                beforeSync tasks.getByName('projects'), tasks.getByName('tasks')
+              }
+            }
+          }""")
     );
 
     final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
@@ -421,16 +428,17 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     importProject(
       createBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
-        .addPostfix("import org.jetbrains.gradle.ext.*\n" +
-                    "idea {\n" +
-                    "  project.settings {\n" +
-                    "    withIDEADir { File dir ->\n" +
-                    "        def f = file(\"test_output.txt\")\n" +
-                    "        f.createNewFile()\n" +
-                    "        f.text = \"Expected file content\"\n" +
-                    "    }  \n" +
-                    "  }\n" +
-                    "}")
+        .addPostfix("""
+                      import org.jetbrains.gradle.ext.*
+                      idea {
+                        project.settings {
+                          withIDEADir { File dir ->
+                              def f = file("test_output.txt")
+                              f.createNewFile()
+                              f.text = "Expected file content"
+                          } \s
+                        }
+                      }""")
         .generate()
     );
     final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
@@ -587,16 +595,17 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testActionDelegationImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    delegateActions {\n" +
-        "      delegateBuildRunToGradle = true\n" +
-        "      testRunner = CHOOSE_PER_TEST\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.*
+          idea {
+            project.settings {
+              delegateActions {
+                delegateBuildRunToGradle = true
+                testRunner = CHOOSE_PER_TEST
+              }
+            }
+          }""")
     );
 
     String projectPath = getCurrentExternalProjectSettings().getExternalProjectPath();

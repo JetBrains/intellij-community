@@ -901,26 +901,25 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         return;
       }
       switch (e.getID()) {
-        case MouseEvent.MOUSE_ENTERED:
-          setCursor(getResizeCursor());
-          break;
-        case MouseEvent.MOUSE_EXITED:
+        case MouseEvent.MOUSE_ENTERED -> setCursor(getResizeCursor());
+        case MouseEvent.MOUSE_EXITED -> {
           if (!myDragging) {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
           }
-          break;
-        case MouseEvent.MOUSE_PRESSED:
+        }
+        case MouseEvent.MOUSE_PRESSED -> {
           if (isInside(e.getPoint())) {
             myWasPressedOnMe = true;
             if (myGlassPane != null) {
               myGlassPane.setCursor(getResizeCursor(), myListener);
             }
             e.consume();
-          } else {
+          }
+          else {
             myWasPressedOnMe = false;
           }
-          break;
-        case MouseEvent.MOUSE_RELEASED:
+        }
+        case MouseEvent.MOUSE_RELEASED -> {
           if (myWasPressedOnMe) {
             e.consume();
           }
@@ -933,12 +932,12 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           myWasPressedOnMe = false;
           myDragging = false;
           myPoint = null;
-          break;
-        case MouseEvent.MOUSE_CLICKED:
+        }
+        case MouseEvent.MOUSE_CLICKED -> {
           if (e.getClickCount() == 2) {
             center();
           }
-          break;
+        }
       }
     }
     private Cursor getResizeCursor() {

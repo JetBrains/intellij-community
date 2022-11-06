@@ -63,7 +63,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * If enabled, runner must add new line char (\n) before each TC message. This char is not reported to user.
    * @deprecated Fix your runner and stop adding "\n" before TC message.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public boolean serviceMessageHasNewLinePrefix() {
     return false;
   }

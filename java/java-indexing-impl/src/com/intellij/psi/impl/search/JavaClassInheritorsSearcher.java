@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.java.indexing.JavaIndexingBundle;
@@ -118,6 +118,11 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
             @Override
             public boolean shouldSearchInLanguage(@NotNull Language language) {
               return parameters.shouldSearchInLanguage(language);
+            }
+
+            @Override
+            public ClassInheritorsSearch.SearchParameters getOriginalParameters() {
+              return parameters;
             }
           })
           .allowParallelProcessing().forEach(subClass -> {

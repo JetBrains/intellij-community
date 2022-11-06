@@ -5,10 +5,9 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -21,7 +20,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
+open class ReferredEntityImpl(val dataSource: ReferredEntityData) : ReferredEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ReferredEntity::class.java, ContentRootEntity::class.java,
@@ -33,20 +32,22 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
 
   }
 
-  override var version: Int = 0
-  @JvmField
-  var _name: String? = null
+  override val version: Int get() = dataSource.version
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
   override val contentRoot: ContentRootEntity?
     get() = snapshot.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this)
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity>(), ReferredEntity.Builder {
+  class Builder(result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity, ReferredEntityData>(
+    result), ReferredEntity.Builder {
     constructor() : this(ReferredEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -64,6 +65,9 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -87,9 +91,9 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ReferredEntity
-      this.entitySource = dataSource.entitySource
-      this.version = dataSource.version
-      this.name = dataSource.name
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.name != dataSource.name) this.name = dataSource.name
       if (parents != null) {
       }
     }
@@ -99,7 +103,7 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -108,7 +112,7 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
       get() = getEntityData().version
       set(value) {
         checkModificationAllowed()
-        getEntityData().version = value
+        getEntityData(true).version = value
         changedProperty.add("version")
       }
 
@@ -116,7 +120,7 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
       get() = getEntityData().name
       set(value) {
         checkModificationAllowed()
-        getEntityData().name = value
+        getEntityData(true).name = value
         changedProperty.add("name")
       }
 
@@ -134,18 +138,18 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(CONTENTROOT_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -155,7 +159,6 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
         changedProperty.add("contentRoot")
       }
 
-    override fun getEntityData(): ReferredEntityData = result ?: super.getEntityData() as ReferredEntityData
     override fun getEntityClass(): Class<ReferredEntity> = ReferredEntity::class.java
   }
 }
@@ -167,26 +170,21 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ReferredEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ReferredEntity> {
     val modifiable = ReferredEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): ReferredEntity {
-    val entity = ReferredEntityImpl()
-    entity.version = version
-    entity._name = name
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ReferredEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -211,7 +209,7 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ReferredEntityData
 
@@ -223,7 +221,7 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ReferredEntityData
 

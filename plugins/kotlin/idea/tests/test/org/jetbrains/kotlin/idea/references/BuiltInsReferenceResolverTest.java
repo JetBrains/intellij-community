@@ -129,6 +129,6 @@ public class BuiltInsReferenceResolverTest extends KotlinLightCodeInsightFixture
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return ProjectDescriptorWithStdlibSources.INSTANCE;
+        return ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources();
     }
 }

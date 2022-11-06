@@ -23,10 +23,10 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
   private val archetypeVersionProperty = propertyGraph.property("")
   private val catalogLocationProperty = propertyGraph.property("")
 
-  var archetypeGroupId by archetypeGroupIdProperty
-  var archetypeArtifactId by archetypeArtifactIdProperty
-  var archetypeVersion by archetypeVersionProperty
-  var catalogLocation by catalogLocationProperty
+  private var archetypeGroupId by archetypeGroupIdProperty
+  private var archetypeArtifactId by archetypeArtifactIdProperty
+  private var archetypeVersion by archetypeVersionProperty
+  private var catalogLocation by catalogLocationProperty
 
   fun getArchetype(): MavenArchetype {
     return MavenArchetype(archetypeGroupId, archetypeArtifactId, archetypeVersion, catalogLocation, null)

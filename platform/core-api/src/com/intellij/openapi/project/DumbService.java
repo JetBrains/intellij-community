@@ -35,8 +35,6 @@ import java.util.*;
  * {@link com.intellij.openapi.application.NonBlockingReadAction#inSmartMode}.
  * <p>
  * More information about dumb mode could be found here: {@link IndexNotReadyException}
- *
- * @author peter
  */
 public abstract class DumbService {
   @Topic.ProjectLevel

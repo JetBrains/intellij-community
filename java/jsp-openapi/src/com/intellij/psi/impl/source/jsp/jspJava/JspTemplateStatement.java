@@ -17,8 +17,5 @@ package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.psi.PsiTemplateStatement;
 
-/**
- * @author peter
- */
 public interface JspTemplateStatement extends PsiTemplateStatement {
 }

@@ -560,7 +560,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
   isRunningFromSources: Boolean = PluginManagerCore.isRunningFromSources(),
   zipFilePool: ZipFilePool?,
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
-  val isInDevServerMode = java.lang.Boolean.getBoolean("idea.use.dev.build.server")
+  val isInDevServerMode = AppMode.isDevServer()
 
   val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
   val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
@@ -583,7 +583,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
     null
   }
   else if (isInDevServerMode) {
-    Paths.get(PathManager.getHomePath(), "out/dev-run", platformPrefix, "plugins")
+    Paths.get(PathManager.getHomePath(), "out/dev-run", AppMode.getDevBuildRunDirName(platformPrefix), "plugins")
   }
   else {
     Paths.get(PathManager.getPreInstalledPluginsPath())
@@ -720,7 +720,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
 
   val outputDir = Files.createTempDirectory("plugin")!!
   try {
-    Decompressor.Zip(file).extract(outputDir)
+    Decompressor.Zip(file).withZipExtensionsIfUnix().extract(outputDir)
     try {
       //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here
       val rootDir = NioFiles.list(outputDir).firstOrNull { it.name != "__index__" }

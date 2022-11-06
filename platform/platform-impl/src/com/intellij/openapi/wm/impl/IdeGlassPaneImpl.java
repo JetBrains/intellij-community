@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -8,15 +8,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.Weighted;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
@@ -33,21 +34,15 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 
-public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
+public final class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeGlassPaneImpl.class);
   private static final String PREPROCESSED_CURSOR_KEY = "SuperCursor";
 
   private final List<EventListener> myMouseListeners = new ArrayList<>();
 
   private final Set<EventListener> mySortedMouseListeners = new TreeSet<>((o1, o2) -> {
-    double weight1 = 0;
-    if (o1 instanceof Weighted) {
-      weight1 = ((Weighted)o1).getWeight();
-    }
-    double weight2 = 0;
-    if (o2 instanceof Weighted) {
-      weight2 = ((Weighted)o2).getWeight();
-    }
+    double weight1 = o1 instanceof Weighted w1 ? w1.getWeight() : 0;
+    double weight2 = o2 instanceof Weighted w2 ? w2.getWeight() : 0;
     return weight1 > weight2 ? 1 : weight1 < weight2 ? -1 : myMouseListeners.indexOf(o1) - myMouseListeners.indexOf(o2);
   });
 
@@ -62,7 +57,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private Cursor myLastOriginalCursor;
   private MouseEvent myPrevPressEvent;
 
-  WindowShadowPainter myWindowShadowPainter;
+  AbstractPainter windowShadowPainter;
+  private boolean paintersInstalled;
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     this(rootPane, false);
@@ -72,16 +68,27 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     myRootPane = rootPane;
     setOpaque(false);
     setVisible(false);
-    setEnabled(false);//Workaround to fix cursor when some semi-transparent 'highlighting area' overrides it to default
+    // workaround to fix cursor when some semi-transparent 'highlighting area' overrides it to default
+    setEnabled(false);
     setLayout(null);
     if (installPainters) {
-      IdeBackgroundUtil.initFramePainters(this);
-      IdeBackgroundUtil.initEditorPainters(this);
+      installPainters();
+    }
+  }
+
+  void installPainters() {
+    if (paintersInstalled) {
+      return;
     }
 
-    if (SystemInfoRt.isWindows && Registry.is("ide.window.shadow.painter", false)) {
-      myWindowShadowPainter = new WindowShadowPainter();
-      getPainters().addPainter(myWindowShadowPainter, null);
+    paintersInstalled = true;
+
+    IdeBackgroundUtil.initFramePainters(this);
+    IdeBackgroundUtil.initEditorPainters(this);
+
+    if (SystemInfoRt.isWindows && Boolean.getBoolean("ide.window.shadow.painter")) {
+      windowShadowPainter = new WindowShadowPainter();
+      getPainters().addPainter(windowShadowPainter, null);
     }
   }
 
@@ -168,12 +175,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
     boolean dispatched = false;
     switch (event.getID()) {
-      case MouseEvent.MOUSE_PRESSED:
+      case MouseEvent.MOUSE_PRESSED -> {
         if (target.isFocusable()) {
           IdeFocusManager.getGlobalInstance()
             .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(target, true));
         }
-
         boolean consumed = false;
         MouseEvent mouseEvent = MouseEventAdapter.convert(event, target);
         for (MouseListener listener : target.getListeners(MouseListener.class)) {
@@ -188,7 +194,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
             break;
           }
         }
-
         if (!mouseEvent.isConsumed()) {
           AWTEventListener[] eventListeners = Toolkit.getDefaultToolkit().getAWTEventListeners(AWTEvent.MOUSE_EVENT_MASK);
           if (eventListeners != null && eventListeners.length > 0) {
@@ -204,23 +209,18 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
             }
           }
         }
-
         if (consumed) {
           event.consume();
         }
         else {
           myPrevPressEvent = mouseEvent;
         }
-
         dispatched = true;
-        break;
-
-      case MouseEvent.MOUSE_RELEASED:
+      }
+      case MouseEvent.MOUSE_RELEASED -> {
         return dispatchMouseReleased(event, target);
-
-      default:
-        myPrevPressEvent = null;
-        break;
+      }
+      default -> myPrevPressEvent = null;
     }
     return dispatched;
   }
@@ -278,7 +278,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       if (event.isAltDown() && SwingUtilities.isLeftMouseButton(event) && event.getID() == MouseEvent.MOUSE_PRESSED) {
         Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
         Component component =
-          ComponentUtil.findParentByCondition(c, comp -> UIUtil.isClientPropertyTrue(comp, UIUtil.TEXT_COPY_ROOT));
+          ComponentUtil.findParentByCondition(c, comp -> ClientProperty.isTrue(comp, UIUtil.TEXT_COPY_ROOT));
         if (component != null) {
           component.getToolkit().getSystemClipboard()
             .setContents(new StringSelection(UIUtil.getDebugText(component)), EmptyClipboardOwner.INSTANCE);
@@ -369,8 +369,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
     else {
       Cursor cursor = null;
-      if (target instanceof JComponent) {
-        JComponent jComponent = (JComponent)target;
+      if (target instanceof JComponent jComponent) {
         cursor = (Cursor)jComponent.getClientProperty(PREPROCESSED_CURSOR_KEY);
         jComponent.putClientProperty(PREPROCESSED_CURSOR_KEY, null);
       }
@@ -431,21 +430,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private static void fireMouseEvent(final MouseListener listener, final MouseEvent event) {
     switch (event.getID()) {
-      case MouseEvent.MOUSE_PRESSED:
-        listener.mousePressed(event);
-        break;
-      case MouseEvent.MOUSE_RELEASED:
-        listener.mouseReleased(event);
-        break;
-      case MouseEvent.MOUSE_ENTERED:
-        listener.mouseEntered(event);
-        break;
-      case MouseEvent.MOUSE_EXITED:
-        listener.mouseExited(event);
-        break;
-      case MouseEvent.MOUSE_CLICKED:
-        listener.mouseClicked(event);
-        break;
+      case MouseEvent.MOUSE_PRESSED -> listener.mousePressed(event);
+      case MouseEvent.MOUSE_RELEASED -> listener.mouseReleased(event);
+      case MouseEvent.MOUSE_ENTERED -> listener.mouseEntered(event);
+      case MouseEvent.MOUSE_EXITED -> listener.mouseExited(event);
+      case MouseEvent.MOUSE_CLICKED -> listener.mouseClicked(event);
     }
   }
 
@@ -470,9 +459,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private void _addListener(@NotNull EventListener listener, @NotNull Disposable parent) {
     myMouseListeners.add(listener);
-    Disposer.register(parent, () -> {
-      UIUtil.invokeLaterIfNeeded(() -> removeListener(listener));
-    });
+    Disposer.register(parent, () -> UIUtil.invokeLaterIfNeeded(() -> removeListener(listener)));
     updateSortedList();
 
     activateIfNeeded();
@@ -528,7 +515,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
   }
 
-  final @NotNull PaintersHelper getNamedPainters(@NotNull String name) {
+  @NotNull PaintersHelper getNamedPainters(@NotNull String name) {
     return myNamedPainters.computeIfAbsent(name, key -> new PaintersHelper(this));
   }
 
@@ -540,9 +527,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   public void addPainter(@Nullable Component component, @NotNull Painter painter, @NotNull Disposable parent) {
     getPainters().addPainter(painter, component);
     activateIfNeeded();
-    Disposer.register(parent, () -> {
-      SwingUtilities.invokeLater(() -> removePainter(painter));
-    });
+    Disposer.register(parent, () -> SwingUtilities.invokeLater(() -> removePainter(painter)));
   }
 
   private void removePainter(@NotNull Painter painter) {
@@ -555,14 +540,14 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   protected void addImpl(Component comp, Object constraints, int index) {
     super.addImpl(comp, constraints, index);
 
-    SwingUtilities.invokeLater(() -> activateIfNeeded());
+    SwingUtilities.invokeLater(this::activateIfNeeded);
   }
 
   @Override
   public void remove(final Component comp) {
     super.remove(comp);
 
-    SwingUtilities.invokeLater(() -> deactivateIfNeeded());
+    SwingUtilities.invokeLater(this::deactivateIfNeeded);
   }
 
   @Override

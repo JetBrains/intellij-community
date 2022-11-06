@@ -15,12 +15,13 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaIns
   }
 
   public void testExtendingInnerClass() {
-    doTest("class X {\n" +
-           "  private X() {}\n" +
-           "  class Y {\n" +
-           "    class Z extends X{}\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class X {
+               private X() {}
+               class Y {
+                 class Z extends X{}
+               }
+             }""");
   }
 
   public void testNoConstructors() {
@@ -42,11 +43,12 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaIns
 
   public void testEnum() {
     //noinspection UnnecessaryEnumModifier
-    doTest("enum Currencies {\n" +
-           "    EURO, DOLLAR;\n" +
-           "    private Currencies() {\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             enum Currencies {
+                 EURO, DOLLAR;
+                 private Currencies() {
+                 }
+             }""");
   }
 
   public void testPublicConstructor() {

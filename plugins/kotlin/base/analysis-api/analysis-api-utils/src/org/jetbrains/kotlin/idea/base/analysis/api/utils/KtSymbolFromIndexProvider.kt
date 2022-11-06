@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
+import org.jetbrains.kotlin.platform.isCommon
 
 class KtSymbolFromIndexProvider(private val project: Project) {
     context(KtAnalysisSession)
@@ -25,9 +27,11 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         psiFilter: (KtClassOrObject) -> Boolean = { true },
     ): Sequence<KtNamedClassOrObjectSymbol> {
         val scope = analysisScope
+        val isCommon = useSiteModule.platform.isCommon()
         return KotlinClassShortNameIndex[name.asString(), project, scope]
             .asSequence()
-            .filter(psiFilter)
+            .filter { ktClass -> isCommon || !ktClass.isExpectDeclaration() }
+            .filter (psiFilter)
             .mapNotNull { it.getNamedClassOrObjectSymbol() }
     }
 
@@ -37,11 +41,13 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         psiFilter: (KtClassOrObject) -> Boolean = { true },
     ): Sequence<KtNamedClassOrObjectSymbol> {
         val scope = analysisScope
+        val isCommon = useSiteModule.platform.isCommon()
         val index = KotlinFullClassNameIndex
         return index.getAllKeys(project).asSequence()
             .filter { fqName -> nameFilter(getShortName(fqName)) }
             .flatMap { fqName -> index[fqName, project, scope] }
-            .filter(psiFilter)
+            .filter { ktClass -> isCommon || !ktClass.isExpectDeclaration() }
+            .filter (psiFilter)
             .mapNotNull { it.getNamedClassOrObjectSymbol() }
     }
 
@@ -100,7 +106,7 @@ class KtSymbolFromIndexProvider(private val project: Project) {
             yieldAll(KotlinPropertyShortNameIndex[nameString, project, scope])
         }
             .onEach { ProgressManager.checkCanceled() }
-            .filter { it is KtCallableDeclaration && psiFilter(it) }
+            .filter { it is KtCallableDeclaration && psiFilter(it) && !it.isExpectDeclaration()}
             .mapNotNull { it.getSymbolOfTypeSafe<KtCallableSymbol>() }
     }
 

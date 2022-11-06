@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension functions 'DelegateImpl.getValue', 'DelegateImpl.setValue'" "true"
 // ERROR: Type 'DelegateImpl<Int>' has no method 'getValue(BigTest, KProperty<*>)' and thus it cannot serve as a delegate
 // ERROR: Type 'DelegateImpl<Int>' has no method 'setValue(BigTest, KProperty<*>, [Error type: Error delegation type for DelegateImpl<Int>()])' and thus it cannot serve as a delegate for var (read-write property)
 /* IGNORE_FIR */
@@ -27,7 +27,7 @@ public operator fun <T> DelegateImpl<T>.setValue(thisRef: Any, property: KProper
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension functions 'DelegateImpl.getValue', 'DelegateImpl.setValue'" "true"
 // ERROR: Type 'DelegateImpl<Int>' has no method 'getValue(BigTest, KProperty<*>)' and thus it cannot serve as a delegate
 // ERROR: Type 'DelegateImpl<Int>' has no method 'setValue(BigTest, KProperty<*>, [Error type: Error delegation type for DelegateImpl<Int>()])' and thus it cannot serve as a delegate for var (read-write property)
 /* IGNORE_FIR */

@@ -123,7 +123,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        override fun visitKtThrowExpressionRaw(ktThrowExpression: JKKtThrowExpression) {
+        override fun visitKtThrowExpressionRaw(ktThrowExpression: JKThrowExpression) {
             printer.print("throw ")
             ktThrowExpression.exception.accept(this)
         }
@@ -427,7 +427,8 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitSuperExpressionRaw(superExpression: JKSuperExpression) {
             printer.print("super")
-            if (superExpression.superTypeQualifier != null) {
+            val numberOfDirectSupertypes = superExpression.parentOfType<JKClass>()?.inheritance?.supertypeCount() ?: 0
+            if (superExpression.superTypeQualifier != null && numberOfDirectSupertypes > 1) {
                 printer.par(ParenthesisKind.ANGLE) {
                     printer.renderSymbol(superExpression.superTypeQualifier, superExpression)
                 }
@@ -802,6 +803,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitAnnotationRaw(annotation: JKAnnotation) {
             printer.print("@")
+            annotation.useSiteTarget?.let { printer.print("${it.renderName}:") }
             printer.renderSymbol(annotation.classSymbol, annotation)
             if (annotation.arguments.isNotEmpty()) {
                 printer.par {

@@ -43,14 +43,14 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   protected val arrowButton: JButton get() = _arrowButton!!
 
   protected var popup: ListPopup? = null
-  protected var showPopupAction: AnAction? = null
+  private var showPopupAction: AnAction? = null
   protected var isPopupShowing: Boolean = false
 
   protected var propertyChangeListener: PropertyChangeListener? = null
   protected var changeListener: ChangeListener? = null
   protected var focusListener: FocusListener? = null
-  protected var arrowButtonActionListener: ActionListener? = null
-  protected var arrowButtonMouseListener: MouseListener? = null
+  private var arrowButtonActionListener: ActionListener? = null
+  private var arrowButtonMouseListener: MouseListener? = null
 
   protected val isSimpleButton: Boolean get() = optionButton.isSimpleButton
 

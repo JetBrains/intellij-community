@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -389,6 +390,7 @@ public final class GitMergeUtil {
   }
 
   public static boolean isReverseRoot(@NotNull GitRepository repository) {
+    if (Registry.is("git.do.not.swap.merge.conflict.sides")) return false;
     return repository.getState().equals(GitRepository.State.REBASING);
   }
 }

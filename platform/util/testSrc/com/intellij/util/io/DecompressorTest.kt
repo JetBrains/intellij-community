@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.SystemProperties
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
@@ -190,7 +190,7 @@ class DecompressorTest {
   }
 
   @Test fun tarSymlinks() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val rogueTarget = tempDir.newFile("rogue_f", "123789".toByteArray(Charsets.UTF_8))
     val tar = tempDir.newFile("test.tar")
@@ -206,7 +206,7 @@ class DecompressorTest {
   }
 
   @Test fun zipSymlinks() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val rogueTarget = tempDir.newFile("rogue_f", "123789".toByteArray(Charsets.UTF_8))
     val zip = tempDir.newFile("test.zip")
@@ -222,7 +222,7 @@ class DecompressorTest {
   }
 
   @Test fun zipRogueSymlinks() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "rogue", link = "../f") }
@@ -233,7 +233,7 @@ class DecompressorTest {
   }
 
   @Test fun tarRogueSymlinks() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "rogue", link = "../f") }
@@ -290,7 +290,7 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathsFilesInTarWithSymlinks() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
@@ -361,7 +361,7 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathTarSymlink() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
@@ -376,7 +376,7 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathZipSymlink() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use {
@@ -391,7 +391,7 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathTarRogueSymlinks() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
@@ -402,7 +402,7 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathZipRogueSymlinks() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
@@ -434,7 +434,7 @@ class DecompressorTest {
   }
 
   @Test fun symlinkOverwrite() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {

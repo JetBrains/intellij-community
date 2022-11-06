@@ -13,6 +13,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
+import git4idea.remote.hosting.GitHostingUrlUtil.match
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.ApiStatus
@@ -140,7 +141,7 @@ object GithubUtil {
     var githubRemote: Pair<GitRemote, String>? = null
     for (gitRemote in repository.remotes) {
       for (remoteUrl in gitRemote.urls) {
-        if (server.matches(remoteUrl)) {
+        if (match(server.toURI(), remoteUrl)) {
           val remoteName = gitRemote.name
           if ("github" == remoteName || "origin" == remoteName) {
             return Pair.create(gitRemote, remoteUrl)

@@ -27,14 +27,10 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
 
   @NotNull
   public static Shortcut newInstance(KeyboardGestureAction.ModifierType type, KeyStroke stroke) {
-    switch (type) {
-      case dblClick:
-        return new DblClick(stroke);
-      case hold:
-        return new Hold(stroke);
-    }
-
-    throw new IllegalArgumentException(type.toString());
+    return switch (type) {
+      case dblClick -> new DblClick(stroke);
+      case hold -> new Hold(stroke);
+    };
   }
 
   protected KeyboardModifierGestureShortcut(final KeyStroke stroke, KeyboardGestureAction.ModifierType type) {

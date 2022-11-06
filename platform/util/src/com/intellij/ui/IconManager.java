@@ -171,7 +171,7 @@ final class DummyIconManager implements IconManager {
     return new DummyRowIcon(icons);
   }
 
-  private static class DummyIcon implements ScalableIcon {
+  private static class DummyIcon implements ScalableIcon, com.intellij.openapi.util.DummyIcon {
     private final String path;
 
     private DummyIcon(@NotNull String path) {
@@ -281,6 +281,12 @@ final class DummyIconManager implements IconManager {
     @Override
     public String toString() {
       return "Row icon. myIcons=" + Arrays.asList(icons);
+    }
+
+    @NotNull
+    @Override
+    public Icon replaceBy(@NotNull IconReplacer replacer) {
+      return this;
     }
   }
 }

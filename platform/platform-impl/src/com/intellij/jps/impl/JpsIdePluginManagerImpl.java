@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -136,12 +137,14 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     if (jpsServiceManager instanceof JpsServiceManagerImpl) {
       ((JpsServiceManagerImpl)jpsServiceManager).cleanupExtensionCache();
     }
+    SourceRootTypeRegistry.getInstance().clearCache();
   }
 
   private void handlePluginAdded(@NotNull PluginDescriptor pluginDescriptor) {
     if (myExternalBuildPlugins.contains(pluginDescriptor)) {
       return;
     }
+    SourceRootTypeRegistry.getInstance().clearCache();
     Set<String> before = new HashSet<>();
     for (JpsModelSerializerExtension extension : loadExtensions(JpsModelSerializerExtension.class)) {
       for (JpsModuleSourceRootPropertiesSerializer<?> serializer : extension.getModuleSourceRootPropertiesSerializers()) {

@@ -9,7 +9,8 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.PairProcessor
 import com.intellij.util.ref.DebugReflectionUtil
 import junit.framework.TestCase
-import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.junit.Assert
 import java.io.File
 
@@ -65,8 +67,9 @@ object UltraLightChecker {
     }
 
     fun checkClassEquivalence(ktClass: KtClassOrObject): KtUltraLightClass? {
-        val ultraLightClass = LightClassGenerationSupport.getInstance(ktClass.project).createUltraLightClass(ktClass) ?: return null
-        val secondULInstance = LightClassGenerationSupport.getInstance(ktClass.project).createUltraLightClass(ktClass)
+        val javaSupport = KotlinAsJavaSupport.getInstance(ktClass.project).cast<KotlinAsJavaSupportBase<*>>()
+        val ultraLightClass = javaSupport.createLightClass(ktClass)?.value?.cast<KtUltraLightClass>() ?: return null
+        val secondULInstance = javaSupport.createLightClass(ktClass)?.value?.cast<KtUltraLightClass>()
         Assert.assertNotNull(secondULInstance)
         Assert.assertTrue(ultraLightClass !== secondULInstance)
         secondULInstance!!

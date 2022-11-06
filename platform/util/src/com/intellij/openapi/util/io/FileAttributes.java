@@ -1,19 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
 
 import static com.intellij.util.BitUtil.isSet;
 
 /**
  * @see FileSystemUtil#getAttributes(String)
  */
-public class FileAttributes {
+public final class FileAttributes {
   public enum Type {FILE, DIRECTORY, SPECIAL}
 
   public enum CaseSensitivity {
@@ -34,7 +40,6 @@ public class FileAttributes {
   public @interface Flags { }
 
   public static final FileAttributes BROKEN_SYMLINK = new FileAttributes(SYM_LINK, 0, 0);
-  protected static final FileAttributes UNKNOWN = new FileAttributes((byte)-1, 0, 0);
 
   private static final int TYPE_SHIFT = 3;
   private static final int CASE_SENSITIVITY_SHIFT = 5;
@@ -45,7 +50,7 @@ public class FileAttributes {
    * <p>Bits 5-7: {@link CaseSensitivity CaseSensitivity} (00={@link CaseSensitivity#UNKNOWN UNKNOWN},
    *   01={@link CaseSensitivity#SENSITIVE SENSITIVE}, 10={@link CaseSensitivity#INSENSITIVE INSENSITIVE})</p>
    */
-  protected final @Flags byte flags;
+  private final @Flags byte flags;
 
   /**
    * In bytes, 0 for special files.<br/>
@@ -71,18 +76,12 @@ public class FileAttributes {
    *                        When {@code isDirectory == false}, the caseSensitivity argument is ignored
    *                        (set to {@link CaseSensitivity#UNKNOWN}), because case sensitivity is configured on a directory level.
    */
-  public FileAttributes(boolean isDirectory,
-                        boolean isSpecial,
-                        boolean isSymlink,
-                        boolean isHidden,
-                        long length,
-                        long lastModified,
-                        boolean isWritable,
+  public FileAttributes(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, long length, long lastModified, boolean isWritable,
                         @NotNull CaseSensitivity caseSensitivity) {
     this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, caseSensitivity), length, lastModified);
   }
 
-  protected FileAttributes(@Flags byte flags, long length, long lastModified) {
+  private FileAttributes(@Flags byte flags, long length, long lastModified) {
     if (flags != -1 && (flags & 0b10000000) != 0) {
       throw new IllegalArgumentException("Invalid flags: " + Integer.toBinaryString(flags));
     }
@@ -92,12 +91,6 @@ public class FileAttributes {
     this.flags = flags;
     this.length = length;
     this.lastModified = lastModified;
-  }
-
-  protected FileAttributes(@NotNull FileAttributes fileAttributes) {
-    this.flags = fileAttributes.flags;
-    this.length = fileAttributes.length;
-    this.lastModified = fileAttributes.lastModified;
   }
 
   private static @Flags byte flags(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, boolean isWritable, CaseSensitivity sensitivity) {
@@ -171,6 +164,10 @@ public class FileAttributes {
     return new FileAttributes(newFlags, length, lastModified);
   }
 
+  public @NotNull FileAttributes withTimeStamp(long timestamp) {
+    return new FileAttributes(flags, length, timestamp);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -208,5 +205,33 @@ public class FileAttributes {
     sb.append(" case sensitive: ").append(areChildrenCaseSensitive());
     sb.append(']');
     return sb.toString();
+  }
+
+  public static @NotNull FileAttributes fromNio(@NotNull Path path, @NotNull BasicFileAttributes attrs) {
+    boolean isSymbolicLink = attrs.isSymbolicLink() || SystemInfo.isWindows && attrs.isOther() && attrs.isDirectory() && path.getParent() != null;
+
+    if (isSymbolicLink) {
+      try {
+        attrs = Files.readAttributes(path, BasicFileAttributes.class);
+      }
+      catch (IOException e) {
+        return BROKEN_SYMLINK;
+      }
+    }
+
+    boolean isHidden = false;
+    boolean isWritable = false;
+    if (SystemInfo.isWindows) {
+      isHidden = path.getParent() != null && ((DosFileAttributes)attrs).isHidden();
+      isWritable = attrs.isDirectory() || !((DosFileAttributes)attrs).isReadOnly();
+    }
+    else {
+      try { isWritable = attrs.isDirectory() || Files.isWritable(path); }
+      catch (SecurityException ignored) { }
+    }
+
+    long lastModified = attrs.lastModifiedTime().toMillis();
+
+    return new FileAttributes(attrs.isDirectory(), attrs.isOther(), isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable);
   }
 }

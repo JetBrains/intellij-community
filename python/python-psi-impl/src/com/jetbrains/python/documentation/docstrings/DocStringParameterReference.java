@@ -37,8 +37,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     if (owner instanceof PyFunction) {
       return resolveParameter((PyFunction)owner);
     }
-    if (owner instanceof PyClass) {
-      PyClass pyClass = (PyClass)owner;
+    if (owner instanceof PyClass pyClass) {
       final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, null);
       if (myType == ReferenceType.PARAMETER) {
         return init != null ? resolveParameter(init) : resolveClassVariable(pyClass);
@@ -50,7 +49,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
             return parameter;
           }
         }
-        PyElement instanceAttr = resolveInstanceVariable(pyClass);
+        final PyElement instanceAttr = resolveInstanceVariable(pyClass);
         return instanceAttr != null ? instanceAttr : resolveClassVariable(pyClass);
       }
       if (myType == ReferenceType.CLASS_VARIABLE) {
@@ -74,25 +73,13 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   }
 
   @Nullable
-  private PyTargetExpression resolveInstanceVariable(final PyClass owner) {
-    final List<PyTargetExpression> attributes = owner.getInstanceAttributes();
-    for (PyTargetExpression element : attributes) {
-      if (getCanonicalText().equals(element.getName())) {
-        return element;
-      }
-    }
-    return null;
+  private PyTargetExpression resolveInstanceVariable(@NotNull PyClass owner) {
+    return owner.findInstanceAttribute(getCanonicalText(), true);
   }
 
   @Nullable
-  private PyTargetExpression resolveClassVariable(@NotNull final PyClass owner) {
-    final List<PyTargetExpression> attributes = owner.getClassAttributes();
-    for (PyTargetExpression element : attributes) {
-      if (getCanonicalText().equals(element.getName())) {
-        return element;
-      }
-    }
-    return null;
+  private PyTargetExpression resolveClassVariable(@NotNull PyClass owner) {
+    return owner.findClassAttribute(getCanonicalText(), true, null);
   }
 
   @Nullable
@@ -170,7 +157,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     TextRange range = getRangeInElement();
-    Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(range.substring(myElement.getText()));
+    Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(range.substring(myElement.getText()));
 
     if (quotes != null) {
       range = TextRange.create(range.getStartOffset() + quotes.first.length(), range.getEndOffset() - quotes.second.length());

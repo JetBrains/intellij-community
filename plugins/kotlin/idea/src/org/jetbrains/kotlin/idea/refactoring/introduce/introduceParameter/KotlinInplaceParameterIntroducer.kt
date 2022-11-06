@@ -13,20 +13,19 @@ import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.JBColor
 import com.intellij.ui.NonFocusableCheckBox
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducer
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinInplaceVariableIntroducer
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
-import org.jetbrains.kotlin.psi.psiUtil.getValueParameterList
-import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import java.awt.Color
@@ -124,7 +123,11 @@ class KotlinInplaceParameterIntroducer(
                         } else ""
 
                         "$modifier$parameterName: $parameterType$defaultValue"
-                    } else parameter.text
+                    } else {
+                        parameter.allChildren.toList()
+                            .dropLastWhile { it is PsiComment || it is PsiWhiteSpace }
+                            .joinToString(separator = "") { it.text }
+                    }
 
                     builder.append(parameterText)
 

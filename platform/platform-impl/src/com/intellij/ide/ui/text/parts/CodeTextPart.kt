@@ -13,17 +13,18 @@ import javax.swing.text.StyleConstants
 
 /**
  * Text part that inserts the text using current editor font and draws the rounded rectangle around.
- * @param addSpaceAround if true one space will be added before and after the provided [text].
- *  It is required because highlighting is wider than text bounds.
+ * [delimiter] - text part that will be added before and after the provided [text].
+ * It is required because highlighting is wider than text bounds.
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-open class CodeTextPart(text: String, private val addSpaceAround: Boolean = false) : TextPart(text) {
+open class CodeTextPart(text: String) : TextPart(text) {
   var frameColor: Color = JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false)
+  var delimiter: TextPart = RegularTextPart("")
 
   init {
     fontGetter = {
-      EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size2D)
+      EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
     }
     editAttributes {
       StyleConstants.setForeground(this, JBUI.CurrentTheme.Label.foreground())
@@ -31,15 +32,18 @@ open class CodeTextPart(text: String, private val addSpaceAround: Boolean = fals
   }
 
   override fun insertToTextPane(textPane: JTextPane, startOffset: Int): Int {
-    val textToInsert = if (addSpaceAround) "\u00A0$text\u00A0" else text
-    textPane.document.insertString(startOffset, textToInsert, attributes)
-    val endOffset = startOffset + textToInsert.length
+    var curOffset = startOffset
+    curOffset = delimiter.insertToTextPane(textPane, curOffset)
+    textPane.document.insertString(curOffset, text, attributes)
+    curOffset += text.length
+    curOffset = delimiter.insertToTextPane(textPane, curOffset)
 
-    val highlightStart = if (addSpaceAround) startOffset + 1 else startOffset
-    val highlightEnd = if (addSpaceAround) endOffset - 1 else endOffset
+    val delimiterLength = delimiter.text.length
+    val highlightStart = startOffset + delimiterLength
+    val highlightEnd = curOffset - delimiterLength
     textPane.highlighter.addHighlight(highlightStart, highlightEnd) { g, _, _, _, c ->
-      c.drawRectangleAroundText(highlightStart, highlightEnd, g, frameColor, fill = false)
+      c.drawRectangleAroundText(highlightStart, highlightEnd, g, frameColor, fontGetter(), delimiter.fontGetter(), fill = false)
     }
-    return endOffset
+    return curOffset
   }
 }

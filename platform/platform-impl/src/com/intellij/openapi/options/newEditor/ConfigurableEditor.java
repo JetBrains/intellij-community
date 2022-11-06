@@ -171,21 +171,18 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   @Override
   public final void eventDispatched(AWTEvent event) {
     switch (event.getID()) {
-      case MouseEvent.MOUSE_PRESSED:
-      case MouseEvent.MOUSE_RELEASED:
-      case MouseEvent.MOUSE_DRAGGED:
+      case MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_DRAGGED -> {
         MouseEvent me = (MouseEvent)event;
         if (isDescendingFrom(me.getComponent(), this) || isPopupOverEditor(me.getComponent())) {
           requestUpdate();
         }
-        break;
-      case KeyEvent.KEY_PRESSED:
-      case KeyEvent.KEY_RELEASED:
+      }
+      case KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED -> {
         KeyEvent ke = (KeyEvent)event;
         if (isDescendingFrom(ke.getComponent(), this)) {
           requestUpdate();
         }
-        break;
+      }
     }
   }
 

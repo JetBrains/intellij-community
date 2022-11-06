@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -29,25 +28,25 @@ import java.util.Map;
  * `Heavy` entries should be disposed with {@link #destroy()} to prevent leak of VirtualFilePointer
  */
 public final class HistoryEntry {
-  @NonNls static final String TAG = "entry";
+  static final @NonNls String TAG = "entry";
   static final String FILE_ATTR = "file";
-  @NonNls private static final String PROVIDER_ELEMENT = "provider";
-  @NonNls private static final String EDITOR_TYPE_ID_ATTR = "editor-type-id";
-  @NonNls private static final String SELECTED_ATTR_VALUE = "selected";
-  @NonNls private static final String STATE_ELEMENT = "state";
-  @NonNls private static final String PREVIEW_ATTR = "preview";
+  private static final @NonNls String PROVIDER_ELEMENT = "provider";
+  private static final @NonNls String EDITOR_TYPE_ID_ATTR = "editor-type-id";
+  private static final @NonNls String SELECTED_ATTR_VALUE = "selected";
+  private static final @NonNls String STATE_ELEMENT = "state";
+  private static final @NonNls String PREVIEW_ATTR = "preview";
 
-  @NotNull private final VirtualFilePointer myFilePointer;
+  private final @NotNull VirtualFilePointer myFilePointer;
 
   private static final Element EMPTY_ELEMENT = new Element("state");
   /**
    * can be null when read from XML
    */
-  @Nullable private FileEditorProvider mySelectedProvider;
-  @NotNull private final Map<FileEditorProvider, FileEditorState> myProviderToState = CollectionFactory.createSmallMemoryFootprintMap();
+  private @Nullable FileEditorProvider mySelectedProvider;
+  private final @NotNull Map<FileEditorProvider, FileEditorState> myProviderToState = CollectionFactory.createSmallMemoryFootprintMap();
   private boolean myPreview;
 
-  @Nullable private final Disposable myDisposable;
+  private final @Nullable Disposable myDisposable;
 
   private HistoryEntry(@NotNull VirtualFilePointer filePointer,
                        @Nullable FileEditorProvider selectedProvider,
@@ -59,22 +58,20 @@ public final class HistoryEntry {
     myDisposable = disposable;
   }
 
-  @NotNull
-  static HistoryEntry createLight(@NotNull VirtualFile file,
-                                  FileEditorProvider @NotNull [] providers,
-                                  FileEditorState @NotNull [] states,
-                                  @NotNull FileEditorProvider selectedProvider,
-                                  boolean preview) {
+  static @NotNull HistoryEntry createLight(@NotNull VirtualFile file,
+                                           @NotNull List<FileEditorProvider> providers,
+                                           @NotNull List<FileEditorState> states,
+                                           @NotNull FileEditorProvider selectedProvider,
+                                           boolean preview) {
     VirtualFilePointer pointer = new LightFilePointer(file);
     HistoryEntry entry = new HistoryEntry(pointer, selectedProvider, preview, null);
-    for (int i = 0; i < providers.length; i++) {
-      entry.putState(providers[i], states[i]);
+    for (int i = 0; i < providers.size(); i++) {
+      entry.putState(providers.get(i), states.get(i));
     }
     return entry;
   }
 
-  @NotNull
-  static HistoryEntry createLight(@NotNull Project project, @NotNull Element e) throws InvalidDataException {
+  static @NotNull HistoryEntry createLight(@NotNull Project project, @NotNull Element e) throws InvalidDataException {
     EntryData entryData = parseEntry(project, e);
 
     VirtualFilePointer pointer = new LightFilePointer(entryData.url);
@@ -85,22 +82,21 @@ public final class HistoryEntry {
     return entry;
   }
 
-  @NotNull
-  static HistoryEntry createHeavy(@NotNull Project project,
-                                  @NotNull VirtualFile file,
-                                  FileEditorProvider @NotNull [] providers,
-                                  FileEditorState @NotNull [] states,
-                                  @NotNull FileEditorProvider selectedProvider,
-                                  boolean preview) {
+  static @NotNull HistoryEntry createHeavy(@NotNull Project project,
+                                           @NotNull VirtualFile file,
+                                           @NotNull List<FileEditorProvider> providers,
+                                           @NotNull List<FileEditorState> states,
+                                           @NotNull FileEditorProvider selectedProvider,
+                                           boolean preview) {
     if (project.isDisposed()) return createLight(file, providers, states, selectedProvider, preview);
 
     Disposable disposable = Disposer.newDisposable();
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null);
 
     HistoryEntry entry = new HistoryEntry(pointer, selectedProvider, preview, disposable);
-    for (int i = 0; i < providers.length; i++) {
-      FileEditorProvider provider = providers[i];
-      FileEditorState state = states[i];
+    for (int i = 0; i < providers.size(); i++) {
+      FileEditorProvider provider = providers.get(i);
+      FileEditorState state = states.get(i);
       if (provider != null && state != null) {
         entry.putState(provider, state);
       }
@@ -108,8 +104,7 @@ public final class HistoryEntry {
     return entry;
   }
 
-  @NotNull
-  static HistoryEntry createHeavy(@NotNull Project project, @NotNull Element e) throws InvalidDataException {
+  static @NotNull HistoryEntry createHeavy(@NotNull Project project, @NotNull Element e) throws InvalidDataException {
     if (project.isDisposed()) return createLight(project, e);
 
     EntryData entryData = parseEntry(project, e);
@@ -124,13 +119,11 @@ public final class HistoryEntry {
     return entry;
   }
 
-  @NotNull
-  public VirtualFilePointer getFilePointer() {
+  public @NotNull VirtualFilePointer getFilePointer() {
     return myFilePointer;
   }
 
-  @Nullable
-  public VirtualFile getFile() {
+  public @Nullable VirtualFile getFile() {
     return myFilePointer.getFile();
   }
 
@@ -167,8 +160,7 @@ public final class HistoryEntry {
    * @return element that was added to the {@code element}.
    * Returned element has tag {@link #TAG}. Never null.
    */
-  @NotNull
-  public Element writeExternal(@NotNull Element element, @NotNull Project project) {
+  public @NotNull Element writeExternal(@NotNull Element element, @NotNull Project project) {
     Element e = new Element(TAG);
     element.addContent(e);
     e.setAttribute(FILE_ATTR, myFilePointer.getUrl());
@@ -183,7 +175,7 @@ public final class HistoryEntry {
 
       Element stateElement = new Element(STATE_ELEMENT);
       provider.writeState(entry.getValue(), project, stateElement);
-      if (!JDOMUtil.isEmpty(stateElement)) {
+      if (!stateElement.isEmpty()) {
         providerElement.addContent(stateElement);
       }
 
@@ -197,8 +189,7 @@ public final class HistoryEntry {
     return e;
   }
 
-  @NotNull
-  private static EntryData parseEntry(@NotNull Project project, @NotNull Element e) {
+  private static @NotNull EntryData parseEntry(@NotNull Project project, @NotNull Element e) {
     if (!e.getName().equals(TAG)) {
       throw new IllegalArgumentException("unexpected tag: " + e);
     }
@@ -222,7 +213,7 @@ public final class HistoryEntry {
       if (file != null) {
         Element stateElement = providerElement.getChild(STATE_ELEMENT);
         FileEditorState state = provider.readState(stateElement == null ? EMPTY_ELEMENT : stateElement, project, file);
-        providerStates.add(Pair.create(provider, state));
+        providerStates.add(new Pair<>(provider, state));
       }
     }
 
@@ -237,10 +228,10 @@ public final class HistoryEntry {
     myProviderToState.remove(provider);
   }
 
-  static class EntryData {
-    @NotNull private final String url;
-    @NotNull private final List<Pair<FileEditorProvider, FileEditorState>> providerStates;
-    @Nullable private final FileEditorProvider selectedProvider;
+  static final class EntryData {
+    private final @NotNull String url;
+    private final @NotNull List<Pair<FileEditorProvider, FileEditorState>> providerStates;
+    private final @Nullable FileEditorProvider selectedProvider;
     private final boolean preview;
 
     EntryData(@NotNull String url,

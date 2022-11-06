@@ -5,6 +5,7 @@ import com.intellij.debugger.InstanceFilter
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.JavaStackFrame
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.Key
@@ -18,6 +19,10 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 
 internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XBreakpoint<*>, @ActionText text : String) : AnAction(text) {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   internal class AddCallerNotFilter(breakpoint: XBreakpoint<*>, private val myCaller: String) :
     BreakpointIntentionAction(breakpoint, JavaDebuggerBundle.message(

@@ -39,7 +39,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   private var dotIdea: Path? = null
 
   internal fun getNameFile(): Path {
-    for (projectNameProvider in ProjectNameProvider.EP_NAME.iterable) {
+    for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
       LOG.runAndLogException { projectNameProvider.getNameFile(project)?.let { return it } }
     }
     return directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
@@ -208,7 +208,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
         for (providerFactory in StreamProviderFactory.EP_NAME.getIterable(project)) {
           LOG.runAndLogException {
             // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
-            providerFactory.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
+            providerFactory?.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
           }
         }
       }

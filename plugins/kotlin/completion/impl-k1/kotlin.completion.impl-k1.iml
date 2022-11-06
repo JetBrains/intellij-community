@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-ir" level="project" />
@@ -35,5 +36,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" />
   </component>
 </module>

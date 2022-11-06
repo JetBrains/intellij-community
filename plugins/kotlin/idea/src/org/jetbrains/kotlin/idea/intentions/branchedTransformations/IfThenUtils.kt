@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
@@ -11,23 +11,23 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.replaceFirstReceiver
 import org.jetbrains.kotlin.idea.intentions.callExpression
-import org.jetbrains.kotlin.idea.intentions.getLeftMostReceiverExpression
-import org.jetbrains.kotlin.idea.intentions.replaceFirstReceiver
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
-import org.jetbrains.kotlin.idea.util.application.invokeLater
+import com.intellij.openapi.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -36,11 +36,11 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getType
+import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue
 import org.jetbrains.kotlin.resolve.calls.util.getExplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
-import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.TypeUtils

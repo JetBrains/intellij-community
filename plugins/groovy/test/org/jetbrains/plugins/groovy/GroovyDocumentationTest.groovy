@@ -7,9 +7,6 @@ import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 
-/**
- * @author peter
- */
 @CompileStatic
 class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
 

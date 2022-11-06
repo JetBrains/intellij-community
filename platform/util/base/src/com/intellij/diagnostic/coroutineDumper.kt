@@ -30,7 +30,8 @@ fun dumpCoroutines(scope: CoroutineScope? = null): String? {
   val charset = StandardCharsets.UTF_8.name()
   val outputStream = ByteArrayOutputStream()
   PrintStream(BufferedOutputStream(outputStream), true, charset).use { out ->
-    dumpCoroutines(scope, out)
+    val jobTree = jobTree(scope).toList()
+    dumpCoroutines(jobTree, out)
   }
   return outputStream.toString(charset)
 }
@@ -62,8 +63,7 @@ fun dumpCoroutines(scope: CoroutineScope? = null): String? {
  * but [CoroutineInfo.lastObservedStackTrace] doesn't enhance the trace with dump of last thread,
  * which is crucial for detecting stuck [runBlocking] coroutines.
  */
-private fun dumpCoroutines(scope: CoroutineScope? = null, out: PrintStream) {
-  val jobTree = jobTree(scope).toList()
+private fun dumpCoroutines(jobTree: List<JobTreeNode>, out: PrintStream) {
   for ((job: Job, info: DebugCoroutineInfo?, level: Int) in jobTree) {
     if (level == 0) {
       out.println()

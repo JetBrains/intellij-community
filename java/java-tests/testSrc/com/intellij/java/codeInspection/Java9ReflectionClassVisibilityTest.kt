@@ -17,11 +17,11 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.reflectiveAccess.Java9ReflectionClassVisibilityInspection
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.intellij.openapi.util.io.FileUtil
 
 /**
  * @author Pavel.Dolgov
@@ -38,39 +38,57 @@ class Java9ReflectionClassVisibilityTest : LightJava9ModulesCodeInsightFixtureTe
   fun testOpenModule() {
     moduleInfo("module MAIN { requires API; }", MAIN)
     moduleInfo("open module API { }", M2)
-    doTest()
+    doTestHighlighting()
   }
 
   fun testOpensPackage() {
     moduleInfo("module MAIN { requires API; }", MAIN)
     moduleInfo("module API { opens my.api; }", M2)
-    doTest()
+    doTestHighlighting()
   }
 
   fun testExportsPackage() {
     moduleInfo("module MAIN { requires API; }", MAIN)
     moduleInfo("module API { exports my.api; }", M2)
     javaClass("my.api", "PackageLocal", M2, "")
-    doTest()
+    doTestHighlighting()
+  }
+
+  fun testExportsPackagePreview() {
+    moduleInfo("module MAIN { requires API; }", MAIN)
+    moduleInfo("module API { exports my.api; }", M2)
+    doTestPreview("Add 'exports my.impl' directive to module-info.java",
+                  "module API { exports my.api;\n    exports my.impl;\n}")
   }
 
   fun testNotInRequirements() {
     moduleInfo("module MAIN { }", MAIN)
     moduleInfo("open module API { }", M2)
-    doTest()
+    doTestHighlighting()
   }
 
-  private fun doTest() {
-    javaClass("my.api", "Api", M2)
-    javaClass("my.impl", "Impl", M2)
-
+  private fun configureMainFile() {
     val testPath = "$testDataPath/${getTestName(false)}.java"
     val mainFile = FileUtil.findFirstThatExist(testPath)
     assertNotNull("Test data: $testPath", mainFile)
     val mainText = String(FileUtil.loadFileText(mainFile!!))
 
     myFixture.configureFromExistingVirtualFile(addFile("my/main/Main.java", mainText, MAIN))
+  }
+
+  private fun doTestHighlighting() {
+    javaClass("my.api", "Api", M2)
+    javaClass("my.impl", "Impl", M2)
+    configureMainFile()
     myFixture.checkHighlighting()
+  }
+
+  @Suppress("SameParameterValue")
+  private fun doTestPreview(hint: String, expectedPreview: String) {
+    javaClass("my.impl", "Impl", M2)
+    configureMainFile()
+    val actualPreview = myFixture.getIntentionPreviewText(myFixture.findSingleIntention(hint))
+    assertEquals(expectedPreview, actualPreview)
   }
 
   private fun javaClass(packageName: String, className: String, descriptor: ModuleDescriptor, modifier: String = "public") {

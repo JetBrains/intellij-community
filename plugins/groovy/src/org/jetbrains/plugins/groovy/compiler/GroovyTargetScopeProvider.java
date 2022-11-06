@@ -28,9 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override

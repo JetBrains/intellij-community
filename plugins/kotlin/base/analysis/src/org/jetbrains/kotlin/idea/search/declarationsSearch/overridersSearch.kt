@@ -6,7 +6,6 @@ import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
-import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiUtil
@@ -15,18 +14,21 @@ import com.intellij.util.EmptyQuery
 import com.intellij.util.MergeQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
-import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
+import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.findDeepestSuperMethodsNoWrapping
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forEachKotlinOverride
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
-import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.psi.*
+import com.intellij.openapi.application.runReadAction
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import java.util.*
 
@@ -132,29 +134,6 @@ fun KtNamedDeclaration.hasOverridingElement(): Boolean {
 
     return hasUsage
 }
-
-fun PsiMethod.forEachImplementation(
-    scope: SearchScope = runReadAction { useScope() },
-    processor: (PsiElement) -> Boolean
-): Boolean = forEachOverridingMethod(scope, processor) && FunctionalExpressionSearch.search(
-    this,
-    scope.excludeKotlinSources(project)
-).forEach(Processor { processor(it) })
-
-@Deprecated(
-        "This method is obsolete and will be removed",
-        ReplaceWith(
-                "OverridersSearchUtilsKt.forEachOverridingMethod",
-                "org.jetbrains.kotlin.idea.search.declarationsSearch.OverridersSearchUtilsKt"
-        ),
-        DeprecationLevel.ERROR
-)
-
-@JvmName("forEachOverridingMethod")
-fun PsiMethod.forEachOverridingMethodCompat(
-        scope: SearchScope = runReadAction { useScope() },
-        processor: (PsiMethod) -> Boolean
-): Boolean = forEachOverridingMethod(scope, processor)
 
 fun PsiClass.forEachDeclaredMemberOverride(processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean) {
     val scope = runReadAction { useScope() }

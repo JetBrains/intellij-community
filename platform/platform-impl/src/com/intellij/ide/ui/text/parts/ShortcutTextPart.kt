@@ -9,7 +9,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import java.awt.Graphics2D
 import java.awt.Point
 import javax.swing.JTextPane
 import javax.swing.KeyStroke
@@ -24,13 +23,15 @@ import javax.swing.text.StyleConstants
  *
  * @param isRaw true value means that [text] is a raw shortcut (in a format described in [KeyStroke.getKeyStroke]),
  *  otherwise [text] should contain id of the action.
- * @param addSpaceAround if true one space will be added before and after the computed shortcut.
- *  It is required because highlighting is wider than text bounds.
+ *
+ * [delimiter] - text part that will be added before and after the computed shortcut.
+ * It is required because highlighting is wider than text bounds.
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpaceAround: Boolean = false) : TextPart(text) {
+open class ShortcutTextPart(text: String, val isRaw: Boolean) : TextPart(text) {
   var backgroundColor: Color = JBColor.namedColor("Lesson.shortcutBackground", 0xE6EEF7, 0x333638)
+  var delimiter: TextPart = RegularTextPart("")
 
   init {
     editAttributes {
@@ -53,9 +54,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
     var start = 0
     val shortcutAttributes = attributes
     val sepAttributes = separatorAttributes
-    if (addSpaceAround) {
-      curOffset = insertText(textPane, "\u00A0", curOffset, shortcutAttributes)
-    }
+    curOffset = delimiter.insertToTextPane(textPane, curOffset)
     for (part in split) {
       curOffset = insertText(textPane, shortcut.substring(start, part.first), curOffset, sepAttributes)
 
@@ -64,14 +63,12 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
       val partEnd = curOffset
 
       textPane.highlighter.addHighlight(partStart, partEnd) { g, _, _, _, c ->
-        c.drawRectangleAroundText(partStart, partEnd, g as Graphics2D, backgroundColor, fill = true)
+        c.drawRectangleAroundText(partStart, partEnd, g, backgroundColor, fontGetter(), fontGetter(), fill = true)
       }
       start = part.last + 1
     }
     curOffset = insertText(textPane, shortcut.substring(start), curOffset, sepAttributes)
-    if (addSpaceAround) {
-      curOffset = insertText(textPane, "\u00A0", curOffset, shortcutAttributes)
-    }
+    curOffset = delimiter.insertToTextPane(textPane, curOffset)
     return curOffset
   }
 

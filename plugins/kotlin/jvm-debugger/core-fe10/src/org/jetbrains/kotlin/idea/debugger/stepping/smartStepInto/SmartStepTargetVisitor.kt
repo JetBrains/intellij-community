@@ -10,6 +10,7 @@ import com.intellij.util.containers.OrderedSet
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.builtins.isFunctionType
+import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.codegen.intrinsics.IntrinsicMethods
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.descriptors.*
@@ -18,7 +19,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.isFromJava
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
@@ -337,7 +338,7 @@ fun KtFunction.isSamLambda(): Boolean {
 
 private fun ValueParameterDescriptor.isSamLambdaParameterDescriptor(): Boolean {
     val type = type
-    return !type.isFunctionType && type is SimpleType && type.isSingleClassifierType
+    return !type.isFunctionType && !type.isSuspendFunctionType && type is SimpleType && type.isSingleClassifierType
 }
 
 private fun KtFunction.getParameterAndResolvedCallDescriptor(): Pair<ValueParameterDescriptor, CallableMemberDescriptor>? {

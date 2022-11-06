@@ -1,45 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import java.util.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
 
-class GradleSettingScriptBuilder {
+interface GradleSettingScriptBuilder : ScriptElementBuilder {
 
-  private val lines = ArrayList<String>()
+  fun setProjectName(projectName: String): GradleSettingScriptBuilder
 
-  private var projectName: String? = null
+  fun include(name: String): GradleSettingScriptBuilder
 
-  fun setProjectName(projectName: String) {
-    this.projectName = projectName
-  }
+  fun includeFlat(name: String): GradleSettingScriptBuilder
 
-  fun enableFeaturePreview(featureName: String) {
-    lines.add("enableFeaturePreview('$featureName')")
-  }
+  fun includeBuild(name: String): GradleSettingScriptBuilder
 
-  fun include(name: String) = apply {
-    lines.add("include '$name'")
-  }
+  fun enableFeaturePreview(featureName: String): GradleSettingScriptBuilder
 
-  fun includeBuild(name: String) = apply {
-    lines.add("includeBuild '$name'")
-  }
+  fun addCode(text: String): GradleSettingScriptBuilder
 
-  fun raw(content: String) {
-    lines.addAll(content.split('\n'))
-  }
+  fun addCode(expression: Expression): GradleSettingScriptBuilder
 
-  fun generate(): String {
-    val joiner = StringJoiner("\n")
-    if (projectName != null) {
-      joiner.add("rootProject.name = '$projectName'")
-    }
-    if (projectName != null && lines.isNotEmpty()) {
-      joiner.add("")
-    }
-    for (line in lines) {
-      joiner.add(line)
-    }
-    return joiner.toString()
-  }
+  fun addCode(configure: ScriptTreeBuilder.() -> Unit): GradleSettingScriptBuilder
+
+  fun generateTree(): BlockElement
+
+  fun generate(useKotlinDsl: Boolean): String
 }

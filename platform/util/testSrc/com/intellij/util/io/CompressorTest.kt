@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
-import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.testFramework.rules.TempDirectory
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -142,7 +142,7 @@ class CompressorTest {
   }
 
   @Test fun tarWithSymbolicLinks() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val dir = tempDir.newDirectory("dir").toPath()
     val origin = Files.createFile(dir.resolve("origin"))

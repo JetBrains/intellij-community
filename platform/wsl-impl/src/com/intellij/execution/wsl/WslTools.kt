@@ -1,6 +1,7 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.processTools.ProcessExistedNotZeroException
 import com.intellij.openapi.application.PathManager
 import java.nio.file.Path
 

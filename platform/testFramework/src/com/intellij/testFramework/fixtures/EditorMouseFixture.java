@@ -190,20 +190,20 @@ public class EditorMouseFixture {
 
   @MagicConstant(flagsFromClass = InputEvent.class)
   private static int getModifiersForButtonPress(int button) {
-    switch (button) {
-      case MouseEvent.BUTTON1: return InputEvent.BUTTON1_DOWN_MASK;
-      case MouseEvent.BUTTON2: return InputEvent.BUTTON2_DOWN_MASK;
-      case MouseEvent.BUTTON3: return InputEvent.BUTTON3_DOWN_MASK;
-      default: return 0;
-    }
+    return switch (button) {
+      case MouseEvent.BUTTON1 -> InputEvent.BUTTON1_DOWN_MASK;
+      case MouseEvent.BUTTON2 -> InputEvent.BUTTON2_DOWN_MASK;
+      case MouseEvent.BUTTON3 -> InputEvent.BUTTON3_DOWN_MASK;
+      default -> 0;
+    };
   }
 
   @MagicConstant(flagsFromClass = InputEvent.class)
   private static int getModifiersForButtonRelease(int button) {
-    switch (button) {
-      case MouseEvent.BUTTON2: return InputEvent.ALT_DOWN_MASK;
-      case MouseEvent.BUTTON3: return InputEvent.META_DOWN_MASK;
-      default: return 0;
-    }
+    return switch (button) {
+      case MouseEvent.BUTTON2 -> InputEvent.ALT_DOWN_MASK;
+      case MouseEvent.BUTTON3 -> InputEvent.META_DOWN_MASK;
+      default -> 0;
+    };
   }
 }

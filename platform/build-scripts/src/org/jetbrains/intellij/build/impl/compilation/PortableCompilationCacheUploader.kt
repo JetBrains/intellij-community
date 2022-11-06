@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -16,7 +17,9 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.io.moveFile
-import org.jetbrains.intellij.build.io.zip
+import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
+import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
 import java.nio.file.Path
@@ -29,16 +32,23 @@ internal class PortableCompilationCacheUploader(
   remoteCacheUrl: String,
   private val remoteGitUrl: String,
   private val commitHash: String,
-  private val syncFolder: String,
+  s3Folder: String,
   private val uploadCompilationOutputsOnly: Boolean,
   private val forcedUpload: Boolean,
 ) {
   private val uploadedOutputCount = AtomicInteger()
 
-  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.paths.buildOutputDir)
+  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
   private val uploader = Uploader(remoteCacheUrl)
 
   private val commitHistory = CommitsHistory(mapOf(remoteGitUrl to setOf(commitHash)))
+
+  private val s3Folder = Path.of(s3Folder)
+
+  init {
+    FileUtil.delete(this.s3Folder)
+    Files.createDirectories(this.s3Folder)
+  }
 
   fun upload(messages: BuildMessages) {
     if (!Files.exists(sourcesStateProcessor.sourceStateFile)) {
@@ -64,6 +74,14 @@ internal class PortableCompilationCacheUploader(
     messages.reportStatisticValue("Uploaded outputs", uploadedOutputCount.get().toString())
 
     uploadMetadata()
+    uploadToS3()
+  }
+
+  private fun uploadToS3() {
+    spanBuilder("aws s3 sync").useWithScope {
+      context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
+      println("##teamcity[setParameter name='jps.caches.aws.sync.skip' value='true']")
+    }
   }
 
   private fun uploadJpsCaches() {
@@ -76,15 +94,14 @@ internal class PortableCompilationCacheUploader(
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
-    moveFile(zipFile, Path.of(syncFolder, cachePath))
+    moveFile(zipFile, s3Folder.resolve(cachePath))
   }
 
   private fun uploadMetadata() {
     val metadataPath = "metadata/$commitHash"
     val sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
-    val sourceStateFileCopy = Path.of(syncFolder, metadataPath)
-    moveFile(sourceStateFile, sourceStateFileCopy)
+    moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
   }
 
   private fun uploadCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>,
@@ -99,13 +116,13 @@ internal class PortableCompilationCacheUploader(
           return@adapt
         }
 
-        val zipFile = outputFolder.parent.resolve(compilationOutput.hash)
-        zip(zipFile, mapOf(outputFolder to ""), compress = true)
-        if (!uploader.isExist(sourcePath)) {
+        val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
+        zipWithCompression(zipFile, mapOf(outputFolder to ""))
+        if (forcedUpload || !uploader.isExist(sourcePath)) {
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()
         }
-        moveFile(zipFile, Path.of(syncFolder, sourcePath))
+        moveFile(zipFile, s3Folder.resolve(sourcePath))
       }
     }
   }
@@ -141,7 +158,7 @@ internal class PortableCompilationCacheUploader(
   }
 
   private fun writeCommitHistory(commitHistory: CommitsHistory): Path {
-    val commitHistoryFile = Path.of(syncFolder, CommitsHistory.JSON_FILE)
+    val commitHistoryFile = s3Folder.resolve(CommitsHistory.JSON_FILE)
     Files.createDirectories(commitHistoryFile.parent)
     val json = commitHistory.toJson()
     Files.writeString(commitHistoryFile, json)
@@ -159,16 +176,18 @@ private class Uploader(serverUrl: String) {
       check(Files.exists(file)) {
         "The file $file does not exist"
       }
+      retryWithExponentialBackOff {
+        httpClient.newCall(Request.Builder().url(url)
+          .put(object : RequestBody() {
+            override fun contentType() = MEDIA_TYPE_BINARY
 
-      httpClient.newCall(Request.Builder().url(url).put(object : RequestBody() {
-        override fun contentType() = MEDIA_TYPE_BINARY
+            override fun contentLength() = Files.size(file)
 
-        override fun contentLength() = Files.size(file)
-
-        override fun writeTo(sink: BufferedSink) {
-          file.source().use(sink::writeAll)
-        }
-      }).build()).execute().useSuccessful {}
+            override fun writeTo(sink: BufferedSink) {
+              file.source().use(sink::writeAll)
+            }
+          }).build()).execute().useSuccessful {}
+      }
     }
     return true
   }
@@ -176,21 +195,38 @@ private class Uploader(serverUrl: String) {
   fun isExist(path: String, logIfExists: Boolean = false): Boolean {
     val url = pathToUrl(path)
     spanBuilder("head").setAttribute("url", url).use { span ->
-      val code = httpClient.head(url).use { it.code }
+      val code = retryWithExponentialBackOff {
+        httpClient.head(url).use {
+          check(it.code == 200 || it.code == 404) {
+            "HEAD $url responded with unexpected ${it.code}"
+          }
+          it.code
+        }
+      }
       if (code == 200) {
+        try {
+          /**
+           * FIXME dirty workaround for unreliable [serverUrl]
+           */
+          httpClient.get(url).use {
+            it.peekBody(byteCount = 1)
+          }
+        }
+        catch (ignored: Exception) {
+          return false
+        }
         if (logIfExists) {
           span.addEvent("File '$path' already exists on server, nothing to upload")
         }
         return true
       }
-      check(code == 404) {
-        "HEAD $url responded with unexpected $code"
-      }
     }
     return false
   }
 
-  fun getAsString(path: String) = httpClient.get(pathToUrl(path)).useSuccessful { it.body.string() }
+  fun getAsString(path: String) = retryWithExponentialBackOff {
+    httpClient.get(pathToUrl(path)).useSuccessful { it.body.string() }
+  }
 
   private fun pathToUrl(path: String) = "$serverUrl${path.trimStart('/')}"
 }

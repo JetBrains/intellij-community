@@ -220,16 +220,13 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     }
 
     @Override
-    public Class getColumnClass(final int column) {
-      switch (column) {
-        case TREE_COLUMN:
-          return TreeTableModel.class;
-        case SEVERITIES_COLUMN:
-          return Icon.class;
-        case IS_ENABLED_COLUMN:
-          return Boolean.class;
-      }
-      throw new IllegalArgumentException();
+    public Class<?> getColumnClass(final int column) {
+      return switch (column) {
+        case TREE_COLUMN -> TreeTableModel.class;
+        case SEVERITIES_COLUMN -> Icon.class;
+        case IS_ENABLED_COLUMN -> Boolean.class;
+        default -> throw new IllegalArgumentException("Unexpected value: " + column);
+      };
     }
 
     @Nullable

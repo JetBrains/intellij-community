@@ -32,7 +32,7 @@ class ProgressWindowTest : ProgressWindowTestCase<ProgressWindowTest.TestProgres
   }
 
   class TestProgressWindow internal constructor(project: Project) : ProgressWindow(true, project) {
-    internal val dialog: Any?
+    internal val dialog: ProgressDialog?
       get() = super.getDialog()
 
     public override fun showDialog(): Unit = super.showDialog()

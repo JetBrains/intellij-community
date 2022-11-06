@@ -108,7 +108,11 @@ public interface IdeActions {
 
   String GROUP_MAIN_MENU = "MainMenu";
   String GROUP_MAIN_TOOLBAR = "MainToolBar";
-  String GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS = "ExperimentalToolbarActions";
+
+  String GROUP_MAIN_TOOLBAR_LEFT = "MainToolbarLeft";
+  String GROUP_MAIN_TOOLBAR_CENTER = "MainToolbarCenter";
+  String GROUP_MAIN_TOOLBAR_RIGHT = "MainToolbarRight";
+
   String GROUP_EXPERIMENTAL_TOOLBAR = "NewToolbarActions";
   String GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN = "NewToolbarActionsXamarin";
   String GROUP_EDITOR_POPUP = "EditorPopupMenu";
@@ -291,10 +295,6 @@ public interface IdeActions {
   String GROUP_WELCOME_SCREEN_CONFIGURE = "WelcomeScreen.Configure";
   String GROUP_WELCOME_SCREEN_OPTIONS = "WelcomeScreen.Options";
   String GROUP_WELCOME_SCREEN_LEARN_IDE = "WelcomeScreen.LearnIdeHelp";
-
-  /** @deprecated please use {@link #GROUP_WELCOME_SCREEN_OPTIONS} (and the corresponding action group) instead */
-  @Deprecated(forRemoval = true)
-  String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";
 
   String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";
   String ACTION_MOVE = "Move";

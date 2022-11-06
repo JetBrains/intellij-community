@@ -10,6 +10,10 @@
 
     <action id="RunToolbarWidgetAction" class="com.intellij.execution.runToolbar.RunToolbarWidgetAction"/>
 
+    <action id="ExecutionTargets" class="com.intellij.execution.actions.ExecutionTargetComboBoxAction"/>
+
+    <group id="ExecutionTargets.Additional" searchable="false"/>
+
     <group id="RunToolbarSlotContextMenuGroup" popup="false">
       <action id="RunToolbarMoveToTopAction" class="com.intellij.execution.runToolbar.RunToolbarMoveToTopAction" icon="AllIcons.Toolbar.Pin"/>
       <action id="RunToolbarEditConfigurationAction" class="com.intellij.execution.runToolbar.RunToolbarEditConfigurationAction"/>
@@ -55,9 +59,14 @@
     <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
     <registryKey key="ide.experimental.ui.redesigned.run.widget"
                  description="Use redesigned run widget"
+                 defaultValue="TRUE"
+                 restartRequired="false"/>
+    <registryKey key="ide.experimental.ui.redesigned.run.popup"
+                 description="Use redesigned run popup"
                  defaultValue="FALSE"
                  restartRequired="false"/>
 
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarComponentService" preload="await" />
+    <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService" order="last"/>
   </extensions>
 </idea-plugin>

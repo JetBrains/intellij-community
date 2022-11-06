@@ -1,14 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,6 +28,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 // todo rewrite: it's an app service for now but its lifecycle should be synchronized with stub index.
@@ -234,11 +242,17 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
   @Override
   protected void initSerializers() {
+    if (mySerializersLoaded) return;
     //noinspection SynchronizeOnThis
     synchronized (this) {
       if (mySerializersLoaded) {
         return;
       }
+
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        instantiateElementTypesFromFields();
+        StubIndexEx.initExtensions();
+      });
 
       registerSerializer(PsiFileStubImpl.TYPE);
       List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
@@ -281,6 +295,22 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
         nameStorageCrashed();
       }
       mySerializersLoaded = false;
+    }
+  }
+
+  private static void instantiateElementTypesFromFields() {
+    // load stub serializers before usage
+    FileTypeRegistry.getInstance().getRegisteredFileTypes();
+    getExtensions(BinaryFileStubBuilders.INSTANCE, builder -> {});
+    getExtensions(LanguageParserDefinitions.INSTANCE, ParserDefinition::getFileNodeType);
+  }
+
+  private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<? super T> consumer) {
+    ExtensionPointImpl<@NotNull KeyedLazyInstance<T>> point = (ExtensionPointImpl<@NotNull KeyedLazyInstance<T>>)collector.getPoint();
+    if (point != null) {
+      for (KeyedLazyInstance<T> instance : point) {
+        consumer.accept(instance.getInstance());
+      }
     }
   }
 }

@@ -495,32 +495,43 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       if (eof()) return "";
 
       switch (get()) {
-        case 'Z':
+        case 'Z' -> {
           return "boolean";
-        case 'B':
+        }
+        case 'B' -> {
           return "byte";
-        case 'C':
+        }
+        case 'C' -> {
           return "char";
-        case 'S':
+        }
+        case 'S' -> {
           return "short";
-        case 'I':
+        }
+        case 'I' -> {
           return "int";
-        case 'J':
+        }
+        case 'J' -> {
           return "long";
-        case 'F':
+        }
+        case 'F' -> {
           return "float";
-        case 'D':
+        }
+        case 'D' -> {
           return "double";
-        case 'V':
+        }
+        case 'V' -> {
           return "void";
-        case 'L':
+        }
+        case 'L' -> {
           int start = pos;
           pos = buffer.indexOf(';', start) + 1;
           LOG.assertTrue(pos > 0);
           return buffer.substring(start, pos - 1).replace('/', '.');
-        case '[':
+        }
+        case '[' -> {
           return getSignature() + "[]";
-        case '(':
+        }
+        case '(' -> {
           StringBuilder result = new StringBuilder("(");
           String separator = "";
           while (peek() != ')') {
@@ -531,9 +542,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           get();
           result.append(")");
           return getSignature() + " " + getClassName() + "." + getMethodName() + " " + result;
-        default:
+        }
+        default -> {
           //          LOG.assertTrue(false, "unknown signature " + buffer);
           return null;
+        }
       }
     }
 
@@ -779,24 +792,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String getThreadStatusText(int statusId) {
-    switch (statusId) {
-      case ThreadReference.THREAD_STATUS_MONITOR:
-        return JavaDebuggerBundle.message("status.thread.monitor");
-      case ThreadReference.THREAD_STATUS_NOT_STARTED:
-        return JavaDebuggerBundle.message("status.thread.not.started");
-      case ThreadReference.THREAD_STATUS_RUNNING:
-        return JavaDebuggerBundle.message("status.thread.running");
-      case ThreadReference.THREAD_STATUS_SLEEPING:
-        return JavaDebuggerBundle.message("status.thread.sleeping");
-      case ThreadReference.THREAD_STATUS_UNKNOWN:
-        return JavaDebuggerBundle.message("status.thread.unknown");
-      case ThreadReference.THREAD_STATUS_WAIT:
-        return JavaDebuggerBundle.message("status.thread.wait");
-      case ThreadReference.THREAD_STATUS_ZOMBIE:
-        return JavaDebuggerBundle.message("status.thread.zombie");
-      default:
-        return JavaDebuggerBundle.message("status.thread.undefined");
-    }
+    return switch (statusId) {
+      case ThreadReference.THREAD_STATUS_MONITOR -> JavaDebuggerBundle.message("status.thread.monitor");
+      case ThreadReference.THREAD_STATUS_NOT_STARTED -> JavaDebuggerBundle.message("status.thread.not.started");
+      case ThreadReference.THREAD_STATUS_RUNNING -> JavaDebuggerBundle.message("status.thread.running");
+      case ThreadReference.THREAD_STATUS_SLEEPING -> JavaDebuggerBundle.message("status.thread.sleeping");
+      case ThreadReference.THREAD_STATUS_UNKNOWN -> JavaDebuggerBundle.message("status.thread.unknown");
+      case ThreadReference.THREAD_STATUS_WAIT -> JavaDebuggerBundle.message("status.thread.wait");
+      case ThreadReference.THREAD_STATUS_ZOMBIE -> JavaDebuggerBundle.message("status.thread.zombie");
+      default -> JavaDebuggerBundle.message("status.thread.undefined");
+    };
   }
 
   public static String prepareValueText(String text, Project project) {
@@ -888,7 +893,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      return intersectWithLine(SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition), mySourcePosition.getFile(), getLine());
+      TextRange range = SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
+      PsiFile file = mySourcePosition.getFile();
+      if (range != null) {
+        Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        if (document != null) {
+          TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
+          TextRange res = range.intersection(lineRange);
+          return res.equals(lineRange) ? null : res; // highlight the whole line for multiline lambdas
+        }
+      }
+      return range;
     }
   }
 

@@ -43,6 +43,10 @@ public interface Query<Result> extends Iterable<Result> {
    */
   boolean forEach(@NotNull Processor<? super Result> consumer);
 
+  /**
+   * @deprecated use {@link #forEach(Processor)} instead
+   */
+  @Deprecated
   default @NotNull AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer) {
     return AsyncUtil.wrapBoolean(forEach(consumer));
   }

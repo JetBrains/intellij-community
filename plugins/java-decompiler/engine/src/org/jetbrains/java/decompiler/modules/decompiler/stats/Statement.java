@@ -834,17 +834,17 @@ public abstract class Statement implements IMatchable {
 
     for (Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
       switch (rule.getKey()) {
-        case STATEMENT_TYPE:
+        case STATEMENT_TYPE -> {
           if (this.type != rule.getValue().value) {
             return false;
           }
-          break;
-        case STATEMENT_STATSIZE:
+        }
+        case STATEMENT_STATSIZE -> {
           if (this.stats.size() != (Integer)rule.getValue().value) {
             return false;
           }
-          break;
-        case STATEMENT_EXPRSIZE:
+        }
+        case STATEMENT_EXPRSIZE -> {
           int exprsize = (Integer)rule.getValue().value;
           if (exprsize == -1) {
             if (this.exprents != null) {
@@ -856,12 +856,12 @@ public abstract class Statement implements IMatchable {
               return false;
             }
           }
-          break;
-        case STATEMENT_RET:
+        }
+        case STATEMENT_RET -> {
           if (!engine.checkAndSetVariableValue((String)rule.getValue().value, this)) {
             return false;
           }
-          break;
+        }
       }
     }
 

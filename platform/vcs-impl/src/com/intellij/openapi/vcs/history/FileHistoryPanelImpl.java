@@ -971,6 +971,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_AS_TREE;
     }
@@ -987,6 +992,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     MyShowDetailsAction() {
       super(VcsBundle.messagePointer("action.ToggleAction.text.show.details"),
             VcsBundle.messagePointer("action.ToggleAction.description.show.details"), AllIcons.Actions.PreviewDetailsVertically);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

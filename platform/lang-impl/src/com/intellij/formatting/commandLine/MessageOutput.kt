@@ -18,7 +18,7 @@ package com.intellij.formatting.commandLine
 import java.io.PrintWriter
 
 
-open class MessageOutput(val infoOut: PrintWriter, val errorOut: PrintWriter) {
+open class MessageOutput(private val infoOut: PrintWriter, private val errorOut: PrintWriter) {
 
   fun info(message: String) = infoOut.printAndFlush(message)
 

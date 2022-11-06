@@ -32,7 +32,7 @@ import java.util.*;
 public class EditorTracker implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorTracker.class);
 
-  private final Project myProject;
+  protected final Project project;
 
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<>();
   private final Map<Window, WindowAdapter> myWindowToWindowFocusListenerMap = new HashMap<>();
@@ -43,23 +43,22 @@ public class EditorTracker implements Disposable {
   private final Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<>();
 
   public EditorTracker(@NotNull Project project) {
-    myProject = project;
-
-    project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        JFrame frame = WindowManager.getInstance().getFrame(myProject);
-        if (frame == null || frame.getFocusOwner() == null) {
-          return;
-        }
-
-        setActiveWindow(frame);
-      }
-    });
+    this.project = project;
   }
 
   public static EditorTracker getInstance(@NotNull Project project) {
     return project.getService(EditorTracker.class);
+  }
+
+  static final class MyAppLevelFileEditorManagerListener implements FileEditorManagerListener {
+    @Override
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+      Project project = event.getManager().getProject();
+      JFrame frame = WindowManager.getInstance().getFrame(project);
+      if (frame != null && frame.getFocusOwner() != null) {
+        getInstance(project).setActiveWindow(frame);
+      }
+    }
   }
 
   static final class MyAppLevelEditorFactoryListener implements EditorFactoryListener {
@@ -67,7 +66,7 @@ public class EditorTracker implements Disposable {
     public void editorCreated(@NotNull EditorFactoryEvent event) {
       Project project = event.getEditor().getProject();
       if (project != null && !project.isDisposed()) {
-        getInstance(project).editorCreated(event);
+        getInstance(project).editorCreated(event, project);
       }
     }
 
@@ -75,15 +74,15 @@ public class EditorTracker implements Disposable {
     public void editorReleased(@NotNull EditorFactoryEvent event) {
       Project project = event.getEditor().getProject();
       if (project != null && !project.isDisposed()) {
-        getInstance(project).editorReleased(event);
+        getInstance(project).editorReleased(event, project);
       }
     }
   }
 
-  private void registerEditor(@NotNull Editor editor) {
+  private void registerEditor(@NotNull Editor editor, @NotNull Project project) {
     unregisterEditor(editor);
 
-    Window window = windowByEditor(editor);
+    Window window = windowByEditor(editor, project);
     if (window == null) {
       return;
     }
@@ -160,11 +159,10 @@ public class EditorTracker implements Disposable {
     }
   }
 
-  @Nullable
-  private Window windowByEditor(@NotNull Editor editor) {
+  private static @Nullable Window windowByEditor(@NotNull Editor editor, @NotNull Project project) {
     Window window = SwingUtilities.windowForComponent(editor.getComponent());
     ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(window);
-    return (frameHelper != null && frameHelper.getProject() != myProject) ? null : window;
+    return (frameHelper != null && frameHelper.getProject() != project) ? null : window;
   }
 
   public @NotNull List<? extends Editor> getActiveEditors() {
@@ -179,7 +177,7 @@ public class EditorTracker implements Disposable {
 
   private void updateActiveEditors(@Nullable Window window) {
     List<Editor> list = window == null ? null : myWindowToEditorsMap.get(window);
-    if (list == null) {
+    if (list == null || list.isEmpty()) {
       setActiveEditors(Collections.emptyList());
     }
     else {
@@ -204,33 +202,29 @@ public class EditorTracker implements Disposable {
     if (LOG.isDebugEnabled()) {
       LOG.debug("active editors changed:");
       for (Editor editor : editors) {
-        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         LOG.debug("    " + psiFile);
       }
     }
 
-    myProject.getMessageBus().syncPublisher(EditorTrackerListener.TOPIC).activeEditorsChanged(editors);
+    project.getMessageBus().syncPublisher(EditorTrackerListener.TOPIC).activeEditorsChanged(editors);
   }
 
-  private void editorCreated(@NotNull EditorFactoryEvent event) {
+  private void editorCreated(@NotNull EditorFactoryEvent event, @NotNull Project project) {
     Editor editor = event.getEditor();
-    if ((editor.getProject() != null && editor.getProject() != myProject) || myProject.isDisposed()) {
-      return;
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (psiFile != null) {
+      createEditorImpl(editor, project);
     }
-
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-    if (psiFile == null) return;
-
-    createEditorImpl(editor);
   }
 
-  protected void createEditorImpl(@NotNull Editor editor) {
+  protected void createEditorImpl(@NotNull Editor editor, @NotNull Project project) {
     JComponent component = editor.getComponent();
     JComponent contentComponent = editor.getContentComponent();
 
     PropertyChangeListener propertyChangeListener = evt -> {
       if (evt.getOldValue() == null && evt.getNewValue() != null) {
-        registerEditor(editor);
+        registerEditor(editor, project);
       }
     };
     component.addPropertyChangeListener("ancestor", propertyChangeListener);
@@ -269,14 +263,11 @@ public class EditorTracker implements Disposable {
     });
   }
 
-  private void editorReleased(@NotNull EditorFactoryEvent event) {
-    Editor editor = event.getEditor();
-    if (editor.getProject() != null && editor.getProject() != myProject) return;
-
-    editorReleasedImpl(editor);
+  private void editorReleased(@NotNull EditorFactoryEvent event, @NotNull Project project) {
+    editorReleasedImpl(event.getEditor(), project);
   }
 
-  protected void editorReleasedImpl(@NotNull Editor editor) {
+  protected void editorReleasedImpl(@NotNull Editor editor, @NotNull Project project) {
     unregisterEditor(editor);
     executeOnRelease(editor);
   }

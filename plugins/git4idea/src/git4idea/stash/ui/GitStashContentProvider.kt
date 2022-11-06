@@ -125,7 +125,6 @@ internal class GitStashStartupActivity : StartupActivity.DumbAware {
           override fun afterValueChanged(value: RegistryValue) {
             gitStashTracker.scheduleRefresh()
             project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-            ShelvedChangesViewManager.getInstance(project).updateAvailability()
           }
         }, gitStashTracker)
       }) { project.isDisposed }

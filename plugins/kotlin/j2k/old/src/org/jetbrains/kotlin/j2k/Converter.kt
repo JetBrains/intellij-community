@@ -821,6 +821,10 @@ class Converter private constructor(
             modifiers = modifiers.without(modifiers.accessModifier())
         }
 
+        if (settings.publicByDefault && modifiers.contains(Modifier.INTERNAL)) {
+            modifiers = modifiers.without(Modifier.INTERNAL).with(Modifier.PUBLIC)
+        }
+
         return modifiers
     }
 

@@ -12,17 +12,16 @@ import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
+import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.preview.DescriptorPreview
@@ -234,7 +233,10 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     TreeUtil.promiseSelectFirstLeaf(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)
-    ContextMenuActionGroup(tree)
+
+    val group = ContextMenuActionGroup(tree)
+    val handler = PopupHandler.installPopupMenu(tree, group, ActionPlaces.BOOKMARKS_VIEW_POPUP)
+    PopupMenuPreloader.install(tree, ActionPlaces.BOOKMARKS_VIEW_POPUP, handler) { group }
 
     project.messageBus.connect(this).subscribe(BookmarksListener.TOPIC, object : BookmarksListener {
       override fun groupsSorted() {

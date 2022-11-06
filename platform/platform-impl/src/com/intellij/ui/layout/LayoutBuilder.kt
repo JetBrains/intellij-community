@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBRadioButton
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.event.ActionListener
 import javax.swing.AbstractButton
 import javax.swing.ButtonGroup
 
@@ -21,22 +20,6 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
   @Deprecated("Use Kotlin UI DSL Version 2")
   override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
     builder.withButtonGroup(buttonGroup, body)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  inline fun buttonGroup(crossinline elementActionListener: () -> Unit, crossinline init: LayoutBuilder.() -> Unit): ButtonGroup {
-    val group = ButtonGroup()
-
-    builder.withButtonGroup(group) {
-      LayoutBuilder(builder).init()
-    }
-
-    val listener = ActionListener { elementActionListener() }
-    for (button in group.elements) {
-      button.addActionListener(listener)
-    }
-    return group
   }
 
   @Suppress("PropertyName")
@@ -50,24 +33,12 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 class CellBuilderWithButtonGroupProperty<T : Any>
-@PublishedApi internal constructor(private val prop: PropertyBinding<T>)  {
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun Cell.radioButton(@NlsContexts.RadioButton text: String, value: T, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
-    val component = JBRadioButton(text, prop.get() == value)
-    return component(comment = comment).bindValue(value)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun CellBuilder<JBRadioButton>.bindValue(value: T): CellBuilder<JBRadioButton> = bindValueToProperty(prop, value)
-}
+@PublishedApi internal constructor(private val prop: PropertyBinding<T>)
 
 
 @Deprecated("Use Kotlin UI DSL Version 2")
 class RowBuilderWithButtonGroupProperty<T : Any>
-    @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
+@PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
 
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun Row.radioButton(@NlsContexts.RadioButton text: String, value: T, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
@@ -88,9 +59,12 @@ private fun <T> CellBuilder<JBRadioButton>.bindValueToProperty(prop: PropertyBin
 }
 
 fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
-  FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), null, fileChosen)
+  FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), null,
+                         fileChosen)
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.attachSubRowsEnabled(component: AbstractButton) {
-  enableSubRowsIf(component.selected)
+  subRowsEnabled = component.selected()
+  component.selected.addListener { subRowsEnabled = it }
 }

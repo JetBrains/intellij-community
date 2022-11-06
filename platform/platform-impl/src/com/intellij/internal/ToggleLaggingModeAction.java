@@ -13,9 +13,6 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 final class ToggleLaggingModeAction extends AnAction implements DumbAware {
 
   private volatile boolean myLagging = false;

@@ -14,8 +14,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.ApiStatus;
@@ -111,7 +112,7 @@ public final class Divider {
 
     Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
 
-    IntStack starts = new IntStack(STARTING_TREE_HEIGHT);
+    IntStack starts = new IntArrayList(STARTING_TREE_HEIGHT);
     starts.push(startOffset);
     Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
     Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
@@ -145,7 +146,7 @@ public final class Divider {
           offset += element.getTextLength();
         }
 
-        int start = starts.pop();
+        int start = starts.popInt();
         if (startOffset <= start && offset <= endOffset) {
           if (TextRangeScalarUtil.containsRange(priorityRange, start, offset)) {
             inside.add(element);

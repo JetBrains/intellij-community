@@ -279,7 +279,7 @@ public class TObjectIntHashMap<K> extends TObjectHash<K> {
 
     @Override
     public boolean execute(K key, int value) {
-      h += _hashingStrategy.computeHashCode(key) ^ HashFunctions.hash(value);
+      h += _hashingStrategy.computeHashCode(key) ^ value;
       return true;
     }
   }

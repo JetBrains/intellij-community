@@ -57,17 +57,12 @@ public final class TraceStreamAction extends AnAction {
     else {
       ChainResolver.ChainStatus chainStatus = CHAIN_RESOLVER.tryFindChain(element);
       switch (chainStatus) {
-        case LANGUAGE_NOT_SUPPORTED:
-          presentation.setEnabledAndVisible(false);
-          break;
-        case FOUND:
-          presentation.setEnabledAndVisible(true);
-          break;
-        case COMPUTING:
-        case NOT_FOUND:
+        case LANGUAGE_NOT_SUPPORTED -> presentation.setEnabledAndVisible(false);
+        case FOUND -> presentation.setEnabledAndVisible(true);
+        case COMPUTING, NOT_FOUND -> {
           presentation.setVisible(true);
           presentation.setEnabled(false);
-          break;
+        }
       }
     }
   }

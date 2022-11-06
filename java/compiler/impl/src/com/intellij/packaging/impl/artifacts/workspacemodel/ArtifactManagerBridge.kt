@@ -23,11 +23,12 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntities.CustomPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 
@@ -202,7 +203,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(changedArtifacts)
 
-    WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel("Commit artifact manager") {
       it.addDiff(artifactModel.diff)
     }
 
@@ -291,7 +292,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
             }
             .toList()
 
-          workspaceModel.updateProjectModelSilent {
+          (workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Initialize artifact bridges") {
             addBridgesToDiff(newBridges, it)
           }
         }
@@ -311,8 +312,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     private val LOG = logger<ArtifactManagerBridge>()
 
-    const val FEATURE_TYPE = "com.intellij.packaging.artifacts.ArtifactType";
-
     val VALID_ARTIFACT_CONDITION: Condition<Artifact> = Condition { it !is InvalidArtifact }
   }
 
@@ -324,7 +323,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    WorkspaceModel.getInstance(project).updateProjectModelSilent {
+    (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
       val map = it.mutableArtifactsMap
       it.entities(ArtifactEntity::class.java).filter(selector).forEach { artifact ->
         map.removeMapping(artifact)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.constraints
 
 import com.intellij.openapi.Disposable
@@ -20,6 +20,5 @@ internal interface ConstrainedExecutionScheduler {
    * such executor MUST NEVER be used for dispatching coroutines, as execution of a coroutine may hang at a suspension point forever
    * without giving it a chance to handle cancellation and exit gracefully.
    */
-  @JvmDefault
   fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier? = null)
 }

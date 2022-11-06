@@ -68,16 +68,16 @@ public class BuilderWithDeprecatedField {
     public BuilderWithDeprecatedField build() {
       java.util.List<String> xyzs;
       switch (this.xyzs == null ? 0 : this.xyzs.size()) {
-      case 0: 
+      case 0:
         xyzs = java.util.Collections.emptyList();
         break;
-      case 1: 
+      case 1:
         xyzs = java.util.Collections.singletonList(this.xyzs.get(0));
         break;
-      default: 
+      default:
         xyzs = java.util.Collections.unmodifiableList(new java.util.ArrayList<String>(this.xyzs));
       }
-      return new BuilderWithDeprecatedField(bar, foo, xyzs);
+      return new BuilderWithDeprecatedField(this.bar, this.foo, xyzs);
     }
 
     @java.lang.Override

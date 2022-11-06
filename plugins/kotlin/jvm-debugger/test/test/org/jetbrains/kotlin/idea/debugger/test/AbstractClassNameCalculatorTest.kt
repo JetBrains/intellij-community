@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 abstract class AbstractClassNameCalculatorTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected fun doTest(unused: String) {
         val testFile = dataFile()

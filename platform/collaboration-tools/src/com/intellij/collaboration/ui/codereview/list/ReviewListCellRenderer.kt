@@ -132,7 +132,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     val tagGroup = presentation.tagGroup
     tags.apply {
-      icon = CollaborationToolsIcons.Branch
+      icon = CollaborationToolsIcons.Review.Branch
       isVisible = tagGroup != null
     }.also {
       if (tagGroup != null) {
@@ -143,10 +143,10 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
             val color = tag.color
             if (color != null) {
               //TODO: need a separate untinted icon to color properly
-              label.icon = IconUtil.colorize(CollaborationToolsIcons.Branch, color)
+              label.icon = IconUtil.colorize(CollaborationToolsIcons.Review.Branch, color)
             }
             else {
-              label.icon = CollaborationToolsIcons.Branch
+              label.icon = CollaborationToolsIcons.Review.Branch
             }
           }
         }
@@ -184,7 +184,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     comments.apply {
       val counter = presentation.commentsCounter
-      icon = CollaborationToolsIcons.Comment
+      icon = CollaborationToolsIcons.Review.Comment
       text = counter?.count.toString()
       toolTipText = counter?.tooltip
       isVisible = counter != null

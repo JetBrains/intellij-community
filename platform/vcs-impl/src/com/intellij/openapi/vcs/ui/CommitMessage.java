@@ -5,8 +5,10 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -41,7 +43,10 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +62,7 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyLimitSettings;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, LafManagerListener {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   public static final Key<Supplier<Iterable<Change>>> CHANGES_SUPPLIER_KEY = Key.create("Vcs.CommitMessage.CompletionContext");
 
@@ -67,16 +72,22 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   private static final @NotNull EditorCustomization COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION = editor -> {
     editor.setBackgroundColor(null); // to use background from set color scheme
-    editor.setColorsScheme(getCommitMessageColorScheme());
+    editor.setColorsScheme(getCommitMessageColorScheme(editor));
   };
 
   @NotNull
-  private static EditorColorsScheme getCommitMessageColorScheme() {
+  private static EditorColorsScheme getCommitMessageColorScheme(EditorEx editor) {
     boolean isLaFDark = ColorUtil.isDark(UIUtil.getPanelBackground());
     boolean isEditorDark = EditorColorsManager.getInstance().isDarkEditor();
-    return isLaFDark == isEditorDark
-           ? EditorColorsManager.getInstance().getGlobalScheme()
-           : EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+    EditorColorsScheme colorsScheme = isLaFDark == isEditorDark
+                                      ? EditorColorsManager.getInstance().getGlobalScheme()
+                                      : EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+
+    // We have to wrap the colorsScheme into a scheme delegate in order to avoid editing the global scheme
+    colorsScheme = editor.createBoundColorSchemeDelegate(colorsScheme);
+    colorsScheme.setEditorFontSize(IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize());
+
+    return colorsScheme;
   }
 
   @NotNull private final EditorTextField myEditorField;
@@ -128,7 +139,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     setBorder(createEmptyBorder());
 
     updateOnInspectionProfileChanged(project);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, this);
   }
 
   @Override
@@ -153,8 +163,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @Override
-  public void lookAndFeelChanged(@NotNull LafManager source) {
-    Editor editor = myEditorField.getEditor();
+  public void updateUI() {
+    super.updateUI();
+
+    //noinspection ConstantValue - called from super.<init>
+    Editor editor = myEditorField != null ? myEditorField.getEditor() : null;
     if (editor instanceof EditorEx) COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION.customize((EditorEx)editor);
   }
 
@@ -311,8 +324,8 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
       if (file != null) {
-        InspectionProfileWrapper.setCustomInspectionProfileWrapperTemporarily(file,
-                         profile -> new InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(myProject)));
+        InspectionProfileWrapper.setCustomInspectionProfileWrapperTemporarily(file, profile ->
+          new InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(myProject)));
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
       ((EditorMarkupModelImpl)editor.getMarkupModel())

@@ -37,6 +37,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -72,8 +73,9 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
   }
 
   private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
+    Set<? extends Key<?>> existing = ContainerUtil.map2Set(myTags, button -> button.myTask.getProviderId());
     return ContainerUtil.filter(BeforeRunTaskProvider.EP_NAME.getExtensions(myConfiguration.getProject()),
-                                provider -> provider.createTask(myConfiguration) != null);
+                                provider -> provider.createTask(myConfiguration) != null && (!provider.isSingleton() || !existing.contains(provider.getId())));
   }
 
   private TaskButton createTag(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {

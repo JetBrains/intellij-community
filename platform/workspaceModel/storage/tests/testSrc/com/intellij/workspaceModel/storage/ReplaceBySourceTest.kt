@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.storage.impl.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -25,7 +26,8 @@ class ReplaceBySourceTest {
     replacement = createEmptyBuilder()
     builder.useNewRbs = true
     builder.keepLastRbsEngine = true
-    builder.upgradeEngine = { (it as ReplaceBySourceAsTree).shuffleEntities = info.currentRepetition.toLong() }
+    // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
+    builder.upgradeEngine = { (it as ReplaceBySourceAsTree).shuffleEntities = Random(info.currentRepetition.toLong()).nextLong() }
   }
 
   @RepeatedTest(10)
@@ -140,7 +142,8 @@ class ReplaceBySourceTest {
   fun `entity modification`() {
     val entity = builder add NamedEntity("hello2", MySource)
     replacement = createBuilderFrom(builder)
-    val modified = replacement.modifyEntity(entity) {
+    val replacementEntity = entity.createReference<NamedEntity>().resolve(replacement)!!
+    val modified = replacement.modifyEntity(replacementEntity) {
       myName = "Hello Alex"
     }
 
@@ -171,7 +174,7 @@ class ReplaceBySourceTest {
   fun `removing entity in builder`() {
     val entity = builder add NamedEntity("myEntity", MySource)
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(entity)
+    replacement.removeEntity(entity.from(replacement))
     rbsAllSources()
 
     builder.assertConsistency()
@@ -187,7 +190,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(parent) {
+    replacement.modifyEntity(parent.from(replacement)) {
       myName = "newProperty"
     }
 
@@ -207,7 +210,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child) {
+    replacement.modifyEntity(child.from(replacement)) {
       childProperty = "newProperty"
     }
 
@@ -226,7 +229,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(parent)
+    replacement.removeEntity(parent.from(replacement))
 
     rbsAllSources()
 
@@ -247,16 +250,21 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child) {
+    replacement.modifyEntity(child.from(replacement)) {
       this.parentEntity = parent2
     }
 
+    // Here the original child entity is removed and a new child entity is added.
+    //   I don't really like this approach, but at the moment we can't understand that child entity wan't actually changed
     rbsAllSources()
 
     builder.assertConsistency()
     val parents = builder.entities(NamedEntity::class.java).toList()
     assertTrue(parents.single { it.myName == "myProperty" }.children.none())
-    assertEquals(child.childProperty, parents.single { it.myName == "anotherProperty" }.children.single().childProperty)
+    assertTrue(parents.single { it.myName == "anotherProperty" }.children.singleOrNull() != null)
+
+    // child is removed, so we can't access it
+    //assertEquals(child.childProperty, parents.single { it.myName == "anotherProperty" }.children.single().childProperty)
     thisStateCheck {
       parent assert ReplaceState.Relabel(parent.base.id)
       parent2 assert ReplaceState.Relabel(parent2.base.id)
@@ -277,7 +285,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child) {
+    replacement.modifyEntity(child.from(replacement)) {
       this.parentEntity = parent
     }
 
@@ -296,7 +304,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(child) {
+    replacement.modifyEntity(child.from(replacement)) {
       this.parentEntity = parent2
     }
 
@@ -316,7 +324,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(child)
+    replacement.removeEntity(child.from(replacement))
 
     rbsAllSources()
 
@@ -366,7 +374,7 @@ class ReplaceBySourceTest {
       this.parentEntity = parentEntity
     }
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(parentEntity)
+    replacement.removeEntity(parentEntity.from(replacement))
 
     builder.replaceBySource({ it is AnotherSource }, replacement)
 
@@ -403,7 +411,7 @@ class ReplaceBySourceTest {
     }
 
     replacement = createBuilderFrom(builder)
-    replacement.removeEntity(child)
+    replacement.removeEntity(child.from(replacement))
 
     builder.replaceBySource({ it is MySource }, replacement)
   }
@@ -411,12 +419,12 @@ class ReplaceBySourceTest {
   @RepeatedTest(10)
   fun `entity with soft reference`() {
     val named = builder.addNamedEntity("MyName")
-    builder.addWithSoftLinkEntity(named.persistentId)
+    builder.addWithSoftLinkEntity(named.symbolicId)
     resetChanges()
     builder.assertConsistency()
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(named) {
+    replacement.modifyEntity(named.from(replacement)) {
       this.myName = "NewName"
     }
 
@@ -432,12 +440,12 @@ class ReplaceBySourceTest {
   @RepeatedTest(10)
   fun `entity with soft reference remove reference`() {
     val named = builder.addNamedEntity("MyName")
-    val linked = builder.addWithListSoftLinksEntity("name", listOf(named.persistentId))
+    val linked = builder.addWithListSoftLinksEntity("name", listOf(named.symbolicId))
     resetChanges()
     builder.assertConsistency()
 
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(linked) {
+    replacement.modifyEntity(linked.from(replacement)) {
       this.links = mutableListOf()
     }
 
@@ -452,8 +460,8 @@ class ReplaceBySourceTest {
   fun `replace by source with composite id`() {
     replacement = createEmptyBuilder()
     val namedEntity = replacement.addNamedEntity("MyName")
-    val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.persistentId)
-    replacement.addComposedLinkEntity(composedEntity.persistentId)
+    val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.symbolicId)
+    replacement.addComposedLinkEntity(composedEntity.symbolicId)
 
     replacement.assertConsistency()
     rbsAllSources()
@@ -468,7 +476,7 @@ class ReplaceBySourceTest {
   fun `trying to create two similar persistent ids`() {
     val namedEntity = builder.addNamedEntity("MyName", source = AnotherSource)
     replacement = createBuilderFrom(builder)
-    replacement.modifyEntity(namedEntity) {
+    replacement.modifyEntity(namedEntity.from(replacement)) {
       this.myName = "AnotherName"
     }
 
@@ -489,7 +497,7 @@ class ReplaceBySourceTest {
     replacement = createBuilderFrom(builder)
 
     val anotherParent = replacement add NamedEntity("Another", MySource)
-    replacement.modifyEntity(childEntity) {
+    replacement.modifyEntity(childEntity.from(replacement)) {
       this.parentEntity = anotherParent
     }
 
@@ -1521,6 +1529,55 @@ class ReplaceBySourceTest {
     builder.assertConsistency()
 
     assertEquals(1, builder.changeLog.changeLog.size)
+  }
+
+  @RepeatedTest(10)
+  fun `replace same entities should produce in case of source chang2e`() {
+    builder add OoParentEntity("prop", MySource)
+
+    val parent = replacement add OoParentEntity("prop", MySource)
+    replacement add OoChildWithNullableParentEntity(AnotherSource) {
+      this.parentEntity = parent
+    }
+    replacement add OoChildWithNullableParentEntity(AnotherSource) {
+      this.parentEntity = parent
+    }
+    replacement add OoChildWithNullableParentEntity(AnotherSource) {
+      this.parentEntity = parent
+    }
+
+    builder.changeLog.clear()
+
+    builder.replaceBySource({ it is AnotherSource }, replacement)
+    builder.replaceBySource({ true }, builder.toSnapshot())
+
+    builder.assertConsistency()
+  }
+
+  @RepeatedTest(10)
+  fun `external entity`() {
+    replacement add MainEntityParentList("data", MySource) {
+      this.children = listOf(AttachedEntityParentList("info", MySource))
+    }
+
+    rbsMySources()
+
+    builder.assertConsistency()
+
+    assertTrue(builder.entities(MainEntityParentList::class.java).single().children.isNotEmpty())
+  }
+
+  @RepeatedTest(10)
+  fun `move external entity`() {
+    replacement add MainEntity("data", MySource) {
+      this.child = AttachedEntity("Data", MySource)
+    }
+
+    builder.changeLog.clear()
+
+    rbsAllSources()
+
+    builder.assertConsistency()
   }
 
   private inner class ThisStateChecker {

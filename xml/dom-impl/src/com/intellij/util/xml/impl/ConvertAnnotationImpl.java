@@ -20,9 +20,6 @@ import com.intellij.util.xml.Converter;
 
 import java.lang.annotation.Annotation;
 
-/**
- * @author peter
-*/
 public class ConvertAnnotationImpl implements Convert {
   private final Converter myConverter;
   private final boolean mySoft;

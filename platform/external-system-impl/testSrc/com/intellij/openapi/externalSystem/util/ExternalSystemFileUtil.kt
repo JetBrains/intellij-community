@@ -17,6 +17,9 @@ import kotlin.io.path.name
 fun VirtualFile.findFileOrDirectory(relativePath: String) =
   fileSystem.findFileOrDirectory(getAbsoluteNioPath(relativePath))
 
+fun VirtualFile.getFileOrDirectory(relativePath: String) =
+  fileSystem.getFileOrDirectory(getAbsoluteNioPath(relativePath))
+
 fun VirtualFile.findFile(relativePath: String) =
   fileSystem.findFile(getAbsoluteNioPath(relativePath))
 
@@ -51,24 +54,28 @@ fun VirtualFileSystem.findFileOrDirectory(path: Path): VirtualFile? {
   return refreshAndFindFileByPath(path.toString())
 }
 
+fun VirtualFileSystem.getFileOrDirectory(path: Path): VirtualFile {
+  return requireNotNull(findFileOrDirectory(path)) { "File or directory doesn't exist: $path" }
+}
+
 fun VirtualFileSystem.findFile(path: Path): VirtualFile? {
   val file = findFileOrDirectory(path) ?: return null
-  require(!file.isDirectory) { "Expected file instead directory: $file" }
+  require(!file.isDirectory) { "Expected file instead directory: $path" }
   return file
 }
 
 fun VirtualFileSystem.getFile(path: Path): VirtualFile {
-  return requireNotNull(findFile(path)) { "File doesn't exist" }
+  return requireNotNull(findFile(path)) { "File doesn't exist: $path" }
 }
 
 fun VirtualFileSystem.findDirectory(path: Path): VirtualFile? {
   val file = findFileOrDirectory(path) ?: return null
-  require(file.isDirectory) { "Expected directory instead file: $file" }
+  require(file.isDirectory) { "Expected directory instead file: $path" }
   return file
 }
 
 fun VirtualFileSystem.getDirectory(path: Path): VirtualFile {
-  return requireNotNull(findDirectory(path)) { "Directory doesn't exist" }
+  return requireNotNull(findDirectory(path)) { "Directory doesn't exist: $path" }
 }
 
 fun VirtualFileSystem.findOrCreateFile(path: Path): VirtualFile {

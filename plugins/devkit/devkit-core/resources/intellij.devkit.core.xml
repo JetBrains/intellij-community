@@ -84,6 +84,11 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDynamicPluginInspection"
                      key="inspection.plugin.xml.dynamic.plugin.display.name"/>
+    <localInspection language="XML" applyToDialects="false"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlExtensionRegistrationInspection"
+                     key="inspection.plugin.xml.extension.registration.display.name"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      groupPathKey="inspections.group.path"
@@ -99,16 +104,16 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"
                      key="inspection.inspection.description.not.found.inspection.display.name"/>
-    <localInspection language="JAVA" shortName="InspectionUsingGrayColors"
+    <localInspection language="UAST" shortName="InspectionUsingGrayColors"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseGrayInspection"
                      key="inspection.inspection.using.gray.colors.display.name"/>
-    <localInspection language="JAVA" shortName="InspectionUniqueToolbarId"
+    <localInspection language="UAST" shortName="UnspecifiedActionsPlace"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UniqueToolbarIdInspection"
-                     key="inspection.inspection.unique.toolbar.id.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnspecifiedActionsPlaceInspection"
+                     key="inspection.inspection.unspecified.actions.place.display.name"/>
     <localInspection language="UAST" shortName="IntentionDescriptionNotFoundInspection"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
@@ -121,17 +126,11 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection shortName="ComponentRegistrationProblems"
+    <localInspection language="UAST" shortName="ComponentRegistrationProblems"
                      key="inspections.registration.problems.name"
-                     groupKey="inspections.group.name"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
-    <localInspection language="XML" shortName="InspectionMappingConsistency" applyToDialects="false"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"
-                     key="inspection.inspection.mapping.consistency.display.name"/>
 
     <localInspection language="UAST" shortName="UndesirableClassUsage"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -148,22 +147,22 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MissingAccessibleContextInspection"
                      key="inspection.missing.accessible.context.display.name"/>
-    <localInspection language="JAVA" shortName="UnsafeVfsRecursion"
+    <localInspection language="UAST" shortName="UnsafeVfsRecursion"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeVfsRecursionInspection"
                      key="inspection.unsafe.vfs.recursion.display.name"/>
-    <localInspection language="JAVA" shortName="UseJBColor"
+    <localInspection language="UAST" shortName="UseJBColor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"
                      key="inspection.use.JB.color.display.name"/>
-    <localInspection language="JAVA" shortName="UseDPIAwareInsets"
+    <localInspection language="UAST" shortName="UseDPIAwareInsets"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsInspection"
                      key="inspection.use.DPI.aware.insets.display.name"/>
-    <localInspection language="JAVA" shortName="UseDPIAwareBorders"
+    <localInspection language="UAST" shortName="UseDPIAwareBorders"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderInspection"
@@ -184,7 +183,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePluginIdEqualsInspection"
                      key="inspection.use.plugin.id.equals.display.name"/>
-    <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor"
+    <localInspection language="UAST" shortName="UnsafeReturnStatementVisitor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"
@@ -205,7 +204,7 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"
                      key="inspection.use.primitive.types.equals.display.name"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection shortName="HighlightVisitorInternal"
+    <localInspection language="" shortName="HighlightVisitorInternal"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" isInternal="true"
                      level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"
@@ -277,6 +276,7 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.NotificationGroupIdReferenceContributor"/>
+    <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ExtensionPointDeclarationReferencesContributor"/>
 
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesQueryExecutor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
@@ -330,7 +330,7 @@
 
     <codeInsight.lineMarkerProvider language="UAST"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptionTypeRelatedItemLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="JAVA"
+    <codeInsight.lineMarkerProvider language="UAST"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionPointDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="UAST"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.PluginDescriptorDeclarationRelatedItemLineMarkerProvider"/>

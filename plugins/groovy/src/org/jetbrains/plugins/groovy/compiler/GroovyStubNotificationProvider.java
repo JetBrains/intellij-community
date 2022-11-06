@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 public final class GroovyStubNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   static final String GROOVY_STUBS = "groovyStubs";
   private static final Key<EditorNotificationPanel> KEY = Key.create("GroovyStubNotificationProvider");

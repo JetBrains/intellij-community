@@ -4,12 +4,8 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.ui.CellRendererPanel
 import com.intellij.util.ui.ThreeStateCheckBox
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Container
-import java.awt.Dimension
+import java.awt.*
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
@@ -54,7 +50,9 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
       background = null
       isOpaque = false
 
-      isVisible = tree.run { isShowCheckboxes && isInclusionVisible(value) }
+      isVisible = tree.isShowCheckboxes &&
+                  (value is ChangesTree.FixedHeightSampleChangesBrowserNode || // assume checkbox is visible for the sample node
+                   tree.isInclusionVisible(value))
       if (isVisible) {
         state = tree.getNodeStatus(value)
         isEnabled = tree.run { isEnabled && isInclusionEnabled(value) }
@@ -88,6 +86,21 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
       }
     }
     return accessibleContext
+  }
+
+  /**
+   * In case of New UI background selection painting performs by [com.intellij.ui.tree.ui.DefaultTreeUI.paint],
+   * but in case of expansion popup painting it is necessary to fill the background in renderer.
+   *
+   * [setOpaque] for renderer is set in the tree UI and in [com.intellij.ui.TreeExpandableItemsHandler]
+   *
+   * @see [com.intellij.ui.tree.ui.DefaultTreeUI.setBackground] and its private overloading
+   * @see [com.intellij.ui.TreeExpandableItemsHandler.doPaintTooltipImage]
+   */
+  final override fun paintComponent(g: Graphics?) {
+    if (isOpaque) {
+      super.paintComponent(g)
+    }
   }
 
   /**

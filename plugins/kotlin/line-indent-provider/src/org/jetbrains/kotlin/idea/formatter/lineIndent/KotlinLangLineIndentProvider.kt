@@ -306,7 +306,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             if (!calleeOrReference.moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment() || calleeOrReference.isAtEnd) {
                 // TODO: line break after dot
                 // case: first call in a chain
-                return createIndentCalculator(settings.indentForChainedCalls, calleeOrReference.after().startOffset)
+                return createIndentCalculator(settings.indentForChainedCalls, copyOfCalleeOrReference.startOffset)
             }
 
             // abc.abc|.call()

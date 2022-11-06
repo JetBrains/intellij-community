@@ -80,19 +80,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final Project myProject;
   private final Editor myEditor;
   private final Object myUiLock = new Object();
-  private final JBList<LookupElement> myList = new JBList<LookupElement>(new CollectionListModelWithBatchUpdate<>()) {
-    // 'myList' is focused when "Screen Reader" mode is enabled
-    @Override
-    protected void processKeyEvent(@NotNull final KeyEvent e) {
-      myEditor.getContentComponent().dispatchEvent(e); // let the editor handle actions properly for the lookup list
-    }
-
-    @NotNull
-    @Override
-    protected ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
-      return new CompletionExtender(this);
-    }
-  };
+  private final JBList<LookupElement> myList = new LookupList();
   final LookupCellRenderer myCellRenderer;
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -1268,6 +1256,30 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       Font font = StartupUiUtil.getLabelFont();
       RelativeFont relativeFont = RelativeFont.NORMAL.scale(JBUI.CurrentTheme.CompletionPopup.Advertiser.fontSizeOffset());
       return relativeFont.derive(font);
+    }
+  }
+
+  /**
+   * List implementation for lookup. Normally, this list is not focused. However,
+   * it gains focus when "Screen Reader" mode is enabled. So we need to delegate
+   * key events and declare a permanent component to provide proper data context for actions.
+   */
+  private class LookupList extends JBList<LookupElement> implements DependentTransientComponent {
+    LookupList() { super(new CollectionListModelWithBatchUpdate<>()); }
+
+    @Override
+    protected void processKeyEvent(@NotNull final KeyEvent e) {
+      myEditor.getContentComponent().dispatchEvent(e);
+    }
+
+    @Override
+    protected @NotNull ExpandableItemsHandler<Integer> createExpandableItemsHandler() {
+      return new CompletionExtender(this);
+    }
+
+    @Override
+    public @NotNull Component getPermanentComponent() {
+      return myEditor.getContentComponent();
     }
   }
 }

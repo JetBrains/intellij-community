@@ -9,10 +9,7 @@ import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +28,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -44,12 +42,19 @@ public class ShowCoveringTestsAction extends AnAction {
 
   private final String myClassFQName;
   private final LineData myLineData;
+  private final boolean myTestsAvailable;
 
-  public ShowCoveringTestsAction(final String classFQName, LineData lineData) {
+  public ShowCoveringTestsAction(@Nullable Project project, final String classFQName, LineData lineData) {
     super(CoverageBundle.message("action.text.show.tests.covering.line"),
           CoverageBundle.message("action.description.show.tests.covering.line"), PlatformIcons.TEST_SOURCE_FOLDER);
     myClassFQName = classFQName;
     myLineData = lineData;
+    boolean enabled = false;
+    if (myLineData != null && myLineData.getStatus() != LineCoverage.NONE && project != null) {
+      final CoverageSuitesBundle bundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
+      enabled = bundle != null && bundle.isCoverageByTestEnabled() && bundle.getCoverageEngine().wasTestDataCollected(project);
+    }
+    myTestsAvailable = enabled;
   }
 
   @Override
@@ -104,15 +109,11 @@ public class ShowCoveringTestsAction extends AnAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(false);
-    if (myLineData != null && myLineData.getStatus() != LineCoverage.NONE) {
-      final Project project = e.getProject();
-      if (project != null) {
-        CoverageSuitesBundle currentSuitesBundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-        presentation.setEnabled(currentSuitesBundle != null &&
-                                currentSuitesBundle.isCoverageByTestEnabled() &&
-                                currentSuitesBundle.getCoverageEngine().wasTestDataCollected(project));
-      }
-    }
+    presentation.setEnabled(myTestsAvailable);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

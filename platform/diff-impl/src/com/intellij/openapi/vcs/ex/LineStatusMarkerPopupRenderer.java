@@ -289,6 +289,11 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
     }

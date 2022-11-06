@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
@@ -51,7 +52,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
     final PsiClass builderClass = info.getBuilderClass();
     final LombokLightMethodBuilder oneAddMethodBuilder = new LombokLightMethodBuilder(
-      info.getManager(), LombokUtils.buildAccessorName(info.getSetterPrefix(), singularName))
+      info.getManager(), LombokUtils.buildAccessorName(info.getSetterPrefix(), singularName, info.getCapitalizationStrategy()))
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
@@ -66,7 +67,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     methods.add(oneAddMethodBuilder);
 
     final LombokLightMethodBuilder allAddMethodBuilder = new LombokLightMethodBuilder(
-      info.getManager(), LombokUtils.buildAccessorName(info.getSetterPrefix(), fieldName))
+      info.getManager(), LombokUtils.buildAccessorName(info.getSetterPrefix(), fieldName, info.getCapitalizationStrategy()))
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
@@ -80,7 +81,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
     methods.add(allAddMethodBuilder);
 
-    final LombokLightMethodBuilder clearMethodBuilder = new LombokLightMethodBuilder(info.getManager(), createSingularClearMethodName(fieldName))
+    final LombokLightMethodBuilder clearMethodBuilder = new LombokLightMethodBuilder(
+      info.getManager(), createSingularClearMethodName(fieldName, info.getCapitalizationStrategy()))
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
@@ -95,13 +97,16 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   }
 
   @NotNull
-  private String createSingularClearMethodName(String fieldName) {
-    return "clear" + StringUtil.capitalize(fieldName);
+  private static String createSingularClearMethodName(String fieldName, CapitalizationStrategy capitalizationStrategy) {
+    return LombokUtils.buildAccessorName("clear", fieldName, capitalizationStrategy);
   }
 
   @Override
-  public List<String> getBuilderMethodNames(@NotNull String fieldName, @Nullable PsiAnnotation singularAnnotation) {
-    return Arrays.asList(createSingularName(singularAnnotation, fieldName), fieldName, createSingularClearMethodName(fieldName));
+  public List<String> getBuilderMethodNames(@NotNull String fieldName, @Nullable PsiAnnotation singularAnnotation,
+                                            CapitalizationStrategy capitalizationStrategy) {
+    return Arrays.asList(createSingularName(singularAnnotation, fieldName),
+                         fieldName,
+                         createSingularClearMethodName(fieldName, capitalizationStrategy));
   }
 
   @Override

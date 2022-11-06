@@ -56,184 +56,212 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
   }
 
   public void testCollectingAttachItems_OneDebugger() {
-    assertItems("--------\n" +
-                "1 exec1: dbg\n" +
-                "2 exec2: dbg\n",
+    assertItems("""
+                  --------
+                  1 exec1: dbg
+                  2 exec2: dbg
+                  """,
                 new TestDebuggerProvider("dbg"));
   }
 
   public void testCollectingAttachItems_DebuggerPerProcess() {
     // from one provider
-    assertItems("--------\n" +
-                "1 exec1: dbg1\n" +
-                "2 exec2: dbg2\n",
+    assertItems("""
+                  --------
+                  1 exec1: dbg1
+                  2 exec2: dbg2
+                  """,
                 new TestDebuggerProvider(1, TEST_GROUP, "dbg1"),
                 new TestDebuggerProvider(2, TEST_GROUP, "dbg2"));
   }
 
   public void testCollectingAttachItems_SeveralDebuggers() {
     // from one provider
-    assertItems("--------\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "    dbg3\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "    dbg3\n",
+    assertItems("""
+                  --------
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                      dbg3
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                      dbg3
+                  """,
                 new TestDebuggerProvider("dbg1", "dbg2", "dbg3"));
 
     // from several providers
-    assertItems("--------\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "    dbg3\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "    dbg3\n",
+    assertItems("""
+                  --------
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                      dbg3
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                      dbg3
+                  """,
                 new TestDebuggerProvider("dbg1"),
                 new TestDebuggerProvider("dbg2", "dbg3"));
 
     // keep order
-    assertItems("--------\n" +
-                "1 exec1: dbg3\n" +
-                "    dbg3\n" +
-                "    dbg2\n" +
-                "    dbg1\n" +
-                "2 exec2: dbg3\n" +
-                "    dbg3\n" +
-                "    dbg2\n" +
-                "    dbg1\n",
+    assertItems("""
+                  --------
+                  1 exec1: dbg3
+                      dbg3
+                      dbg2
+                      dbg1
+                  2 exec2: dbg3
+                      dbg3
+                      dbg2
+                      dbg1
+                  """,
                 new TestDebuggerProvider("dbg3"),
                 new TestDebuggerProvider("dbg2", "dbg1"));
 
     // several debuggers with same display name
-    assertItems("--------\n" +
-                "1 exec1: dbg\n" +
-                "    dbg\n" +
-                "    dbg\n" +
-                "    dbg\n" +
-                "2 exec2: dbg\n" +
-                "    dbg\n" +
-                "    dbg\n" +
-                "    dbg\n",
+    assertItems("""
+                  --------
+                  1 exec1: dbg
+                      dbg
+                      dbg
+                      dbg
+                  2 exec2: dbg
+                      dbg
+                      dbg
+                      dbg
+                  """,
                 new TestDebuggerProvider("dbg", "dbg"),
                 new TestDebuggerProvider("dbg"));
   }
 
   public void testCollectingAttachItems_Groups() {
     // one group
-    assertItems("----group----\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n",
+    assertItems("""
+                  ----group----
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  """,
                 new TestDebuggerProvider(new TestAttachGroup("group", 0), "dbg1", "dbg2"));
 
     // merging same group
     TestAttachGroup group = new TestAttachGroup("group", 0);
-    assertItems("----group----\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n",
+    assertItems("""
+                  ----group----
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  """,
                 new TestDebuggerProvider(group, "dbg1"),
                 new TestDebuggerProvider(group, "dbg2"));
 
-    assertItems("--------\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "--------\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n",
+    assertItems("""
+                  --------
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  --------
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  """,
                 new TestDebuggerProvider(TEST_GROUP, "dbg1", "dbg2"),
                 new TestDebuggerProvider(new TestAttachGroup("", 1), "dbg1", "dbg2"));
   }
 
   public void testCollectingAttachItems_Groups_SortingGroups() {
-    assertItems("----group1----\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "----group2----\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n",
+    assertItems("""
+                  ----group1----
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  ----group2----
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  """,
                 new TestDebuggerProvider(new TestAttachGroup("group1", 1), "dbg1", "dbg2"),
                 new TestDebuggerProvider(new TestAttachGroup("group2", 2), "dbg1", "dbg2"));
-    assertItems("----group2----\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "----group1----\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n",
+    assertItems("""
+                  ----group2----
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  ----group1----
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  """,
                 new TestDebuggerProvider(new TestAttachGroup("group1", 2), "dbg1", "dbg2"),
                 new TestDebuggerProvider(new TestAttachGroup("group2", 1), "dbg1", "dbg2"));
 
     // sorting with default group
-    assertItems("----group2----\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "--------\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "----group1----\n" +
-                "1 exec1: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n" +
-                "2 exec2: dbg1\n" +
-                "    dbg1\n" +
-                "    dbg2\n",
+    assertItems("""
+                  ----group2----
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  --------
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  ----group1----
+                  1 exec1: dbg1
+                      dbg1
+                      dbg2
+                  2 exec2: dbg1
+                      dbg1
+                      dbg2
+                  """,
                 new TestDebuggerProvider(TEST_GROUP, "dbg1", "dbg2"),
                 new TestDebuggerProvider(new TestAttachGroup("group1", 1), "dbg1", "dbg2"),
                 new TestDebuggerProvider(new TestAttachGroup("group2", -1), "dbg1", "dbg2"));
   }
 
   public void testCollectingAttachItems_Groups_SortingItems() {
-    assertItems("----group----\n" +
-                "1 exec1: dbg1\n" +
-                "2 exec2: dbg1\n",
+    assertItems("""
+                  ----group----
+                  1 exec1: dbg1
+                  2 exec2: dbg1
+                  """,
                 new TestDebuggerProvider(new TestAttachGroup("group", 0), "dbg1"));
-    assertItems("----group----\n" +
-                "2 exec2: dbg1\n" +
-                "1 exec1: dbg1\n",
+    assertItems("""
+                  ----group----
+                  2 exec2: dbg1
+                  1 exec1: dbg1
+                  """,
                 new TestDebuggerProvider(new TestAttachGroup("group", 0) {
                   @Override
                   public int compare(@NotNull ProcessInfo a, @NotNull ProcessInfo b) {
@@ -243,9 +271,11 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
   }
 
   public void testCollectingAttachItems_Groups_CustomItemTitles() {
-    assertItems("----group----\n" +
-                "1 custom: dbg1\n" +
-                "2 custom: dbg1\n",
+    assertItems("""
+                  ----group----
+                  1 custom: dbg1
+                  2 custom: dbg1
+                  """,
                 new TestDebuggerProvider(new TestAttachGroup("group", 0) {
                   @Nls
                   @Override
@@ -336,18 +366,20 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
 
     // one item in history
     addToRecent(getProject(), originalItems.get(0));
-    assertItems("----Recent----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----Recent----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
@@ -357,21 +389,23 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
 
     // several items in history
     addToRecent(getProject(), originalItems.get(1));
-    assertItems("----Recent----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----Recent----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
@@ -381,21 +415,23 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
 
     // put most recent item on top
     addToRecent(getProject(), originalItems.get(0));
-    assertItems("----Recent----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n" +
-                "----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----Recent----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
@@ -406,21 +442,23 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
     // put debugger used in history item on top
     addToRecent(getProject(), originalItems.get(0).getSubItems().get(1));
     addToRecent(getProject(), originalItems.get(1).getSubItems().get(1));
-    assertItems("----Recent----\n" +
-                "20 exec20: lldb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n" +
-                "10 exec10: lldb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----Recent----
+                  20 exec20: lldb2
+                      gdb2
+                      lldb2
+                  10 exec10: lldb1
+                      gdb1
+                      lldb1
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
@@ -429,32 +467,36 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(20, group2, debuggers2));
 
     // filter unavailable history items
-    assertItems("----Recent----\n" +
-                "20 exec20: lldb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n" +
-                "----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----Recent----
+                  20 exec20: lldb2
+                      gdb2
+                      lldb2
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 10", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
-    assertItems("----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 10", "exec10", "args10"),
                   new ProcessInfo(20, "command line 20", "exec20", "args20")
@@ -462,21 +504,23 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
     // history items available again:
-    assertItems("----Recent----\n" +
-                "20 exec20: lldb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n" +
-                "10 exec10: lldb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----Recent----
+                  20 exec20: lldb2
+                      gdb2
+                      lldb2
+                  10 exec10: lldb1
+                      gdb1
+                      lldb1
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
@@ -485,34 +529,38 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(20, group2, debuggers2));
 
     // filter items from history by suitable group
-    assertItems("----Recent----\n" +
-                "10 exec10: lldb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----Recent----
+                  10 exec10: lldb1
+                      gdb1
+                      lldb1
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group1, debuggers2));
-    assertItems("----Recent----\n" +
-                "20 exec20: lldb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n" +
-                "----group2----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----Recent----
+                  20 exec20: lldb2
+                      gdb2
+                      lldb2
+                  ----group2----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
@@ -520,14 +568,16 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(10, group2, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
     // filter by group equality, not by name
-    assertItems("----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
@@ -536,18 +586,20 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(20, new TestAttachGroup(group2.getGroupName(), group2.getOrder()), debuggers2));
 
     // filter items from history by available debugger
-    assertItems("----Recent----\n" +
-                "10 exec10: lldb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n",
+    assertItems("""
+                  ----Recent----
+                  10 exec10: lldb1
+                      gdb1
+                      lldb1
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb1
+                      gdb1
+                      lldb1
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")
@@ -556,21 +608,23 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(20, group2, debuggers1));
 
     // filter debuggers by name, not by equality
-    assertItems("----Recent----\n" +
-                "20 exec20: lldb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n" +
-                "10 exec10: lldb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group1----\n" +
-                "10 exec10: gdb1\n" +
-                "    gdb1\n" +
-                "    lldb1\n" +
-                "----group2----\n" +
-                "20 exec20: gdb2\n" +
-                "    gdb2\n" +
-                "    lldb2\n",
+    assertItems("""
+                  ----Recent----
+                  20 exec20: lldb2
+                      gdb2
+                      lldb2
+                  10 exec10: lldb1
+                      gdb1
+                      lldb1
+                  ----group1----
+                  10 exec10: gdb1
+                      gdb1
+                      lldb1
+                  ----group2----
+                  20 exec20: gdb2
+                      gdb2
+                      lldb2
+                  """,
                 new ProcessInfo[]{
                   new ProcessInfo(10, "command line 1", "exec10", "args10"),
                   new ProcessInfo(20, "command line 2", "exec20", "args20")

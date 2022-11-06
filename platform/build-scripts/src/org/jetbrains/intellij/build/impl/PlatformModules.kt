@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.impl
 
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -14,7 +16,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 private const val UTIL_JAR = "util.jar"
 private const val UTIL_RT_JAR = "util_rt.jar"
 
-private val PLATFORM_API_MODULES: List<String> = java.util.List.of(
+private val PLATFORM_API_MODULES = persistentListOf(
   "intellij.platform.analysis",
   "intellij.platform.builtInServer",
   "intellij.platform.core",
@@ -44,6 +46,7 @@ private val PLATFORM_API_MODULES: List<String> = java.util.List.of(
   "intellij.platform.vcs.log.graph",
   "intellij.platform.execution",
   "intellij.platform.debugger",
+  "intellij.platform.webSymbols",
   "intellij.xml.analysis",
   "intellij.xml",
   "intellij.xml.psi",
@@ -54,7 +57,7 @@ private val PLATFORM_API_MODULES: List<String> = java.util.List.of(
 /**
  * List of modules which are included into lib/app.jar in all IntelliJ based IDEs.
  */
-private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
+private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.analysis.impl",
   "intellij.platform.builtInServer.impl",
   "intellij.platform.core.impl",
@@ -99,6 +102,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.platform.core.ui",
   "intellij.platform.credentialStore",
   "intellij.platform.credentialStore.ui",
+  "intellij.platform.dependenciesToolwindow",
   "intellij.platform.rd.community",
   "intellij.platform.ml.impl",
   "intellij.remoteDev.util",
@@ -108,26 +112,23 @@ private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.idea.community.build.dependencies",
   "intellij.platform.usageView.impl",
   "intellij.platform.ml.impl",
+  "intellij.platform.tips",
 )
 
 object PlatformModules {
   const val PRODUCT_JAR = "product.jar"
 
-  val CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = linkedMapOf(
-    // jna uses native lib
-    "jna" to LibraryPackMode.STANDALONE_MERGED,
-    "lz4-java" to LibraryPackMode.STANDALONE_MERGED,
+  internal val CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = persistentMapOf(
     "jetbrains-annotations-java5" to LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
     "intellij-coverage" to LibraryPackMode.STANDALONE_SEPARATE,
-    "github.jnr.ffi" to LibraryPackMode.STANDALONE_SEPARATE,
   )
 
-  fun collectPlatformModules(to: MutableCollection<String>) {
+  internal fun collectPlatformModules(to: MutableCollection<String>) {
     to.addAll(PLATFORM_API_MODULES)
     to.addAll(PLATFORM_IMPLEMENTATION_MODULES)
   }
 
-  fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
+  internal fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
     val modules = LinkedHashSet<String>()
     modules.addAll(productLayout.getIncludedPluginModules(enabledPluginModules))
     modules.addAll(PLATFORM_API_MODULES)
@@ -159,7 +160,7 @@ object PlatformModules {
     return false
   }
 
-  fun jar(relativeJarPath: String, moduleNames: Collection<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
+  private fun jar(relativeJarPath: String, moduleNames: Collection<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
     for (moduleName in moduleNames) {
       if (!productLayout.excludedModuleNames.contains(moduleName)) {
         layout.withModule(moduleName, relativeJarPath)
@@ -179,11 +180,10 @@ object PlatformModules {
     }
   }
 
-  @JvmStatic
-  fun createPlatformLayout(productLayout: ProductModulesLayout,
-                           hasPlatformCoverage: Boolean,
-                           additionalProjectLevelLibraries: SortedSet<ProjectLibraryData>,
-                           context: BuildContext): PlatformLayout {
+  internal fun createPlatformLayout(productLayout: ProductModulesLayout,
+                                    hasPlatformCoverage: Boolean,
+                                    additionalProjectLevelLibraries: SortedSet<ProjectLibraryData>,
+                                    context: BuildContext): PlatformLayout {
     val layout = PlatformLayout()
     // used only in modules that packed into Java
     layout.withoutProjectLibrary("jps-javac-extension")
@@ -225,8 +225,8 @@ object PlatformModules {
       }
     }
 
-    for (entry in productLayout.moduleExcludes.entrySet()) {
-      layout.moduleExcludes.putValues(entry.key, entry.value)
+    for ((module, patterns) in productLayout.moduleExcludes) {
+      layout.excludeFromModule(module, patterns)
     }
 
     jar(UTIL_RT_JAR, listOf(
@@ -269,6 +269,7 @@ object PlatformModules {
       "intellij.relaxng",
       "intellij.json",
       "intellij.spellchecker",
+      "intellij.platform.webSymbols",
       "intellij.xml.analysis.impl",
       "intellij.xml.psi.impl",
       "intellij.xml.structureView.impl",
@@ -288,19 +289,19 @@ object PlatformModules {
       "intellij.platform.resources",
       "intellij.platform.resources.en",
       "intellij.platform.colorSchemes",
-      ), productLayout, layout)
+    ), productLayout, layout)
 
     jar("stats.jar", listOf(
       "intellij.platform.statistics",
       "intellij.platform.statistics.uploader",
       "intellij.platform.statistics.config",
-      ), productLayout, layout)
-
-    layout.excludedModuleLibraries.putValue("intellij.platform.credentialStore", "dbus-java")
+    ), productLayout, layout)
 
     addModule("intellij.platform.statistics.devkit", productLayout, layout)
     addModule("intellij.platform.objectSerializer.annotations", productLayout, layout)
-    addModule("intellij.java.guiForms.rt", productLayout, layout)
+    if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
+      layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
+    }
 
     addModule("intellij.platform.jps.model.serialization", "jps-model.jar", productLayout, layout)
     addModule("intellij.platform.jps.model.impl", "jps-model.jar", productLayout, layout)
@@ -334,7 +335,7 @@ object PlatformModules {
     }
     layout.collectProjectLibrariesFromIncludedModules(context) { lib, module ->
       val name = lib.name
-      if (module.name == "intellij.platform.buildScripts.downloader" && name == "zstd-jni") {
+      if (module.name == "intellij.platform.buildScripts.downloader" && (name == "zstd-jni" || name == "zstd-jni-windows-aarch64")) {
         return@collectProjectLibrariesFromIncludedModules
       }
 

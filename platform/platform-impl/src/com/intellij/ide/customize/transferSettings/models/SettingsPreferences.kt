@@ -5,7 +5,7 @@ enum class SettingsPreferencesKind {
   Laf, SyntaxScheme, Keymap, RecentProjects, Plugins, None;
 
   companion object {
-    val noneList = listOf(None)
+    private val noneList = listOf(None)
     val keysWithoutNone = values().toList() - noneList
   }
 }

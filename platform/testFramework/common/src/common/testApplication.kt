@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.testFramework.common
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
@@ -8,11 +10,14 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginSet
 import com.intellij.idea.*
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.application.impl.RwLockHolder
 import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
@@ -21,7 +26,10 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
@@ -44,16 +52,21 @@ import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.EdtInvocationManager
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 private var applicationInitializationResult: Result<Unit>? = null
+const val LEAKED_PROJECTS = "leakedProjects"
 
 val isApplicationInitialized: Boolean
   get() = applicationInitializationResult?.isSuccess == true
@@ -100,37 +113,44 @@ fun loadApp(setupEventQueue: Runnable) {
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
 
-  val app = ApplicationImpl(true, true, isHeadless, true)
+  val rwLockHolder = RwLockHolder()
+  val awtBusyThread = AppScheduledExecutorService.getPeriodicTasksThread()
+  EdtInvocationManager.invokeAndWaitIfNeeded {
+    // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
+    // That thread was chosen because we know for sure it's running. Needed for EDT not to exit suddenly
+    AWTAutoShutdown.getInstance().notifyThreadBusy(awtBusyThread)
+    rwLockHolder.initialize(Thread.currentThread())
+  }
+
+  val app = ApplicationImpl(isHeadless, rwLockHolder)
+
+  Disposer.register(app) {
+    AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
+  }
 
   if (SystemProperties.getBooleanProperty("tests.assertOnMissedCache", true)) {
     RecursionManager.assertOnMissedCache(app)
   }
 
   try {
-    runBlocking {
-      // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
-      val pluginSet = withTimeout(Duration.ofSeconds(40).toMillis()) {
-        loadedModuleFuture.await()
+    // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
+    val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
+    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
+
+    initConfigurationStore(app)
+
+    addKeysFromPlugins()
+    Registry.markAsLoaded()
+
+    if (EDT.isCurrentThreadEdt()) {
+      runBlockingModal(ModalTaskOwner.guess(), "") {
+        preloadServicesAndCallAppInitializedListeners(app, pluginSet)
       }
-
-      app.registerComponents(pluginSet.getEnabledModules(), app, null, null)
-      initConfigurationStore(app)
-      addKeysFromPlugins()
-      Registry.markAsLoaded()
-
-      coroutineScope {
-        withTimeout(Duration.ofSeconds(40).toMillis()) {
-          preloadCriticalServices(app)
-          app.preloadServices(
-            modules = pluginSet.getEnabledModules(),
-            activityPrefix = "",
-            syncScope = this,
-          )
-        }
-        app.loadComponents()
+    }
+    else {
+      runBlocking(Dispatchers.Default) {
+        preloadServicesAndCallAppInitializedListeners(app, pluginSet)
       }
-
-      callAppInitialized(getAppInitializedListeners(app), app.coroutineScope)
     }
 
     StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)
@@ -138,6 +158,30 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
   catch (e: InterruptedException) {
     throw e.cause ?: e
+  }
+}
+
+private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl, pluginSet: PluginSet) {
+  coroutineScope {
+    withTimeout(Duration.ofSeconds(40).toMillis()) {
+      preloadCriticalServices(app)
+      app.preloadServices(
+        modules = pluginSet.getEnabledModules(),
+        activityPrefix = "",
+        syncScope = this,
+      )
+    }
+
+    app.createInitOldComponentsTask()?.let { loadComponentInEdtTask ->
+      withContext(Dispatchers.EDT) {
+        loadComponentInEdtTask()
+      }
+    }
+    app.loadComponents()
+  }
+
+  coroutineScope {
+    callAppInitialized(getAppInitializedListeners(app), app.coroutineScope)
   }
 }
 
@@ -253,12 +297,12 @@ fun assertNonDefaultProjectsAreNotLeaked() {
     LeakHunter.checkNonDefaultProjectLeak()
   }
   catch (e: AssertionError) {
-    publishHeapDump("leakedProjects")
-    throw e
+    publishHeapDump(LEAKED_PROJECTS)
+    throw AssertionError(e)
   }
   catch (e: Exception) {
-    publishHeapDump("leakedProjects")
-    throw e
+    publishHeapDump(LEAKED_PROJECTS)
+    throw AssertionError(e)
   }
 }
 

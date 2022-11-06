@@ -21,10 +21,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
@@ -53,9 +50,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
-  private final FileAttributes FAKE_ROOT_ATTRIBUTES =
-    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false,
-                       isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
+  private static final FileAttributes UNC_ROOT_ATTRIBUTES =
+    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.INSENSITIVE);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
 
@@ -134,7 +130,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 
-  private static @NotNull String toIoPath(@NotNull VirtualFile file) {
+  protected static @NotNull String toIoPath(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (path.length() == 2 && SystemInfo.isWindows && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
       // makes 'C:' resolve to a root directory of the drive C:, not the current directory on that drive
@@ -152,7 +148,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return file.getFileSystem() == this ? Paths.get(toIoPath(file)) : null;
   }
 
-  private static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file) throws FileNotFoundException {
+  private static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file, boolean assertSlowOp) throws FileNotFoundException {
+    if (assertSlowOp) { // remove condition when writes are moved to BGT
+      SlowOperations.assertSlowOperationsAreAllowed();
+    }
     File ioFile = convertToIOFile(file);
 
     if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening fifo files
@@ -454,7 +453,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    File ioFile = convertToIOFileAndCheck(file);
+    File ioFile = convertToIOFileAndCheck(file, true);
 
     for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
       InputStream is = loader.getInputStream(ioFile);
@@ -468,7 +467,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    File ioFile = convertToIOFileAndCheck(file);
+    File ioFile = convertToIOFileAndCheck(file, true);
 
     for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
       byte[] bytes = loader.contentToByteArray(ioFile);
@@ -509,7 +508,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
-    File ioFile = convertToIOFileAndCheck(file);
+    File ioFile = convertToIOFileAndCheck(file, false);
     OutputStream stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? new FileOutputStream(ioFile) :
                           requestor instanceof LargeFileWriteRequestor ? new PreemptiveSafeFileOutputStream(ioFile.toPath()) :
                           new SafeFileOutputStream(ioFile);
@@ -748,10 +747,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    if (SystemInfo.isWindows && file.getParent() == null && file.getPath().startsWith("//")) {
-      return FAKE_ROOT_ATTRIBUTES;  // UNC roots
-    }
-    return myAttrGetter.accessDiskWithCheckCanceled(file);
+    return SystemInfo.isWindows && file.getParent() == null && file.getPath().startsWith("//")
+           ? UNC_ROOT_ATTRIBUTES
+           : myAttrGetter.accessDiskWithCheckCanceled(file);
   }
 
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(LocalFileSystemBase::getAttributesWithCustomTimestamp);
@@ -784,27 +782,18 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     PersistentFS.getInstance().clearIdCache();
   }
 
-  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(@NotNull VirtualFile file) {
-    final FileAttributes attributes = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
+  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(VirtualFile file) {
+    FileAttributes attributes = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
     return copyWithCustomTimestamp(file, attributes);
   }
 
-  protected static @Nullable FileAttributes copyWithCustomTimestamp(@NotNull VirtualFile file, @Nullable FileAttributes attributes) {
-    if (attributes == null) return null;
-
-    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
-      final Long custom = provider.getTimestamp(file);
-      if (custom != null) {
-        return new FileAttributes(
-          attributes.isDirectory(),
-          attributes.isSpecial(),
-          attributes.isSymLink(),
-          attributes.isHidden(),
-          attributes.length,
-          custom,
-          attributes.isWritable(),
-          attributes.areChildrenCaseSensitive()
-        );
+  private static @Nullable FileAttributes copyWithCustomTimestamp(VirtualFile file, @Nullable FileAttributes attributes) {
+    if (attributes != null) {
+      for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+        Long custom = provider.getTimestamp(file);
+        if (custom != null) {
+          return attributes.withTimeStamp(custom);
+        }
       }
     }
 

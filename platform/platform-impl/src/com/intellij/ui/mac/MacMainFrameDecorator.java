@@ -19,6 +19,8 @@ import com.intellij.ui.ToolbarUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.CustomWindowDecoration;
+import com.jetbrains.JBR;
 import com.sun.jna.Native;
 import com.sun.jna.platform.mac.CoreFoundation;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +60,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
   private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
+  private boolean myIsInit;
+  private boolean myCallSetFullScreenAfterInit;
+
   public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     super(frame);
 
@@ -138,31 +143,45 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2 && e.getY() <= UIUtil.getTransparentTitleBarHeight(rootPane)) {
-            CoreFoundation.CFStringRef appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick");
-            CoreFoundation.CFStringRef apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain");
-            CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
-              appleActionOnDoubleClick,
-              apple_global_domain);
-            if (res != null && !res.stringValue().equals("Maximize")) {
-              if (frame.getExtendedState() == Frame.ICONIFIED) {
-                frame.setExtendedState(Frame.NORMAL);
-              }
-              else {
-                frame.setExtendedState(Frame.ICONIFIED);
-              }
-            }
-            else {
-              if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
-                frame.setExtendedState(Frame.NORMAL);
-              }
-              else {
-                frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            int hitTestSpot = CustomWindowDecoration.NO_HIT_SPOT;
+            if (JBR.isCustomWindowDecorationSupported()) {
+              var spots = JBR.getCustomWindowDecoration().getCustomDecorationHitTestSpots(myFrame);
+              if (spots != null) {
+                for (var spot : spots) {
+                  if (spot.getKey().contains(e.getPoint())) {
+                    hitTestSpot = spot.getValue();
+                    break;
+                  }
+                }
               }
             }
-            apple_global_domain.release();
-            appleActionOnDoubleClick.release();
-            if(res != null) {
-              res.release();
+            if (hitTestSpot != CustomWindowDecoration.NO_HIT_SPOT) {
+              CoreFoundation.CFStringRef appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick");
+              CoreFoundation.CFStringRef apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain");
+              CoreFoundation.CFStringRef res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
+                appleActionOnDoubleClick,
+                apple_global_domain);
+              if (res != null && !res.stringValue().equals("Maximize")) {
+                if (frame.getExtendedState() == Frame.ICONIFIED) {
+                  frame.setExtendedState(Frame.NORMAL);
+                }
+                else {
+                  frame.setExtendedState(Frame.ICONIFIED);
+                }
+              }
+              else {
+                if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
+                  frame.setExtendedState(Frame.NORMAL);
+                }
+                else {
+                  frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+                }
+              }
+              apple_global_domain.release();
+              appleActionOnDoubleClick.release();
+              if(res != null) {
+                res.release();
+              }
             }
           }
           super.mouseClicked(e);
@@ -196,7 +215,15 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   @Override
   public void frameInit() {
+    myIsInit = true;
     myTabsHandler.frameInit();
+    if (myCallSetFullScreenAfterInit) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Sets full screen after init frame: " + myFrame);
+      }
+      myCallSetFullScreenAfterInit = false;
+      toggleFullScreen(true);
+    }
   }
 
   @Override
@@ -239,6 +266,14 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         promise.complete(null);
       }
       else {
+        if (!myIsInit && !myFrame.isValid()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Sets full screen before init frame: " + myFrame);
+          }
+          myCallSetFullScreenAfterInit = true;
+          promise.complete(false);
+          return;
+        }
         AtomicBoolean preEventReceived = new AtomicBoolean();
         FSAdapter listener = new FSAdapter() {
           @Override
@@ -318,6 +353,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   @Override
   public void appClosing() {
     myTabsHandler.appClosing();
+  }
+
+  @Override
+  public boolean isTabbedWindow() {
+    return MergeAllWindowsAction.isTabbedWindow(myFrame);
   }
 
   private interface FSListener extends FullScreenListener, EventListener {

@@ -74,7 +74,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiLocalVariable variable = (PsiLocalVariable)referenceExpression.resolve();
       if (variable == null) return;

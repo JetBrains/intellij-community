@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -8,14 +8,13 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.intentions.receiverTypeIfSelectorIsSizeOrLength
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -35,7 +34,7 @@ class ReplaceManualRangeWithIndicesCallsInspection : AbstractRangeInspection() {
         if (left.toIntConstant() != 0) return
         val sizeOrLengthCall = right.sizeOrLengthCall(type) ?: return
         val collection = sizeOrLengthCall.safeAs<KtQualifiedExpression>()?.receiverExpression
-        if (collection != null && collection !is KtSimpleNameExpression) return
+        if (collection != null && collection !is KtSimpleNameExpression && collection !is KtThisExpression) return
 
         val parent = range.parent.parent
         if (parent is KtForExpression) {
@@ -83,7 +82,7 @@ class ReplaceManualRangeWithIndicesCallQuickFix : LocalQuickFix {
             else -> null
         }
         val psiFactory = KtPsiFactory(project)
-        val newExpression = if (receiver != null) {
+        val newExpression = if (receiver != null && receiver !is KtThisExpression) {
             psiFactory.createExpressionByPattern("$0.indices", receiver)
         } else {
             psiFactory.createExpression("indices")
@@ -133,6 +132,6 @@ private fun KtExpression.sizeOrLengthCall(type: RangeKtExpressionType): KtExpres
         DOWN_TO -> return null
     }
     val receiverType = expression.receiverTypeIfSelectorIsSizeOrLength() ?: return null
-    if (receiverType.isMap(DefaultBuiltIns.Instance)) return null
+    if (receiverType.isMap()) return null
     return expression
 }

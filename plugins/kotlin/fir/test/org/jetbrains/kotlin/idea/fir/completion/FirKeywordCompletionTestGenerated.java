@@ -360,11 +360,6 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../completion/testData/keywords/NoBreak1.kt");
         }
 
-        @TestMetadata("NoBreak2.kt")
-        public void testNoBreak2() throws Exception {
-            runTest("../completion/testData/keywords/NoBreak2.kt");
-        }
-
         @TestMetadata("NoCompanionThis.kt")
         public void testNoCompanionThis() throws Exception {
             runTest("../completion/testData/keywords/NoCompanionThis.kt");
@@ -408,6 +403,36 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("NoValVarInSecondaryConstructorParameters.kt")
         public void testNoValVarInSecondaryConstructorParameters() throws Exception {
             runTest("../completion/testData/keywords/NoValVarInSecondaryConstructorParameters.kt");
+        }
+
+        @TestMetadata("NonLocalBreakDisabled.kt")
+        public void testNonLocalBreakDisabled() throws Exception {
+            runTest("../completion/testData/keywords/NonLocalBreakDisabled.kt");
+        }
+
+        @TestMetadata("NonLocalBreakEnabled.kt")
+        public void testNonLocalBreakEnabled() throws Exception {
+            runTest("../completion/testData/keywords/NonLocalBreakEnabled.kt");
+        }
+
+        @TestMetadata("NonLocalBreakNotInlineFunction.kt")
+        public void testNonLocalBreakNotInlineFunction() throws Exception {
+            runTest("../completion/testData/keywords/NonLocalBreakNotInlineFunction.kt");
+        }
+
+        @TestMetadata("NonLocalContinueDisabled.kt")
+        public void testNonLocalContinueDisabled() throws Exception {
+            runTest("../completion/testData/keywords/NonLocalContinueDisabled.kt");
+        }
+
+        @TestMetadata("NonLocalContinueEnabled.kt")
+        public void testNonLocalContinueEnabled() throws Exception {
+            runTest("../completion/testData/keywords/NonLocalContinueEnabled.kt");
+        }
+
+        @TestMetadata("NonLocalContinueNotInlineFunction.kt")
+        public void testNonLocalContinueNotInlineFunction() throws Exception {
+            runTest("../completion/testData/keywords/NonLocalContinueNotInlineFunction.kt");
         }
 
         @TestMetadata("NotInNotIs.kt")

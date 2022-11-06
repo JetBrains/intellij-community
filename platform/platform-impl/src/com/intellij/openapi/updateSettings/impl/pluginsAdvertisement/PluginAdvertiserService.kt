@@ -19,6 +19,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
@@ -26,22 +28,83 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
 
-open class PluginAdvertiserService(private val project: Project) : Disposable {
+sealed interface PluginAdvertiserService {
 
   companion object {
-
-    private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
-
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
+
+    internal fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
+      return when (activeProductCode) {
+        "IC", "IE", "AS" -> "IU"
+        "PC", "PE" -> "PY"
+        else -> null
+      }
+    }
+
+    fun getIde(ideCode: String?): SuggestedIde? = ides[ideCode]
+
+    @Suppress("HardCodedStringLiteral")
+    val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
+
+    @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
+    internal val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
+
+    @Suppress("HardCodedStringLiteral")
+    internal val ides: Map<String, SuggestedIde> = linkedMapOf(
+      "WS" to SuggestedIde("WebStorm", "https://www.jetbrains.com/webstorm/download/"),
+      "RM" to SuggestedIde("RubyMine", "https://www.jetbrains.com/ruby/download/"),
+      "PY" to pyCharmProfessional,
+      "PS" to SuggestedIde("PhpStorm", "https://www.jetbrains.com/phpstorm/download/"),
+      "GO" to SuggestedIde("GoLand", "https://www.jetbrains.com/go/download/"),
+      "CL" to SuggestedIde("CLion", "https://www.jetbrains.com/clion/download/"),
+      "RD" to SuggestedIde("Rider", "https://www.jetbrains.com/rider/download/"),
+      "OC" to SuggestedIde("AppCode", "https://www.jetbrains.com/objc/download/"),
+      "IU" to ideaUltimate
+    )
+
+    internal val marketplaceIdeCodes: Map<String, String> = linkedMapOf(
+      "IU" to "idea",
+      "IC" to "idea_ce",
+      "IE" to "idea_edu",
+      "PY" to "pycharm",
+      "PC" to "pycharm_ce",
+      "PE" to "pycharm_edu",
+      "WS" to "webstorm",
+      "GO" to "go",
+      "CL" to "clion",
+      "RD" to "rider",
+      "RM" to "ruby",
+      "AS" to "androidstudio"
+    )
   }
 
-  private val coroutineScope = CoroutineScope(Job())
-
-  open suspend fun run(
+  suspend fun run(
     customPlugins: List<PluginNode>,
     unknownFeatures: Collection<UnknownFeature>,
-    includeIgnored: Boolean = false
+    includeIgnored: Boolean = false,
+  )
+
+  @ApiStatus.Internal
+  fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false)
+
+  @ApiStatus.Internal
+  fun rescanDependencies(block: suspend CoroutineScope.() -> Unit = {})
+}
+
+open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdvertiserService,
+                                                                       Disposable {
+
+  companion object {
+    private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
+  }
+
+  private val coroutineScope = CoroutineScope(SupervisorJob())
+
+  override suspend fun run(
+    customPlugins: List<PluginNode>,
+    unknownFeatures: Collection<UnknownFeature>,
+    includeIgnored: Boolean,
   ) {
     val featuresMap = MultiMap.createSet<PluginId, UnknownFeature>()
 
@@ -129,18 +192,19 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
       MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
       customPlugins,
       true,
-    ).filterNot { loadedPlugin ->
-      val pluginId = loadedPlugin.pluginId
-      val compareVersions = PluginManagerCore.getPlugin(pluginId)?.let {
-        PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, it) <= 0
-      } ?: false
-
-      compareVersions
-      || !pluginIds.contains(pluginId)
-      || PluginManagerCore.isDisabled(pluginId)
-      || PluginManagerCore.isBrokenPlugin(loadedPlugin)
-    }.filter { org.allowInstallingPlugin(it) }
+    ).asSequence()
+      .filter { pluginIds.contains(it.pluginId) }
+      .filterNot { PluginManagerCore.isDisabled(it.pluginId) }
+      .filterNot { PluginManagerCore.isBrokenPlugin(it) }
+      .filter { loadedPlugin ->
+        when (val installedPlugin = PluginManagerCore.getPluginSet().findInstalledPlugin(loadedPlugin.pluginId)) {
+          null -> true
+          else -> (!installedPlugin.isBundled || installedPlugin.allowBundledUpdate())
+                  && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, installedPlugin) > 0
+        }
+      }.filter { org.allowInstallingPlugin(it) }
       .map { PluginDownloader.createDownloader(it) }
+      .toList()
   }
 
   private fun notifyUser(
@@ -192,8 +256,8 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
         bundledPlugins.joinToString()
       ) to listOf(
         NotificationAction.createSimpleExpiring(
-          IdeBundle.message("plugins.advertiser.action.try.ultimate", PluginAdvertiserEditorNotificationProvider.ideaUltimate.name)) {
-          FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, PluginAdvertiserEditorNotificationProvider.ideaUltimate.downloadUrl)
+          IdeBundle.message("plugins.advertiser.action.try.ultimate", ideaUltimate.name)) {
+          FUSEventSource.NOTIFICATION.openDownloadPageAndLog(project, ideaUltimate.downloadUrl)
         },
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
           FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)
@@ -252,7 +316,9 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
     val ids = plugins.mapTo(LinkedHashSet()) { it.id } +
               disabledPlugins.map { it.pluginId }
 
-    val pluginNames = plugins.joinToString { it.pluginName } + disabledPlugins.joinToString { it.name }
+    val pluginNames = (plugins.map { it.pluginName } + disabledPlugins.map { it.name })
+      .sorted()
+      .joinToString(", ")
 
     val addressedFeatures = collectFeaturesByName(ids, features)
 
@@ -313,8 +379,7 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
     }
   }
 
-  @ApiStatus.Internal
-  open fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false) {
+  override fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {
     val featuresCollector = UnknownFeaturesCollector.getInstance(project)
 
     featuresCollector.getUnknownFeaturesOfType(DEPENDENCY_SUPPORT_FEATURE)
@@ -347,8 +412,7 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
     return result
   }
 
-  @JvmOverloads
-  fun rescanDependencies(block: suspend CoroutineScope.() -> Unit = {}) {
+  override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {
     coroutineScope.launch(Dispatchers.IO) {
       rescanDependencies()
       block()
@@ -368,3 +432,19 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
     }
   }
 }
+
+open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
+
+  final override suspend fun run(
+    customPlugins: List<PluginNode>,
+    unknownFeatures: Collection<UnknownFeature>,
+    includeIgnored: Boolean,
+  ) {
+  }
+
+  final override fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {}
+
+  final override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {}
+}
+
+data class SuggestedIde(@NlsContexts.DialogMessage val name: String, val downloadUrl: String)

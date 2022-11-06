@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -21,7 +20,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ChildWithNullsMultipleImpl : ChildWithNullsMultiple, WorkspaceEntityBase() {
+open class ChildWithNullsMultipleImpl(val dataSource: ChildWithNullsMultipleData) : ChildWithNullsMultiple, WorkspaceEntityBase() {
 
   companion object {
 
@@ -31,16 +30,18 @@ open class ChildWithNullsMultipleImpl : ChildWithNullsMultiple, WorkspaceEntityB
 
   }
 
-  @JvmField
-  var _childData: String? = null
   override val childData: String
-    get() = _childData!!
+    get() = dataSource.childData
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ChildWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsMultiple>(), ChildWithNullsMultiple.Builder {
+  class Builder(result: ChildWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsMultiple, ChildWithNullsMultipleData>(
+    result), ChildWithNullsMultiple.Builder {
     constructor() : this(ChildWithNullsMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,6 +59,9 @@ open class ChildWithNullsMultipleImpl : ChildWithNullsMultiple, WorkspaceEntityB
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -81,8 +85,8 @@ open class ChildWithNullsMultipleImpl : ChildWithNullsMultiple, WorkspaceEntityB
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildWithNullsMultiple
-      this.entitySource = dataSource.entitySource
-      this.childData = dataSource.childData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.childData != dataSource.childData) this.childData = dataSource.childData
       if (parents != null) {
       }
     }
@@ -92,7 +96,7 @@ open class ChildWithNullsMultipleImpl : ChildWithNullsMultiple, WorkspaceEntityB
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -101,11 +105,10 @@ open class ChildWithNullsMultipleImpl : ChildWithNullsMultiple, WorkspaceEntityB
       get() = getEntityData().childData
       set(value) {
         checkModificationAllowed()
-        getEntityData().childData = value
+        getEntityData(true).childData = value
         changedProperty.add("childData")
       }
 
-    override fun getEntityData(): ChildWithNullsMultipleData = result ?: super.getEntityData() as ChildWithNullsMultipleData
     override fun getEntityClass(): Class<ChildWithNullsMultiple> = ChildWithNullsMultiple::class.java
   }
 }
@@ -115,25 +118,21 @@ class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMultiple>()
 
   fun isChildDataInitialized(): Boolean = ::childData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildWithNullsMultiple> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildWithNullsMultiple> {
     val modifiable = ChildWithNullsMultipleImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): ChildWithNullsMultiple {
-    val entity = ChildWithNullsMultipleImpl()
-    entity._childData = childData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ChildWithNullsMultipleImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -158,7 +157,7 @@ class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMultiple>()
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildWithNullsMultipleData
 
@@ -169,7 +168,7 @@ class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMultiple>()
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildWithNullsMultipleData
 

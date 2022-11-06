@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public class JavaLiteralExpressionElementType extends JavaStubElementType<PsiLiteralStub, PsiLiteralExpression> {
   public JavaLiteralExpressionElementType() {
     super("LITERAL_EXPRESSION");

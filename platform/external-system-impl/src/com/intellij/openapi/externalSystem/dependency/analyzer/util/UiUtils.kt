@@ -6,7 +6,10 @@ import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.observable.operations.ObservableOperationTrace
+import com.intellij.openapi.observable.operation.core.ObservableOperationTrace
+import com.intellij.openapi.observable.operation.core.isOperationInProgress
+import com.intellij.openapi.observable.operation.core.whenOperationFinished
+import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.bind
@@ -92,14 +95,14 @@ internal fun <T, C : CardLayoutPanel<T, *, *>> C.bind(property: ObservableProper
 }
 
 internal fun <C : JBLoadingPanel> C.bind(operation: ObservableOperationTrace): C = apply {
-  if (operation.isOperationCompleted()) {
-    stopLoading()
-  }
-  else {
+  if (operation.isOperationInProgress()) {
     startLoading()
   }
-  operation.beforeOperation { startLoading() }
-  operation.afterOperation { stopLoading() }
+  else {
+    stopLoading()
+  }
+  operation.whenOperationStarted { startLoading() }
+  operation.whenOperationFinished { stopLoading() }
 }
 
 internal fun <C : JBLoadingPanel> C.bindLoadingText(property: ObservableProperty<@Nls String>): C = apply {

@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Specifies how method names are converted into XML element names
  *
- * @author peter
  * @see NameStrategy
  * @see NameStrategyForAttributes
  */

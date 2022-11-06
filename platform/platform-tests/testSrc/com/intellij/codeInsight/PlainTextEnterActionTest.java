@@ -28,9 +28,11 @@ public class PlainTextEnterActionTest extends AbstractEnterActionTestCase {
     doTextTest(
       "txt",
       "   class Foo {<caret>",
-      "   class Foo {\n" +
-      "   <caret>\n" +
-      "   }"
+      """
+           class Foo {
+           <caret>
+           }\
+        """
     );
   }
 
@@ -40,9 +42,10 @@ public class PlainTextEnterActionTest extends AbstractEnterActionTestCase {
       "txt",
       "Here is a list of bullet points:\n" +
       "* Bullet one.  <caret>Bullet two.",
-      "Here is a list of bullet points:\n" +
-      "* Bullet one.  \n" +
-      "<caret>Bullet two."
+      """
+        Here is a list of bullet points:
+        * Bullet one. \s
+        <caret>Bullet two."""
     );
   }
 

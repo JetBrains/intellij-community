@@ -21,32 +21,35 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
-abstract class LibraryInfo(
+/**
+ * @see [org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache]
+ */
+abstract class LibraryInfo internal constructor(
     override val project: Project,
-    val library: Library
+    val library: LibraryEx,
 ) : IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
-
-    private val libraryWrapper = LibraryWrapper(library as LibraryEx)
-
-    override val moduleOrigin: ModuleOrigin
-        get() = ModuleOrigin.LIBRARY
+    override val moduleOrigin: ModuleOrigin get() = ModuleOrigin.LIBRARY
 
     override val name: Name = Name.special("<library ${library.name}>")
 
     override val displayedName: String
-        get() = KotlinBaseProjectStructureBundle.message("library.0", library.name.toString())
+        get() = KotlinBaseProjectStructureBundle.message("library.0", library.presentableName)
 
     override val contentScope: GlobalSearchScope
         get() = LibraryWithoutSourceScope(project, library)
 
     override fun dependencies(): List<IdeaModuleInfo> {
         val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this)
-
-        return LinkedHashSet<IdeaModuleInfo>(dependencies.libraries.size + dependencies.sdk.size + 1).apply {
+        return buildList {
             add(this@LibraryInfo)
             addAll(dependencies.sdk)
-            addAll(dependencies.libraries)
-        }.toList()
+            addAll(dependencies.librariesWithoutSelf)
+        }
+    }
+
+    override fun dependenciesWithoutSelf(): Sequence<IdeaModuleInfo> {
+        val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this)
+        return dependencies.sdk.asSequence() + dependencies.librariesWithoutSelf.asSequence()
     }
 
     abstract override val platform: TargetPlatform // must override
@@ -59,8 +62,7 @@ abstract class LibraryInfo(
     override val sourcesModuleInfo: SourceForBinaryModuleInfo
         get() = _sourcesModuleInfo
 
-    override fun getLibraryRoots(): Collection<String> =
-        library.getFiles(OrderRootType.CLASSES).mapNotNull(PathUtil::getLocalPath)
+    override fun getLibraryRoots(): Collection<String> = library.getFiles(OrderRootType.CLASSES).mapNotNull(PathUtil::getLocalPath)
 
     override fun createModificationTracker(): ModificationTracker =
         if (!project.useLibraryToSourceAnalysis) {
@@ -69,8 +71,7 @@ abstract class LibraryInfo(
             ResolutionAnchorAwareLibraryModificationTracker(this)
         }
 
-    internal val isDisposed
-        get() = if (library is LibraryEx) library.isDisposed else false
+    val isDisposed get() = library.isDisposed
 
     override fun checkValidity() {
         if (isDisposed) {
@@ -78,17 +79,7 @@ abstract class LibraryInfo(
         }
     }
 
-    override fun toString() =
-        "${this::class.simpleName}(libraryName=${library.name}${if (!isDisposed) ", libraryRoots=${getLibraryRoots()}" else " -disposed-"})"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is LibraryInfo) return false
-
-        return libraryWrapper == other.libraryWrapper
-    }
-
-    override fun hashCode() = libraryWrapper.hashCode()
+    override fun toString() = "${this::class.simpleName}@${Integer.toHexString(System.identityHashCode(this))}($library)"
 }
 
 private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: LibraryInfo) : ModificationTracker {

@@ -63,6 +63,7 @@ class ConvertCollectionFix(element: KtExpression, val type: CollectionType) : Ko
         fun getConversionTypeOrNull(expressionType: KotlinType, expectedType: KotlinType): CollectionType? {
             val expressionCollectionType = expressionType.getCollectionType() ?: return null
             val expectedCollectionType = expectedType.getCollectionType() ?: return null
+            if (expressionCollectionType == expectedCollectionType) return null
 
             val expressionTypeArg = expressionType.arguments.singleOrNull()?.type ?: return null
             val expectedTypeArg = expectedType.arguments.singleOrNull()?.type ?: return null

@@ -18,11 +18,12 @@ public class PyDeprecationTest extends PyTestCase {
 
   public void testFunction() {
     myFixture.configureByText(PythonFileType.INSTANCE,
-                              "def getstatus(file):\n" +
-                              "    \"\"\"Return output of \"ls -ld <file>\" in a string.\"\"\"\n" +
-                              "    import warnings\n" +
-                              "    warnings.warn(\"commands.getstatus() is deprecated\", DeprecationWarning, 2)\n" +
-                              "    return getoutput('ls -ld' + mkarg(file))");
+                              """
+                                def getstatus(file):
+                                    ""\"Return output of "ls -ld <file>" in a string.""\"
+                                    import warnings
+                                    warnings.warn("commands.getstatus() is deprecated", DeprecationWarning, 2)
+                                    return getoutput('ls -ld' + mkarg(file))""");
     PyFunction getstatus = ((PyFile) myFixture.getFile()).findTopLevelFunction("getstatus");
     assertEquals("commands.getstatus() is deprecated", getstatus.getDeprecationMessage());
   }

@@ -6,7 +6,10 @@ package org.jetbrains.kotlin.nj2k.symbols
 import com.intellij.psi.PsiVariable
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.tree.JKVariable
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKClassType
+import org.jetbrains.kotlin.nj2k.types.JKType
+import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
+import org.jetbrains.kotlin.nj2k.types.toJK
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClass

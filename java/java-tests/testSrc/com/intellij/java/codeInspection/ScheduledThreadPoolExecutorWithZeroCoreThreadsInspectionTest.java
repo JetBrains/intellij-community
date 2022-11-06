@@ -21,18 +21,20 @@ public class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspectionTest extend
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[]{
-      "package java.util.concurrent;\n" +
-      "public class ThreadPoolExecutor {\n" +
-      "public void setCorePoolSize(int corePoolSize) {}\n" +
-      "}",
+      """
+package java.util.concurrent;
+public class ThreadPoolExecutor {
+public void setCorePoolSize(int corePoolSize) {}
+}""",
 
-      "package java.util.concurrent;\n" +
-      "public class ScheduledThreadPoolExecutor\n" +
-      "        extends ThreadPoolExecutor {\n" +
-      "    public ScheduledThreadPoolExecutor(int corePoolSize) {}\n" +
-      "    @Override\n"+
-      "    public void setCorePoolSize(int corePoolSize) {}\n" +
-      "}",
+      """
+package java.util.concurrent;
+public class ScheduledThreadPoolExecutor
+        extends ThreadPoolExecutor {
+    public ScheduledThreadPoolExecutor(int corePoolSize) {}
+    @Override
+    public void setCorePoolSize(int corePoolSize) {}
+}""",
     };
   }
 

@@ -95,6 +95,15 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   static final class MyPersistentFsConnectionListener implements PersistentFsConnectionListener {
+
+    @Override
+    public void connectionOpen() {
+      final var service = ApplicationManager.getApplication().getServiceIfCreated(VirtualFilePointerManager.class);
+      if (service != null) {
+        ((VirtualFilePointerManagerImpl)service).resolveUrlBasedPointers();
+      }
+    }
+
     @Override
     public void beforeConnectionClosed() {
       final var service = ApplicationManager.getApplication().getServiceIfCreated(VirtualFilePointerManager.class);
@@ -428,6 +437,32 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
   }
 
+  synchronized void resolveUrlBasedPointers() {
+    resolveUrlBasedPointers(myLocalRoot);
+    resolveUrlBasedPointers(myTempRoot);
+  }
+
+  private static void resolveUrlBasedPointers(@NotNull FilePartNodeRoot root) {
+    for (FilePartNode child : root.children) {
+      if (child.isUrlBased()) {
+        final var resolvedChild = VirtualFileManager.getInstance().findFileByUrl(FilePartNode.myUrl(child.myFileOrUrl));
+        if (resolvedChild != null) {
+          child = child.replaceWithFPPN(resolvedChild, root);
+        }
+      }
+
+      resolveUrlBasedPointers(child, root, root);
+    }
+  }
+
+  private static void resolveUrlBasedPointers(@NotNull FilePartNode node, @NotNull FilePartNode parent, @NotNull FilePartNodeRoot root) {
+    node.update(parent, root, "VFPMI invalidated VFP during FS connection", null);
+
+    for (FilePartNode child : node.children) {
+      resolveUrlBasedPointers(child, node, root);
+    }
+  }
+
   synchronized void switchToUrlBasedPointers() {
     myLocalRoot.replaceChildrenWithUPN();
     myTempRoot.replaceChildrenWithUPN();
@@ -445,7 +480,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
     }
     else {
-      node.processPointers(VirtualFilePointerManagerImpl::throwAndDisposeOnLeakedPointer);
+      throw new IllegalStateException("Node for " + node.myFileOrUrl + " is not a url-based");
     }
   }
 
@@ -453,7 +488,12 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     List<VirtualFilePointer> leaked = new ArrayList<>(dumpAllPointers());
     leaked.sort(Comparator.comparing(VirtualFilePointer::getUrl));
     for (VirtualFilePointer pointer : leaked) {
-      throwAndDisposeOnLeakedPointer((VirtualFilePointerImpl)pointer);
+      try {
+        ((VirtualFilePointerImpl)pointer).throwDisposalError("Not disposed pointer: " + pointer);
+      }
+      finally {
+        ((VirtualFilePointerImpl)pointer).dispose();
+      }
     }
 
     synchronized (myContainers) {
@@ -461,15 +501,6 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         VirtualFilePointerContainerImpl container = myContainers.iterator().next();
         container.throwDisposalError("Not disposed container");
       }
-    }
-  }
-
-  private static void throwAndDisposeOnLeakedPointer(@NotNull VirtualFilePointerImpl pointer) {
-    try {
-      pointer.throwDisposalError("Not disposed pointer: " + pointer);
-    }
-    finally {
-      pointer.dispose();
     }
   }
 

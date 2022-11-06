@@ -41,7 +41,9 @@ import java.util.function.Supplier;
  */
 public final class PopupMenuPreloader implements Runnable, HierarchyListener {
   private static final Logger LOG = Logger.getInstance(PopupMenuPreloader.class);
-  private static final String PRELOADER_PLACE_SUFFIX = "(preload)";
+
+  private static final String MODE = Registry.get("actionSystem.update.actions.preload.menus").getSelectedOption();
+  private static final String PRELOADER_PLACE_SUFFIX = "(preload-" + MODE + ")";
 
   private static int ourEditorContextMenuPreloadCount;
 
@@ -58,6 +60,7 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
                              @Nullable PopupHandler popupHandler,
                              @NotNull Supplier<? extends ActionGroup> groupSupplier) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if ("none".equals(MODE)) return;
     if (component instanceof EditorComponentImpl && ourEditorContextMenuPreloadCount > 4 ||
         component instanceof IdeMenuBar && SwingUtilities.getWindowAncestor(component) instanceof IdeFrame.Child) {
       return;
@@ -92,6 +95,10 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
     myGroupSupplier = groupSupplier;
     myPlace = actionPlace + PRELOADER_PLACE_SUFFIX;
     component.addHierarchyListener(this);
+  }
+
+  static boolean isToSkipComputeOnEDT(@NotNull String place) {
+    return place.endsWith(PRELOADER_PLACE_SUFFIX) && "bgt".equals(MODE);
   }
 
   @Override

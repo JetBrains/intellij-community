@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.Patches;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.application.Application;
@@ -488,7 +489,8 @@ public final class HttpRequests {
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     Application app = ApplicationManager.getApplication();
     LOG.assertTrue(app == null || app.isUnitTestMode() || app.isHeadlessEnvironment() || !app.isReadAccessAllowed(),
-                   "Network shouldn't be accessed in EDT or inside read action");
+                   "Network must not be accessed in EDT or inside read action, because this may take considerable amount of time, " +
+                   "and write actions will be blocked during that time so user won't be able to perform tasks in the IDE");
 
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
     if (contextLoader != null && shouldOverrideContextClassLoader()) {
@@ -543,11 +545,15 @@ public final class HttpRequests {
       if (!builder.myUseProxy) {
         connection = new URL(url).openConnection(Proxy.NO_PROXY);
       }
-      else if (ApplicationManager.getApplication() == null) {
-        connection = new URL(url).openConnection();
-      }
       else {
-        connection = IdeUiService.getInstance().openHttpConnection(url);
+        Application app = ApplicationManager.getApplication();
+        IdeUiService uiService = app != null ? app.getServiceIfCreated(IdeUiService.class) : null;
+        if (uiService != null) {
+          connection = uiService.openHttpConnection(url);
+        }
+        else {
+          connection = new URL(url).openConnection();
+        }
       }
 
       if (connection instanceof HttpsURLConnection) {
@@ -653,7 +659,7 @@ public final class HttpRequests {
   }
 
   private static void configureSslConnection(@NotNull String url, @NotNull HttpsURLConnection connection) {
-    if (ApplicationManager.getApplication() == null) {
+    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       LOG.info("Application is not initialized yet; Using default SSL configuration to connect to " + url);
       return;
     }

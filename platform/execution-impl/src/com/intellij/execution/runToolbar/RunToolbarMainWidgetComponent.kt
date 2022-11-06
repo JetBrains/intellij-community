@@ -1,13 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.runToolbar.data.RWActiveListener
 import com.intellij.execution.runToolbar.data.RWSlotManagerState
 import com.intellij.execution.runToolbar.data.RWStateListener
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.ToolbarSettings
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.GotItTooltip
+import java.awt.Point
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
 
@@ -16,6 +22,8 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   companion object {
     private val LOG = Logger.getInstance(RunToolbarMainWidgetComponent::class.java)
     private var counter: MutableMap<Project, Int> = mutableMapOf()
+
+    private const val GOT_IT_TOOLTIP_ID = "run.toolbar.gotIt"
   }
 
   override fun logNeeded(): Boolean = RunToolbarProcess.logNeeded
@@ -112,7 +120,48 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       project = it
 
       RunWidgetWidthHelper.getInstance(it).runConfig = RunToolbarSettings.getInstance(it).getRunConfigWidth()
+      checkGotIt(it)
     }
+  }
+
+  private var rwActiveListener: RWActiveListener? = null
+
+  private fun checkGotIt(project: Project) {
+    val propertiesComponent = PropertiesComponent.getInstance()
+    val inclusionState = propertiesComponent.getInt(ToolbarSettings.INCLUSION_STATE, 0)
+    if(inclusionState != 1) return
+
+    val instance = RunToolbarSlotManager.getInstance(project)
+    if(instance.initialized) {
+      showGotItTooltip()
+    } else {
+      val lst = object : RWActiveListener {
+        override fun initialize() {
+          if(!instance.active) return
+
+          showGotItTooltip()
+          propertiesComponent.setValue(ToolbarSettings.INCLUSION_STATE, inclusionState+1, 0)
+          clearListeners(project)
+        }
+      }
+      rwActiveListener = lst
+      instance.activeListener.addListener(lst)
+    }
+  }
+
+  private fun clearListeners(project: Project) {
+    rwActiveListener?.let {
+      RunToolbarSlotManager.getInstance(project).activeListener.removeListener(it)
+    }
+  }
+
+  private fun showGotItTooltip() {
+    val gotItTooltip = GotItTooltip(GOT_IT_TOOLTIP_ID, ExecutionBundle.message("run.toolbar.gotIt.text"), project)
+      .withHeader(ExecutionBundle.message("run.toolbar.gotIt.title"))
+
+   gotItTooltip.show(this){c, b ->
+     Point(c.width/3, c.height)
+   }
   }
 
   override fun updateWidthHandler() {
@@ -129,7 +178,11 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   }
 
   override fun removeNotify() {
-    project = null
+    project?.let {
+      clearListeners(it)
+      project = null
+    }
+
     super.removeNotify()
   }
 

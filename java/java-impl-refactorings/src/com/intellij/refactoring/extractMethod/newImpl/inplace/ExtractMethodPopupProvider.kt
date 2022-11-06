@@ -41,7 +41,7 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
 
   val panel: JPanel by lazy { createPanel() }
 
-  val makeStaticLabel = if (staticPassFields) {
+  private val makeStaticLabel = if (staticPassFields) {
     JavaRefactoringBundle.message("extract.method.checkbox.make.static.and.pass.fields")
   } else {
     JavaRefactoringBundle.message("extract.method.checkbox.make.static")

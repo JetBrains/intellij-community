@@ -4,8 +4,7 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeKotlinModificationTrackerFactory"/>
-    <projectService
-            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModificationTrackerService"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModificationTrackerService"/>
     <psi.treeChangePreprocessor
             implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>
   </extensions>

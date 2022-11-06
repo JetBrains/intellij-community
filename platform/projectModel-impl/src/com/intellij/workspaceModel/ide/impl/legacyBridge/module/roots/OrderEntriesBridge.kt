@@ -15,11 +15,11 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
@@ -109,9 +109,7 @@ internal class ModuleOrderEntryBridge(
   override fun getModule(): Module? {
     val storage = getRootModel().storage
     val moduleEntity = storage.resolve(moduleDependencyItem.module)
-    val module = moduleEntity?.let {
-      storage.findModuleByEntity(it)
-    }
+    val module = moduleEntity?.findModule(storage)
     return getRootModel().accessor.getModule(module, moduleName)
   }
 

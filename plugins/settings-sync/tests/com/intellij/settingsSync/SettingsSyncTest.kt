@@ -2,17 +2,23 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
+import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.editor.colors.FontPreferences
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
+import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.exists
-import com.intellij.util.toBufferExposingByteArray
+import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
@@ -25,6 +31,7 @@ import java.nio.charset.Charset
 import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
+import kotlin.io.path.div
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncTest : SettingsSyncTestBase() {
@@ -65,17 +72,23 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   fun `scheme changes are logged`() {
     initSettingsSync()
 
-    val keymap = KeymapImpl()
-    val name = "SettingsSyncTestKeyMap"
-    keymap.name = name
-
-    KeymapManagerImpl().schemeManager.addScheme(keymap, false)
-
-    runBlocking { componentStore.save() }
+    val keymap = createAndSaveKeymap()
 
     assertSettingsPushed {
-      fileState("keymaps/$name.xml", String(keymap.writeScheme().toBufferExposingByteArray().toByteArray(), Charset.defaultCharset()))
+      fileState("keymaps/${keymap.name}.xml", String(keymap.writeScheme().toByteArray(), Charset.defaultCharset()))
     }
+  }
+
+  private fun createAndSaveKeymap(): KeymapImpl {
+    val keymap = KeymapImpl()
+    keymap.name = "SettingsSyncTestKeyMap"
+    val keymapSchemeManager = KeymapManagerImpl().schemeManager
+    keymapSchemeManager.addScheme(keymap, false)
+    Disposer.register(disposable, Disposable {
+      keymapSchemeManager.removeScheme(keymap)
+    })
+    runBlocking { componentStore.save() }
+    return keymap
   }
 
   @Test
@@ -131,6 +144,39 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     }
   }
 
+  @Test fun `disabled categories should be ignored when copying settings on initialization`() {
+    GeneralSettings.getInstance().initModifyAndSave {
+      isSaveOnFrameDeactivation = false
+    }
+    EditorSettingsExternalizable.getInstance().initModifyAndSave {
+      SHOW_INTENTION_BULB = false
+    }
+    AppEditorFontOptions.getInstance().initModifyAndSave {
+      FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE - 5
+    }
+    val keymap = createAndSaveKeymap()
+
+    val os = getPerOsSettingsStorageFolderName()
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
+    SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID,  false)
+
+    initSettingsSync()
+
+    assertTrue("Settings from enabled category was not copied", (settingsSyncStorage / "options" / "editor.xml").exists())
+    assertFalse("Settings from disabled category was copied", (settingsSyncStorage / "options" / "ide.general.xml").exists())
+    assertFalse("Settings from disabled subcategory was copied", (settingsSyncStorage / "options" / "editor-font.xml").exists())
+    assertFalse("Settings from disabled category was copied", (settingsSyncStorage / "options" / os / "keymap.xml").exists())
+    assertFalse("Schema from disabled category was copied", (settingsSyncStorage / "keymaps" / "${keymap.name}.xml").exists())
+    remoteCommunicator.getVersionOnServer()!!.assertSettingsSnapshot {
+      fileState {
+        EditorSettingsExternalizable().withState {
+          SHOW_INTENTION_BULB = false
+        }
+      }
+    }
+  }
+
   @Test
   fun `settings from server are applied`() {
     val generalSettings = GeneralSettings.getInstance().init()
@@ -139,9 +185,9 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState)))
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState), null))
 
-    updateChecker.scheduleUpdateFromServer()
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
 
     waitForSettingsToBeApplied(generalSettings)
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
@@ -183,7 +229,9 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
          storages = [Storage("settings-sync-test.exportable-non-roamable.xml", roamingType = RoamingType.DISABLED, exportable = true)])
   private class ExportableNonRoamable: BaseComponent()
 
-  @State(name = "SettingsSyncTestRoamable", storages = [Storage("settings-sync-test.roamable.xml", roamingType = RoamingType.DEFAULT)])
+  @State(name = "SettingsSyncTestRoamable",
+         storages = [Storage("settings-sync-test.roamable.xml", roamingType = RoamingType.DEFAULT)],
+         category = SettingsCategory.UI)
   private class Roamable: BaseComponent()
 
   private open class BaseComponent : PersistentStateComponent<AState> {
@@ -222,10 +270,10 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState)))
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState), null))
     //remoteCommunicator.offline = false
 
-    updateChecker.scheduleUpdateFromServer() // merge will happen here
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker) // merge will happen here
 
     assertSettingsPushed {
       fileState {
@@ -252,7 +300,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   private fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>) {
     val cdl = CountDownLatch(1)
     componentStore.reinitLatch = cdl
-    assertTrue("Didn't await until new settings are applied", cdl.await(5, TIMEOUT_UNIT))
+    assertTrue("Didn't await until new settings are applied", cdl.wait())
 
     val reinitedComponents = componentStore.reinitedComponents
     for (componentToReinit in componentsToReinit) {

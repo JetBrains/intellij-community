@@ -35,7 +35,7 @@ internal abstract class ConstantStringBasedPostfixTemplate(
     override fun getElementToRemove(expr: PsiElement?) = expr
 }
 
-internal abstract class KtWrapWithCallPostfixTemplate(val functionName: String, provider: PostfixTemplateProvider) :
+internal abstract class KtWrapWithCallPostfixTemplate(private val functionName: String, provider: PostfixTemplateProvider) :
     ConstantStringBasedPostfixTemplate(
         functionName,
         "$functionName(expr)",

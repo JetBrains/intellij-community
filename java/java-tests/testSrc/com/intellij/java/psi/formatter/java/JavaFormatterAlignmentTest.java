@@ -38,37 +38,41 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
   public void testChainedMethodWithComments() {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doMethodTest("AAAAA.b()\n" +
-                 ".c() // comment after line\n" +
-                 ".d()\n" +
-                 ".e();",
+    doMethodTest("""
+                   AAAAA.b()
+                   .c() // comment after line
+                   .d()
+                   .e();""",
 
-                 "AAAAA.b()\n" +
-                 "     .c() // comment after line\n" +
-                 "     .d()\n" +
-                 "     .e();");
+                 """
+                   AAAAA.b()
+                        .c() // comment after line
+                        .d()
+                        .e();""");
   }
 
   public void testChainedMethodWithBlockComment() {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doTextTest("class X {\n" +
-               "    public void test() {\n" +
-               "        AAAAAA.b()\n" +
-               ".c()\n" +
-               ".d()\n" +
-               "          /* simple block comment */\n" +
-               ".e();\n" +
-               "    }\n" +
-               "}",
-               "class X {\n" +
-               "    public void test() {\n" +
-               "        AAAAAA.b()\n" +
-               "              .c()\n" +
-               "              .d()\n" +
-               "              /* simple block comment */\n" +
-               "              .e();\n" +
-               "    }\n" +
-               "}");
+    doTextTest("""
+                 class X {
+                     public void test() {
+                         AAAAAA.b()
+                 .c()
+                 .d()
+                           /* simple block comment */
+                 .e();
+                     }
+                 }""",
+               """
+                 class X {
+                     public void test() {
+                         AAAAAA.b()
+                               .c()
+                               .d()
+                               /* simple block comment */
+                               .e();
+                     }
+                 }""");
   }
 
   public void testMultipleMethodAnnotationsCommentedInTheMiddle() {
@@ -77,22 +81,24 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
     // Inspired by IDEA-53942
     doTextTest(
-      "public class Test {\n" +
-      "          @Override\n" +
-      "//       @XmlElement(name = \"Document\", required = true, type = DocumentType.class)\n" +
-      "       @XmlTransient\n" +
-      "  void foo() {\n" +
-      "}\n" +
-      "}",
+      """
+        public class Test {
+                  @Override
+        //       @XmlElement(name = "Document", required = true, type = DocumentType.class)
+               @XmlTransient
+          void foo() {
+        }
+        }""",
 
-      "public class Test {\n" +
-      "\n" +
-      "    @Override\n" +
-      "//       @XmlElement(name = \"Document\", required = true, type = DocumentType.class)\n" +
-      "    @XmlTransient\n" +
-      "    void foo() {\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+
+            @Override
+        //       @XmlElement(name = "Document", required = true, type = DocumentType.class)
+            @XmlTransient
+            void foo() {
+            }
+        }"""
     );
   }
 
@@ -108,22 +114,23 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).SMART_TABS = true;
     getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
-    doTextTest("class Foo {\n" +
-               "    void foo() {\n" +
-               "        bar(new Object[] {\n" +
-               "            \"hello1\",\n" +
-               "            \"hello2\", add(\"hello3\",\n" +
-               "                           \"world\")\n" +
-               "});" +
-               "    }}", "class Foo {\n" +
-                         "\tvoid foo() {\n" +
-                         "\t\tbar(new Object[]{\n" +
-                         "\t\t\t\t\"hello1\",\n" +
-                         "\t\t\t\t\"hello2\", add(\"hello3\",\n" +
-                         "\t\t\t\t              \"world\")\n" +
-                         "\t\t});\n" +
-                         "\t}\n" +
-                         "}");
+    doTextTest("""
+                 class Foo {
+                     void foo() {
+                         bar(new Object[] {
+                             "hello1",
+                             "hello2", add("hello3",
+                                            "world")
+                 });    }}""", """
+                 class Foo {
+                 \tvoid foo() {
+                 \t\tbar(new Object[]{
+                 \t\t\t\t"hello1",
+                 \t\t\t\t"hello2", add("hello3",
+                 \t\t\t\t              "world")
+                 \t\t});
+                 \t}
+                 }""");
   }
 
   public void testArrayInitializer() throws IncorrectOperationException {
@@ -132,14 +139,16 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true;
 
     doTextTest(
-      "@SuppressWarnings({\"UseOfSystemOutOrSystemErr\", \"AssignmentToCollectionOrArrayFieldFromParameter\", \"ReturnOfCollectionOrArrayField\"})\n" +
-      "public class Some {\n" +
-      "}",
-      "@SuppressWarnings({\"UseOfSystemOutOrSystemErr\",\n" +
-      "                   \"AssignmentToCollectionOrArrayFieldFromParameter\",\n" +
-      "                   \"ReturnOfCollectionOrArrayField\"})\n" +
-      "public class Some {\n" +
-      "}");
+      """
+        @SuppressWarnings({"UseOfSystemOutOrSystemErr", "AssignmentToCollectionOrArrayFieldFromParameter", "ReturnOfCollectionOrArrayField"})
+        public class Some {
+        }""",
+      """
+        @SuppressWarnings({"UseOfSystemOutOrSystemErr",
+                           "AssignmentToCollectionOrArrayFieldFromParameter",
+                           "ReturnOfCollectionOrArrayField"})
+        public class Some {
+        }""");
   }
 
   public void testMethodBrackets() {
@@ -152,36 +161,39 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
 
     doClassTest(
-      "public void foo(int i,\n" +
-      "                  int j) {\n" +
-      "}\n" +
-      "\n" +
-      "  public void bar() {\n" +
-      "    foo(1,\n" +
-      "        2);\n" +
-      "  }",
+      """
+        public void foo(int i,
+                          int j) {
+        }
 
-      "public void foo(int i,\n" +
-      "                int j\n" +
-      "               ) {\n" +
-      "}\n" +
-      "\n" +
-      "public void bar() {\n" +
-      "    foo(1,\n" +
-      "        2\n" +
-      "       );\n" +
-      "}"
+          public void bar() {
+            foo(1,
+                2);
+          }""",
+
+      """
+        public void foo(int i,
+                        int j
+                       ) {
+        }
+
+        public void bar() {
+            foo(1,
+                2
+               );
+        }"""
     );
 
     // Inspired by IDEA-55306
     getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = false;
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
     String method =
-      "executeCommand(new Command<Boolean>() {\n" +
-      "    public Boolean run() throws ExecutionException {\n" +
-      "        return doInterrupt();\n" +
-      "    }\n" +
-      "});";
+      """
+        executeCommand(new Command<Boolean>() {
+            public Boolean run() throws ExecutionException {
+                return doInterrupt();
+            }
+        });""";
     doMethodTest(method, method);
   }
 
@@ -192,53 +204,55 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
 
     doTextTest(
-      "public class FormattingTest {\n" +
-      "\n" +
-      "    int start = 1;\n" +
-      "    double end = 2;\n" +
-      "\n" +
-      "    int i2 = 1;\n" +
-      "    double dd2,\n" +
-      "        dd3 = 2;\n" +
-      "\n" +
-      "    // asd\n" +
-      "    char ccc3 = 'a';\n" +
-      "    double ddd31, ddd32 = 1;\n" +
-      "\n" +
-      "    private\n" +
-      "    final String s4 = \"\";\n" +
-      "    private\n" +
-      "    transient int i4 = 1;\n" +
-      "\n" +
-      "    private final String s5 = \"xxx\";\n" +
-      "    private transient int iiii5 = 1;\n" +
-      "    /*sdf*/\n" +
-      "    @MyAnnotation(value = 1, text = 2) float f5 = 1;\n" +
-      "}",
+      """
+        public class FormattingTest {
 
-      "public class FormattingTest {\n" +
-      "\n" +
-      "    int    start = 1;\n" +
-      "    double end   = 2;\n" +
-      "\n" +
-      "    int    i2   = 1;\n" +
-      "    double dd2,\n" +
-      "            dd3 = 2;\n" +
-      "\n" +
-      "    // asd\n" +
-      "    char   ccc3         = 'a';\n" +
-      "    double ddd31, ddd32 = 1;\n" +
-      "\n" +
-      "    private\n" +
-      "    final     String s4 = \"\";\n" +
-      "    private\n" +
-      "    transient int    i4 = 1;\n" +
-      "\n" +
-      "    private final                      String s5    = \"xxx\";\n" +
-      "    private transient                  int    iiii5 = 1;\n" +
-      "    /*sdf*/\n" +
-      "    @MyAnnotation(value = 1, text = 2) float  f5    = 1;\n" +
-      "}"
+            int start = 1;
+            double end = 2;
+
+            int i2 = 1;
+            double dd2,
+                dd3 = 2;
+
+            // asd
+            char ccc3 = 'a';
+            double ddd31, ddd32 = 1;
+
+            private
+            final String s4 = "";
+            private
+            transient int i4 = 1;
+
+            private final String s5 = "xxx";
+            private transient int iiii5 = 1;
+            /*sdf*/
+            @MyAnnotation(value = 1, text = 2) float f5 = 1;
+        }""",
+
+      """
+        public class FormattingTest {
+
+            int    start = 1;
+            double end   = 2;
+
+            int    i2   = 1;
+            double dd2,
+                    dd3 = 2;
+
+            // asd
+            char   ccc3         = 'a';
+            double ddd31, ddd32 = 1;
+
+            private
+            final     String s4 = "";
+            private
+            transient int    i4 = 1;
+
+            private final                      String s5    = "xxx";
+            private transient                  int    iiii5 = 1;
+            /*sdf*/
+            @MyAnnotation(value = 1, text = 2) float  f5    = 1;
+        }"""
     );
   }
 
@@ -248,34 +262,38 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getIndentOptions().USE_TAB_CHARACTER = true;
 
     doTextTest(
-      "public class Test {\n" +
-        "\tprivate Long field2 = null;\n" +
-        "\tprivate final Object field1 = null;\n" +
-        "\tprivate int i = 1;\n" +
-      "}",
+      """
+        public class Test {
+        \tprivate Long field2 = null;
+        \tprivate final Object field1 = null;
+        \tprivate int i = 1;
+        }""",
 
-      "public class Test {\n" +
-        "\tprivate       Long   field2 = null;\n" +
-        "\tprivate final Object field1 = null;\n" +
-        "\tprivate       int    i      = 1;\n" +
-      "}"
+      """
+        public class Test {
+        \tprivate       Long   field2 = null;
+        \tprivate final Object field1 = null;
+        \tprivate       int    i      = 1;
+        }"""
     );
   }
 
   public void testDoNotAlignIfNotEnabled() {
     getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = false;
     doTextTest(
-      "public class Test {\n" +
-      "private Long field2 = null;\n" +
-      "private final Object field1 = null;\n" +
-      "private int i = 1;\n" +
-      "}",
+      """
+        public class Test {
+        private Long field2 = null;
+        private final Object field1 = null;
+        private int i = 1;
+        }""",
 
-      "public class Test {\n" +
-      "    private Long field2 = null;\n" +
-      "    private final Object field1 = null;\n" +
-      "    private int i = 1;\n" +
-      "}"
+      """
+        public class Test {
+            private Long field2 = null;
+            private final Object field1 = null;
+            private int i = 1;
+        }"""
     );
   }
 
@@ -284,23 +302,25 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
     getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
     doTextTest(
-      "public class Test {\n" +
-      "    @Id\n" +
-      "    private final String name;\n" +
-      "    @Column(length = 2 * 1024 * 1024 /* 2 MB */)\n" +
-      "    private String value;\n" +
-      "    private boolean required;\n" +
-      "    private String unsetValue;\n" +
-      "}",
+      """
+        public class Test {
+            @Id
+            private final String name;
+            @Column(length = 2 * 1024 * 1024 /* 2 MB */)
+            private String value;
+            private boolean required;
+            private String unsetValue;
+        }""",
 
-      "public class Test {\n" +
-      "    @Id\n" +
-      "    private final String  name;\n" +
-      "    @Column(length = 2 * 1024 * 1024 /* 2 MB */)\n" +
-      "    private       String  value;\n" +
-      "    private       boolean required;\n" +
-      "    private       String  unsetValue;\n" +
-      "}"
+      """
+        public class Test {
+            @Id
+            private final String  name;
+            @Column(length = 2 * 1024 * 1024 /* 2 MB */)
+            private       String  value;
+            private       boolean required;
+            private       String  unsetValue;
+        }"""
     );
   }
 
@@ -311,18 +331,20 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doClassTest(
       "public void test()\n" +
       "                 throws Exception {}",
-      "public void test()\n" +
-      "throws Exception {\n" +
-      "}"
+      """
+        public void test()
+        throws Exception {
+        }"""
     );
 
     getSettings().ALIGN_THROWS_KEYWORD = false;
     doClassTest(
       "public void test()\n" +
       "                 throws Exception {}",
-      "public void test()\n" +
-      "        throws Exception {\n" +
-      "}"
+      """
+        public void test()
+                throws Exception {
+        }"""
     );
   }
 
@@ -350,20 +372,22 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doMethodTest(
       "a.current.current.current.getThis().getThis().getThis();",
 
-      "a.current.current.current.getThis()\n" +
-      "                         .getThis()\n" +
-      "                         .getThis();"
+      """
+        a.current.current.current.getThis()
+                                 .getThis()
+                                 .getThis();"""
     );
 
     doMethodTest(
       "a.current.current.current.getThis().getThis().getThis().current.getThis().getThis().getThis().getThis();",
 
-      "a.current.current.current.getThis()\n" +
-      "                         .getThis()\n" +
-      "                         .getThis().current.getThis()\n" +
-      "                                           .getThis()\n" +
-      "                                           .getThis()\n" +
-      "                                           .getThis();"
+      """
+        a.current.current.current.getThis()
+                                 .getThis()
+                                 .getThis().current.getThis()
+                                                   .getThis()
+                                                   .getThis()
+                                                   .getThis();"""
     );
 
 
@@ -381,9 +405,10 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doMethodTest(
       "a.current.current.current.getThis().getThis().getThis();",
 
-      "a.current.current.current.getThis()\n" +
-      "        .getThis()\n" +
-      "        .getThis();"
+      """
+        a.current.current.current.getThis()
+                .getThis()
+                .getThis();"""
     );
   }
 
@@ -395,11 +420,12 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     String before = "a.current.current.getThis().getThis().getThis().getThis().getThis();";
     doMethodTest(
       before,
-      "a.current.current.getThis()\n" +
-      "                 .getThis()\n" +
-      "                 .getThis()\n" +
-      "                 .getThis()\n" +
-      "                 .getThis();"
+      """
+        a.current.current.getThis()
+                         .getThis()
+                         .getThis()
+                         .getThis()
+                         .getThis();"""
     );
 
     getSettings().RIGHT_MARGIN = 80;
@@ -435,12 +461,16 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
     doMethodTest(
-      "test(call1(),\n" +
-      "             call2(),\n" +
-      "                        call3());\n",
-      "test(call1(),\n" +
-      "     call2(),\n" +
-      "     call3());\n"
+      """
+        test(call1(),
+                     call2(),
+                                call3());
+        """,
+      """
+        test(call1(),
+             call2(),
+             call3());
+        """
     );
   }
 
@@ -457,60 +487,70 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
   public void testAlignOnlyDeclarationStatements() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doMethodTest(
-      "      String s;\n" +
-      "   int a = 2;\n" +
-      "s = \"abs\";\n" +
-      "long stamp = 12;",
-      "String s;\n" +
-      "int    a = 2;\n" +
-      "s = \"abs\";\n" +
-      "long stamp = 12;"
+      """
+              String s;
+           int a = 2;
+        s = "abs";
+        long stamp = 12;""",
+      """
+        String s;
+        int    a = 2;
+        s = "abs";
+        long stamp = 12;"""
     );
   }
 
   public void testAlignFieldDeclarations() {
     getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
     doClassTest(
-      "char a = '2';\n" +
-      "int aaaaa = 3;\n" +
-      "String b;",
-      "char   a     = '2';\n" +
-      "int    aaaaa = 3;\n" +
-      "String b;");
+      """
+        char a = '2';
+        int aaaaa = 3;
+        String b;""",
+      """
+        char   a     = '2';
+        int    aaaaa = 3;
+        String b;""");
   }
 
   public void testAlignVarDeclarations() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doMethodTest(
-      "char a = '2';\n" +
-      "int aaaaa = 3;\n" +
-      "String b;",
-      "char   a     = '2';\n" +
-      "int    aaaaa = 3;\n" +
-      "String b;");
+      """
+        char a = '2';
+        int aaaaa = 3;
+        String b;""",
+      """
+        char   a     = '2';
+        int    aaaaa = 3;
+        String b;""");
   }
 
   public void testDoNotAlignWhenBlankLine() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doMethodTest(
-      "int a = 2;\n" +
-      "\n" +
-      "String myString = \"my string\"",
-      "int a = 2;\n" +
-      "\n" +
-      "String myString = \"my string\""
+      """
+        int a = 2;
+
+        String myString = "my string\"""",
+      """
+        int a = 2;
+
+        String myString = "my string\""""
     );
   }
 
   public void testDoNotAlignWhenGroupInterrupted() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doMethodTest(
-      "int a = 2;\n" +
-      "System.out.println(\"hi!\")\n" +
-      "String myString = \"my string\"",
-      "int a = 2;\n" +
-      "System.out.println(\"hi!\")\n" +
-      "String myString = \"my string\""
+      """
+        int a = 2;
+        System.out.println("hi!")
+        String myString = "my string\"""",
+      """
+        int a = 2;
+        System.out.println("hi!")
+        String myString = "my string\""""
     );
   }
 
@@ -528,59 +568,65 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
 
     doMethodTest(
-      "int a = 12;\n" +
-      "  Runnable runnable = new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "        System.out.println(\"AAA!\");\n" +
-      "    }\n" +
-      "};",
+      """
+        int a = 12;
+          Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("AAA!");
+            }
+        };""",
 
-      "int a = 12;\n" +
-      "Runnable runnable = new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "        System.out.println(\"AAA!\");\n" +
-      "    }\n" +
-      "};"
+      """
+        int a = 12;
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("AAA!");
+            }
+        };"""
     );
 
     doMethodTest(
-      "   Runnable runnable = new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "        System.out.println(\"AAA!\");\n" +
-      "    }\n" +
-      "};\n" +
-      "int c = 12;",
+      """
+           Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("AAA!");
+            }
+        };
+        int c = 12;""",
 
-      "Runnable runnable = new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "        System.out.println(\"AAA!\");\n" +
-      "    }\n" +
-      "};\n" +
-      "int c = 12;"
+      """
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("AAA!");
+            }
+        };
+        int c = 12;"""
     );
 
     doMethodTest(
-      "    int ac = 99;\n" +
-      "Runnable runnable = new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "        System.out.println(\"AAA!\");\n" +
-      "    }\n" +
-      "};\n" +
-      "int c = 12;",
+      """
+            int ac = 99;
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("AAA!");
+            }
+        };
+        int c = 12;""",
 
-      "int ac = 99;\n" +
-      "Runnable runnable = new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "        System.out.println(\"AAA!\");\n" +
-      "    }\n" +
-      "};\n" +
-      "int c = 12;"
+      """
+        int ac = 99;
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("AAA!");
+            }
+        };
+        int c = 12;"""
     );
   }
 
@@ -588,55 +634,61 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
 
     doMethodTest(
-      "int\n" +
-      "       i = 0;\n" +
-      "int[] a = new int[]{1, 2, 0x0052, 0x0053, 0x0054};\n" +
-      "int var1 = 1;\n" +
-      "int var2 = 2;",
+      """
+        int
+               i = 0;
+        int[] a = new int[]{1, 2, 0x0052, 0x0053, 0x0054};
+        int var1 = 1;
+        int var2 = 2;""",
 
-      "int\n" +
-      "        i = 0;\n" +
-      "int[] a    = new int[]{1, 2, 0x0052, 0x0053, 0x0054};\n" +
-      "int   var1 = 1;\n" +
-      "int   var2 = 2;"
+      """
+        int
+                i = 0;
+        int[] a    = new int[]{1, 2, 0x0052, 0x0053, 0x0054};
+        int   var1 = 1;
+        int   var2 = 2;"""
     );
   }
 
   public void testAlign_InMethod() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doClassTest(
-      "public void run() {\n" +
-      "\n" +
-      "                int a = 2;\n" +
-      "            String superString = \"\";\n" +
-      "\n" +
-      "     test(call1(), call2(), call3());\n" +
-      "    }",
+      """
+        public void run() {
 
-      "public void run() {\n" +
-      "\n" +
-      "    int    a           = 2;\n" +
-      "    String superString = \"\";\n" +
-      "\n" +
-      "    test(call1(), call2(), call3());\n" +
-      "}"
+                        int a = 2;
+                    String superString = "";
+
+             test(call1(), call2(), call3());
+            }""",
+
+      """
+        public void run() {
+
+            int    a           = 2;
+            String superString = "";
+
+            test(call1(), call2(), call3());
+        }"""
     );
 
     doClassTest(
-      "public void run() {\n" +
-      "\n" +
-      "        test(call1(), call2(), call3());\n" +
-      "\n" +
-      "        int a = 2;\n" +
-      "             String superString = \"\";\n" +
-      "}",
-      "public void run() {\n" +
-      "\n" +
-      "    test(call1(), call2(), call3());\n" +
-      "\n" +
-      "    int    a           = 2;\n" +
-      "    String superString = \"\";\n" +
-      "}");
+      """
+        public void run() {
+
+                test(call1(), call2(), call3());
+
+                int a = 2;
+                     String superString = "";
+        }""",
+      """
+        public void run() {
+
+            test(call1(), call2(), call3());
+
+            int    a           = 2;
+            String superString = "";
+        }""");
   }
 
   public void test_Shift_All_AlignedParameters() {
@@ -644,25 +696,27 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTextTest(
       REFORMAT_WITH_CONTEXT,
-      "public class Test {\n" +
-      "\n" +
-      "    public void fooooo(String foo,\n" +
-      "                    String booo,\n" +
-      "                    String kakadoo) {\n" +
-      "\n" +
-      "    }\n" +
-      "\n" +
-      "}",
+      """
+        public class Test {
 
-      "public class Test {\n" +
-      "\n" +
-      "    public void fooooo(String foo,\n" +
-      "                       String booo,\n" +
-      "                       String kakadoo) {\n" +
-      "\n" +
-      "    }\n" +
-      "\n" +
-      "}"
+            public void fooooo(String foo,
+                            String booo,
+                            String kakadoo) {
+
+            }
+
+        }""",
+
+      """
+        public class Test {
+
+            public void fooooo(String foo,
+                               String booo,
+                               String kakadoo) {
+
+            }
+
+        }"""
     );
   }
 
@@ -671,14 +725,16 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
     doTextTest(
       REFORMAT_WITH_CONTEXT,
-      "public class Test {\n" +
-      "    public int    i = 1;\n" +
-      "    public String iiiiiiiiii = 2;\n" +
-      "}",
-      "public class Test {\n" +
-      "    public int    i          = 1;\n" +
-      "    public String iiiiiiiiii = 2;\n" +
-      "}"
+      """
+        public class Test {
+            public int    i = 1;
+            public String iiiiiiiiii = 2;
+        }""",
+      """
+        public class Test {
+            public int    i          = 1;
+            public String iiiiiiiiii = 2;
+        }"""
     );
   }
 
@@ -687,138 +743,160 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doTextTest(
       REFORMAT_WITH_CONTEXT,
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int s = 2;\n" +
-      "        String sssss = 3;\n" +
-      "    }\n" +
-      "}",
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int    s     = 2;\n" +
-      "        String sssss = 3;\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+            public void test() {
+                int s = 2;
+                String sssss = 3;
+            }
+        }""",
+      """
+        public class Test {
+            public void test() {
+                int    s     = 2;
+                String sssss = 3;
+            }
+        }"""
     );
   }
 
   public void test_Align_ConsecutiveVars_InsideIfBlock() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doMethodTest(
-      "if (a > 2) {\n" +
-      "int a=2;\n" +
-      "String name=\"Yarik\";\n" +
-      "}\n",
-      "if (a > 2) {\n" +
-      "    int    a    = 2;\n" +
-      "    String name = \"Yarik\";\n" +
-      "}\n"
+      """
+        if (a > 2) {
+        int a=2;
+        String name="Yarik";
+        }
+        """,
+      """
+        if (a > 2) {
+            int    a    = 2;
+            String name = "Yarik";
+        }
+        """
     );
   }
 
   public void test_Align_ConsecutiveVars_InsideForBlock() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doMethodTest(
-      "    for (int i = 0; i < 10; i++) {\n" +
-      "      int a=2;\n" +
-      "      String name=\"Xa\";\n" +
-      "    }\n",
-      "for (int i = 0; i < 10; i++) {\n" +
-      "    int    a    = 2;\n" +
-      "    String name = \"Xa\";\n" +
-      "}\n"
+      """
+            for (int i = 0; i < 10; i++) {
+              int a=2;
+              String name="Xa";
+            }
+        """,
+      """
+        for (int i = 0; i < 10; i++) {
+            int    a    = 2;
+            String name = "Xa";
+        }
+        """
     );
   }
 
   public void test_Align_ConsecutiveVars_InsideTryBlock() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doMethodTest(
-      "    try {\n" +
-      "      int x = getX();\n" +
-      "      String name = \"Ha\";\n" +
-      "    }\n" +
-      "    catch (IOException exception) {\n" +
-      "      int y = 12;\n" +
-      "      String test = \"Test\";\n" +
-      "    }\n" +
-      "    finally {\n" +
-      "      int z = 12;\n" +
-      "      String zzzz = \"pnmhd\";\n" +
-      "    }\n",
-      "try {\n" +
-      "    int    x    = getX();\n" +
-      "    String name = \"Ha\";\n" +
-      "} catch (IOException exception) {\n" +
-      "    int    y    = 12;\n" +
-      "    String test = \"Test\";\n" +
-      "} finally {\n" +
-      "    int    z    = 12;\n" +
-      "    String zzzz = \"pnmhd\";\n" +
-      "}\n"
+      """
+            try {
+              int x = getX();
+              String name = "Ha";
+            }
+            catch (IOException exception) {
+              int y = 12;
+              String test = "Test";
+            }
+            finally {
+              int z = 12;
+              String zzzz = "pnmhd";
+            }
+        """,
+      """
+        try {
+            int    x    = getX();
+            String name = "Ha";
+        } catch (IOException exception) {
+            int    y    = 12;
+            String test = "Test";
+        } finally {
+            int    z    = 12;
+            String zzzz = "pnmhd";
+        }
+        """
     );
   }
 
   public void test_Align_ConsecutiveVars_InsideCodeBlock() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doMethodTest(
-      "    System.out.println(\"AAAA\");\n" +
-      "    int a = 2;\n" +
-      "    \n" +
-      "    {\n" +
-      "      int x=2;\n" +
-      "      String name=3;\n" +
-      "    }\n",
-      "System.out.println(\"AAAA\");\n" +
-      "int a = 2;\n" +
-      "\n" +
-      "{\n" +
-      "    int    x    = 2;\n" +
-      "    String name = 3;\n" +
-      "}\n"
+      """
+            System.out.println("AAAA");
+            int a = 2;
+           \s
+            {
+              int x=2;
+              String name=3;
+            }
+        """,
+      """
+        System.out.println("AAAA");
+        int a = 2;
+
+        {
+            int    x    = 2;
+            String name = 3;
+        }
+        """
     );
   }
 
   public void test_AlignComments_BetweenChainedMethodCalls() {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
     doMethodTest(
-      "ActionBarPullToRefresh.from(getActivity())\n" +
-      "        // Mark the ListView as pullable\n" +
-      "        .theseChildrenArePullable(eventsListView)\n" +
-      "                // Set the OnRefreshListener\n" +
-      "        .listener(this)\n" +
-      "                // Use the AbsListView delegate for StickyListHeadersListView\n" +
-      "        .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
-      "                // Finally commit the setup to our PullToRefreshLayout\n" +
-      "        .setup(mPullToRefreshLayout);",
-      "ActionBarPullToRefresh.from(getActivity())\n" +
-      "                      // Mark the ListView as pullable\n" +
-      "                      .theseChildrenArePullable(eventsListView)\n" +
-      "                      // Set the OnRefreshListener\n" +
-      "                      .listener(this)\n" +
-      "                      // Use the AbsListView delegate for StickyListHeadersListView\n" +
-      "                      .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
-      "                      // Finally commit the setup to our PullToRefreshLayout\n" +
-      "                      .setup(mPullToRefreshLayout);"
+      """
+        ActionBarPullToRefresh.from(getActivity())
+                // Mark the ListView as pullable
+                .theseChildrenArePullable(eventsListView)
+                        // Set the OnRefreshListener
+                .listener(this)
+                        // Use the AbsListView delegate for StickyListHeadersListView
+                .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())
+                        // Finally commit the setup to our PullToRefreshLayout
+                .setup(mPullToRefreshLayout);""",
+      """
+        ActionBarPullToRefresh.from(getActivity())
+                              // Mark the ListView as pullable
+                              .theseChildrenArePullable(eventsListView)
+                              // Set the OnRefreshListener
+                              .listener(this)
+                              // Use the AbsListView delegate for StickyListHeadersListView
+                              .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())
+                              // Finally commit the setup to our PullToRefreshLayout
+                              .setup(mPullToRefreshLayout);"""
     );
   }
 
   public void test_AlignComments_2() {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
     doClassTest(
-      "public String returnWithBuilder2() {\n" +
-      "    return MoreObjects\n" +
-      "        .toStringHelper(this)\n" +
-      "        .add(\"value\", value)\n" +
-      "                   // comment\n" +
-      "        .toString();\n" +
-      "  }",
-      "public String returnWithBuilder2() {\n" +
-      "    return MoreObjects\n" +
-      "            .toStringHelper(this)\n" +
-      "            .add(\"value\", value)\n" +
-      "            // comment\n" +
-      "            .toString();\n" +
-      "}"
+      """
+        public String returnWithBuilder2() {
+            return MoreObjects
+                .toStringHelper(this)
+                .add("value", value)
+                           // comment
+                .toString();
+          }""",
+      """
+        public String returnWithBuilder2() {
+            return MoreObjects
+                    .toStringHelper(this)
+                    .add("value", value)
+                    // comment
+                    .toString();
+        }"""
     );
   }
 
@@ -827,38 +905,42 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().SPACE_WITHIN_BRACES = true;
     getSettings().ALIGN_SUBSEQUENT_SIMPLE_METHODS = true;
     doTextTest(
-      "public class Test {\n" +
-      "\n" +
-      "    public void testSuperDuperFuckerMother() { System.out.println(\"AAA\"); }\n" +
-      "\n" +
-      "    public void testCounterMounter() { System.out.println(\"XXXX\"); }\n" +
-      "\n" +
-      "}",
-      "public class Test {\n" +
-      "\n" +
-      "    public void testSuperDuperFuckerMother() { System.out.println(\"AAA\"); }\n" +
-      "\n" +
-      "    public void testCounterMounter()         { System.out.println(\"XXXX\"); }\n" +
-      "\n" +
-      "}"
+      """
+        public class Test {
+
+            public void testSuperDuperFuckerMother() { System.out.println("AAA"); }
+
+            public void testCounterMounter() { System.out.println("XXXX"); }
+
+        }""",
+      """
+        public class Test {
+
+            public void testSuperDuperFuckerMother() { System.out.println("AAA"); }
+
+            public void testCounterMounter()         { System.out.println("XXXX"); }
+
+        }"""
     );
   }
 
   public void test_alignAssignments() {
     getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
     doTextTest(
-      "public class Test {\n" +
-      "  void foo(int a, int xyz) {\n" +
-      "    a = 9999;\n" +
-      "    xyz = 1;\n" +
-      "  }\n" +
-      "}",
-      "public class Test {\n" +
-      "    void foo(int a, int xyz) {\n" +
-      "        a   = 9999;\n" +
-      "        xyz = 1;\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+          void foo(int a, int xyz) {
+            a = 9999;
+            xyz = 1;
+          }
+        }""",
+      """
+        public class Test {
+            void foo(int a, int xyz) {
+                a   = 9999;
+                xyz = 1;
+            }
+        }"""
     );
   }
 
@@ -866,20 +948,22 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
     getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
     doTextTest(
-      "public class Test {\n" +
-      "  void foo(int a, int xyz) {\n" +
-      "    a = 9999;\n" +
-      "    xyz = a = \n" +
-      "    a = 12;\n" +
-      "  }\n" +
-      "}",
-      "public class Test {\n" +
-      "    void foo(int a, int xyz) {\n" +
-      "        a   = 9999;\n" +
-      "        xyz = a =\n" +
-      "        a   = 12;\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+          void foo(int a, int xyz) {
+            a = 9999;
+            xyz = a =\s
+            a = 12;
+          }
+        }""",
+      """
+        public class Test {
+            void foo(int a, int xyz) {
+                a   = 9999;
+                xyz = a =
+                a   = 12;
+            }
+        }"""
     );
   }
 
@@ -889,98 +973,106 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doTextTest(
-      "public class Test {\n" +
-      "  void foo(int a, int xyz, int bc) {\n" +
-      "    bc = 9999;\n" +
-      "    a = 9999;\n" +
-      "    int basdf = 1234;\n" +
-      "    int as = 3;\n" +
-      "    xyz = a = \n" +
-      "    a = 12;\n" +
-      "  }\n" +
-      "}",
-      "public class Test {\n" +
-      "    void foo(int a, int xyz, int bc) {\n" +
-      "        bc = 9999;\n" +
-      "        a  = 9999;\n" +
-      "        int basdf = 1234;\n" +
-      "        int as    = 3;\n" +
-      "        xyz = a =\n" +
-      "        a   = 12;\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+          void foo(int a, int xyz, int bc) {
+            bc = 9999;
+            a = 9999;
+            int basdf = 1234;
+            int as = 3;
+            xyz = a =\s
+            a = 12;
+          }
+        }""",
+      """
+        public class Test {
+            void foo(int a, int xyz, int bc) {
+                bc = 9999;
+                a  = 9999;
+                int basdf = 1234;
+                int as    = 3;
+                xyz = a =
+                a   = 12;
+            }
+        }"""
     );
   }
 
   public void test_alignAssignmentsFields() {
     getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
     doTextTest(
-      "public class Test {\n" +
-      "  void foo(A a, int xyz) {\n" +
-      "    a.bar = 9999;\n" +
-      "    xyz = 1;\n" +
-      "  }\n" +
-      "}",
-      "public class Test {\n" +
-      "    void foo(A a, int xyz) {\n" +
-      "        a.bar = 9999;\n" +
-      "        xyz   = 1;\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+          void foo(A a, int xyz) {
+            a.bar = 9999;
+            xyz = 1;
+          }
+        }""",
+      """
+        public class Test {
+            void foo(A a, int xyz) {
+                a.bar = 9999;
+                xyz   = 1;
+            }
+        }"""
     );
   }
 
   public void test_alignMultilineTextBlock() {
     getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true;
     doTextTest(
-      "public class Test {\n" +
-      "    void foo() {\n" +
-      "        String block = \"\"\"\n" +
-      "  text\n" +
-      "  block\n" +
-      " \"\"\";\n" +
-      "    }\n" +
-      "}",
-      "public class Test {\n" +
-      "    void foo() {\n" +
-      "        String block = \"\"\"\n" +
-      "                        text\n" +
-      "                        block\n" +
-      "                       \"\"\";\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+            void foo() {
+                String block = ""\"
+          text
+          block
+         ""\";
+            }
+        }""",
+      """
+        public class Test {
+            void foo() {
+                String block = ""\"
+                                text
+                                block
+                               ""\";
+            }
+        }"""
     );
   }
 
   public void testAlign() {
     getJavaSettings().MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     doTextTest(
-      "public class Main {\n" +
-      "\n" +
-      "    public static void main(String[] args) {\n" +
-      "      try {\n" +
-      "        \n" +
-      "      } catch (FooException | BarException | FooBarException | FooBarFooException | BarBarFooException | BarFooFooException e) {\n" +
-      "        \n" +
-      "      }\n" +
-      "    }\n" +
-      "}",
+      """
+        public class Main {
 
-      "public class Main {\n" +
-      "\n" +
-      "    public static void main(String[] args) {\n" +
-      "        try {\n" +
-      "\n" +
-      "        } catch (FooException |\n" +
-      "                 BarException |\n" +
-      "                 FooBarException |\n" +
-      "                 FooBarFooException |\n" +
-      "                 BarBarFooException |\n" +
-      "                 BarFooFooException e) {\n" +
-      "\n" +
-      "        }\n" +
-      "    }\n" +
-      "}"
+            public static void main(String[] args) {
+              try {
+               \s
+              } catch (FooException | BarException | FooBarException | FooBarFooException | BarBarFooException | BarFooFooException e) {
+               \s
+              }
+            }
+        }""",
+
+      """
+        public class Main {
+
+            public static void main(String[] args) {
+                try {
+
+                } catch (FooException |
+                         BarException |
+                         FooBarException |
+                         FooBarFooException |
+                         BarBarFooException |
+                         BarFooFooException e) {
+
+                }
+            }
+        }"""
     );
   }
 
@@ -992,36 +1084,38 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
 
     doTextTest(
-      "public class Main {\n" +
-      "\n" +
-      "    public static void main(String[] args) {\n" +
-      "        int one               = 1;\n" +
-      "        int a_million_dollars = 1000000;\n" +
-      "\n" +
-      "        doSomething(one, a_million_dollars);\n" +
-      "    }\n" +
-      "\n" +
-      "    private static void doSomething(int one, int two) {\n" +
-      "    }\n" +
-      "\n" +
-      "}",
+      """
+        public class Main {
 
-      "public class Main {\n" +
-      "\n" +
-      "    public static void main(String[] args) {\n" +
-      "        int one               = 1;\n" +
-      "        int a_million_dollars = 1000000;\n" +
-      "\n" +
-      "        doSomething(\n" +
-      "                one,\n" +
-      "                a_million_dollars\n" +
-      "        );\n" +
-      "    }\n" +
-      "\n" +
-      "    private static void doSomething(int one, int two) {\n" +
-      "    }\n" +
-      "\n" +
-      "}"
+            public static void main(String[] args) {
+                int one               = 1;
+                int a_million_dollars = 1000000;
+
+                doSomething(one, a_million_dollars);
+            }
+
+            private static void doSomething(int one, int two) {
+            }
+
+        }""",
+
+      """
+        public class Main {
+
+            public static void main(String[] args) {
+                int one               = 1;
+                int a_million_dollars = 1000000;
+
+                doSomething(
+                        one,
+                        a_million_dollars
+                );
+            }
+
+            private static void doSomething(int one, int two) {
+            }
+
+        }"""
     );
   }
 }

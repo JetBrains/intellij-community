@@ -356,7 +356,7 @@ object ExpectedCompletionUtils {
 
     private val LookupElement.moduleName: String?
         get() {
-            return (`object` as? DeclarationLookupObject)?.psiElement?.module?.name
+            return psiElement?.module?.name
         }
 
     private fun textAttributes(presentation: LookupElementPresentation): String {

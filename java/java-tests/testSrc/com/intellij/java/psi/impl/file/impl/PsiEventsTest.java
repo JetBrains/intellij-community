@@ -83,8 +83,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildAddition\n" +
-            "childAdded\n";
+      """
+        beforeChildAddition
+        childAdded
+        """;
     assertEquals(psiDir.getName(), expected, string);
   }
 
@@ -98,8 +100,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildAddition\n" +
-            "childAdded\n";
+      """
+        beforeChildAddition
+        childAdded
+        """;
     assertEquals(psiDir.getName(), expected, string);
   }
 
@@ -116,8 +120,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildRemoval\n" +
-            "childRemoved\n";
+      """
+        beforeChildRemoval
+        childRemoved
+        """;
     assertEquals(psiFile.getName(), expected, string);
   }
 
@@ -134,8 +140,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildRemoval\n" +
-            "childRemoved\n";
+      """
+        beforeChildRemoval
+        childRemoved
+        """;
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
@@ -154,8 +162,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange fileName\n" +
-            "propertyChanged fileName\n";
+      """
+        beforePropertyChange fileName
+        propertyChanged fileName
+        """;
     assertEquals(psiFile.getName(), expected, string);
   }
 
@@ -173,8 +183,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange fileName\n" +
-            "propertyChanged fileName\n";
+      """
+        beforePropertyChange fileName
+        propertyChanged fileName
+        """;
     assertEquals(psiFile.getName(), expected, string);
   }
 
@@ -190,8 +202,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildReplacement\n" +
-            "childReplaced\n";
+      """
+        beforeChildReplacement
+        childReplaced
+        """;
     assertEquals(psiFile.getName(), expected, string);
   }
 
@@ -207,8 +221,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildRemoval\n" +
-            "childRemoved\n";
+      """
+        beforeChildRemoval
+        childRemoved
+        """;
     assertEquals(psiFile.getName(), expected, string);
     assertNull(fileManager.findFile(file));
   }
@@ -225,8 +241,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildAddition\n" +
-            "childAdded\n";
+      """
+        beforeChildAddition
+        childAdded
+        """;
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
@@ -242,8 +260,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange directoryName\n" +
-            "propertyChanged directoryName\n";
+      """
+        beforePropertyChange directoryName
+        propertyChanged directoryName
+        """;
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
@@ -262,8 +282,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange propUnloadedPsi\n" +
-            "propertyChanged propUnloadedPsi\n";
+      """
+        beforePropertyChange propUnloadedPsi
+        propertyChanged propUnloadedPsi
+        """;
     assertEquals(fileManager.findDirectory(file).getName(), expected, string);
   }
 
@@ -279,8 +301,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildRemoval\n" +
-            "childRemoved\n";
+      """
+        beforeChildRemoval
+        childRemoved
+        """;
     assertEquals(psiDirectory.getName(), expected, string);
     assertNull(fileManager.findDirectory(file));
   }
@@ -297,8 +321,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildAddition\n" +
-            "childAdded\n";
+      """
+        beforeChildAddition
+        childAdded
+        """;
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
@@ -317,8 +343,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
 
     final String expected =
-            "beforePropertyChange writable\n" +
-            "propertyChanged writable\n";
+      """
+        beforePropertyChange writable
+        propertyChanged writable
+        """;
 
     new WaitFor(500){
       @Override
@@ -345,8 +373,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildMovement\n" +
-            "childMoved\n";
+      """
+        beforeChildMovement
+        childMoved
+        """;
     assertEquals(psiFile.getName(), expected, string);
   }
 
@@ -362,8 +392,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildRemoval\n" +
-            "childRemoved\n";
+      """
+        beforeChildRemoval
+        childRemoved
+        """;
     assertEquals(psiFile.getName(), expected, string);
     assertNull(fileManager.findFile(file));
   }
@@ -378,8 +410,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildAddition\n" +
-            "childAdded\n";
+      """
+        beforeChildAddition
+        childAdded
+        """;
     assertEquals(expected, string);
   }
 
@@ -409,8 +443,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildMovement\n" +
-            "childMoved\n";
+      """
+        beforeChildMovement
+        childMoved
+        """;
     assertEquals(psiDirectory.getName(), expected, string);
   }
 
@@ -426,8 +462,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildRemoval\n" +
-            "childRemoved\n";
+      """
+        beforeChildRemoval
+        childRemoved
+        """;
     assertEquals(psiDirectory.getName(), expected, string);
     assertNull(fileManager.findDirectory(file));
   }
@@ -442,8 +480,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforeChildAddition\n" +
-            "childAdded\n";
+      """
+        beforeChildAddition
+        childAdded
+        """;
     assertEquals(expected, string);
   }
 
@@ -482,10 +522,12 @@ public class PsiEventsTest extends JavaPsiTestCase {
     */
 
     assertEquals(
-            "beforeChildrenChange\n" +
-            "beforeChildReplacement\n" +
-            "childReplaced\n"+
-            "childrenChanged\n",
+      """
+        beforeChildrenChange
+        beforeChildReplacement
+        childReplaced
+        childrenChanged
+        """,
             listener.getEventsString());
   }
 
@@ -500,8 +542,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange roots\n" +
-            "propertyChanged roots\n";
+      """
+        beforePropertyChange roots
+        propertyChanged roots
+        """;
     assertEquals(expected, string);
   }
 
@@ -515,8 +559,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-            "beforePropertyChange roots\n" +
-            "propertyChanged roots\n";
+      """
+        beforePropertyChange roots
+        propertyChanged roots
+        """;
     assertEquals(expected, string);
   }
 
@@ -532,8 +578,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
     String string = listener.getEventsString();
     String expected =
-      "beforePropertyChange propFileTypes\n" +
-      "propertyChanged propFileTypes\n";
+      """
+        beforePropertyChange propFileTypes
+        propertyChanged propFileTypes
+        """;
     assertEquals(expected, string);
   }
 
@@ -686,8 +734,10 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertNotNull(psiDir2);
     WriteAction.run(() -> original.copy(this, mySrcDir2, "b.xml"));
 
-    assertEquals("beforeChildAddition\n" +
-                 "childAdded\n", listener.getEventsString());
+    assertEquals("""
+                   beforeChildAddition
+                   childAdded
+                   """, listener.getEventsString());
   }
 
   public void testSuccessfulRecoveryAfterTreeChangePreprocessorThrowsException() throws Exception {

@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
@@ -43,9 +44,14 @@ public final class IndexOperationFUS {
   static final boolean THROW_ON_INCORRECT_USAGE = SystemProperties.getBooleanProperty("IndexOperationFUS.THROW_ON_INCORRECT_USAGE", false);
 
   /**
+   * 'Feature flag': report detailed index lookup events. Default: true for EAP, false otherwise
+   */
+  private static final boolean REPORT_DETAILED_STATS = SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_DETAILED_STATS",
+                                                                                           ApplicationManager.getApplication().isEAP());
+  /**
    * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics. Default: true
    */
-  private static final boolean REPORT_AGGREGATES = SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_AGGREGATES", true);
+  private static final boolean REPORT_AGGREGATED_STATS = SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_AGGREGATED_STATS", true);
 
 
   /**
@@ -57,7 +63,7 @@ public final class IndexOperationFUS {
    * different event schema _version_.
    */
   private static final int REPORT_ONLY_OPERATIONS_LONGER_THAN_MS =
-    Integer.getInteger("IndexOperationFUS.REPORT_ONLY_OPERATIONS_LONGER_THAN_MS", 10);
+    Integer.getInteger("IndexOperationFUS.REPORT_ONLY_OPERATIONS_LONGER_THAN_MS", 100);
 
   /**
    * How many recursive lookups to allow before suspect it is not a recursive lookup, but
@@ -76,7 +82,7 @@ public final class IndexOperationFUS {
   /**
    * Averages/percentiles over lookups in a time window
    */
-  private static final EventLogGroup INDEX_USAGE_AGGREGATES_GROUP = new EventLogGroup("index.usage.aggregates", 1);
+  private static final EventLogGroup INDEX_USAGE_AGGREGATES_GROUP = new EventLogGroup("index.usage.aggregates", 2);
 
   /* ================== EVENTS FIELDS: ====================================================== */
 
@@ -271,11 +277,13 @@ public final class IndexOperationFUS {
           final long lookupFinishedAtMs = System.currentTimeMillis();
           final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
 
-          if (lookupDurationMs > REPORT_ONLY_OPERATIONS_LONGER_THAN_MS || lookupFailed) {
-            reportDetailedDataToAnalytics(lookupFinishedAtMs);
+          if(REPORT_DETAILED_STATS) {
+            if (lookupDurationMs > REPORT_ONLY_OPERATIONS_LONGER_THAN_MS || lookupFailed) {
+              reportDetailedDataToAnalytics(lookupFinishedAtMs);
+            }
           }
 
-          if (REPORT_AGGREGATES) {
+          if (REPORT_AGGREGATED_STATS) {
             reportAggregatesDataToAnalytics(lookupFinishedAtMs);
           }
         }
@@ -627,7 +635,8 @@ public final class IndexOperationFUS {
 
       @Override
       protected void reportAggregatesDataToAnalytics(long lookupFinishedAtMs) {
-        //TODO reporting aggregates not implemented yet here
+        final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
+        IndexOperationAggregatesCollector.recordStubEntriesByKeysLookup(indexId, lookupFailed, lookupDurationMs);
       }
     }
 
@@ -641,7 +650,8 @@ public final class IndexOperationFUS {
    */
   public static class IndexOperationAggregatesCollector extends ApplicationUsagesCollector {
 
-    public static final int MAX_TRACKABLE_DURATION_MS = SystemProperties.getIntProperty("IndexOperationFUS.MAX_TRACKABLE_DURATION_MS", 5000);
+    public static final int MAX_TRACKABLE_DURATION_MS =
+      SystemProperties.getIntProperty("IndexOperationFUS.MAX_TRACKABLE_DURATION_MS", 5000);
 
     private static final IntEventField FIELD_LOOKUPS_TOTAL = EventFields.Int("lookups_total");
     private static final IntEventField FIELD_LOOKUPS_FAILED = EventFields.Int("lookups_failed");
@@ -680,8 +690,23 @@ public final class IndexOperationFUS {
       FIELD_LOOKUP_DURATION_MAX
     );
 
+    private static final VarargEventId EVENT_STUB_INDEX_ENTRIES_LOOKUP = INDEX_USAGE_AGGREGATES_GROUP.registerVarargEvent(
+      "lookup.stub_entries",
+      FIELD_INDEX_ID,
+
+      FIELD_LOOKUPS_TOTAL,
+      FIELD_LOOKUPS_FAILED,
+
+      FIELD_LOOKUP_DURATION_MEAN,
+      FIELD_LOOKUP_DURATION_90P,
+      FIELD_LOOKUP_DURATION_95P,
+      FIELD_LOOKUP_DURATION_99P,
+      FIELD_LOOKUP_DURATION_MAX
+    );
+
     private static final ConcurrentHashMap<IndexId<?, ?>, Recorder> allKeysLookupDurationsMsByIndexId = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<IndexId<?, ?>, Recorder> entriesLookupDurationsMsByIndexId = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<IndexId<?, ?>, Recorder> stubEntriesLookupDurationsMsByIndexId = new ConcurrentHashMap<>();
 
 
     public IndexOperationAggregatesCollector() {
@@ -733,10 +758,29 @@ public final class IndexOperationFUS {
       }
     }
 
+    public static void recordStubEntriesByKeysLookup(final IndexId<?, ?> indexId,
+                                                     final boolean failed,
+                                                     final long durationMs) {
+      if (!failed) {
+        final Recorder recorder = stubEntriesLookupDurationsMsByIndexId.computeIfAbsent(
+          indexId,
+          __ -> new Recorder(
+            MAX_TRACKABLE_DURATION_MS,
+            /* significant digits = */ 2     /* ~1% accuracy */
+          )
+        );
+
+        //Recorder allows concurrent writes:
+        recorder.recordValue(
+          Math.max(Math.min(durationMs, MAX_TRACKABLE_DURATION_MS), 0)
+        );
+      }
+    }
+
     @NotNull
     @Override
     public Set<MetricEvent> getMetrics() {
-      if (REPORT_AGGREGATES) {
+      if (REPORT_AGGREGATED_STATS) {
         final Set<MetricEvent> allKeysLookupStats = allKeysLookupDurationsMsByIndexId.entrySet().stream().map(e -> {
           final IndexId<?, ?> indexId = e.getKey();
           final Recorder recorderForIndex = e.getValue();
@@ -749,9 +793,9 @@ public final class IndexOperationFUS {
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 
-            FIELD_LOOKUP_DURATION_90P.with((int)recordedValuesHistogram.getValueAtPercentile(0.90)),
-            FIELD_LOOKUP_DURATION_95P.with((int)recordedValuesHistogram.getValueAtPercentile(0.95)),
-            FIELD_LOOKUP_DURATION_99P.with((int)recordedValuesHistogram.getValueAtPercentile(0.99)),
+            FIELD_LOOKUP_DURATION_90P.with((int)recordedValuesHistogram.getValueAtPercentile(90)),
+            FIELD_LOOKUP_DURATION_95P.with((int)recordedValuesHistogram.getValueAtPercentile(95)),
+            FIELD_LOOKUP_DURATION_99P.with((int)recordedValuesHistogram.getValueAtPercentile(99)),
             FIELD_LOOKUP_DURATION_MAX.with((int)recordedValuesHistogram.getMaxValue()
             )
           );
@@ -768,18 +812,37 @@ public final class IndexOperationFUS {
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 
-            FIELD_LOOKUP_DURATION_90P.with((int)recordedValuesHistogram.getValueAtPercentile(0.90)),
-            FIELD_LOOKUP_DURATION_95P.with((int)recordedValuesHistogram.getValueAtPercentile(0.95)),
-            FIELD_LOOKUP_DURATION_99P.with((int)recordedValuesHistogram.getValueAtPercentile(0.99)),
+            FIELD_LOOKUP_DURATION_90P.with((int)recordedValuesHistogram.getValueAtPercentile(90)),
+            FIELD_LOOKUP_DURATION_95P.with((int)recordedValuesHistogram.getValueAtPercentile(95)),
+            FIELD_LOOKUP_DURATION_99P.with((int)recordedValuesHistogram.getValueAtPercentile(99)),
+            FIELD_LOOKUP_DURATION_MAX.with((int)recordedValuesHistogram.getMaxValue()
+            )
+          );
+        }).collect(toSet());
+        final Set<MetricEvent> stubEntriesLookupStats = stubEntriesLookupDurationsMsByIndexId.entrySet().stream().map(e -> {
+          final IndexId<?, ?> indexId = e.getKey();
+          final Recorder recorderForIndex = e.getValue();
+          final Histogram recordedValuesHistogram = recorderForIndex.getIntervalHistogram();
+          return EVENT_STUB_INDEX_ENTRIES_LOOKUP.metric(
+            FIELD_INDEX_ID.with(indexId.getName()),
+
+            FIELD_LOOKUPS_TOTAL.with((int)recordedValuesHistogram.getTotalCount()),
+            //TODO FIELD_LOOKUPS_FAILED.with( -1 ),
+
+            FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
+
+            FIELD_LOOKUP_DURATION_90P.with((int)recordedValuesHistogram.getValueAtPercentile(90)),
+            FIELD_LOOKUP_DURATION_95P.with((int)recordedValuesHistogram.getValueAtPercentile(95)),
+            FIELD_LOOKUP_DURATION_99P.with((int)recordedValuesHistogram.getValueAtPercentile(99)),
             FIELD_LOOKUP_DURATION_MAX.with((int)recordedValuesHistogram.getMaxValue()
             )
           );
         }).collect(toSet());
 
-
         final HashSet<MetricEvent> all = new HashSet<>();
         all.addAll(allKeysLookupStats);
         all.addAll(entriesLookupStats);
+        all.addAll(stubEntriesLookupStats);
         return all;
       }
       else {

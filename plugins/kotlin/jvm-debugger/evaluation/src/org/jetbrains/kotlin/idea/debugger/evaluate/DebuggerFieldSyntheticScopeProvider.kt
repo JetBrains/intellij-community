@@ -46,7 +46,7 @@ class DebuggerFieldSyntheticScopeProvider : SyntheticScopeProviderExtension {
     }
 }
 
-class DebuggerFieldSyntheticScope(val javaSyntheticPropertiesScope: JavaSyntheticPropertiesScope) : SyntheticScope.Default() {
+class DebuggerFieldSyntheticScope(private val javaSyntheticPropertiesScope: JavaSyntheticPropertiesScope) : SyntheticScope.Default() {
     private val javaSourceElementFactory = JavaSourceElementFactoryImpl()
 
     override fun getSyntheticExtensionProperties(

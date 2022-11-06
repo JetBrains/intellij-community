@@ -4,7 +4,6 @@ package com.intellij.ide.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -15,11 +14,6 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val toolWindowManager = ToolWindowManager.getInstance(event.project ?: return) as? ToolWindowManagerImpl ?: return
     val idsToHide = getIdsToHide(toolWindowManager)
-    val window = event.getData(EditorWindow.DATA_KEY)
-    if (window != null && window.owner.isFloating) {
-      return
-    }
-
     if (idsToHide.none()) {
       toolWindowManager.layoutToRestoreLater?.let {
         toolWindowManager.layoutToRestoreLater = null
@@ -40,11 +34,6 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
     val presentation = event.presentation
     presentation.isEnabled = false
-    val window = event.getData(EditorWindow.DATA_KEY)
-    if (window != null && window.owner.isFloating) {
-      return
-    }
-
     val toolWindowManager = ToolWindowManager.getInstance(event.project ?: return) as ToolWindowManagerEx
     if (getIdsToHide(toolWindowManager).any()) {
       presentation.isEnabled = true

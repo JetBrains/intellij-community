@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.backend.common.serialization.metadata.metadataVersion
 import org.jetbrains.kotlin.idea.base.util.asKotlinLogger
@@ -22,7 +22,8 @@ sealed class KlibCompatibilityInfo(val isCompatible: Boolean) {
     class IncompatibleMetadata(val isOlder: Boolean) : KlibCompatibilityInfo(false)
 }
 
-abstract class AbstractKlibLibraryInfo(project: Project, library: Library, val libraryRoot: String) : LibraryInfo(project, library) {
+abstract class AbstractKlibLibraryInfo internal constructor(project: Project, library: LibraryEx, val libraryRoot: String) :
+    LibraryInfo(project, library) {
     val resolvedKotlinLibrary: KotlinLibrary = resolveSingleFileKlib(
         libraryFile = File(libraryRoot),
         logger = LOG,
@@ -56,10 +57,12 @@ val KotlinLibrary.compatibilityInfo: KlibCompatibilityInfo
                 // Too old KLIB format, even doesn't have metadata version
                 KlibCompatibilityInfo.IncompatibleMetadata(true)
             }
+
             !metadataVersion.isCompatible() -> {
                 val isOlder = metadataVersion.isAtLeast(KlibMetadataVersion.INSTANCE)
                 KlibCompatibilityInfo.IncompatibleMetadata(!isOlder)
             }
+
             else -> KlibCompatibilityInfo.Compatible
         }
     }

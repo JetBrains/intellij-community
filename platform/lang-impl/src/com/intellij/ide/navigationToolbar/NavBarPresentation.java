@@ -38,7 +38,9 @@ import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public final class NavBarPresentation {
   private final Project project;
 

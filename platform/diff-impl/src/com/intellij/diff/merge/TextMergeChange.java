@@ -119,16 +119,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Override
   public boolean isResolved(@NotNull ThreeSide side) {
-    switch (side) {
-      case LEFT:
-        return isResolved(Side.LEFT);
-      case BASE:
-        return isResolved();
-      case RIGHT:
-        return isResolved(Side.RIGHT);
-      default:
-        throw new IllegalArgumentException(side.toString());
-    }
+    return switch (side) {
+      case LEFT -> isResolved(Side.LEFT);
+      case BASE -> isResolved();
+      case RIGHT -> isResolved(Side.RIGHT);
+    };
   }
 
   public int getStartLine() {

@@ -143,13 +143,6 @@
     <action id="DomCollectionControl.Edit">
         <keyboard-shortcut first-keystroke="f4" />
     </action>
-    <action id="DomElementsTreeView.DeleteElement">
-        <keyboard-shortcut first-keystroke="delete" />
-        <keyboard-shortcut first-keystroke="back_space" />
-    </action>
-    <action id="DomElementsTreeView.GotoDomElementDeclarationAction">
-        <keyboard-shortcut first-keystroke="f4" />
-    </action>
     <action id="EditSource">
         <keyboard-shortcut first-keystroke="f4" />
     </action>

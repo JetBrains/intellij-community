@@ -41,7 +41,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private final Reference<Node> root = new Reference<>();
   private final String description;
   private final Invoker invoker;
-  private final Structure structure;
+  private final @NotNull Structure structure;
   private volatile Comparator<? super Node> comparator;
 
   public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent) {
@@ -63,6 +63,10 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     this.invoker = invoker;
     this.comparator = comparator == null ? null : wrapToNodeComparator(comparator);
     Disposer.register(parent, this);
+  }
+
+  public @NotNull Structure getTreeStructure() {
+    return structure;
   }
 
   private static @NotNull Comparator<? super Node> wrapToNodeComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {

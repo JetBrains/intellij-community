@@ -19,6 +19,7 @@ object ApplicabilityRanges {
     }
 
     val VISIBILITY_MODIFIER = modifier(KtTokens.VISIBILITY_MODIFIERS)
+    val MODALITY_MODIFIER = modifier(KtTokens.MODALITY_MODIFIERS)
 
     private fun modifier(tokens: TokenSet) = applicabilityTarget<KtModifierListOwner> { declaration ->
         declaration.modifierList?.getModifier(tokens)

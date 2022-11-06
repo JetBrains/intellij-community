@@ -70,7 +70,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     myTree.setRootVisible(true);
     MyCellRenderer renderer = new MyCellRenderer();
     myTree.setCellRenderer(renderer);
-    mySpeedSearch = new TreeSpeedSearch(myTree, x -> renderer.getTreeCellRendererComponent(myTree, x.getLastPathComponent(), false, false, false, 0, false).toString());
+    mySpeedSearch = new TreeSpeedSearch(myTree, false, x -> renderer.getTreeCellRendererComponent(myTree, x.getLastPathComponent(), false, false, false, 0, false).toString());
     init();
     TreeUtil.expandAll(myTree);
     setTitle("Image Duplicates");

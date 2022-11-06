@@ -51,6 +51,16 @@
                              implementationClass="com.jetbrains.python.psi.impl.references.PyKeywordPatternManipulator"/>
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
 
+    <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
+    <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>
+    <postFormatProcessor implementation="com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor"/>
+    <postFormatProcessor implementation="com.jetbrains.python.formatter.PyFromImportPostFormatProcessor"/>
+    <lang.whiteSpaceFormattingStrategy language="Python"
+                                       implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
+    <lang.lineWrapStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyLineWrapPositionStrategy"/>
+
+    <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
+
     <!-- PyFunctionTypeAnnotation -->
     <lang.parserDefinition language="PyFunctionTypeComment"
                            implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>
@@ -76,6 +86,8 @@
                               language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"
                               language="Python"/>
+
+    <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.imports.PyImportOptimizer"/>
 
     <!-- PyDocstring -->
     <languageInjector implementation="com.jetbrains.python.documentation.doctest.PyDocstringLanguageInjector"/>
@@ -425,6 +437,8 @@
     <registryKey defaultValue="false"
                  description="Enable pyi stubs distributed with numpy (see https://github.com/numpy/numpy/issues/18565)"
                  key="enable.numpy.pyi.stubs"/>
+    <registryKey key="python.explicit.namespace.packages" defaultValue="true" restartRequired="true"
+                 description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
   </extensions>
 
   <extensionPoints>
@@ -523,7 +537,8 @@
     <inspectionExtension implementation="com.jetbrains.python.inspections.stdlib.PyStdlibInspectionExtension"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>
+    <!-- This provider should be able to override the results on anything else, including types coming from .pyi stubs -->
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider" order="first"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyOverridingClassDunderMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>

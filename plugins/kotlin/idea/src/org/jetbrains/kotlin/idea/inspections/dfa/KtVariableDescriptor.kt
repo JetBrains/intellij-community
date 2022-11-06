@@ -12,13 +12,13 @@ import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.findAnnotation
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -158,10 +158,8 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
         private fun isTrackableProperty(target: PsiElement?) =
             target is KtParameter && target.ownerFunction is KtPrimaryConstructor ||
             target is KtProperty && !target.hasDelegate() && target.getter == null && target.setter == null &&
-                    !target.hasModifier(KtTokens.ABSTRACT_KEYWORD) &&
-                    target.findAnnotation(VOLATILE_ANNOTATION_FQ_NAME) == null &&
-                    target.containingClass()?.isInterface() != true &&
-                    !target.isExtensionDeclaration()
+                    !target.isOverridable && !target.isExtensionDeclaration() &&
+                    target.findAnnotation(VOLATILE_ANNOTATION_FQ_NAME) == null
     }
 }
 class KtItVariableDescriptor(val lambda: KtElement, val type: KotlinType): JvmVariableDescriptor() {

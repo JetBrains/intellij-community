@@ -2,6 +2,7 @@
 package com.intellij.diff.actions;
 
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -35,6 +36,11 @@ public final class ProxyUndoRedoAction extends DumbAwareAction {
       DiffUtil.registerAction(new ProxyUndoRedoAction(undoManager, textEditor, true), component);
       DiffUtil.registerAction(new ProxyUndoRedoAction(undoManager, textEditor, false), component);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

@@ -14,9 +14,9 @@ import com.intellij.openapi.diagnostic.logger
 import java.io.File
 import javax.swing.KeyStroke
 
-class KeyBindingsParser(private val settings: Settings) {
-  private val logger = logger<KeyBindingsParser>()
+private val logger = logger<KeyBindingsParser>()
 
+class KeyBindingsParser(private val settings: Settings) {
   companion object {
     private const val COMMAND = "command"
     private const val KEY = "key"

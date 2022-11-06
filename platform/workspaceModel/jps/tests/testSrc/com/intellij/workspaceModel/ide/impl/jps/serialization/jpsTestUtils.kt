@@ -13,8 +13,10 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.LineSeparator
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -46,14 +48,19 @@ internal data class LoadedProjectData(
     get() = File(VfsUtilCore.urlToPath(configLocation.baseDirectoryUrlString))
 }
 
-internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: VirtualFileUrlManager): LoadedProjectData {
+internal fun copyAndLoadProject(originalProjectFile: File,
+                                virtualFileManager: VirtualFileUrlManager,
+                                checkConsistencyAfterLoading: Boolean = true,
+                                externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): LoadedProjectData {
   val (projectDir, originalProjectDir) = copyProjectFiles(originalProjectFile)
   val originalBuilder = MutableEntityStorage.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
   val configLocation = toConfigLocation(projectFile.toPath(), virtualFileManager)
-  val serializers = loadProject(configLocation, originalBuilder, virtualFileManager) as JpsProjectSerializersImpl
+  val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager) as JpsProjectSerializersImpl
   val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), serializers, configLocation, originalProjectDir)
-  serializers.checkConsistency(loadedProjectData.configLocation, loadedProjectData.storage, virtualFileManager)
+  if (checkConsistencyAfterLoading) {
+    serializers.checkConsistency(loadedProjectData.configLocation, loadedProjectData.storage, virtualFileManager)
+  }
   return loadedProjectData
 }
 
@@ -75,7 +82,7 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuild
   }
 }
 
-internal fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
+fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
   val writer = JpsFileContentWriterImpl(configLocation)
   saveAllEntities(storage, writer)
   writer.writeFiles()
@@ -186,7 +193,8 @@ internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlMana
 }
 
 internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectConfigLocation) : JpsFileContentWriter {
-  val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
+  private val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
+  private val XML_PROLOG = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     urlToComponents.computeIfAbsent(fileUrl) { LinkedHashMap() }[componentName] = componentTag
@@ -250,7 +258,13 @@ internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectCo
       if (rootElement != null) {
         replaceMacroMap.substitute(rootElement, true, true)
         FileUtil.createParentDirs(file)
-        JDOMUtil.write(rootElement, file)
+        file.outputStream().use {
+          if (isModuleFile(file)) {
+            it.write(XML_PROLOG)
+            it.write(LineSeparator.LF.separatorBytes)
+          }
+          JDOMUtil.write(rootElement, it)
+        }
       }
       else {
         FileUtil.delete(file)
@@ -266,4 +280,45 @@ internal object TestErrorReporter : ErrorReporter {
   override fun reportError(message: String, file: VirtualFileUrl) {
     throw AssertionFailedError("Failed to load ${file.url}: $message")
   }
+}
+
+internal fun checkSaveProjectAfterChange(originalProjectFile: File,
+                                         changedFilesDirectoryName: String?,
+                                         change: (MutableEntityStorage, JpsProjectConfigLocation) -> Unit,
+                                         virtualFileManager: VirtualFileUrlManager,
+                                         testDir: String,
+                                         checkConsistencyAfterLoading: Boolean = true,
+                                         externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) {
+  val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, checkConsistencyAfterLoading, externalStorageConfigurationManager)
+  val builder = MutableEntityStorage.from(projectData.storage)
+  change(builder, projectData.configLocation)
+  val changesMap = builder.collectChanges(projectData.storage)
+  val changedSources = changesMap.values.flatMapTo(HashSet()) { changes ->
+    changes.flatMap { change ->
+      when (change) {
+        is EntityChange.Added -> listOf(change.entity)
+        is EntityChange.Removed -> listOf(change.entity)
+        is EntityChange.Replaced -> listOf(change.oldEntity, change.newEntity)
+      }
+    }.map { it.entitySource }
+  }
+  val writer = JpsFileContentWriterImpl(projectData.configLocation)
+  projectData.serializers.saveEntities(builder.toSnapshot(), changedSources, writer)
+  writer.writeFiles()
+  if (checkConsistencyAfterLoading) {
+    projectData.serializers.checkConsistency(projectData.configLocation, builder.toSnapshot(), virtualFileManager)
+  }
+
+  val expectedDir = FileUtil.createTempDirectory("jpsProjectTest", "expected")
+  FileUtil.copyDir(projectData.originalProjectDir, expectedDir)
+  if (changedFilesDirectoryName != null) {
+    val changedDir = PathManagerEx.findFileUnderCommunityHome(
+      "platform/workspaceModel/jps/tests/testData/$testDir/$changedFilesDirectoryName")
+    FileUtil.copyDir(changedDir, expectedDir)
+  }
+  expectedDir.walk().filter { it.isFile && it.readText().trim() == "<delete/>" }.forEach {
+    FileUtil.delete(it)
+  }
+
+  assertDirectoryMatches(projectData.projectDir, expectedDir, emptySet(), emptyList())
 }

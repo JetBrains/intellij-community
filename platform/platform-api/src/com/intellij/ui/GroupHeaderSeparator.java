@@ -26,7 +26,7 @@ public class GroupHeaderSeparator extends SeparatorWithText {
     if (ExperimentalUI.isNewUI()) {
       lineInsets = JBUI.CurrentTheme.Popup.separatorInsets();
       setBorder(JBUI.Borders.empty());
-      setFont(RelativeFont.BOLD.derive(JBFont.small()));
+      setFont(RelativeFont.BOLD.derive(JBFont.smallOrNewUiMedium()));
     } else {
       lineInsets = JBUI.insets(getVgap(), getHgap(), getVgap(), getHgap());
     }

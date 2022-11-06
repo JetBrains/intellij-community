@@ -9,7 +9,7 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.canBeResolvedWithFrontEnd
 import org.jetbrains.kotlin.idea.search.usagesSearch.buildProcessDelegationCallConstructorUsagesTask
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 
 class KotlinConstructorDelegationCallReferenceSearcher : QueryExecutorBase<PsiReference, SearchParameters>() {
     override fun processQuery(queryParameters: SearchParameters, consumer: Processor<in PsiReference>) {

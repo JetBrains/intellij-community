@@ -2,8 +2,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.util.EarlyAccessRegistryManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;

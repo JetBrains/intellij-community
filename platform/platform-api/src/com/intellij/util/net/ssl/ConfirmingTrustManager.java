@@ -239,12 +239,17 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       LOG.debug("Image Fetcher thread is detected. Certificate check will be skipped.");
       return true;
     }
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || CertificateManager.getInstance().getState().ACCEPT_AUTOMATICALLY) {
+
+    if (app.isHeadlessEnvironment() || CertificateManager.getInstance().getState().ACCEPT_AUTOMATICALLY) {
       LOG.debug("Certificate will be accepted automatically");
       if (parameters.myAddToKeyStore) {
         myCustomManager.addCertificate(endPoint);
       }
       return true;
+    }
+
+    if (app.isUnitTestMode()) {
+      return false;
     }
 
     boolean accepted = false;

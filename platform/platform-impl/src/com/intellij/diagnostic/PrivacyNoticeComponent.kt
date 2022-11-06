@@ -19,6 +19,7 @@ import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@Deprecated("Use Kotlin UI DSL 2, or com.intellij.diagnostic.PrivacyNotice from Java code")
 class PrivacyNoticeComponent(@NlsContexts.Label private val label: String, @NlsContexts.Label private val expandedLabel: String) : JPanel(
   GridBagLayout()) {
 

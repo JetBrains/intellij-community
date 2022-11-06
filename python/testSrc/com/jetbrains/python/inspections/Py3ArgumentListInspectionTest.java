@@ -20,37 +20,39 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
 
   // PY-50404
   public void testPassingKeywordArgumentsToParamSpec() {
-    doTestByText("from collections.abc import Callable\n" +
-                 "from typing import ParamSpec\n" +
-                 "\n" +
-                 "P = ParamSpec(\"P\")\n" +
-                 "\n" +
-                 "\n" +
-                 "def changes_return_type_to_str(x: Callable[P, int]) -> Callable[P, str]:\n" +
-                 "    def inner(*args: P.args, **kwargs: P.kwargs) -> str:\n" +
-                 "        return \"42\"\n" +
-                 "    return inner\n" +
-                 "\n" +
-                 "\n" +
-                 "def returns_int(a: str, b: bool) -> int:\n" +
-                 "    return 42\n" +
-                 "\n" +
-                 "\n" +
-                 "f = changes_return_type_to_str(returns_int)\n" +
-                 "res2 = f(a=\"A\", b=True)");
+    doTestByText("""
+                   from collections.abc import Callable
+                   from typing import ParamSpec
+
+                   P = ParamSpec("P")
+
+
+                   def changes_return_type_to_str(x: Callable[P, int]) -> Callable[P, str]:
+                       def inner(*args: P.args, **kwargs: P.kwargs) -> str:
+                           return "42"
+                       return inner
+
+
+                   def returns_int(a: str, b: bool) -> int:
+                       return 42
+
+
+                   f = changes_return_type_to_str(returns_int)
+                   res2 = f(a="A", b=True)""");
   }
 
   // PY-53611
   public void testTypedDictWithRequiredAndNotRequiredKeys() {
-    doTestByText("from typing_extensions import TypedDict, Required, NotRequired\n" +
-                 "class A(TypedDict):\n" +
-                 "    x: int\n" +
-                 "    y: NotRequired[int]\n" +
-                 "class B(TypedDict, total=False):\n" +
-                 "    x: Required[int]\n" +
-                 "    y: int\n" +
-                 "a = A(<warning descr=\"Parameter 'x' unfilled\">)</warning>\n" +
-                 "b = B(<warning descr=\"Parameter 'x' unfilled\">)</warning>");
+    doTestByText("""
+                   from typing_extensions import TypedDict, Required, NotRequired
+                   class A(TypedDict):
+                       x: int
+                       y: NotRequired[int]
+                   class B(TypedDict, total=False):
+                       x: Required[int]
+                       y: int
+                   a = A(<warning descr="Parameter 'x' unfilled">)</warning>
+                   b = B(<warning descr="Parameter 'x' unfilled">)</warning>""");
   }
 
   // PY-53671
@@ -70,8 +72,20 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
 
   // PY-53671
   public void testRandomRandint() {
-    doTestByText("import random\n" +
-                 "\n" +
-                 "random.randint(1, 2)");
+    doTestByText("""
+                   import random
+
+                   random.randint(1, 2)""");
+  }
+
+  // PY-53388
+  public void testEnumAuto() {
+    doTestByText("""
+                   import enum
+
+                   class MyEnum(enum.Enum):
+                       FOO = enum.auto()
+                       BAR = enum.auto()
+                   """);
   }
 }

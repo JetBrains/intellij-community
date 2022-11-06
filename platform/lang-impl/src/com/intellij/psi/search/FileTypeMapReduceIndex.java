@@ -13,6 +13,7 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -74,7 +75,7 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, V
   }
 
   @Override
-  public String getFileTypeName(int id) throws IOException {
+  public @Nullable String getFileTypeName(int id) throws IOException {
     return myFileTypeNameEnumerator.valueOf(id);
   }
 

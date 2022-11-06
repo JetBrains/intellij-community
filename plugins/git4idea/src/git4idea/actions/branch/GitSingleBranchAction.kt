@@ -9,6 +9,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import git4idea.GitBranch
+import git4idea.actions.branch.GitBranchActionsUtil.getAffectedRepositories
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.util.function.Supplier
 
@@ -26,15 +28,14 @@ abstract class GitSingleBranchAction(dynamicText: Supplier<@NlsActions.ActionTex
 
   final override fun update(e: AnActionEvent) {
     val project = e.project
-    val repositories = e.getData(GitBranchActionsUtil.REPOSITORIES_KEY)
+    val repositories = getAffectedRepositories(e)
     val branches = e.getData(GitBranchActionsUtil.BRANCHES_KEY)
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(project, repositories, branches)
 
-    //TODO: check and i18n
-    DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, repositories.orEmpty(), "Action")
+    DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, repositories, GitBundle.message("action.not.possible.in.fresh.repo.generic"))
 
     if (e.presentation.isEnabledAndVisible) {
-      updateIfEnabledAndVisible(e, project!!, repositories!!, branches!!.single())
+      updateIfEnabledAndVisible(e, project!!, repositories, branches!!.single())
     }
   }
 
@@ -64,7 +65,7 @@ abstract class GitSingleBranchAction(dynamicText: Supplier<@NlsActions.ActionTex
 
   final override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    val repositories = e.getRequiredData(GitBranchActionsUtil.REPOSITORIES_KEY)
+    val repositories = getAffectedRepositories(e)
     val branch = e.getRequiredData(GitBranchActionsUtil.BRANCHES_KEY).single()
 
     actionPerformed(e, project, repositories, branch)

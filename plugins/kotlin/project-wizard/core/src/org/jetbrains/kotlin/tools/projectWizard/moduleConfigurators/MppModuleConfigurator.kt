@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
@@ -46,6 +47,7 @@ object MppModuleConfigurator : ModuleConfigurator,
         )
 
     // TODO remove when be removed in KMM wizard
+    @Suppress("unused")
     val generateTests by booleanSetting("Generate Tests", GenerationPhase.PROJECT_GENERATION) {
         defaultValue = value(false)
     }
@@ -63,20 +65,8 @@ object MppModuleConfigurator : ModuleConfigurator,
 
     private fun shouldApplyHmppGradleProperties(configurationData: ModulesToIrConversionData): Boolean {
         val kotlinVersionText = configurationData.kotlinVersion.version.text
-        val kotlinVersion = kotlinVersionText.toKotlinVersion() ?: return false
+        val kotlinVersion = IdeKotlinVersion.opt(kotlinVersionText)?.kotlinVersion ?: return false
         return kotlinVersion < HMPP_BY_DEFAULT_VERSION
-    }
-
-    private fun String.toKotlinVersion(): KotlinVersion? {
-        val semanticParts = split(".").takeIf { it.size >= 3 }?.take(3) ?: return null
-        val (major, minor, patch) = semanticParts.map { partString ->
-            try {
-                partString.toInt()
-            } catch (_: NumberFormatException) {
-                return null
-            }
-        }
-        return KotlinVersion(major, minor, patch)
     }
 
     private val HMPP_BY_DEFAULT_VERSION = KotlinVersion(1, 6, 20)

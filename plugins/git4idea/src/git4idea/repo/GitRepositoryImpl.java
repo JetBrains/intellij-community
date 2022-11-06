@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -17,7 +18,6 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.status.GitStagingAreaHolder;
-import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 
+import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -112,6 +113,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
                                       @NotNull VirtualFile gitDir,
                                       @NotNull Project project,
                                       @NotNull Disposable parentDisposable) {
+    ProgressManager.checkCanceled();
     GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable);
     repository.setupUpdater();
     GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
@@ -247,25 +249,25 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    Span span =
-      TraceManager.INSTANCE.getTracer("vcs").spanBuilder("reading Git repo info").setAttribute("repository", getShortRepositoryName(this))
-        .startSpan();
-    File configFile = myRepositoryFiles.getConfigFile();
-    GitConfig config = GitConfig.read(configFile);
-    myRepositoryFiles.updateCustomPaths(config.parseCore());
+    return computeWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "reading Git repo info", span -> {
+      span.setAttribute("repository", getShortRepositoryName(this));
 
-    Collection<GitRemote> remotes = config.parseRemotes();
-    GitBranchState state = myReader.readState(remotes);
-    boolean isShallow = myReader.hasShallowCommits();
-    Collection<GitBranchTrackInfo> trackInfos =
-      config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
-    GitHooksInfo hooksInfo = myReader.readHooksInfo();
-    Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
-    span.end();
-    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
-                           new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
-                           new LinkedHashSet<>(trackInfos),
-                           submodules, hooksInfo, isShallow);
+      File configFile = myRepositoryFiles.getConfigFile();
+      GitConfig config = GitConfig.read(configFile);
+      myRepositoryFiles.updateCustomPaths(config.parseCore());
+
+      Collection<GitRemote> remotes = config.parseRemotes();
+      GitBranchState state = myReader.readState(remotes);
+      boolean isShallow = myReader.hasShallowCommits();
+      Collection<GitBranchTrackInfo> trackInfos =
+        config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
+      GitHooksInfo hooksInfo = myReader.readHooksInfo();
+      Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
+      return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
+                             new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
+                             new LinkedHashSet<>(trackInfos),
+                             submodules, hooksInfo, isShallow);
+    });
   }
 
   @NotNull

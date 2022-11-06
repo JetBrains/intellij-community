@@ -92,7 +92,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement ifKeywordElement = descriptor.getPsiElement();
       final PsiIfStatement statement = (PsiIfStatement)ifKeywordElement.getParent();
       simplify(statement);

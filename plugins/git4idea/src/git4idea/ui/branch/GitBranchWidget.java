@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.repo.Repository;
@@ -8,15 +8,15 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitBranchesUsageCollector;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -26,7 +26,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Status bar widget which displays the current branch for the file currently open in the editor.
+ * A status bar widget which displays the current branch for a file currently open in the editor.
  */
 public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   private static final @NonNls String ID = "git";
@@ -58,22 +57,18 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     return new GitBranchWidget(getProject());
   }
 
-  @Nullable
   @Override
-  @RequiresEdt
-  protected GitRepository guessCurrentRepository(@NotNull Project project) {
-    return GitBranchUtil.guessWidgetRepository(project);
+  protected @Nullable GitRepository guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
+    return GitBranchUtil.guessWidgetRepository(project, selectedFile);
   }
 
-  @Nullable
   @Override
-  protected Icon getIcon(@NotNull GitRepository repository) {
+  protected @Nullable Icon getIcon(@NotNull GitRepository repository) {
     return BranchIconUtil.Companion.getBranchIcon(repository);
   }
 
-  @NotNull
   @Override
-  protected String getFullBranchName(@NotNull GitRepository repository) {
+  protected @NotNull String getFullBranchName(@NotNull GitRepository repository) {
     return GitBranchUtil.getDisplayableBranchText(repository);
   }
 
@@ -82,12 +77,16 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     return !GitUtil.justOneGitRepository(project);
   }
 
-  @NotNull
   @Override
-  protected ListPopup getPopup(@NotNull Project project, @NotNull GitRepository repository) {
+  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull GitRepository repository) {
     GitBranchesUsageCollector.branchWidgetClicked();
-    return GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent()))
-      .asListPopup();
+    if (GitBranchesTreePopup.isEnabled()) {
+      return GitBranchesTreePopup.create(project);
+    }
+    else {
+      return GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent()))
+        .asListPopup();
+    }
   }
 
   @Override
@@ -123,7 +122,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     }
 
     @Override
-    public @Nls @NotNull String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return GitBundle.message("git.status.bar.widget.name");
     }
 

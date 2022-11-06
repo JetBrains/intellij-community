@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.debugger.base.util.FileApplicabilityChecker
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.FqName

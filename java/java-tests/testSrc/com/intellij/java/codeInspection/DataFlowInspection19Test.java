@@ -26,4 +26,13 @@ public class DataFlowInspection19Test extends DataFlowInspectionTestCase {
   public void testRecordPatterns() {
     doTest();
   }
+  public void testRecordPatternNested() {
+    doTest();
+  }
+  public void testRecordPatternAndWhen() {
+    doTest();
+  }
+  public void testNestedRecordPatterns() {
+    doTest();
+  }
 }

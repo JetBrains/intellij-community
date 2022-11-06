@@ -81,7 +81,7 @@ public interface FileIndex {
   boolean isInContent(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns {@code true} if {@code fileOrDir} is a file or directory located under a sources, tests or resources root and not excluded or ignored.
+   * Returns {@code true} if {@code fileOrDir} is a file or directory located under a source root of some module and not excluded or ignored.
    */
   boolean isInSourceContent(@NotNull VirtualFile fileOrDir);
 

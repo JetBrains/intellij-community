@@ -17,9 +17,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 
-/**
- * @author peter
- */
 public interface InsertHandlerDecorator<T extends LookupElement> extends InsertHandler<LookupElementDecorator<T>> {
 
 }

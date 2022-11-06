@@ -11,10 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectFrameAllocatorKt;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.LightEditFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
@@ -129,7 +126,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
 
     @Override
-    protected @Nullable ActionGroup getMainMenuActionGroup() {
+    public @Nullable ActionGroup getMainMenuActionGroup() {
       return new LightEditMainMenuHelper().getMainMenuActionGroup();
     }
 
@@ -153,18 +150,18 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
 
     @Override
-    protected void installNorthComponents(@NotNull Project project) {
+    public void installNorthComponents$intellij_platform_ide_impl(@NotNull Project project) {
     }
 
     @Override
-    protected void deinstallNorthComponents() {
+    public void deinstallNorthComponents$intellij_platform_ide_impl(@NotNull Project project) {
     }
   }
 
   static @NotNull LightEditFrameWrapper allocate(@NotNull Project project,
                                                  @Nullable FrameInfo frameInfo,
                                                  @NotNull BooleanSupplier closeHandler) {
-    return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(project, () -> {
+    return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateLightEditFrame(project, () -> {
       return new LightEditFrameWrapper(project, ProjectFrameAllocatorKt.createNewProjectFrame(frameInfo), closeHandler);
     });
   }
@@ -174,7 +171,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   }
 
   @Override
-  public void setFrameTitle(String text) {
+  public void setFrameTitle(@NotNull String text) {
     if (myFrameTitleUpdateEnabled) {
       super.setFrameTitle(text);
     }

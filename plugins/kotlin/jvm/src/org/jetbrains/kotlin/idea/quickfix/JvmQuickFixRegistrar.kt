@@ -19,7 +19,6 @@ class JvmQuickFixRegistrar : QuickFixContributor {
 
         UNSUPPORTED_FEATURE.registerFactory(EnableUnsupportedFeatureFix)
 
-        EXPERIMENTAL_FEATURE_ERROR.registerFactory(ChangeGeneralLanguageFeatureSupportFix)
         EXPERIMENTAL_FEATURE_WARNING.registerFactory(ChangeGeneralLanguageFeatureSupportFix)
 
         NO_REFLECTION_IN_CLASS_PATH.registerFactory(AddReflectionQuickFix)

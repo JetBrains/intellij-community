@@ -32,7 +32,7 @@ class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureS
     val features: Map<String, FeaturePluginList> = emptyMap(),
   )
 
-  fun <T> collectFeatureMapping(
+  fun <T : Any> collectFeatureMapping(
     featureType: String,
     ep: ExtensionPointName<T>,
     idMapping: (T) -> String,

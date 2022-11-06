@@ -15,6 +15,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.RuleChain
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
@@ -47,10 +48,14 @@ internal abstract class SettingsSyncTestBase {
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
 
-    remoteCommunicator = if (System.getenv("SETTINGS_SYNC_TEST_CLOUD") == "real") {
+    SettingsSyncLocalSettings.getInstance().state.reset()
+    SettingsSyncSettings.getInstance().state.reset()
+
+    remoteCommunicator = if (isTestingAgainstRealCloudServer()) {
       System.setProperty(CloudConfigServerCommunicator.URL_PROPERTY, CloudConfigServerCommunicator.DEFAULT_PRODUCTION_URL)
       TestCloudConfigRemoteCommunicator()
-    } else {
+    }
+    else {
       MockRemoteCommunicator()
     }
 
@@ -64,7 +69,7 @@ internal abstract class SettingsSyncTestBase {
   @After
   fun cleanup() {
     if (::bridge.isInitialized) {
-      bridge.waitForAllExecuted(10, TimeUnit.SECONDS)
+      bridge.waitForAllExecuted()
     }
 
     remoteCommunicator.delete()
@@ -84,3 +89,15 @@ internal abstract class SettingsSyncTestBase {
     assertSnapshot(pushedSnap!!)
   }
 }
+
+internal fun SettingsSyncBridge.waitForAllExecuted() {
+  this.waitForAllExecuted(getDefaultTimeoutInSeconds(), TIMEOUT_UNIT)
+}
+
+internal fun CountDownLatch.wait(): Boolean {
+  return this.await(getDefaultTimeoutInSeconds(), TIMEOUT_UNIT)
+}
+
+private fun isTestingAgainstRealCloudServer() = System.getenv("SETTINGS_SYNC_TEST_CLOUD") == "real"
+
+private fun getDefaultTimeoutInSeconds(): Long = if (isTestingAgainstRealCloudServer()) 60 else 10

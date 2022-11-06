@@ -3,8 +3,8 @@ package org.jetbrains.plugins.groovy.util
 
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.UIUtil.getListSelectionForeground
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JList
@@ -51,7 +51,7 @@ class RightTextCellRenderer<T>(
 
     label.text = text
     label.background = bg
-    label.foreground = if (isSelected) getListSelectionForeground(true) else UIUtil.getInactiveTextColor()
+    label.foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else NamedColorUtil.getInactiveTextColor()
 
     spacer.background = bg
 

@@ -3,8 +3,10 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
@@ -121,7 +123,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @NotNull @ProgressTitle String progressTitle,
+                                                              @NotNull @NlsContexts.DialogTitle String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project);
 
@@ -139,7 +141,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @throws E exception thrown by process
    */
   public abstract <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
-                                                                                 @NotNull @ProgressTitle String progressTitle,
+                                                                                 @NotNull @NlsContexts.DialogTitle String progressTitle,
                                                                                  boolean canBeCanceled,
                                                                                  @Nullable Project project) throws E;
 
@@ -157,7 +159,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @NotNull @ProgressTitle String progressTitle,
+                                                              @NotNull @NlsContexts.DialogTitle String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project,
                                                               @Nullable JComponent parentComponent);
@@ -271,4 +273,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @ApiStatus.Internal
   public abstract <X> X silenceGlobalIndicator(@NotNull Supplier<? extends X> computable);
+
+  @ApiStatus.Internal
+  public abstract @Nullable ModalityState getCurrentProgressModality();
 }

@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -190,6 +189,10 @@ public class AnnotationsPanel {
     myComponent.add(tablePanel, constraints);
   }
 
+  protected boolean isAnnotationAccepted(PsiClass annotation) {
+    return true;
+  }
+
   private void loadAdvancedAnnotations(@NotNull AnnotationPanelModel model) {
     // No project-specific annotations are possible for default project
     if (myProject.isDefault()) return;
@@ -248,7 +251,7 @@ public class AnnotationsPanel {
       .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject), new ClassFilter() {
         @Override
         public boolean isAccepted(PsiClass aClass) {
-          return aClass.isAnnotationType();
+          return aClass.isAnnotationType() && isAnnotationAccepted(aClass);
         }
       }, null);
     chooser.showDialog();
@@ -300,6 +303,23 @@ public class AnnotationsPanel {
       }
     }
     return result;
+  }
+
+  /** Reset table to contain only annotations from the list. */
+  public void resetAnnotations(List<String> annotations) {
+    final Set<String> set = new HashSet<>(annotations);
+    int row = 0;
+    for (String annotation : getAnnotations()) {
+      if (!set.contains(annotation)) {
+        myTableModel.removeRow(row);
+      } else {
+        set.remove(annotation);
+        row++;
+      }
+    }
+    for (String annotation : set) {
+      addRow(annotation, false);
+    }
   }
 
   private static class SimpleAnnotationPanelModel implements AnnotationPanelModel {

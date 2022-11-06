@@ -19,6 +19,7 @@
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="xml-resolver" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="NanoXML" level="project" />
@@ -29,5 +30,6 @@
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.webSymbols" />
   </component>
 </module>

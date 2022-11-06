@@ -7,13 +7,13 @@ import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PythonAutoPopupTest extends PyTestCase {
-  private static final String FOO_CLASS = "class Foo(object):\n" +
-                                          "    def bar(self):\n" +
-                                          "        pass\n\n";
+  private static final String FOO_CLASS = """
+    class Foo(object):
+        def bar(self):
+            pass
+
+    """;
   private CompletionAutoPopupTester myTester;
 
   @Override

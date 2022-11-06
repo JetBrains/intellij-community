@@ -12,14 +12,18 @@ import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.asSimpleType
 import org.jetbrains.kotlin.types.isError
 
-class SpecifyTypeExplicitlyFix : PsiElementBaseIntentionAction() {
+class SpecifyTypeExplicitlyFix(private val convertToNullable: Boolean = false) : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = KotlinBundle.message("specify.type.explicitly")
 
     override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         val declaration = declarationByElement(element)!!
         val type = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(declaration)
+            .let { if (convertToNullable) it.convertToNullable() else it }
         SpecifyTypeExplicitlyIntention.addTypeAnnotation(editor, declaration, type)
     }
 
@@ -39,3 +43,5 @@ class SpecifyTypeExplicitlyFix : PsiElementBaseIntentionAction() {
         return PsiTreeUtil.getParentOfType(element, KtProperty::class.java, KtNamedFunction::class.java) as KtCallableDeclaration?
     }
 }
+
+fun KotlinType.convertToNullable(): KotlinType = KotlinTypeFactory.simpleType(asSimpleType(), nullable = true)

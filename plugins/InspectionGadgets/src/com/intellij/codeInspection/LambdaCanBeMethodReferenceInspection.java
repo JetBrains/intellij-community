@@ -360,11 +360,9 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     for (PsiMethod method : psiMethods) {
       if (isPairedNoReceiver(parameters, receiverType, method)) {
         final PsiMethod[] deepestSuperMethods = psiMethod.findDeepestSuperMethods();
-        if (deepestSuperMethods.length > 0) {
-          for (PsiMethod superMethod : deepestSuperMethods) {
-            PsiMethod validSuperMethod = getNonAmbiguousReceiver(parameters, superMethod);
-            if (validSuperMethod != null) return validSuperMethod;
-          }
+        for (PsiMethod superMethod : deepestSuperMethods) {
+          PsiMethod validSuperMethod = getNonAmbiguousReceiver(parameters, superMethod);
+          if (validSuperMethod != null) return validSuperMethod;
         }
         return null;
       }

@@ -21,9 +21,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implements DomFixedChildDescription {
   private final Collection<JavaMethod>[] myGetterMethods;
   private final int myCount;

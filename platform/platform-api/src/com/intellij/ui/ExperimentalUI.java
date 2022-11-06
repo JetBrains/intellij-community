@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -8,12 +9,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.EarlyAccessRegistryManager;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,10 +35,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class ExperimentalUI {
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
-  private static final String KEY = "ide.experimental.ui";
+  public static final String KEY = "ide.experimental.ui";
 
+  @Contract(pure = true)
   public static boolean isNewUI() {
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
+    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
+    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
+
+    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
+  }
+
+  public static boolean isSupported() {
+    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
+    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
+
+    return true;
   }
 
   public static boolean isNewNavbar() {
@@ -51,10 +65,14 @@ public abstract class ExperimentalUI {
   }
 
   @SuppressWarnings("unused")
-  private final static class NewUiRegistryListener implements RegistryValueListener {
+  public static class NewUiRegistryListener implements RegistryValueListener {
+    protected boolean isApplicable() {
+      return !PlatformUtils.isJetBrainsClient(); // JetBrains Client has custom listener
+    }
+
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
-      if (!value.getKey().equals(KEY)) {
+      if (!isApplicable() || !value.getKey().equals(KEY)) {
         return;
       }
 
@@ -69,12 +87,12 @@ public abstract class ExperimentalUI {
           getInstance().iconPathPatcher = getInstance().createPathPatcher();
           IconLoader.installPathPatcher(getInstance().iconPathPatcher);
         }
-        getInstance().onExpUIEnabled();
+        getInstance().onExpUIEnabled(true);
       }
       else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
         IconLoader.removePathPatcher(getInstance().iconPathPatcher);
         getInstance().iconPathPatcher = null;
-        getInstance().onExpUIDisabled();
+        getInstance().onExpUIDisabled(true);
       }
     }
   }
@@ -110,8 +128,8 @@ public abstract class ExperimentalUI {
 
   public abstract Map<ClassLoader, Map<String, String>> getIconMappings();
 
-  public abstract void onExpUIEnabled();
-  public abstract void onExpUIDisabled();
+  public abstract void onExpUIEnabled(boolean suggestRestart);
+  public abstract void onExpUIDisabled(boolean suggestRestart);
 
   private static void patchUIDefaults(boolean isNewUiEnabled) {
     if (!isNewUiEnabled) {
@@ -132,7 +150,7 @@ public abstract class ExperimentalUI {
     }
 
     if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
-      installInterFont(defaults);
+      installInterFont();
     }
   }
 
@@ -141,38 +159,21 @@ public abstract class ExperimentalUI {
     defaults.put(key, value);
   }
 
-  private static void installInterFont(UIDefaults defaults) {
+  private static void installInterFont() {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
       UISettings.getInstance().setOverrideLafFonts(false);
     }
-    //List<String> keysToPatch = List.of("CheckBoxMenuItem.acceleratorFont",
-    //                                   "CheckBoxMenuItem.font",
-    //                                   "Menu.acceleratorFont",
-    //                                   "Menu.font",
-    //                                   //"MenuBar.font",
-    //                                   "MenuItem.acceleratorFont",
-    //                                   "MenuItem.font",
-    //                                   "PopupMenu.font",
-    //                                   "RadioButtonMenuItem.acceleratorFont",
-    //                                   "RadioButtonMenuItem.font");
-    //for (String key : keysToPatch) {
-    //  Font font = defaults.getFont(key);
-    //  defaults.put(key, new FontUIResource("Inter", font.getStyle(), font.getSize()));
-    //}
+  }
 
-    //if (JBColor.isBright()) {
-    //  Color menuBg = new ColorUIResource(0x242933);
-    //  Color menuFg = new ColorUIResource(0xFFFFFF);
-    //  setUIProperty("PopupMenu.background", menuBg, defaults);
-    //  setUIProperty("MenuItem.background", menuBg, defaults);
-    //  setUIProperty("MenuItem.foreground", menuFg, defaults);
-    //  setUIProperty("Menu.background", menuBg, defaults);
-    //  setUIProperty("Menu.foreground", menuFg, defaults);
-    //  setUIProperty("CheckBoxMenuItem.acceleratorForeground", menuFg, defaults);
-    //  setUIProperty("Menu.acceleratorForeground", menuFg, defaults);
-    //  setUIProperty("MenuItem.acceleratorForeground", menuFg, defaults);
-    //  setUIProperty("RadioButtonMenuItem.acceleratorForeground", menuFg, defaults);
-    //}
+  public static final class Icons {
+    public static class Gutter {
+      public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
+      public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
+    }
+
+    private static Icon loadIcon(String path) {
+      return IconLoader.getIcon(path, AllIcons .class.getClassLoader());
+    }
   }
 }

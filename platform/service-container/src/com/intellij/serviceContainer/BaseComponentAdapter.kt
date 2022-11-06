@@ -10,8 +10,8 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.*
+import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
 import org.picocontainer.ComponentAdapter
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
@@ -83,8 +83,7 @@ internal sealed class BaseComponentAdapter(
     }
 
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    val indicator: ProgressIndicator? = ProgressIndicatorProvider.getGlobalProgressIndicator()
-    checkContainerIsActive(componentManager, indicator)
+    checkContainerIsActive(componentManager)
 
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
     val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
@@ -98,7 +97,16 @@ internal sealed class BaseComponentAdapter(
       throw PluginException("Cyclic service initialization: ${toString()}", pluginId)
     }
 
-    val result = (deferred as Deferred<T>).asCompletableFuture().join()
+    while (!deferred.isCompleted) {
+      ProgressManager.checkCanceled()
+      try {
+        Thread.sleep(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
+      }
+      catch (e: InterruptedException) {
+        throw ProcessCanceledException(e)
+      }
+    }
+    val result = deferred.getCompleted() as T
     if (activityCategory != null) {
       val end = StartUpMeasurer.getCurrentTime()
       if ((end - beforeLockTime) > 100) {
@@ -182,26 +190,26 @@ internal sealed class BaseComponentAdapter(
   /**
    * Indicator must be always passed - if under progress, then ProcessCanceledException will be thrown instead of AlreadyDisposedException.
    */
-  private fun checkContainerIsActive(componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
-    if (indicator != null) {
+  private fun checkContainerIsActive(componentManager: ComponentManagerImpl) {
+    if (isUnderIndicatorOrJob()) {
       checkCanceledIfNotInClassInit()
     }
 
     if (componentManager.isDisposed) {
-      throwAlreadyDisposedError(toString(), componentManager, indicator)
+      throwAlreadyDisposedError(toString(), componentManager)
     }
     if (!isGettingServiceAllowedDuringPluginUnloading(pluginDescriptor)) {
       componentManager.componentContainerIsReadonly?.let {
         val error = AlreadyDisposedException(
           "Cannot create ${toString()} because container in read-only mode (reason=$it, container=${componentManager})"
         )
-        throw if (indicator == null) error else ProcessCanceledException(error)
+        throw if (!isUnderIndicatorOrJob()) error else ProcessCanceledException(error)
       }
     }
   }
 
-  internal fun throwAlreadyDisposedError(componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
-    throwAlreadyDisposedError(toString(), componentManager, indicator)
+  internal fun throwAlreadyDisposedError(componentManager: ComponentManagerImpl) {
+    throwAlreadyDisposedError(toString(), componentManager)
   }
 
   protected abstract fun getActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory?

@@ -7,7 +7,6 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectNameProvider
@@ -64,7 +63,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
       return storedName
     }
 
-    for (projectNameProvider in ProjectNameProvider.EP_NAME.iterable) {
+    for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
       runCatching {
         projectNameProvider.getDefaultName(project)
       }
@@ -166,7 +165,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
                                          isForceSavingAllSettings: Boolean,
                                          projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
     moduleSavingCustomizer.saveModules(projectSaveSessionManager, this)
-    val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
+    val modules = ModuleManager.getInstance(project).modules
     if (modules.isEmpty()) {
       return emptyList()
     }

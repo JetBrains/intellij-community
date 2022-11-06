@@ -479,15 +479,12 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testCompilerPluginConfigurationFromProperties() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>\n" +
-                     "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n" +
-                     "        <maven.compiler.source>1.7</maven.compiler.source>\n" +
-                     "        <maven.compiler.target>1.7</maven.compiler.target>\n" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
+                               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                               <maven.compiler.source>1.7</maven.compiler.source>
+                               <maven.compiler.target>1.7</maven.compiler.target>
+                       </properties>""");
 
     importProject();
 
@@ -497,28 +494,12 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test 
   public void testCompilerPluginConfigurationFromPropertiesOverride() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>\n" +
-                     "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n" +
-                     "        <maven.compiler.source>1.7</maven.compiler.source>\n" +
-                     "        <maven.compiler.target>1.7</maven.compiler.target>\n" +
-                     "</properties>" +
-
-                     "<build>" +
-                     "  <plugins>" +
-                     "    <plugin>" +
-                     "      <groupId>org.apache.maven.plugins</groupId>" +
-                     "      <artifactId>maven-compiler-plugin</artifactId>" +
-                     "      <configuration>" +
-                     "        <target>1.4</target>" +
-                     "        <source>1.4</source>" +
-                     "      </configuration>" +
-                     "    </plugin>" +
-                     "  </plugins>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
+                               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                               <maven.compiler.source>1.7</maven.compiler.source>
+                               <maven.compiler.target>1.7</maven.compiler.target>
+                       </properties><build>  <plugins>    <plugin>      <groupId>org.apache.maven.plugins</groupId>      <artifactId>maven-compiler-plugin</artifactId>      <configuration>        <target>1.4</target>        <source>1.4</source>      </configuration>    </plugin>  </plugins></build>""");
 
     importProject();
 
@@ -710,50 +691,34 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testResolveRemoteRepositories() throws IOException, MavenProcessCanceledException {
-    updateSettingsXml("<mirrors>\n" +
-                      "  <mirror>\n" +
-                      "    <id>mirror</id>\n" +
-                      "    <url>https://test/mirror</url>\n" +
-                      "    <mirrorOf>repo,repo-pom</mirrorOf>\n" +
-                      "  </mirror>\n" +
-                      "</mirrors>\n" +
-                      "<profiles>\n" +
-                      "  <profile>\n" +
-                      "    <id>repo-test</id>\n" +
-                      "    <repositories>\n" +
-                      "      <repository>" +
-                      "        <id>repo</id>" +
-                      "        <url>https://settings/repo</url>" +
-                      "      </repository>" +
-                      "      <repository>" +
-                      "        <id>repo1</id>" +
-                      "        <url>https://settings/repo1</url>" +
-                      "      </repository>" +
-                      "    </repositories>\n" +
-                      "  </profile>\n" +
-                      "</profiles>\n" +
-                      "<activeProfiles>\n" +
-                      "   <activeProfile>repo-test</activeProfile>\n" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <mirrors>
+                          <mirror>
+                            <id>mirror</id>
+                            <url>https://test/mirror</url>
+                            <mirrorOf>repo,repo-pom</mirrorOf>
+                          </mirror>
+                        </mirrors>
+                        <profiles>
+                          <profile>
+                            <id>repo-test</id>
+                            <repositories>
+                              <repository>        <id>repo</id>        <url>https://settings/repo</url>      </repository>      <repository>        <id>repo1</id>        <url>https://settings/repo1</url>      </repository>    </repositories>
+                          </profile>
+                        </profiles>
+                        <activeProfiles>
+                           <activeProfile>repo-test</activeProfile>
+                        </activeProfiles>""");
 
-    VirtualFile projectPom = createProjectPom("<groupId>test</groupId>" +
-                                              "<artifactId>test</artifactId>" +
-                                              "<version>1</version>" +
-
-                                              "<repositories>\n" +
-                                              "  <repository>\n" +
-                                              "    <id>repo-pom</id>" +
-                                              "    <url>https://pom/repo</url>" +
-                                              "  </repository>\n" +
-                                              "  <repository>\n" +
-                                              "    <id>repo-pom1</id>" +
-                                              "    <url>https://pom/repo1</url>" +
-                                              "  </repository>\n" +
-                                              "  <repository>\n" +
-                                              "    <id>repo-http</id>" +
-                                              "    <url>http://pom/http</url>" +
-                                              "  </repository>\n" +
-                                              "</repositories>");
+    VirtualFile projectPom = createProjectPom("""
+                                                <groupId>test</groupId><artifactId>test</artifactId><version>1</version><repositories>
+                                                  <repository>
+                                                    <id>repo-pom</id>    <url>https://pom/repo</url>  </repository>
+                                                  <repository>
+                                                    <id>repo-pom1</id>    <url>https://pom/repo1</url>  </repository>
+                                                  <repository>
+                                                    <id>repo-http</id>    <url>http://pom/http</url>  </repository>
+                                                </repositories>""");
     importProject();
 
     Set<MavenRemoteRepository> repositories = myProjectsManager.getRemoteRepositories();

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -37,6 +38,8 @@ public class GrHighlightHandlerFactory extends HighlightUsagesHandlerFactoryBase
     if (node == null) return null;
 
     IElementType type = node.getElementType();
+    if (!(type instanceof GroovyElementType)) return null;
+
     if (type == GroovyTokenTypes.kIMPLEMENTS || type == GroovyTokenTypes.kEXTENDS) {
       PsiElement parent = target.getParent();
       if (!(parent instanceof GrReferenceList)) return null;

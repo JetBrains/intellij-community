@@ -19,7 +19,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import javax.swing.SwingUtilities

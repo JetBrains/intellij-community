@@ -155,13 +155,14 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
   public void testBackslashFuction() {
-    doTest("def test():\n" +
-           "    print \\\n" +
-           "\n" +
-           "def test2():\n" +
-           "    pass\n" +
-           "\n" +
-           "print 'hello'", "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK",
+    doTest("""
+             def test():
+                 print \\
+
+             def test2():
+                 pass
+
+             print 'hello'""", "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK",
            "Py:LINE_BREAK", "Py:INDENT", "Py:IDENTIFIER", "Py:SPACE", "Py:LINE_BREAK", "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK",
            "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE",
@@ -189,12 +190,13 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
   public void testDedentBeforeComment() {  // PY-2209 & friends
-    doTest("class UserProfile:\n" +
-           "    pass\n" +
-           "\n" +
-           "#noinspection PyUnusedLocal\n" +
-           "def foo(sender):\n" +
-           "    pass",
+    doTest("""
+             class UserProfile:
+                 pass
+
+             #noinspection PyUnusedLocal
+             def foo(sender):
+                 pass""",
            "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK",
            "Py:DEDENT", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
@@ -203,9 +205,11 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
   public void testDedentAfterComment() { // PY-2137
-    doTest("def foo():\n" +
-           "    pass\n" +
-           "    #comment\n",
+    doTest("""
+             def foo():
+                 pass
+                 #comment
+             """,
            "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:END_OF_LINE_COMMENT", "Py:DEDENT", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
@@ -217,11 +221,13 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   // PY-3067
   public void testErrorOpenParInExpr() {
-    doTest("def f():\n" +
-           "    (\n" +
-           "\n" +
-           "def g():\n" +
-           "    pass\n",
+    doTest("""
+             def f():
+                 (
+
+             def g():
+                 pass
+             """,
            "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:INDENT", "Py:LPAR", "Py:LINE_BREAK",
            "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK", // Error recovery
@@ -232,11 +238,13 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   // PY-3067
   public void testErrorOpenParInExprBeforeComment() {
-    doTest("def f():\n" +
-           "    (\n" +
-           "#comment\n" +
-           "def g():\n" +
-           "    pass\n",
+    doTest("""
+             def f():
+                 (
+             #comment
+             def g():
+                 pass
+             """,
            "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:INDENT", "Py:LPAR", "Py:LINE_BREAK",
            "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
@@ -249,11 +257,12 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   // PY-7255
   public void testDocstringInDict() {
-    doTest("d = {\n" +
-           "    'foo':\n" +
-           "        'bar'\n" +
-           "        'baz'\n" +
-           "}",
+    doTest("""
+             d = {
+                 'foo':
+                     'bar'
+                     'baz'
+             }""",
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:LBRACE", "Py:LINE_BREAK",
            "Py:SINGLE_QUOTED_STRING", "Py:COLON", "Py:LINE_BREAK", "Py:SINGLE_QUOTED_STRING", "Py:LINE_BREAK",
            "Py:SINGLE_QUOTED_STRING", "Py:LINE_BREAK", "Py:RBRACE", "Py:STATEMENT_BREAK");
@@ -261,12 +270,14 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   // PY-3067
   public void testErrorOpenParInMethod() {
-    doTest("class C:\n" +
-           "    def f(self):\n" +
-           "        (\n" +
-           "\n" +
-           "    def g(self):\n" +
-           "        pass\n",
+    doTest("""
+             class C:
+                 def f(self):
+                     (
+
+                 def g(self):
+                     pass
+             """,
            "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:INDENT", "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:INDENT", "Py:LPAR", "Py:LINE_BREAK",
@@ -278,10 +289,12 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   // PY-6722
   public void testBackslashAndEmptyLineInsideSquareBrackets() {
-    doTest("xs = [ \\\n" +
-           "\n" +
-           "]\n" +
-           "print(xs)\n",
+    doTest("""
+             xs = [ \\
+
+             ]
+             print(xs)
+             """,
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:LBRACKET", "Py:SPACE", "Py:LINE_BREAK",
            "Py:LINE_BREAK",
            "Py:RBRACKET", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
@@ -291,9 +304,11 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   // PY-6722
   public void testSingleBackslashLineInsideSquareBrackets() {
-    doTest("xs = [\n" +
-           "\\\n" +
-           "]\n",
+    doTest("""
+             xs = [
+             \\
+             ]
+             """,
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:LBRACKET", "Py:LINE_BREAK",
            "Py:SPACE", "Py:LINE_BREAK",
            "Py:RBRACKET", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
@@ -452,38 +467,46 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   // PY-21697
   public void testTripleSingleQuotedStringWithEscapedSlashAfterOneQuote() {
-    doTest("s = '''\n" +
-           "'\\\\'''\n" +
-           "'''\n",
+    doTest("""
+             s = '''
+             '\\\\'''
+             '''
+             """,
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
            "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
   }
   
   // PY-21697
   public void testTripleSingleQuotedStringWithEscapedSlashAfterTwoQuotes() {
-    doTest("s = '''\n" +
-           "''\\\\'''\n" +
-           "'''\n",
+    doTest("""
+             s = '''
+             ''\\\\'''
+             '''
+             """,
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
            "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
   }
   
   // PY-21697
   public void testTripleDoubleQuotedStringWithEscapedSlashAfterOneQuote() {
-        doTest("s = \"\"\"\n" +
-           "\"\\\\\"\"\"\n" +
-           "\"\"\"\n",
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
-           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+        doTest("""
+                 s = ""\"
+                 "\\\\""\"
+                 ""\"
+                 """,
+               "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
+               "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
   }
   
   // PY-21697
   public void testTripleDoubleQuotedStringWithEscapedSlashAfterTwoQuotes() {
-        doTest("s = \"\"\"\n" +
-           "\"\"\\\\\"\"\"\n" +
-           "\"\"\"\n",
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
-           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+        doTest("""
+                 s = ""\"
+                 ""\\\\""\"
+                 ""\"
+                 """,
+               "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
+               "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
   }
 
   // PY-40757

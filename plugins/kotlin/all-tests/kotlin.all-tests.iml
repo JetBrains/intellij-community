@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="kotlin.base.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.code-insight.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.core.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.native.tests" scope="RUNTIME" />
@@ -22,6 +21,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="RUNTIME" />
@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.performance-tests.performance-test-utils" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.performance-tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="RUNTIME" />

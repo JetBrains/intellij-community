@@ -6,13 +6,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.UiSwitcher
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.Expandable
-import com.intellij.ui.dsl.builder.CollapsibleRow
-import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import javax.swing.border.EmptyBorder
@@ -69,15 +64,15 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
     lateinit var expandablePanel: Panel
     panel {
       row {
-        cell(collapsibleTitledSeparator).horizontalAlign(HorizontalAlign.FILL)
+        cell(collapsibleTitledSeparator).align(AlignX.FILL)
       }
       row {
-        expandablePanel = panel(init).verticalAlign(VerticalAlign.FILL)
+        expandablePanel = panel(init).align(AlignY.FILL)
       }.resizableRow()
       collapsibleTitledSeparator.onAction {
         expandablePanel.visible(it)
       }
-    }.verticalAlign(VerticalAlign.FILL)
+    }.align(AlignY.FILL)
     applyUiSwitcher(expandablePanel as PanelImpl, CollapsibleRowUiSwitcher(this))
   }
 

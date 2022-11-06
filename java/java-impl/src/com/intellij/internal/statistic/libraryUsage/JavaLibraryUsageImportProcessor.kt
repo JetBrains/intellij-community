@@ -5,14 +5,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.PsiJavaFile
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 
-class JavaLibraryUsageImportProcessor : LibraryUsageImportProcessor<PsiImportStatementBase> {
-  override fun imports(file: PsiFile): List<PsiImportStatementBase> = file.castSafelyTo<PsiJavaFile>()
-    ?.importList
-    ?.allImportStatements
-    ?.toList()
-    .orEmpty()
+internal class JavaLibraryUsageImportProcessor : LibraryUsageImportProcessor<PsiImportStatementBase> {
+  override fun imports(file: PsiFile): List<PsiImportStatementBase> {
+    return file.asSafely<PsiJavaFile>()
+      ?.importList
+      ?.allImportStatements
+      ?.toList()
+      .orEmpty()
+  }
 
   override fun isSingleElementImport(import: PsiImportStatementBase): Boolean = !import.isOnDemand
 

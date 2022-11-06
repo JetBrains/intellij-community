@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.buildScripts" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="opentelemetry" level="project" />
@@ -21,7 +21,8 @@
     <orderEntry type="library" scope="TEST" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-collections-immutable-jvm" level="project" />
-    <orderEntry type="library" scope="TEST" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="library" scope="TEST" name="commons-compress" level="project" />
+    <orderEntry type="module" module-name="intellij.idea.community.build" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

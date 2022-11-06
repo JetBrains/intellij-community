@@ -17,23 +17,20 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.storage.CachedValue
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -41,7 +38,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
-internal class ModifiableRootModelBridgeImpl(
+class ModifiableRootModelBridgeImpl(
   diff: MutableEntityStorage,
   override val moduleBridge: ModuleBridge,
   override val accessor: RootConfigurationAccessor,
@@ -68,10 +65,10 @@ internal class ModifiableRootModelBridgeImpl(
   private fun getModuleEntity(current: EntityStorage, myModuleBridge: ModuleBridge): ModuleEntity? {
     // Try to get entity by module id
     // In some cases this won't work. These cases can happen during maven or gradle import where we provide a general builder.
-    //   The case: we rename the module. Since the changes not yet committed, the module will remain with the old persistentId. After that
+    //   The case: we rename the module. Since the changes not yet committed, the module will remain with the old symbolicId. After that
     //   we try to get modifiableRootModel. In general case it would work fine because the builder will be based on main store, but
     //   in case of gradle/maven import we take the builder that was used for renaming. So, the old name cannot be found in the new store.
-    return current.resolve(myModuleBridge.moduleEntityId) ?: current.findModuleEntity(myModuleBridge)
+    return current.resolve(myModuleBridge.moduleEntityId) ?: myModuleBridge.findModuleEntity(current)
   }
 
   override fun getModificationCount(): Long = diff.modificationCount
@@ -112,7 +109,7 @@ internal class ModifiableRootModelBridgeImpl(
    * library referenced from [LibraryOrderEntry] is renamed).
    */
   private val orderEntriesArrayValue: CachedValue<Array<OrderEntry>> = CachedValue { storage ->
-    val dependencies = storage.findModuleEntity(module)?.dependencies ?: return@CachedValue emptyArray()
+    val dependencies = module.findModuleEntity(storage)?.dependencies ?: return@CachedValue emptyArray()
     if (mutableOrderEntries.size == dependencies.size) {
       //keep old instances of OrderEntries if possible (i.e. if only some properties of order entries were changes via WorkspaceModel)
       for (i in mutableOrderEntries.indices) {
@@ -136,7 +133,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
 
   private val contentEntriesImplValue: CachedValue<List<ModifiableContentEntryBridge>> = CachedValue { storage ->
-    val moduleEntity = storage.findModuleEntity(module) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()
+    val moduleEntity = module.findModuleEntity(storage) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()
     val contentEntries = moduleEntity.contentRoots.sortedBy { it.url.url }.toList()
 
     contentEntries.map {
@@ -180,12 +177,28 @@ internal class ModifiableRootModelBridgeImpl(
 
   override fun getProject(): Project = moduleBridge.project
 
-  override fun addContentEntry(root: VirtualFile): ContentEntry =
-    addContentEntry(root.url)
+  override fun addContentEntry(root: VirtualFile): ContentEntry {
+    return addContentEntry(root.url)
+  }
+
+  override fun addContentEntry(root: VirtualFile, externalSource: ProjectModelExternalSource): ContentEntry {
+    return addContentEntry(root.url, externalSource)
+  }
 
   override fun addContentEntry(url: String): ContentEntry {
     assertModelIsLive()
 
+    val finalSource = getInternalFileSource(moduleEntity.entitySource) ?: moduleEntity.entitySource
+    return addEntityAndContentEntry(url, finalSource)
+  }
+
+  override fun addContentEntry(url: String, externalSource: ProjectModelExternalSource): ContentEntry {
+    assertModelIsLive()
+
+    return addEntityAndContentEntry(url, moduleEntity.entitySource)
+  }
+
+  private fun addEntityAndContentEntry(url: String, entitySource: EntitySource): ContentEntry {
     val virtualFileUrl = virtualFileManager.fromUrl(url)
     val existingEntry = contentEntries.firstOrNull { it.contentEntryUrl == virtualFileUrl }
     if (existingEntry != null) {
@@ -196,7 +209,8 @@ internal class ModifiableRootModelBridgeImpl(
       module = moduleEntity,
       excludedUrls = emptyList(),
       excludedPatterns = emptyList(),
-      url = virtualFileUrl
+      url = virtualFileUrl,
+      source = entitySource
     )
 
     // TODO It's N^2 operations since we need to recreate contentEntries every time
@@ -327,7 +341,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
   }
 
-  internal fun appendDependencies(dependencies: List<ModuleDependencyItem>) {
+  private fun appendDependencies(dependencies: List<ModuleDependencyItem>) {
     for (dependency in dependencies) {
       mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     }
@@ -337,7 +351,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
   }
 
-  internal fun insertDependency(dependency: ModuleDependencyItem, position: Int): OrderEntryBridge {
+  private fun insertDependency(dependency: ModuleDependencyItem, position: Int): OrderEntryBridge {
     val last = position == mutableOrderEntries.size
     val newEntry = RootModelBridgeImpl.toOrderEntry(dependency, position, this, this::updateDependencyItem)
     if (last) {
@@ -543,7 +557,7 @@ internal class ModifiableRootModelBridgeImpl(
       moduleDiff.addDiff(diff)
     }
     else {
-      WorkspaceModel.getInstance(project).updateProjectModel {
+      WorkspaceModel.getInstance(project).updateProjectModel("Root model commit") {
         it.addDiff(diff)
       }
     }
@@ -611,7 +625,7 @@ internal class ModifiableRootModelBridgeImpl(
 
   // TODO compare by actual values
   override fun isChanged(): Boolean {
-    if (!diff.isEmpty()) return true
+    if (diff.hasChanges()) return true
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) return true
 
@@ -712,3 +726,9 @@ internal class ModifiableRootModelBridgeImpl(
   }
 }
 
+internal fun getInternalFileSource(source: EntitySource) = when (source) {
+  is JpsFileDependentEntitySource -> source.originalSource
+  is CustomModuleEntitySource -> source.internalSource
+  is JpsFileEntitySource -> source
+  else -> null
+}

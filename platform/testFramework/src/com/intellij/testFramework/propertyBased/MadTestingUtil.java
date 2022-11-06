@@ -64,9 +64,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-/**
- * @author peter
- */
 public final class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance(MadTestingUtil.class);
   private static final boolean USE_ROULETTE_WHEEL = true;
@@ -538,13 +535,29 @@ public final class MadTestingUtil {
     private static final File[] EMPTY_DIRECTORY = new File[0];
     private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<>() {
       @Override
-      protected File[] create(File f) {
+      protected File[] create(@NotNull File f) {
         File[] files = f.listFiles(child -> myFilter.accept(child) && (child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child)));
-        return files != null && files.length == 0 ? EMPTY_DIRECTORY : files;
+        if (files == null) {
+          return null;
+        }
+        if (files.length == 0) {
+          return EMPTY_DIRECTORY;
+        }
+        for (int i = 0; i < files.length; i++) {
+          File file = files[i];
+          boolean isDirectory = file.isDirectory();
+          files[i] = new File(file.getPath()) {
+            @Override
+            public boolean isDirectory() {
+              return isDirectory;
+            }
+          };
+        }
+        return files;
       }
     };
 
-    private RouletteWheelFileGenerator(File root, FileFilter filter) {
+    private RouletteWheelFileGenerator(@NotNull File root, @NotNull FileFilter filter) {
       myRoot = root;
       myFilter = filter;
     }

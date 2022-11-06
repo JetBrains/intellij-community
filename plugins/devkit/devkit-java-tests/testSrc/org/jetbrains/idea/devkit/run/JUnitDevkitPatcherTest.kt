@@ -2,52 +2,56 @@
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.execution.configurations.ParametersList
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.util.lang.JavaVersion
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.After
+import org.junit.Rule
 import org.junit.Test
 
 class JUnitDevkitPatcherTest : BareTestFixtureTestCase() {
+  @Rule @JvmField val projectRule = ProjectRule()
+
+  private lateinit var file: VirtualFile
+
+  @After fun tearDown() {
+    if (this::file.isInitialized) {
+      runWriteActionAndWait { file.delete(this) }
+    }
+  }
+
   @Test fun jdk17AddOpens() {
+    val module = projectRule.module
+    runWriteActionAndWait {
+      file = ModuleRootManager.getInstance(module).contentRoots[0].createChildData(this, "OpenedPackages.txt")
+      @Suppress("SpellCheckingInspection")
+      file.setBinaryContent("""
+          --add-opens=java.base/java.io=ALL-UNNAMED
+          --add-opens=java.base/java.lang=ALL-UNNAMED
+          --add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED
+          --add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED
+          --add-opens=java.desktop/sun.lwawt=ALL-UNNAMED
+          """.trimIndent().toByteArray())
+    }
     val jdk = IdeaTestUtil.getMockJdk(JavaVersion.parse("17.0.1"))
     val parametersList = ParametersList()
-    JUnitDevKitPatcher.appendAddOpensWhenNeeded(jdk, parametersList)
-    @Suppress("SpellCheckingInspection")
-    assertThat(parametersList.list)
-      .contains("--add-opens=java.base/java.io=ALL-UNNAMED",
-                "--add-opens=java.base/java.lang=ALL-UNNAMED",
-                "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-                "--add-opens=java.base/java.net=ALL-UNNAMED",
-                "--add-opens=java.base/java.nio.charset=ALL-UNNAMED",
-                "--add-opens=java.base/java.text=ALL-UNNAMED",
-                "--add-opens=java.base/java.time=ALL-UNNAMED",
-                "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
-                "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-                "--add-opens=java.base/java.util=ALL-UNNAMED",
-                "--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED",
-                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-                "--add-opens=java.base/sun.security.ssl=ALL-UNNAMED",
-                "--add-opens=java.base/sun.security.util=ALL-UNNAMED",
-                "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-                "--add-opens=java.desktop/java.awt.dnd.peer=ALL-UNNAMED",
-                "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
-                "--add-opens=java.desktop/java.awt.image=ALL-UNNAMED",
-                "--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED",
-                "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
-                "--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED",
-                "--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED",
-                "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
-                "--add-opens=java.desktop/sun.awt.datatransfer=ALL-UNNAMED",
-                "--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED",
-                "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
-                "--add-opens=java.desktop/sun.java2d=ALL-UNNAMED",
-                "--add-opens=java.desktop/sun.swing=ALL-UNNAMED",
-                "--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED",
-                "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-                "--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED",
-                "--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED")
-      .doesNotContain("--add-opens=java.desktop/sun.awt.${if (SystemInfo.isWindows) "X11" else "windows"}=ALL-UNNAMED")
+
+    JUnitDevKitPatcher.appendAddOpensWhenNeeded(projectRule.project, jdk, parametersList)
+
+    @Suppress("SpellCheckingInspection") val awtPackage = when {
+      SystemInfo.isWindows -> "sun.awt.windows"
+      SystemInfo.isMac -> "sun.lwawt"
+      else -> "sun.awt.X11"
+    }
+    assertThat(parametersList.list).containsExactly(
+      "--add-opens=java.base/java.io=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.desktop/${awtPackage}=ALL-UNNAMED")
   }
 }

@@ -2,13 +2,16 @@
 package com.intellij.credentialStore
 
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.*
 import java.awt.Component
 
 interface CredentialStoreUiService {
+  companion object {
+    fun getInstance(): CredentialStoreUiService = service()
+  }
+
   fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?, action: NotificationAction?)
 
   fun showChangeMasterPasswordDialog(contextComponent: Component?,
@@ -22,9 +25,4 @@ interface CredentialStoreUiService {
   fun showErrorMessage(parent: Component?, @DialogTitle title: String, @DialogMessage message: String)
 
   fun openSettings(project: Project?)
-
-  companion object {
-    fun getInstance(): CredentialStoreUiService =
-      ApplicationManager.getApplication().getService(CredentialStoreUiService::class.java)
-  }
 }

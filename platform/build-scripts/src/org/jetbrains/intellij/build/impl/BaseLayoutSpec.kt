@@ -3,13 +3,17 @@
 
 package org.jetbrains.intellij.build.impl
 
-open class BaseLayoutSpec(private val layout: BaseLayout) {
+sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   /**
    * Register an additional module to be included into the plugin distribution. Module-level libraries from
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
   fun withModule(moduleName: String) {
     layout.withModule(moduleName)
+  }
+
+  fun withModules(names: Iterable<String>) {
+    names.forEach(layout::withModule)
   }
 
   /**
@@ -65,13 +69,17 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.excludeFromModule(moduleName, excludedPattern)
   }
 
+  fun excludeFromModule(moduleName: String, excludedPatterns: List<String>) {
+    layout.excludeFromModule(moduleName, excludedPatterns)
+  }
+
   /**
    * Include an artifact output to the plugin distribution.
    * @param artifactName name of the project configuration
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   fun withArtifact(artifactName: String, relativeOutputPath: String) {
-    layout.includedArtifacts.put(artifactName, relativeOutputPath)
+    layout.includedArtifacts = layout.includedArtifacts.put(artifactName, relativeOutputPath)
   }
 
   /**

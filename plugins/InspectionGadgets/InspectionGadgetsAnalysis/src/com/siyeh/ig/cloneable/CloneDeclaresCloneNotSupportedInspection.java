@@ -83,7 +83,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodNameIdentifier.getParent();
       PsiUtil.addException(method, "java.lang.CloneNotSupportedException");

@@ -90,8 +90,6 @@ abstract class ToolWindowManager {
    * [ToolWindow.getAnchor] is set to [ToolWindowAnchor.BOTTOM] by default.
    * [ToolWindow.setToHideOnEmptyContent] is set to `true` by default.
    */
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
   inline fun registerToolWindow(id: String, builder: RegisterToolWindowTaskBuilder.() -> Unit): ToolWindow {
     val b = RegisterToolWindowTaskBuilder(id)
     b.builder()
@@ -170,7 +168,6 @@ abstract class ToolWindowManager {
   open fun getLocationIcon(id: String, fallbackIcon: Icon): Icon = fallbackIcon
 }
 
-@ApiStatus.Internal
 class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private val id: String) {
   @JvmField
   var anchor = ToolWindowAnchor.BOTTOM

@@ -3,7 +3,6 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.Platform
 import com.intellij.execution.target.*
-import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.progress.ProgressIndicator
 import org.assertj.core.api.SoftAssertions
@@ -16,7 +15,7 @@ class PydevConsoleRunnerUtilTest {
     val dummyEnvironment = DummyTargetEnvironment(dummyRequest)
 
     val pythonPath = mutableListOf(constant("/home/foo/bar's baz"))
-    val workingDir = "/home/foo/bar\\qux"
+    val workingDir = constant("/home/foo/bar\\qux")
 
     val consoleStartCommand = PydevConsoleRunnerImpl.CONSOLE_START_COMMAND
 
@@ -42,20 +41,6 @@ class PydevConsoleRunnerUtilTest {
     @Deprecated("Use uploadVolumes")
     override val defaultVolume: TargetEnvironmentRequest.Volume
       get() = throw UnsupportedOperationException()
-
-    @Deprecated("Use uploadVolumes")
-    override fun createUploadRoot(remoteRootPath: String?, temporary: Boolean): TargetEnvironmentRequest.Volume =
-      throw UnsupportedOperationException()
-
-    @Deprecated("Use downloadVolumes")
-    override fun createDownloadRoot(remoteRootPath: String?): TargetEnvironmentRequest.DownloadableVolume =
-      throw UnsupportedOperationException()
-
-    @Deprecated("Use targetPortBindings")
-    override fun bindTargetPort(targetPort: Int): TargetValue<Int> = throw UnsupportedOperationException()
-
-    @Deprecated("Use localPortBindings")
-    override fun bindLocalPort(localPort: Int): TargetValue<HostPort> = throw UnsupportedOperationException()
 
     override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment = DummyTargetEnvironment(this)
 

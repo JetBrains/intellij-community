@@ -5,16 +5,18 @@ import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 public class RenameFieldActionTest extends AbstractLombokLightCodeInsightTestCase {
 
   public void testFieldRename() {
-    myFixture.configureByText("Main.java", "@lombok.Data\n" +
-                                                     "public class Main {\n" +
-                                                     "    private String someString<caret>;\n" +
-                                                     "\n" +
-                                                     "    public static void main(String[] args) {\n" +
-                                                     "        final Main main = new Main();\n" +
-                                                     "        main.setSomeString(\"Hello World\");\n" +
-                                                     "        System.out.println(main.getSomeString());\n" +
-                                                     "    }\n" +
-                                                     "}\n");
+    myFixture.configureByText("Main.java", """
+      @lombok.Data
+      public class Main {
+          private String someString<caret>;
+
+          public static void main(String[] args) {
+              final Main main = new Main();
+              main.setSomeString("Hello World");
+              System.out.println(main.getSomeString());
+          }
+      }
+      """);
 
     myFixture.renameElementAtCaretUsingHandler("someString2");
 

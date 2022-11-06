@@ -105,7 +105,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
-  public static final int THROTTLING_TIMEOUT = 100;
 
   private static final Icon SHOW_IN_FIND_TOOL_WINDOW_ICON =
     ExperimentalUI.isNewUI() ? IconManager.getInstance().getIcon("expui/general/openInToolWindow.svg", AllIcons.class)
@@ -146,7 +145,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     init();
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
-    myBufferedListener = createListener(contributors);
+    myBufferedListener = createListener();
     SearchListener listener = Registry.is("search.everywhere.detect.slow.contributors")
                               ? SearchListener.combine(myBufferedListener, new SlowContributorDetector())
                               : myBufferedListener;
@@ -188,13 +187,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @NotNull
-  private BufferingListenerWrapper createListener(Collection<SearchEverywhereContributor<?>> contributors) {
+  private BufferingListenerWrapper createListener() {
+    SearchListener wrapped = SearchListener.combine(mySearchListener, new SearchProcessLogger());
     if (Registry.is("search.everywhere.wait.for.contributors")) {
-      List<SearchEverywhereContributor<?>> contributorsToWait = ContainerUtil.filter(contributors, c -> !PossibleSlowContributor.checkSlow(c));
-      return new WaitForContributorsListenerWrapper(mySearchListener, myListModel);
+      return new SwitchSEListener(wrapped, myListModel);
     }
 
-    return new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener);
+    return new ThrottlingListenerWrapper(wrapped);
   }
 
   @Override

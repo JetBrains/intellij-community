@@ -34,7 +34,8 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
+import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.publicByDefault
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
@@ -179,7 +180,8 @@ class KotlinCreateTestIntention : SelfTargetingRangeIntention<KtNamedDeclaration
                                     generatedClass
                                         .methods
                                         .filter { it.name !in existingMethodNames }
-                                        .forEach { it.j2k()?.let { declaration -> existingClass.addDeclaration(declaration) } }
+                                        .forEach { it.j2k(settings = publicByDefault)
+                                            ?.let { declaration -> existingClass.addDeclaration(declaration) } }
                                     generatedClass.delete()
                                 }
 
@@ -193,8 +195,9 @@ class KotlinCreateTestIntention : SelfTargetingRangeIntention<KtNamedDeclaration
                                     listOf(generatedFile),
                                     project,
                                     srcModule,
-                                    false,
-                                    forceUsingOldJ2k = true
+                                    enableExternalCodeProcessing = false,
+                                    forceUsingOldJ2k = true,
+                                    settings = publicByDefault
                                 ).singleOrNull()
                             }
                         }

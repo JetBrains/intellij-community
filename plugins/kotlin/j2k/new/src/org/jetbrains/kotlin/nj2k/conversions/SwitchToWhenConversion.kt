@@ -7,6 +7,7 @@ import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.runExpression
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -45,11 +46,12 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
                 .takeWhileInclusive { statement -> statement.singleListOrBlockStatements().none { isSwitchBreakOrYield(it) } }
                 .mapNotNull { statement ->
                     when (statement) {
-                      is JKBlockStatement -> blockStatement(
-                          statement.block.statements
-                              .takeWhileInclusive { !isSwitchBreakOrYield(it) }
-                              .mapNotNull {  handleBreakOrYield(it) }
-                      ).withFormattingFrom(statement)
+                        is JKBlockStatement -> blockStatement(
+                            statement.block.statements
+                                .takeWhileInclusive { !isSwitchBreakOrYield(it) }
+                                .mapNotNull { handleBreakOrYield(it) }
+                        ).withFormattingFrom(statement)
+
                         else -> handleBreakOrYield(statement)
                     }
                 }
@@ -78,6 +80,7 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
                 switchCasesToWhenCases(cases.drop(javaLabels.size))
 
     }
+
     private fun handleBreakOrYield(statement: JKStatement) = when {
         isSwitchBreak(statement) -> null
         else -> statement.copyTreeAndDetach()
@@ -87,19 +90,12 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
         takeWhile(predicate) + listOfNotNull(find { !predicate(it) })
 
     private fun List<JKStatement>.singleBlockOrWrapToRun(): JKStatement =
-        singleOrNull()
-            ?: JKBlockStatement(
-                JKBlockImpl(map { statement ->
-                    when (statement) {
-                        is JKBlockStatement ->
-                            JKExpressionStatement(
-                                runExpression(statement, symbolProvider)
-                            )
-                        else -> statement
-                    }
-                })
-            )
-
+        singleOrNull() ?: blockStatement(map { statement ->
+            when (statement) {
+                is JKBlockStatement -> JKExpressionStatement(runExpression(statement, symbolProvider))
+                else -> statement
+            }
+        })
 
     private fun JKStatement.singleListOrBlockStatements(): List<JKStatement> =
         when (this) {
@@ -122,16 +118,18 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
                     this is JKBreakStatement ||
                     this is JKReturnStatement ||
                     this is JKContinueStatement -> false
+
             this is JKBlockStatement -> block.statements.fallsThrough()
             this is JKIfElseStatement ||
                     this is JKJavaSwitchBlock ||
                     this is JKKtWhenBlock ->
                 psi?.canCompleteNormally() == true
+
             else -> true
         }
 
     private fun JKStatement.isThrowStatement(): Boolean =
-        (this as? JKExpressionStatement)?.expression is JKKtThrowExpression
+        (this as? JKExpressionStatement)?.expression is JKThrowExpression
 
     private fun PsiElement.canCompleteNormally(): Boolean {
         val controlFlow =

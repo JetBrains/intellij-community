@@ -114,112 +114,116 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
    */
   public void testDefaultColorScheme() {
     assertEquals(
-      "ABSTRACT_CLASS_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "ABSTRACT_METHOD_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "ANNOTATION_NAME_ATTRIBUTES { color: #808000;  font-style: normal; }\n" +
-      "ANONYMOUS_CLASS_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "CLASS_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "CONSTRUCTOR_CALL_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "CONSTRUCTOR_DECLARATION_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "DOC_COMMENT_TAG_VALUE { color: #3d3d3d;  font-style: italic;  font-weight: bold; }\n" +
-      "ENUM_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES { color: #660e7a;  font-style: normal; }\n" +
-      "INHERITED_METHOD_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "INSTANCE_FIELD_ATTRIBUTES { color: #660e7a;  font-style: normal;  font-weight: bold; }\n" +
-      "INSTANCE_FINAL_FIELD_ATTRIBUTES { color: #660e7a;  font-style: normal;  font-weight: bold; }\n" +
-      "INTERFACE_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "JAVA_BLOCK_COMMENT { color: #808080;  font-style: italic; }\n" +
-      "JAVA_BRACES { color: #000000;  font-style: normal; }\n" +
-      "JAVA_BRACKETS { color: #000000;  font-style: normal; }\n" +
-      "JAVA_COMMA { color: #000000;  font-style: normal; }\n" +
-      "JAVA_DOC_COMMENT { color: #808080;  font-style: italic; }\n" +
-      "JAVA_DOC_MARKUP { color: #000000;  background-color: #e2ffe2;  font-style: normal; }\n" +
-      "JAVA_DOC_TAG { color: #000000;  font-style: normal;  font-weight: bold; text-decoration: underline #808080; }\n" +
-      "JAVA_DOT { color: #000000;  font-style: normal; }\n" +
-      "JAVA_INVALID_STRING_ESCAPE { color: #008000;  background-color: #ffcccc;  font-style: normal; }\n" +
-      "JAVA_KEYWORD { color: #000080;  font-style: normal;  font-weight: bold; }\n" +
-      "JAVA_LINE_COMMENT { color: #808080;  font-style: italic; }\n" +
-      "JAVA_NUMBER { color: #0000ff;  font-style: normal; }\n" +
-      "JAVA_OPERATION_SIGN { color: #000000;  font-style: normal; }\n" +
-      "JAVA_PARENTH { color: #000000;  font-style: normal; }\n" +
-      "JAVA_SEMICOLON { color: #000000;  font-style: normal; }\n" +
-      "JAVA_STRING { color: #008000;  font-style: normal;  font-weight: bold; }\n" +
-      "JAVA_VALID_STRING_ESCAPE { color: #000080;  font-style: normal;  font-weight: bold; }\n" +
-      "LAMBDA_PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "METHOD_CALL_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "METHOD_DECLARATION_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "PACKAGE_PRIVATE_REFERENCE { color: #000000;  font-style: normal; }\n" +
-      "PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
-      "PRIVATE_REFERENCE { color: #000000;  font-style: normal; }\n" +
-      "PROTECTED_REFERENCE { color: #000000;  font-style: normal; }\n" +
-      "PUBLIC_REFERENCE { color: #000000;  font-style: normal; }\n" +
-      "REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }\n" +
-      "REASSIGNED_PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }\n" +
-      "STATIC_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic; }\n" +
-      "STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #660e7a;  font-style: italic; }\n" +
-      "STATIC_FINAL_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic;  font-weight: bold; }\n" +
-      "STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES { color: #660e7a;  font-style: italic;  font-weight: bold; }\n" +
-      "STATIC_METHOD_ATTRIBUTES { color: #000000;  font-style: italic; }\n" +
-      "STATIC_METHOD_IMPORTED_ATTRIBUTES { color: #000000;  font-style: italic; }\n" +
-      "TYPE_PARAMETER_NAME_ATTRIBUTES { color: #20999d;  font-style: normal; }\n",
+      """
+        ABSTRACT_CLASS_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
+        ABSTRACT_METHOD_ATTRIBUTES { color: #000000;  font-style: normal; }
+        ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
+        ANNOTATION_NAME_ATTRIBUTES { color: #808000;  font-style: normal; }
+        ANONYMOUS_CLASS_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
+        CLASS_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
+        CONSTRUCTOR_CALL_ATTRIBUTES { color: #000000;  font-style: normal; }
+        CONSTRUCTOR_DECLARATION_ATTRIBUTES { color: #000000;  font-style: normal; }
+        DOC_COMMENT_TAG_VALUE { color: #3d3d3d;  font-style: italic;  font-weight: bold; }
+        ENUM_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
+        IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES { color: #660e7a;  font-style: normal; }
+        INHERITED_METHOD_ATTRIBUTES { color: #000000;  font-style: normal; }
+        INSTANCE_FIELD_ATTRIBUTES { color: #660e7a;  font-style: normal;  font-weight: bold; }
+        INSTANCE_FINAL_FIELD_ATTRIBUTES { color: #660e7a;  font-style: normal;  font-weight: bold; }
+        INTERFACE_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
+        JAVA_BLOCK_COMMENT { color: #808080;  font-style: italic; }
+        JAVA_BRACES { color: #000000;  font-style: normal; }
+        JAVA_BRACKETS { color: #000000;  font-style: normal; }
+        JAVA_COMMA { color: #000000;  font-style: normal; }
+        JAVA_DOC_COMMENT { color: #808080;  font-style: italic; }
+        JAVA_DOC_MARKUP { color: #000000;  background-color: #e2ffe2;  font-style: normal; }
+        JAVA_DOC_TAG { color: #000000;  font-style: normal;  font-weight: bold; text-decoration: underline #808080; }
+        JAVA_DOT { color: #000000;  font-style: normal; }
+        JAVA_INVALID_STRING_ESCAPE { color: #008000;  background-color: #ffcccc;  font-style: normal; }
+        JAVA_KEYWORD { color: #000080;  font-style: normal;  font-weight: bold; }
+        JAVA_LINE_COMMENT { color: #808080;  font-style: italic; }
+        JAVA_NUMBER { color: #0000ff;  font-style: normal; }
+        JAVA_OPERATION_SIGN { color: #000000;  font-style: normal; }
+        JAVA_PARENTH { color: #000000;  font-style: normal; }
+        JAVA_SEMICOLON { color: #000000;  font-style: normal; }
+        JAVA_STRING { color: #008000;  font-style: normal;  font-weight: bold; }
+        JAVA_VALID_STRING_ESCAPE { color: #000080;  font-style: normal;  font-weight: bold; }
+        LAMBDA_PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; }
+        LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; }
+        METHOD_CALL_ATTRIBUTES { color: #000000;  font-style: normal; }
+        METHOD_DECLARATION_ATTRIBUTES { color: #000000;  font-style: normal; }
+        PACKAGE_PRIVATE_REFERENCE { color: #000000;  font-style: normal; }
+        PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; }
+        PRIVATE_REFERENCE { color: #000000;  font-style: normal; }
+        PROTECTED_REFERENCE { color: #000000;  font-style: normal; }
+        PUBLIC_REFERENCE { color: #000000;  font-style: normal; }
+        REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
+        REASSIGNED_PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
+        STATIC_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic; }
+        STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #660e7a;  font-style: italic; }
+        STATIC_FINAL_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic;  font-weight: bold; }
+        STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES { color: #660e7a;  font-style: italic;  font-weight: bold; }
+        STATIC_METHOD_ATTRIBUTES { color: #000000;  font-style: italic; }
+        STATIC_METHOD_IMPORTED_ATTRIBUTES { color: #000000;  font-style: italic; }
+        TYPE_PARAMETER_NAME_ATTRIBUTES { color: #20999d;  font-style: normal; }
+        """,
 
       dumpDefaultColorScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME));
   }
 
   public void testDarculaColorScheme() {
     assertEquals(
-      "ABSTRACT_CLASS_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "ABSTRACT_METHOD_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "ANNOTATION_NAME_ATTRIBUTES { color: #bbb529;  font-style: normal; }\n" +
-      "ANONYMOUS_CLASS_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "CLASS_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "CONSTRUCTOR_CALL_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "CONSTRUCTOR_DECLARATION_ATTRIBUTES { color: #ffc66d;  font-style: normal; }\n" +
-      "DOC_COMMENT_TAG_VALUE { color: #8a653b;  font-style: normal; }\n" +
-      "ENUM_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES { color: #b389c5;  font-style: normal; text-decoration: underline #b389c5; }\n" +
-      "INHERITED_METHOD_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "INSTANCE_FIELD_ATTRIBUTES { color: #9876aa;  font-style: normal; }\n" +
-      "INSTANCE_FINAL_FIELD_ATTRIBUTES { color: #9876aa;  font-style: normal; }\n" +
-      "INTERFACE_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "JAVA_BLOCK_COMMENT { color: #808080;  font-style: normal; }\n" +
-      "JAVA_BRACES { color: #a9b7c6;  font-style: normal; }\n" +
-      "JAVA_BRACKETS { color: #a9b7c6;  font-style: normal; }\n" +
-      "JAVA_COMMA { color: #cc7832;  font-style: normal; }\n" +
-      "JAVA_DOC_COMMENT { color: #629755;  font-style: italic; }\n" +
-      "JAVA_DOC_MARKUP { color: #77b767;  font-style: normal; }\n" +
-      "JAVA_DOC_TAG { color: #629755;  font-style: italic;  font-weight: bold; text-decoration: underline #629755; }\n" +
-      "JAVA_DOT { color: #a9b7c6;  font-style: normal; }\n" +
-      "JAVA_INVALID_STRING_ESCAPE { color: #6a8759;  font-style: normal; text-decoration: underline #ff0000wavy; }\n" +
-      "JAVA_KEYWORD { color: #cc7832;  font-style: normal; }\n" +
-      "JAVA_LINE_COMMENT { color: #808080;  font-style: normal; }\n" +
-      "JAVA_NUMBER { color: #6897bb;  font-style: normal; }\n" +
-      "JAVA_OPERATION_SIGN { color: #a9b7c6;  font-style: normal; }\n" +
-      "JAVA_PARENTH { color: #a9b7c6;  font-style: normal; }\n" +
-      "JAVA_SEMICOLON { color: #cc7832;  font-style: normal; }\n" +
-      "JAVA_STRING { color: #6a8759;  font-style: normal; }\n" +
-      "JAVA_VALID_STRING_ESCAPE { color: #cc7832;  font-style: normal; }\n" +
-      "LAMBDA_PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "METHOD_CALL_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "METHOD_DECLARATION_ATTRIBUTES { color: #ffc66d;  font-style: normal; }\n" +
-      "PACKAGE_PRIVATE_REFERENCE { color: #a9b7c6;  font-style: normal; }\n" +
-      "PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }\n" +
-      "PRIVATE_REFERENCE { color: #a9b7c6;  font-style: normal; }\n" +
-      "PROTECTED_REFERENCE { color: #a9b7c6;  font-style: normal; }\n" +
-      "PUBLIC_REFERENCE { color: #a9b7c6;  font-style: normal; }\n" +
-      "REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }\n" +
-      "REASSIGNED_PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }\n" +
-      "STATIC_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }\n" +
-      "STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #9876aa;  font-style: italic; }\n" +
-      "STATIC_FINAL_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }\n" +
-      "STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES { color: #9876aa;  font-style: italic; }\n" +
-      "STATIC_METHOD_ATTRIBUTES { color: #a9b7c6;  font-style: italic; }\n" +
-      "STATIC_METHOD_IMPORTED_ATTRIBUTES { color: #a9b7c6;  font-style: italic; }\n" +
-      "TYPE_PARAMETER_NAME_ATTRIBUTES { color: #507874;  font-style: normal; }\n",
+      """
+        ABSTRACT_CLASS_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        ABSTRACT_METHOD_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        ANNOTATION_NAME_ATTRIBUTES { color: #bbb529;  font-style: normal; }
+        ANONYMOUS_CLASS_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        CLASS_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        CONSTRUCTOR_CALL_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        CONSTRUCTOR_DECLARATION_ATTRIBUTES { color: #ffc66d;  font-style: normal; }
+        DOC_COMMENT_TAG_VALUE { color: #8a653b;  font-style: normal; }
+        ENUM_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES { color: #b389c5;  font-style: normal; text-decoration: underline #b389c5; }
+        INHERITED_METHOD_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        INSTANCE_FIELD_ATTRIBUTES { color: #9876aa;  font-style: normal; }
+        INSTANCE_FINAL_FIELD_ATTRIBUTES { color: #9876aa;  font-style: normal; }
+        INTERFACE_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        JAVA_BLOCK_COMMENT { color: #808080;  font-style: normal; }
+        JAVA_BRACES { color: #a9b7c6;  font-style: normal; }
+        JAVA_BRACKETS { color: #a9b7c6;  font-style: normal; }
+        JAVA_COMMA { color: #cc7832;  font-style: normal; }
+        JAVA_DOC_COMMENT { color: #629755;  font-style: italic; }
+        JAVA_DOC_MARKUP { color: #77b767;  font-style: normal; }
+        JAVA_DOC_TAG { color: #629755;  font-style: italic;  font-weight: bold; text-decoration: underline #629755; }
+        JAVA_DOT { color: #a9b7c6;  font-style: normal; }
+        JAVA_INVALID_STRING_ESCAPE { color: #6a8759;  font-style: normal; text-decoration: underline #ff0000wavy; }
+        JAVA_KEYWORD { color: #cc7832;  font-style: normal; }
+        JAVA_LINE_COMMENT { color: #808080;  font-style: normal; }
+        JAVA_NUMBER { color: #6897bb;  font-style: normal; }
+        JAVA_OPERATION_SIGN { color: #a9b7c6;  font-style: normal; }
+        JAVA_PARENTH { color: #a9b7c6;  font-style: normal; }
+        JAVA_SEMICOLON { color: #cc7832;  font-style: normal; }
+        JAVA_STRING { color: #6a8759;  font-style: normal; }
+        JAVA_VALID_STRING_ESCAPE { color: #cc7832;  font-style: normal; }
+        LAMBDA_PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        METHOD_CALL_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        METHOD_DECLARATION_ATTRIBUTES { color: #ffc66d;  font-style: normal; }
+        PACKAGE_PRIVATE_REFERENCE { color: #a9b7c6;  font-style: normal; }
+        PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
+        PRIVATE_REFERENCE { color: #a9b7c6;  font-style: normal; }
+        PROTECTED_REFERENCE { color: #a9b7c6;  font-style: normal; }
+        PUBLIC_REFERENCE { color: #a9b7c6;  font-style: normal; }
+        REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
+        REASSIGNED_PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
+        STATIC_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }
+        STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #9876aa;  font-style: italic; }
+        STATIC_FINAL_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }
+        STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES { color: #9876aa;  font-style: italic; }
+        STATIC_METHOD_ATTRIBUTES { color: #a9b7c6;  font-style: italic; }
+        STATIC_METHOD_IMPORTED_ATTRIBUTES { color: #a9b7c6;  font-style: italic; }
+        TYPE_PARAMETER_NAME_ATTRIBUTES { color: #507874;  font-style: normal; }
+        """,
 
       dumpDefaultColorScheme("Darcula")
     );

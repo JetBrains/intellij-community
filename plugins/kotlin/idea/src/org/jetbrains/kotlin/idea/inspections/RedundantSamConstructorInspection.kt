@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.keysToMapExceptNulls
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import com.intellij.openapi.application.runWriteAction
 
 class RedundantSamConstructorInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -105,7 +106,8 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
         fun replaceSamConstructorCall(callExpression: KtCallExpression): KtLambdaExpression {
             val functionalArgument = callExpression.samConstructorValueArgument()?.getArgumentExpression()
                 ?: throw AssertionError("SAM-constructor should have a FunctionLiteralExpression as single argument: ${callExpression.getElementTextWithContext()}")
-            return callExpression.getQualifiedExpressionForSelectorOrThis().replace(functionalArgument) as KtLambdaExpression
+            val ktExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
+            return runWriteAction { ktExpression.replace(functionalArgument) as KtLambdaExpression }
         }
 
         private fun canBeReplaced(

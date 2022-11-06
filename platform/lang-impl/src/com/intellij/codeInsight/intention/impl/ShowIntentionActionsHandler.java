@@ -33,7 +33,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -121,12 +120,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   @NotNull
   @ApiStatus.Internal
-  public static ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project,
-                                                                  @NotNull Editor editor,
-                                                                  @NotNull PsiFile file) {
-    ShowIntentionsPass.IntentionsInfo intentions = ActionUtil.underModalProgress(project,
-                                                                                 CodeInsightBundle.message("progress.title.searching.for.context.actions"), () ->
-      ShowIntentionsPass.getActionsToShow(editor, file, false));
+  public static ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ShowIntentionsPass.IntentionsInfo intentions = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.searching.for.context.actions"), () -> {
+        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+        return ShowIntentionsPass.getActionsToShow(editor, file, false);
+      });
 
     ShowIntentionsPass.getActionsToShowSync(editor, file, intentions);
     return intentions;
@@ -221,7 +220,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName) {
     Project project = hostFile.getProject();
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();

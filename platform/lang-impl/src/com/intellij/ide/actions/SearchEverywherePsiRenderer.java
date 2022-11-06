@@ -27,7 +27,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   @Override
   protected @NotNull SimpleTextAttributes getErrorAttributes() {
     SimpleTextAttributes schemeAttributes = SimpleTextAttributes.fromTextAttributes(scheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES));
-    return new SimpleTextAttributes(schemeAttributes.getBgColor(), UIUtil.getInactiveTextColor(), schemeAttributes.getWaveColor(),
+    return new SimpleTextAttributes(schemeAttributes.getBgColor(), NamedColorUtil.getInactiveTextColor(), schemeAttributes.getWaveColor(),
                                     schemeAttributes.getStyle() | SimpleTextAttributes.STYLE_USE_EFFECT_COLOR);
   }
 

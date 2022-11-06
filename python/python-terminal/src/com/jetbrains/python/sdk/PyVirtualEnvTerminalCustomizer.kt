@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -12,7 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.run.findActivateScript
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
@@ -97,7 +98,11 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         }
         else {
           //for other shells we read envs from activate script by the default shell and pass them to the process
-          envs.putAll(PySdkUtil.activateVirtualEnv(sdk))
+          val envVars = PySdkUtil.activateVirtualEnv(sdk)
+          if (envVars.isEmpty()) {
+            Logger.getInstance(PyVirtualEnvTerminalCustomizer::class.java).warn("No vars found to activate in ${sdk.homePath}")
+          }
+          envs.putAll(envVars)
         }
       }
     }
@@ -140,7 +145,7 @@ class SettingsState {
 
 @State(name = "PyVirtualEnvTerminalCustomizer", storages = [(Storage("python-terminal.xml"))])
 class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
-  var myState: SettingsState = SettingsState()
+  private var myState: SettingsState = SettingsState()
 
   var virtualEnvActivate: Boolean
     get() = myState.virtualEnvActivate

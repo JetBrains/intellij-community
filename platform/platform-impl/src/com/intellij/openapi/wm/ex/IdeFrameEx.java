@@ -2,11 +2,11 @@
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
@@ -18,5 +18,5 @@ public interface IdeFrameEx extends IdeFrame {
   CompletableFuture<?> toggleFullScreen(boolean state);
 
   @Nullable
-  IdeRootPaneNorthExtension getNorthExtension(String key);
+  JComponent getNorthExtension(@NotNull String key);
 }

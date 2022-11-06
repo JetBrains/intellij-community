@@ -60,6 +60,18 @@ class PointlessBooleanExpression {
     }
   }
 
+  void patternVariableAccessedOutsideOfExpression(Object o) {
+    if (false && o instanceof String s) {
+      System.out.println(s);
+    }
+  }
+
+  void patternVariableThatCanBeRemoved(Object o) {
+    if (<warning descr="'false && o instanceof String s && !s.isEmpty()' can be simplified to 'false'">false && o instanceof String s && !s.isEmpty()</warning>) {
+      System.out.println(o);
+    }
+  }
+
   void method() {
     if(<warning descr="'sideEffect() && false' can be simplified to 'false'">sideEffect() && false</warning>) {
       System.out.println("ok");

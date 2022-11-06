@@ -80,17 +80,7 @@ public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
 
   @Override
   public @NotNull Iterable<Entry<K>> entries() {
-    return ContainerUtil.map(myMap.object2IntEntrySet(), e->new Entry<K>() {
-      @Override
-      public @NotNull K getKey() {
-        return e.getKey();
-      }
-
-      @Override
-      public int getValue() {
-        return e.getIntValue();
-      }
-    });
+    return ContainerUtil.map(myMap.object2IntEntrySet(), e-> new IntEntry(e));
   }
 
   /**
@@ -99,5 +89,26 @@ public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   @Deprecated
   public final int get(@NotNull K key, int defaultValue) {
     return getOrDefault(key, defaultValue);
+  }
+
+  private class IntEntry implements Entry<K> {
+    private final Object2IntMap.Entry<? extends K> myEntry;
+
+    IntEntry(@NotNull Object2IntMap.Entry<? extends K> entry) { myEntry = entry; }
+
+    @Override
+    public @NotNull K getKey() {
+      return myEntry.getKey();
+    }
+
+    @Override
+    public int getValue() {
+      return myEntry.getIntValue();
+    }
+
+    @Override
+    public String toString() {
+      return myEntry.toString();
+    }
   }
 }

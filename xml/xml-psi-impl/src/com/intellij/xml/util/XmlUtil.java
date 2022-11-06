@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -87,12 +87,26 @@ public final class XmlUtil {
   @NonNls public static final String[] JSTL_CORE_URIS = {JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3, JSTL_CORE_URI_JAVAEE_7};
   @NonNls public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
   @NonNls public static final String JSF_HTML_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/html";
-  @NonNls public static final String[] JSF_HTML_URIS = {JSF_HTML_URI, JSF_HTML_URI_JAVAEE_7};
+
+  @NonNls public static final String JSF_HTML_URI_JAKARTA_10 = "jakarta.faces.html";
+  @NonNls public static final String[] JSF_HTML_URIS = {JSF_HTML_URI, JSF_HTML_URI_JAVAEE_7,JSF_HTML_URI_JAKARTA_10};
   @NonNls public static final String JSF_CORE_URI = "http://java.sun.com/jsf/core";
   @NonNls public static final String JSF_CORE_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/core";
-  @NonNls public static final String[] JSF_CORE_URIS = {JSF_CORE_URI, JSF_CORE_URI_JAVAEE_7};
+
+  @NonNls public static final String JSF_CORE_URI_JAKARTA_10 = "jakarta.faces.core";
+  @NonNls public static final String[] JSF_CORE_URIS = {JSF_CORE_URI, JSF_CORE_URI_JAVAEE_7, JSF_CORE_URI_JAKARTA_10};
   @NonNls public static final String JSF_PASS_THROUGH_ATTR_URI_JAVAEE7 = "http://xmlns.jcp.org/jsf";
   @NonNls public static final String JSF_PASSTHROUGH_URI = "http://xmlns.jcp.org/jsf/passthrough";
+
+  @NonNls public static final String JSF_PASSTHROUGH_URI_JAKARTA_10 = "jakarta.faces.passthrough";
+
+  @NonNls public static final String JSF_JAKARTA_TAGLIB_10 = "jakarta.faces";
+
+  @NonNls public static final String JSF_JAKARTA_FACELETS_10 = "jakarta.faces.facelets";
+
+  @NonNls public static final String JSF_JAKARTA_TAGS_TAGLIB_10 = "jakarta.tags.core";
+  @NonNls public static final String JSF_JAKARTA_FUNCTIONS_TAGLIB_10 = "jakarta.tags.functions";
+  @NonNls public static final String JSF_PASSTHROUGH_ATTR_URI_JAKARTA_10 = "jakarta.faces.passthrough";
   @NonNls public static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
   @NonNls public static final String JSTL_FORMAT_URI2 = "http://java.sun.com/jstl/fmt";
   @NonNls public static final String SPRING_URI = "http://www.springframework.org/tags";
@@ -113,7 +127,8 @@ public final class XmlUtil {
       "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
   @NonNls public static final String FACELETS_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/facelets";
-  @NonNls public static final String[] FACELETS_URIS = {FACELETS_URI, FACELETS_URI_JAVAEE_7};
+
+  @NonNls public static final String[] FACELETS_URIS = {FACELETS_URI, FACELETS_URI_JAVAEE_7, JSF_JAKARTA_FACELETS_10};
   @NonNls public static final String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
   @NonNls public static final String JSTL_FUNCTIONS_URI2 = "http://java.sun.com/jstl/functions";
   @NonNls public static final String JSTL_FUNCTIONS_JAVAEE_7 = "http://xmlns.jcp.org/jsp/jstl/functions";

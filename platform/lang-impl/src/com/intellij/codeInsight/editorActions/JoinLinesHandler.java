@@ -8,9 +8,7 @@ import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -53,19 +51,18 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
   public void doExecute(@NotNull final Editor editor, @NotNull Caret caret, final DataContext dataContext) {
     if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
 
-    if (!(editor.getDocument() instanceof DocumentEx)) {
-      myOriginalHandler.execute(editor, caret, dataContext);
+    if (!(editor.getDocument() instanceof DocumentEx document)) {
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
       return;
     }
-    final DocumentEx doc = (DocumentEx)editor.getDocument();
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
-    if (project == null) return;
-
-    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
-    PsiFile psiFile = docManager.getPsiFile(doc);
-
+    Project project = editor.getProject();
+    PsiFile psiFile = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null) {
-      myOriginalHandler.execute(editor, caret, dataContext);
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
       return;
     }
 
@@ -73,12 +70,12 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
     int startLine = caretPosition.line;
     int endLine = startLine + 1;
     if (caret.hasSelection()) {
-      startLine = doc.getLineNumber(caret.getSelectionStart());
-      endLine = doc.getLineNumber(caret.getSelectionEnd());
-      if (doc.getLineStartOffset(endLine) == caret.getSelectionEnd()) endLine--;
+      startLine = document.getLineNumber(caret.getSelectionStart());
+      endLine = document.getLineNumber(caret.getSelectionEnd());
+      if (document.getLineStartOffset(endLine) == caret.getSelectionEnd()) endLine--;
     }
 
-    if (endLine >= doc.getLineCount()) return;
+    if (endLine >= document.getLineCount()) return;
 
     int lineCount = endLine - startLine;
     int line = startLine;
@@ -86,7 +83,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
     ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       LangBundle.message("progress.title.join.lines"), project, null, indicator -> {
         indicator.setIndeterminate(false);
-        JoinLineProcessor processor = new JoinLineProcessor(doc, psiFile, line, indicator);
+        JoinLineProcessor processor = new JoinLineProcessor(document, psiFile, line, indicator);
         processor.process(editor, caret, lineCount);
       });
   }

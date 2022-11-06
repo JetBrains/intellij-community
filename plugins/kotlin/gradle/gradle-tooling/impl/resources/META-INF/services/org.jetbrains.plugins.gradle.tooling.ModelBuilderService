@@ -7,5 +7,6 @@ org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModelBuilderService
 org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptModelBuilderService
 org.jetbrains.kotlin.idea.gradleTooling.model.noarg.NoArgModelBuilderService
 org.jetbrains.kotlin.idea.gradleTooling.model.samWithReceiver.SamWithReceiverModelBuilderService
+org.jetbrains.kotlin.idea.gradleTooling.model.assignment.AssignmentModelBuilderService
 org.jetbrains.kotlin.idea.gradleTooling.model.parcelize.ParcelizeModelBuilderService
 org.jetbrains.kotlin.idea.gradleTooling.model.lombok.LombokModelBuilderService

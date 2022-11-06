@@ -34,7 +34,7 @@ import java.util.prefs.Preferences
 @Service(Service.Level.APP)
 class EventLogConfiguration {
   companion object {
-    internal val LOG = Logger.getInstance(EventLogConfiguration::class.java)
+    internal val LOG: Logger = Logger.getInstance(EventLogConfiguration::class.java)
 
     internal const val UNDEFINED_DEVICE_ID = "000000000000000-0000-0000-0000-000000000000"
 
@@ -57,9 +57,9 @@ class EventLogConfiguration {
       return StringUtil.toHexString(md.digest())
     }
 
-    public fun getOrGenerateSaltFromPrefs(recorderId: String): ByteArray{
+    fun getOrGenerateSaltFromPrefs(recorderId: String): ByteArray{
       val companyName = ApplicationInfoImpl.getShadowInstance().shortCompanyName
-      val name = if (StringUtil.isEmptyOrSpaces(companyName)) "jetbrains" else companyName.toLowerCase(Locale.US)
+      val name = if (StringUtil.isEmptyOrSpaces(companyName)) "jetbrains" else companyName.lowercase(Locale.US)
       val prefs = Preferences.userRoot().node(name)
 
       val saltKey = getSaltPropertyKey(recorderId)
@@ -91,7 +91,7 @@ class EventLogConfiguration {
       return FUS_RECORDER == recorderId
     }
 
-    internal fun getSaltPropertyKey(recorderId: String): String {
+    private fun getSaltPropertyKey(recorderId: String): String {
       return if (isDefaultRecorderId(recorderId)) SALT_PREFERENCE_KEY else StringUtil.toLowerCase(recorderId) + "_" + SALT_PREFERENCE_KEY
     }
   }
@@ -157,11 +157,13 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   val machineId: MachineId
     get() = machineIdReference.getValue()
 
-  val maxFilesToSend: Int = getMaxFilesToSend()
+  val maxFilesToSend: Int = computeMaxFilesToSend()
 
   init {
-    val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
-    machineIdReference = AtomicLazyValue { generateMachineId(configOptions.machineIdSalt, configOptions.machineIdRevision) }
+    machineIdReference = AtomicLazyValue {
+      val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
+      generateMachineId(configOptions.machineIdSalt, configOptions.machineIdRevision)
+    }
 
     EventLogConfigOptionsService.TOPIC.subscribe(null, object : EventLogRecorderConfigOptionsListener(recorderId) {
       override fun onMachineIdConfigurationChanged(salt: @Nullable String?, revision: Int) {
@@ -181,10 +183,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       return MachineId.DISABLED
     }
     val revision = if (value >= 0) value else DEFAULT_ID_REVISION
-    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrains$recorderId", salt)
-    if (machineId == null) {
-      return MachineId.UNKNOWN
-    }
+    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrains$recorderId", salt) ?: return MachineId.UNKNOWN
     return MachineId(machineId, revision)
   }
 
@@ -233,7 +232,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   /**
    * Returns the number of files that could be sent at once or -1 if there is no limit
    */
-  internal fun getMaxFilesToSend(): Int {
+  private fun computeMaxFilesToSend(): Int {
     val app = ApplicationManager.getApplication()
     if (app != null && app.isHeadlessEnvironment) {
       val property = eventLogConfiguration.getHeadlessMaxFilesToSendProperty(recorderId)

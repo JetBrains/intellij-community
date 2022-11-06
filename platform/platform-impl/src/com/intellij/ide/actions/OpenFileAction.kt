@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.lightEdit.*
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ActionsBundle
@@ -15,6 +14,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -22,6 +22,8 @@ import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -77,7 +79,9 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
           return@chooseFiles
         }
       }
-      runBlockingUnderModalProgress {
+      @Suppress("DialogTitleCapitalization")
+      runBlockingModal(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+                       title = IdeBundle.message("title.open.project")) {
         for (file in files) {
           doOpenFile(project, file)
         }
@@ -85,13 +89,15 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
     }
   }
 
-  internal class OnWelcomeScreen : OpenFileAction() {
+  @Suppress("unused")
+  private class OnWelcomeScreen : OpenFileAction() {
     override fun update(e: AnActionEvent) {
       val presentation = e.presentation
       if (!NewWelcomeScreen.isNewWelcomeScreen(e)) {
         presentation.isEnabledAndVisible = false
         return
       }
+
       if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.icon = AllIcons.Welcome.Open
         presentation.selectedIcon = AllIcons.Welcome.OpenSelected
@@ -143,46 +149,48 @@ private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(
   override fun isChooseMultiple() = true
 }
 
-private suspend fun doOpenFile(project: Project?, file: VirtualFile) {
-  val filePath = file.toNioPath()
-  if (Files.isDirectory(filePath)) {
+private suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
+  val file = virtualFile.toNioPath()
+  if (Files.isDirectory(file)) {
     @Suppress("TestOnlyProblems")
-    ProjectUtil.openExistingDir(filePath, project)
+    ProjectUtil.openExistingDir(file, project)
     return
   }
 
   // try to open as a project - unless the file is an .ipr of the current one
-  if ((project == null || file != project.projectFile) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
-    val answer = shouldOpenNewProject(project, file)
+  if ((project == null || virtualFile != project.projectFile) && OpenProjectFileChooserDescriptor.isProjectFile(virtualFile)) {
+    val answer = shouldOpenNewProject(project, virtualFile)
     if (answer == Messages.CANCEL) {
       return
     }
     else if (answer == Messages.YES) {
-      val openedProject = ProjectUtil.openOrImportAsync(filePath, OpenProjectTask { projectToClose = project })
+      val openedProject = ProjectUtil.openOrImportAsync(file, OpenProjectTask { projectToClose = project })
       openedProject?.let {
-        FileChooserUtil.setLastOpenedFile(it, filePath)
+        FileChooserUtil.setLastOpenedFile(it, file)
       }
       return
     }
   }
 
-  LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, file)
-  FileTypeChooser.getKnownFileTypeOrAssociate(file, project) ?: return
-  if (project != null && !project.isDefault) {
-    NonProjectFileWritingAccessProvider.allowWriting(listOf(file))
+  LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
+  readAction {
+    FileTypeChooser.getKnownFileTypeOrAssociate(virtualFile, project)
+  } ?: return
+  if (project == null || project.isDefault) {
+    PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(file, OpenProjectTask { projectToClose = project })
+  }
+  else {
+    NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))
     if (LightEdit.owns(project)) {
-      LightEditService.getInstance().openFile(file)
+      LightEditService.getInstance().openFile(virtualFile)
       LightEditFeatureUsagesUtil.logFileOpen(project, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction)
     }
     else {
-      val navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
+      val navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
       withContext(Dispatchers.EDT) {
         navigatable.navigate(true)
       }
     }
-  }
-  else {
-    PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(filePath, OpenProjectTask { projectToClose = project })
   }
 }
 

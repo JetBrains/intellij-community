@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.google.common.collect.Lists;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -56,10 +56,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.context.Scope;
 import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.CalledInAny;
@@ -81,6 +78,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
+import static com.intellij.diagnostic.telemetry.TraceKt.*;
+import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
+import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_FAILED;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_SUCCESSFUL;
@@ -435,46 +435,52 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private ShelvedChangeList createShelfFromChanges(@NotNull Collection<? extends Change> changes,
                                                    String commitMessage,
                                                    boolean markToBeDeleted,
-                                                   boolean honorExcludedFromCommit)
-    throws IOException, VcsException {
-
+                                                   boolean honorExcludedFromCommit) throws VcsException, IOException {
     LOG.debug("Shelving of " + changes.size() + " changes...");
-    Span totalSpan = myTracer.spanBuilder("total shelving").setAttribute("changesSize", changes.size()).startSpan();
-    Scope scope = totalSpan.makeCurrent();
 
-    Path schemePatchDir = generateUniqueSchemePatchDir(commitMessage, true);
-    List<Change> textChanges = new ArrayList<>();
-    final List<ShelvedBinaryFile> binaryFiles = new ArrayList<>();
-    for (Change change : changes) {
-      if (ChangesUtil.getFilePath(change).isDirectory()) {
-        continue;
-      }
-      if (IdeaTextPatchBuilder.isBinaryRevision(change.getBeforeRevision()) ||
-          IdeaTextPatchBuilder.isBinaryRevision(change.getAfterRevision())) {
-        binaryFiles.add(shelveBinaryFile(schemePatchDir, change));
-      }
-      else {
-        textChanges.add(change);
-      }
+    try {
+      return computeWithSpanThrows(myTracer, "total shelving", (span) -> {
+        span.setAttribute("changesSize", changes.size());
+
+        Path schemePatchDir = generateUniqueSchemePatchDir(commitMessage, true);
+        List<Change> textChanges = new ArrayList<>();
+        final List<ShelvedBinaryFile> binaryFiles = new ArrayList<>();
+        for (Change change : changes) {
+          if (ChangesUtil.getFilePath(change).isDirectory()) {
+            continue;
+          }
+          if (IdeaTextPatchBuilder.isBinaryRevision(change.getBeforeRevision()) ||
+              IdeaTextPatchBuilder.isBinaryRevision(change.getAfterRevision())) {
+            binaryFiles.add(shelveBinaryFile(schemePatchDir, change));
+          }
+          else {
+            textChanges.add(change);
+          }
+        }
+
+        Path patchFile = getPatchFileInConfigDir(schemePatchDir);
+        List<FilePatch> patches = new ArrayList<>(buildAndSavePatchInBatches(patchFile, textChanges, honorExcludedFromCommit));
+
+        ShelvedChangeList changeList = new ShelvedChangeList(patchFile, commitMessage.replace('\n', ' '), binaryFiles,
+                                                             createShelvedChangesFromFilePatches(myProject, patchFile, patches));
+        changeList.markToDelete(markToBeDeleted);
+        changeList.setName(schemePatchDir.getFileName().toString());
+        ProgressManager.checkCanceled();
+        mySchemeManager.addScheme(changeList, false);
+        return changeList;
+      });
     }
-
-    Path patchFile = getPatchFileInConfigDir(schemePatchDir);
-    List<FilePatch> patches = new ArrayList<>(buildAndSavePatchInBatches(patchFile, textChanges, honorExcludedFromCommit));
-
-    ShelvedChangeList changeList = new ShelvedChangeList(patchFile, commitMessage.replace('\n', ' '), binaryFiles,
-                                                         createShelvedChangesFromFilePatches(myProject, patchFile, patches));
-    changeList.markToDelete(markToBeDeleted);
-    changeList.setName(schemePatchDir.getFileName().toString());
-    ProgressManager.checkCanceled();
-    mySchemeManager.addScheme(changeList, false);
-    totalSpan.end();
-    scope.close();
-    return changeList;
+    catch (IOException | VcsException | RuntimeException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private List<FilePatch> buildAndSavePatchInBatches(@NotNull Path patchFile,
                                                      @NotNull List<Change> textChanges,
-                                                     boolean honorExcludedFromCommit) throws VcsException, IOException {
+                                                     boolean honorExcludedFromCommit) throws IOException, VcsException {
     List<FilePatch> patches = new ArrayList<>();
     if (textChanges.isEmpty()) {
       savePatchFile(myProject, patchFile, patches, null, new CommitContext());
@@ -487,34 +493,47 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     List<List<Change>> partition = Lists.partition(textChanges, partitionSize);
     for (List<Change> list : partition) {
       batchIndex++;
-      Span mainSpan = myTracer.spanBuilder("batch shelving").setAttribute("batch", batchIndex).startSpan();
-      try (Scope ignored = mainSpan.makeCurrent()) {
-        if (baseContentsPreloadSize > 0) {
-          Span span = myTracer.spanBuilder("preloading base revisions").setAttribute("changesSize", list.size()).startSpan();
-          preloadBaseRevisions(list);
-          span.end();
-        }
+      int finalBatchIndex = batchIndex;
+      try {
+        runWithSpanThrows(myTracer, "batch shelving", (span) -> {
+          span.setAttribute("batch", finalBatchIndex);
 
-        ProgressManager.checkCanceled();
-        Span spanBuildingPatches = myTracer.spanBuilder("building patches").startSpan();
-        patches.addAll(IdeaTextPatchBuilder
-                         .buildPatch(myProject, list, ProjectKt.getStateStore(myProject).getProjectBasePath(), false,
-                                     honorExcludedFromCommit));
-        spanBuildingPatches.end();
-        ProgressManager.checkCanceled();
+          try {
+            if (baseContentsPreloadSize > 0) {
+              runWithSpan(myTracer, "preloading base revisions", (preloadSpan) -> {
+                preloadSpan.setAttribute("changesSize", list.size());
+                preloadBaseRevisions(list);
+              });
+            }
 
-        Span spanStoringBaseRevisions = myTracer.spanBuilder("storing base revisions").startSpan();
-        CommitContext commitContext = new CommitContext();
-        baseRevisionsOfDvcsIntoContext(list, commitContext);
-        spanStoringBaseRevisions.end();
+            ProgressManager.checkCanceled();
+            runWithSpanThrows(myTracer, "building patches", (__) -> {
+              patches.addAll(IdeaTextPatchBuilder
+                               .buildPatch(myProject, list, ProjectKt.getStateStore(myProject).getProjectBasePath(), false,
+                                           honorExcludedFromCommit));
+            });
+            ProgressManager.checkCanceled();
 
-        Span spanSavingPatchFile = myTracer.spanBuilder("saving patch file").startSpan();
-        savePatchFile(myProject, patchFile, patches, null, commitContext);
-        spanSavingPatchFile.end();
+            CommitContext commitContext = computeWithSpan(myTracer, "storing base revisions", (__) -> {
+              CommitContext context = new CommitContext();
+              baseRevisionsOfDvcsIntoContext(list, context);
+              return context;
+            });
+
+            runWithSpanThrows(myTracer, "saving patch file", (__) -> {
+              savePatchFile(myProject, patchFile, patches, null, commitContext);
+            });
+          }
+          finally {
+            ProjectLevelVcsManager.getInstance(myProject).getContentRevisionCache().clearConstantCache();
+          }
+        });
       }
-      finally {
-        ProjectLevelVcsManager.getInstance(myProject).getContentRevisionCache().clearConstantCache();
-        mainSpan.end();
+      catch (IOException | VcsException | RuntimeException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     }
     return patches;
@@ -547,10 +566,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private void rollbackChangesAfterShelve(@NotNull Collection<? extends Change> changes, boolean honorExcludedFromCommit) {
     final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
-    Span span = myTracer.spanBuilder("rollback after shelve").startSpan();
-    new RollbackWorker(myProject, operationName, modalContext)
-      .doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"), honorExcludedFromCommit);
-    span.end();
+    runWithSpan(myTracer, "rollback after shelve", (__) -> {
+      new RollbackWorker(myProject, operationName, modalContext)
+        .doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"), honorExcludedFromCommit);
+    });
   }
 
   private static @NotNull Path getPatchFileInConfigDir(@NotNull Path schemePatchDir) {
@@ -570,7 +589,6 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
           toKeep.put(filePath, change.getBeforeRevision());
         }
       }
-      commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, true);
       commitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisions, toKeep);
     }
   }
@@ -601,8 +619,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   private boolean dvcsUsedInProject() {
-    return Arrays.stream(ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()).
-      anyMatch(vcs -> VcsType.distributed.equals(vcs.getType()));
+    return ContainerUtil.exists(ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss(),
+                                vcs -> VcsType.distributed.equals(vcs.getType()));
   }
 
   public @NotNull ShelvedChangeList importFilePatches(String fileName,
@@ -773,6 +791,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     List<FilePatch> remainingPatches = new ArrayList<>();
 
     CommitContext commitContext = new CommitContext();
+    commitContext.putUserData(BaseRevisionTextPatchEP.ourProvideStoredBaseRevisionTextKey, true);
+
     List<TextFilePatch> textFilePatches;
     try {
       textFilePatches = loadTextPatches(myProject, changeList, changes, remainingPatches, commitContext);
@@ -861,6 +881,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     remainingBinaries.removeAll(binaryFiles);
 
     final CommitContext commitContext = new CommitContext();
+    commitContext.putUserData(BaseRevisionTextPatchEP.ourProvideStoredBaseRevisionTextKey, true);
+
     final List<FilePatch> remainingPatches = new ArrayList<>();
     try {
       loadTextPatches(myProject, list, changes, remainingPatches, commitContext);
@@ -1197,7 +1219,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       //changes should be loaded
       saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
 
-      removeFromListWithChanges(listCopy, Objects.requireNonNull(changeList.getChanges()), changeList.getBinaryFiles());
+      removeFromListWithChanges(listCopy, Objects.requireNonNull(changeList.getChanges()), changeList.getBinaryFiles(), commitContext);
       if (delete) {
         markChangeListAsDeleted(listCopy);
       }
@@ -1288,14 +1310,14 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   private void removeFromListWithChanges(@NotNull final ShelvedChangeList listCopy,
                                          @NotNull List<ShelvedChange> shelvedChanges,
-                                         @NotNull List<? extends ShelvedBinaryFile> shelvedBinaryChanges) {
+                                         @NotNull List<? extends ShelvedBinaryFile> shelvedBinaryChanges,
+                                         @NotNull CommitContext commitContext) {
     //listCopy should contain loaded changes
     removeBinaries(listCopy, shelvedBinaryChanges);
     removeChanges(listCopy, shelvedChanges);
 
     // create patch file based on filtered changes
     try {
-      final CommitContext commitContext = new CommitContext();
       final List<FilePatch> patches = new ArrayList<>();
       List<TextFilePatch> filePatches = loadPatches(myProject, listCopy.path, commitContext);
       for (ShelvedChange change : Objects.requireNonNull(listCopy.getChanges())) {

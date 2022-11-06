@@ -14,7 +14,7 @@ import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.getModuleLibraries
 import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
 import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
@@ -118,7 +118,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals("$projectUrl/out/test-util", utilJavaSettings.compilerOutputForTests?.url)
     val utilContentRoot = assertOneElement(utilModule.contentRoots.toList())
     assertEquals("$projectUrl/util", utilContentRoot.url.url)
-    assertEquals("$projectUrl/util/exc", assertOneElement(utilContentRoot.excludedUrls).url)
+    assertEquals("$projectUrl/util/exc", assertOneElement(utilContentRoot.excludedUrls).url.url)
     assertEquals(listOf("*.xml", "cvs"), utilContentRoot.excludedPatterns)
     val utilModuleSrc = assertOneElement(utilModule.sourceRoots.toList())
     assertEquals("$projectUrl/util/src", utilModuleSrc.url.url)

@@ -51,7 +51,7 @@ private fun <T : IkvIndexEntry> writeIkvIndex(unsortedEntries: Collection<T>,
       // write offsets in key index order
       val evaluator = RecSplitEvaluator(keyData, hash, settings)
       keyData.flip()
-      val sortedEntries = unsortedEntries.sortedWith(Comparator { o1, o2 -> evaluator.evaluate(o1).compareTo(evaluator.evaluate(o2)) })
+      val sortedEntries = unsortedEntries.sortedWith { o1, o2 -> evaluator.evaluate(o1).compareTo(evaluator.evaluate(o2)) }
 
       if (writeSize) {
         val longBuffer = buffer.asLongBuffer()

@@ -205,9 +205,11 @@ public final class HtmlUtil {
       }
       else if (parent instanceof HtmlDocumentImpl) {
         final XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
-        for (XmlElementDescriptor elementDescriptor : nsDescriptor.getRootElementsDescriptors((XmlDocument)parent)) {
-          if (isHtmlBlockTag(elementDescriptor.getName()) && !variants.contains(elementDescriptor)) {
-            variants.add(elementDescriptor);
+        if (nsDescriptor != null) {
+          for (XmlElementDescriptor elementDescriptor : nsDescriptor.getRootElementsDescriptors((XmlDocument)parent)) {
+            if (isHtmlBlockTag(elementDescriptor.getName()) && !variants.contains(elementDescriptor)) {
+              variants.add(elementDescriptor);
+            }
           }
         }
       }

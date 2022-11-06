@@ -2,12 +2,13 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -20,7 +21,7 @@ interface ParentWithNullsMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentWithNullsMultiple, ModifiableWorkspaceEntity<ParentWithNullsMultiple>, ObjBuilder<ParentWithNullsMultiple> {
+  interface Builder : ParentWithNullsMultiple, WorkspaceEntity.Builder<ParentWithNullsMultiple>, ObjBuilder<ParentWithNullsMultiple> {
     override var entitySource: EntitySource
     override var parentData: String
     override var children: List<ChildWithNullsMultiple>
@@ -50,7 +51,7 @@ interface ChildWithNullsMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildWithNullsMultiple, ModifiableWorkspaceEntity<ChildWithNullsMultiple>, ObjBuilder<ChildWithNullsMultiple> {
+  interface Builder : ChildWithNullsMultiple, WorkspaceEntity.Builder<ChildWithNullsMultiple>, ObjBuilder<ChildWithNullsMultiple> {
     override var entitySource: EntitySource
     override var childData: String
   }

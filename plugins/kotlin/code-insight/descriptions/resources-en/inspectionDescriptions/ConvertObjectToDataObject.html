@@ -1,0 +1,25 @@
+<html>
+<body>
+<p>Reports <code>object</code> that can be converted to <code>data object</code></p>
+<p><code>data object</code> auto-generates <code>toString</code>, <code>equals</code>, <code>hashCode</code> and <code>readResolve</code> if
+    the <code>object</code> is annotated with <code>java.io.Serializable</code></p>
+<p>The inspection suggests to convert <code>object</code> to <code>data object</code> in 3 cases:</p>
+<ul>
+    <li>When custom <code>toString</code> returns name of the class</li>
+    <li>When <code>object</code> implements <code>java.io.Serializable</code></li>
+    <li>When <code>object</code> inherits sealed <code>class</code>/<code>interface</code></li>
+</ul>
+<p><b>Example:</b></p>
+<pre><code>
+    object Foo {
+        override fun toString(): String = "Foo"
+    }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+    data object Foo
+</code></pre>
+<!-- tooltip end -->
+<p>This inspection only reports if the Kotlin language level of the project or module is 1.8 or higher</p>
+</body>
+</html>

@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.rename.VariableInplaceRenameHandlerWithFinishHook
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.match

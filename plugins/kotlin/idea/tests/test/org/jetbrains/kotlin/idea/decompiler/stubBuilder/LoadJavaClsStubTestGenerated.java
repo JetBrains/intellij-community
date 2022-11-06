@@ -445,6 +445,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotationInArray.kt"));
             }
 
+            @TestMetadata("AnnotationOnTypeParameter.kt")
+            public void testAnnotationOnTypeParameter() throws Exception {
+                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotationOnTypeParameter.kt"));
+            }
+
             @TestMetadata("ClassLiteralArguments.kt")
             public void testClassLiteralArguments() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/ClassLiteralArguments.kt"));
@@ -1018,6 +1023,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @TestMetadata("Basic.kt")
         public void testBasic() throws Exception {
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/coroutines/Basic.kt"));
+        }
+
+        @TestMetadata("TypeAliasFTSuspendWithReceiver.kt")
+        public void testTypeAliasFTSuspendWithReceiver() throws Exception {
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/coroutines/TypeAliasFTSuspendWithReceiver.kt"));
         }
     }
 

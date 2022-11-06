@@ -74,7 +74,10 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
         WslPathBrowser(object : TextAccessor {
           override fun setText(text: String) = textComponentAccessor.setText(component, text)
           override fun getText() = textComponentAccessor.getText(component)
-        }).browsePath(it, component, accessWindowsFs = targetBrowserHints.showLocalFsInBrowser)
+        }).browsePath(it,
+                      component,
+                      accessWindowsFs = targetBrowserHints.showLocalFsInBrowser,
+                      customFileDescriptor = targetBrowserHints.customFileChooserDescriptor)
         return@ActionListener
       }
     }

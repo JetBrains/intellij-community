@@ -71,6 +71,18 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
+  <template name="itm" value="for (java.util.Map.Entry&lt;$KEY_TYPE$, $VALUE_TYPE$&gt; $ENTRY$: $MAP$.entrySet()) {&#10;  $KEY_TYPE$ $KEY$ = $ENTRY$.getKey();&#10;  $VALUE_TYPE$ $VALUE$ = $ENTRY$.getValue();&#10;  $END$&#10;}"
+            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.itm" toReformat="true" toShortenFQNames="true">
+    <variable name="MAP" expression="variableOfType(&quot;java.util.Map&quot;)" defaultValue="&quot;map&quot;" alwaysStopAt="true" />
+    <variable name="KEY_TYPE" expression="typeParameterOf(MAP,&quot;0&quot;)" defaultValue="" alwaysStopAt="false" />
+    <variable name="VALUE_TYPE" expression="typeParameterOf(MAP,&quot;1&quot;)" defaultValue="" alwaysStopAt="false" />
+    <variable name="ENTRY" expression="suggestVariableName()" defaultValue="&quot;entry&quot;" alwaysStopAt="true" />
+    <variable name="KEY" expression="suggestVariableName()" defaultValue="&quot;key&quot;" alwaysStopAt="true" />
+    <variable name="VALUE" expression="suggestVariableName()" defaultValue="&quot;value&quot;" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_STATEMENT" value="true" />
+    </context>
+  </template>
   <template name="ittok" value="for (java.util.StringTokenizer $TOKENIZER$ = new java.util.StringTokenizer($STRING$); $TOKENIZER$.hasMoreTokens(); ) {&#10;    String $VAR$ = $TOKENIZER_COPY$.nextToken();&#10;    $END$&#10;}&#10;"
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.ittok" toReformat="true" toShortenFQNames="true">
     <variable name="TOKENIZER" expression="suggestVariableName()" defaultValue="&quot;tokenizer&quot;" alwaysStopAt="true" />
@@ -280,24 +292,7 @@
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutp"
             name="soutp" toReformat="true" toShortenFQNames="true" value="System.out.println($FORMAT$);">
-    <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;import com.intellij.psi.*;import com.intellij.psi.util.PsiTreeUtil; def file = PsiDocumentManager.getInstance(_editor.project).getPsiFile(_editor.document); PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, _editor.caretModel.offset, PsiMethod.class, false); PsiParameter[] parameters = method == null ? PsiParameter.EMPTY_ARRAY : method.parameterList.parameters; return parameters.size() == 0 ? '' : '\&quot;' + parameters.collect { def prefix = it.name + ' = '; def type = it.type; return type instanceof PsiArrayType ? type.componentType instanceof PsiPrimitiveType ? prefix + '\&quot; + java.util.Arrays.toString(' + it.name + ')' : prefix + '\&quot; + java.util.Arrays.deepToString(' + it.name + ')' : prefix + '\&quot; + ' + it.name }.join(' + \&quot;, ')&quot;, methodParameters())" name="FORMAT" />
-    <!--
-    import com.intellij.psi.*
-    import com.intellij.psi.util.PsiTreeUtil
-    
-    def file = PsiDocumentManager.getInstance(_editor.project).getPsiFile(_editor.document)
-    PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, _editor.caretModel.offset, PsiMethod.class, false)
-    PsiParameter[] parameters = method == null ? PsiParameter.EMPTY_ARRAY : method.parameterList.parameters
-    return parameters.size() == 0 ? '' : '"' + parameters.collect {
-      def prefix = it.name + ' = '
-      def type = it.type
-      return type instanceof PsiArrayType
-        ? type.componentType instanceof PsiPrimitiveType
-               ? prefix + '" + java.util.Arrays.toString(' + it.name + ')'
-               : prefix + '" + java.util.Arrays.deepToString(' + it.name + ')'
-        : prefix + '" + ' + it.name
-    }.join(' + ", ')
-    -->
+    <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;_1.isEmpty() ? '' : '\&quot;' + _1.withIndex().collect { el, index -> el + ' = \&quot; + ' + (_2[index].indexOf('[') > 0 ? (_2[index].lastIndexOf('[') != _2[index].indexOf('[') ? 'java.util.Arrays.deepToString(' : 'java.util.Arrays.toString(') + el + ')' : el) }.join(' + \&quot;, ')&quot;, methodParameters(), methodParameterTypes())" name="FORMAT" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />

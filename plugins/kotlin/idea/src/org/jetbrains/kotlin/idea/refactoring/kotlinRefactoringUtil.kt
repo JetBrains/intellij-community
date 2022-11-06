@@ -49,29 +49,21 @@ import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.VisibilityUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.asJava.getAccessorLightMethods
-import org.jetbrains.kotlin.asJava.isSyntheticValuesOrValueOfMethod
-import org.jetbrains.kotlin.asJava.namedUnwrappedElement
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.collapseSpaces
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
@@ -83,8 +75,7 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.rename.canonicalRender
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.actualsForExpected
-import org.jetbrains.kotlin.idea.util.application.invokeLater
+import com.intellij.openapi.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -104,9 +95,9 @@ import java.util.*
 import javax.swing.Icon
 import kotlin.math.min
 import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
-import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 
 const val CHECK_SUPER_METHODS_YES_NO_DIALOG = "CHECK_SUPER_METHODS_YES_NO_DIALOG"
 
@@ -782,8 +773,6 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
     else -> false
 }
 
-fun KtNamedDeclaration.isConstructorDeclaredProperty() = this is KtParameter && ownerFunction is KtPrimaryConstructor && hasValOrVar()
-
 fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     changeInfo: KotlinChangeInfo,
     originalList: ListType,
@@ -1084,12 +1073,6 @@ fun checkSuperMethodsWithPopup(
 fun KtNamedDeclaration.isCompanionMemberOf(klass: KtClassOrObject): Boolean {
     val containingObject = containingClassOrObject as? KtObjectDeclaration ?: return false
     return containingObject.isCompanion() && containingObject.containingClassOrObject == klass
-}
-
-internal fun KtDeclaration.withExpectedActuals(): List<KtDeclaration> {
-    val expect = liftToExpected() ?: return listOf(this)
-    val actuals = expect.actualsForExpected()
-    return listOf(expect) + actuals
 }
 
 internal fun KtDeclaration.resolveToExpectedDescriptorIfPossible(): DeclarationDescriptor {

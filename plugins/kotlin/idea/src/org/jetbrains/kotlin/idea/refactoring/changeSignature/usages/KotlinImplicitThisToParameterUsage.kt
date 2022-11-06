@@ -32,9 +32,9 @@ abstract class KotlinImplicitReceiverUsage(callElement: KtElement) : KotlinUsage
 }
 
 class KotlinImplicitThisToParameterUsage(
-    callElement: KtElement,
-    val parameterInfo: KotlinParameterInfo,
-    val containingCallable: KotlinCallableDefinitionUsage<*>
+  callElement: KtElement,
+  val parameterInfo: KotlinParameterInfo,
+  private val containingCallable: KotlinCallableDefinitionUsage<*>
 ) : KotlinImplicitReceiverUsage(callElement) {
     override fun getNewReceiverText(): String = parameterInfo.getInheritedName(containingCallable)
 

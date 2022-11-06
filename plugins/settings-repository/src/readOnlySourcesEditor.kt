@@ -1,15 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.panel
 import com.intellij.util.Function
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
@@ -18,8 +21,9 @@ import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.table.TableModelEditor
-import org.jetbrains.settingsRepository.git.asProgressMonitor
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.settingsRepository.git.cloneBare
+import org.jetbrains.settingsRepository.git.progressMonitor
 import kotlin.properties.Delegates.notNull
 
 private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
@@ -99,17 +103,15 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         return
       }
 
-      runModalTask(icsMessage("task.sync.title")) { indicator ->
-        indicator.isIndeterminate = true
-
+      runBlockingModal(ModalTaskOwner.guess(), icsMessage ("task.sync.title")) {
         val root = icsManager.readOnlySourcesManager.rootDir
 
         if (toDelete.isNotEmpty()) {
-          indicator.text = icsMessage("progress.deleting.old.repositories")
+          progressSink?.text(icsMessage("progress.deleting.old.repositories"))
           for (path in toDelete) {
-            indicator.checkCanceled()
+            ensureActive()
             LOG.runAndLogException {
-              indicator.text2 = path
+              progressSink?.details(path)
               root.resolve(path).delete()
             }
           }
@@ -117,14 +119,17 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
 
         if (toCheckout.isNotEmpty()) {
           for (source in toCheckout) {
-            indicator.checkCanceled()
+            ensureActive()
             LOG.runAndLogException {
-              indicator.text = icsMessage("progress.cloning.repository", source.url!!.trimMiddle(255))
+              progressSink?.text(icsMessage("progress.cloning.repository", source.url!!.trimMiddle(255)))
               val dir = root.resolve(source.path!!)
               if (dir.exists()) {
                 dir.delete()
               }
-              cloneBare(source.url!!, dir, icsManager.credentialsStore, indicator.asProgressMonitor()).close()
+              val progressMonitor = progressMonitor()
+              blockingContext {
+                cloneBare(source.url!!, dir, icsManager.credentialsStore, progressMonitor).close()
+              }
             }
           }
         }

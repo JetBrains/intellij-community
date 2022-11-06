@@ -88,7 +88,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       Document document = descriptor.getPsiElement().getContainingFile().getViewProvider().getDocument();
       if (document != null) {
         document.replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), String.valueOf(c));
@@ -136,7 +136,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
         }
         int nextChar = i + 1;
         while (nextChar < length && text.charAt(nextChar) == 'u') {
-          nextChar++; // \\uuuu0061 is a legal Unicode escape
+          nextChar++; // \uuuuFFFD is a legal Unicode escape
         }
         if (nextChar == i + 1 || nextChar + 3 >= length) {
           continue;

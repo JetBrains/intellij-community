@@ -1,8 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Point
 import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import javax.swing.Icon
@@ -28,7 +32,9 @@ abstract class ToolbarComboWidget: JComponent() {
     isOpaque = false
   }
 
-  abstract fun doExpand(e: InputEvent)
+  open fun updateWidget() {}
+
+  abstract fun doExpand(e: InputEvent?)
 
   override fun getUIClassID(): String {
     return "ToolbarComboWidgetUI"

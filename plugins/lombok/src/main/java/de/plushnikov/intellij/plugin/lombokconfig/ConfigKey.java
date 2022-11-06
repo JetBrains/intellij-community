@@ -21,10 +21,13 @@ public enum ConfigKey {
   TOSTRING_CALL_SUPER("lombok.toString.callSuper", "skip"),
   TOSTRING_DO_NOT_USE_GETTERS("lombok.toString.doNotUseGetters", "false"),
   TOSTRING_INCLUDE_FIELD_NAMES("lombok.toString.includeFieldNames", "true"),
+  TOSTRING_ONLY_EXPLICITLY_INCLUDED("lombok.toString.onlyExplicitlyIncluded", "false"),
 
   ACCESSORS_PREFIX("lombok.accessors.prefix", "", false),
   ACCESSORS_CHAIN("lombok.accessors.chain", "false"),
   ACCESSORS_FLUENT("lombok.accessors.fluent", "false"),
+  ACCESSORS_MAKE_FINAL("lombok.accessors.makeFinal", "false"),
+  ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION("lombok.accessors.capitalization", "BASIC"),
   GETTER_NO_IS_PREFIX("lombok.getter.noIsPrefix", "false"),
 
   SINGULAR_USE_GUAVA("lombok.singular.useGuava", "false"),

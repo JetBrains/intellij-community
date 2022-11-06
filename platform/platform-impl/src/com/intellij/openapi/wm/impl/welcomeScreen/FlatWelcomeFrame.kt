@@ -54,6 +54,7 @@ import net.miginfocom.swing.MigLayout
 import java.awt.*
 import java.awt.dnd.*
 import java.awt.event.*
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -110,7 +111,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.jMenuBar = WelcomeFrameMenuBar().setFrame(this)
+        rootPane.jMenuBar = WelcomeFrameMenuBar()
       }
       content.setContent(screen.welcomePanel)
     }
@@ -178,7 +179,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.jMenuBar = WelcomeFrameMenuBar().setFrame(this)
+        rootPane.jMenuBar = WelcomeFrameMenuBar()
       }
       content.setContent(screen.welcomePanel)
     }
@@ -236,9 +237,9 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
   override fun getStatusBar(): StatusBar? = null
 
-  override fun getCurrentAccessibleContext() = accessibleContext
+  override fun getCurrentAccessibleContext(): AccessibleContext? = accessibleContext
 
-  protected val welcomeFrameTitle: String
+  private val welcomeFrameTitle: String
     get() = WelcomeScreenComponentFactory.getApplicationTitle()
 
   @Suppress("unused")

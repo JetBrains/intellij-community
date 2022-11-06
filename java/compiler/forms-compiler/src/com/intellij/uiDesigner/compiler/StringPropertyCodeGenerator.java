@@ -70,15 +70,15 @@ public final class StringPropertyCodeGenerator extends PropertyCodeGenerator imp
                                         GetFontMethodProvider fontMethodProvider,
                                         final int componentLocal,
                                         final String formClassName) throws IOException, ClassNotFoundException {
-    if (!"text".equals(property.getName())) {
-      return false;
-    }
-    
     StringDescriptor propertyValue = (StringDescriptor)lwComponent.getPropertyValue(property);
     String key = propertyValue.getKey();
 
     if (key != null) {
       propertyValue.setFormClass(formClassName);
+    }
+
+    if (!"text".equals(property.getName())) {
+      return false;
     }
 
     InstrumentationClassFinder.PseudoClass abstractButtonClass = componentClass.getFinder().loadClass(AbstractButton.class.getName());

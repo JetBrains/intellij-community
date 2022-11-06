@@ -22,11 +22,11 @@ private val LOG get() = logger<OnDemandPluginFeatureEnablerImpl>()
 private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : PluginFeatureEnabler,
                                                                                Disposable {
 
-  private val coroutineScope = CoroutineScope(Job())
+  private val coroutineScope = CoroutineScope(SupervisorJob())
 
   override suspend fun enableSuggested(): Boolean {
     val application = ApplicationManager.getApplication()
-    LOG.assertTrue(!application.isDispatchThread && !application.isReadAccessAllowed
+    LOG.assertTrue(!application.isReadAccessAllowed
                    || application.isUnitTestMode)
 
     if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) {
@@ -36,7 +36,8 @@ private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : P
     coroutineContext.ensureActive()
 
     val featureService = PluginFeatureService.instance
-    val pluginEnabler = PluginEnabler.getInstance()
+    val pluginEnabler = PluginEnabler.getInstance() as? DynamicPluginEnabler
+                        ?: return false
     val pluginSet = PluginManagerCore.getPluginSet()
 
     val descriptors = UnknownFeaturesCollector.getInstance(project)
@@ -59,7 +60,7 @@ private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : P
     }
 
     return withContext(Dispatchers.EDT) {
-      val result = pluginEnabler.enable(descriptors)
+      val result = pluginEnabler.enable(descriptors, project)
 
       if (!application.isUnitTestMode) {
         notifyUser(descriptors)
@@ -69,7 +70,7 @@ private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : P
     }
   }
 
-  override fun enableSuggestedHelper() {
+  override fun scheduleEnableSuggested() {
     coroutineScope.launch(Dispatchers.IO) {
       enableSuggested()
     }

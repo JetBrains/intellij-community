@@ -17,9 +17,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,7 +115,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
           if (type instanceof PsiArrayType) {
             PsiClass enumClass = PsiUtil.resolveClassInClassTypeOnly(((PsiArrayType)type).getComponentType());
             if (enumClass != null && enumClass.isEnum()) {
-              List<PsiEnumConstant> constants = StreamEx.of(enumClass.getFields()).select(PsiEnumConstant.class).toList();
+              List<PsiEnumConstant> constants = ContainerUtil.filterIsInstance(enumClass.getFields(), PsiEnumConstant.class);
               return generatedList(loop, constants.size(), index -> enumClass.getQualifiedName() + "." + constants.get(index).getName());
             }
           }

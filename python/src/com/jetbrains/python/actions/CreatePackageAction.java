@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.actions;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateDirectoryOrPackageHandler;

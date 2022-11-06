@@ -1,21 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkByJavaFile
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkDescriptorsLeak
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     open fun doTest(testDataPath: String) {
         val testDataFile = File(testDataPath)
@@ -32,8 +32,7 @@ abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtur
             val ktClassOrObjects = UltraLightChecker.allClasses(file)
 
             if (checkByJavaFile) {
-                val classFabric = LightClassGenerationSupport.getInstance(project)
-                val classList = ktClassOrObjects.mapNotNull { classFabric.createUltraLightClass(it) }
+                val classList = ktClassOrObjects.mapNotNull { it.toLightClass() }
                 checkByJavaFile(testDataPath, classList)
                 classList.forEach { checkDescriptorsLeak(it) }
             } else {

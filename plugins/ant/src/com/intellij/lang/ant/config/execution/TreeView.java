@@ -375,21 +375,28 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      final MessageNode item = getSelectedItem();
+      return item != null? (DataProvider)id -> getSlowData(id, item) : null;
+    }
+    return null;
+  }
+
+  @Nullable
+  private Object getSlowData(@NonNls @NotNull String dataId, @NotNull final MessageNode item) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      MessageNode item = getSelectedItem();
-      if (item == null) return null;
       if (isValid(item.getFile())) {
         return PsiNavigationSupport.getInstance().createNavigatable(myProject, item.getFile(), item.getOffset());
       }
       if (item.getType() == AntBuildMessageView.MessageType.TARGET) {
         final Navigatable descriptor = getDescriptorForTargetNode(item);
-        if (descriptor != null && (descriptor.canNavigate())) {
+        if (descriptor != null && descriptor.canNavigate()) {
           return descriptor;
         }
       }
       if (item.getType() == AntBuildMessageView.MessageType.TASK) {
         final Navigatable descriptor = getDescriptorForTaskNode(item);
-        if (descriptor != null && (descriptor.canNavigate())) {
+        if (descriptor != null && descriptor.canNavigate()) {
           return descriptor;
         }
       }

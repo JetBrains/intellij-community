@@ -1,11 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.io.NioFiles
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.BundledRuntimeImpl.Companion.getProductPrefix
@@ -14,7 +20,7 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.minutes
 
 class LinuxDistributionBuilder(override val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
@@ -29,46 +35,51 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     iconPngPath = if (iconPng.isNullOrEmpty()) null else Path.of(iconPng)
   }
 
-  override fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
-    spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope {
-      val distBinDir = targetPath.resolve("bin")
-      val sourceBinDir = context.paths.communityHomeDir.communityRoot.resolve("bin/linux")
-      copyFileToDir(sourceBinDir.resolve("restart.py"), distBinDir)
-      if (arch == JvmArchitecture.x64 || arch == JvmArchitecture.aarch64) {
-        @Suppress("SpellCheckingInspection")
-        listOf("fsnotifier", "libdbm.so").forEach {
-          copyFileToDir(sourceBinDir.resolve("${arch.dirName}/${it}"), distBinDir)
+  override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
+    spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope2 {
+      withContext(Dispatchers.IO) {
+        val distBinDir = targetPath.resolve("bin")
+        val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
+        copyFileToDir(sourceBinDir.resolve("restart.py"), distBinDir)
+        if (arch == JvmArchitecture.x64 || arch == JvmArchitecture.aarch64) {
+          @Suppress("SpellCheckingInspection")
+          listOf("fsnotifier", "libdbm.so").forEach {
+            copyFileToDir(sourceBinDir.resolve("${arch.dirName}/${it}"), distBinDir)
+          }
         }
+        generateBuildTxt(context, targetPath)
+        copyDistFiles(context = context, newDir = targetPath, os = OsFamily.LINUX, arch = arch)
+        Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
+        //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
+        // for real installers we need to checkout all text files with 'lf' separators anyway
+        convertLineSeparators(targetPath.resolve("bin/idea.properties"), "\n")
+        if (iconPngPath != null) {
+          Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
+        }
+        generateVMOptions(distBinDir)
+        generateUnixScripts(distBinDir = distBinDir,
+                            os = OsFamily.LINUX,
+                            arch = arch,
+                            context = context)
+        generateReadme(targetPath)
+        generateVersionMarker(targetPath, context)
+        RepairUtilityBuilder.bundle(context = context, os = OsFamily.LINUX, arch = arch, distributionDir = targetPath)
+        customizer.copyAdditionalFiles(context = context, targetDir = targetPath, arch = arch)
       }
-      unpackPty4jNative(context, targetPath, "linux")
-      generateBuildTxt(context, targetPath)
-      copyDistFiles(context, targetPath)
-      val extraJarNames = addDbusJava(context, targetPath.resolve("lib"))
-      Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
-      //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
-      // for real installers we need to checkout all text files with 'lf' separators anyway
-      convertLineSeparators(targetPath.resolve("bin/idea.properties"), "\n")
-      if (iconPngPath != null) {
-        Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
-      }
-      generateVMOptions(distBinDir)
-      generateUnixScripts(context, extraJarNames, distBinDir, OsFamily.LINUX)
-      generateReadme(targetPath)
-      generateVersionMarker(targetPath, context)
-      RepairUtilityBuilder.bundle(context, OsFamily.LINUX, arch, targetPath)
-      customizer.copyAdditionalFiles(context = context, targetDir = targetPath, arch = arch)
     }
   }
 
-  override fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
+  override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
-      if (customizer.buildTarGzWithoutBundledRuntime &&
-          (arch == JvmArchitecture.x64 || !context.shouldBuildDistributionForOS(OsFamily.LINUX, JvmArchitecture.x64))) {
+      if (customizer.buildTarGzWithoutBundledRuntime) {
         context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
                             BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
-          val tarGzPath = buildTarGz(runtimeDir = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_JBR_SUFFIX)
+          val tarGzPath = buildTarGz(runtimeDir = null,
+                                     unixDistPath = osAndArchSpecificDistPath,
+                                     suffix = NO_JBR_SUFFIX + suffix,
+                                     arch = arch)
           checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = false)
         }
       }
@@ -77,22 +88,25 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       }
 
       val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
-      val tarGzPath = buildTarGz(runtimeDir, osAndArchSpecificDistPath, suffix)
+      val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix)
       checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = true)
 
       if (arch == JvmArchitecture.x64) {
-        buildSnapPackage(runtimeDir, osAndArchSpecificDistPath)
+        buildSnapPackage(runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
       }
       else {
         // TODO: Add snap for aarch64
-        context.messages.info("Skipping building Snap packages for non-x64 arch")
+        Span.current().addEvent("skip building Snap packages for non-x64 arch")
       }
 
       if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
         val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
         try {
           ArchiveUtils.unTar(tarGzPath, tempTar)
-          RepairUtilityBuilder.generateManifest(context, tempTar.resolve(rootDirectoryName), OsFamily.LINUX, arch)
+          RepairUtilityBuilder.generateManifest(context = context,
+                                                unpackedDistribution = tempTar.resolve(rootDirectoryName),
+                                                os = OsFamily.LINUX,
+                                                arch = arch)
         }
         finally {
           NioFiles.deleteRecursively(tempTar)
@@ -112,7 +126,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
   private fun generateReadme(unixDistPath: Path) {
     val fullName = context.applicationInfo.productName
-    val sourceFile = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
+    val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
     substituteTemplatePlaceholders(sourceFile, targetFile, "@@", listOf(
       Pair("product_full", fullName),
@@ -123,30 +137,18 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   }
 
   override fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
-    val patterns = ArrayList<String>()
-    patterns.addAll(listOf("bin/*.sh", "bin/*.py", "bin/fsnotifier*", "bin/remote-dev-server.sh"))
-    patterns.addAll(customizer.extraExecutables)
+    var patterns = persistentListOf("bin/*.sh", "plugins/**/*.sh", "bin/*.py", "bin/fsnotifier*")
+      .addAll(customizer.extraExecutables)
     if (includeRuntime) {
-      patterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX))
+      patterns = patterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX))
     }
-    return patterns
-  }
-
-  override fun getArtifactNames(context: BuildContext): List<String> {
-    val suffixes = ArrayList<String>()
-    if (customizer.buildTarGzWithoutBundledRuntime) {
-      suffixes.add(NO_JBR_SUFFIX)
-    }
-    if (!customizer.buildOnlyBareTarGz) {
-      suffixes.add("")
-    }
-    return suffixes.map { artifactName(context, it) }
+    return patterns.addAll(context.getExtraExecutablePattern(OsFamily.LINUX))
   }
 
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
 
-  private fun buildTarGz(runtimeDir: Path?, unixDistPath: Path, suffix: String): Path {
+  private fun buildTarGz(arch: JvmArchitecture, runtimeDir: Path?, unixDistPath: Path, suffix: String): Path {
     val tarRoot = rootDirectoryName
     val tarName = artifactName(context, suffix)
     val tarPath = context.paths.artifactDir.resolve(tarName)
@@ -159,7 +161,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     }
 
     val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json$suffix")
-    generateProductJson(productJsonDir, javaExecutablePath, context)
+    generateProductJson(targetDir = productJsonDir, arch = arch, javaExecutablePath = javaExecutablePath, context = context)
     paths.add(productJsonDir)
 
     val executableFilesPatterns = generateExecutableFilesPatterns(runtimeDir != null)
@@ -180,7 +182,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     return tarPath
   }
 
-  private fun buildSnapPackage(jreDirectoryPath: Path, unixDistPath: Path) {
+  private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
     val snapName = customizer.snapName ?: return
     if (!context.options.buildUnixSnaps) {
       return
@@ -200,7 +202,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         val appInfo = context.applicationInfo
         val productName = appInfo.productNameWithEdition
         substituteTemplatePlaceholders(
-          inputFile = context.paths.communityHomeDir.communityRoot.resolve("platform/platform-resources/src/entry.desktop"),
+          inputFile = context.paths.communityHomeDir.resolve("platform/platform-resources/src/entry.desktop"),
           outputFile = snapDir.resolve("$snapName.desktop"),
           placeholder = "$",
           values = listOf(
@@ -211,8 +213,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             Pair("WM_CLASS", getLinuxFrameClass(context))
           )
         )
-        moveFile(iconPngPath, snapDir.resolve("$snapName.png"))
-        val snapcraftTemplate = context.paths.communityHomeDir.communityRoot.resolve(
+        copyFile(iconPngPath, snapDir.resolve("$snapName.png"))
+        val snapcraftTemplate = context.paths.communityHomeDir.resolve(
           "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
         val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
         val version = "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
@@ -236,7 +238,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           .include("bin/fsnotifier*")
           .enumerate().forEach(::makeFileExecutable)
 
-        FileSet(jreDirectoryPath)
+        FileSet(runtimeDir)
           .include("jbr/bin/*")
           .enumerate().forEach(::makeFileExecutable)
 
@@ -247,9 +249,9 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             fs.enumerateNoAssertUnusedPatterns().forEach(::makeFileExecutable)
           }
         }
-        validateProductJson(jsonText = generateProductJson(unixSnapDistPath, "jbr/bin/java", context),
+        validateProductJson(jsonText = generateProductJson(unixSnapDistPath, arch = arch, "jbr/bin/java", context),
                             relativePathToProductJson = "",
-                            installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, jreDirectoryPath),
+                            installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, runtimeDir),
                             installationArchives = listOf(),
                             context = context)
         val resultDir = snapDir.resolve("result")
@@ -264,15 +266,14 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             "--volume=$snapDir/result:/build/result",
             "--volume=${context.paths.getDistAll()}:/build/dist.all:ro",
             "--volume=$unixSnapDistPath:/build/dist.unix:ro",
-            "--volume=$jreDirectoryPath:/build/jre:ro",
+            "--volume=$runtimeDir:/build/jre:ro",
             "--workdir=/build",
             context.options.snapDockerImage,
             "snapcraft",
             "snap", "-o", "result/$snapArtifact"
           ),
           workingDir = snapDir,
-          logger = context.messages,
-          timeoutMillis = TimeUnit.MINUTES.toMillis(context.options.snapDockerBuildTimeoutMin)
+          timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
         moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
         context.notifyArtifactWasBuilt(context.paths.artifactDir.resolve(snapArtifact))
@@ -282,20 +283,22 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
 private const val NO_JBR_SUFFIX = "-no-jbr"
 
-private fun generateProductJson(targetDir: Path, javaExecutablePath: String?, context: BuildContext): String {
+private fun generateProductJson(targetDir: Path, arch: JvmArchitecture, javaExecutablePath: String?, context: BuildContext): String {
   val scriptName = context.productProperties.baseFileName
   val file = targetDir.resolve(PRODUCT_INFO_FILE_NAME)
   Files.createDirectories(targetDir)
   val json = generateMultiPlatformProductJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
-    launch = listOf(ProductInfoLaunchData(os = OsFamily.LINUX.osName,
-                                          launcherPath = "bin/$scriptName.sh",
-                                          javaExecutablePath = javaExecutablePath,
-                                          vmOptionsFilePath = "bin/" + scriptName + "64.vmoptions",
-                                          startupWmClass = getLinuxFrameClass(context),
-                                          bootClassPathJarNames = context.bootClassPathJarNames,
-                                          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX))),
+    launch = listOf(ProductInfoLaunchData(
+      os = OsFamily.LINUX.osName,
+      arch = arch.dirName,
+      launcherPath = "bin/$scriptName.sh",
+      javaExecutablePath = javaExecutablePath,
+      vmOptionsFilePath = "bin/" + scriptName + "64.vmoptions",
+      startupWmClass = getLinuxFrameClass(context),
+      bootClassPathJarNames = context.bootClassPathJarNames,
+      additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch))),
     context = context
   )
   Files.writeString(file, json)
@@ -319,36 +322,19 @@ private fun makeFileExecutable(file: Path) {
   Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
 }
 
-fun copyFileSymlinkAware(source: Path, target: Path, vararg options: CopyOption) {
-  val parent = target.parent
-  if (parent != null) {
-    Files.createDirectories(parent)
-  }
-
-  val optionsList = options.toMutableList()
-  if (Files.isSymbolicLink(source)) {
-    // Append 'NOFOLLOW_LINKS' copy option to be able to copy symbolic links.
-    if (!optionsList.contains(LinkOption.NOFOLLOW_LINKS)) {
-      optionsList.add(LinkOption.NOFOLLOW_LINKS)
-    }
-  }
-  Files.copy(source, target, *optionsList.toTypedArray())
-}
-
-
 internal const val REMOTE_DEV_SCRIPT_FILE_NAME = "remote-dev-server.sh"
 
-internal fun generateUnixScripts(context: BuildContext,
-                                 extraJarNames: List<String>,
-                                 distBinDir: Path,
-                                 osFamily: OsFamily) {
-  val classPathJars = context.bootClassPathJarNames.addAll(extraJarNames)
+internal fun generateUnixScripts(distBinDir: Path,
+                                 os: OsFamily,
+                                 arch: JvmArchitecture,
+                                 context: BuildContext) {
+  val classPathJars = context.bootClassPathJarNames
   var classPath = "CLASS_PATH=\"\$IDE_HOME/lib/${classPathJars[0]}\""
   for (i in 1 until classPathJars.size) {
     classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars[i]}\""
   }
 
-  val additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX).toMutableList()
+  val additionalJvmArguments = context.getAdditionalJvmArguments(os = os, arch = arch, isScript = true).toMutableList()
   if (!context.xBootClassPathJarNames.isEmpty()) {
     val bootCp = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$IDE_HOME/lib/${it}" }
     additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
@@ -356,7 +342,7 @@ internal fun generateUnixScripts(context: BuildContext,
   val additionalJvmArgs = additionalJvmArguments.joinToString(separator = " ")
   val baseName = context.productProperties.baseFileName
 
-  val vmOptionsPath = when (osFamily) {
+  val vmOptionsPath = when (os) {
     OsFamily.LINUX -> distBinDir.resolve("${baseName}64.vmoptions")
     OsFamily.MACOS -> distBinDir.resolve("${baseName}.vmoptions")
     else -> throw IllegalStateException("Unknown OsFamily")
@@ -372,9 +358,9 @@ internal fun generateUnixScripts(context: BuildContext,
   val isRemoteDevEnabled = context.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
 
   Files.createDirectories(distBinDir)
-  val sourceScriptDir = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/linux/scripts")
+  val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
 
-  when (osFamily) {
+  when (os) {
     OsFamily.LINUX -> {
       val scriptName = "$baseName.sh"
       Files.newDirectoryStream(sourceScriptDir).use {
@@ -408,7 +394,7 @@ internal fun generateUnixScripts(context: BuildContext,
                  context = context)
     }
     else -> {
-      throw IllegalStateException("Unsupported OsFamily: $osFamily")
+      throw IllegalStateException("Unsupported OsFamily: $os")
     }
   }
 }

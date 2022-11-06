@@ -62,6 +62,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/Class.kt");
         }
 
+        @TestMetadata("ClassAndProperties.kt")
+        public void testClassAndProperties() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/ClassAndProperties.kt");
+        }
+
         @TestMetadata("ClassObjectInStaticNestedClass.kt")
         public void testClassObjectInStaticNestedClass() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/ClassObjectInStaticNestedClass.kt");

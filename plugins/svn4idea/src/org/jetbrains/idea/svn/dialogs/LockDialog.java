@@ -2,12 +2,12 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsShowSettingOption;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,15 +20,17 @@ public class LockDialog extends OptionsDialog {
   private JCheckBox myForceCheckBox;
 
   @NonNls private static final String HELP_ID = "reference.VCS.subversion.lockFile";
+  private final VcsShowSettingOption myOption;
 
-  public LockDialog(Project project, boolean canBeParent, boolean multiple) {
+  public LockDialog(Project project, boolean canBeParent, boolean multiple, @NonNls VcsShowSettingOption option) {
     super(project, canBeParent);
+    myOption = option;
+
     setTitle(multiple ? SvnBundle.message("dialog.title.lock.files") : SvnBundle.message("dialog.title.lock.file"));
     setResizable(true);
 
     getHelpAction().setEnabled(true);
     init();
-
   }
 
   @Override
@@ -112,7 +114,7 @@ public class LockDialog extends OptionsDialog {
 
   @Override
   protected void setToBeShown(final boolean value, final boolean onOk) {
-    SvnVcs.getInstance(myProject).getCheckoutOptions().setValue(value);
+    myOption.setValue(value);
   }
 
   @Override

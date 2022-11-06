@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
-import com.jetbrains.python.inspections.quickfix.sdk.InterpreterSettingsQuickFix
+import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
@@ -97,7 +97,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
                                               runtimePkgName, specsToString)
             registerProblem(node,
                             message,
-                            InterpreterSettingsQuickFix(module),
+                            PyInterpreterInspection.InterpreterSettingsQuickFix(module),
                             createIgnoreStubPackageQuickFix(stubPkgName, ignoredStubPackages))
           }
         }

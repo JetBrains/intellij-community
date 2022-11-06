@@ -22,9 +22,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public class NullableDataExternalizer<T> implements DataExternalizer<T> {
   @NotNull
   private final DataExternalizer<T> myNotNullExternalizer;

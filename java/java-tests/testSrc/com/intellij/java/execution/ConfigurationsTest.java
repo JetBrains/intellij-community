@@ -24,7 +24,6 @@ import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -54,7 +53,6 @@ import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
-import com.intellij.util.Assertion;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
@@ -68,8 +66,6 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConfigurationsTest extends BaseConfigurationTestCase {
-  private final Assertion CHECK = new Assertion();
-
   private Sdk myJdk;
   private static final String INNER_TEST_NAME = "test1.InnerTest.Inner";
   private static final String RT_INNER_TEST_NAME = "test1.InnerTest$Inner";
@@ -87,12 +83,12 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     Module module1 = getModule1();
     PsiClass psiClass = findTestA(module1);
     JUnitConfiguration configuration = createConfiguration(psiClass);
-    assertEquals(Collections.singleton(module1), new HashSet<>(Arrays.asList(configuration.getModules())));
+    assertThat(configuration.getModules()).containsExactlyInAnyOrder(module1);
     checkClassName(psiClass.getQualifiedName(), configuration);
     assertEquals(psiClass.getName(), configuration.getName());
     checkTestObject(JUnitConfiguration.TEST_CLASS, configuration);
     Module module2 = getModule2();
-    Assertion.compareUnordered(new Module[]{module1, module2}, configuration.getValidModules());
+    assertThat(configuration.getValidModules()).containsExactlyInAnyOrder(module1, module2);
 
     PsiClass innerTest = findClass(module1, INNER_TEST_NAME);
     configuration = createJUnitConfiguration(innerTest, TestInClassConfigurationProducer.class, new MapDataContext());
@@ -196,16 +192,15 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     JUnitConfiguration configuration = createConfiguration(psiPackage, module1);
     JavaParameters parameters = checkCanRun(configuration);
     List<String> lines = extractAllInPackageTests(parameters, psiPackage);
-    Assertion.compareUnordered(
+    assertThat(lines).containsExactlyInAnyOrder(
       //category, filters, classNames...
-      new Object[]{"", "", psiClass.getQualifiedName(),
+      "", "", psiClass.getQualifiedName(),
         derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
         "test1.nested.TestA",
         "test1.nested.TestWithJunit4",
         "test1.ThirdPartyTest",
         testB.getQualifiedName(),
-        psiClass2.getQualifiedName()},
-      lines);
+        psiClass2.getQualifiedName());
   }
 
   public void testConfiguredFromAnotherModuleWhenInitialConfigurationProvidesNoModule() {
@@ -215,7 +210,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     MapDataContext context = new MapDataContext();
     VirtualFile root = ModuleRootManager.getInstance(module1).getContentRoots()[0];
     PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(root);
-    context.put(LangDataKeys.PSI_ELEMENT_ARRAY, new PsiElement[] {psiDirectory});
+    context.put(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, new PsiElement[] {psiDirectory});
     context.put(CommonDataKeys.PROJECT, myProject);
     context.put(PlatformCoreDataKeys.MODULE, module1);
     assertFalse(new AllInPackageConfigurationProducer().isConfigurationFromContext(allInProjectConfiguration, ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN)));
@@ -234,15 +229,14 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
     List<String> lines = FileUtilRt.loadLines(new File(filePath));
     lines.remove(0);
-    Assertion.compareUnordered(
+    assertThat(lines).containsAll(
       //category, filters, classNames...
-      new Object[]{"", "", "pattern.TestA", "abstractPattern.TestB", "abstractPattern.TestC", psiClass.getQualifiedName(),
-        "test1.DerivedTest", RT_INNER_TEST_NAME,
-        "test1.nested.TestA",
-        "test1.nested.TestWithJunit4",
-        "test1.ThirdPartyTest",
-        "TestA"},
-      lines);
+      List.of("", "pattern.TestA", "abstractPattern.TestB", "abstractPattern.TestC", psiClass.getQualifiedName(),
+            "test1.DerivedTest", RT_INNER_TEST_NAME,
+            "test1.nested.TestA",
+            "test1.nested.TestWithJunit4",
+            "test1.ThirdPartyTest",
+            "TestA"));
   }
   
   public void testPattern() throws IOException, ExecutionException {
@@ -257,10 +251,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
     List<String> lines = FileUtilRt.loadLines(new File(filePath));
     lines.remove(0);
-    Assertion.compareUnordered(
+    assertThat(lines).containsExactlyInAnyOrder(
       //category, filters, classNames...
-      new Object[]{"", "", "pattern.TestA,test1"},
-      lines);
+      "", "", "pattern.TestA,test1");
   }
 
   public void testSameMethodPattern() throws IOException, ExecutionException {
@@ -275,10 +268,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
                                          value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
     List<String> lines = FileUtilRt.loadLines(new File(filePath));
     lines.remove(0);
-    Assertion.compareUnordered(
+    assertThat(lines).containsExactlyInAnyOrder(
       //category, filters, classNames...
-      new Object[]{"", "", "abstractPattern.TestB,test1", "abstractPattern.TestC,test1"},
-      lines);
+      "", "", "abstractPattern.TestB,test1", "abstractPattern.TestC,test1");
   }
 
   public void testRunAllInPackageWhenPackageIsEmptyInModule() throws ExecutionException {
@@ -315,7 +307,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     String childTest1 = findClass(child1, "test1.TestB").getQualifiedName();
     String childTest2 = findClass(child2, "test1.Test5").getQualifiedName();
     String ancestorTest = findClass(ancestor, "test1.TestA").getQualifiedName();
-    CHECK.containsAll(tests, new Object[]{ancestorTest, childTest1, childTest2});
+    assertThat(tests).containsAll(List.of(ancestorTest, childTest1, childTest2));
   }
 
   public void testConstructors() throws IOException, ExecutionException {
@@ -328,7 +320,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     checkPackage(psiPackage.getQualifiedName(), configuration);
     JavaParameters parameters = checkCanRun(configuration);
     List<String> tests = extractAllInPackageTests(parameters, psiPackage);
-    CHECK.containsAll(tests, new Object[]{"test1.TestCaseInheritor"});
+    assertThat(tests).containsAll(List.of("test1.TestCaseInheritor"));
   }
 
   public void testClasspathConfiguration() throws CantRunException {
@@ -351,16 +343,16 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       String token = tokenizer.nextToken();
       classPath.add(token);
     }
-    CHECK.singleOccurence(classPath, getOutput(module1, false));
-    CHECK.singleOccurence(classPath, getOutput(module1, false));
-    CHECK.singleOccurence(classPath, getOutput(module1, true));
-    CHECK.singleOccurence(classPath, getOutput(module2, false));
-    CHECK.singleOccurence(classPath, getOutput(module2, true));
-    CHECK.singleOccurence(classPath, getOutput(module3, false));
-    CHECK.singleOccurence(classPath, getOutput(module3, true));
+    assertThat(classPath).containsOnlyOnce(getOutput(module1, false));
+    assertThat(classPath).containsOnlyOnce(getOutput(module1, false));
+    assertThat(classPath).containsOnlyOnce(getOutput(module1, true));
+    assertThat(classPath).containsOnlyOnce(getOutput(module2, false));
+    assertThat(classPath).containsOnlyOnce(getOutput(module2, true));
+    assertThat(classPath).containsOnlyOnce(getOutput(module3, false));
+    assertThat(classPath).containsOnlyOnce(getOutput(module3, true));
     IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
     for (File file : junit4Library.getClasses()) {
-      CHECK.singleOccurence(classPath, file.getPath());
+      assertThat(classPath).containsOnlyOnce(file.getPath());
     }
   }
 

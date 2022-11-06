@@ -28,13 +28,13 @@ public final class IntBitPacker {
       initValue = in[startIndex + 127];
     }
     switch (endIndex - startIndex) {
-      case 32: {
+      case 32 -> {
         final int mBits1 = maxDiffBits(initValue, in, startIndex);
         out[tmpOutPos++] = mBits1;
         pack(initValue, in, startIndex, out, tmpOutPos, mBits1);
         return tmpOutPos + mBits1;
       }
-      case 64: {
+      case 64 -> {
         final int mBits1 = maxDiffBits(initValue, in, startIndex);
         final int initOffset2 = in[startIndex + 31];
         final int mBits2 = maxDiffBits(initOffset2, in, startIndex + 32);
@@ -44,7 +44,7 @@ public final class IntBitPacker {
         pack(initOffset2, in, startIndex + 32, out, tmpOutPos, mBits2);
         return tmpOutPos + mBits2;
       }
-      case 96: {
+      case 96 -> {
         final int mBits1 = maxDiffBits(initValue, in, startIndex);
         final int initOffset2 = in[startIndex + 31];
         final int mBits2 = maxDiffBits(initOffset2, in, startIndex + 32);
@@ -58,12 +58,10 @@ public final class IntBitPacker {
         pack(initOffset3, in, startIndex + 64, out, tmpOutPos, mBits3);
         return tmpOutPos + mBits3;
       }
-      case 0: {
+      case 0 -> {
         return tmpOutPos;
       }
-      default: {
-        throw new IllegalStateException();
-      }
+      default -> throw new IllegalStateException();
     }
   }
 
@@ -92,13 +90,12 @@ public final class IntBitPacker {
       initValue = out[s + 127];
     }
     switch (outEndIndex - s) {
-      case 32: {
+      case 32 -> {
         final int mBits1 = in[index] & 0xff;
         index++;
         unpack(initValue, in, index, out, s, mBits1);
       }
-      break;
-      case 64: {
+      case 64 -> {
         final int mBits1 = in[index] >>> 8;
         final int mBits2 = in[index] & 0xff;
         index++;
@@ -107,8 +104,7 @@ public final class IntBitPacker {
         initValue = out[s + 31];
         unpack(initValue, in, index, out, s + 32, mBits2);
       }
-      break;
-      case 96: {
+      case 96 -> {
         final int mBits1 = in[index] >>> 16;
         final int mBits2 = in[index] >>> 8 & 0xff;
         final int mBits3 = in[index] & 0xff;
@@ -121,7 +117,6 @@ public final class IntBitPacker {
         initValue = out[s + 63];
         unpack(initValue, in, index, out, s + 64, mBits3);
       }
-      break;
     }
   }
 
@@ -245,140 +240,40 @@ public final class IntBitPacker {
   private static void pack(final int initValue, final int[] in, final int inPos, final int[] out,
       final int outPos, final int bitCount) {
     switch ((byte)bitCount) {
-      case 0: {
-        break;
-      }
-      case 1: {
-        pack1(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 2: {
-        pack2(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 3: {
-        pack3(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 4: {
-        pack4(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 5: {
-        pack5(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 6: {
-        pack6(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 7: {
-        pack7(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 8: {
-        pack8(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 9: {
-        pack9(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 10: {
-        pack10(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 11: {
-        pack11(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 12: {
-        pack12(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 13: {
-        pack13(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 14: {
-        pack14(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 15: {
-        pack15(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 16: {
-        pack16(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 17: {
-        pack17(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 18: {
-        pack18(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 19: {
-        pack19(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 20: {
-        pack20(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 21: {
-        pack21(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 22: {
-        pack22(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 23: {
-        pack23(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 24: {
-        pack24(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 25: {
-        pack25(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 26: {
-        pack26(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 27: {
-        pack27(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 28: {
-        pack28(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 29: {
-        pack29(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 30: {
-        pack30(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 31: {
-        pack31(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 32: {
-        System.arraycopy(in, inPos, out, outPos, 32);
-        break;
-      }
-      default: {
-        throw new IllegalArgumentException("Unsupported bit width: " + bitCount);
-      }
+      case 0 -> {}
+      case 1 -> pack1(initValue, in, inPos, out, outPos);
+      case 2 -> pack2(initValue, in, inPos, out, outPos);
+      case 3 -> pack3(initValue, in, inPos, out, outPos);
+      case 4 -> pack4(initValue, in, inPos, out, outPos);
+      case 5 -> pack5(initValue, in, inPos, out, outPos);
+      case 6 -> pack6(initValue, in, inPos, out, outPos);
+      case 7 -> pack7(initValue, in, inPos, out, outPos);
+      case 8 -> pack8(initValue, in, inPos, out, outPos);
+      case 9 -> pack9(initValue, in, inPos, out, outPos);
+      case 10 -> pack10(initValue, in, inPos, out, outPos);
+      case 11 -> pack11(initValue, in, inPos, out, outPos);
+      case 12 -> pack12(initValue, in, inPos, out, outPos);
+      case 13 -> pack13(initValue, in, inPos, out, outPos);
+      case 14 -> pack14(initValue, in, inPos, out, outPos);
+      case 15 -> pack15(initValue, in, inPos, out, outPos);
+      case 16 -> pack16(initValue, in, inPos, out, outPos);
+      case 17 -> pack17(initValue, in, inPos, out, outPos);
+      case 18 -> pack18(initValue, in, inPos, out, outPos);
+      case 19 -> pack19(initValue, in, inPos, out, outPos);
+      case 20 -> pack20(initValue, in, inPos, out, outPos);
+      case 21 -> pack21(initValue, in, inPos, out, outPos);
+      case 22 -> pack22(initValue, in, inPos, out, outPos);
+      case 23 -> pack23(initValue, in, inPos, out, outPos);
+      case 24 -> pack24(initValue, in, inPos, out, outPos);
+      case 25 -> pack25(initValue, in, inPos, out, outPos);
+      case 26 -> pack26(initValue, in, inPos, out, outPos);
+      case 27 -> pack27(initValue, in, inPos, out, outPos);
+      case 28 -> pack28(initValue, in, inPos, out, outPos);
+      case 29 -> pack29(initValue, in, inPos, out, outPos);
+      case 30 -> pack30(initValue, in, inPos, out, outPos);
+      case 31 -> pack31(initValue, in, inPos, out, outPos);
+      case 32 -> System.arraycopy(in, inPos, out, outPos, 32);
+      default -> throw new IllegalArgumentException("Unsupported bit width: " + bitCount);
     }
   }
 
@@ -395,141 +290,40 @@ public final class IntBitPacker {
   private static void unpack(final int initValue, final int[] in, final int inPos, final int[] out,
       final int outPos, final int bitCount) {
     switch ((byte)bitCount) {
-      case 0: {
-        Arrays.fill(out, outPos, outPos + 32, initValue);
-        break;
-      }
-      case 1: {
-        unpack1(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 2: {
-        unpack2(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 3: {
-        unpack3(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 4: {
-        unpack4(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 5: {
-        unpack5(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 6: {
-        unpack6(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 7: {
-        unpack7(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 8: {
-        unpack8(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 9: {
-        unpack9(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 10: {
-        unpack10(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 11: {
-        unpack11(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 12: {
-        unpack12(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 13: {
-        unpack13(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 14: {
-        unpack14(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 15: {
-        unpack15(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 16: {
-        unpack16(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 17: {
-        unpack17(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 18: {
-        unpack18(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 19: {
-        unpack19(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 20: {
-        unpack20(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 21: {
-        unpack21(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 22: {
-        unpack22(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 23: {
-        unpack23(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 24: {
-        unpack24(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 25: {
-        unpack25(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 26: {
-        unpack26(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 27: {
-        unpack27(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 28: {
-        unpack28(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 29: {
-        unpack29(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 30: {
-        unpack30(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 31: {
-        unpack31(initValue, in, inPos, out, outPos);
-        break;
-      }
-      case 32: {
-        System.arraycopy(in, inPos, out, outPos, 32);
-        break;
-      }
-      default: {
-        throw new IllegalArgumentException("Unsupported bit width: " + bitCount);
-      }
+      case 0 -> Arrays.fill(out, outPos, outPos + 32, initValue);
+      case 1 -> unpack1(initValue, in, inPos, out, outPos);
+      case 2 -> unpack2(initValue, in, inPos, out, outPos);
+      case 3 -> unpack3(initValue, in, inPos, out, outPos);
+      case 4 -> unpack4(initValue, in, inPos, out, outPos);
+      case 5 -> unpack5(initValue, in, inPos, out, outPos);
+      case 6 -> unpack6(initValue, in, inPos, out, outPos);
+      case 7 -> unpack7(initValue, in, inPos, out, outPos);
+      case 8 -> unpack8(initValue, in, inPos, out, outPos);
+      case 9 -> unpack9(initValue, in, inPos, out, outPos);
+      case 10 -> unpack10(initValue, in, inPos, out, outPos);
+      case 11 -> unpack11(initValue, in, inPos, out, outPos);
+      case 12 -> unpack12(initValue, in, inPos, out, outPos);
+      case 13 -> unpack13(initValue, in, inPos, out, outPos);
+      case 14 -> unpack14(initValue, in, inPos, out, outPos);
+      case 15 -> unpack15(initValue, in, inPos, out, outPos);
+      case 16 -> unpack16(initValue, in, inPos, out, outPos);
+      case 17 -> unpack17(initValue, in, inPos, out, outPos);
+      case 18 -> unpack18(initValue, in, inPos, out, outPos);
+      case 19 -> unpack19(initValue, in, inPos, out, outPos);
+      case 20 -> unpack20(initValue, in, inPos, out, outPos);
+      case 21 -> unpack21(initValue, in, inPos, out, outPos);
+      case 22 -> unpack22(initValue, in, inPos, out, outPos);
+      case 23 -> unpack23(initValue, in, inPos, out, outPos);
+      case 24 -> unpack24(initValue, in, inPos, out, outPos);
+      case 25 -> unpack25(initValue, in, inPos, out, outPos);
+      case 26 -> unpack26(initValue, in, inPos, out, outPos);
+      case 27 -> unpack27(initValue, in, inPos, out, outPos);
+      case 28 -> unpack28(initValue, in, inPos, out, outPos);
+      case 29 -> unpack29(initValue, in, inPos, out, outPos);
+      case 30 -> unpack30(initValue, in, inPos, out, outPos);
+      case 31 -> unpack31(initValue, in, inPos, out, outPos);
+      case 32 -> System.arraycopy(in, inPos, out, outPos, 32);
+      default -> throw new IllegalArgumentException("Unsupported bit width: " + bitCount);
     }
   }
 

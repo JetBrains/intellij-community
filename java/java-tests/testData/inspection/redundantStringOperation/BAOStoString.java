@@ -5,7 +5,7 @@ import java.nio.charset.Charset;
 class Main {
   void string() {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    String s = <warning descr="Inefficient conversion from ByteArrayOutputStream">new String(baos.toByteArray())</warning>;
+    String s = new <warning descr="Inefficient conversion from ByteArrayOutputStream">String</warning>(baos.toByteArray());
   }
 
   void charset() {
@@ -19,7 +19,7 @@ class Main {
     String csn = "ISO-8859-1";
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    String s = <warning descr="Inefficient conversion from ByteArrayOutputStream">new String(baos.toByteArray(), csn)</warning>;
+    String s = new <warning descr="Inefficient conversion from ByteArrayOutputStream">String</warning>(baos.toByteArray(), csn);
   }
 
 

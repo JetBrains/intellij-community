@@ -453,6 +453,13 @@ private class StackedCompositeBindingContextTrace(
         override fun addOwnDataTo(trace: BindingTrace, commitDiagnostics: Boolean) = throw UnsupportedOperationException()
     }
 
+    override fun <K : Any?, V : Any?> get(slice: ReadOnlySlice<K, V>, key: K): V? =
+        if (slice == BindingContext.ANNOTATION) {
+            selfGet(slice, key) ?: parentContext.get(slice, key)
+        } else {
+            super.get(slice, key)
+        }
+
     override fun clear() {
         super.clear()
         stackedContext.cachedDiagnostics = null

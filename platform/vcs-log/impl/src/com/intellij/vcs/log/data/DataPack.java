@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.vcs.log.Hash;
@@ -12,13 +12,14 @@ import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
-import io.opentelemetry.api.trace.Span;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
 
 public class DataPack extends DataPackBase {
   public static final DataPack EMPTY = new DataPack(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY),
@@ -52,9 +53,9 @@ public class DataPack extends DataPackBase {
       GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
-      Span span = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("building graph").startSpan();
-      permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
-      span.end();
+      permanentGraph = computeWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "building graph", (span) -> {
+        return PermanentGraphImpl.newInstance(commits, colorManager, branches);
+      });
     }
 
     return new DataPack(refsModel, permanentGraph, providers, full);

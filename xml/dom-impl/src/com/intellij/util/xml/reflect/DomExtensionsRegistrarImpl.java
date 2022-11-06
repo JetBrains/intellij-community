@@ -15,9 +15,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
   private final List<DomExtensionImpl> myAttributes = new SmartList<>();
   private final List<DomExtensionImpl> myFixeds = new SmartList<>();

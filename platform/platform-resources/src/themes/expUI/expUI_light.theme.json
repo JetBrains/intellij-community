@@ -263,9 +263,14 @@
       "rowHeight": "24",
       "border": "4,0,4,0",
       "Button": {
-        "separatorColor": "Grey13",
+        "separatorColor": "#FFFFFFB3",
+        "separatorInset": 4,
         "hoverBackground": "Blue12",
         "leftRightInset": 8
+      },
+      "Tag": {
+        "background": "Grey11",
+        "foreground": "Grey4"
       }
     },
 
@@ -291,9 +296,10 @@
     "MenuItem.background": "Grey13",
 
     "MainMenu": {
+      "background": "Grey2",
       "foreground": "Grey11",
       "selectionForeground": "Grey11",
-      "selectionBackground": "Grey1"
+      "selectionBackground": "Grey3"
     },
 
     "MemoryIndicator": {
@@ -418,8 +424,7 @@
 
     "SpeedSearch": {
       "background": "Grey13",
-      "borderColor": "Grey10",
-      "errorForeground": "errorForeground"
+      "borderColor": "Grey11"
     },
 
     "StatusBar": {
@@ -513,18 +518,19 @@
     "MainToolbar": {
       "background": "Grey2",
       "inactiveBackground": "Grey3",
+      "separatorColor": "Grey4",
       "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
-        "hoverBackground": "Grey1",
-        "pressedBackground": "Grey1"
+        "hoverBackground": "Grey3",
+        "pressedBackground": "Grey3"
       },
       "Dropdown": {
         "foreground": "Grey11",
-        "borderInsets": "3,8,3,4",
+        "borderInsets": "3,12,3,6",
         "background": "Grey2",
-        "hoverBackground": "Grey1",
-        "pressedBackground": "Grey1"
+        "hoverBackground": "Grey3",
+        "pressedBackground": "Grey3"
       },
       "Button": {
         "buttonInsets": "0,0,0,0"
@@ -571,7 +577,7 @@
     "WelcomeScreen.Details.background": "Grey13",
 
     "TipOfTheDay": {
-      "Image.borderColor": "Grey10"
+      "Image.borderColor": "Grey11"
     },
 
     "Lesson": {
@@ -599,6 +605,48 @@
       },
       "PackageTagSelected.background": "Blue10",
       "PackageTagSelected.foreground": "Grey13"
+    },
+
+    "UnattendedHostStatus": {
+      "warningBackground": "Yellow7",
+      "warningForeground": "Grey3",
+      "dangerBackground": "Red6"
+    },
+
+    "CodeWithMe.Users": {
+      "1": {
+        "Background": "Green6",
+        "Foreground": "Grey13"
+      },
+      "2": {
+        "Background": "#15A0B2",
+        "Foreground": "Grey13"
+      },
+      "3": {
+        "Background": "Red6",
+        "Foreground": "Grey13"
+      },
+      "4": {
+        "Background": "#955AE0",
+        "Foreground": "Grey13"
+      },
+      "5": {
+        "Background": "Yellow6",
+        "Foreground": "Grey13"
+      },
+      "6": {
+        "Background": "Orange6",
+        "Foreground": "Grey13"
+      }
+    },
+
+    "RunWidget" : {
+      "foreground": "Grey13",
+      "background": "Blue5",
+      "runningBackground": "Green5",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
     }
   },
 

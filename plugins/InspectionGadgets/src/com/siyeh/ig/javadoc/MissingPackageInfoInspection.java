@@ -5,10 +5,8 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CreatePackageInfoAction;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -100,7 +98,7 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
         }
 
         @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor) {
+        protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
           DataManager.getInstance()
                      .getDataContextFromFocusAsync()
                      .onSuccess(context -> {

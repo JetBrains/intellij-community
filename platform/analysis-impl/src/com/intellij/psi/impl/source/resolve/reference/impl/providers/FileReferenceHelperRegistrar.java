@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class FileReferenceHelperRegistrar {
 
   private FileReferenceHelperRegistrar() {

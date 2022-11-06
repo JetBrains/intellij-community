@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
-sealed class GrUnnecessarySealingModifierInspection(val sealingModifier: String) : GrUnnecessaryModifierInspection(sealingModifier) {
+sealed class GrUnnecessarySealingModifierInspection(private val sealingModifier: String) : GrUnnecessaryModifierInspection(sealingModifier) {
 
   override fun isRedundant(element: PsiElement): Boolean {
     val modifierList = element.parent as? GrModifierList ?: return false

@@ -247,7 +247,10 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
                                         mavenProject: MavenProject,
                                         ideCompilerConfiguration: CompilerConfiguration) {
     // Exclude src/main/archetype-resources
-    val dir = VfsUtil.findRelativeFile(mavenProject.directoryFile, "src", "main", "resources", "archetype-resources")
+    val dir = runCatching {
+      // EA-719125 Accessing invalid virtual file
+      VfsUtil.findRelativeFile(mavenProject.directoryFile, "src", "main", "resources", "archetype-resources")
+    }.getOrNull()
     if (dir != null && !ideCompilerConfiguration.isExcludedFromCompilation(dir)) {
       val cfg = ideCompilerConfiguration.excludedEntriesConfiguration
       cfg.addExcludeEntryDescription(ExcludeEntryDescription(dir, true, false, MavenDisposable.getInstance(project)))

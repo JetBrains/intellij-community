@@ -1,26 +1,26 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
 
 
-interface FirstEntityWithPId : WorkspaceEntityWithPersistentId {
+interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
   val data: String
-  override val persistentId: FirstPId
+  override val symbolicId: FirstPId
     get() {
       return FirstPId(data)
     }
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FirstEntityWithPId, ModifiableWorkspaceEntity<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
+  interface Builder : FirstEntityWithPId, WorkspaceEntity.Builder<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
     override var entitySource: EntitySource
     override var data: String
   }
@@ -43,16 +43,16 @@ fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId, modification: 
   FirstEntityWithPId.Builder::class.java, entity, modification)
 //endregion
 
-data class FirstPId(override val presentableName: String) : PersistentEntityId<FirstEntityWithPId>
+data class FirstPId(override val presentableName: String) : SymbolicEntityId<FirstEntityWithPId>
 
-interface SecondEntityWithPId : WorkspaceEntityWithPersistentId {
+interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
   val data: String
-  override val persistentId: SecondPId
+  override val symbolicId: SecondPId
     get() = SecondPId(data)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SecondEntityWithPId, ModifiableWorkspaceEntity<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
+  interface Builder : SecondEntityWithPId, WorkspaceEntity.Builder<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
     override var entitySource: EntitySource
     override var data: String
   }
@@ -75,5 +75,5 @@ fun MutableEntityStorage.modifyEntity(entity: SecondEntityWithPId, modification:
   SecondEntityWithPId.Builder::class.java, entity, modification)
 //endregion
 
-data class SecondPId(override val presentableName: String) : PersistentEntityId<SecondEntityWithPId>
+data class SecondPId(override val presentableName: String) : SymbolicEntityId<SecondEntityWithPId>
 data class TestPId(var presentableName: String, val aaa: Int?, var angry: Boolean)

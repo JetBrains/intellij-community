@@ -11,6 +11,7 @@ import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.*
@@ -18,10 +19,10 @@ import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule

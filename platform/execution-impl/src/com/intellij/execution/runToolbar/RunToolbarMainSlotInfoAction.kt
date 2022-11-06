@@ -62,6 +62,7 @@ internal class RunToolbarMainSlotInfoAction : SegmentedCustomAction(),
         presentation.isVisible = presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
+    presentation.isEnabled = presentation.isEnabled && e.isFromActionToolbar
     traceLog(LOG, e)
   }
 

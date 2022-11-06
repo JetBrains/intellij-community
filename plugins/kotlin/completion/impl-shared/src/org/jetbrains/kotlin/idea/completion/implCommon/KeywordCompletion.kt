@@ -19,6 +19,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
@@ -67,16 +68,20 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
             ABSTRACT_KEYWORD
         ).mapTo(HashSet()) { it.value }
 
-        private val COMPOUND_KEYWORDS = mapOf<KtKeywordToken, Set<KtKeywordToken>>(
-            COMPANION_KEYWORD to setOf(OBJECT_KEYWORD),
-            DATA_KEYWORD to setOf(CLASS_KEYWORD),
-            ENUM_KEYWORD to setOf(CLASS_KEYWORD),
-            ANNOTATION_KEYWORD to setOf(CLASS_KEYWORD),
-            SEALED_KEYWORD to setOf(CLASS_KEYWORD, INTERFACE_KEYWORD, FUN_KEYWORD),
-            LATEINIT_KEYWORD to setOf(VAR_KEYWORD),
-            CONST_KEYWORD to setOf(VAL_KEYWORD),
-            SUSPEND_KEYWORD to setOf(FUN_KEYWORD)
-        )
+        private fun getCompoundKeywords(token: KtKeywordToken, languageVersionSettings: LanguageVersionSettings): Set<KtKeywordToken>? =
+            mapOf<KtKeywordToken, Set<KtKeywordToken>>(
+                COMPANION_KEYWORD to setOf(OBJECT_KEYWORD),
+                DATA_KEYWORD to setOfNotNull(
+                    CLASS_KEYWORD,
+                    OBJECT_KEYWORD.takeIf { languageVersionSettings.supportsFeature(LanguageFeature.DataObjects) },
+                ),
+                ENUM_KEYWORD to setOf(CLASS_KEYWORD),
+                ANNOTATION_KEYWORD to setOf(CLASS_KEYWORD),
+                SEALED_KEYWORD to setOf(CLASS_KEYWORD, INTERFACE_KEYWORD, FUN_KEYWORD),
+                LATEINIT_KEYWORD to setOf(VAR_KEYWORD),
+                CONST_KEYWORD to setOf(VAL_KEYWORD),
+                SUSPEND_KEYWORD to setOf(FUN_KEYWORD)
+            )[token]
 
         private val COMPOUND_KEYWORDS_NOT_SUGGEST_TOGETHER = mapOf<KtKeywordToken, Set<KtKeywordToken>>(
             // 'fun' can follow 'sealed', e.g. "sealed fun interface". But "sealed fun" looks irrelevant differ to "sealed interface/class".
@@ -129,7 +134,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
     private fun KtKeywordToken.getNextPossibleKeywords(position: PsiElement): Set<KtKeywordToken>? {
         return when {
             this == SUSPEND_KEYWORD && position.isInsideKtTypeReference -> null
-            else -> COMPOUND_KEYWORDS[this]
+            else -> getCompoundKeywords(this, languageVersionSettingProvider.getLanguageVersionSetting(position))
         }
     }
 
@@ -202,17 +207,27 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
             val element = createKeywordConstructLookupElement(position.project, keyword, constructText)
             consumer(element)
         } else {
-            if (listOf(CLASS_KEYWORD, OBJECT_KEYWORD, INTERFACE_KEYWORD).any { keyword.endsWith(it.value) }) {
-                val topLevelClassName = getTopLevelClassName(position)
-                if (topLevelClassName != null) {
-                    if (keyword.startsWith(DATA_KEYWORD.value)) {
-                        consumer(createKeywordConstructLookupElement(position.project, keyword, "$keyword $topLevelClassName(caret)"))
-                    } else {
-                        consumer(createLookupElementBuilder("$keyword $topLevelClassName", position))
-                    }
+            handleTopLevelClassName(position, keyword, consumer)
+            consumer(createLookupElementBuilder(keyword, position))
+        }
+    }
+
+    private fun handleTopLevelClassName(position: PsiElement, keyword: String, consumer: (LookupElement) -> Unit) {
+        val topLevelClassName = getTopLevelClassName(position)
+        fun consumeClassNameWithoutBraces() {
+            consumer(createLookupElementBuilder("$keyword $topLevelClassName", position))
+        }
+        if (topLevelClassName != null) {
+            if (listOf(OBJECT_KEYWORD, INTERFACE_KEYWORD).any { keyword.endsWith(it.value) }) {
+                consumeClassNameWithoutBraces()
+            }
+            if (keyword.endsWith(CLASS_KEYWORD.value)) {
+                if (keyword.startsWith(DATA_KEYWORD.value)) {
+                    consumer(createKeywordConstructLookupElement(position.project, keyword, "$keyword $topLevelClassName(caret)"))
+                } else {
+                    consumeClassNameWithoutBraces()
                 }
             }
-            consumer(createLookupElementBuilder(keyword, position))
         }
     }
 
@@ -303,6 +318,17 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
         while (parent != null) {
             when (parent) {
                 is KtBlockExpression -> {
+                    if (
+                        prevParent is KtScriptInitializer &&
+                        parent.parent is KtScript &&
+                        parent.allChildren.firstIsInstanceOrNull<KtScriptInitializer>() === prevParent &&
+                        parent.parent.allChildren.firstIsInstanceOrNull<KtBlockExpression>() === parent
+                    ) {
+                        // It's the first script initializer after preamble.
+                        // Possibly, user enters "import" or "package" here. So we need a global context for it.
+                        return buildFilterWithReducedContext("", null, position)
+                    }
+
                     var prefixText = "fun foo() { "
                     if (prevParent is KtExpression) {
                         // check that we are right after a try-expression without finally-block or after if-expression without else

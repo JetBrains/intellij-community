@@ -86,10 +86,9 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
             checkBox(cdInlays).visible(PlatformUtils.isIntelliJ())
           }
           lateinit var visualFormattingLayer: Cell<JBCheckBox>
-          val vFmtEnabledByRegistry = VisualFormattingLayerService.getInstance().enabledByRegistry
           row {
             visualFormattingLayer = checkBox(cdVisualFormattingLayer)
-          }.visible(vFmtEnabledByRegistry)
+          }
           indent {
             row(IdeBundle.message("combobox.label.visual.formatting.layer.scheme")) {
               val combo = comboVisualFormattingLayerScheme
@@ -114,7 +113,7 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
                   }
                 }
             }
-          }.enabledIf(visualFormattingLayer.selected).visible(vFmtEnabledByRegistry)
+          }.enabledIf(visualFormattingLayer.selected)
         }
       }.enabledIf(enabled.selected)
     }
@@ -125,7 +124,7 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
     project.messageBus.syncPublisher(ReaderModeSettingsListener.TOPIC).modeChanged(project)
   }
 
-  fun goToGlobalSettings(configurableID: String) {
+  private fun goToGlobalSettings(configurableID: String) {
     DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
       context?.let { dataContext ->
         Settings.KEY.getData(dataContext)?.let { settings ->

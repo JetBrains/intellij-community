@@ -16,18 +16,19 @@
 package com.intellij.featureStatistics;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 public class GroupDescriptor {
   private String myId;
-  private String myDisplayName;
+  @Nls private String myDisplayName;
   @NonNls protected static final String ID_ATTR = "id";
   @NonNls private static final String GROUP_PREFIX = "group.";
 
   GroupDescriptor() {
   }
 
-  public GroupDescriptor(String id, String displayName) {
+  public GroupDescriptor(String id, @Nls String displayName) {
     myId = id;
     myDisplayName = displayName;
   }
@@ -41,6 +42,7 @@ public class GroupDescriptor {
     return myId;
   }
 
+  @Nls
   public String getDisplayName() {
     return myDisplayName;
   }

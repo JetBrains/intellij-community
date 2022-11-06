@@ -165,7 +165,7 @@ class KotlinStepIntoRequestHint(
     filter: MethodFilter?,
     parentHint: RequestHint?
 ) : KotlinRequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, filter, parentHint) {
-    var lastWasKotlinFakeLineNumber = false
+    private var lastWasKotlinFakeLineNumber = false
 
     private companion object {
         private val LOG = Logger.getInstance(KotlinStepIntoRequestHint::class.java)

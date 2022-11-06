@@ -279,13 +279,6 @@ public abstract class ArchiveHandler {
     return new Pair<>(parentPath, shortName);
   }
 
-  /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  protected @NotNull Pair<String, String> splitPath(@NotNull String entryName) {
-    return split(entryName);
-  }
-
   public abstract byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException;
 
   public @NotNull InputStream getInputStream(@NotNull String relativePath) throws IOException {

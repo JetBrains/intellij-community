@@ -2,6 +2,7 @@
 package org.jetbrains.uast.test.java.generate
 
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import junit.framework.TestCase
@@ -500,5 +501,94 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
             c().
             e()
     """.trimIndent(), callExpression.sourcePsi?.text)
+  }
+
+  fun `test initialize field`() {
+    val psiFile = myFixture.configureByText("MyClass.java", """
+      class My<caret>Class {
+        String field;
+        void method(String value) {
+        }
+      }
+    """.trimIndent())
+    initializeField()
+    TestCase.assertEquals("""
+      class MyClass {
+        String field;
+        void method(String value) {
+            field = value;
+        }
+      }
+    """.trimIndent(), psiFile.text)
+  }
+
+  fun `test initialize field in method with whitespace`() {
+    val psiFile = myFixture.configureByText("MyClass.java", """
+      class My<caret>Class {
+        String field;
+        void method(String value) {
+          
+        }
+      }
+    """.trimIndent())
+    initializeField()
+    TestCase.assertEquals("""
+      class MyClass {
+        String field;
+        void method(String value) {
+            field = value;
+        }
+      }
+    """.trimIndent(), psiFile.text)
+  }
+
+  fun `test initialize field in method with statement`() {
+    val psiFile = myFixture.configureByText("MyClass.java", """
+      class My<caret>Class {
+        String field;
+        void method(String value) {
+            int i = 0;
+        }
+      }
+    """.trimIndent())
+    initializeField()
+    TestCase.assertEquals("""
+      class MyClass {
+        String field;
+        void method(String value) {
+            int i = 0;
+            field = value;
+        }
+      }
+    """.trimIndent(), psiFile.text)
+  }
+
+  fun `test initialize field with same name`() {
+    val psiFile = myFixture.configureByText("MyClass.java", """
+      class My<caret>Class {
+        String field;
+        void method(String field) {
+        }
+      }
+    """.trimIndent())
+    initializeField()
+    TestCase.assertEquals("""
+      class MyClass {
+        String field;
+        void method(String field) {
+            this.field = field;
+        }
+      }
+    """.trimIndent(), psiFile.text)
+  }
+
+  private fun initializeField() {
+    val uClass =
+      myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<PsiClass>().toUElementOfType<UClass>()
+      ?: fail("Cannot find UClass")
+    val uField = uClass.fields.firstOrNull() ?: fail("Cannot find field")
+    val uParameter = uClass.methods.find { it.name == "method"}?.uastParameters?.firstOrNull() ?: fail("Cannot find parameter")
+
+    WriteCommandAction.runWriteCommandAction(project) { generatePlugin.initializeField(uField, uParameter) }
   }
 }

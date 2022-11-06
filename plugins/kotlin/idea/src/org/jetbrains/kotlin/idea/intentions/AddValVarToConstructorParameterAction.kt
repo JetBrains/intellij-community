@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.editor.Editor
@@ -10,13 +11,16 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
+import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyValPropertiesInPrimaryConstructor
+import org.jetbrains.kotlin.idea.base.psi.mustHaveValOrVar
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.ValVarExpression
-import org.jetbrains.kotlin.idea.util.isExpectDeclaration
-import org.jetbrains.kotlin.idea.util.mustHaveValOrVar
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -32,7 +36,7 @@ interface AddValVarToConstructorParameterAction {
 
         element.addBefore(KtPsiFactory(project).createValKeyword(), element.nameIdentifier)
 
-        if (element.containingClass()?.isInline() == true || editor == null) return
+        if (element.containingClass()?.mustHaveOnlyValPropertiesInPrimaryConstructor() == true || editor == null) return
 
         val parameter = element.createSmartPointer().let {
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
@@ -54,7 +58,10 @@ interface AddValVarToConstructorParameterAction {
         override fun applicabilityRange(element: KtParameter): TextRange? {
             if (!canInvoke(element)) return null
             val containingClass = element.getStrictParentOfType<KtClass>()
-            if (containingClass?.isData() == true || containingClass?.isInline() == true) return null
+            if (containingClass?.mustHaveOnlyPropertiesInPrimaryConstructor() == true) {
+                // this case is handled by a separate quickfix below
+                return null
+            }
             setTextGetter(KotlinBundle.lazyMessage("add.val.var.to.parameter.0", element.name ?: ""))
             return element.nameIdentifier?.textRange
         }
@@ -67,12 +74,11 @@ interface AddValVarToConstructorParameterAction {
       AddValVarToConstructorParameterAction {
         override fun getText(): String {
             val element = this.element ?: return ""
-
-            val key = when {
-                element.getStrictParentOfType<KtClass>()?.isInline() == true -> "add.val.to.parameter.0"
-                else -> "add.val.var.to.parameter.0"
+            val key = if (element.getStrictParentOfType<KtClass>()?.mustHaveOnlyValPropertiesInPrimaryConstructor() == true ) {
+                "add.val.to.parameter.0"
+            } else {
+                "add.val.var.to.parameter.0"
             }
-
             return KotlinBundle.message(key, element.name ?: "")
         }
 
@@ -83,7 +89,21 @@ interface AddValVarToConstructorParameterAction {
         }
     }
 
-    object DataClassVsPropertyQuickFixFactory : KotlinSingleIntentionActionFactory() {
+    object DataClassConstructorNotPropertyQuickFixFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic) = QuickFix(Errors.DATA_CLASS_NOT_PROPERTY_PARAMETER.cast(diagnostic).psiElement)
+    }
+
+    object AnnotationClassConstructorNotValPropertyQuickFixFactory : KotlinSingleIntentionActionFactory() {
+        override fun createAction(diagnostic: Diagnostic) = QuickFix(Errors.MISSING_VAL_ON_ANNOTATION_PARAMETER.cast(diagnostic).psiElement)
+    }
+
+    object ValueClassConstructorNotValPropertyQuickFixFactory : KotlinSingleIntentionActionFactory() {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction {
+            val parameter = Errors.VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.cast(diagnostic).psiElement
+            return if (parameter.isMutable)
+                ChangeVariableMutabilityFix(parameter, false)
+            else
+                QuickFix(parameter)
+        }
     }
 }

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.findUsages.KotlinReferencePreservingUsageInfo
 import org.jetbrains.kotlin.idea.findUsages.KotlinReferenceUsageInfo
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import java.util.*
 
 abstract class KotlinFindUsagesHandler<T : PsiElement>(

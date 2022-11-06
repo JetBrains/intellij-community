@@ -232,15 +232,11 @@ public final class MoveFilesOrDirectoriesUtil {
     }
 
     PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
-    switch (directories.length) {
-      case 0:
-        return null;
-      case 1:
-        return directories[0];
-      default:
-        return DirectoryChooserUtil.chooseDirectory(directories, directories[0], project, new HashMap<>());
-    }
-
+    return switch (directories.length) {
+      case 0 -> null;
+      case 1 -> directories[0];
+      default -> DirectoryChooserUtil.chooseDirectory(directories, directories[0], project, new HashMap<>());
+    };
   }
 
   @Nullable

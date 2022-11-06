@@ -23,16 +23,20 @@ public class ProcessListUtilTest extends TestCase {
 
   public void testMac_Basic() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
-      "  PID  PPID STAT USER    COMM\n\n" +
-      "    1     0 S    user    /dir/file\n" +
-      "    2     1 S    user    ./dir/dir/file\n" +
-      "    3     2 S    user    ./dir/dir/file\n" +
-      "10000     3 S    user    ./dir/dir/file",
-      "  PID  PPID STAT USER    COMMAND\n\n" +
-      "    1     0 S    user    /dir/file\n" +
-      "    2     1 S    user    ./dir/dir/file\n" +
-      "    3     2 S    user    ./dir/dir/file param param\n" +
-      "10000     3 S    user    ./dir/dir/file param2 param2"
+      """
+          PID  PPID STAT USER    COMM
+
+            1     0 S    user    /dir/file
+            2     1 S    user    ./dir/dir/file
+            3     2 S    user    ./dir/dir/file
+        10000     3 S    user    ./dir/dir/file""",
+      """
+          PID  PPID STAT USER    COMMAND
+
+            1     0 S    user    /dir/file
+            2     1 S    user    ./dir/dir/file
+            3     2 S    user    ./dir/dir/file param param
+        10000     3 S    user    ./dir/dir/file param2 param2"""
     );
     assertOrderedEquals(infos,
                         new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0),
@@ -43,54 +47,78 @@ public class ProcessListUtilTest extends TestCase {
 
   public void testMac_DoNotIncludeProcessedMissingOnTheSecondPSRun() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
-      "  PID  PPID STAT USER    COMM\n\n" +
-      "    1     0 S    user    /dir/file\n" +
-      "    2     1 S    user    /dir/file\n",
-      "  PID  PPID STAT USER    COMMAND\n\n" +
-      "    1     0 S    user    /dir/file\n" +
-      "    5     1 S    user    /dir/file\n"
+      """
+          PID  PPID STAT USER    COMM
+
+            1     0 S    user    /dir/file
+            2     1 S    user    /dir/file
+        """,
+      """
+          PID  PPID STAT USER    COMMAND
+
+            1     0 S    user    /dir/file
+            5     1 S    user    /dir/file
+        """
     );
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0));
   }
 
   public void testMac_DoNotIncludeProcessedChangedOnTheSecondPSRun() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
-      "  PID  PPID STAT USER    COMM\n\n" +
-      "    1     0 S    user    /dir/file\n" +
-      "    2     1 S    user    /dir/file\n" +
-      "    3     2 S    user    /dir/file\n" +
-      "    4     3 S    user    /dir/file\n",
-      "  PID  PPID STAT USER    COMMAND\n\n" +
-      "    1     0 S    user    /dir/file param\n" +
-      "    2     1 S    user    /dir/ffff\n" +
-      "    3     2 S    user    /dir/file1\n" +
-      "    4     3 S    user    /dir/file/1\n"
+      """
+          PID  PPID STAT USER    COMM
+
+            1     0 S    user    /dir/file
+            2     1 S    user    /dir/file
+            3     2 S    user    /dir/file
+            4     3 S    user    /dir/file
+        """,
+      """
+          PID  PPID STAT USER    COMMAND
+
+            1     0 S    user    /dir/file param
+            2     1 S    user    /dir/ffff
+            3     2 S    user    /dir/file1
+            4     3 S    user    /dir/file/1
+        """
     );
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file param", "file", "param", "/dir/file", 0));
   }
 
   public void testMac_DoNotIncludeZombies() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
-      "  PID  PPID STAT USER    COMM\n\n" +
-      "    1     0 S    user    /dir/file\n" +
-      "    2     1 Z    user    /dir/file\n" +
-      "    3     1 SZ   user    /dir/file\n",
-      "  PID  PPID STAT USER    COMM\n\n" +
-      "    1     0 S    user    /dir/file\n" +
-      "    2     1 Z    user    /dir/file\n" +
-      "    3     1 SZ   user    /dir/file\n"
+      """
+          PID  PPID STAT USER    COMM
+
+            1     0 S    user    /dir/file
+            2     1 Z    user    /dir/file
+            3     1 SZ   user    /dir/file
+        """,
+      """
+          PID  PPID STAT USER    COMM
+
+            1     0 S    user    /dir/file
+            2     1 Z    user    /dir/file
+            3     1 SZ   user    /dir/file
+        """
     );
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0));
   }
 
   public void testMac_VariousFormsPidStatUser() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
-      "  PID  PPID STAT USER      COMMAND\n\n" +
-      "    1     0 S    user      /dir/file\n" +
-      "  101     1 Ss   user_name /dir/file\n",
-      "  PID  PPID STAT USER      COMM\n\n" +
-      "    1     0 S    user      /dir/file\n" +
-      "  101     1 Ss   user_name /dir/file\n"
+      """
+          PID  PPID STAT USER      COMMAND
+
+            1     0 S    user      /dir/file
+          101     1 Ss   user_name /dir/file
+        """,
+      """
+          PID  PPID STAT USER      COMM
+
+            1     0 S    user      /dir/file
+          101     1 Ss   user_name /dir/file
+        """
     );
     assertOrderedEquals(infos,
                         new ProcessInfo(1, "/dir/file", "file", "", "/dir/file", 0),
@@ -99,51 +127,77 @@ public class ProcessListUtilTest extends TestCase {
 
   public void testMac_WrongFormat() {
     assertNull(ProcessListUtil.parseMacOutput(
-      "   PID STAT USER    COMM\n\n" +
-      "     1 S    user    /dir/file\n",
+      """
+           PID STAT USER    COMM
+
+             1 S    user    /dir/file
+        """,
       ""
     ));
     assertNull(ProcessListUtil.parseMacOutput(
       "",
-      "   PID STAT USER    COMMAND\n\n" +
-      "     1 S    user    /dir/file\n"
+      """
+           PID STAT USER    COMMAND
+
+             1 S    user    /dir/file
+        """
     ));
 
 
     assertNull(ProcessListUtil.parseMacOutput(
-      "   PID STAT USER    COMM\n\n" +
-      "     1 S    user    /dir/file\n",
+      """
+           PID STAT USER    COMM
+
+             1 S    user    /dir/file
+        """,
       "wrong format"
     ));
     assertNull(ProcessListUtil.parseMacOutput(
       "wrong format",
-      "   PID STAT USER    COMMAND\n\n" +
-      "     1 S    user    /dir/file\n"
+      """
+           PID STAT USER    COMMAND
+
+             1 S    user    /dir/file
+        """
     ));
 
     assertEmpty(ProcessListUtil.parseMacOutput(
-      "   PID PPID STAT USER    COMM\n\n" +
-      "     1    0 S    user    /dir/file\n",
-      "   PID PPID S USER    COMMAND\n\n" +
-      "                           \n"
+      """
+           PID PPID STAT USER    COMM
+
+             1    0 S    user    /dir/file
+        """,
+      """
+           PID PPID S USER    COMMAND
+
+                                  \s
+        """
     ));
     assertEmpty(ProcessListUtil.parseMacOutput(
-      "   PID PPID S USER    COMMAND\n\n" +
-      "                           \n",
-      "   PID PPID STAT USER    COMMAND\n\n" +
-      "     1    0 S    user    /dir/file\n"
+      """
+           PID PPID S USER    COMMAND
+
+                                  \s
+        """,
+      """
+           PID PPID STAT USER    COMMAND
+
+             1    0 S    user    /dir/file
+        """
     ));
   }
 
   public void testWindows_WMIC() {
     List<ProcessInfo> infos = ProcessListUtil.parseWMICOutput(
-      "Caption                   CommandLine                                            ExecutablePath                                ParentProcessId                          ProcessId  \n" +
-      "smss.exe                                                                                                                       0                                        304        \n" +
-      "sihost.exe                sihost.exe                                                                                           304                                      3052       \n" +
-      "taskhostw.exe             taskhostw.exe {222A245B-E637-4AE9-A93F-A59CA119A75E}                                                 0                                        3068       \n" +
-      "explorer.exe              C:\\WINDOWS\\Explorer.EXE                                C:\\WINDOWS\\Explorer.EXE                       3068                                     3164       \n" +
-      "TPAutoConnect.exe         TPAutoConnect.exe -q -i vmware -a COM1 -F 30                                                         3164                                     3336       \n" +
-      "conhost.exe               \\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4                \\??\\C:\\WINDOWS\\system32\\conhost.exe           0                                        3348       \n");
+      """
+        Caption                   CommandLine                                            ExecutablePath                                ParentProcessId                          ProcessId \s
+        smss.exe                                                                                                                       0                                        304       \s
+        sihost.exe                sihost.exe                                                                                           304                                      3052      \s
+        taskhostw.exe             taskhostw.exe {222A245B-E637-4AE9-A93F-A59CA119A75E}                                                 0                                        3068      \s
+        explorer.exe              C:\\WINDOWS\\Explorer.EXE                                C:\\WINDOWS\\Explorer.EXE                       3068                                     3164      \s
+        TPAutoConnect.exe         TPAutoConnect.exe -q -i vmware -a COM1 -F 30                                                         3164                                     3336      \s
+        conhost.exe               \\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4                \\??\\C:\\WINDOWS\\system32\\conhost.exe           0                                        3348      \s
+        """);
     assertOrderedEquals(infos,
                         new ProcessInfo(304, "smss.exe", "smss.exe", "", null, 0),
                         new ProcessInfo(3052, "sihost.exe", "sihost.exe", "", null, 304),
@@ -155,10 +209,12 @@ public class ProcessListUtilTest extends TestCase {
 
   public void testOnWindows_WMIC_DoNotIncludeSystemIdleProcess() {
     List<ProcessInfo> infos = ProcessListUtil.parseWMICOutput(
-      "Caption                   CommandLine                     ExecutablePath                       ParentProcessId                     ProcessId  \n" +
-      "System Idle Process                                                                            -1                                  0          \n" +
-      "System                                                                                         0                                   4          \n" +
-      "smss.exe                                                                                       0                                   304        \n");
+      """
+        Caption                   CommandLine                     ExecutablePath                       ParentProcessId                     ProcessId \s
+        System Idle Process                                                                            -1                                  0         \s
+        System                                                                                         0                                   4         \s
+        smss.exe                                                                                       0                                   304       \s
+        """);
     assertOrderedEquals(infos,
                         new ProcessInfo(4, "System", "System", "", null, 0),
                         new ProcessInfo(304, "smss.exe", "smss.exe", "", null, 0));
@@ -175,24 +231,32 @@ public class ProcessListUtilTest extends TestCase {
       "smss.exe                                                                         304        \n"));
 
     assertNull(ProcessListUtil.parseWMICOutput(
-      "Caption                   XXX                ExecutablePath                                    ProcessId  \n" +
-      "smss.exe                                                                                       304        \n"));
+      """
+        Caption                   XXX                ExecutablePath                                    ProcessId \s
+        smss.exe                                                                                       304       \s
+        """));
     assertNull(ProcessListUtil.parseWMICOutput(
-      "Caption                   CommandLine               ExecutablePath                             XXX  \n" +
-      "smss.exe                                                                                       304        \n"));
+      """
+        Caption                   CommandLine               ExecutablePath                             XXX \s
+        smss.exe                                                                                       304       \s
+        """));
     assertEmpty(ProcessListUtil.parseWMICOutput(
-      "Caption                   CommandLine               ExecutablePath                         ParentProcessId                         ProcessId  \n" +
-      "                                                                                                          \n"));
+      """
+        Caption                   CommandLine               ExecutablePath                         ParentProcessId                         ProcessId \s
+                                                                                                                 \s
+        """));
   }
 
   public void testWindows_TaskList() {
     List<ProcessInfo> infos = ProcessListUtil.parseListTasksOutput(
-      "\"smss.exe\",\"304\",\"Services\",\"0\",\"224 K\",\"Unknown\",\"N/A\",\"0:00:00\",\"N/A\"\n" +
-      "\"sihost.exe\",\"3052\",\"Console\",\"1\",\"10,924 K\",\"Running\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:02\",\"N/A\"\n" +
-      "\"taskhostw.exe\",\"3068\",\"Console\",\"1\",\"5,860 K\",\"Running\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:00\",\"Task Host Window\"\n" +
-      "\"explorer.exe\",\"3164\",\"Console\",\"1\",\"30,964 K\",\"Running\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:04\",\"N/A\"\n" +
-      "\"TPAutoConnect.exe\",\"3336\",\"Console\",\"1\",\"5,508 K\",\"Running\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:04\",\"HiddenTPAutoConnectWindow\"\n" +
-      "\"conhost.exe\",\"3348\",\"Console\",\"1\",\"1,172 K\",\"Unknown\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:00\",\"N/A\"\n");
+      """
+        "smss.exe","304","Services","0","224 K","Unknown","N/A","0:00:00","N/A"
+        "sihost.exe","3052","Console","1","10,924 K","Running","VM-WINDOWS\\Anton Makeev","0:00:02","N/A"
+        "taskhostw.exe","3068","Console","1","5,860 K","Running","VM-WINDOWS\\Anton Makeev","0:00:00","Task Host Window"
+        "explorer.exe","3164","Console","1","30,964 K","Running","VM-WINDOWS\\Anton Makeev","0:00:04","N/A"
+        "TPAutoConnect.exe","3336","Console","1","5,508 K","Running","VM-WINDOWS\\Anton Makeev","0:00:04","HiddenTPAutoConnectWindow"
+        "conhost.exe","3348","Console","1","1,172 K","Unknown","VM-WINDOWS\\Anton Makeev","0:00:00","N/A"
+        """);
     assertOrderedEquals(infos,
                         new ProcessInfo(304, "smss.exe", "smss.exe", ""),
                         new ProcessInfo(3052, "sihost.exe", "sihost.exe", ""),
@@ -211,22 +275,24 @@ public class ProcessListUtilTest extends TestCase {
 
   public void testWinProcessListHelperOutputParsing() {
     List<ProcessInfo> infos = ProcessListUtil.parseWinProcessListHelperOutput(
-      "pid:19608\n" +
-      "parentPid:0\n" +
-      "name:SourceTree.exe\n" +
-      "cmd:\"C:\\\\Users\\\\grahams\\\\AppData\\\\Local\\\\SourceTree\\\\app-3.1.3\\\\SourceTree.exe\"\n" +
-      "pid:12300\n" +
-      "parentPid:0\n" +
-      "name:conhost.exe\n" +
-      "cmd:\\\\??\\\\C:\\\\Windows\\\\system32\\\\conhost.exe 0x4\n" +
-      "pid:26284\n" +
-      "parentPid:0\n" +
-      "name:Unity Hub.exe\n" +
-      "cmd:\"C:\\\\Program Files\\\\Unity Hub\\\\Unity Hub.exe\" --no-sandbox --lang=en-US --node-integration=true /prefetch:1\n" +
-      "pid:25064\n" +
-      "parentPid:12300\n" +
-      "name:cmd.exe\n" +
-      "cmd:\"C:\\\\WINDOWS\\\\system32\\\\cmd.exe\" /c \"pause\\necho 123\"\n"
+      """
+        pid:19608
+        parentPid:0
+        name:SourceTree.exe
+        cmd:"C:\\\\Users\\\\grahams\\\\AppData\\\\Local\\\\SourceTree\\\\app-3.1.3\\\\SourceTree.exe"
+        pid:12300
+        parentPid:0
+        name:conhost.exe
+        cmd:\\\\??\\\\C:\\\\Windows\\\\system32\\\\conhost.exe 0x4
+        pid:26284
+        parentPid:0
+        name:Unity Hub.exe
+        cmd:"C:\\\\Program Files\\\\Unity Hub\\\\Unity Hub.exe" --no-sandbox --lang=en-US --node-integration=true /prefetch:1
+        pid:25064
+        parentPid:12300
+        name:cmd.exe
+        cmd:"C:\\\\WINDOWS\\\\system32\\\\cmd.exe" /c "pause\\necho 123"
+        """
     );
     assertOrderedEquals(
       infos,
@@ -244,12 +310,14 @@ public class ProcessListUtilTest extends TestCase {
 
     assertNull(ProcessListUtil.parseWinProcessListHelperOutput(""));
     assertNull(ProcessListUtil.parseWinProcessListHelperOutput("Hello"));
-    assertNull(ProcessListUtil.parseWinProcessListHelperOutput("pid:12345\n" +
-                                                               "name:git.exe\n" +
-                                                               "cmd:git.exe fetch\n" +
-                                                               "pid:1x\n" +
-                                                               "name:node.exe\n" +
-                                                               "cmd:node.exe qq\n"
+    assertNull(ProcessListUtil.parseWinProcessListHelperOutput("""
+                                                                 pid:12345
+                                                                 name:git.exe
+                                                                 cmd:git.exe fetch
+                                                                 pid:1x
+                                                                 name:node.exe
+                                                                 cmd:node.exe qq
+                                                                 """
     ));
   }
 }

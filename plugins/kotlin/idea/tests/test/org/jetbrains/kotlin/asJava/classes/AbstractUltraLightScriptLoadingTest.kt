@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.asJava.classes
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.asJava.renderClass
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractUltraLightScriptLoadingTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun doTest(testDataPath: String) {
         val testDataFile = File(testDataPath)
@@ -33,7 +33,7 @@ abstract class AbstractUltraLightScriptLoadingTest : KotlinLightCodeInsightFixtu
 
         val expectedTextFile = File(testDataPath.replaceFirst("\\.kts\$".toRegex(), ".java"))
         if (expectedTextFile.exists()) {
-            val ultraLightScript = LightClassGenerationSupport.getInstance(script.project).createUltraLightClassForScript(script)
+            val ultraLightScript = script.toLightClass()!!
             val renderedResult = ultraLightScript.renderClass()
             KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedResult)
             checkDescriptorsLeak(ultraLightScript)

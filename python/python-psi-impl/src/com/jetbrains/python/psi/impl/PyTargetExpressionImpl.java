@@ -690,7 +690,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public PyStringLiteralExpression getDocStringExpression() {
     final PsiElement parent = getParent();
-    if (parent instanceof PyAssignmentStatement) {
+    if (parent instanceof PyAssignmentStatement || parent instanceof PyTypeDeclarationStatement) {
       final PsiElement nextSibling = PyPsiUtils.getNextNonCommentSibling(parent, true);
       if (nextSibling instanceof PyExpressionStatement) {
         final PyExpression expression = ((PyExpressionStatement)nextSibling).getExpression();

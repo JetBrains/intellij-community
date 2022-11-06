@@ -32,9 +32,6 @@ import java.util.List
 import java.util.concurrent.TimeUnit
 import java.util.function.BiPredicate
 
-/**
- * @author peter
- */
 @CompileStatic
 class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey")

@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle.Companion.INSTANCE
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService

@@ -100,10 +100,10 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @NotNull
   public String getCanonicalText() {
     switch (getKind()) {
-      case PACKAGE_REFERENCE:
-      case IMPORT_REFERENCE:
+      case PACKAGE_REFERENCE, IMPORT_REFERENCE -> {
         return getTextSkipWhiteSpaceAndComments();
-      case REFERENCE:
+      }
+      case REFERENCE -> {
         final PsiElement target = resolve();
         if (target instanceof PsiTypeParameter) {
           return StringUtil.notNullize(((PsiTypeParameter)target).getName());
@@ -134,8 +134,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           LOG.assertTrue(target == null);
           return getTextSkipWhiteSpaceAndComments();
         }
-      default:
-        throw new IllegalStateException();
+      }
+      default -> throw new IllegalStateException();
     }
   }
 
@@ -175,18 +175,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    switch (getKind()) {
-      case PACKAGE_REFERENCE:
-        return referencesPackage(element);
-      case REFERENCE:
-        return referencesPackage(element) || element instanceof PsiClass && resolvesTo(element);
-      case IMPORT_REFERENCE:
-        return ((element instanceof PsiClass || element instanceof PsiField) && checkName((PsiNamedElement)element) && resolvesTo(element))
-               || (element instanceof PsiMethod && checkPropertyName((PsiNamedElement)element) && multiResolvesTo(element))
-               || (element instanceof PsiPackage && referencesPackage(element));
-      default:
-        throw new IllegalStateException();
-    }
+    return switch (getKind()) {
+      case PACKAGE_REFERENCE -> referencesPackage(element);
+      case REFERENCE -> referencesPackage(element) || element instanceof PsiClass && resolvesTo(element);
+      case IMPORT_REFERENCE ->
+        ((element instanceof PsiClass || element instanceof PsiField) && checkName((PsiNamedElement)element) && resolvesTo(element))
+        || (element instanceof PsiMethod && checkPropertyName((PsiNamedElement)element) && multiResolvesTo(element))
+        || (element instanceof PsiPackage && referencesPackage(element));
+    };
   }
 
   private boolean referencesPackage(@NotNull PsiElement element) {

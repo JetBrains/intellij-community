@@ -25,36 +25,42 @@ public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
   
   public void testNonEmptyLineEnd() {
     doTest(
-      "class Test {\n" +
-      "    // This is a <caret>comment string\n" +
-      "}",
-      "class Test {\n" +
-      "    // This is a <caret>\n" +
-      "}"
+      """
+        class Test {
+            // This is a <caret>comment string
+        }""",
+      """
+        class Test {
+            // This is a <caret>
+        }"""
     );
   }
 
   public void testEmptyLineEnd() {
     doTest(
-      "class Test {\n" +
-      "    <caret>   \n" +
-      "    // some comment\n" +
-      "}",
-      "class Test {\n" +
-      "    <caret>    // some comment\n" +
-      "}"
+      """
+        class Test {
+            <caret>  \s
+            // some comment
+        }""",
+      """
+        class Test {
+            <caret>    // some comment
+        }"""
     );
   }
   
   public void testAtLineEnd() {
     doTest(
-      "class Test {\n" +
-      "    // This is a comment string1<caret>\n" +
-      "    // This is a comment string2\n" +
-      "}",
-      "class Test {\n" +
-      "    // This is a comment string1<caret>    // This is a comment string2\n" +
-      "}"
+      """
+        class Test {
+            // This is a comment string1<caret>
+            // This is a comment string2
+        }""",
+      """
+        class Test {
+            // This is a comment string1<caret>    // This is a comment string2
+        }"""
     );
   }
   

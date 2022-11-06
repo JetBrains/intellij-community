@@ -3,6 +3,7 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -23,9 +24,15 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   fun testCaseLabelsExpressionDefaultLast() = doTest()
   fun testCaseLabelsExpressionDifferentComments() = doTest()
   fun testCaseLabelsExpressionSameComments() = doTest()
+  fun testEmptyBodiesCanBeMerge() = doTest()
+  fun testEmptyBodiesCannotBeMerge() = doTest()
 
   private fun doTest() {
     myFixture.enableInspections(DuplicateBranchesInSwitchInspection())
     myFixture.testHighlighting("${getTestName(false)}.java")
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_17
   }
 }

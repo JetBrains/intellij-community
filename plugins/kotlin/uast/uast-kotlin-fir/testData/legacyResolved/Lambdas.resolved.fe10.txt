@@ -15,10 +15,10 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = St
         UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isEmpty) -> Decompiled_Method: isEmpty
 UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> Decompiled_Class: Unit
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = selectItemFunction) -> Kotlin_Light_Value_Parameter: selectItemFunction
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = selectItemFunction) -> Kotlin_Light_Value_Parameter: selectItemFunction
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = Local) -> null: null
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Variable: baz
-    UWhileExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> null:
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Variable: baz
+    UWhileExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> Decompiled_Method:
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
     UReturnExpression -> UQualifiedReferenceExpression -> Decompiled_Method: length

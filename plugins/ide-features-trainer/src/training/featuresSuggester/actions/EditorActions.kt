@@ -3,6 +3,9 @@ package training.featuresSuggester.actions
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -24,6 +27,13 @@ sealed class EditorAction : Action() {
   protected fun getPsiFileFromEditor(): PsiFile? {
     val project = editor.project ?: return null
     return PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+  }
+
+  protected fun getLanguageFromEditor(): Language? {
+    val file = FileDocumentManager.getInstance().getFile(editor.document)
+    val fileExtension = file?.extension ?: return null
+    val fileType = FileTypeRegistry.getInstance().getFileTypeByExtension(fileExtension)
+    return if (fileType is LanguageFileType) fileType.language else null
   }
 }
 
@@ -66,6 +76,8 @@ data class EditorTextInsertedAction(
 ) : EditorAction() {
   override val psiFile: PsiFile?
     get() = getPsiFileFromEditor()
+  override val language: Language?
+    get() = getLanguageFromEditor()
 }
 
 data class EditorTextRemovedAction(
@@ -76,6 +88,8 @@ data class EditorTextRemovedAction(
 ) : EditorAction() {
   override val psiFile: PsiFile?
     get() = getPsiFileFromEditor()
+  override val language: Language?
+    get() = getLanguageFromEditor()
 }
 
 data class EditorFindAction(
@@ -111,6 +125,8 @@ data class EditorFocusGainedAction(
 ) : EditorAction() {
   override val psiFile: PsiFile?
     get() = getPsiFileFromEditor()
+  override val language: Language?
+    get() = getLanguageFromEditor()
 }
 
 // -------------------------------------EDITOR BEFORE ACTIONS-------------------------------------
@@ -152,6 +168,8 @@ data class BeforeEditorTextInsertedAction(
 ) : EditorAction() {
   override val psiFile: PsiFile?
     get() = getPsiFileFromEditor()
+  override val language: Language?
+    get() = getLanguageFromEditor()
 }
 
 data class BeforeEditorTextRemovedAction(
@@ -162,6 +180,8 @@ data class BeforeEditorTextRemovedAction(
 ) : EditorAction() {
   override val psiFile: PsiFile?
     get() = getPsiFileFromEditor()
+  override val language: Language?
+    get() = getLanguageFromEditor()
 }
 
 data class BeforeEditorFindAction(

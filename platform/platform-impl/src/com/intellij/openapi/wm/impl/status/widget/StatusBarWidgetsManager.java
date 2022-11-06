@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.wm.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class StatusBarWidgetsManager extends SimpleModificationTracker implements Disposable {
-  private static final @NotNull Logger LOG = Logger.getInstance(StatusBar.class);
+  private static final @NotNull Logger LOG = Logger.getInstance(StatusBarWidgetsManager.class);
 
   private final List<StatusBarWidgetFactory> myPendingFactories = new ArrayList<>();
   private final Map<StatusBarWidgetFactory, StatusBarWidget> myWidgetFactories = new LinkedHashMap<>();
@@ -99,6 +100,12 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   public boolean wasWidgetCreated(@Nullable StatusBarWidgetFactory factory) {
     synchronized (myWidgetFactories) {
       return myWidgetFactories.get(factory) != null;
+    }
+  }
+
+  public boolean wasWidgetCreated(@NotNull String factoryId) {
+    synchronized (myWidgetFactories) {
+      return ContainerUtil.exists(myWidgetFactories.keySet(), factory -> factory.getId().equalsIgnoreCase(factoryId));
     }
   }
 

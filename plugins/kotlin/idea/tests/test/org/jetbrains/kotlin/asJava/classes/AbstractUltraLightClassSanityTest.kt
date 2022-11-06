@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractUltraLightClassSanityTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
 
     fun doTest(testDataPath: String) {
         val ioFile = File(testDataPath)

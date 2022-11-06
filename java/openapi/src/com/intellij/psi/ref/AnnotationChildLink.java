@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public class AnnotationChildLink extends PsiChildLink<PsiModifierListOwner, PsiAnnotation> {
   private final String myAnnoFqn;
 

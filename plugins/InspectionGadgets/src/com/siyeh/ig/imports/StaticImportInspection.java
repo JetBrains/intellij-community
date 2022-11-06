@@ -110,7 +110,7 @@ public class StaticImportInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiImportStaticStatement importStatement = (PsiImportStaticStatement)descriptor.getPsiElement();
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
       if (importReference == null) {

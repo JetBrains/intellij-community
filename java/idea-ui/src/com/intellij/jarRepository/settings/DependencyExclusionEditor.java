@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.*;
 class DependencyExclusionEditor {
   private static final SimpleTextAttributes STRIKEOUT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
   private static final SimpleTextAttributes STRIKEOUT_GRAYED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT,
-                                                                                                   UIUtil.getInactiveTextColor());
+                                                                                                   NamedColorUtil.getInactiveTextColor());
   private final CheckboxTree myDependenciesTree;
   private final CheckedTreeNode myRootNode;
   private final JPanel myMainPanel;
@@ -58,7 +58,7 @@ class DependencyExclusionEditor {
     }, myRootNode, policy) {
       @Override
       protected void installSpeedSearch() {
-        new TreeSpeedSearch(this, treePath -> {
+        new TreeSpeedSearch(this, false, treePath -> {
           Object node = treePath.getLastPathComponent();
           if (!(node instanceof CheckedTreeNode)) return "";
           Object data = ((CheckedTreeNode)node).getUserObject();

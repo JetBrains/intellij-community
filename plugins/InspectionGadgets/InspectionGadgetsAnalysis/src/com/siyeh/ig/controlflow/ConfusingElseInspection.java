@@ -75,7 +75,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement ifKeyword = descriptor.getPsiElement();
       final PsiIfStatement ifStatement = (PsiIfStatement)ifKeyword.getParent();
       if (ifStatement == null) {

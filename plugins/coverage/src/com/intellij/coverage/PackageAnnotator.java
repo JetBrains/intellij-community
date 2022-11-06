@@ -63,6 +63,8 @@ public final class PackageAnnotator {
     myAnnotator = annotator;
     myIgnoreEmptyPrivateConstructors = ignoreEmptyPrivateConstructors;
     myIgnoreImplicitConstructor = ignoreImplicitConstructor;
+    IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
+    IDEACoverageRunner.setExcludeAnnotations(project, myUnloadedClassesProjectData);
   }
 
   public interface Annotator {
@@ -181,8 +183,7 @@ public final class PackageAnnotator {
     myRunner = runner;
   }
 
-  public static @NotNull File findRelativeFile(@NotNull String rootPackageVMName, VirtualFile output) {
-    File outputRoot = VfsUtilCore.virtualToIoFile(output);
+  public static @NotNull File findRelativeFile(@NotNull String rootPackageVMName, File outputRoot) {
     outputRoot = rootPackageVMName.length() > 0 ? new File(outputRoot, FileUtil.toSystemDependentName(rootPackageVMName)) : outputRoot;
     return outputRoot;
   }
@@ -194,7 +195,8 @@ public final class PackageAnnotator {
         .isInTestSourceContent(psiClass.getContainingFile().getVirtualFile());
       final CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
       if (moduleExtension == null) return null;
-      final VirtualFile outputPath = isInTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
+      final String outputPathUrl = isInTests ? moduleExtension.getCompilerOutputUrlForTests() : moduleExtension.getCompilerOutputUrl();
+      final File outputPath = outputPathUrl != null ? new File(VfsUtilCore.urlToPath(outputPathUrl)) : null;
 
       if (outputPath != null) {
         final String qualifiedName = psiClass.getQualifiedName();
@@ -273,8 +275,9 @@ public final class PackageAnnotator {
                                                                             final String className) {
     final PackageAnnotator.ClassCoverageInfo info = new PackageAnnotator.ClassCoverageInfo();
     ClassData classData = myProjectData.getClassData(className);
-    if ((classData == null || classData.getLines() == null) && (myRunner == null || myRunner.shouldProcessUnloadedClasses())) {
-      classData = collectNonCoveredClassInfo(classFile, className, myUnloadedClassesProjectData);
+    final boolean classExists = classData != null && classData.getLines() != null;
+    if ((!classExists || !classData.isFullyAnalysed()) && (myRunner == null || myRunner.shouldProcessUnloadedClasses())) {
+      classData = collectNonCoveredClassInfo(classFile, className, classExists ? myProjectData : myUnloadedClassesProjectData);
     }
 
     if (classData != null && classData.getLines() != null) {

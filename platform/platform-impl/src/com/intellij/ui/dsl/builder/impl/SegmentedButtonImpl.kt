@@ -4,23 +4,22 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.whenItemSelected
+import com.intellij.openapi.observable.util.whenItemSelectedFromUi
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.SegmentedButton
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.bind
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
 import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import com.intellij.openapi.observable.util.bind
-import com.intellij.openapi.observable.util.whenItemSelected
-import com.intellij.openapi.observable.util.whenItemSelectedFromUi
-import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
-import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.bind
-import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
-import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultComboBoxModel
@@ -42,13 +41,20 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     rebuild()
   }
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T> {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T> {
     super.verticalAlign(verticalAlign)
+    return this
+  }
+
+  override fun align(align: Align): SegmentedButton<T> {
+    super.align(align)
     return this
   }
 

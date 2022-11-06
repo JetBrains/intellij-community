@@ -81,7 +81,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
     myRootsTree = new MyTree();
     TypeMigrationTreeStructure structure = new TypeMigrationTreeStructure(project);
     structure.setRoots(currentRoot);
-    StructureTreeModel model = new StructureTreeModel<>(structure, AlphaComparator.INSTANCE, this);
+    StructureTreeModel<?> model = new StructureTreeModel<>(structure, AlphaComparator.INSTANCE, this);
     myRootsTree.setModel(new AsyncTreeModel(model, this));
 
     initTree(myRootsTree);
@@ -136,7 +136,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
       if (failedUsages.length > 0) {
         myConflictsPanel.showUsages(PsiElement.EMPTY_ARRAY, failedUsages);
       }
-      final AbstractTreeNode rootNode = migrationNode.getParent();
+      final AbstractTreeNode<?> rootNode = migrationNode.getParent();
       if (rootNode instanceof MigrationNode) {
         myUsagesPanel.showRootUsages(((MigrationNode)rootNode).getInfo(), migrationNode.getInfo(), myLabeler);
       }
@@ -149,10 +149,10 @@ public final class MigrationPanel extends JPanel implements Disposable {
                                                    GridBagConstraints.NONE, JBUI.insets(5, 10, 5, 0), 0, 0);
     final JButton performButton = new JButton(JavaRefactoringBundle.message("type.migration.migrate.button.text"));
     performButton.addActionListener(new ActionListener() {
-      private void expandTree(MigrationNode migrationNode) {
+      private static void expandTree(MigrationNode migrationNode) {
         if (!migrationNode.getInfo().isExcluded() || migrationNode.areChildrenInitialized()) { //do not walk into excluded collapsed nodes: nothing to migrate can be found
           final Collection<? extends AbstractTreeNode<?>> nodes = migrationNode.getChildren();
-          for (final AbstractTreeNode node : nodes) {
+          for (final AbstractTreeNode<?> node : nodes) {
             ApplicationManager.getApplication().runReadAction(() -> expandTree((MigrationNode)node));
           }
         }
@@ -168,7 +168,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
               final Set<VirtualFile> files = new HashSet<>();
               final TypeMigrationUsageInfo[] usages = ReadAction.compute(() -> {
                   final Collection<? extends AbstractTreeNode<?>> children = ((MigrationRootNode)userObject).getChildren();
-                  for (AbstractTreeNode child : children) {
+                  for (AbstractTreeNode<?> child : children) {
                     expandTree((MigrationNode)child);
                   }
                   final TypeMigrationUsageInfo[] usages1 = myLabeler.getMigratedUsages();
@@ -276,18 +276,18 @@ public final class MigrationPanel extends JPanel implements Disposable {
 
     @Override
     public Object getData(@NotNull @NonNls final String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
         final DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
-        return selectedNodes.length == 1 && selectedNodes[0].getUserObject() instanceof MigrationNode
-               ? ((MigrationNode)selectedNodes[0].getUserObject()).getInfo().getElement() : null;
+        if (selectedNodes.length == 1 && selectedNodes[0].getUserObject() instanceof MigrationNode node) {
+          return (DataProvider)slowId -> CommonDataKeys.PSI_ELEMENT.is(dataId) ? node.getInfo().getElement() : null;
+        }
       }
       if (MIGRATION_USAGES_KEY.is(dataId)) {
         DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
         final Set<TypeMigrationUsageInfo> usageInfos = new HashSet<>();
         for (DefaultMutableTreeNode selectedNode : selectedNodes) {
-          final Object userObject = selectedNode.getUserObject();
-          if (userObject instanceof MigrationNode) {
-            collectInfos(usageInfos, (MigrationNode)userObject);
+          if (selectedNode.getUserObject() instanceof MigrationNode node) {
+            collectInfos(usageInfos, node);
           }
         }
         return usageInfos.toArray(new TypeMigrationUsageInfo[0]);
@@ -299,7 +299,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
       usageInfos.add(currentNode.getInfo());
       if (!currentNode.areChildrenInitialized()) return;
       final Collection<? extends AbstractTreeNode<?>> nodes = currentNode.getChildren();
-      for (AbstractTreeNode node : nodes) {
+      for (AbstractTreeNode<?> node : nodes) {
         collectInfos(usageInfos, (MigrationNode)node);
       }
     }
@@ -335,9 +335,9 @@ public final class MigrationPanel extends JPanel implements Disposable {
       final DefaultMutableTreeNode[] selectedNodes = myRootsTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
       for (DefaultMutableTreeNode node : selectedNodes) {
         final Object userObject = node.getUserObject();
-        if (!(userObject instanceof MigrationNode)) return;
-        final AbstractTreeNode parent = ((MigrationNode)userObject).getParent(); //disable include if parent was excluded
-        if (parent instanceof MigrationNode && ((MigrationNode)parent).getInfo().isExcluded()) return;
+        if (!(userObject instanceof MigrationNode migrationNode)) return;
+        //disable include if parent was excluded
+        if (migrationNode.getParent() instanceof MigrationNode parentNode && parentNode.getInfo().isExcluded()) return;
       }
       presentation.setEnabled(true);
     }
@@ -350,7 +350,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
       super(text);
     }
 
-    private TypeMigrationUsageInfo @Nullable [] getUsages(AnActionEvent context) {
+    private static TypeMigrationUsageInfo @Nullable [] getUsages(AnActionEvent context) {
       return context.getData(MIGRATION_USAGES_KEY);
     }
 
@@ -358,6 +358,11 @@ public final class MigrationPanel extends JPanel implements Disposable {
     public void update(@NotNull AnActionEvent e) {
       final TreePath[] selectionPaths = myRootsTree.getSelectionPaths();
       e.getPresentation().setEnabled(selectionPaths != null && selectionPaths.length > 0);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -387,14 +392,16 @@ public final class MigrationPanel extends JPanel implements Disposable {
         final PsiElement element = usageInfo.getElement();
         if (element != null) {
           PsiElement typeElement = null;
-          if (element instanceof PsiVariable) {
-            typeElement = ((PsiVariable)element).getTypeElement();
-          } else if (element instanceof PsiMethod) {
-            typeElement = ((PsiMethod)element).getReturnTypeElement();
+          if (element instanceof PsiVariable var) {
+            typeElement = var.getTypeElement();
+          }
+          else if (element instanceof PsiMethod method) {
+            typeElement = method.getReturnTypeElement();
           }
           if (typeElement == null) typeElement = element;
 
-          final UsagePresentation presentation = UsageInfoToUsageConverter.convert(new PsiElement[]{typeElement}, new UsageInfo(typeElement)).getPresentation();
+          final UsagePresentation presentation =
+            UsageInfoToUsageConverter.convert(new PsiElement[]{typeElement}, new UsageInfo(typeElement)).getPresentation();
           boolean isPrefix = true;  //skip usage position
           for (TextChunk chunk : presentation.getText()) {
             if (!isPrefix) append(chunk.getText(), patchAttrs(usageInfo, chunk.getSimpleAttributesIgnoreBackground()));
@@ -408,20 +415,20 @@ public final class MigrationPanel extends JPanel implements Disposable {
           }
           else {
             final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
-            if (member instanceof PsiField) {
-              location = PsiFormatUtil.formatVariable((PsiVariable)member, PsiFormatUtilBase.SHOW_NAME |
-                                                                           PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                                                                           PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
+            if (member instanceof PsiField field) {
+              location = PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_NAME |
+                                                             PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                             PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
             }
-            else if (member instanceof PsiMethod) {
-              location = PsiFormatUtil.formatMethod((PsiMethod)member, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
-                                                                                             PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                                                                                             PsiFormatUtilBase.SHOW_FQ_NAME,
+            else if (member instanceof PsiMethod method) {
+              location = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
+                                                                                  PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                                  PsiFormatUtilBase.SHOW_FQ_NAME,
                                                     PsiFormatUtilBase.SHOW_TYPE);
             }
-            else if (member instanceof PsiClass) {
-              location = PsiFormatUtil.formatClass((PsiClass)member, PsiFormatUtilBase.SHOW_NAME |
-                                                                     PsiFormatUtilBase.SHOW_FQ_NAME);
+            else if (member instanceof PsiClass psiClass) {
+              location = PsiFormatUtil.formatClass(psiClass, PsiFormatUtilBase.SHOW_NAME |
+                                                             PsiFormatUtilBase.SHOW_FQ_NAME);
             }
             else {
               location = null;

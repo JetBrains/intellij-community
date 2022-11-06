@@ -21,6 +21,7 @@ package com.intellij.lang.properties.parsing;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesList;
 import com.intellij.lang.properties.psi.PropertiesListStub;
 import com.intellij.lang.properties.psi.impl.PropertiesListImpl;
@@ -32,7 +33,7 @@ import java.io.IOException;
 
 class PropertyListStubElementType extends ILightStubElementType<PropertiesListStub, PropertiesList> {
   PropertyListStubElementType() {
-    super("PROPERTIES_LIST", PropertiesElementTypes.LANG);
+    super("PROPERTIES_LIST", PropertiesLanguage.INSTANCE);
   }
 
   @Override

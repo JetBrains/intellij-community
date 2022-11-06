@@ -4,9 +4,6 @@ package com.siyeh.ipp.forloop.imports;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.IntentionPowerPackBundle;
 
-/**
- * @author peter
- */
 public class ReplaceOnDemandImportTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testUnavailableOnBrokenCode() {

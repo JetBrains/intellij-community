@@ -15,6 +15,9 @@
 
     <extensionPoint name="xdebugger.attachHostProvider" interface="com.intellij.xdebugger.attach.XAttachHostProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.attachDebuggerProvider" interface="com.intellij.xdebugger.attach.XAttachDebuggerProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.inlineValuePopupProvider" interface="com.intellij.xdebugger.impl.inline.InlineValuePopupProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.attachHostSettingsProvider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.dialog.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -47,6 +50,8 @@
     <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule"/>
     <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroupingRule"/>
 
+    <xdebugger.inlineValuePopupProvider implementation="com.intellij.xdebugger.impl.InlineTextValuePopupProvider"/>
+
     <xdebugger.configurableProvider implementation="com.intellij.xdebugger.impl.settings.XDebuggerConfigurableProvider" order="first"/>
     <editor.linePainter implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter"/>
 
@@ -64,6 +69,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.XDebugThreadsFramesViewChangeCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector"/>
 
     <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
                          id="smart-step-into-up"/>
@@ -82,6 +88,12 @@
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EscHandler"
                          order="before hide-search" id="smart-step-into-escape"/>
     <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
+
+    <applicationService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogPresentationService"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessDialogFactory"/>
+
+    <xdebugger.dialog.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultItemPresentationProvider"/>
 
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
@@ -133,5 +145,9 @@
       <action id="AddBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction"/>
       <action id="AddConditionalBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction$WithCondition"/>
     </group>
+
+    <action id="XDebugger.Show.Breakpoints.Over.Line.Numbers" class="com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction">
+      <add-to-group group-id="EditorGutterPopupMenu.Appearance" anchor="after" relative-to-action="EditorGutterToggleGlobalLineNumbers"/>
+    </action>
   </actions>
 </idea-plugin>

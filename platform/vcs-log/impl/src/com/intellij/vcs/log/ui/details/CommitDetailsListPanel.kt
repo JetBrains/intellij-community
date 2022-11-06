@@ -18,6 +18,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.ProfileListener
@@ -85,6 +86,8 @@ class CommitDetailsListPanel
     background = getCommitDetailsBackground()
 
     addToCenter(loadingPanel)
+
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, statusText.wrappedFragmentsIterable)
   }
 
   fun startLoadingDetails() {

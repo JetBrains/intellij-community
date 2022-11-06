@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -opt-in=kotlinx.coroutines.FlowPreview -opt-in=kotlin.time.ExperimentalTime" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -opt-in=kotlinx.coroutines.FlowPreview -opt-in=kotlin.time.ExperimentalTime -opt-in=kotlinx.coroutines.DelicateCoroutinesApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -48,7 +48,6 @@
     <orderEntry type="library" name="package-search-api-models" level="project" />
     <orderEntry type="library" name="package-search-version-utils" level="project" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="module" module-name="intellij.packageSearch.compat" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
@@ -67,5 +66,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.repository.search" />
+    <orderEntry type="module" module-name="intellij.platform.dependenciesToolwindow" />
+    <orderEntry type="library" name="ktor-client-cio" level="project" />
   </component>
 </module>

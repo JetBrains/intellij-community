@@ -39,5 +39,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="TEST" />
   </component>
 </module>

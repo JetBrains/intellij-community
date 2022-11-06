@@ -24,9 +24,9 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer
 import com.intellij.workspaceModel.storage.DummyParentEntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume.assumeTrue

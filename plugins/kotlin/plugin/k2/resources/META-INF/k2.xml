@@ -6,15 +6,16 @@
   <depends optional="true" config-file="dep-jvm-decompiler.xml">org.jetbrains.java.decompiler</depends>
 
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.idea</depends>
   <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.modules.java-capable</depends>
 
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="formatter.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="formatter.xml" xpointer ="xpointer(/idea-plugin/*)"/>
   <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -41,24 +42,34 @@
     <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin"/>
   </extensions>
 
+  <!-- Line markers -->
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinSuspendCallLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinRecursiveCallLineMarkerProvider"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"
+                    serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
     <!-- fir-specific -->
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.fir.AndroidPluginIncompatibilityCheckerStartupActivity"/>
 
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.FirKotlinPluginKindProvider"/>
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
+                        serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideImplementFacilityImpl"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider"
                     serviceImplementation="org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSessionProvider"/>
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
                         serviceImplementation="org.jetbrains.kotlin.idea.references.KotlinFirReferenceContributor"/>
     <statusBarWidgetFactory implementation="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetFactory"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.psi.KtFileClassProvider"
-                    serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl"/>
 
     <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
                         serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
@@ -92,6 +103,7 @@
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
     <lang.psiDocumentation id="KotlinDocumentationTargetProvider"
                            implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
+    <lang.documentationLinkHandler implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationLinkHandler"/>
     <lang.documentation id="KotlinDocumentationTargetProvider"
                         implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
   </extensions>
@@ -117,7 +129,7 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.FirCompletionDummyIdentifierProviderService"
                         serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
 
-    <applicationService
+    <projectService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService"/>
 
@@ -155,7 +167,7 @@
                     serviceImplementation="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupportFirImpl"/>
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportFirImpl"/>
-
+    
     <targetElementEvaluator language="kotlin"
                             implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
@@ -182,7 +194,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector"
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector"
                         serviceImplementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.SymbolBasedKotlinMainFunctionDetector"/>
 
     <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
@@ -190,7 +202,6 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
-    <runLineMarkerContributor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighting.KotlinFirMainRunLineMarkerContributor"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService"/>
 
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex"/>
@@ -228,7 +239,10 @@
     <module name="kotlin.code-insight.inspections-k2"/>
     <module name="kotlin.code-insight.k2"/>
     <module name="kotlin.code-insight.live-templates-k2"/>
+    <module name="kotlin.code-insight.postfix-templates-k2"/>
 
+    <module name="kotlin.search.k2"/>
+    <module name="kotlin.refactorings.k2"/>
     <module name="kotlin.refactorings.rename.k2"/>
 
     <module name="kotlin.navigation"/>

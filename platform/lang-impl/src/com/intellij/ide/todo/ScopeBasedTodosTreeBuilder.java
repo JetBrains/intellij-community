@@ -22,18 +22,19 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder{
-  private final ScopeChooserCombo myScopes;
+public class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder {
 
-  public ScopeBasedTodosTreeBuilder(JTree tree, Project project, ScopeChooserCombo scopes){
+  private final @NotNull ScopeChooserCombo myScopes;
+
+  public ScopeBasedTodosTreeBuilder(@NotNull JTree tree,
+                                    @NotNull Project project,
+                                    @NotNull ScopeChooserCombo scopes) {
     super(tree, project);
     myScopes = scopes;
   }
 
   @Override
-  @NotNull
-  protected TodoTreeStructure createTreeStructure(){
+  protected @NotNull TodoTreeStructure createTreeStructure() {
     return new ScopeBasedTodosTreeStructure(myProject, myScopes);
   }
-
 }

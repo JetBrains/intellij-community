@@ -14,10 +14,12 @@ import org.intellij.lang.annotations.Language;
 @SuppressWarnings("HtmlDeprecatedAttribute")
 public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   public void testRangeHint() {
-    doTest("  void test(int x) {\n" +
-           "    x = Math.abs(x);\n" +
-           "    <selection>x</selection>\n" +
-           "  }", "int",
+    doTest("""
+               void test(int x) {
+                 x = Math.abs(x);
+                 <selection>x</selection>
+               }\
+             """, "int",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>int</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Range:</td><td>Integer.MIN_VALUE or &gt;= 0</td></tr>" +
@@ -58,11 +60,13 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testOptionalHint() {
-    doTest("  void test(java.util.Optional<String> t) {\n" +
-           "    if(t.isPresent()) {\n" +
-           "      <selection>t</selection>\n" +
-           "    }\n" +
-           "  }", "Optional&lt;String&gt;",
+    doTest("""
+               void test(java.util.Optional<String> t) {
+                 if(t.isPresent()) {
+                   <selection>t</selection>
+                 }
+               }\
+             """, "Optional&lt;String&gt;",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Optional&lt;String&gt;</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
@@ -71,9 +75,11 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testFunctionalType() {
-    doTest("  void test() {\n" +
-           "      Runnable r = <selection>() -> {}</selection>;\n" +
-           "  }", "Runnable", 
+    doTest("""
+               void test() {
+                   Runnable r = <selection>() -> {}</selection>;
+               }\
+             """, "Runnable",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Runnable</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
@@ -82,15 +88,17 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testTypeConstraint() {
-    doTest("  void x(Object a) {\n" +
-           "    if(a instanceof String || a instanceof Number) {\n" +
-           "      \n" +
-           "    } else if(a instanceof CharSequence){\n" +
-           "      <selection>a</selection>\n" +
-           "    } else {\n" +
-           "      a\n" +
-           "    }\n" +
-           "  }", "Object",
+    doTest("""
+               void x(Object a) {
+                 if(a instanceof String || a instanceof Number) {
+                  \s
+                 } else if(a instanceof CharSequence){
+                   <selection>a</selection>
+                 } else {
+                   a
+                 }
+               }\
+             """, "Object",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Object</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
@@ -100,15 +108,17 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testTypeConstraint2() {
-    doTest("  void x(Object a) {\n" +
-           "    if(a instanceof String || a instanceof Number) {\n" +
-           "      \n" +
-           "    } else if(a instanceof CharSequence){\n" +
-           "      \n" +
-           "    } else {\n" +
-           "      <selection>a</selection>\n" +
-           "    }\n" +
-           "  }\n", "Object",
+    doTest("""
+               void x(Object a) {
+                 if(a instanceof String || a instanceof Number) {
+                  \s
+                 } else if(a instanceof CharSequence){
+                  \s
+                 } else {
+                   <selection>a</selection>
+                 }
+               }
+             """, "Object",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>Object</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Constraints:</td><td>not instanceof CharSequence, Number</td></tr>" +
@@ -116,11 +126,12 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testSpecialField() {
-    doTest("void x(int[] data) {\n" +
-           "  if (data.length == 1) {\n" +
-           "    System.out.println(java.util.Arrays.toString(<selection>data</selection>));\n" +
-           "  }\n" +
-           "}", "int[]",
+    doTest("""
+             void x(int[] data) {
+               if (data.length == 1) {
+                 System.out.println(java.util.Arrays.toString(<selection>data</selection>));
+               }
+             }""", "int[]",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>int[]</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Nullability:</td><td>non-null</td></tr>" +
@@ -129,9 +140,10 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testBooleanValue() {
-    doTest("void test(int x) {\n" +
-           "  if(x > 5 && <selection>x < 0</selection>) {}\n" +
-           "}", "boolean", 
+    doTest("""
+             void test(int x) {
+               if(x > 5 && <selection>x < 0</selection>) {}
+             }""", "boolean",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>boolean</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>false</td></tr>" +
@@ -139,11 +151,12 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testStringValue() {
-    doTest("void test(String x) {\n" +
-           "  if(x.equals(\"foo\") || x.equals(\"bar\")) {\n" +
-           "    <selection>x</selection>\n" +
-           "  }\n" +
-           "}", "String", 
+    doTest("""
+             void test(String x) {
+               if(x.equals("foo") || x.equals("bar")) {
+                 <selection>x</selection>
+               }
+             }""", "String",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>String</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>&quot;bar&quot; or &quot;foo&quot;</td></tr>" +
@@ -151,11 +164,12 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testNotValue() {
-    doTest("void test(String x) {\n" +
-           "  if(x.equals(\"foo\") || x.equals(\"bar\")) {} else {\n" +
-           "    <selection>x</selection>\n" +
-           "  }\n" +
-           "}", "String", 
+    doTest("""
+             void test(String x) {
+               if(x.equals("foo") || x.equals("bar")) {} else {
+                 <selection>x</selection>
+               }
+             }""", "String",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>String</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Not equal to:</td><td>&quot;bar&quot;, &quot;foo&quot;</td></tr>" +
@@ -164,12 +178,12 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testNotValueEnum() {
-    doTest("enum X {A, B}" +
-           "void test(X x) {\n" +
-           "  if(x == X.A) {} else {\n" +
-           "    <selection>x</selection>\n" +
-           "  }\n" +
-           "}", "X", 
+    doTest("""
+             enum X {A, B}void test(X x) {
+               if(x == X.A) {} else {
+                 <selection>x</selection>
+               }
+             }""", "X",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>X</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Not equal to:</td><td>X.A</td></tr>" +
@@ -177,11 +191,12 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testEscaping() {
-    doTest("public static void main(int i) {\n" +
-           "  if (i < 50) {\n" +
-           "    System.out.println(<selection>i</selection>);\n" +
-           "  }\n" +
-           "}", "int", 
+    doTest("""
+             public static void main(int i) {
+               if (i < 50) {
+                 System.out.println(<selection>i</selection>);
+               }
+             }""", "int",
            "<table>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>int</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Range:</td><td>&lt;= 49</td></tr>" +

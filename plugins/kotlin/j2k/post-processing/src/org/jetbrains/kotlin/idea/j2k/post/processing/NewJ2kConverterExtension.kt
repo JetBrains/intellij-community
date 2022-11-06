@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.hasAnyKotlinRuntimeInScope
 import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
 import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -61,9 +60,10 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
                     val message = KotlinNJ2KServicesBundle.message("converter.kotlin.not.configured.no.configurators.available")
                     Messages.showErrorDialog(message, title)
                 }
+
                 configurators.size == 1 -> configurators.single().configure(project, emptyList())
                 else -> {
-                    val resultIndex = Messages.showChooseDialog(//TODO a better dialog?
+                    val resultIndex = Messages.showChooseDialog( //TODO a better dialog?
                         project,
                         KotlinNJ2KServicesBundle.message("converter.kotlin.not.configured.choose.configurator"),
                         title,

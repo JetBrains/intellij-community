@@ -2,7 +2,7 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -17,7 +17,7 @@ interface ParentAbEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentAbEntity, ModifiableWorkspaceEntity<ParentAbEntity>, ObjBuilder<ParentAbEntity> {
+  interface Builder : ParentAbEntity, WorkspaceEntity.Builder<ParentAbEntity>, ObjBuilder<ParentAbEntity> {
     override var entitySource: EntitySource
     override var children: List<ChildAbstractBaseEntity>
   }
@@ -47,7 +47,7 @@ interface ChildAbstractBaseEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : ChildAbstractBaseEntity> : ChildAbstractBaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+  interface Builder<T : ChildAbstractBaseEntity> : ChildAbstractBaseEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
@@ -73,7 +73,7 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildFirstEntity, ChildAbstractBaseEntity.Builder<ChildFirstEntity>, ModifiableWorkspaceEntity<ChildFirstEntity>, ObjBuilder<ChildFirstEntity> {
+  interface Builder : ChildFirstEntity, ChildAbstractBaseEntity.Builder<ChildFirstEntity>, WorkspaceEntity.Builder<ChildFirstEntity>, ObjBuilder<ChildFirstEntity> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
@@ -111,7 +111,7 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSecondEntity, ChildAbstractBaseEntity.Builder<ChildSecondEntity>, ModifiableWorkspaceEntity<ChildSecondEntity>, ObjBuilder<ChildSecondEntity> {
+  interface Builder : ChildSecondEntity, ChildAbstractBaseEntity.Builder<ChildSecondEntity>, WorkspaceEntity.Builder<ChildSecondEntity>, ObjBuilder<ChildSecondEntity> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity

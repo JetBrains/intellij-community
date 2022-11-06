@@ -18,9 +18,6 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class PsiChildLink<Parent extends PsiElement, Child extends PsiElement> implements PsiRefElementCreator<Parent, Child> {
   
   @Nullable public abstract Child findLinkedChild(@Nullable Parent parent);

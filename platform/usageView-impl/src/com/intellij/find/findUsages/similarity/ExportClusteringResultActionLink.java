@@ -32,9 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
@@ -47,7 +46,7 @@ public class ExportClusteringResultActionLink extends ActionLink {
   public ExportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
     super(UsageViewBundle.message("similar.usages.internal.export.clustering.data"),
           (event) -> {
-            List<UsageCluster> clusters = new ArrayList<>(session.getClusters());
+            List<UsageCluster> clusters = session.getClusters();
             Task.Backgroundable loadMostCommonUsagePatternsTask = new Task.Backgroundable(project, UsageViewBundle.message(
               "similar.usages.internal.exporting.clustering.data.progress.title")) {
               @Override
@@ -83,7 +82,7 @@ public class ExportClusteringResultActionLink extends ActionLink {
     generator.writeStartArray();
     for (UsageCluster cluster : clusters) {
       indicator.setFraction(counter++ / (double)clusters.size());
-      HashSet<SimilarUsage> usages = new HashSet<>(cluster.getUsages());
+      Set<SimilarUsage> usages = cluster.getUsages();
       for (SimilarUsage usage : usages) {
         if (usage instanceof UsageInfo2UsageAdapter) {
           indicator.checkCanceled();

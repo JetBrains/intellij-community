@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.visibility.ClassEscapesItsScopeInspection;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       myHolder = holder;
       myDeadCodeInspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
     }
-    private final Object2IntOpenHashMap<PsiClass> maxSuggestedLevelForChildMembers = new Object2IntOpenHashMap<>();
+    private final Object2IntMap<PsiClass> maxSuggestedLevelForChildMembers = new Object2IntOpenHashMap<>();
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {

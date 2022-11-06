@@ -128,24 +128,15 @@ public class NlsMessages {
    * @return the corresponding unit of measurement
    */
   private static @NotNull MeasureUnit convert(@NotNull TimeUnit timeUnit) {
-    switch (timeUnit) {
-      case NANOSECONDS:
-        return MeasureUnit.NANOSECOND;
-      case MICROSECONDS:
-        return MeasureUnit.MICROSECOND;
-      case MILLISECONDS:
-        return MeasureUnit.MILLISECOND;
-      case SECONDS:
-        return MeasureUnit.SECOND;
-      case MINUTES:
-        return MeasureUnit.MINUTE;
-      case HOURS:
-        return MeasureUnit.HOUR;
-      case DAYS:
-        return MeasureUnit.DAY;
-      default:
-        throw new AssertionError("Probably a new type of time measurement has been added in the given JDK. Can't convert this type");
-    }
+    return switch (timeUnit) {
+      case NANOSECONDS -> MeasureUnit.NANOSECOND;
+      case MICROSECONDS -> MeasureUnit.MICROSECOND;
+      case MILLISECONDS -> MeasureUnit.MILLISECOND;
+      case SECONDS -> MeasureUnit.SECOND;
+      case MINUTES -> MeasureUnit.MINUTE;
+      case HOURS -> MeasureUnit.HOUR;
+      case DAYS -> MeasureUnit.DAY;
+    };
   }
 
   /**

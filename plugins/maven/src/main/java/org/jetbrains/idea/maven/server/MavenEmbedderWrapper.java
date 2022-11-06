@@ -138,13 +138,9 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
         if (artifactEvents != null) {
           for (MavenArtifactDownloadServerProgressEvent e : artifactEvents) {
             switch (e.getArtifactEventType()) {
-              case DOWNLOAD_STARTED:
-                indicator.startedDownload(e.getResolveType(), e.getDependencyId());
-                break;
-              case DOWNLOAD_COMPLETED:
-                indicator.completedDownload(e.getResolveType(), e.getDependencyId());
-                break;
-              case DOWNLOAD_FAILED:
+              case DOWNLOAD_STARTED -> indicator.startedDownload(e.getResolveType(), e.getDependencyId());
+              case DOWNLOAD_COMPLETED -> indicator.completedDownload(e.getResolveType(), e.getDependencyId());
+              case DOWNLOAD_FAILED ->
                 indicator.failedDownload(e.getResolveType(), e.getDependencyId(), e.getErrorMessage(), e.getStackTrace());
             }
           }

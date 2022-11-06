@@ -109,6 +109,16 @@ public abstract class Decompressor {
       return new CommonsZip(mySource);
     }
 
+    /**
+     * <p>Returns an alternative implementation that is slower but supports ZIP extensions (UNIX/DOS attributes, symlinks),
+     * if the current OS is unix, otherwise returns this.</p>
+     * <p><b>NOTE</b>: requires Commons Compress to be on the classpath, if the current OS is unix.</p>
+     */
+    public @NotNull Decompressor withZipExtensionsIfUnix() {
+      if (SystemInfo.isUnix) return withZipExtensions();
+      return this;
+    }
+
     //<editor-fold desc="Implementation">
     private final Path mySource;
     private ZipFile myZip;

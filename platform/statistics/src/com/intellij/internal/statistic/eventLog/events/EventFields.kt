@@ -448,6 +448,9 @@ object EventFields {
   val DurationMs = LongEventField("duration_ms")
 
   @JvmField
+  val Size = Int("size")
+
+  @JvmField
   val IdeActivityIdField = object : PrimitiveEventField<StructuredIdeActivity>() {
     override val name: String = "ide_activity_id"
 

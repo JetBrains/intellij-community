@@ -2,17 +2,17 @@
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.util.ui.UIUtil.getInactiveTextColor
+import com.intellij.util.ui.NamedColorUtil
+import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHOAuthService
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.Validator
+import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 
 internal class GHOAuthCredentialsUi(
@@ -24,19 +24,10 @@ internal class GHOAuthCredentialsUi(
 
   override fun getValidator(): Validator = { null }
 
-  override fun createExecutor(): GithubApiRequestExecutor = factory.create("")
-
-  override fun acquireLoginAndToken(
-    server: GithubServerPath,
-    executor: GithubApiRequestExecutor,
-    indicator: ProgressIndicator
-  ): Pair<String, String> {
-    executor as GithubApiRequestExecutor.WithTokenAuth
-
-    val token = acquireToken(indicator)
-    executor.token = token
-
-    val login = GHTokenCredentialsUi.acquireLogin(server, executor, indicator, isAccountUnique, null)
+  override suspend fun login(server: GithubServerPath): Pair<String, String> {
+    val token = acquireToken()
+    val executor = factory.create(token)
+    val login = GHTokenCredentialsUi.acquireLogin(server, executor, isAccountUnique, null)
     return login to token
   }
 
@@ -48,19 +39,19 @@ internal class GHOAuthCredentialsUi(
     row {
       label(message("label.login.progress")).applyToComponent {
         icon = AnimatedIcon.Default()
-        foreground = getInactiveTextColor()
+        foreground = NamedColorUtil.getInactiveTextColor()
       }
     }
   }
 
-  private fun acquireToken(indicator: ProgressIndicator): String {
+  private suspend fun acquireToken(): String {
     val credentialsFuture = GHOAuthService.instance.authorize()
     try {
-      return ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator).accessToken
+      return credentialsFuture.await().accessToken
     }
-    catch (pce: ProcessCanceledException) {
-      credentialsFuture.completeExceptionally(pce)
-      throw pce
+    catch (ce: CancellationException) {
+      credentialsFuture.completeExceptionally(ProcessCanceledException(ce))
+      throw ce
     }
   }
 }

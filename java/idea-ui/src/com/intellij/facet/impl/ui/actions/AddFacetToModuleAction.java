@@ -6,6 +6,7 @@ import com.intellij.facet.*;
 import com.intellij.facet.impl.ui.FacetEditorFacade;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.impl.AddFrameworkSupportInProjectStructureAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,6 +55,11 @@ public final class AddFacetToModuleAction extends AnAction implements DumbAware 
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(isVisible(myEditor, myType));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   public static boolean isVisible(FacetEditorFacade editor, final FacetType<?, ?> type) {

@@ -7,20 +7,10 @@ import six
 from six import text_type, u
 
 ENCODING = 'utf-8'
-_stdin = os.fdopen(sys.stdin.fileno(), 'rb')
-_stdout = os.fdopen(sys.stdout.fileno(), 'wb')
-_stderr = os.fdopen(sys.stderr.fileno(), 'wb')
 
-
-def read_safe():
-    return _stdin.read().decode(ENCODING)
-
-
-def print_safe(s, error=False):
-    stream = _stderr if error else _stdout
-    stream.write(s.encode(ENCODING))
-    stream.flush()
-
+# regexp from sphinxcontrib/napoleon/docstring.py:35 and py2only/docutils/parsers/rst/states.py:1107
+TAGS_START = re.compile(
+    r'(\.\. \S+::)|:(?![: ])([^:\\]|\\.|:(?!([ `]|$)))*(?<! ):( +|$)')
 
 def format_rest(docstring):
     from docutils import nodes
@@ -221,6 +211,7 @@ def format_rest(docstring):
             self.output = ''
 
     writer = _DocumentPseudoWriter()
+    docstring = add_blank_line_before_first_tag(docstring)
     publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
                                                                  'halt_level': 10000,
                                                                  'warning_stream': None,
@@ -230,6 +221,16 @@ def format_rest(docstring):
     visitor = RestHTMLTranslator(document)
     document.walkabout(visitor)
     return u('').join(visitor.body)
+
+
+def add_blank_line_before_first_tag(docstring):
+    input_lines = docstring.splitlines()
+    for i, line in enumerate(input_lines):
+        if TAGS_START.match(line):
+            if i > 0 and not input_lines[i - 1].isspace():
+                input_lines.insert(i, '')
+            break
+    return '\n'.join(input_lines)
 
 
 def format_google(docstring):
@@ -284,6 +285,18 @@ def format_epytext(docstring):
 
 
 def main():
+    _stdin = os.fdopen(sys.stdin.fileno(), 'rb')
+    _stdout = os.fdopen(sys.stdout.fileno(), 'wb')
+    _stderr = os.fdopen(sys.stderr.fileno(), 'wb')
+
+    def read_safe():
+        return _stdin.read().decode(ENCODING)
+
+    def print_safe(s, error=False):
+        stream = _stderr if error else _stdout
+        stream.write(s.encode(ENCODING))
+        stream.flush()
+
     # Remove existing Sphinx extensions registered via
     # sphinxcontrib setuptools namespace package, as they
     # conflict with sphinxcontrib.napoleon that we bundle.
@@ -308,13 +321,14 @@ def main():
         'epytext': format_epytext
     }.get(docstring_format, format_rest)
 
-    html = formatter(text)
+    try:
+        html = formatter(text)
+    except ImportError:
+        print_safe('sys.path = %s\n\n' % sys.path, error=True)
+        raise
+
     print_safe(html)
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except ImportError:
-        print_safe('sys.path = %s\n\n' % sys.path, error=True)
-        raise
+    main()

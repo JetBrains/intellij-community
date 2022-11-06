@@ -298,6 +298,16 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
 
   private @NotNull DfaInstructionState mergeBackBranches(DfaInstructionState instructionState, Collection<DfaMemoryState> processed) {
     DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
+    int curStateStackSize = curState.getStackSize();
+    if (processed.size() > 10 && curStateStackSize > 10) {
+      for (DfaMemoryState state : processed) {
+        int diff = curStateStackSize - state.getStackSize();
+        if (diff > 10) {
+          throw new IllegalStateException("Stack for instruction %d increased by %d; it's likely that IR was built incorrectly"
+              .formatted(instructionState.getInstruction().getIndex(), diff));
+        }
+      }
+    }
     Object key = curState.getMergeabilityKey();
     DfaMemoryStateImpl mergedState =
       StreamEx.of(processed).filterBy(DfaMemoryState::getMergeabilityKey, key)

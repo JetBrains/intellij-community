@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
@@ -137,11 +137,18 @@ class KotlinAddImportAction internal constructor(
     private fun variantsList(): List<AutoImportVariant> {
         if (singleImportVariant != null && !isUnitTestMode()) return listOf(singleImportVariant!!)
 
-        return project.runSynchronouslyWithProgress(KotlinBundle.message("import.progress.text.resolve.imports"), true) {
+        val variantsList = {
             runReadAction {
                 variants.sortedBy { it.priority }.map { it.variant }.toList()
             }
-        }.orEmpty()
+        }
+        return if (isUnitTestMode()) {
+            variantsList()
+        } else {
+            project.runSynchronouslyWithProgress(KotlinBundle.message("import.progress.text.resolve.imports"), true) {
+                variantsList()
+            }.orEmpty()
+        }
     }
 
     fun showHint(): Boolean {
@@ -160,16 +167,6 @@ class KotlinAddImportAction internal constructor(
         HintManager.getInstance().showQuestionHint(editor, hintText, element.startOffset, element.endOffset, this)
 
         return true
-    }
-
-    fun isUnambiguous(): Boolean {
-        singleImportVariant = variants.singleOrNull()?.variant?.takeIf { variant ->
-            variant.descriptorsToImport.all { it is ClassDescriptor } ||
-                    variant.descriptorsToImport.all { it is FunctionDescriptor } ||
-                    variant.descriptorsToImport.all { it is PropertyDescriptor }
-        }
-
-        return singleImportVariant != null
     }
 
     override fun execute(): Boolean {
@@ -293,7 +290,7 @@ internal interface ComparablePriority : Comparable<ComparablePriority>
 
 internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ComparablePriority)
 
-private class Prioritizer(private val file: KtFile, private val compareNames: Boolean = true) {
+internal class Prioritizer(private val file: KtFile, private val compareNames: Boolean = true) {
     private val classifier = ImportableFqNameClassifier(file){
         ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
     }

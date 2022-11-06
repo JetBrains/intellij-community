@@ -2,8 +2,9 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
+import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.traceRun
+import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.util.RecursionManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -26,7 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class PropertyGraph(debugName: String? = null, private val isBlockPropagation: Boolean = true) {
 
-  private val propagation = AnonymousParallelOperationTrace((if (debugName == null) "" else " of $debugName") + ": Graph propagation")
+  private val propagation = AtomicOperationTrace("Graph ${debugName ?: "UNKNOWN"} propagation")
   private val properties = ConcurrentHashMap<ObservableProperty<*>, PropertyNode>()
   private val dependencies = ConcurrentHashMap<PropertyNode, CopyOnWriteArrayList<Dependency<*>>>()
   private val recursionGuard = RecursionManager.createGuard<PropertyNode>(PropertyGraph::class.java.name)
@@ -59,7 +60,7 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
    * @see PropertyGraph
    */
   fun afterPropagation(listener: () -> Unit) {
-    propagation.afterOperation(listener)
+    propagation.whenOperationFinished(listener)
   }
 
   /**
@@ -70,10 +71,10 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
    */
   fun afterPropagation(parentDisposable: Disposable?, listener: () -> Unit) {
     if (parentDisposable == null) {
-      propagation.afterOperation(listener)
+      propagation.whenOperationFinished(listener)
     }
     else {
-      propagation.afterOperation(listener, parentDisposable)
+      propagation.whenOperationFinished(parentDisposable, listener)
     }
   }
 
@@ -82,7 +83,7 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
       PropertyNode().also { node ->
         property.afterChange {
           recursionGuard.doPreventingRecursion(node, false) {
-            propagation.task {
+            propagation.traceRun {
               node.isPropagationBlocked = isBlockPropagation
               propagateChange(node)
             }

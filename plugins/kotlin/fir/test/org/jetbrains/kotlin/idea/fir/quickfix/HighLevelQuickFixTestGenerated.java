@@ -2839,6 +2839,31 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/returnedExpressionTypeMismatchFunctionParameterType.kt");
             }
 
+            @TestMetadata("twoDimensionalArray.kt")
+            public void testTwoDimensionalArray() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalArray.kt");
+            }
+
+            @TestMetadata("twoDimensionalArray2.kt")
+            public void testTwoDimensionalArray2() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalArray2.kt");
+            }
+
+            @TestMetadata("twoDimensionalArray3.kt")
+            public void testTwoDimensionalArray3() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalArray3.kt");
+            }
+
+            @TestMetadata("twoDimensionalList.kt")
+            public void testTwoDimensionalList() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalList.kt");
+            }
+
+            @TestMetadata("twoDimensionalList2.kt")
+            public void testTwoDimensionalList2() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/twoDimensionalList2.kt");
+            }
+
             @TestMetadata("typeMismatchInIfStatementReturnedByFunction.kt")
             public void testTypeMismatchInIfStatementReturnedByFunction() throws Exception {
                 runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/typeMismatchInIfStatementReturnedByFunction.kt");

@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A helper class for working with file gists: associating persistent data with current VFS or PSI file contents.
- * @author peter
  */
 public abstract class GistManager {
   @NotNull

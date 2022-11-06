@@ -42,8 +42,7 @@ public class ImplementationSearcher {
 
   protected static SearchScope getSearchScope(PsiElement element, Editor editor) {
     try {
-      DumbService dumbService = ReadAction.compute(() -> DumbService.getInstance(element.getProject()));
-      return dumbService.runReadActionInSmartMode(() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
+      return ReadAction.compute(() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
     }
     catch (PsiInvalidElementAccessException e) {
       throw new ProcessCanceledException(e);

@@ -58,7 +58,7 @@ interface SimplePropertiesProvider {
 }
 
 class Properties(val properties: List<Property>, val instance: Any) {
-  val propertiesMap: MutableMap<String, Property> = HashMap(properties.map { Pair(it.getName(), it) }.toMap())
+  private val propertiesMap: MutableMap<String, Property> = HashMap(properties.map { Pair(it.getName(), it) }.toMap())
 
   init {
     if (instance is SimplePropertiesProvider) {

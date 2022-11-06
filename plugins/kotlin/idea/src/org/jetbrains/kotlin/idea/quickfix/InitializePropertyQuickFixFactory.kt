@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.core.appendElement
 import org.jetbrains.kotlin.idea.core.getOrCreateBody
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*

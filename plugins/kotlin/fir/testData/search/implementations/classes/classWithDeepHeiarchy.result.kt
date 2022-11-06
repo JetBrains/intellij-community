@@ -1,3 +1,3 @@
-SymbolLightClass: A
-SymbolLightClass: B
-SymbolLightClass: C
+KtClass: A
+KtClass: B
+KtClass: C

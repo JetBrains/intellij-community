@@ -89,11 +89,11 @@ fun MutableEntityStorage.addSourceEntity(data: String,
   return entity
 }
 
-fun MutableEntityStorage.addPersistentIdEntity(
+fun MutableEntityStorage.addSymbolicIdEntity(
   data: String,
   source: EntitySource = SampleEntitySource("test")
-): PersistentIdEntity {
-  val entity = PersistentIdEntity(data, source)
+): SymbolicIdEntity {
+  val entity = SymbolicIdEntity(data, source)
   this.addEntity(entity)
   return entity
 }

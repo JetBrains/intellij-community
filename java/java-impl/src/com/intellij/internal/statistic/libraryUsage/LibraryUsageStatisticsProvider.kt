@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
 
 internal class LibraryUsageStatisticsProvider(private val project: Project) : DaemonListener {
 
@@ -46,7 +47,7 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
         .inSmartMode(project)
         .expireWith(processedFilesService)
         .coalesceBy(vFile, processedFilesService)
-        .submit(AppExecutorUtil.getAppExecutorService())
+        .submit(boundedExecutor)
     }
   }
 
@@ -94,5 +95,12 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
           !isUnitTestMode && !isHeadlessEnvironment && StatisticsUploadAssistant.isSendAllowed()
         }
       }
+
+    private val boundedExecutor: ExecutorService by lazy {
+      AppExecutorUtil.createBoundedApplicationPoolExecutor(
+        /* name = */ "LibraryUsageStatisticsProvider",
+        /* maxThreads = */ 1,
+      )
+    }
   }
 }

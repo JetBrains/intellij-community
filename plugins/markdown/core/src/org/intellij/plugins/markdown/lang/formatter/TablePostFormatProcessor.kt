@@ -33,7 +33,7 @@ internal class TablePostFormatProcessor: PostFormatProcessor {
     }
     val document = obtainDocument(source) ?: return rangeToReformat
     PsiDocumentManager.getInstance(source.project).commitDocument(document)
-    val elements = source.firstChild?.lastChild?.siblings(forward = false, withSelf = false).orEmpty()
+    val elements = source.firstChild?.lastChild?.siblings(forward = false, withSelf = true).orEmpty()
     val tables = elements.filterIsInstance<MarkdownTable>()
     for (table in tables) {
       if (rangeToReformat.intersects(table.textRange)) {

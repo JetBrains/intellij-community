@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.common.DumpKt;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.PairProcessor;
@@ -58,10 +60,8 @@ public final class LeakHunter {
                                    @NotNull Class<T> suspectClass,
                                    @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
     processLeaks(rootsSupplier, suspectClass, isReallyLeak, (leaked, backLink)->{
-      String place = leaked instanceof Project ? getCreationPlace((Project)leaked) : "";
-      String message ="Found leaked "+leaked.getClass() + ": "+leaked +
-                      "; hash: " + System.identityHashCode(leaked) + "; place: " + place + "\n" +
-                      backLink;
+      String message = getLeakedObjectDetails(leaked, backLink, true);
+
       System.out.println(message);
       System.out.println(";-----");
       ThreadUtil.printThreadDump();
@@ -136,5 +136,52 @@ public final class LeakHunter {
       }
       return result;
     };
+  }
+
+  @TestOnly
+  @NotNull
+  public static String getLeakedObjectDetails(@NotNull Object leaked,
+                                              @Nullable Object backLink,
+                                              boolean detailedErrorDescription) {
+    int hashCode = System.identityHashCode(leaked);
+    String result = "Found a leaked instance of "+leaked.getClass()
+                    +"\nInstance: "+leaked
+                    +"\nHashcode: "+hashCode;
+    if (detailedErrorDescription) {
+      result += "\n"+getLeakedObjectErrorDescription(null);
+    }
+    if (backLink != null) {
+      result += "\nExisting strong reference path to the instance:\n" +backLink.toString().indent(2);
+    }
+
+    String creationPlace = leaked instanceof Project ? getCreationPlace((Project)leaked) : null;
+    if (creationPlace != null) {
+      result += "\nThe instance was created at: "+creationPlace;
+    }
+    return result;
+  }
+
+  @TestOnly
+  public static @NotNull String getLeakedObjectErrorDescription(@Nullable String knownHeapDumpPath) {
+    String result = """
+      Error description:
+        This error means that the object is expected to be collected by the garbage collector by this time, but it was not.
+        Please make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html""";
+
+    if (knownHeapDumpPath == null) {
+      result += "\n  If this is a TeamCity build, you can find a memory snapshot `" +
+                TestApplicationKt.LEAKED_PROJECTS + ".hproof.zip` in the \"Artifacts\" tab of the build run."
+                + "\n  Otherwise, try looking for '" + DumpKt.HEAP_DUMP_IS_PUBLISHED + "' string in the system output in the log  below.";
+    }
+    else if (TeamCityLogger.isUnderTC) {
+      result+="\n  You can find a memory snapshot `"
+        +TestApplicationKt.LEAKED_PROJECTS
+        +".hproof.zip` in the \"Artifacts\" tab of the build run.";
+    }
+    else {
+      result += "\n  Try looking for '"+DumpKt.HEAP_DUMP_IS_PUBLISHED
+        +"' string in the system output log below.";
+    }
+    return result;
   }
 }

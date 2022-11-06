@@ -4,8 +4,9 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -19,7 +20,7 @@ interface KeyParent : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : KeyParent, ModifiableWorkspaceEntity<KeyParent>, ObjBuilder<KeyParent> {
+  interface Builder : KeyParent, WorkspaceEntity.Builder<KeyParent>, ObjBuilder<KeyParent> {
     override var entitySource: EntitySource
     override var keyField: String
     override var notKeyField: String
@@ -52,7 +53,7 @@ interface KeyChild : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : KeyChild, ModifiableWorkspaceEntity<KeyChild>, ObjBuilder<KeyChild> {
+  interface Builder : KeyChild, WorkspaceEntity.Builder<KeyChild>, ObjBuilder<KeyChild> {
     override var entitySource: EntitySource
     override var data: String
     override var parentEntity: KeyParent

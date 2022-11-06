@@ -25,9 +25,10 @@ public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
     super.setUp();
     filters = new MavenConsoleFilterProvider().getDefaultFilters(myFixture.getProject());
     javaFilePath = myFixture.configureByText("main.java",
-                                             "public class Test {ff\n" +
-                                             "    public static void main(String[] args) {}\n" +
-                                             "}")
+                                             """
+                                               public class Test {ff
+                                                   public static void main(String[] args) {}
+                                               }""")
       .getVirtualFile()
       .getCanonicalPath();
 

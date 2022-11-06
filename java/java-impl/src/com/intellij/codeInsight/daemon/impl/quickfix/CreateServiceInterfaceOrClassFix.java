@@ -3,7 +3,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.actions.TemplateKindCombo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -113,6 +115,11 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
         }
       }
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", "public interface " + myInterfaceName + " {}");
   }
 
   @NotNull

@@ -9,8 +9,7 @@ import java.util.*
 import java.util.function.Predicate
 import java.util.regex.Pattern
 
-@PublishedApi
-internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING)
+val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
 
 fun copyFileToDir(file: Path, targetDir: Path) {
   doCopyFile(file, targetDir.resolve(file.fileName), targetDir)

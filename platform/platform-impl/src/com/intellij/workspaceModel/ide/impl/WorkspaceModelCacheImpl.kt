@@ -17,7 +17,7 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.io.*
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -44,7 +44,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     if (enabled) {
       LOG.debug("Project Model Cache at $cacheFile")
 
-      WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
+      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
           LOG.debug("Schedule cache update")
           saveAlarm.request()

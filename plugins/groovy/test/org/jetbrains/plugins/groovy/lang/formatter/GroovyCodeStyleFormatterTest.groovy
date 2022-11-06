@@ -4,9 +4,6 @@ package org.jetbrains.plugins.groovy.lang.formatter
 
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/codeStyle/"

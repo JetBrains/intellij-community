@@ -304,10 +304,8 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     Runnable iteration = () -> {
       try {
         List<Caret> sortedCarets = getAllCarets();
-        if (reverseOrder) {
-          Collections.reverse(sortedCarets);
-        }
-        for (Caret caret : sortedCarets) {
+        Iterable<Caret> caretIterable = reverseOrder ? ContainerUtil.iterateBackward(sortedCarets) : sortedCarets;
+        for (Caret caret : caretIterable) {
           myCurrentCaret.set((CaretImpl)caret);
           action.perform(caret);
         }

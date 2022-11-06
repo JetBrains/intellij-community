@@ -1,26 +1,5 @@
 <!--suppress PluginXmlDynamicPlugin -->
 <idea-plugin>
-  <project-components>
-    <component>
-      <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
-      <!--suppress PluginXmlValidity -->
-      <headless-implementation-class>com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl</headless-implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.problems.WolfTheProblemSolver</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl</implementation-class>
-      <headless-implementation-class>com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver</headless-implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-  </project-components>
-
   <extensionPoints>
     <!-- only bundled plugin can define extension -->
     <!--suppress PluginXmlDynamicPlugin -->
@@ -28,6 +7,23 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService
+      serviceInterface="com.intellij.openapi.fileEditor.FileEditorManager"
+      serviceImplementation="com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl"
+      headlessImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
+    />
+    <projectService
+      serviceInterface="com.intellij.problems.WolfTheProblemSolver"
+      serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"
+      headlessImplementation="com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver"
+    />
+    <!-- no preload="await" - requested by DaemonListeners -->
+    <projectService
+      serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer"
+      serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl"
+    />
+    <editorFactoryListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl$MyEditorFactoryListener"/>
+
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher$RootsChangeWatcherDelegator"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
@@ -61,7 +57,7 @@
                         headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
-                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl" preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.ide.DataManager"
                         serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>
@@ -76,7 +72,7 @@
                         client="local"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.CurrentEditorProvider"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.ClientCurrentEditorProvider"
-                        client="guest"/>
+                        client="remote"/>
 
     <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
@@ -115,7 +111,6 @@
       serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl"/>
 
-    <!-- as last - to preload after all others preloaded services -->
     <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
@@ -149,9 +144,9 @@
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyProjectListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener" activeInHeadlessMode="false"/>
+              topic="com.intellij.openapi.project.ProjectCloseListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
-    <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.openapi.project.ProjectManagerListener"
+    <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.openapi.project.ProjectCloseListener"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.ide.lightEdit.LightEditServiceListener"
               activeInHeadlessMode="false"/>
@@ -169,9 +164,9 @@
               topic="com.intellij.notification.Notifications"/>
 
     <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
-              topic="com.intellij.ide.ui.LafManagerListener"/>
+              topic="com.intellij.ide.ui.LafManagerListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
-              topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
+              topic="com.intellij.openapi.editor.colors.EditorColorsListener" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeAction$Listener"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
@@ -224,7 +219,7 @@
     <listener class="com.intellij.notification.impl.NotificationsBeeper" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.codeInsight.editorActions.ReaderModeFileEditorListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInHeadlessMode="false"/>
+              topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.codeInsight.actions.ReaderModeSettingsListener"
               topic="com.intellij.codeInsight.actions.ReaderModeListener" activeInHeadlessMode="false"/>
 

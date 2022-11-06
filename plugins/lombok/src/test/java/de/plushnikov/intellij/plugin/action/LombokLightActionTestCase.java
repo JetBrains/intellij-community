@@ -25,7 +25,7 @@ public abstract class LombokLightActionTestCase extends AbstractLombokLightCodeI
 
     Promise<DataContext> contextResult = DataManager.getInstance().getDataContextFromFocusAsync();
     AnActionEvent anActionEvent = new AnActionEvent(null, contextResult.blockingGet(10, TimeUnit.SECONDS),
-      "", anAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
+      "", anAction.getTemplatePresentation().clone(), ActionManager.getInstance(), 0);
 
     anAction.actionPerformed(anActionEvent);
     FileDocumentManager.getInstance().saveAllDocuments();

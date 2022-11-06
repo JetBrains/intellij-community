@@ -30,6 +30,7 @@ interface StatisticsEventLogger {
     logAsync(group, eventId, Collections.emptyMap(), isState)
 
   fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void>
+  fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void>
   fun getActiveLogFile(): EventLogFile?
   fun getLogFilesProvider(): EventLogFilesProvider
   fun cleanup()
@@ -151,6 +152,8 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun cleanup() = Unit
   override fun rollOver() = Unit
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> =
+    CompletableFuture.completedFuture(null)
+  override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> =
     CompletableFuture.completedFuture(null)
 }
 

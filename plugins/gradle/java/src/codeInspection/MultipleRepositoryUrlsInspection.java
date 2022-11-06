@@ -70,7 +70,7 @@ public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
       if (statements.size() > 1) {
         myHolder.registerProblem(closure, GradleInspectionBundle.message("multiple.repository.urls"),
                                  ProblemHighlightType.GENERIC_ERROR,
-                                 new MultipleRepositoryUrlsFix(closure, mavenMethodExpression.getText()));
+                                 new MultipleRepositoryUrlsFix(mavenMethodExpression.getText()));
       }
     }
   }

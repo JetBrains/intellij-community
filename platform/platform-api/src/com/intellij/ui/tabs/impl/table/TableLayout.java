@@ -56,7 +56,7 @@ public class TableLayout extends TabLayout {
     int requiredRowsPinned = 0;
     int requiredRowsUnpinned = 0;
 
-    final int maxX = data.moreRect.x - 1;
+    final int maxX = data.moreRect.x;
     ActionToolbar entryPointToolbar = myTabs.myEntryPointToolbar;
 
     int hGap = myTabs.getTabHGap();

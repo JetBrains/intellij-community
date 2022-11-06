@@ -103,12 +103,6 @@ final class DefaultProject extends UserDataHolderBase implements Project {
     return getDelegate().hasComponent(interfaceClass);
   }
 
-  @Override
-  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-    //noinspection deprecation
-    return getDelegate().getComponents(baseClass);
-  }
-
   // make default project facade equal to any other default project facade
   // to enable Map<Project, T>
   @Override

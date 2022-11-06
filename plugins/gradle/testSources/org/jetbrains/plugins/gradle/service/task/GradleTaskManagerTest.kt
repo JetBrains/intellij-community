@@ -7,19 +7,25 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import org.gradle.tooling.LongRunningOperation
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
+import java.util.concurrent.atomic.AtomicReference
 
 class GradleTaskManagerTest: UsefulTestCase() {
   private lateinit var myTestFixture: IdeaProjectTestFixture
@@ -44,17 +50,27 @@ class GradleTaskManagerTest: UsefulTestCase() {
   }
 
   override fun tearDown() {
-    try {
-      myTestFixture.tearDown()
-    } finally {
-      super.tearDown()
-    }
+    runAll(
+      { myTestFixture.tearDown() },
+      { super.tearDown() }
+    )
   }
 
   @Test
   fun `test task manager uses wrapper task when configured`() {
     val output = runHelpTask(GradleVersion.version("4.8.1"))
     assertTrue("Gradle 4.8.1 should be started", output.anyLineContains("Welcome to Gradle 4.8.1"))
+  }
+
+  @Test
+  fun `test task manager calls Operation Helper Extension`() {
+    val executed: AtomicReference<Boolean> = AtomicReference(false)
+    val ext = TestOperationHelperExtension(prepareExec = {
+      executed.set(true)
+    })
+    ExtensionTestUtil.maskExtensions(GradleOperationHelperExtension.EP_NAME, listOf(ext), testRootDisposable, false)
+    runHelpTask(GradleVersion.version("4.8.1"))
+    assertTrue(executed.get())
   }
 
   @Test
@@ -133,7 +149,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
 
   private fun createBuildFile(gradleVersion: GradleVersion, configure: TestGradleBuildScriptBuilder.() -> Unit) {
     val projectRoot = runWriteAction { PlatformTestUtil.getOrCreateProjectBaseDir(myProject) }
-    projectRoot.createBuildFile(gradleVersion, configure)
+    projectRoot.createBuildFile(gradleVersion, configure = configure)
   }
 }
 
@@ -144,4 +160,17 @@ class TaskExecutionOutput: ExternalSystemTaskNotificationListenerAdapter() {
   }
 
   fun anyLineContains(something: String): Boolean = storage.any { it.contains(something) }
+}
+
+class TestOperationHelperExtension(val prepareSync: () -> Unit = {},
+                                   val prepareExec: () -> Unit = {}): GradleOperationHelperExtension {
+  override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) {
+    prepareSync()
+  }
+
+  override fun prepareForExecution(id: ExternalSystemTaskId,
+                                   operation: LongRunningOperation,
+                                   gradleExecutionSettings: GradleExecutionSettings) {
+    prepareExec()
+  }
 }

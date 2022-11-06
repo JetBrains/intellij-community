@@ -81,7 +81,6 @@ internal class PackageManagementPanel(
     private val packagesListPanel = PackagesListPanel(
         project = project,
         operationExecutor = operationExecutor,
-        operationFactory = operationFactory,
         viewModelFlow = combine(
             modulesTree.targetModulesStateFlow,
             project.packageSearchProjectService.installedPackagesStateFlow,
@@ -192,10 +191,12 @@ internal class PackageManagementPanel(
         togglePackageDetailsAction
     )
 
-    override fun buildTitleActions(): Array<AnAction> = arrayOf(togglePackageDetailsAction)
+    override fun buildTitleActions(): List<AnAction> = listOf(togglePackageDetailsAction)
 
-    override fun getData(dataId: String) = when {
-        PkgsToDAAction.PACKAGES_LIST_PANEL_DATA_KEY.`is`(dataId) -> dataModelStateFlow.value
-        else -> null
+    override fun getData(dataId: String): PackageModel.Installed? {
+        return when {
+            PkgsToDAAction.PACKAGES_LIST_PANEL_DATA_KEY.`is`(dataId) -> dataModelStateFlow.value
+            else -> null
+        }
     }
 }

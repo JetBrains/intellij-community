@@ -85,7 +85,7 @@ public final class LaterInvocator {
   }
 
   static void invokeAndWait(@NotNull ModalityState modalityState, @NotNull final Runnable runnable) {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();

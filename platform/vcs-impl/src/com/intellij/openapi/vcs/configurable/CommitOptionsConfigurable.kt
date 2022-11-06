@@ -13,10 +13,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
+import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitOptionsPanel.Companion.verticalPanel
 import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
-import com.intellij.vcs.commit.getDefaultCommitActionName
 import java.awt.GridLayout
 import java.io.File
 
@@ -55,7 +55,7 @@ class CommitOptionsConfigurable(val project: Project) : JBPanel<CommitOptionsCon
     override fun getSelectedChanges() = emptyList<Change>()
     override fun getFiles() = emptyList<File>()
 
-    override fun getCommitActionName(): String = getDefaultCommitActionName()
+    override fun getCommitActionName(): String = AbstractCommitWorkflowHandler.getDefaultCommitActionName(emptyList())
     override fun setCommitMessage(currentDescription: String) {}
     override fun getCommitMessage() = ""
 

@@ -16,12 +16,14 @@ val isMacOsCredentialStoreSupported: Boolean
 private const val errSecSuccess = 0
 private const val errSecItemNotFound = -25300
 private const val errSecInvalidRecord = -67701
+
 // or if Deny clicked on access dialog
 private const val errUserNameNotCorrect = -25293
+
 // https://developer.apple.com/documentation/security/1542001-security_framework_result_codes/errsecusercanceled?language=objc
 private const val errSecUserCanceled = -128
 private const val kSecFormatUnknown = 0
-private const val kSecAccountItemAttr = (('a'.toInt() shl 8 or 'c'.toInt()) shl 8 or 'c'.toInt()) shl 8 or 't'.toInt()
+private const val kSecAccountItemAttr = (('a'.code shl 8 or 'c'.code) shl 8 or 'c'.code) shl 8 or 't'.code
 
 internal class KeyChainCredentialStore : CredentialStore {
   companion object {

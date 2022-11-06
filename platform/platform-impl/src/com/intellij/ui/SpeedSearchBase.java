@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -51,11 +52,6 @@ import static com.intellij.util.ReflectionUtil.getMethodDeclaringClass;
  */
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
-
-  private static final JBColor BORDER_COLOR = JBColor.namedColor("SpeedSearch.borderColor", JBColor.LIGHT_GRAY);
-  protected static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
-  protected static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(Gray.xFF, Gray._111));
-  protected static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
 
   private static JBInsets borderInsets() {
     return JBUI.insets("SpeedSearch.borderInsets", JBUI.insets(0, 0, 0, 0));
@@ -589,14 +585,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       @NotNull String @NotNull[] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
       for (String id : actionIds) {
         switch (id) {
-          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP:
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP -> {
             return KeyEvent.VK_UP;
-          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN:
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN -> {
             return KeyEvent.VK_DOWN;
-          case IdeActions.ACTION_EDITOR_MOVE_LINE_START:
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_START -> {
             return KeyEvent.VK_HOME;
-          case IdeActions.ACTION_EDITOR_MOVE_LINE_END:
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_END -> {
             return KeyEvent.VK_END;
+          }
         }
       }
     }
@@ -628,6 +628,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       };
 
       addExtension(leftExtension);
+
+      Extension rightExtension = createSearchFieldExtension();
+      if (rightExtension != null) {
+        addExtension(rightExtension);
+      }
     }
 
     @Override
@@ -683,6 +688,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }
 
+  }
+
+  /**
+   * Creates an additional extension.
+   * SpeedSearch calls this method when creating the search text field.
+   * If the result of this method is not null, the caller adds it as a serach text field extension.
+   * @return an extension, or null.
+   */
+  @Nullable
+  protected ExtendableTextComponent.Extension createSearchFieldExtension() {
+    return null;
   }
 
   private static boolean isUpDownHomeEnd(int keyCode) {

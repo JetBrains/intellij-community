@@ -364,21 +364,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Nullable
   private static String nameByType(@NotNull String longTypeName, @NotNull VariableKind kind) {
     if (kind == VariableKind.PARAMETER || kind == VariableKind.LOCAL_VARIABLE) {
-      switch (longTypeName) {
-        case "int":
-        case "boolean":
-        case "byte":
-        case "char":
-        case "long":
-          return longTypeName.substring(0, 1);
-        case "double":
-        case "float":
-          return "v";
-        case "short": return "i";
-        case CommonClassNames.JAVA_LANG_OBJECT: return "o";
-        case CommonClassNames.JAVA_LANG_STRING: return "s";
-        case CommonClassNames.JAVA_LANG_VOID: return "unused";
-      }
+      return switch (longTypeName) {
+        case "int", "boolean", "byte", "char", "long" -> longTypeName.substring(0, 1);
+        case "double", "float" -> "v";
+        case "short" -> "i";
+        case CommonClassNames.JAVA_LANG_OBJECT -> "o";
+        case CommonClassNames.JAVA_LANG_STRING -> "s";
+        case CommonClassNames.JAVA_LANG_VOID -> "unused";
+        default -> null;
+      };
     }
     return null;
   }

@@ -110,7 +110,7 @@ public class CachedNumberConstructorCallInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiNewExpression expression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiNewExpression.class, false);
       assert expression != null;
       final PsiExpressionList argList = expression.getArgumentList();

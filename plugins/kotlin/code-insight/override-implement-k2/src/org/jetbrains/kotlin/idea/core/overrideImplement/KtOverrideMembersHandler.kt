@@ -9,15 +9,14 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @ApiStatus.Internal
 open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
@@ -30,7 +29,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
         }
     }
 
-    fun KtAnalysisSession.collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
+    private fun KtAnalysisSession.collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
         val classOrObjectSymbol = classOrObject.getClassOrObjectSymbol()
         return getOverridableMembers(classOrObjectSymbol).map { (symbol, bodyType, containingSymbol) ->
             KtClassMember(
@@ -59,7 +58,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                 val symbolsToProcess = if (intersectionSymbols.size <= 1) {
                     listOf(symbol)
                 } else {
-                    val nonAbstractMembers = intersectionSymbols.filter { (it as? KtSymbolWithModality)?.modality != Modality.ABSTRACT }
+                    val nonAbstractMembers = intersectionSymbols.filter { it.safeAs<KtSymbolWithModality>()?.modality != Modality.ABSTRACT }
                     // If there are non-abstract members, we only want to show override for these non-abstract members. Otherwise, show any
                     // abstract member to override.
                     nonAbstractMembers.ifEmpty {
@@ -82,7 +81,15 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                                 BodyType.NoBody
                             }
                         }
-                        (originalOverriddenSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT ->
+                        classOrObjectSymbol.safeAs<KtNamedClassOrObjectSymbol>()?.isInline == true &&
+                                containingSymbol?.classIdIfNonLocal == StandardClassIds.Any -> {
+                            if (symbolToProcess.safeAs<KtFunctionSymbol>()?.name?.asString() in listOf("equals", "hashCode")) {
+                                continue
+                            } else {
+                                BodyType.Super
+                            }
+                        }
+                        originalOverriddenSymbol.safeAs<KtSymbolWithModality>()?.modality == Modality.ABSTRACT ->
                             BodyType.FromTemplate
                         symbolsToProcess.size > 1 ->
                             BodyType.QualifiedSuper

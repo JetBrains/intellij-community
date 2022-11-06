@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 
-abstract class SettingsScriptBuilder<T: PsiFile>(val scriptFile: T) {
+abstract class SettingsScriptBuilder<T: PsiFile>(private val scriptFile: T) {
     private val builder = StringBuilder(scriptFile.text)
 
     private fun findBlockBody(blockName: String, startFrom: Int = 0): Int {

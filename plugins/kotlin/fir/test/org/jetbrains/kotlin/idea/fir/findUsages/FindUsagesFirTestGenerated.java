@@ -48,9 +48,24 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/kotlin/companionObject/named.0.kt");
             }
 
+            @TestMetadata("namedWithInvoke.0.kt")
+            public void testNamedWithInvoke() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/companionObject/namedWithInvoke.0.kt");
+            }
+
             @TestMetadata("simple.0.kt")
             public void testSimple() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/companionObject/simple.0.kt");
+            }
+
+            @TestMetadata("withInvoke.0.kt")
+            public void testWithInvoke() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/companionObject/withInvoke.0.kt");
+            }
+
+            @TestMetadata("withInvokeFromParent.0.kt")
+            public void testWithInvokeFromParent() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/companionObject/withInvokeFromParent.0.kt");
             }
         }
 
@@ -577,6 +592,26 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("interfaceOverrides.0.kt")
             public void testInterfaceOverrides() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/interfaceOverrides.0.kt");
+            }
+
+            @TestMetadata("invokeFromClassCompanion.0.kt")
+            public void testInvokeFromClassCompanion() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/invokeFromClassCompanion.0.kt");
+            }
+
+            @TestMetadata("invokeFromClassCompanionExtension.0.kt")
+            public void testInvokeFromClassCompanionExtension() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/invokeFromClassCompanionExtension.0.kt");
+            }
+
+            @TestMetadata("invokeFromInterfaceCompanion.0.kt")
+            public void testInvokeFromInterfaceCompanion() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/invokeFromInterfaceCompanion.0.kt");
+            }
+
+            @TestMetadata("invokeFromParentCompanionClass.0.kt")
+            public void testInvokeFromParentCompanionClass() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findFunctionUsages/invokeFromParentCompanionClass.0.kt");
             }
 
             @TestMetadata("javaAndKotlinOverrides.0.kt")

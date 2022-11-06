@@ -36,7 +36,6 @@ import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
-import com.jetbrains.python.inspections.quickfix.sdk.ConfigureInterpreterFix;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
@@ -352,12 +351,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
     if (!PythonSdkUtil.isRemote(sdk) && PySdkExtKt.adminPermissionsNeeded(sdk)) {
       final int answer = askToConfigureInterpreter(project, sdk);
       switch (answer) {
-        case Messages.YES:
-          new ConfigureInterpreterFix().applyFix(project, descriptor);
+        case Messages.YES -> {
+          new PyInterpreterInspection.ConfigureInterpreterFix().applyFix(project, descriptor);
           return true;
-        case Messages.CANCEL:
-        case -1:
+        }
+        case Messages.CANCEL, -1 -> {
           return true;
+        }
       }
     }
     return false;

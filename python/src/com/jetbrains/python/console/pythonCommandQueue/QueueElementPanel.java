@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +141,7 @@ public final class QueueElementPanel {
   }
 
   public void setTextColor() {
-    myText.setForeground(UIUtil.getListSelectionForeground(false));
+    myText.setForeground(NamedColorUtil.getListSelectionForeground(false));
   }
 
   public void setButtonColor() {
@@ -149,7 +150,7 @@ public final class QueueElementPanel {
 
   public void selectPanel() {
     myRootPanel.setBackground(UIUtil.getListSelectionBackground(true));
-    myText.setForeground(UIUtil.getListSelectionForeground(true));
+    myText.setForeground(NamedColorUtil.getListSelectionForeground(true));
   }
 
   private static final class Item extends ContentChooser.Item {

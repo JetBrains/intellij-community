@@ -20,8 +20,9 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -80,7 +81,7 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
                     descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
                     onFinish: (ExtractionResult) -> Unit
                 ) {
-                    project.executeWriteCommand(text) {
+                    project.executeCommand(text) {
                         val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf(className))
                         doRefactor(
                             ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT),
@@ -102,25 +103,32 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
                     }
             }
 
-            val introducedClass = functionDeclaration.replaced(newClass).apply {
-                if (hasMemberReference && containingClass == (parent.parent as? KtClass)) addModifier(KtTokens.INNER_KEYWORD)
-                primaryConstructor?.reformatted()
-            }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) } ?: return@run
+            val introducedClass = runWriteAction {
+                functionDeclaration.replaced(newClass).apply {
+                    if (hasMemberReference && containingClass == (parent.parent as? KtClass)) addModifier(KtTokens.INNER_KEYWORD)
+                    primaryConstructor?.reformatted()
+                }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) }
+            } ?: return@run
 
             val file = introducedClass.containingFile
 
             val template = TemplateBuilderImpl(file).let { builder ->
                 builder.replaceElement(introducedClass.nameIdentifier!!, NEW_CLASS_NAME, ChooseStringExpression(classNames), true)
                 for (psiReference in ReferencesSearch.search(introducedClass, LocalSearchScope(file), false)) {
-                    builder.replaceElement(psiReference.element, USAGE_VARIABLE_NAME, NEW_CLASS_NAME, false)
+                    runWriteAction {
+                        builder.replaceElement(psiReference.element, USAGE_VARIABLE_NAME, NEW_CLASS_NAME, false)
+                    }
                 }
-                builder.buildInlineTemplate()
+                runWriteAction {
+                    builder.buildInlineTemplate()
+                }
             }
 
             editor.caretModel.moveToOffset(file.startOffset)
-            TemplateManager.getInstance(project).startTemplate(editor, template)
+            runWriteAction {
+                TemplateManager.getInstance(project).startTemplate(editor, template)
+            }
         }
-        
     }
 
     override fun applyTo(element: KtObjectLiteralExpression, editor: Editor?) {

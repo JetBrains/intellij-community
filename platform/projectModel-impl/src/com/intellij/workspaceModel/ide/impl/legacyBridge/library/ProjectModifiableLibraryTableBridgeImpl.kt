@@ -19,9 +19,9 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ProjectModifiableLibraryTableBridgeImpl(
@@ -100,7 +100,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   override fun commit() {
     prepareForCommit()
-    WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel("Project library table commit") {
       it.addDiff(diff)
     }
   }
@@ -136,5 +136,5 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     myAddedLibraries.clear()
   }
 
-  override fun isChanged(): Boolean = !diff.isEmpty()
+  override fun isChanged(): Boolean = diff.hasChanges()
 }

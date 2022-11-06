@@ -50,11 +50,10 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
             when (val targetElement = reference.resolveToSymbol()) {
                 is KtClassifierSymbol ->
                     when (targetElement) {
-                        is KtEnumEntrySymbol -> getVariableUsageType(refExpr)
-                        is KtClassOrObjectSymbol -> when {
-                            targetElement.classKind == KtClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
-                            targetElement.classKind == KtClassKind.OBJECT -> getVariableUsageType(refExpr)
-                            else -> getClassUsageType(refExpr)
+                        is KtClassOrObjectSymbol -> when (targetElement.classKind) {
+                          KtClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
+                          KtClassKind.OBJECT -> getVariableUsageType(refExpr)
+                          else -> getClassUsageType(refExpr)
                         }
                         else -> getClassUsageType(refExpr)
                     }

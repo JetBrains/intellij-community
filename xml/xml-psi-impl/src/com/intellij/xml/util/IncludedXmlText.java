@@ -23,9 +23,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class IncludedXmlText extends IncludedXmlElement<XmlText> implements XmlText {
   public IncludedXmlText(@NotNull XmlText original, @Nullable XmlTag parent) {
     super(original, parent);

@@ -24,7 +24,7 @@ abstract class AbstractReferenceSubstitutionRenameHandler(
     private val delegateHandler: RenameHandler = MemberInplaceRenameHandler()
 ) : PsiElementRenameHandler() {
     companion object {
-        fun getReferenceExpression(file: PsiFile, offset: Int): KtSimpleNameExpression? {
+        private fun getReferenceExpression(file: PsiFile, offset: Int): KtSimpleNameExpression? {
             var elementAtCaret = file.findElementAt(offset) ?: return null
             if (elementAtCaret.node?.elementType == KtTokens.AT) return null
             if (elementAtCaret is PsiWhiteSpace) {

@@ -18,19 +18,16 @@ import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.name
-import kotlin.streams.toList
 
 interface OsSpecificDistributionBuilder {
   val context: BuildContext
   val targetOs: OsFamily
 
-  fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
+  suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
 
-  fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
+  suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
 
   fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> = emptyList()
-
-  fun getArtifactNames(context: BuildContext): List<String> = emptyList()
 
   fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true) {
     TraceManager.spanBuilder("Permissions check for ${distribution.name}").useWithScope {

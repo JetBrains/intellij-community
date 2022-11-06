@@ -9,11 +9,13 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptDependenciesSourcesScope
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import kotlin.script.experimental.api.ScriptAcceptedLocation
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
@@ -26,10 +28,9 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
     override fun matches(filter: RootKindFilter, virtualFile: VirtualFile): Boolean {
         ProgressManager.checkCanceled()
 
-        val fileType = FileTypeManager.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
-        val kotlinExcludeLibrarySources = fileType == KotlinFileType.INSTANCE
-                && !filter.includeLibrarySourceFiles
-                && !filter.includeScriptsOutsideSourceRoots
+        val kotlinExcludeLibrarySources = !filter.includeLibrarySourceFiles &&
+                !filter.includeScriptsOutsideSourceRoots &&
+                virtualFile.isKotlinFileType()
 
         if (kotlinExcludeLibrarySources && !filter.includeProjectSourceFiles) {
             return false
@@ -66,7 +67,7 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
         }
 
         if (correctedFilter.includeScriptsOutsideSourceRoots) {
-            if (ProjectRootManager.getInstance(project).fileIndex.isInContent(virtualFile) || ScratchUtil.isScratch(virtualFile)) {
+            if (fileIndex.isInContent(virtualFile) || ScratchUtil.isScratch(virtualFile)) {
                 return true
             }
 
@@ -77,21 +78,21 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             return false
         }
 
+        val fileType = FileTypeManager.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
         // NOTE: the following is a workaround for cases when class files are under library source roots and source files are under class roots
         val canContainClassFiles = fileType == ArchiveFileType.INSTANCE || virtualFile.isDirectory
         val isBinary = fileType.isKotlinBinary
-
-        val scriptConfigurationManager = when {
-            correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(project)
-            else -> null
-        }
 
         if (correctedFilter.includeLibraryClassFiles && (isBinary || canContainClassFiles)) {
             if (fileIndex.isInLibraryClasses(virtualFile)) {
                 return true
             }
 
-            val classFileScope = scriptConfigurationManager?.getAllScriptsDependenciesClassFilesScope()
+            val classFileScope = when {
+                correctedFilter.includeScriptDependencies -> getAllScriptsDependenciesClassFilesScope(project)
+                else -> null
+            }
+
             if (classFileScope != null && classFileScope.contains(virtualFile)) {
                 return true
             }
@@ -102,10 +103,14 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
                 return true
             }
 
-            val sourceFileScope = scriptConfigurationManager?.getAllScriptDependenciesSourcesScope()
-            if (sourceFileScope != null && sourceFileScope.contains(virtualFile) && !(virtualFile !is VirtualFileWindow && fileIndex.isInSourceContent(
-                    virtualFile
-                ))
+            val sourceFileScope = when {
+                correctedFilter.includeScriptDependencies -> getAllScriptDependenciesSourcesScope(project)
+                else -> null
+            }
+
+            if (sourceFileScope != null &&
+                sourceFileScope.contains(virtualFile) &&
+                !(virtualFile !is VirtualFileWindow && fileIndex.isInSourceContent(virtualFile))
             ) {
                 return true
             }

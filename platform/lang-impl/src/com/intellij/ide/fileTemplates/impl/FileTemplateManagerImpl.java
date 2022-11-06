@@ -116,18 +116,13 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
 
   @Override
   public FileTemplate @NotNull [] getTemplates(@NotNull String category) {
-    switch (category) {
-      case DEFAULT_TEMPLATES_CATEGORY:
-        return ArrayUtil.mergeArrays(getInternalTemplates(), getAllTemplates());
-      case INCLUDES_TEMPLATES_CATEGORY:
-        return getAllPatterns();
-      case CODE_TEMPLATES_CATEGORY:
-        return getAllCodeTemplates();
-      case J2EE_TEMPLATES_CATEGORY:
-        return getAllJ2eeTemplates();
-      default:
-        throw new IllegalArgumentException("Unknown category: " + category);
-    }
+    return switch (category) {
+      case DEFAULT_TEMPLATES_CATEGORY -> ArrayUtil.mergeArrays(getInternalTemplates(), getAllTemplates());
+      case INCLUDES_TEMPLATES_CATEGORY -> getAllPatterns();
+      case CODE_TEMPLATES_CATEGORY -> getAllCodeTemplates();
+      case J2EE_TEMPLATES_CATEGORY -> getAllJ2eeTemplates();
+      default -> throw new IllegalArgumentException("Unknown category: " + category);
+    };
   }
 
   @Override

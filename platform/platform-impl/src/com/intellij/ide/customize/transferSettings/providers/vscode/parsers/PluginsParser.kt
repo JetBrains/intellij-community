@@ -12,9 +12,9 @@ import com.intellij.ide.customize.transferSettings.providers.vscode.mappings.Plu
 import com.intellij.openapi.diagnostic.logger
 import java.io.File
 
-class PluginsParser(private val settings: Settings) {
-  private val logger = logger<PluginsParser>()
+private val logger = logger<PluginsParser>()
 
+class PluginsParser(private val settings: Settings) {
   companion object {
     private const val PUBLISHER = "publisher"
     private const val NAME = "name"

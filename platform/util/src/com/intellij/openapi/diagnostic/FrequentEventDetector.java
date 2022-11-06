@@ -27,9 +27,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
 public class FrequentEventDetector {
   private static final Logger LOG = Logger.getInstance(FrequentEventDetector.class);
 

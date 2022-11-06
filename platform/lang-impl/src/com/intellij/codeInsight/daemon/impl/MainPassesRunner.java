@@ -95,13 +95,13 @@ public class MainPassesRunner {
   }
 
   private void runMainPasses(@NotNull List<? extends VirtualFile> files, @NotNull Map<? super Document, List<HighlightInfo>> result, @NotNull ProgressIndicator progress) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     for (int i = 0; i < files.size(); i++) {
       ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
 
       VirtualFile file = files.get(i);
 
-      progress.setText(ProjectUtil.calcRelativeToProjectPath(file, myProject));
+      progress.setText(ReadAction.compute(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
       progress.setFraction((double)i / (double)files.size());
 
       while (true) {
@@ -136,14 +136,14 @@ public class MainPassesRunner {
   private void runMainPasses(@NotNull VirtualFile file,
                              @NotNull Map<? super Document, List<HighlightInfo>> result,
                              @NotNull DaemonProgressIndicator daemonIndicator) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
     Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
     if (psiFile == null || document == null || !ReadAction.compute(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {
       return;
     }
-    ProperTextRange range = ReadAction.compute(() -> ProperTextRange.create(0, document.getTextLength()));
-    HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, range, false);
+    ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
+    HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, range, CanISilentlyChange.Result.UH_UH);
     ProgressManager.getInstance().runProcess(() -> runMainPasses(daemonIndicator, result, psiFile, document), daemonIndicator);
   }
 

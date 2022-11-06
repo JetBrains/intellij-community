@@ -12,7 +12,6 @@ import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
-import java.util.Comparator;
 
 public class PlatformDataKeys extends PlatformCoreDataKeys {
 
@@ -44,11 +43,9 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
 
   public static final DataKey<ModalityState> MODALITY_STATE = DataKey.create("ModalityState");
 
-  public static final DataKey<Boolean> SOURCE_NAVIGATION_LOCKED = DataKey.create("sourceNavigationLocked");
-
   public static final DataKey<String> PREDEFINED_TEXT = DataKey.create("predefined.text.value");
 
-  public static final DataKey<String> SEARCH_INPUT_TEXT = DataKey.create("search.input.text.value");
+  public static final DataKey<String> SPEED_SEARCH_TEXT = DataKey.create("speed.search.text");
   public static final DataKey<Object> SPEED_SEARCH_COMPONENT = DataKey.create("speed.search.component.value");
 
   /**
@@ -64,20 +61,4 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
    */
   @ApiStatus.Experimental
   public static final DataKey<PopupLocator> CONTEXT_MENU_LOCATOR = DataKey.create("contextMenuLocator");
-
-  /**
-   * It's allowed to assign multiple actions to the same keyboard shortcut. Actions system filters them on the current
-   * context basis during processing (e.g., we can have two actions assigned to the same shortcut, but one of them is
-   * configured to be inapplicable in modal dialog context).
-   * <p/>
-   * However, there is a possible case that there is still more than one action applicable for particular keyboard shortcut
-   * after filtering. The first one is executed then. Hence, action processing order becomes very important.
-   * <p/>
-   * Current key allows specifying custom action sorter to use if any. I.e., every component can define its custom
-   * sorting rule to define priorities for target actions (classes of actions).
-   *
-   * @deprecated use {@link ActionPromoter}
-   */
-  @Deprecated(forRemoval = true)
-  public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
 }

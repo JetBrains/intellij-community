@@ -5,9 +5,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 
-/**
- * @author peter
- */
 public class AutoCompletionContext {
   private final CompletionParameters myParameters;
   private final LookupElement[] myItems;

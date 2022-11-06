@@ -68,6 +68,6 @@ public interface ToolWindowManagerListener extends EventListener {
   enum ToolWindowManagerEventType {
     ActivateToolWindow, HideToolWindow, RegisterToolWindow, SetContentUiType, SetLayout, SetShowStripeButton,
     SetSideTool, SetSideToolAndAnchor, SetToolWindowAnchor, SetToolWindowAutoHide, SetToolWindowType, SetVisibleOnLargeStripe,
-    ShowToolWindow, UnregisterToolWindow, ToolWindowAvailable, ToolWindowUnavailable, Resized
+    ShowToolWindow, UnregisterToolWindow, ToolWindowAvailable, ToolWindowUnavailable, MovedOrResized
   }
 }

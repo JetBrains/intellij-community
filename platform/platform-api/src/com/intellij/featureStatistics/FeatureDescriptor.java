@@ -15,11 +15,12 @@ public class FeatureDescriptor {
   @NotNull private String myId;
   @NotNull private String myDisplayName;
   @Nullable private String myGroupId;
-  @Nullable private String myTipFileName;
+  @Nullable private String myTipId;
   @Nullable private Set<String> myDependencies;
   private int myDaysBeforeFirstShowUp;
   private int myDaysBetweenSuccessiveShowUps;
   private int myMinUsageCount;
+  private int myUtilityScore;  // should be from 1 to 5, required for tips sorting in Tips of the Day
   private boolean myNeedToBeShownInGuide = true;
   private final List<FeatureUsageEvent.Action> myActionEvents = new ArrayList<>();
   private final List<FeatureUsageEvent.Intention> myIntentionEvents = new ArrayList<>();
@@ -36,10 +37,11 @@ public class FeatureDescriptor {
   @NonNls private static final String ATTRIBUTE_LAST_USED = "last-used";
   @NonNls private static final String ATTRIBUTE_SHOWN_COUNT = "shown-count";
   @NonNls private static final String ATTRIBUTE_ID = "id";
-  @NonNls private static final String ATTRIBUTE_TIP_FILE = "tip-file";
+  @NonNls private static final String ATTRIBUTE_TIP_ID = "tip-id";
   @NonNls private static final String ATTRIBUTE_FIRST_SHOW = "first-show";
   @NonNls private static final String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
   @NonNls private static final String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
+  @NonNls private static final String ATTRIBUTE_UTILITY_SCORE = "utility-score";
   @NonNls private static final String ATTRIBUTE_SHOW_IN_GUIDE = "show-in-guide";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ELEMENT_DEPENDENCY = "dependency";
@@ -54,27 +56,41 @@ public class FeatureDescriptor {
 
   public FeatureDescriptor(@NonNls @NotNull String id,
                            @NonNls @Nullable String groupId,
-                           @NonNls @Nullable String tipFileName,
+                           @NonNls @Nullable String tipId,
                            @NotNull String displayName,
                            int daysBeforeFirstShowUp,
                            int daysBetweenSuccessiveShowUps,
                            @Nullable Set<String> dependencies,
                            int minUsageCount,
                            @Nullable ProductivityFeaturesProvider provider) {
+    this(id, groupId, tipId, displayName, daysBeforeFirstShowUp, daysBetweenSuccessiveShowUps, dependencies, minUsageCount, 3, provider);
+  }
+
+  public FeatureDescriptor(@NonNls @NotNull String id,
+                           @NonNls @Nullable String groupId,
+                           @NonNls @Nullable String tipId,
+                           @NotNull String displayName,
+                           int daysBeforeFirstShowUp,
+                           int daysBetweenSuccessiveShowUps,
+                           @Nullable Set<String> dependencies,
+                           int minUsageCount,
+                           int utilityScore,
+                           @Nullable ProductivityFeaturesProvider provider) {
     myId = id;
     myGroupId = groupId;
-    myTipFileName = tipFileName;
+    myTipId = tipId;
     myDisplayName = displayName;
     myDaysBeforeFirstShowUp = daysBeforeFirstShowUp;
     myDaysBetweenSuccessiveShowUps = daysBetweenSuccessiveShowUps;
     myDependencies = dependencies;
     myMinUsageCount = minUsageCount;
+    myUtilityScore = utilityScore;
     myProvider = provider;
   }
 
   private void readExternal(Element element) {
     myId = Objects.requireNonNull(element.getAttributeValue(ATTRIBUTE_ID));
-    myTipFileName = element.getAttributeValue(ATTRIBUTE_TIP_FILE);
+    myTipId = element.getAttributeValue(ATTRIBUTE_TIP_ID);
     myDisplayName = FeatureStatisticsBundle.message(myId);
     String needToBeShownInGuide = element.getAttributeValue(ATTRIBUTE_SHOW_IN_GUIDE);
     if (needToBeShownInGuide != null) {
@@ -84,6 +100,7 @@ public class FeatureDescriptor {
     myDaysBetweenSuccessiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), 3);
     String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
+    myUtilityScore = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_UTILITY_SCORE), 3);
     List<Element> actionEvents = element.getChildren(ELEMENT_TRACK_ACTION);
     for (Element actionElement : actionEvents) {
       @NonNls String actionId = actionElement.getAttributeValue(ATTRIBUTE_ID);
@@ -116,8 +133,16 @@ public class FeatureDescriptor {
     return myGroupId;
   }
 
+  /**
+   * @deprecated Use {@code getTipId()} instead
+   */
+  @Deprecated
   public @Nullable String getTipFileName() {
-    return myTipFileName;
+    return myTipId;
+  }
+
+  public @Nullable String getTipId() {
+    return myTipId;
   }
 
   public List<FeatureUsageEvent.Action> getActionEvents() {
@@ -157,6 +182,11 @@ public class FeatureDescriptor {
     return myUsageCount < myMinUsageCount;
   }
 
+  public void adjustUsageInfo(int newUsageCount, long newLastTimeUsed) {
+    myUsageCount = Math.max(myUsageCount, newUsageCount);
+    myLastTimeUsed = Math.max(myLastTimeUsed, newLastTimeUsed);
+  }
+
   public String toString() {
 
     return "id = [" +
@@ -180,6 +210,10 @@ public class FeatureDescriptor {
 
   public int getMinUsageCount() {
     return myMinUsageCount;
+  }
+
+  public int getUtilityScore() {
+    return myUtilityScore;
   }
 
   public long getLastTimeShown() {

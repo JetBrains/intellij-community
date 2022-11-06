@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,16 +32,18 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar
       .registerUastReferenceProvider(registrar,
-                                     injectionHostUExpression().methodCallParameter(0, psiMethod()
-                                       .withName(string().oneOf("isFeatureEnabled", "setFeatureEnabled"))
-                                       .definedInClass(Experiments.class.getName())),
+                                     injectionHostUExpression()
+                                       .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+                                       .methodCallParameter(0, psiMethod()
+                                         .withName(string().oneOf("isFeatureEnabled", "setFeatureEnabled"))
+                                         .definedInClass(Experiments.class.getName())),
                                      UastReferenceRegistrar.uastInjectionHostReferenceProvider(
                                        (expression, host) -> new PsiReference[]{new ExperimentalFeatureIdReference(host)}),
                                      PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
 
-  private static final class ExperimentalFeatureIdReference extends ExtensionPointReferenceBase {
+  private static final class ExperimentalFeatureIdReference extends ExtensionReferenceBase {
 
     private ExperimentalFeatureIdReference(PsiElement element) {
       super(element);

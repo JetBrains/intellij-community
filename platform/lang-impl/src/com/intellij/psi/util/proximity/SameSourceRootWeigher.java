@@ -23,9 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class SameSourceRootWeigher extends ProximityWeigher {
   private static final NullableLazyKey<VirtualFile, ProximityLocation> SOURCE_ROOT_KEY = NullableLazyKey.create("sourceRoot",
                                                                                                                  proximityLocation -> findSourceRoot(proximityLocation.getPosition()));

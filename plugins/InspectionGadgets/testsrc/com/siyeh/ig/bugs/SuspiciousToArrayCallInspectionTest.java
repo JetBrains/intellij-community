@@ -39,144 +39,154 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
   }
 
   public void testGenerics() {
-    doTest("import java.util.*;" +
-           "class K<T extends Integer> {\n" +
-           "    List<T> list = new ArrayList<>();\n" +
-           "\n" +
-           "    String[] m() {\n" +
-           "        return list.toArray(/*Array of type 'java.lang.Integer[]' expected, 'java.lang.String[]' found*/new String[list.size()]/**/);\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.util.*;class K<T extends Integer> {
+                 List<T> list = new ArrayList<>();
+
+                 String[] m() {
+                     return list.toArray(/*Array of type 'java.lang.Integer[]' expected, 'java.lang.String[]' found*/new String[list.size()]/**/);
+                 }
+             }""");
   }
 
   public void testQuestionMark() {
-    doTest("import java.util.List;\n" +
-           "\n" +
-           "class Test {\n" +
-           "  Integer[] test(List<?> list) {\n" +
-           "    return list.toArray(/*Array of type 'java.lang.Object[]' expected, 'java.lang.Integer[]' found*/new Integer[0]/**/);\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             import java.util.List;
+
+             class Test {
+               Integer[] test(List<?> list) {
+                 return list.toArray(/*Array of type 'java.lang.Object[]' expected, 'java.lang.Integer[]' found*/new Integer[0]/**/);
+               }
+             }""");
   }
 
   public void testWrongGeneric() {
-    doTest("import java.util.*;\n" +
-           "\n" +
-           "class Test {\n" +
-           "  static class X<T> extends ArrayList<Integer> {}\n" +
-           "  Integer[] test(X<Double> x) {\n" +
-           "    return x.toArray(new Integer[0]);\n" +
-           "  }\n" +
-           "\n" +
-           "  Double[] test2(X<Double> x) {\n" +
-           "    return x.toArray(/*Array of type 'java.lang.Integer[]' expected, 'java.lang.Double[]' found*/new Double[0]/**/);\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             import java.util.*;
+
+             class Test {
+               static class X<T> extends ArrayList<Integer> {}
+               Integer[] test(X<Double> x) {
+                 return x.toArray(new Integer[0]);
+               }
+
+               Double[] test2(X<Double> x) {
+                 return x.toArray(/*Array of type 'java.lang.Integer[]' expected, 'java.lang.Double[]' found*/new Double[0]/**/);
+               }
+             }""");
   }
   
   public void testStreams() {
-    doTest("import java.util.stream.Stream;\n" +
-           "class Test {\n" +
-           "    static {\n" +
-           "        Stream.of(1.0, 2.0, 3.0).toArray(/*Array of type 'java.lang.Double[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/);\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.util.stream.Stream;
+             class Test {
+                 static {
+                     Stream.of(1.0, 2.0, 3.0).toArray(/*Array of type 'java.lang.Double[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/);
+                 }
+             }""");
   }
   
   public void testStreamsParens() {
-    doTest("import java.util.stream.Stream;\n" +
-           "class Test {\n" +
-           "    static {\n" +
-           "        Stream.of(1.0, 2.0, 3.0).toArray(((/*Array of type 'java.lang.Double[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/)));\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.util.stream.Stream;
+             class Test {
+                 static {
+                     Stream.of(1.0, 2.0, 3.0).toArray(((/*Array of type 'java.lang.Double[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/)));
+                 }
+             }""");
   }
   
   public void testStreamsIntersection() {
-    doTest("import java.util.stream.Stream;\n" +
-           "class Test {\n" +
-           "    static {\n" +
-           "        Stream.of(1, 2.0, 3.0).toArray(/*Array of type 'java.lang.Number[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/);\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.util.stream.Stream;
+             class Test {
+                 static {
+                     Stream.of(1, 2.0, 3.0).toArray(/*Array of type 'java.lang.Number[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/);
+                 }
+             }""");
   }
   
   public void testToArrayGeneric() {
-    doTest("import java.util.*;\n" +
-           "class Test {\n" +
-           "  static <A extends CharSequence> A[] toArray(List<CharSequence> cs) {\n" +
-           "    //noinspection unchecked\n" +
-           "    return (A[]) cs.stream().filter(Objects::nonNull).toArray(CharSequence[]::new);\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             import java.util.*;
+             class Test {
+               static <A extends CharSequence> A[] toArray(List<CharSequence> cs) {
+                 //noinspection unchecked
+                 return (A[]) cs.stream().filter(Objects::nonNull).toArray(CharSequence[]::new);
+               }
+             }""");
   }
   
   public void testToArrayGeneric2() {
-    doTest("import java.util.*;\n" +
-           "class Test {\n" +
-           "\n" +
-           "    static <A extends CharSequence> A[] toArray2(List<CharSequence> cs) {\n" +
-           "        //noinspection unchecked\n" +
-           "        return (A[]) cs.toArray(new CharSequence[0]);\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.util.*;
+             class Test {
+
+                 static <A extends CharSequence> A[] toArray2(List<CharSequence> cs) {
+                     //noinspection unchecked
+                     return (A[]) cs.toArray(new CharSequence[0]);
+                 }
+             }""");
   }
   
   public void testCastNonRaw() {
-    doTest("import java.util.*;\n" +
-           "\n" +
-           "class Test {\n" +
-           "  void test() {\n" +
-           "    List<Foo> list = new ArrayList<>();\n" +
-           "    Bar[] arr2 = (Bar[])list.toArray(new Foo[0]);\n" +
-           "  }\n" +
-           "}\n" +
-           "\n" +
-           "class Foo {}\n" +
-           "class Bar extends Foo {}");
+    doTest("""
+             import java.util.*;
+
+             class Test {
+               void test() {
+                 List<Foo> list = new ArrayList<>();
+                 Bar[] arr2 = (Bar[])list.toArray(new Foo[0]);
+               }
+             }
+
+             class Foo {}
+             class Bar extends Foo {}""");
   }
 
   public void testTypeParameter() {
-    doTest("import java.util.stream.*;\n" +
-           "import java.util.function.*;\n" +
-           "abstract class AbstractStreamWrapper<T extends Cloneable> implements Stream<T> {\n" +
-           "    private final Stream<T> delegate;\n" +
-           "\n" +
-           "    AbstractStreamWrapper(Stream<T> delegate) {\n" +
-           "        this.delegate = delegate;\n" +
-           "    }\n" +
-           "\n" +
-           "    @Override\n" +
-           "    public <A> A[] toArray(IntFunction<A[]> generator) {\n" +
-           "        return delegate.toArray(generator);\n" +
-           "    }\n" +
-           "    public <A extends CharSequence> A[] toArray2(IntFunction<A[]> generator) {\n" +
-           "        return delegate.toArray(/*Array of type 'java.lang.Cloneable[]' expected, 'A[]' found*/generator/**/);\n" +
-           "    }\n" +
-           "    public <A extends Cloneable> A[] toArray3(IntFunction<A[]> generator) {\n" +
-           "        return delegate.toArray(generator);\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.util.stream.*;
+             import java.util.function.*;
+             abstract class AbstractStreamWrapper<T extends Cloneable> implements Stream<T> {
+                 private final Stream<T> delegate;
+
+                 AbstractStreamWrapper(Stream<T> delegate) {
+                     this.delegate = delegate;
+                 }
+
+                 @Override
+                 public <A> A[] toArray(IntFunction<A[]> generator) {
+                     return delegate.toArray(generator);
+                 }
+                 public <A extends CharSequence> A[] toArray2(IntFunction<A[]> generator) {
+                     return delegate.toArray(/*Array of type 'java.lang.Cloneable[]' expected, 'A[]' found*/generator/**/);
+                 }
+                 public <A extends Cloneable> A[] toArray3(IntFunction<A[]> generator) {
+                     return delegate.toArray(generator);
+                 }
+             }""");
   }
 
   public void testStreamFilter() {
-    doTest("import java.util.Arrays;\n" +
-           "class Parent {}\n" +
-           "class Child extends Parent {}\n" +
-           "class Test {\n" +
-           "   void test(Parent[] parent) {\n" +
-           "     Child[] children = Arrays.stream(parent)\n" +
-           "       .filter(t -> t instanceof Child)\n" +
-           "       .toArray(Child[]::new);\n" +
-           "     Child[] children2 = Arrays.stream(parent)\n" +
-           "       .filter(Child.class::isInstance)\n" +
-           "       .toArray(Child[]::new);\n" +
-           "     Child[] children3 = Arrays.stream(parent)\n" +
-           "       .filter(Child.class::isInstance)\n" +
-           "       .filter(c -> c.hashCode() > 0)\n" +
-           "       .toArray(Child[]::new);\n" +
-           "   }\n" +
-           "}");
+    doTest("""
+             import java.util.Arrays;
+             class Parent {}
+             class Child extends Parent {}
+             class Test {
+                void test(Parent[] parent) {
+                  Child[] children = Arrays.stream(parent)
+                    .filter(t -> t instanceof Child)
+                    .toArray(Child[]::new);
+                  Child[] children2 = Arrays.stream(parent)
+                    .filter(Child.class::isInstance)
+                    .toArray(Child[]::new);
+                  Child[] children3 = Arrays.stream(parent)
+                    .filter(Child.class::isInstance)
+                    .filter(c -> c.hashCode() > 0)
+                    .toArray(Child[]::new);
+                }
+             }""");
   }
 
   @NotNull

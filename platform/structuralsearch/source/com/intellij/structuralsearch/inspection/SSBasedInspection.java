@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -158,15 +159,17 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
     final PsiFile file = holder.getFile();
-    if (file.getFileType() instanceof PlainTextLikeFileType) return PsiElementVisitor.EMPTY_VISITOR;
+    final FileType fileType = file.getFileType();
+    if (fileType instanceof PlainTextLikeFileType) return PsiElementVisitor.EMPTY_VISITOR;
 
     final Project project = holder.getProject();
     final InspectionProfileImpl profile =
       (mySessionProfile != null && !isOnTheFly) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
     final List<Configuration> configurations = new SmartList<>();
     for (Configuration configuration : myConfigurations) {
+      if (configuration.getFileType() != fileType) continue;
       final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuid(), project);
-      if (tools != null && tools.isEnabled()) {
+      if (tools != null && tools.isEnabled(file)) {
         configurations.add(configuration);
         register(configuration);
       }
@@ -183,7 +186,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       // not a main configuration containing meta data
       return;
     }
-    // modify from single (AWT) thread, to prevent race conditions.
+    // modify from single (event) thread, to prevent race conditions.
     ApplicationManager.getApplication().invokeLater(() -> {
       final String shortName = configuration.getUuid();
       final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
@@ -287,7 +290,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     @Override
     @NotNull
     public String getName() {
-      return SSRBundle.message("SSRInspection.replace.with", myReplacementInfo.getReplacement());
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementInfo.getReplacement());
     }
 
     @Override
@@ -358,8 +361,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
   }
 
-  @Nullable
-  Map<Configuration, Matcher> checkOutCompiledPatterns(@NotNull List<? extends Configuration> configurations, @NotNull Project project) {
+  private Map<Configuration, Matcher> checkOutCompiledPatterns(@NotNull List<? extends Configuration> configurations,
+                                                               @NotNull Project project) {
     final Map<Configuration, Matcher> result = new HashMap<>();
     for (Configuration configuration : configurations) {
       final Matcher matcher = myCompiledPatterns.popValue(configuration);
@@ -383,7 +386,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return result;
   }
 
-  Matcher buildCompiledConfiguration(Configuration configuration, @NotNull Project project) {
+  private static Matcher buildCompiledConfiguration(Configuration configuration, @NotNull Project project) {
     try {
       final MatchOptions matchOptions = configuration.getMatchOptions();
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, true);
@@ -394,7 +397,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
   }
 
-  void checkInCompiledPatterns(@NotNull Map<Configuration, Matcher> compiledPatterns) {
+  private void checkInCompiledPatterns(@NotNull Map<Configuration, Matcher> compiledPatterns) {
     for (Map.Entry<Configuration, Matcher> entry : compiledPatterns.entrySet()) {
       final Configuration configuration = entry.getKey();
       final Matcher matcher = entry.getValue();

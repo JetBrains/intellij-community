@@ -28,6 +28,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuBar;
+import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.*;
@@ -74,15 +75,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private double myProgress;
   private boolean myActivated;
 
-  private final MenuBar myScreenMenuPeer = Menu.isJbScreenMenuEnabled() ? new MenuBar("MainMenu") : null;
+  private MenuBar myScreenMenuPeer;
 
   public static @NotNull IdeMenuBar createMenuBar() {
     return SystemInfoRt.isLinux ? new LinuxIdeMenuBar() : new IdeMenuBar();
-  }
-
-  public IdeMenuBar setFrame(@NotNull JFrame frame) {
-    if (myScreenMenuPeer != null) myScreenMenuPeer.setFrame(frame);
-    return this;
   }
 
   protected IdeMenuBar() {
@@ -274,6 +270,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Override
   public void addNotify() {
     super.addNotify();
+    if (Menu.isJbScreenMenuEnabled()) {
+      myScreenMenuPeer = new MenuBar("MainMenu");
+      myScreenMenuPeer.setFrame(SwingUtilities.getWindowAncestor(this));
+    }
     ActionManagerEx.doWithLazyActionManager(actionManager -> {
       if (myDisposable.isDisposed()) return;
       doUpdateMenuActions(false, actionManager);
@@ -291,6 +291,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public void removeNotify() {
+    if (myScreenMenuPeer != null) {
+      myScreenMenuPeer.dispose();
+      myScreenMenuPeer = null;
+    }
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (myAnimator != null) {
         myAnimator.suspend();
@@ -473,7 +477,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
 
     if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      g.setColor(UIManager.getColor("MenuItem.background"));
+      g.setColor(IdeaMenuUI.getMenuBackgroundColor());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
   }
@@ -580,13 +584,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     protected void paintCycleEnd() {
       myProgress = 1;
       switch (getState()) {
-        case COLLAPSING:
-          setState(State.COLLAPSED);
-          break;
-        case EXPANDING:
-          setState(State.TEMPORARY_EXPANDED);
-          break;
-        default:
+        case COLLAPSING -> setState(State.COLLAPSED);
+        case EXPANDING -> setState(State.TEMPORARY_EXPANDED);
+        default -> {
+        }
       }
       if (!isShowing()) {
         return;

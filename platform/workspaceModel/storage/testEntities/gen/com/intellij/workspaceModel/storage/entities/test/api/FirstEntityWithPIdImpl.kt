@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -20,7 +19,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FirstEntityWithPIdImpl : FirstEntityWithPId, WorkspaceEntityBase() {
+open class FirstEntityWithPIdImpl(val dataSource: FirstEntityWithPIdData) : FirstEntityWithPId, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,16 +29,18 @@ open class FirstEntityWithPIdImpl : FirstEntityWithPId, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: FirstEntityWithPIdData?) : ModifiableWorkspaceEntityBase<FirstEntityWithPId>(), FirstEntityWithPId.Builder {
+  class Builder(result: FirstEntityWithPIdData?) : ModifiableWorkspaceEntityBase<FirstEntityWithPId, FirstEntityWithPIdData>(
+    result), FirstEntityWithPId.Builder {
     constructor() : this(FirstEntityWithPIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -57,6 +58,9 @@ open class FirstEntityWithPIdImpl : FirstEntityWithPId, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -80,8 +84,8 @@ open class FirstEntityWithPIdImpl : FirstEntityWithPId, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FirstEntityWithPId
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
       }
     }
@@ -91,7 +95,7 @@ open class FirstEntityWithPIdImpl : FirstEntityWithPId, WorkspaceEntityBase() {
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -100,42 +104,37 @@ open class FirstEntityWithPIdImpl : FirstEntityWithPId, WorkspaceEntityBase() {
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): FirstEntityWithPIdData = result ?: super.getEntityData() as FirstEntityWithPIdData
     override fun getEntityClass(): Class<FirstEntityWithPId> = FirstEntityWithPId::class.java
   }
 }
 
-class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<FirstEntityWithPId>() {
+class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<FirstEntityWithPId>() {
   lateinit var data: String
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FirstEntityWithPId> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FirstEntityWithPId> {
     val modifiable = FirstEntityWithPIdImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): FirstEntityWithPId {
-    val entity = FirstEntityWithPIdImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FirstEntityWithPIdImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return FirstPId(data)
   }
 
@@ -161,7 +160,7 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FirstEntityWithPIdData
 
@@ -172,7 +171,7 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FirstEntityWithPIdData
 

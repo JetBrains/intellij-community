@@ -31,14 +31,15 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.containers.IntStack;
 import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
+public final class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
   private static final Key<Long> LAST_TIME_INDENTS_BUILT = Key.create("LAST_TIME_INDENTS_BUILT");
 
@@ -149,8 +150,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     calculator.calculate();
     int[] lineIndents = calculator.lineIndents;
 
-    IntStack lines = new IntStack();
-    IntStack indents = new IntStack();
+    IntStack lines = new IntArrayList();
+    IntStack indents = new IntArrayList();
 
     lines.push(0);
     indents.push(0);
@@ -159,10 +160,10 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       ProgressManager.checkCanceled();
       int curIndent = Math.abs(lineIndents[line]);
 
-      while (!indents.empty() && curIndent <= indents.peek()) {
+      while (!indents.isEmpty() && curIndent <= indents.topInt()) {
         ProgressManager.checkCanceled();
-        int level = indents.pop();
-        int startLine = lines.pop();
+        int level = indents.popInt();
+        int startLine = lines.popInt();
         if (level > 0) {
           for (int i = startLine; i < line; i++) {
             if (level != Math.abs(lineIndents[i])) {
@@ -183,10 +184,10 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
     }
 
-    while (!indents.empty()) {
+    while (!indents.isEmpty()) {
       ProgressManager.checkCanceled();
-      int level = indents.pop();
-      int startLine = lines.pop();
+      int level = indents.popInt();
+      int startLine = lines.popInt();
       if (level > 0) {
         IndentGuideDescriptor descriptor = createDescriptor(level, startLine, myDocument.getLineCount(), lineIndents);
         if (IndentsPassFilterUtils.shouldShowIndentGuide(myEditor, descriptor)) descriptors.add(descriptor);

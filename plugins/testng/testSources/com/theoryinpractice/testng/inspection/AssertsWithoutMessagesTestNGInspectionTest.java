@@ -36,30 +36,30 @@ public class AssertsWithoutMessagesTestNGInspectionTest extends JavaCodeInsightF
   }
 
   public void testQuickFix() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "import org.testng.annotations.Test;\n" +
-                                          "import static org.testng.Assert.*;\n" +
-
-                                          "class TestCase {\n" +
-                                          "    @Test\n" +
-                                          "    public void test() {\n" +
-                                          "        <warning descr=\"'assertEquals()' without message\"><caret>assertEquals</warning>(1, 1);\n" +
-                                          "    }\n" +
-                                          "}");
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      import org.testng.annotations.Test;
+      import static org.testng.Assert.*;
+      class TestCase {
+          @Test
+          public void test() {
+              <warning descr="'assertEquals()' without message"><caret>assertEquals</warning>(1, 1);
+          }
+      }""");
     myFixture.enableInspections(AssertWithoutMessageInspection.class);
     myFixture.testHighlighting(true, false, false);
 
     final IntentionAction intention = myFixture.getAvailableIntention("Add error message");
     assertNotNull(intention);
     myFixture.launchAction(intention);
-    myFixture.checkResult("import org.testng.annotations.Test;\n" +
-                          "import static org.testng.Assert.*;\n" +
-
-                          "class TestCase {\n" +
-                          "    @Test\n" +
-                          "    public void test() {\n" +
-                          "        assertEquals(1, 1, \"<caret>\");\n" +
-                          "    }\n" +
-                          "}");
+    myFixture.checkResult("""
+                            import org.testng.annotations.Test;
+                            import static org.testng.Assert.*;
+                            class TestCase {
+                                @Test
+                                public void test() {
+                                    assertEquals(1, 1, "<caret>");
+                                }
+                            }""");
   }
 
   @Override

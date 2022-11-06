@@ -5,37 +5,45 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.SendFeedbackAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 
 /**
  * @author Konstantin Bulenkov
  */
 internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
   IdeBundle.message("configurable.new.ui.name"),
-  "reference.settings.ide.settings.new.ui") {
+  "reference.settings.ide.settings.new.ui"), Configurable.Beta {
 
   override fun createPanel() = panel {
+    lateinit var newUiCheckBox: com.intellij.ui.dsl.builder.Cell<JBCheckBox>
+
     row {
-      checkBox(IdeBundle.message("checkbox.enable.new.ui"))
+      newUiCheckBox = checkBox(IdeBundle.message("checkbox.enable.new.ui"))
         .bindSelected(
           { ExperimentalUI.isNewUI() },
           { Registry.get("ide.experimental.ui").setValue(it) })
         .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
     }
 
-    row { browserLink(IdeBundle.message("new.ui.blog.post.link"), "https://blog.jetbrains.com/idea/2022/05/take-part-in-the-new-ui-preview-for-your-jetbrains-ide/") }
     row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
     row { link(IdeBundle.message("new.ui.submit.feedback")) { SendFeedbackAction.submit(null) } }
 
-    if (!SystemInfo.isMac) {
+    if (SystemInfo.isWindows || SystemInfo.isXWindow) {
       group(IdeBundle.message("new.ui.settings.group.name")) {
         row {
           checkBox(IdeBundle.message("checkbox.main.menu.separate.toolbar"))
             .bindSelected(UISettings.getInstance()::separateMainMenu)
-          comment(IdeBundle.message("main.menu.separate.toolbar.comment"))
+            .apply {
+              if (SystemInfo.isXWindow) {
+                comment(IdeBundle.message("ide.restart.required.comment"))
+              }
+            }.enabledIf(newUiCheckBox.selected)
         }
       }
     }
@@ -43,5 +51,13 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
 
   override fun getHelpTopic(): String? {
     return null
+  }
+
+  override fun apply() {
+    val uiSettingsChanged = isModified
+    super.apply()
+    if (uiSettingsChanged) {
+      UISettings.getInstance().fireUISettingsChanged()
+    }
   }
 }

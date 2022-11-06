@@ -26,9 +26,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author peter
- */
 @CompileStatic
 class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -739,6 +736,20 @@ static String test(String a, String b) {
   void "test this propagated to parameter"() {
     def c = inferContracts("""StringBuilder foo(StringBuilder sb) {return sb.append("foo");}""")
     assert c == ['_ -> param1']
+  }
+  
+  void "test boxed boolean equals"() {
+    def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
+        return Boolean.FALSE.equals(condition);
+    }""")
+    assert c == ['false -> true', '_ -> false']
+  }
+
+  void "test boxed boolean equals2"() {
+    def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
+        return Boolean.TRUE.equals(condition);
+    }""")
+    assert c == ['true -> true', '_ -> false']
   }
 
   private String inferContract(String method) {

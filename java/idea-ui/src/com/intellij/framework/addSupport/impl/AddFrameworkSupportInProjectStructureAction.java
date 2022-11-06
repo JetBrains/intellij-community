@@ -21,6 +21,7 @@ import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -32,6 +33,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM;
 
 public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AddFrameworkSupportInProjectStructureAction.class);
@@ -49,11 +52,16 @@ public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setVisible(isVisible());
+    e.getPresentation().setVisible(isVisible(e));
   }
 
-  private boolean isVisible() {
-    final Module module = getSelectedModule();
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  private boolean isVisible(@NotNull AnActionEvent e) {
+    final Module module = getSelectedModule(e);
     if (module == null || !myProvider.isEnabledForModuleType(ModuleType.get(module))) {
       return false;
     }
@@ -73,27 +81,20 @@ public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction
   }
 
   @Nullable
-  private Module getSelectedModule() {
-    final Object selected = myModuleStructureConfigurable.getSelectedObject();
+  private static Module getSelectedModule(@NotNull AnActionEvent e) {
+    Object selected = e.getData(SELECTED_ITEM);
     if (selected instanceof Module) {
       return (Module)selected;
     }
-    final Facet facet = getSelectedFacet();
-    return facet != null ? facet.getModule() : null;
-  }
-
-  @Nullable
-  private Facet getSelectedFacet() {
-    final Object selected = myModuleStructureConfigurable.getSelectedObject();
-    if (selected instanceof Facet) {
-      return ((Facet)selected);
+    else if (selected instanceof Facet<?>) {
+      return ((Facet<?>)selected).getModule();
     }
-    return null;
+    else return null;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Module module = getSelectedModule();
+    final Module module = getSelectedModule(e);
     if (module == null) return;
 
     final LibrariesContainer librariesContainer = LibrariesContainerFactory.createContainer(myModuleStructureConfigurable.getContext());

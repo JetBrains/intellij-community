@@ -44,7 +44,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
 
     private fun createPresentation(): Presentation {
       val presentation = Presentation()
-      presentation.icon = IconLoader.loadCustomVersionOrScale(AllIcons.Actions.MoreHorizontal as ScalableIcon, 20f)
+      presentation.icon = IconLoader.loadCustomVersionOrScale(AllIcons.Actions.MoreHorizontal as ScalableIcon, 20)
       presentation.isEnabledAndVisible = true
       return presentation
     }
@@ -55,7 +55,9 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
           val moreSquareStripeButton = toolWindowToolbar.moreButton
           ToolwindowSwitcher.invokePopup(e.project!!, Comparator.comparing { it.stripeTitle },
                                          e.dataContext, notVisibleOnStripePredicate,
-                                         RelativePoint(toolWindowToolbar, Point(toolWindowToolbar.width, moreSquareStripeButton.y)))
+                                         RelativePoint(toolWindowToolbar, Point(toolWindowToolbar.width, moreSquareStripeButton.y)),
+                                         moreSquareStripeButton,
+          )
         }
 
         override fun update(e: AnActionEvent) {

@@ -131,20 +131,21 @@ public class LibraryOptionsPanel implements Disposable {
   @Nullable
   private String getPresentableVersion() {
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
+      case DOWNLOAD -> {
         LibraryDownloadSettings settings = mySettings.getDownloadSettings();
         if (settings != null) {
           return settings.getVersion().getVersionNumber();
         }
-        break;
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         LibraryEditor item = myLibraryComboBoxModel.getSelectedItem();
         if (item instanceof ExistingLibraryEditor) {
           return item.getName();
         }
-        break;
-      default:
+      }
+      default -> {
         return null;
+      }
     }
     return null;
   }
@@ -411,17 +412,15 @@ public class LibraryOptionsPanel implements Disposable {
     String message = "";
     boolean showConfigurePanel = true;
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
-        message = getDownloadFilesMessage();
-        break;
-      case USE_FROM_PROVIDER:
+      case DOWNLOAD -> message = getDownloadFilesMessage();
+      case USE_FROM_PROVIDER -> {
         if (myLibraryProvider != null) {
           message =
             JavaUiBundle.message("library.options.panel.update.state.library.from.0.will.be.used", myLibraryProvider.getPresentableName());
         }
         myConfigureButton.setVisible(false);
-        break;
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item == null) {
           myMessageLabel.setIcon(AllIcons.General.BalloonError);
@@ -431,14 +430,13 @@ public class LibraryOptionsPanel implements Disposable {
         else if (item instanceof NewLibraryEditor) {
           final LibraryEditor libraryEditor = (LibraryEditor)item;
           message = JavaUiBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
-                                      libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
+                                         libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
         else {
           message = JavaUiBundle.message("label.existing.library.will.be.used", ((ExistingLibraryEditor)item).getName());
         }
-        break;
-      default:
-        showConfigurePanel = false;
+      }
+      default -> showConfigurePanel = false;
     }
 
     if (myLibraryProvider != null) {

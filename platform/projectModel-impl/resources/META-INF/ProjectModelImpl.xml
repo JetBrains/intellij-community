@@ -13,6 +13,11 @@
     <extensionPoint name="customEntityProjectModelInfoProvider"
                     interface="com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider"
                     dynamic="true"/>
+    <extensionPoint name="workspaceModel.facetContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceModel.fileIndexContributor"
+                    interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager"
@@ -21,12 +26,17 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableModelCommitterServiceBridge"/>
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
                         serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
+                        serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
+    <applicationService serviceImplementation="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
     <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModel"
-                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl" preload="await"/>
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
+                    serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
@@ -36,6 +46,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
                     serviceImplementation="com.intellij.openapi.module.DummyAutomaticModuleUnloader"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex" 
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper"
                         serviceImplementation="com.intellij.openapi.roots.impl.AdditionalLibraryRootsListenerHelperImpl"/>
@@ -44,5 +56,16 @@
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
+    <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
+                   serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>
+
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ContentRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.SourceRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ExcludedRootFileIndexContributor"/>
+    <registryKey key="platform.projectModel.workspace.model.file.index" defaultValue="true"
+                 description="Use new implementation of ProjectFileIndex based on WorkspaceModel with incremental updates"
+                 restartRequired="true"/>
+    
   </extensions>
 </idea-plugin>

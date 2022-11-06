@@ -81,33 +81,33 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     if (HostManager.hostIsMac)
                         moduleDependency("multimod-hmpp.top-mpp.dummyiOSMain", DependencyScope.TEST)
                 }
-                module("multimod-hmpp.bottom-mpp.jvm16Main") {
+                module("multimod-hmpp.bottom-mpp.jvm11Main") {
                     targetPlatform(jvm)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.COMPILE)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.COMPILE)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
                 }
-                module("multimod-hmpp.bottom-mpp.jvm16Test") {
+                module("multimod-hmpp.bottom-mpp.jvm11Test") {
                     targetPlatform(jvm)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.TEST)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonTest", DependencyScope.TEST)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvm16Main", DependencyScope.TEST)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvm16Main", DependencyScope.RUNTIME)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.TEST)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Test", DependencyScope.TEST)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvm11Main", DependencyScope.TEST)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvm11Main", DependencyScope.RUNTIME)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Main", DependencyScope.TEST)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Test", DependencyScope.TEST)
                     moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.TEST)
                 }
 
-                module("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main") {
+                module("multimod-hmpp.bottom-mpp.jvmJavaJvm11Main") {
                     targetPlatform(jvm)
                     moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.COMPILE)
                 }
-                module("multimod-hmpp.bottom-mpp.jvmJavaJvm16Test") {
+                module("multimod-hmpp.bottom-mpp.jvmJavaJvm11Test") {
                     targetPlatform(jvm)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.TEST)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonTest", DependencyScope.TEST)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.TEST)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Main", DependencyScope.TEST)
                     moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.TEST)
                     moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST, isOptional = true)
                 }
@@ -115,7 +115,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     targetPlatform(jvm)
                     moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.COMPILE)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.COMPILE)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaiOSMain", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.top-mpp.jvm18Main", DependencyScope.COMPILE)
                     // `allowMultiple` flags for the next three moduleDependency should be removed
@@ -129,8 +129,8 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.TEST)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.TEST)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonTest", DependencyScope.TEST)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.TEST)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Test", DependencyScope.TEST)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Main", DependencyScope.TEST)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Test", DependencyScope.TEST)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaMain", DependencyScope.TEST)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaMain", DependencyScope.RUNTIME, isOptional = true)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaiOSMain", DependencyScope.TEST)
@@ -334,7 +334,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("multimod-hmpp.api-jvm.main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaMain", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.COMPILE)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.COMPILE)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaiOSMain", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.top-mpp.jvm18Main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE)
@@ -347,7 +347,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("multimod-hmpp.plain-jvm.main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaMain", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.commonMain", DependencyScope.COMPILE)
-                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm16Main", DependencyScope.COMPILE)
+                    moduleDependency("multimod-hmpp.bottom-mpp.jvmJavaJvm11Main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.bottom-mpp.jvmWithJavaiOSMain", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.top-mpp.jvm18Main", DependencyScope.COMPILE)
                     moduleDependency("multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE)
@@ -482,6 +482,14 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
             configureByFiles()
             importProject()
             checkHighlightingOnAllModules()
+        }
+
+        @Test
+        @PluginTargetVersions(pluginVersion = "1.8.0-dev-0+")
+        fun testKtij22345SyntheticJavaProperties() {
+            configureByFiles()
+            importProject()
+            createHighlightingCheck(testLineMarkers = false).invokeOnAllModules()
         }
     }
 

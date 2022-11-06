@@ -264,17 +264,5 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       val artificialExpression = requireNotNull(artificialReturn.returnValue)
       return inferNullability(listOf(artificialExpression))
     }
-
-    fun findReturnExpressionsIn(scope: PsiElement): List<PsiExpression> {
-      val expressions = mutableListOf<PsiExpression>()
-      val visitor: JavaRecursiveElementWalkingVisitor = object : JavaRecursiveElementWalkingVisitor() {
-        override fun visitReturnStatement(statement: PsiReturnStatement) {
-          val returnExpression = statement.returnValue
-          if (returnExpression != null) expressions += returnExpression
-        }
-      }
-      scope.accept(visitor)
-      return expressions
-    }
   }
 }

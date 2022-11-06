@@ -69,7 +69,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
     }
 
     @Override
-    protected void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiTypeParameter) {

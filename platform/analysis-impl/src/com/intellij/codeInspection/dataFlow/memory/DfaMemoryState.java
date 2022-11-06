@@ -53,6 +53,11 @@ public interface DfaMemoryState {
   @Nullable DfaValue getStackValue(int offset);
 
   /**
+   * @return number of values on the stack
+   */
+  int getStackSize();
+
+  /**
    * @return true if there are no values in the stack
    */
   boolean isEmptyStack();

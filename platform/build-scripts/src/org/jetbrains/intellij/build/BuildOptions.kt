@@ -1,8 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.util.concurrent.ThreadLocalRandom
@@ -17,7 +21,7 @@ class BuildOptions {
     /**
      * Use this property to change the project compiled classes output directory.
      *
-     * @see [org.jetbrains.intellij.build.impl.CompilationContextImpl.projectOutputDirectory]
+     * @see [org.jetbrains.intellij.build.impl.CompilationContextImpl.classesOutputDirectory]
      */
     const val PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY = "intellij.project.classes.output.directory"
     const val OS_LINUX = "linux"
@@ -78,16 +82,15 @@ class BuildOptions {
 
     @JvmField
     @Internal
-    val WIN_SIGN_OPTIONS = System.getProperty("intellij.build.win.sign.options", "")
-      .split(';')
-      .dropLastWhile { it.isEmpty() }
-      .asSequence()
+    val WIN_SIGN_OPTIONS: PersistentMap<String, String> = System.getProperty("intellij.build.win.sign.options", "")
+      .splitToSequence(';')
       .filter { !it.isBlank() }
       .associate {
         val item = it.split('=', limit = 2)
         require(item.size == 2) { "Could not split by '=': $it" }
         item[0] to item[1]
       }
+      .toPersistentMap()
 
     /** Build Frankenstein artifacts.  */
     const val CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
@@ -104,6 +107,8 @@ class BuildOptions {
     const val PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
     const val SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
     const val VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions"
+
+    const val ARCHIVE_PLUGINS = "archivePlugins"
 
     /**
      * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
@@ -143,7 +148,7 @@ class BuildOptions {
      * If `true` compilation step is skipped and compiled classes from the project output are used instead.
      * True if [BuildOptions.isInDevelopmentMode] is enabled.
      *
-     * @see [org.jetbrains.intellij.build.impl.CompilationContextImpl.projectOutputDirectory]
+     * @see [org.jetbrains.intellij.build.impl.CompilationContextImpl.classesOutputDirectory]
      */
     const val USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
 
@@ -173,12 +178,12 @@ class BuildOptions {
     const val TARGET_OS_PROPERTY = "intellij.build.target.os"
   }
 
-  var projectClassesOutputDirectory: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
+  var classesOutputDirectory: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
 
   /**
    * Specifies for which operating systems distributions should be built.
    */
-  var targetOs: String
+  var targetOs: PersistentList<OsFamily>
 
   /**
    * Specifies for which arch distributions should be built. null means all
@@ -191,9 +196,7 @@ class BuildOptions {
   var buildStepsToSkip: MutableSet<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
     .split(',')
     .dropLastWhile { it.isEmpty() }
-    .asSequence()
-    .filter { s: String -> !s.isBlank() }
-    .toHashSet()
+    .filterTo(HashSet()) { !it.isBlank() }
 
   var buildMacArtifactsWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME,
                                                                             SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
@@ -206,10 +209,9 @@ class BuildOptions {
   var buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
-   * Image for snap package creation. Default is "snapcore/snapcraft:stable", but can be modified mostly due to problems
-   * with new versions of snapcraft.
+   * Docker image for snap package creation
    */
-  var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable")
+  var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable@sha256:6d771575c134569e28a590f173f7efae8bf7f4d1746ad8a474c98e02f4a3f627")
   var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin", "20").toLong()
 
   /**
@@ -229,11 +231,6 @@ class BuildOptions {
   var incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
 
   /**
-   * By default, some build steps are executed in parallel threads. Set this property to `false` to disable this.
-   */
-  var runBuildStepsInParallel = SystemProperties.getBooleanProperty("intellij.build.run.steps.in.parallel", true)
-
-  /**
    * Build number without product code (e.g. '162.500.10'), if `null` '&lt;baseline&gt;.SNAPSHOT' will be used. Use [BuildContext.buildNumber] to
    * get the actual build number in build scripts.
    */
@@ -243,7 +240,8 @@ class BuildOptions {
    * By default, build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
    * change the output directory.
    */
-  var outputRootPath: String? = System.getProperty("intellij.build.output.root")
+  var outputRootPath: Path? = System.getProperty("intellij.build.output.root")?.let { Path.of(it).toAbsolutePath().normalize() }
+
   var logPath: String? = System.getProperty("intellij.build.log.root")
 
   /**
@@ -273,11 +271,14 @@ class BuildOptions {
    */
   var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
 
+  @Internal
+  var printFreeSpace = true
+
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
    * used to speed up updating the IDE from sources.
    */
-  val bundledPluginDirectoriesToSkip = getSetProperty("intellij.build.bundled.plugin.dirs.to.skip")
+  val bundledPluginDirectoriesToSkip: Set<String> = getSetProperty("intellij.build.bundled.plugin.dirs.to.skip")
 
   /**
    * Specifies list of names of directories of non-bundled plugins (determined by [ProductModulesLayout.pluginsToPublish] and
@@ -314,7 +315,7 @@ class BuildOptions {
   var validateClassFileSubpaths = parseBooleanValue(System.getProperty(VALIDATE_CLASSFILE_SUBPATHS_PROPERTY, "false"))
 
   @Internal
-  var compressNonBundledPluginArchive = true
+  var skipCustomResourceGenerators = false
 
   var resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
   var resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
@@ -325,20 +326,21 @@ class BuildOptions {
   var buildDateInSeconds: Long = 0
   var randomSeedNumber: Long = 0
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  var compressZipFiles = true
+
   init {
-    var targetOs = System.getProperty(TARGET_OS_PROPERTY, OS_ALL)
-    if (targetOs == OS_CURRENT) {
-      targetOs = when {
-        SystemInfoRt.isWindows -> OS_WINDOWS
-        SystemInfoRt.isMac -> OS_MAC
-        SystemInfoRt.isLinux -> OS_LINUX
-        else -> throw RuntimeException("Unknown OS")
-      }
+    val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()
+    targetOs = when {
+      targetOsId == OS_CURRENT -> persistentListOf(OsFamily.currentOs)
+      targetOsId.isEmpty() || targetOsId == OS_ALL -> OsFamily.ALL
+      targetOsId == OS_NONE -> persistentListOf()
+      targetOsId == OsFamily.MACOS.osId -> persistentListOf(OsFamily.MACOS)
+      targetOsId == OsFamily.WINDOWS.osId -> persistentListOf(OsFamily.WINDOWS)
+      targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
+      else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
-    else if (targetOs.isEmpty()) {
-      targetOs = OS_ALL
-    }
-    this.targetOs = targetOs
 
     val sourceDateEpoch = System.getenv("SOURCE_DATE_EPOCH")
     buildDateInSeconds = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)

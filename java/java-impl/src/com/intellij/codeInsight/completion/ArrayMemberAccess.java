@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
 
-/**
- * @author peter
- */
 final class ArrayMemberAccess {
   static void addMemberAccessors(final PsiElement element, final String prefix, final PsiType itemType,
                                  final PsiElement qualifier, final Consumer<? super LookupElement> result, PsiModifierListOwner object,

@@ -13,7 +13,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 
 val SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS = setOf("classpath", "compile", "api", "implementation", "compileOnly", "runtimeOnly")
@@ -82,6 +82,6 @@ fun GradleBuildScriptManipulator<*>.useNewSyntax(kotlinPluginName: String, gradl
 }
 
 fun LanguageFeature.State.assertApplicableInMultiplatform() {
-    if (this == LanguageFeature.State.ENABLED_WITH_ERROR || this == LanguageFeature.State.DISABLED)
+    if (this == LanguageFeature.State.DISABLED)
         throw UnsupportedOperationException("Disabling the language feature is unsupported for multiplatform")
 }

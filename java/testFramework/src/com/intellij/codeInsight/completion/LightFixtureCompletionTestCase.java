@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class LightFixtureCompletionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected LookupElement[] myItems;
 

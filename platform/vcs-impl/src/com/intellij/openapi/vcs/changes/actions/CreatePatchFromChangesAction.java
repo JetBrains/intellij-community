@@ -130,7 +130,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
                                   @NotNull PatchBuilder patchBuilder) {
     CommitContext commitContext = new CommitContext();
     if (silentClipboard) {
-      createIntoClipboard(project, changes, patchBuilder, commitContext);
+      createIntoClipboard(project, changes, commitMessage, patchBuilder, commitContext);
     }
     else {
       createWithDialog(project, commitMessage, changes, patchBuilder, commitContext);
@@ -155,12 +155,14 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
   private static void createIntoClipboard(@NotNull Project project,
                                           @NotNull List<? extends Change> changes,
+                                          @Nullable String commitMessage,
                                           @NotNull PatchBuilder patchBuilder,
                                           @NotNull CommitContext commitContext) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
         Path baseDir = PatchWriter.calculateBaseDirForWritingPatch(project, changes);
-        CreatePatchCommitExecutor.writePatchToClipboard(project, baseDir, changes, false, false, patchBuilder, commitContext);
+        CreatePatchCommitExecutor.writePatchToClipboard(project, baseDir, changes, commitMessage, false, false,
+                                                        patchBuilder, commitContext);
       }
       catch (IOException | VcsException exception) {
         LOG.warn("Can't create patch", exception);

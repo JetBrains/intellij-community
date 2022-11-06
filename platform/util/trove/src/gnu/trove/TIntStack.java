@@ -15,19 +15,12 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-
-
 package gnu.trove;
 
 /**
- * A stack of int primitives, backed by a TIntArrayList.
- * <p>
- * Created: Tue Jan  1 10:30:35 2002
- *
- * @author Eric D. Friedman
- * @version $Id: TIntStack.java,v 1.5 2004/09/24 09:11:15 cdr Exp $
+ * @deprecated Use {@link it.unimi.dsi.fastutil.ints.IntArrayList}
  */
-
+@Deprecated
 public final class TIntStack {
 
   /**
@@ -47,8 +40,6 @@ public final class TIntStack {
 
   /**
    * Copy constructor.
-   *
-   * @param copy
    */
   public TIntStack(TIntStack copy) {
     _list = new TIntArrayList(copy._list.toNativeArray());

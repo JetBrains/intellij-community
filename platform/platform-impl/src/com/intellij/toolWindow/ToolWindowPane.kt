@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedR
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.reference.SoftReference
+import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBLayeredPane
@@ -58,12 +59,14 @@ class ToolWindowPane internal constructor(frame: JFrame,
   companion object {
     const val TEMPORARY_ADDED = "TEMPORARY_ADDED"
 
-    //The size of topmost 'resize' area when toolwindow caption is used for both resize and drag
+    // the size of topmost 'resize' area when toolwindow caption is used for both resize and drag
     internal val headerResizeArea: Int
       get() = JBUI.scale(Registry.intValue("ide.new.tool.window.resize.area.height", 14, 1, 26))
 
     private fun normalizeWeight(weight: Float): Float {
-      if (weight <= 0) return WindowInfoImpl.DEFAULT_WEIGHT
+      if (weight <= 0) {
+        return WindowInfoImpl.DEFAULT_WEIGHT
+      }
       return if (weight >= 1) 1 - WindowInfoImpl.DEFAULT_WEIGHT else weight
     }
   }
@@ -80,7 +83,7 @@ class ToolWindowPane internal constructor(frame: JFrame,
   private val layeredPane: MyLayeredPane
 
   /*
-   * Splitters.
+   * Splitters
    */
   private val verticalSplitter: ThreeComponentsSplitter
   private val horizontalSplitter: ThreeComponentsSplitter
@@ -104,11 +107,11 @@ class ToolWindowPane internal constructor(frame: JFrame,
     }, parentDisposable)
     verticalSplitter.dividerWidth = 0
     verticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
-    verticalSplitter.background = Color.gray
+    verticalSplitter.background = JBColor.GRAY
     horizontalSplitter = ThreeComponentsSplitter(false, parentDisposable)
     horizontalSplitter.dividerWidth = 0
     horizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
-    horizontalSplitter.background = Color.gray
+    horizontalSplitter.background = JBColor.GRAY
     updateInnerMinSize(registryValue)
     val uiSettings = UISettings.getInstance()
     isWideScreen = uiSettings.wideScreenSupport
@@ -227,22 +230,46 @@ class ToolWindowPane internal constructor(frame: JFrame,
   }
 
   private fun setComponent(component: JComponent?, anchor: ToolWindowAnchor, weight: Float) {
-    val size = rootPane.size
     when (anchor) {
       ToolWindowAnchor.TOP -> {
         verticalSplitter.firstComponent = component
-        verticalSplitter.firstSize = (size.getHeight() * weight).toInt()
       }
       ToolWindowAnchor.LEFT -> {
         horizontalSplitter.firstComponent = component
-        horizontalSplitter.firstSize = (size.getWidth() * weight).toInt()
       }
       ToolWindowAnchor.BOTTOM -> {
         verticalSplitter.lastComponent = component
-        verticalSplitter.lastSize = (size.getHeight() * weight).toInt()
       }
       ToolWindowAnchor.RIGHT -> {
         horizontalSplitter.lastComponent = component
+      }
+      else -> {
+        LOG.error("unknown anchor: $anchor")
+      }
+    }
+    setWeight(anchor, weight)
+  }
+
+  fun setWeight(window: ToolWindow, weight: Float) {
+    if (window.type != ToolWindowType.DOCKED) {
+      return
+    }
+    setWeight(window.anchor, normalizeWeight(weight))
+  }
+
+  private fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
+    val size = rootPane.size
+    when (anchor) {
+      ToolWindowAnchor.TOP -> {
+        verticalSplitter.firstSize = (size.getHeight() * weight).toInt()
+      }
+      ToolWindowAnchor.LEFT -> {
+        horizontalSplitter.firstSize = (size.getWidth() * weight).toInt()
+      }
+      ToolWindowAnchor.BOTTOM -> {
+        verticalSplitter.lastSize = (size.getHeight() * weight).toInt()
+      }
+      ToolWindowAnchor.RIGHT -> {
         horizontalSplitter.lastSize = (size.getWidth() * weight).toInt()
       }
       else -> {
@@ -815,7 +842,7 @@ private class Surface(private val myTopImage: Image,
       }
       val onePaintTime = timeSpent.toDouble() / count
       var iterations = ((desiredTimeToComplete - timeSpent) / onePaintTime).toInt()
-      iterations = Math.max(1, iterations)
+      iterations = 1.coerceAtLeast(iterations)
       offset += (distance - offset) / iterations
     }
   }

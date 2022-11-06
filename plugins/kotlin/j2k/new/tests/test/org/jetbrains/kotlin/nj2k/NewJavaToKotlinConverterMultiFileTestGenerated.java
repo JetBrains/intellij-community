@@ -38,6 +38,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/DetectPropertiesMultipleFiles/");
     }
 
+    @TestMetadata("FieldToPrimaryConstructorProperty")
+    public void testFieldToPrimaryConstructorProperty() throws Exception {
+        runTest("testData/multiFile/FieldToPrimaryConstructorProperty/");
+    }
+
     @TestMetadata("FieldToProperty")
     public void testFieldToProperty() throws Exception {
         runTest("testData/multiFile/FieldToProperty/");
@@ -58,6 +63,21 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/InterfaceWithGetterInOtherFile/");
     }
 
+    @TestMetadata("Java17_RecordClass")
+    public void testJava17_RecordClass() throws Exception {
+        runTest("testData/multiFile/Java17_RecordClass/");
+    }
+
+    @TestMetadata("Java17_RecordClassExplicitAccessor")
+    public void testJava17_RecordClassExplicitAccessor() throws Exception {
+        runTest("testData/multiFile/Java17_RecordClassExplicitAccessor/");
+    }
+
+    @TestMetadata("JavaUsageOfBothFieldAndAccessor")
+    public void testJavaUsageOfBothFieldAndAccessor() throws Exception {
+        runTest("testData/multiFile/JavaUsageOfBothFieldAndAccessor/");
+    }
+
     @TestMetadata("KT11952")
     public void testKT11952() throws Exception {
         runTest("testData/multiFile/KT11952/");
@@ -68,9 +88,19 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/NullabilityByDFa/");
     }
 
+    @TestMetadata("OverrideFieldToPrimaryConstructorProperty")
+    public void testOverrideFieldToPrimaryConstructorProperty() throws Exception {
+        runTest("testData/multiFile/OverrideFieldToPrimaryConstructorProperty/");
+    }
+
     @TestMetadata("ProtectedVisibility")
     public void testProtectedVisibility() throws Exception {
         runTest("testData/multiFile/ProtectedVisibility/");
+    }
+
+    @TestMetadata("StaticAnnotation")
+    public void testStaticAnnotation() throws Exception {
+        runTest("testData/multiFile/StaticAnnotation/");
     }
 
     @TestMetadata("ToCompanionObject")

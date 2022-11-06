@@ -28,7 +28,7 @@ class BarBar<T> {
 
     @java.lang.SuppressWarnings("all")
     public BarBar<T> build() {
-      return new BarBar<T>(content);
+      return new BarBar<T>(this.content);
     }
 
     @java.lang.Override

@@ -230,6 +230,8 @@ class XDebugSessionTab3(
     }
   }
 
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
   val threadFramesView: XDebugView?
     get() = getView(DebuggerContentInfo.FRAME_CONTENT, XDebugView::class.java)
 

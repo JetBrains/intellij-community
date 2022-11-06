@@ -36,7 +36,7 @@ class PlatformLayout: BaseLayout() {
 
   inline fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
     val libsToUnpack = projectLibrariesToUnpack.values()
-    for (moduleName in getIncludedModuleNames()) {
+    for (moduleName in includedModuleNames) {
       val module = context.findRequiredModule(moduleName)
       for (library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
         if (library.createReference().parentReference is JpsModuleReference ||

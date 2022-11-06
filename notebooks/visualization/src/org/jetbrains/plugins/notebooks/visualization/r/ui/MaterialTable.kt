@@ -106,7 +106,7 @@ open class MaterialTable : JBTable {
     addMouseListener(mouseListener)
   }
 
-  fun isHighlightRowSelected(row: Int) = isRowSelected(row) || row == rollOverRowIndex
+  private fun isHighlightRowSelected(row: Int) = isRowSelected(row) || row == rollOverRowIndex
 
   fun isRollOverRowIndex(row: Int): Boolean = row == rollOverRowIndex
 

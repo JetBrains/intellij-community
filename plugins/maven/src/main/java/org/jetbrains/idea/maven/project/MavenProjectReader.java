@@ -414,15 +414,9 @@ public final class MavenProjectReader {
                                                  Path basedir,
                                                  MavenExplicitProfiles explicitProfiles,
                                                  Collection<String> alwaysOnProfiles) {
-    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString());
-    try {
-      return connector.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
-    catch (Exception e) {
-      MavenServerManager.getInstance().shutdownConnector(connector, false);
-      return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
-        .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
+
+    return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
+      .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
 
   private MavenModel resolveInheritance(final MavenGeneralSettings generalSettings,

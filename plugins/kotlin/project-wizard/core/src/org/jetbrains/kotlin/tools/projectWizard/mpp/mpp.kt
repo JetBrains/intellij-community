@@ -65,7 +65,7 @@ data class MppFile(
 
 
 @ExpectFileDSL
-class MppSources(val mppFiles: List<MppFile>, val simpleFiles: List<SimpleFiles>) {
+class MppSources(val mppFiles: List<MppFile>, private val simpleFiles: List<SimpleFiles>) {
 
     fun getFilesFor(moduleSubType: ModuleSubType): List<SimpleFile> =
         simpleFiles.filter { moduleSubType in it.moduleSubTypes }.flatMap { it.files }
@@ -88,7 +88,7 @@ class MppSources(val mppFiles: List<MppFile>, val simpleFiles: List<SimpleFiles>
 
 
 data class SimpleFiles(val moduleSubTypes: List<ModuleSubType>, val files: List<SimpleFile>) {
-    class Builder(private val moduleSubTypes: List<ModuleSubType>, val filesPackage: JavaPackage?) {
+    class Builder(private val moduleSubTypes: List<ModuleSubType>, private val filesPackage: JavaPackage?) {
         private val files = mutableListOf<SimpleFile>()
 
         fun file(fileDescriptor: FileDescriptor, filename: String, type: SourcesetType, init: SimpleFile.Builder.() -> Unit = {}) {

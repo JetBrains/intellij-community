@@ -16,6 +16,7 @@ import com.intellij.xdebugger.attach.*;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,7 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
     final List<XAttachDebugger> result = PythonSdkUtil.getAllLocalCPythons()
       .stream()
       .filter(sdk -> sdk != selectedSdk)
-      .filter(sdk -> !PythonSdkUtil.isInvalid(sdk))
+      .filter(sdk -> PySdkExtKt.getSdkSeemsValid(sdk))
       .sorted(PreferredSdkComparator.INSTANCE)
       .map(PyLocalAttachDebugger::new)
       .collect(Collectors.toList());

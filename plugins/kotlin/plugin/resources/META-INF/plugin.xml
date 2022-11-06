@@ -20,17 +20,18 @@ The plugin supports Kotlin 1.7 and lower.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
-    <h3>1.7.20-RC</h3>
+    <h3>1.7.20</h3>
     <ul>
       <li>K2: support for the `all-open, `no-arg`, SAM-with-receiver, Lombok, Parcelize, AtomicFU, and `jvm-abi-gen` compiler plugins</li>
       <li>Language: experimental `..<` (`rangeUntil`) operator for ranges with the excluded end bound, deprecated inferring type variables into an empty intersection type, warning on potentially empty intersection types, improved script handling in source roots</li>
+      <li>Language: builder inference in cases with multiple lambdas now requires explicit type arguments; using an uninferred stub type as a receiver in a call during type inference is now forbidden and leads to an error</li>
       <li>Kotlin/JVM: experimental generic inline classes, more optimized cases of delegated properties</li>
       <li>Kotlin/Native: the new memory manager enabled by default (with deprecated freezing API and an ability to run Kotlin `suspend` functions on non-main threads from Swift), customizable bundle identifier of the generated framework, improved documentation generated to the Objective-C header</li>
       <li>Kotlin/JS IR: improved speed on the first build when using the incremental compilation, faster klib generation</li>
       <li>Libraries: a new experimental interface for ranges with the excluded end bound, new walk and visit extensions for `java.nio.file.Path`</li>
       <li>Gradle: simplified configuration method for the JVM Toolchain, fixed deprecations and ensured compatibility with Gradle 7.1</li>
     </ul>
-    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.7.20-RC">changelog</a>.
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.7.20">changelog</a>.
     <br><br>
     <h3>1.7.0</h3>
     <ul>
@@ -198,6 +199,8 @@ The plugin supports Kotlin 1.7 and lower.
     <!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->
     <plugin id="com.intellij.java"/>
   </dependencies>
+
+  <depends optional="true" config-file="performance-plugin.xml">com.jetbrains.performancePlugin</depends>
 
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 

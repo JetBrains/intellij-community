@@ -46,7 +46,7 @@ class VcsLogIconProvider : FileIconProvider {
 }
 
 class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogFile) : FileEditorBase() {
-  internal val rootComponent: JComponent = JPanel(BorderLayout()).also {
+  private val rootComponent: JComponent = JPanel(BorderLayout()).also {
     it.add(vcsLogFile.createMainComponent(project), BorderLayout.CENTER)
   }
 

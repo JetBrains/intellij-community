@@ -3,7 +3,6 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.dvcs.branch.isGroupingEnabled
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getColorManager
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getRepositoryIcon
 import com.intellij.icons.AllIcons
@@ -35,9 +34,9 @@ import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsImplUtil
-import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
@@ -76,7 +75,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   private inner class BranchTreeCellRenderer(project: Project) : ColoredTreeCellRenderer() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
     private val colorManager = getColorManager(project)
-    private val branchSettings = GitVcsSettings.getInstance(project).branchSettings
+    private val branchManager = project.service<GitBranchManager>()
 
     private var incomingOutgoingIcon: NodeIcon? = null
 
@@ -112,7 +111,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
       append(value.getTextRepresentation(), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
 
-      val repositoryGrouping = branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+      val repositoryGrouping = branchManager.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
       if (!repositoryGrouping && branchInfo != null && branchInfo.repositories.size < repositoryManager.repositories.size) {
         append(" (${DvcsUtil.getShortNames(branchInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
@@ -256,7 +255,7 @@ internal class FilteringBranchesTree(
   private val treeStateHolder: BranchesTreeStateHolder get() = project.service()
 
   private val groupingConfig: MutableMap<GroupingKey, Boolean> =
-    with(GitVcsSettings.getInstance(project).branchSettings) {
+    with(project.service<GitBranchManager>()) {
       hashMapOf(
         GroupingKey.GROUPING_BY_DIRECTORY to isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
         GroupingKey.GROUPING_BY_REPOSITORY to isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)

@@ -110,5 +110,12 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.ml" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="jackson-dataformat-yaml" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.python.community.core.impl" />
   </component>
 </module>

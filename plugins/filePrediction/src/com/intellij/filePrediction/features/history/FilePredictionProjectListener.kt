@@ -2,9 +2,10 @@
 package com.intellij.filePrediction.features.history
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManagerListener
 
-class FilePredictionProjectListener : ProjectManagerListener {
+class FilePredictionProjectListener : ProjectCloseListener {
   override fun projectClosing(project: Project) {
     FilePredictionHistory.getInstanceIfCreated(project)?.saveFilePredictionHistory(project)
   }

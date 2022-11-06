@@ -4,6 +4,7 @@
 package com.intellij.ui
 
 import com.fasterxml.jackson.jr.ob.JSON
+import com.intellij.feedback.new_ui.state.NewUIInfoService
 import com.intellij.ide.ui.IconMapperBean
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
@@ -14,7 +15,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ResourceUtil
-import java.util.*
 
 /**
  * @author Konstantin Bulenkov
@@ -22,12 +22,15 @@ import java.util.*
 class ExperimentalUIImpl : ExperimentalUI() {
   override fun getIconMappings() = loadIconMappingsImpl()
 
-  override fun onExpUIEnabled() {
+  override fun onExpUIEnabled(suggestRestart: Boolean) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
+    NewUIInfoService.getInstance().updateEnableNewUIDate()
+    
     setRegistryKeyIfNecessary("ide.experimental.ui", true)
     setRegistryKeyIfNecessary("debugger.new.tool.window.layout", true)
     UISettings.getInstance().openInPreviewTabIfPossible = true
+    UISettings.getInstance().hideToolStripes = false
     val name = if (JBColor.isBright()) "Light" else "Dark"
     val lafManager = LafManager.getInstance()
     val laf = lafManager.installedLookAndFeels.firstOrNull { it.name == name }
@@ -42,12 +45,16 @@ class ExperimentalUIImpl : ExperimentalUI() {
         }
       }
     }
-    ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
+    if (suggestRestart) {
+      ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
+    }
   }
 
-  override fun onExpUIDisabled() {
+  override fun onExpUIDisabled(suggestRestart: Boolean) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
+    NewUIInfoService.getInstance().updateDisableNewUIDate()
+    
     setRegistryKeyIfNecessary("ide.experimental.ui", false)
     setRegistryKeyIfNecessary("debugger.new.tool.window.layout", false)
     val mgr = LafManager.getInstance() as LafManagerImpl
@@ -64,7 +71,9 @@ class ExperimentalUIImpl : ExperimentalUI() {
         }
       }
     }
-    ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
+    if (suggestRestart) {
+      ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
+    }
   }
 
   companion object {

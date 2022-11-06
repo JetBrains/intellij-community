@@ -11,9 +11,9 @@
     <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
     <orderEntry type="module-library" exported="" scope="RUNTIME">
       <library name="tips-idea-ce" type="repository">
-        <properties maven-id="com.jetbrains.intellij.documentation:tips-intellij-idea-community:222.42" />
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-intellij-idea-community:223.48" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea-community/222.42/tips-intellij-idea-community-222.42.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea-community/223.48/tips-intellij-idea-community-223.48.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

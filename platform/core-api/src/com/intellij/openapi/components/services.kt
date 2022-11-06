@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
+import kotlinx.coroutines.Deferred
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Initializes the service instance if not yet initialized, and returns the service instance.
  *
@@ -50,4 +53,19 @@ inline fun <reified T : Any> ComponentManager.serviceIfCreated(): T? {
  */
 inline fun <reified T : Any> ComponentManager.services(includeLocal: Boolean): List<T> {
   return getServices(T::class.java, includeLocal)
+}
+
+@ApiStatus.Internal
+@ApiStatus.Experimental
+suspend inline fun <reified T : Any> ComponentManager.serviceAsync(): Deferred<T> {
+  return (this as ComponentManagerEx).getServiceAsync(T::class.java)
+}
+
+@ApiStatus.Internal
+interface ComponentManagerEx {
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): Deferred<T> {
+    throw AbstractMethodError()
+  }
 }

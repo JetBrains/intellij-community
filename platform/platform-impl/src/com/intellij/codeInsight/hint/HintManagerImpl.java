@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -273,7 +275,7 @@ public class HintManagerImpl extends HintManager {
     int layeredPaneHeight = externalComponent.getHeight();
 
     switch (constraint) {
-      case LEFT: {
+      case LEFT -> {
         int y = lookupBounds.y;
         if (y < 0) {
           y = 0;
@@ -283,8 +285,7 @@ public class HintManagerImpl extends HintManager {
         }
         return new Point(lookupBounds.x - hintSize.width, y);
       }
-
-      case RIGHT:
+      case RIGHT -> {
         int y = lookupBounds.y;
         if (y < 0) {
           y = 0;
@@ -293,18 +294,19 @@ public class HintManagerImpl extends HintManager {
           y = layeredPaneHeight - hintSize.height;
         }
         return new Point(lookupBounds.x + lookupBounds.width, y);
-
-      case ABOVE:
+      }
+      case ABOVE -> {
         Point posAboveCaret = getHintPosition(hint, editor, pos, ABOVE);
         return new Point(lookupBounds.x, Math.min(posAboveCaret.y, lookupBounds.y - hintSize.height));
-
-      case UNDER:
+      }
+      case UNDER -> {
         Point posUnderCaret = getHintPosition(hint, editor, pos, UNDER);
         return new Point(lookupBounds.x, Math.max(posUnderCaret.y, lookupBounds.y + lookupBounds.height));
-
-      default:
+      }
+      default -> {
         LOG.error("");
         return null;
+      }
     }
   }
 
@@ -490,11 +492,9 @@ public class HintManagerImpl extends HintManager {
 
   @NotNull
   private static ClientHintManager getClientManager(@NotNull Editor editor) {
-    final ClientHintManager[] instance = new ClientHintManager[1];
-    ClientEditorManager.withEditorClientId(editor, () -> {
-      instance[0] = ClientHintManager.getCurrentInstance();
-    });
-    return instance[0];
+    try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+      return ClientHintManager.getCurrentInstance();
+    }
   }
 
   @Override

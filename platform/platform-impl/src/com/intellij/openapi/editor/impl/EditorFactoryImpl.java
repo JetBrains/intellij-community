@@ -28,8 +28,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -50,7 +50,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   public EditorFactoryImpl() {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
@@ -249,9 +249,8 @@ public class EditorFactoryImpl extends EditorFactory {
       .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
   }
 
-  @NotNull
-  private static Stream<Editor> collectAllEditors() {
-    return ClientEditorManager.getAllInstances().stream().flatMap(it -> it.editors());
+  private static @NotNull Stream<Editor> collectAllEditors() {
+    return ClientEditorManager.getAllInstances().stream().flatMap(ClientEditorManager::editors);
   }
 
   @Override
@@ -267,7 +266,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable) {
-    myEditorFactoryEventDispatcher.addListener(listener,parentDisposable);
+    myEditorFactoryEventDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -281,10 +280,10 @@ public class EditorFactoryImpl extends EditorFactory {
     return myEditorEventMulticaster;
   }
 
-  public static final class MyRawTypedHandler implements TypedActionHandlerEx {
+  private static final class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
-    public MyRawTypedHandler(TypedActionHandler delegate) {
+    private MyRawTypedHandler(TypedActionHandler delegate) {
       myDelegate = delegate;
     }
 

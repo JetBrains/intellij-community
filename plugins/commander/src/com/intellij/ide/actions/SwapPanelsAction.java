@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.commander.Commander;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -31,5 +32,10 @@ final class SwapPanelsAction extends AnAction {
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     String id = windowManager.getActiveToolWindowId();
     presentation.setEnabled(ToolWindowId.COMMANDER.equals(id));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

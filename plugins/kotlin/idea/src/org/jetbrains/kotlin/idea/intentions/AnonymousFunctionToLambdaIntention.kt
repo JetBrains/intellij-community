@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParenthesesIfPos
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.contentRange
@@ -34,6 +35,8 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
         if (element.name != null || !element.hasBody()) return null
         return element.funKeyword?.textRange
     }
+
+    override fun startInWriteAction(): Boolean = false
 
     override fun applyTo(element: KtNamedFunction, editor: Editor?) {
         val argument = element.getStrictParentOfType<KtValueArgument>()
@@ -110,24 +113,26 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
             appendFixedText("}")
         }
 
-        val replaced = element.replaced(newExpression)
-        if (callElement != null) {
-            val callExpression = replaced.parents.firstIsInstance<KtCallExpression>()
-            val callee = callExpression.getCalleeExpressionIfAny() as? KtNameReferenceExpression ?: return
+        runWriteAction {
+            val replaced = element.replaced(newExpression)
+            if (callElement != null) {
+                val callExpression = replaced.parents.firstIsInstance<KtCallExpression>()
+                val callee = callExpression.getCalleeExpressionIfAny() as? KtNameReferenceExpression ?: return@runWriteAction
 
-            val labeledExpression = replaced as? KtLabeledExpression
-            val returnLabel = labeledExpression?.getLabelNameAsName() ?: callee.getReferencedNameAsName()
-            val lambda = (labeledExpression?.baseExpression ?: replaced) as KtLambdaExpression
-            returnSaver.restore(lambda, returnLabel)
-            commentSaver.restore(replaced, forceAdjustIndent = true)
+                val labeledExpression = replaced as? KtLabeledExpression
+                val returnLabel = labeledExpression?.getLabelNameAsName() ?: callee.getReferencedNameAsName()
+                val lambda = (labeledExpression?.baseExpression ?: replaced) as KtLambdaExpression
+                returnSaver.restore(lambda, returnLabel)
+                commentSaver.restore(replaced, forceAdjustIndent = true)
 
-            callExpression.getLastLambdaExpression()?.moveFunctionLiteralOutsideParenthesesIfPossible()
-        } else {
-            val labeledExpression = replaced as? KtLabeledExpression ?: return
-            val lambdaExpression = labeledExpression.baseExpression as? KtLambdaExpression ?: return
-            val returnLabel = labeledExpression.getLabelNameAsName() ?: return
-            returnSaver.restore(lambdaExpression, returnLabel)
-            commentSaver.restore(replaced, forceAdjustIndent = true)
+                callExpression.getLastLambdaExpression()?.moveFunctionLiteralOutsideParenthesesIfPossible()
+            } else {
+                val labeledExpression = replaced as? KtLabeledExpression ?: return@runWriteAction
+                val lambdaExpression = labeledExpression.baseExpression as? KtLambdaExpression ?: return@runWriteAction
+                val returnLabel = labeledExpression.getLabelNameAsName() ?: return@runWriteAction
+                returnSaver.restore(lambdaExpression, returnLabel)
+                commentSaver.restore(replaced, forceAdjustIndent = true)
+            }
         }
     }
 }

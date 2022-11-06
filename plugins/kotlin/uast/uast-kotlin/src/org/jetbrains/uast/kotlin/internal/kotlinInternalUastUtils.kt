@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
@@ -244,7 +245,12 @@ internal fun KotlinType.getFunctionalInterfaceType(
     takeIf { it.isInterface() && !it.isBuiltinFunctionalTypeOrSubtype }?.toPsiType(source, element, typeOwnerKind, false)
 
 internal fun KotlinULambdaExpression.getFunctionalInterfaceType(): PsiType? {
-    val parent = sourcePsi.parent
+    val parent = if (sourcePsi.parent is KtLabeledExpression) {
+        // lambda -> labeled expression -> lambda argument (value argument)
+        sourcePsi.parent.parent
+    } else {
+        sourcePsi.parent
+    }
     if (parent is KtBinaryExpressionWithTypeRHS)
         return parent.right?.getType()?.getFunctionalInterfaceType(this, sourcePsi, parent.right!!.typeOwnerKind)
     if (parent is KtValueArgument) run {
@@ -305,6 +311,13 @@ internal fun resolveToPsiMethod(
             return UastFakeLightPrimaryConstructor(source, lightClass)
         }
         return null
+    }
+
+    // FunctionN::invoke
+    if (descriptor is FunctionInvokeDescriptor) {
+        return resolveToPsiClass({ null }, descriptor.containingDeclaration, context)
+            ?.methods
+            ?.singleOrNull() // FunctionN is SAM!
     }
 
     return when (source) {
@@ -528,10 +541,7 @@ private fun PsiClass.getMethodBySignature(methodSignature: JvmMemberSignature?) 
 private fun PsiClass.getMethodBySignature(name: String, descr: String?) =
     methods.firstOrNull { method -> method.name == name && descr?.let { method.matchesDesc(it) } ?: true }
 
-private fun PsiMethod.matchesDesc(desc: String) = desc == buildString {
-    parameterList.parameters.joinTo(this, separator = "", prefix = "(", postfix = ")") { MapPsiToAsmDesc.typeDesc(it.type) }
-    append(MapPsiToAsmDesc.typeDesc(returnType ?: PsiType.VOID))
-}
+private fun PsiMethod.matchesDesc(desc: String) = desc == this.desc
 
 private fun getMethodSignatureFromDescriptor(context: KtElement, descriptor: CallableDescriptor): JvmMemberSignature? {
     fun PsiType.raw() = (this as? PsiClassType)?.rawType() ?: PsiPrimitiveType.getUnboxedType(this) ?: this

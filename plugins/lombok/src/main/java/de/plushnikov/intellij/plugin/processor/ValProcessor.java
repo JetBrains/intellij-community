@@ -79,7 +79,7 @@ public class ValProcessor extends AbstractProcessor {
     return false;
   }
 
-  private boolean isValOrVarForEach(@NotNull PsiParameter psiParameter) {
+  private static boolean isValOrVarForEach(@NotNull PsiParameter psiParameter) {
     if (psiParameter.getParent() instanceof PsiForeachStatement) {
       final PsiTypeElement typeElement = psiParameter.getTypeElement();
       return null != typeElement && isPossibleValOrVar(typeElement.getText()) && isValOrVar(resolveQualifiedName(typeElement));
@@ -176,14 +176,14 @@ public class ValProcessor extends AbstractProcessor {
     }
   }
 
-  public boolean canInferType(@NotNull PsiTypeElement typeElement) {
+  public static boolean canInferType(@NotNull PsiTypeElement typeElement) {
     final PsiElement parent = typeElement.getParent();
     return (parent instanceof PsiLocalVariable && isValOrVar((PsiLocalVariable) parent)) ||
       (parent instanceof PsiParameter && isValOrVarForEach((PsiParameter) parent));
   }
 
   @Nullable
-  public PsiType inferType(PsiTypeElement typeElement) {
+  public static PsiType inferType(PsiTypeElement typeElement) {
     PsiType psiType = null;
 
     if (canInferType(typeElement)) {
@@ -201,7 +201,7 @@ public class ValProcessor extends AbstractProcessor {
     return psiType;
   }
 
-  private PsiType processLocalVariableInitializer(final PsiExpression psiExpression) {
+  private static PsiType processLocalVariableInitializer(final PsiExpression psiExpression) {
     PsiType result = null;
     if (null != psiExpression && !(psiExpression instanceof PsiArrayInitializerExpression)) {
       result = RecursionManager.doPreventingRecursion(psiExpression, true, () -> {
@@ -225,7 +225,7 @@ public class ValProcessor extends AbstractProcessor {
     return result;
   }
 
-  private PsiType processParameterDeclaration(PsiElement parentDeclarationScope) {
+  private static PsiType processParameterDeclaration(PsiElement parentDeclarationScope) {
     PsiType result = null;
     if (parentDeclarationScope instanceof PsiForeachStatement) {
       final PsiForeachStatement foreachStatement = (PsiForeachStatement) parentDeclarationScope;

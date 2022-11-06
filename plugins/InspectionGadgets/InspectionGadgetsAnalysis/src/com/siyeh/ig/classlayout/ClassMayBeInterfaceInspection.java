@@ -88,7 +88,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiIdentifier classNameIdentifier = (PsiIdentifier)descriptor.getPsiElement();
       final PsiClass interfaceClass = (PsiClass)classNameIdentifier.getParent();
       final SearchScope searchScope = interfaceClass.getUseScope();

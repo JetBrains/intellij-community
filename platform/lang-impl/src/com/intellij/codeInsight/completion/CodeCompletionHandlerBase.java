@@ -11,7 +11,7 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -54,9 +54,8 @@ import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
+import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +66,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
+
+import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 
 @SuppressWarnings("deprecation")
 public class CodeCompletionHandlerBase {
@@ -142,15 +143,10 @@ public class CodeCompletionHandlerBase {
 
   public final void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers) {
     clearCaretMarkers(editor);
-    invokeCompletion(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
+    invokeCompletionWithTracing(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
   }
 
   private void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
-    Span invokeCompletionSpan = completionTracer.spanBuilder("invokeCompletion")
-      .setAttribute("project", project.getName())
-      .setAttribute("caretOffset", caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset())
-      .startSpan();
-    try (Scope ignored = invokeCompletionSpan.makeCurrent()) {
       markCaretAsProcessed(caret);
 
       if (invokedExplicitly) {
@@ -165,12 +161,10 @@ public class CodeCompletionHandlerBase {
       if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
         editor.getDocument().fireReadOnlyModificationAttempt();
         EditorModificationUtil.checkModificationAllowed(editor);
-        invokeCompletionSpan.setAttribute("readOnly", true);
         return;
       }
 
       if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-        invokeCompletionSpan.setAttribute("readOnly", true);
         return;
       }
       CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -204,6 +198,7 @@ public class CodeCompletionHandlerBase {
 
         doComplete(context, hasModifiers, hasValidContext, startingTime);
       };
+    try {
       if (autopopup) {
         CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
       }
@@ -212,14 +207,24 @@ public class CodeCompletionHandlerBase {
       }
     }
     catch (IndexNotReadyException e) {
-      invokeCompletionSpan.recordException(e);
       if (invokedExplicitly) {
         DumbService.getInstance(project).showDumbModeNotification(CodeInsightBundle.message("completion.not.available.during.indexing"));
       }
+      throw e;
     }
-    finally {
-      invokeCompletionSpan.end();
-    }
+  }
+
+  private void invokeCompletionWithTracing(@NotNull Project project,
+                                           @NotNull Editor editor,
+                                           int time,
+                                           boolean hasModifiers,
+                                           @NotNull Caret caret) {
+    runWithSpan(completionTracer, "invokeCompletion", (span) -> {
+      span.setAttribute("project", project.getName());
+      span.setAttribute("caretOffset", caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset());
+
+      invokeCompletion(project, editor, time, hasModifiers, caret);
+    });
   }
 
   private static void checkNoWriteAccess() {
@@ -356,16 +361,18 @@ public class CodeCompletionHandlerBase {
       return null;
     }
 
-    return indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
-      OffsetsInFile finalOffsets = CompletionInitializationUtil.toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
-      indicator.registerChildDisposable(finalOffsets::getOffsets);
+    return indicator.getCompletionThreading()
+      .startThread(indicator, Context.current().wrap(() -> AsyncCompletion.tryReadOrCancel(indicator, Context.current().wrap(() -> {
+        OffsetsInFile finalOffsets = CompletionInitializationUtil.toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
+        indicator.registerChildDisposable(finalOffsets::getOffsets);
 
-      CompletionParameters parameters = CompletionInitializationUtil.createCompletionParameters(initContext, indicator, finalOffsets);
-      parameters.setIsTestingMode(isTestingMode());
-      indicator.setParameters(parameters);
+        CompletionParameters parameters =
+          CompletionInitializationUtil.createCompletionParameters(initContext, indicator, finalOffsets);
+        parameters.setIsTestingMode(isTestingMode());
+        indicator.setParameters(parameters);
 
-      indicator.runContributors(initContext);
-    }));
+        indicator.runContributors(initContext);
+      }))));
   }
 
   private static void checkForExceptions(Future<?> future) {
@@ -444,7 +451,7 @@ public class CodeCompletionHandlerBase {
 
       Caret nextCaret = getNextCaretToProcess(indicator.getEditor());
       if (nextCaret != null) {
-        invokeCompletion(indicator.getProject(), indicator.getEditor(), indicator.getInvocationCount(), hasModifiers, nextCaret);
+        invokeCompletionWithTracing(indicator.getProject(), indicator.getEditor(), indicator.getInvocationCount(), hasModifiers, nextCaret);
       }
       else {
         indicator.handleEmptyLookup(true);
@@ -494,10 +501,6 @@ public class CodeCompletionHandlerBase {
 
   protected void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,
                                          final List<LookupElement> items) {
-    if (indicator.isAutopopupCompletion()) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
-    }
-
     WatchingInsertionContext context = null;
     try {
       StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);

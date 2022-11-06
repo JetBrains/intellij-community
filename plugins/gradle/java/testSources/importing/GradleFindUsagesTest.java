@@ -79,22 +79,24 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
                                             "include ':app'");
     // buildSrc module files
     createProjectSubFile("buildSrc/settings.gradle", "include 'buildSrcSubProject'");
-    createProjectSubFile("buildSrc/build.gradle", "allprojects {\n" +
-                                                  "    apply plugin: 'groovy'\n" +
-                                                  "    dependencies {\n" +
-                                                  "        implementation gradleApi()\n" +
-                                                  "        implementation localGroovy()\n" +
-                                                  "    }\n" +
-                                                  "    repositories {\n" +
-                                                  "        mavenCentral()\n" +
-                                                  "    }\n" +
-                                                  "\n" +
-                                                  "    if (it != rootProject) {\n" +
-                                                  "        rootProject.dependencies {\n" +
-                                                  "            runtimeOnly project(path)\n" +
-                                                  "        }\n" +
-                                                  "    }\n" +
-                                                  "}\n");
+    createProjectSubFile("buildSrc/build.gradle", """
+      allprojects {
+          apply plugin: 'groovy'
+          dependencies {
+              implementation gradleApi()
+              implementation localGroovy()
+          }
+          repositories {
+              mavenCentral()
+          }
+
+          if (it != rootProject) {
+              rootProject.dependencies {
+                  runtimeOnly project(path)
+              }
+          }
+      }
+      """);
     createProjectSubFile("buildSrc/src/main/groovy/testMultiModuleBuildSrcClassesUsages/BuildSrcClass.groovy",
                          "package testMultiModuleBuildSrcClassesUsages;\n" +
                          "public class BuildSrcClass {}");
@@ -185,9 +187,10 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   private void createProjectWithIncludedBuildAndBuildSrcModules(@NotNull String classPackage) throws IOException {
-    createProjectSubFile("settings.gradle", "rootProject.name = 'multiproject'\n" +
-                                            "include ':app'\n" +
-                                            "includeBuild 'gradle-plugin'");
+    createProjectSubFile("settings.gradle", """
+      rootProject.name = 'multiproject'
+      include ':app'
+      includeBuild 'gradle-plugin'""");
     createProjectSubFile("buildSrc/src/main/groovy/" + classPackage + "/BuildSrcClass.groovy", "package " + classPackage + ";\n" +
                                                                                                "public class BuildSrcClass {}");
 

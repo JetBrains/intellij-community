@@ -324,9 +324,10 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       return myAffectedPaths != null;
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      Set<VirtualFile> roots = new HashSet<>(myRoots);
       VcsTreeModelData selectedData = VcsTreeModelData.selected(myViewer);
       DataProvider superProvider = (DataProvider)super.getData(dataId);
-      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selectedData), superProvider);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, roots, selectedData), superProvider);
     }
     else if (QuickActionProvider.KEY.is(dataId)) {
       return new QuickActionProvider() {
@@ -349,9 +350,9 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return super.getData(dataId);
   }
 
-  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull VcsTreeModelData selectedData) {
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull Set<VirtualFile> roots, @NotNull VcsTreeModelData selectedData) {
     if (VcsDataKeys.VCS.is(dataId)) {
-      AbstractVcs rootsVcs = JBIterable.from(myRoots)
+      AbstractVcs rootsVcs = JBIterable.from(roots)
         .map(root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root))
         .filterNotNull()
         .unique()

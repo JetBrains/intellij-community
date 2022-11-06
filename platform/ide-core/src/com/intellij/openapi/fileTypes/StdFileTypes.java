@@ -1,9 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -81,24 +78,6 @@ public final class StdFileTypes extends FileTypes {
   @Deprecated(forRemoval = true)
   public static volatile FileType GUI_DESIGNER_FORM = FileTypeManager.getInstance().getStdFileType("GUI_DESIGNER_FORM");
 
-  /**
-   * @deprecated use {@link WorkspaceFileType#INSTANCE} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static volatile FileType IDEA_WORKSPACE = FileTypeManager.getInstance().getStdFileType("IDEA_WORKSPACE");
-
-  /**
-   * @deprecated use {@link ProjectFileType#INSTANCE} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static volatile FileType IDEA_PROJECT = FileTypeManager.getInstance().getStdFileType("IDEA_PROJECT");
-
-  /**
-   * @deprecated use {@link ModuleFileType#INSTANCE} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static volatile FileType IDEA_MODULE = FileTypeManager.getInstance().getStdFileType("IDEA_MODULE");
-
 
   public static class StdFileTypesUpdater implements FileTypeListener {
     @Override
@@ -107,20 +86,17 @@ public final class StdFileTypes extends FileTypes {
       if (addedFileType != null) {
         String name = addedFileType.getName();
         switch (name) {
-          case "JAVA": JAVA = (LanguageFileType)addedFileType; break;
-          case "CLASS": CLASS = addedFileType; break;
-          case "JSP": JSP = (LanguageFileType)addedFileType; break;
-          case "JSPX": JSPX = (LanguageFileType)addedFileType; break;
-          case "XML": XML = (LanguageFileType)addedFileType; break;
-          case "DTD": DTD = (LanguageFileType)addedFileType; break;
-          case "HTML": HTML = (LanguageFileType)addedFileType; break;
-          case "XHTML": XHTML = (LanguageFileType)addedFileType; break;
-          case "JavaScript": JS = (LanguageFileType)addedFileType; break;
-          case "Properties": PROPERTIES = (LanguageFileType)addedFileType; break;
-          case "GUI_DESIGNER_FORM": GUI_DESIGNER_FORM = addedFileType; break;
-          case "IDEA_WORKSPACE": IDEA_WORKSPACE = addedFileType; break;
-          case "IDEA_PROJECT": IDEA_PROJECT = addedFileType; break;
-          case "IDEA_MODULE": IDEA_MODULE = addedFileType; break;
+          case "JAVA" -> JAVA = (LanguageFileType)addedFileType;
+          case "CLASS" -> CLASS = addedFileType;
+          case "JSP" -> JSP = (LanguageFileType)addedFileType;
+          case "JSPX" -> JSPX = (LanguageFileType)addedFileType;
+          case "XML" -> XML = (LanguageFileType)addedFileType;
+          case "DTD" -> DTD = (LanguageFileType)addedFileType;
+          case "HTML" -> HTML = (LanguageFileType)addedFileType;
+          case "XHTML" -> XHTML = (LanguageFileType)addedFileType;
+          case "JavaScript" -> JS = (LanguageFileType)addedFileType;
+          case "Properties" -> PROPERTIES = (LanguageFileType)addedFileType;
+          case "GUI_DESIGNER_FORM" -> GUI_DESIGNER_FORM = addedFileType;
         }
       }
 
@@ -128,22 +104,18 @@ public final class StdFileTypes extends FileTypes {
       if (removedFileType != null) {
         String name = removedFileType.getName();
         switch (name) {
-          case "JAVA": JAVA = PLAIN_TEXT; break;
-          case "CLASS": CLASS = PLAIN_TEXT; break;
-          case "JSP": JSP = PLAIN_TEXT; break;
-          case "JSPX": JSPX = PLAIN_TEXT; break;
-          case "XML": XML = PLAIN_TEXT; break;
-          case "DTD": DTD = PLAIN_TEXT; break;
-          case "HTML": HTML = PLAIN_TEXT; break;
-          case "XHTML": XHTML = PLAIN_TEXT; break;
-          case "JavaScript": JS = PLAIN_TEXT; break;
-          case "Properties": PROPERTIES = PLAIN_TEXT; break;
-          case "GUI_DESIGNER_FORM": GUI_DESIGNER_FORM = PLAIN_TEXT; break;
-          case "IDEA_WORKSPACE": IDEA_WORKSPACE = PLAIN_TEXT; break;
-          case "IDEA_PROJECT": IDEA_PROJECT = PLAIN_TEXT; break;
-          case "IDEA_MODULE": IDEA_MODULE = PLAIN_TEXT; break;
-          case "PATCH":
-            break;
+          case "JAVA" -> JAVA = PLAIN_TEXT;
+          case "CLASS" -> CLASS = PLAIN_TEXT;
+          case "JSP" -> JSP = PLAIN_TEXT;
+          case "JSPX" -> JSPX = PLAIN_TEXT;
+          case "XML" -> XML = PLAIN_TEXT;
+          case "DTD" -> DTD = PLAIN_TEXT;
+          case "HTML" -> HTML = PLAIN_TEXT;
+          case "XHTML" -> XHTML = PLAIN_TEXT;
+          case "JavaScript" -> JS = PLAIN_TEXT;
+          case "Properties" -> PROPERTIES = PLAIN_TEXT;
+          case "GUI_DESIGNER_FORM" -> GUI_DESIGNER_FORM = PLAIN_TEXT;
+          case "PATCH" -> {}
         }
       }
     }

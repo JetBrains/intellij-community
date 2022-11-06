@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
@@ -104,7 +104,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         collector.showNotification()
     }
 
-    fun configureSilently(project: Project, modules: List<Module>, version: IdeKotlinVersion): NotificationMessageCollector {
+    private fun configureSilently(project: Project, modules: List<Module>, version: IdeKotlinVersion): NotificationMessageCollector {
         return project.executeCommand(KotlinIdeaGradleBundle.message("command.name.configure.kotlin")) {
             val collector = NotificationMessageCollector.create(project)
             val changedFiles = configureWithVersion(project, modules, version, collector)
@@ -159,7 +159,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         }
     }
 
-    protected fun configureModuleBuildScript(file: PsiFile, version: IdeKotlinVersion): Boolean {
+    private fun configureModuleBuildScript(file: PsiFile, version: IdeKotlinVersion): Boolean {
         val sdk = ModuleUtil.findModuleForPsiElement(file)?.let { ModuleRootManager.getInstance(it).sdk }
         val jvmTarget = getJvmTarget(sdk, version)
         return GradleBuildScriptSupport.getManipulator(file).configureModuleBuildScript(

@@ -76,12 +76,13 @@ public class SSRSerializationTest extends LightPlatformTestCase {
   }
 
   public void testDefaultToolsNotWritten() {
-    final String expected = "<profile version=\"1.0\" is_locked=\"true\">\n" +
-                            "  <option name=\"myName\" value=\"test\" />\n" +
-                            "  <inspection_tool class=\"SSBasedInspection\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
-                            "    <searchConfiguration name=\"i\" text=\"int i;\" recursive=\"false\" caseInsensitive=\"false\" type=\"JAVA\" />\n" +
-                            "  </inspection_tool>\n" +
-                            "</profile>";
+    final String expected = """
+      <profile version="1.0" is_locked="true">
+        <option name="myName" value="test" />
+        <inspection_tool class="SSBasedInspection" enabled="true" level="WARNING" enabled_by_default="true">
+          <searchConfiguration name="i" text="int i;" recursive="false" caseInsensitive="false" type="JAVA" />
+        </inspection_tool>
+      </profile>""";
     assertEquals(expected, buildXmlFromProfile());
   }
 
@@ -90,13 +91,14 @@ public class SSRSerializationTest extends LightPlatformTestCase {
     myProfile.setToolEnabled(configuration.getUuid(), false);
 
     final String expected =
-      "<profile version=\"1.0\" is_locked=\"true\">\n" +
-      "  <option name=\"myName\" value=\"test\" />\n" +
-      "  <inspection_tool class=\"865c0c0b-4ab0-3063-a5ca-a3387c1a8741\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
-      "  <inspection_tool class=\"SSBasedInspection\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
-      "    <searchConfiguration name=\"i\" text=\"int i;\" recursive=\"false\" caseInsensitive=\"false\" type=\"JAVA\" />\n" +
-      "  </inspection_tool>\n" +
-      "</profile>";
+      """
+        <profile version="1.0" is_locked="true">
+          <option name="myName" value="test" />
+          <inspection_tool class="865c0c0b-4ab0-3063-a5ca-a3387c1a8741" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="SSBasedInspection" enabled="true" level="WARNING" enabled_by_default="true">
+            <searchConfiguration name="i" text="int i;" recursive="false" caseInsensitive="false" type="JAVA" />
+          </inspection_tool>
+        </profile>""";
     assertEquals(expected, buildXmlFromProfile());
   }
 
@@ -105,12 +107,13 @@ public class SSRSerializationTest extends LightPlatformTestCase {
     configuration.setName("j");
 
     final String expected =
-      "<profile version=\"1.0\" is_locked=\"true\">\n" +
-      "  <option name=\"myName\" value=\"test\" />\n" +
-      "  <inspection_tool class=\"SSBasedInspection\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
-      "    <searchConfiguration name=\"j\" uuid=\"865c0c0b-4ab0-3063-a5ca-a3387c1a8741\" text=\"int i;\" recursive=\"false\" caseInsensitive=\"false\" type=\"JAVA\" />\n" +
-      "  </inspection_tool>\n" +
-      "</profile>";
+      """
+        <profile version="1.0" is_locked="true">
+          <option name="myName" value="test" />
+          <inspection_tool class="SSBasedInspection" enabled="true" level="WARNING" enabled_by_default="true">
+            <searchConfiguration name="j" uuid="865c0c0b-4ab0-3063-a5ca-a3387c1a8741" text="int i;" recursive="false" caseInsensitive="false" type="JAVA" />
+          </inspection_tool>
+        </profile>""";
     assertEquals(expected, buildXmlFromProfile());
   }
 }

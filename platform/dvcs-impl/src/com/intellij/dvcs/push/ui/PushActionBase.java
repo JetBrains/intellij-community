@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * Any OK-action in the push dialog must inherit from this base class.
  */
@@ -27,6 +29,12 @@ public abstract class PushActionBase extends DumbAwareAction {
   }
 
   protected abstract boolean isEnabled(@NotNull VcsPushUi dialog);
+
+  @Nls
+  @NotNull
+  protected String getText(@NotNull VcsPushUi dialog, boolean enabled) {
+    return Objects.requireNonNull(getTemplatePresentation().getTextWithMnemonic());
+  }
 
   @Nls
   @Nullable
@@ -55,6 +63,7 @@ public abstract class PushActionBase extends DumbAwareAction {
 
     boolean enabled = isEnabled(dialog);
     e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setText(getText(dialog, enabled));
     e.getPresentation().setDescription(getDescription(dialog, enabled));
   }
 }

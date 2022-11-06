@@ -933,7 +933,7 @@ public class PsiTreeUtil {
   }
 
   public static boolean processElements(@NotNull PsiElementProcessor<? super PsiElement> processor, PsiElement @Nullable ... elements) {
-    if (elements != null && elements.length != 0) {
+    if (elements != null) {
       for (PsiElement element : elements) {
         if (!processElements(element, processor)) {
           return false;

@@ -38,8 +38,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +95,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
     compilationAffectedModulesSubscription.accept(connect, myCompilationAffectedModules);
 
-    WorkspaceModelTopics.getInstance(myProject).subscribeAfterModuleLoading(connect, new WorkspaceModelChangeListener() {
+    connect.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
       @Override
       public void beforeChanged(@NotNull VersionedStorageChange event) {
         for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {

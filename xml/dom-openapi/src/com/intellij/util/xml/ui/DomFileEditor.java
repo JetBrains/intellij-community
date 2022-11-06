@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author peter
- */
 public class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor implements CommittablePanel, Highlightable {
   private final @Nls String myName;
   private final Factory<? extends T> myComponentFactory;

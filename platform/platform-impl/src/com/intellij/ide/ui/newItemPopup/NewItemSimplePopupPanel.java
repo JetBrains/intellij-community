@@ -72,8 +72,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
       Point point = new Point(0, insets.top - JBUIScale.scale(6) - hintSize.height);
       myErrorShowPoint = new RelativePoint(myTextField, point);
     }).setCancelOnWindowDeactivation(false)
-      .setCancelOnClickOutside(true)
-      .addUserData("SIMPLE_WINDOW");
+      .setCancelOnClickOutside(true);
 
     myErrorPopup = popupBuilder.createPopup();
     myErrorPopup.show(myErrorShowPoint);

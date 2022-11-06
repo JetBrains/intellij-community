@@ -26,9 +26,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PsiCommentManipulator extends AbstractElementManipulator<PsiComment> {
   @Override
   public PsiComment handleContentChange(@NotNull PsiComment psiComment, @NotNull TextRange range, String newContent) throws IncorrectOperationException {

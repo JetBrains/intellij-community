@@ -6,9 +6,7 @@
                     interface="com.intellij.openapi.application.ApplicationStarter"
                     dynamic="true"/>
 
-    <extensionPoint name="defaultProjectTypeProvider"
-                    beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
-
+    <extensionPoint name="projectTypesProvider" interface="com.intellij.openapi.project.ProjectTypesProvider" dynamic="true"/>
     <extensionPoint name="errorHandler" interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter" dynamic="true"/>
 
     <extensionPoint name="jps.plugin"
@@ -88,7 +86,7 @@
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean"/>
 
-    <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension" area="IDEA_PROJECT"/>
+    <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension"/>
 
     <extensionPoint name="handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
                     area="IDEA_PROJECT"/>
@@ -140,7 +138,6 @@
                     beanClass="com.intellij.platform.ProjectTemplateEP" dynamic="true"/>
 
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
-    <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
     <extensionPoint name="ideEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$EventDispatcher" dynamic="true"/>
 
     <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider" dynamic="true"/>
@@ -204,7 +201,6 @@
 
     <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider" dynamic="true"/>
     <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher" dynamic="true"/>
-    <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
 
     <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider" dynamic="true"/>
 
@@ -298,7 +294,6 @@
     <extensionPoint name="webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener" dynamic="true"/>
     <extensionPoint name="tipAndTrick" beanClass="com.intellij.ide.util.TipAndTrickBean" dynamic="true"/>
-    <extensionPoint name="tipAndTrickPromotionFactory" interface="com.intellij.ide.util.TipAndTrickPromotionFactory" dynamic="true"/>
 
     <extensionPoint name="remote.pathMappingProvider" interface="com.intellij.remote.PathMappingProvider" dynamic="true"/>
 
@@ -330,6 +325,10 @@
     <extensionPoint name="diff.tools.combined.diffBlockFactory" interface="com.intellij.diff.tools.combined.CombinedDiffBlockFactory" dynamic="true"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
+    <extensionPoint name="execution.syntheticConfigurationTypeProvider"
+                    interface="com.intellij.execution.configurations.SyntheticConfigurationTypeProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="executionActionSuppressor"
                     interface="com.intellij.execution.ExecutionActionSuppressor"
                     dynamic="true"/>
@@ -356,7 +355,6 @@
 
     <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean"/>
     <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
-    <extensionPoint name="notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
 
     <extensionPoint name="notificationRemindLaterHandler" interface="com.intellij.notification.NotificationRemindLaterHandler" dynamic="true"/>
 
@@ -399,7 +397,6 @@
     </extensionPoint>
 
     <extensionPoint name="systemProperty" beanClass="com.intellij.openapi.util.SystemPropertyBean"/>
-    <extensionPoint name="registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
 
     <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT" dynamic="true"/>
 
@@ -455,7 +452,10 @@
     <extensionPoint name="projectOriginInfoProvider" interface="com.intellij.ide.impl.ProjectOriginInfoProvider" dynamic="true"/>
     <extensionPoint name="trustedHostsConfigurablePanelProvider" interface="com.intellij.ide.impl.TrustedHostsConfigurablePanelProvider"
                     dynamic="true"/>
+    <extensionPoint name="trustedHostsConfigurableProvider" interface="com.intellij.ide.impl.TrustedHostsConfigurableProvider"
+                    dynamic="true"/>
     <extensionPoint name="settingsEntryPointActionProvider" interface="com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider" dynamic="true"/>
+    <extensionPoint name="settingsEntryPointIconCustomizer" interface="com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer" dynamic="true"/>
     <extensionPoint name="jbProtocolRevisionResolver" interface="com.intellij.navigation.JBProtocolRevisionResolver" dynamic="true"/>
 
     <!--suppress PluginXmlValidity -->

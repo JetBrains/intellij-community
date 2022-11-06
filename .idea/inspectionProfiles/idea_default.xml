@@ -842,20 +842,6 @@
         <constraint name="runnable" nameOfExprType="java.lang.Runnable" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="new java.util.Timer()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
-        <constraint name="__context__" target="true" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="java.util.Timer()" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" target="true" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="new java.util.Timer($b$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
-        <constraint name="__context__" target="true" within="" contains="" />
-        <constraint name="b" nameOfExprType="boolean" exprTypeWithinHierarchy="true" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="java.util.Timer($b$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" target="true" within="" contains="" />
-        <constraint name="b" nameOfExprType="boolean" exprTypeWithinHierarchy="true" within="" contains="" />
-      </searchConfiguration>
       <replaceConfiguration name="Arrays.asList() is not immutable" text="public static final $Type$ $Field$ = java.util.Arrays.asList($elements$);" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="public static final $Type$ $Field$ = com.intellij.util.containers.ContainerUtil.immutableList($elements$);">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Field" within="" contains="" />
@@ -1073,6 +1059,9 @@
         <constraint name="Instance" regexp="super" nameOfExprType="Disposable" withinHierarchy="true" exprTypeWithinHierarchy="true" minCount="0" negateName="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Disposable instance by lambda" description="It's not safe to instantiate Disposable via lambda because lambdas does not guarantee their identity." text="Disposable { }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Disposer.newDisposable()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="Don't read channels with for, use consume/consumeEach" suppressId="CHAN_WITH_FOR" text="for ($Item$ in $Collection$) {&#10;  $Statement$&#10;}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="false" replacement="$Collection$.consumeEach { $Item$ -&gt;&#10;  $Statement$&#10;}">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Item" within="" contains="" />
@@ -1103,6 +1092,11 @@
       <searchConfiguration name="Don't use javax.swing.FocusManager" uuid="fdcd3e7e-31cb-3d1e-b4c1-373c34bde609" text="$Clz$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Double ' in without { in property value" description="A double single quote in a propery value without a parameter like &#10;{0} will be rendered as a doubled single quote in the result. When&#10;a parameter is present it will be rendered as a single single &#10;quote." suppressId="DoubleSingleQuote" text="$key$=$value$" recursive="true" caseInsensitive="true" type="Properties" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="key" within="" contains="" />
+        <constraint name="value" regexp="[^{]*''[^{]*" target="true" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
@@ -1314,13 +1308,13 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="x" within="" contains="" />
         <constraint name="Anno" regexp="Nullable|NotNull" target="true" within="" contains="" />
-        <constraint name="Type" script="&quot;def parent = Type.parent;&#10;com.intellij.psi.util.PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp; &#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
+        <constraint name="Type" script="&quot;import com.intellij.psi.util.PsiUtil&#10;&#10;def parent = Type.parent;&#10;parent != null &amp;&amp;&#10;PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="nullability for array elements specified, probably nullability for the array itself was intended" text="@$Anno$ $Type$ $x$($T$ $param$);" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="member">
         <constraint name="__context__" within="" contains="" />
         <constraint name="x" within="" contains="" />
         <constraint name="Anno" regexp="Nullable|NotNull" target="true" within="" contains="" />
-        <constraint name="Type" script="&quot;def parent = Type.parent;&#10;com.intellij.psi.util.PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp; &#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
+        <constraint name="Type" script="&quot;import com.intellij.psi.util.PsiUtil&#10;&#10;def parent = Type.parent;&#10;parent != null &amp;&amp;&#10;PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
         <constraint name="T" within="" contains="" />
         <constraint name="param" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
@@ -1387,6 +1381,18 @@
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" within="" contains="" />
         <constraint name="Var1" nameOfExprType="Presentation" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Presentation text copying will lose mnemonic" description="&lt;code&gt;Presentation.getText()&lt;/code&gt; omits assigned action mnemonic.&#10;Consider using &lt;code&gt;presentation.setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic())&lt;/code&gt; instead." suppressId="PresentationTextCopyMnemonic" text="$presentation1$.setText($presentation2$.getText())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$presentation1$.setTextWithMnemonic($presentation2$.getTextWithPossibleMnemonic())">
+        <constraint name="presentation1" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" exprTypeWithinHierarchy="true" minCount="0" within="" contains=""/>
+        <constraint name="presentation2" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" exprTypeWithinHierarchy="true" minCount="0" within="" contains=""/>
+      </replaceConfiguration>
+      <replaceConfiguration name="Presentation text copying will lose mnemonic" description="&lt;code&gt;Presentation.getText()&lt;/code&gt; omits assigned action mnemonic.&#10;Consider using &lt;code&gt;presentation.setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic())&lt;/code&gt; instead." suppressId="PresentationTextCopyMnemonic" text="$presentation1$.setText($presentation2$.getText())" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$presentation1$.setTextWithMnemonic($presentation2$.getTextWithPossibleMnemonic())">
+        <constraint name="presentation1" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
+        <constraint name="presentation2" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Presentation text copying will lose mnemonic" description="&lt;code&gt;Presentation.getText()&lt;/code&gt; omits assigned action mnemonic.&#10;Consider using &lt;code&gt;presentation.setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic())&lt;/code&gt; instead." suppressId="PresentationTextCopyMnemonic" text="$presentation1$.text = $presentation2$.text" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$presentation1$.setTextWithMnemonic($presentation2$.textWithPossibleMnemonic)">
+        <constraint name="presentation1" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
+        <constraint name="presentation2" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="PsiManager.getInstance(psiElement.getProject())" text="com.intellij.psi.PsiManager.getInstance($psiElement$.getProject())" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$psiElement$.getManager()">
         <constraint name="psiElement" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
@@ -1702,6 +1708,16 @@
         <constraint name="states" within="" contains="" />
         <constraint name="dd" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).select($c$).toList()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="c" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).select($c$).collect(Collectors.toList())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="c" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="String.getBytes() is current locale-dependant, use String.getBytes(Charset) instead" text="$s$.getBytes()" recursive="false" caseInsensitive="true" type="JAVA">
         <constraint name="s" nameOfExprType="java.lang.String" exprTypeWithinHierarchy="true" within="" contains="" />
       </searchConfiguration>
@@ -1773,6 +1789,14 @@
       </searchConfiguration>
       <searchConfiguration name="SwingWorker generates too many threads; use Application.execute*() instead" text="javax.swing.SwingWorker" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Timer creates/leaks threads" description="java.util.Timer eagerly creates a Thread on its start, which is too expensive. Please use ApplicationExecutionUtil.getScheduledExecutorService() instead  &#10;&#10;" text="new java.util.Timer($p$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Timer creates/leaks threads" text="Timer($p$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="TokenSet.create(TokenType.WHITE_SPACE) -&gt; TokenSet.WHITE_SPACE" text="com.intellij.psi.tree.TokenSet.create(com.intellij.psi.TokenType.WHITE_SPACE)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.tree.TokenSet.WHITE_SPACE" />
       <replaceConfiguration name="TokenSet.create(TokenType.WHITE_SPACE) -&gt; TokenSet.WHITE_SPACE" text="com.intellij.psi.tree.TokenSet.create(com.intellij.psi.TokenType.WHITE_SPACE)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.tree.TokenSet.WHITE_SPACE">

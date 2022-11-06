@@ -73,6 +73,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 
   @RequiresEdt
   fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper
+  fun getChangesToBeCommitted(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): String?
   fun getPartialCommitContent(changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitContent?
   fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean)
 
@@ -495,7 +496,14 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   override fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper {
     val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
 
-    val contentToCommit = documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
+    val contentToCommit = documentTracker.writeLock {
+      documentTracker.updateFrozenContentIfNeeded()
+      documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
+      ?: run {
+        LOG.warn("handlePartialCommit - frozen tracker: $this")
+        documentTracker.getContent(side).toString()
+      }
+    }
 
     return object : PartialCommitHelper(contentToCommit) {
       override fun applyChanges() {
@@ -520,6 +528,18 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   override fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean) {
     val toCommitCondition = createToCommitCondition(changelistsIds, honorExcludedFromCommit)
     runBulkRollback(toCommitCondition)
+  }
+
+  override fun getChangesToBeCommitted(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): String? {
+    return documentTracker.readLock {
+      if (!isValid() || documentTracker.isFrozen()) return@readLock null
+      val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
+      return@readLock documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
+                      ?: run {
+                        LOG.warn("getChangesToBeCommitted - frozen tracker: $this")
+                        documentTracker.getContent(side).toString()
+                      }
+    }
   }
 
   override fun getPartialCommitContent(changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitContent? {
@@ -551,7 +571,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, flagsProvider, 0)
     }
 
-    class MyFlagsProvider(val defaultChangelistId: String) : DefaultFlagsProvider() {
+    class MyFlagsProvider(private val defaultChangelistId: String) : DefaultFlagsProvider() {
       override fun getFlags(range: Range): DefaultLineFlags {
         val ignored = range is LocalRange && range.changelistId != defaultChangelistId
         return if (ignored) DefaultLineFlags.IGNORED else DefaultLineFlags.DEFAULT

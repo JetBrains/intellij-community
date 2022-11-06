@@ -22,10 +22,12 @@ class NullabilityDefaultStateProvider : DefaultStateProvider() {
                     || owner.function.hasModifier(KtTokens.OPEN_KEYWORD)
                     || owner.function.bodyExpression == null
                 ) State.UPPER else State.LOWER
+
             is Property -> if (owner.property.isPrivate()
-                               || !owner.property.isVar
-                               || !owner.property.isLocal
+                || !owner.property.isVar
+                || !owner.property.isLocal
             ) State.LOWER else State.UPPER
+
             is TypeArgument -> State.LOWER
             OtherTarget -> State.UPPER
         }

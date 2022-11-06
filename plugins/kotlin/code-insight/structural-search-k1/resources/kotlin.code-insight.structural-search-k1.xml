@@ -1,5 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.structuralsearch">
+
   <dependencies>
+    <plugin id="com.intellij.modules.structuralsearch"/>
     <module name="kotlin.code-insight.live-templates-shared"/>
   </dependencies>
 

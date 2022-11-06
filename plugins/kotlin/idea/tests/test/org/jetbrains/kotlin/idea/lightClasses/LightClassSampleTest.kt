@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class LightClassSampleTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testDeprecationLevelHIDDEN() {
         // KT27243

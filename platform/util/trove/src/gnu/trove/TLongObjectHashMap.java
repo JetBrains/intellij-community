@@ -670,7 +670,7 @@ public final class TLongObjectHashMap<V> extends THash implements TLongHashingSt
    * @return the hashcode.
    */
   @Override
-  public final int computeHashCode(long val) {
+  public int computeHashCode(long val) {
     return HashFunctions.hash(val);
   }
 

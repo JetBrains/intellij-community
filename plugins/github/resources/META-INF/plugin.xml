@@ -50,6 +50,7 @@
     <statistics.counterUsagesCollector
       implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$Counters"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.github.util.GithubNotificationIdsHolder"/>
+    <backgroundPostStartupActivity implementation="org.jetbrains.plugins.github.pullrequest.GHServerVersionsCollector$Initializer"/>
 
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffExtension"/>
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
@@ -74,6 +75,7 @@
     <fileIconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
 
     <registryKey defaultValue="true" description="Applying suggested changes" key="github.suggested.changes.apply"/>
+    <iconMapper mappingFile="GithubIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -176,14 +178,6 @@
 
     <action id="Github.Break.Api.Requests" internal="true"
             class="org.jetbrains.plugins.github.api.GHRequestExecutorBreaker$Action"/>
-
-    <group id="Github.Accounts.AddAccount">
-      <action id="Github.Accounts.AddGHAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountAction"/>
-      <action id="Github.Accounts.AddGHAccountWithToken"
-              class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountWithTokenAction"/>
-      <separator/>
-      <action id="Github.Accounts.AddGHEAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHEAccountAction"/>
-    </group>
 
     <action id="Github.PullRequest.Diff.Comment.Create"
             class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRCreateDiffCommentAction">

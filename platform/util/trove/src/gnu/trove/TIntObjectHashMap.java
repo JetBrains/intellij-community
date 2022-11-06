@@ -666,7 +666,7 @@ public class TIntObjectHashMap<V> extends THash implements TIntHashingStrategy {
    */
   @Override
   public final int computeHashCode(int val) {
-    return HashFunctions.hash(val);
+    return val;
   }
 
   @Override

@@ -93,14 +93,15 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       // this trick is essential since we are under some conditions to refresh changes;
       // but we can only rely on callback after refresh
       ChangeListManager.getInstance(project).invokeAfterUpdate(true, () -> {
-        try {
-          ChangesViewManager.getInstanceEx(project).refreshImmediately();
-          List<Change> actualChanges = loadFakeRevisions(project, changes);
-          resultRef.set(collectRequestProducers(project, actualChanges, unversioned, view));
-        }
-        catch (Throwable err) {
-          resultRef.setException(err);
-        }
+        ChangesViewManager.getInstanceEx(project).promiseRefresh().onProcessed(__ -> {
+          try {
+            List<Change> actualChanges = loadFakeRevisions(project, changes);
+            resultRef.set(collectRequestProducers(project, actualChanges, unversioned, view));
+          }
+          catch (Throwable err) {
+            resultRef.setException(err);
+          }
+        });
       });
 
       chain = new ChangeDiffRequestChain.Async() {
@@ -125,7 +126,6 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     setAllowExcludeFromCommit(project, chain);
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
   }
-
 
   private static boolean checkIfThereAreFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
     boolean needsConversion = false;

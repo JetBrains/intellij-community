@@ -43,10 +43,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.StatusText;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,9 +68,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private Pattern myCachedSearchPattern;
   private Pattern myCachedReplacePattern;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  private @Nullable MostCommonUsagePatternsComponent myCommonUsagePatternsComponent;
   private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
-  private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbar;
+  private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbarWithSimilarUsagesLink;
+  private @Nullable MostCommonUsagePatternsComponent myMostCommonUsagePatternsComponent;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -216,29 +213,20 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       UsageInfo info = infos.get(i);
       PsiElement psiElement = info.getElement();
       if (psiElement == null || !psiElement.isValid()) continue;
-      int offsetInFile = psiElement.getTextOffset();
 
-      TextRange elementRange = psiElement.getTextRange();
-      TextRange infoRange = info.getRangeInElement();
-      TextRange textRange = infoRange == null
-                            || infoRange.getStartOffset() > elementRange.getLength()
-                            || infoRange.getEndOffset() > elementRange.getLength() ? null
-                                                                                   : elementRange.cutOut(infoRange);
-      if (textRange == null) textRange = elementRange;
-      // hack to determine element range to highlight
+      ProperTextRange infoRange = info.getRangeInElement();
+      TextRange rangeToHighlight = null;
       if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
-        PsiFile psiFile = psiElement.getContainingFile();
-        PsiElement nameElement = psiFile.findElementAt(offsetInFile);
-        if (nameElement != null) {
-          textRange = nameElement.getTextRange();
-        }
+        rangeToHighlight = getNameElementTextRange(psiElement);
+      }
+      if (rangeToHighlight == null) {
+        rangeToHighlight = calculateHighlightingRangeForUsage(psiElement, infoRange);
       }
       // highlight injected element in host document text range
-      textRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiElement, textRange);
-
+      rangeToHighlight = InjectedLanguageManager.getInstance(psiElement.getProject()).injectedToHost(psiElement, rangeToHighlight);
       RangeHighlighter highlighter = markupModel.addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
-                                                                     textRange.getStartOffset(),
-                                                                     textRange.getEndOffset(),
+                                                                     rangeToHighlight.getStartOffset(),
+                                                                     rangeToHighlight.getEndOffset(),
                                                                      highlightLayer,
                                                                      HighlighterTargetArea.EXACT_RANGE);
       highlighter.putUserData(IN_PREVIEW_USAGE_FLAG, Boolean.TRUE);
@@ -254,14 +242,43 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
         editor.getCaretModel().moveToOffset(infoRange.getEndOffset());
       }
       else {
-        editor.getCaretModel().moveToOffset(textRange.getEndOffset());
+        editor.getCaretModel().moveToOffset(rangeToHighlight.getEndOffset());
       }
 
-      if (findModel != null && infos.size() == 1 && infoRange != null && infoRange.equals(textRange)) {
+      if (findModel != null && infos.size() == 1 && infoRange != null && infoRange.equals(rangeToHighlight)) {
         showBalloon(project, editor, infoRange, findModel);
       }
     }
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+  }
+
+  /**
+   * Attempts to find the name element of PsiNamedElement and return its range
+   * @param psiElement an element to highlight
+   * @return range to highlight for named element
+   */
+  private static @Nullable TextRange getNameElementTextRange(@NotNull PsiElement psiElement) {
+    TextRange textRange = null;
+    PsiFile psiFile = psiElement.getContainingFile();
+    PsiElement nameElement = psiFile.findElementAt(psiElement.getTextOffset());
+    if (nameElement != null) {
+      textRange = nameElement.getTextRange();
+    }
+    return textRange;
+  }
+
+  /**
+   * Calculates the proper highlighting range for usage in preview. In some cases psiElement text range info is not fine (i.e. Non-code usages)
+   * @param psiElement an element to highlight
+   * @param infoRange the {@link UsageInfo#getRangeInElement()} result in corresponding UsageInfo
+   * @return range to highlight for in usage preview
+   */
+  @ApiStatus.Internal
+  public static @NotNull TextRange calculateHighlightingRangeForUsage(@NotNull PsiElement psiElement, @Nullable ProperTextRange infoRange) {
+    TextRange elementRange = psiElement.getTextRange();
+    return infoRange == null || infoRange.getStartOffset() > elementRange.getLength() || infoRange.getEndOffset() > elementRange.getLength()
+           ? elementRange
+           : elementRange.cutOut(infoRange);
   }
 
   private static final Key<Balloon> REPLACEMENT_BALLOON_KEY = Key.create("REPLACEMENT_BALLOON_KEY");
@@ -350,7 +367,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   public void dispose() {
     isDisposed = true;
     releaseEditor();
-    disposeMostCommonUsageComponent();
+    disposeAndRemoveSimilarUsagesToolbar();
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getProject() == myProject && editor.getUserData(PREVIEW_EDITOR_FLAG) == this) {
         LOG.error("Editor was not released:" + editor);
@@ -358,11 +375,13 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
-  private void disposeMostCommonUsageComponent() {
-    if (myCommonUsagePatternsComponent != null) {
-      Disposer.dispose(myCommonUsagePatternsComponent);
+  private void disposeAndRemoveSimilarUsagesToolbar() {
+    if (myToolbarWithSimilarUsagesLink != null) {
+      remove(myToolbarWithSimilarUsagesLink);
+      revalidate();
+      Disposer.dispose(myToolbarWithSimilarUsagesLink);
+      myToolbarWithSimilarUsagesLink = null;
     }
-    myCommonUsagePatternsComponent = null;
   }
 
   void releaseEditor() {
@@ -406,6 +425,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   @Override
   @RequiresEdt
   public void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+    disposeAndRemoveSimilarUsagesToolbar();
     UsageViewImpl usageViewImpl = ObjectUtils.tryCast(usageView, UsageViewImpl.class);
     if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && usageViewImpl != null) {
       ClusteringSearchSession sessionInUsageView = findClusteringSessionInUsageView(usageViewImpl);
@@ -426,16 +446,12 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
   public void updateSimilarUsagesToolBar(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     if (Registry.is("similarity.find.usages.show.similar.usages.in.usage.preview")) {
-      if (myToolbar != null) {
-        remove(myToolbar);
-        revalidate();
-      }
       ClusteringSearchSession session = findClusteringSessionInUsageView(usageView);
       if (session != null) {
-        UsageCluster cluster = session.findCluster(infos);
+        UsageCluster cluster = session.findCluster(ContainerUtil.getFirstItem(infos));
         if (cluster != null && cluster.getUsages().size() > 1) {
-          myToolbar = new UsagePreviewToolbarWithSimilarUsagesLink(this, usageView, infos, cluster);
-          add(myToolbar, BorderLayout.NORTH);
+          myToolbarWithSimilarUsagesLink = new UsagePreviewToolbarWithSimilarUsagesLink(this, usageView, infos, cluster, session);
+          add(myToolbarWithSimilarUsagesLink, BorderLayout.NORTH);
         }
       }
     }
@@ -446,10 +462,13 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
                                            @NotNull Set<? extends @NotNull GroupNode> selectedGroupNodes, ClusteringSearchSession session) {
     if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
-      disposeMostCommonUsageComponent();
       removeAll();
-      myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
-      add(myCommonUsagePatternsComponent);
+      if (myMostCommonUsagePatternsComponent == null) {
+        myMostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
+        Disposer.register(this, myMostCommonUsagePatternsComponent);
+      }
+      add(myMostCommonUsagePatternsComponent);
+      myMostCommonUsagePatternsComponent.loadSnippets();
     }
   }
 

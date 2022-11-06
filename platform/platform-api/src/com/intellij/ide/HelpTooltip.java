@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -101,7 +101,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  * The UI designer will offer to create {@code private void createUIComponents()} method where you can create the label with a static method.</p>
  */
 public class HelpTooltip {
-  private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
+  private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", JBUI.CurrentTheme.ContextHelp.FOREGROUND);
   private static final Color LINK_COLOR = JBColor.namedColor("ToolTip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
 
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
@@ -113,6 +113,7 @@ public class HelpTooltip {
 
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
+  private static final String TOOLTIP_DISABLED_PROPERTY = "JComponent.helpTooltipDisabled";
 
   private @TooltipTitle String title;
   private @NlsSafe String shortcut;
@@ -438,8 +439,8 @@ public class HelpTooltip {
     tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
     tipPanel.setBackground(UIUtil.getToolTipBackground());
 
-    boolean hasTitle = StringUtil.isNotEmpty(title);
-    boolean hasDescription = StringUtil.isNotEmpty(description);
+    boolean hasTitle = Strings.isNotEmpty(title);
+    boolean hasDescription = Strings.isNotEmpty(description);
 
     if (hasTitle) {
       tipPanel.add(new Header(hasDescription), VerticalLayout.TOP);
@@ -451,7 +452,7 @@ public class HelpTooltip {
       Arrays.stream(pa).filter(p -> !p.isEmpty()).forEach(p -> tipPanel.add(new Paragraph(p, hasTitle), VerticalLayout.TOP));
     }
 
-    if (!hasTitle && StringUtil.isNotEmpty(shortcut)) {
+    if (!hasTitle && Strings.isNotEmpty(shortcut)) {
       JLabel shortcutLabel = new JLabel(shortcut);
       shortcutLabel.setFont(deriveDescriptionFont(shortcutLabel.getFont(), false));
       shortcutLabel.setForeground(JBUI.CurrentTheme.Tooltip.shortcutForeground());
@@ -465,7 +466,7 @@ public class HelpTooltip {
       tipPanel.add(link, VerticalLayout.TOP);
     }
 
-    isMultiline = isMultiline || StringUtil.isNotEmpty(description) && (StringUtil.isNotEmpty(title) || link != null);
+    isMultiline = isMultiline || Strings.isNotEmpty(description) && (Strings.isNotEmpty(title) || link != null);
     tipPanel.setBorder(textBorder(isMultiline));
 
     return tipPanel;
@@ -494,8 +495,7 @@ public class HelpTooltip {
    * @param owner a possible {@code HelpTooltip} owner.
    */
   public static void dispose(@NotNull Component owner) {
-    if (owner instanceof JComponent) {
-      JComponent component = (JComponent)owner;
+    if (owner instanceof JComponent component) {
       HelpTooltip instance = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
       if (instance != null) {
         instance.hideAndDispose(component);
@@ -559,9 +559,30 @@ public class HelpTooltip {
     }
   }
 
+  public static void disableTooltip(Component source) {
+    if (source instanceof JComponent component) {
+      component.putClientProperty(TOOLTIP_DISABLED_PROPERTY, Boolean.TRUE);
+    }
+  }
+
+  public static void enableTooltip(Component source) {
+    if (source instanceof JComponent component) {
+      component.putClientProperty(TOOLTIP_DISABLED_PROPERTY, null);
+    }
+  }
+
+  private static boolean isTooltipDisabled(Component component) {
+    if (component instanceof JComponent jComponent) {
+      Boolean disabled = (Boolean)jComponent.getClientProperty(TOOLTIP_DISABLED_PROPERTY);
+      return disabled == Boolean.TRUE;
+    } else {
+      return false;
+    }
+  }
+
   private void scheduleShow(MouseEvent e, int delay) {
     popupAlarm.cancelAllRequests();
-
+    if (isTooltipDisabled(e.getComponent())) return;
     if (ScreenReader.isActive()) return; // Disable HelpTooltip in screen reader mode.
 
     popupAlarm.addRequest(() -> {
@@ -570,8 +591,12 @@ public class HelpTooltip {
         Component owner = e.getComponent();
         String text = owner instanceof JComponent ? ((JComponent)owner).getToolTipText(e) : null;
         if (myPopup != null && !myPopup.isDisposed()) {
-          if (StringUtil.isEmpty(text) && StringUtil.isEmpty(myToolTipText)) return; // do nothing if a tooltip become empty
-          if (StringUtil.equals(text, myToolTipText)) return; // do nothing if a tooltip is not changed
+          if (Strings.isEmpty(text) && Strings.isEmpty(myToolTipText)) {
+            return; // do nothing if a tooltip become empty
+          }
+          if (Objects.equals(text, myToolTipText)) {
+            return; // do nothing if a tooltip is not changed
+          }
           myPopup.cancel(); // cancel previous popup before showing a new one
         }
         myToolTipText = text;
@@ -594,8 +619,8 @@ public class HelpTooltip {
     initialShowScheduled = false;
     popupAlarm.cancelAllRequests();
 
-    if (myPopup != null && myPopup.isVisible() && (!isOverPopup || force)) {
-      myPopup.cancel();
+    if (myPopup != null && (!isOverPopup || force)) {
+      if (myPopup.isVisible()) myPopup.cancel();
       myPopup = null;
       myToolTipText = null;
     }
@@ -618,7 +643,7 @@ public class HelpTooltip {
 
   @Contract(pure = true)
   public static @NotNull String getShortcutAsHtml(@Nullable String shortcut) {
-    return StringUtil.isEmpty(shortcut)
+    return Strings.isEmpty(shortcut)
            ? ""
            : String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(JBUI.CurrentTheme.Tooltip.shortcutForeground()),
                            shortcut);

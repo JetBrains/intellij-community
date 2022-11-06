@@ -2,64 +2,56 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddArgumentNamesApplicators
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentNames
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.associateArgumentNamesStartingAt
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class AddNamesToFollowingArgumentsIntention :
-    AbstractKotlinApplicatorBasedIntention<KtValueArgument, AddArgumentNamesApplicators.MultipleArgumentsInput>(KtValueArgument::class),
+    KotlinApplicableIntentionWithContext<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class),
     LowPriorityAction {
+
+    class Context(val argumentNames: Map<SmartPsiElementPointer<KtValueArgument>, Name>)
+
+    override fun getFamilyName(): String = KotlinBundle.message("add.names.to.this.argument.and.following.arguments")
+    override fun getActionName(element: KtValueArgument, context: Context): String = familyName
+
     override fun getApplicabilityRange() = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
-    override fun getApplicator() = applicator<KtValueArgument, AddArgumentNamesApplicators.MultipleArgumentsInput> {
-        familyAndActionName(KotlinBundle.lazyMessage("add.names.to.this.argument.and.following.arguments"))
-
-        isApplicableByPsi { element ->
-            // Not applicable when lambda is trailing lambda after argument list (e.g., `run {  }`); element is a KtLambdaArgument.
-            // May be applicable when lambda is inside an argument list (e.g., `run({  })`); element is a KtValueArgument in this case.
-            if (element.isNamed() || element is KtLambdaArgument) {
-                return@isApplicableByPsi false
-            }
-
-            val argumentList = element.parent as? KtValueArgumentList ?: return@isApplicableByPsi false
-            // Shadowed by HLAddNamesToCallArgumentsIntention
-            if (argumentList.arguments.firstOrNull() == element) return@isApplicableByPsi false
-            // Shadowed by HLAddNameToArgumentIntention
-            if (argumentList.arguments.lastOrNull { !it.isNamed() } == element) return@isApplicableByPsi false
-            true
+    override fun isApplicableByPsi(element: KtValueArgument): Boolean {
+        // Not applicable when lambda is trailing lambda after argument list (e.g., `run {  }`); element is a KtLambdaArgument.
+        // May be applicable when lambda is inside an argument list (e.g., `run({  })`); element is a KtValueArgument in this case.
+        if (element.isNamed() || element is KtLambdaArgument) {
+            return false
         }
 
-        applyTo { element, input, project, editor ->
-            val callElement = element.parent?.safeAs<KtValueArgumentList>()?.parent as? KtCallElement
-            callElement?.let { AddArgumentNamesApplicators.multipleArgumentsApplicator.applyTo(it, input, project, editor) }
-        }
+        val argumentList = element.parent as? KtValueArgumentList ?: return false
+        // Shadowed by `AddNamesToCallArgumentsIntention`
+        if (argumentList.arguments.firstOrNull() == element) return false
+        // Shadowed by `AddNameToArgumentIntention`
+        if (argumentList.arguments.lastOrNull { !it.isNamed() } == element) return false
+
+        return true
     }
 
-
-    override fun getInputProvider() = inputProvider { element: KtValueArgument ->
-        val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
-
-        val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null
-        val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return@inputProvider null
-
-        if (!resolvedCall.symbol.hasStableParameterNames) {
-            return@inputProvider null
-        }
-
-        val argumentsExcludingPrevious =
-            callElement.valueArgumentList?.arguments?.dropWhile { it != element } ?: return@inputProvider null
-        AddArgumentNamesApplicators.MultipleArgumentsInput(argumentsExcludingPrevious.associateWith {
-            getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return@inputProvider null
-        })
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtValueArgument): Context? {
+        val argumentList = element.parent as? KtValueArgumentList ?: return null
+        val call = argumentList.parent as? KtCallElement ?: return null
+        return associateArgumentNamesStartingAt(call, element)?.let { Context(it) }
     }
+
+    override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
+        addArgumentNames(context.argumentNames.dereferenceValidKeys())
 }

@@ -22,7 +22,6 @@
     <orderEntry type="module" module-name="kotlin.base.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.kdoc" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.klib" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.obsolete-compat" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.platforms" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
@@ -86,11 +85,17 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.navigation" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.refactorings.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.search.k2" scope="RUNTIME" />
   </component>
 </module>

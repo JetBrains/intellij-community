@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -23,7 +22,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
+open class OoChildEntityImpl(val dataSource: OoChildEntityData) : OoChildEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentEntity::class.java, OoChildEntity::class.java,
@@ -35,19 +34,21 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _childProperty: String? = null
   override val childProperty: String
-    get() = _childProperty!!
+    get() = dataSource.childProperty
 
   override val parentEntity: OoParentEntity
     get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: OoChildEntityData?) : ModifiableWorkspaceEntityBase<OoChildEntity>(), OoChildEntity.Builder {
+  class Builder(result: OoChildEntityData?) : ModifiableWorkspaceEntityBase<OoChildEntity, OoChildEntityData>(
+    result), OoChildEntity.Builder {
     constructor() : this(OoChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,6 +66,9 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -98,10 +102,13 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OoChildEntity
-      this.entitySource = dataSource.entitySource
-      this.childProperty = dataSource.childProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.childProperty != dataSource.childProperty) this.childProperty = dataSource.childProperty
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<OoParentEntity>().single()
+        val parentEntityNew = parents.filterIsInstance<OoParentEntity>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -110,7 +117,7 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -119,7 +126,7 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
       get() = getEntityData().childProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().childProperty = value
+        getEntityData(true).childProperty = value
         changedProperty.add("childProperty")
       }
 
@@ -137,18 +144,18 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -158,7 +165,6 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
         changedProperty.add("parentEntity")
       }
 
-    override fun getEntityData(): OoChildEntityData = result ?: super.getEntityData() as OoChildEntityData
     override fun getEntityClass(): Class<OoChildEntity> = OoChildEntity::class.java
   }
 }
@@ -168,25 +174,21 @@ class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
 
   fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OoChildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OoChildEntity> {
     val modifiable = OoChildEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): OoChildEntity {
-    val entity = OoChildEntityImpl()
-    entity._childProperty = childProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = OoChildEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -213,7 +215,7 @@ class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OoChildEntityData
 
@@ -224,7 +226,7 @@ class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OoChildEntityData
 

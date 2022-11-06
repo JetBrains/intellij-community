@@ -3,19 +3,22 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
+import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.diagnostic.launchAndMeasure
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.idea.SplashManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.withModalContext
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.restoreOpenedFiles
 import com.intellij.openapi.progress.TaskCancellation
@@ -60,7 +63,7 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
    * But start-up and post start-up activities are not yet executed.
    * Executed under a modal progress dialog.
    */
-  open suspend fun projectLoaded(project: Project): Job? = null
+  open fun CoroutineScope.projectLoaded(project: Project): Deferred<Job?>? = null
 
   open suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }
@@ -88,7 +91,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       val deferredWindow = async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         val frameManager = createFrameManager()
         val frameHelper = frameManager.createFrameHelper(this@ProjectUiFrameAllocator)
-        frameHelper.init()
+        frameHelper.init(installPainters = false)
         val window = frameManager.getWindow()
         // implOptions == null - not via recents project - show frame immediately
         if (options.showFrameAsap || options.implOptions == null) {
@@ -106,6 +109,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         val showIndicatorJob = showModalIndicatorForProjectLoading(
           windowDeferred = deferredWindow,
           title = getProgressTitle(),
+          isVisibleManaged = options.isVisibleManaged,
         )
         try {
           task(saveTemplateDeferred)
@@ -154,47 +158,57 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     }
   }
 
-  override suspend fun projectLoaded(project: Project): Job? {
-    val windowManager = WindowManager.getInstance() as WindowManagerImpl
-    val frameHelper = deferredProjectFrameHelper.await()
-    return withContext(Dispatchers.EDT) {
-      runActivity("project frame assigning") {
-        windowManager.assignFrame(frameHelper, project)
+  override fun CoroutineScope.projectLoaded(project: Project): Deferred<Job?> {
+    // we must assign frame to project under modal dialog
+    return async {
+      val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
+      val frameHelper = deferredProjectFrameHelper.await()
+
+      val fileEditorManager = project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl ?: return@async null
+
+      service<StartUpPerformanceService>().addActivityListener(project)
+
+      withContext(Dispatchers.EDT) {
+        runActivity("project frame assigning") {
+          windowManager.assignFrame(frameHelper, project)
+          frameHelper.setProject(project)
+        }
+
+        val editorComponent = fileEditorManager.init()
+        frameHelper.rootPane!!.getToolWindowPane().setDocumentComponent(editorComponent)
+        // not as a part of a project modal dialog
+        val reopeningEditorJob = project.coroutineScope.launchAndMeasure("editor reopening") {
+          restoreOpenedFiles(fileEditorManager = fileEditorManager,
+                             editorComponent = editorComponent,
+                             project = project,
+                             frameHelper = frameHelper)
+        }
+
+        async {
+          frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project))
+        }
+
+        project.coroutineScope.launchAndMeasure("tool window pane creation") {
+          val toolWindowManager = ToolWindowManager.getInstance(project = project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
+          toolWindowManager.init(frameHelper = frameHelper, reopeningEditorsJob = reopeningEditorJob)
+        }
+        project.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          val rootPane = frameHelper.rootPane!!
+          runActivity("north components updating") {
+            rootPane.updateNorthComponents()
+          }
+
+          runActivity("toolbar updating") {
+            rootPane.initOrCreateToolbar(project)
+          }
+
+          if (!options.isVisibleManaged) {
+            frameHelper.frameOrNull?.isVisible = true
+          }
+        }
+        reopeningEditorJob
       }
-
-      val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return@withContext null
-      val editorSplitters = fileEditorManager.init()
-
-      // not as a part of a project modal dialog
-      project.coroutineScope.buildUi(editorSplitters, fileEditorManager, frameHelper, project)
     }
-  }
-
-  private fun CoroutineScope.buildUi(editorSplitters: EditorsSplitters,
-                                     fileEditorManager: FileEditorManagerImpl,
-                                     frameHelper: ProjectFrameHelper,
-                                     project: Project): Job {
-    val reopeningEditorJob = launchAndMeasure("editor reopening") {
-      restoreOpenedFiles(fileEditorManager, editorSplitters, project)
-    }
-
-    launchAndMeasure("tool window pane creation") {
-      val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
-      toolWindowManager.init(frameHelper, editorSplitters)
-    }
-    launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val rootPane = frameHelper.rootPane!!
-      runActivity("north components updating") {
-        rootPane.updateNorthComponents()
-      }
-
-      runActivity("toolbar updating") {
-        rootPane.initOrCreateToolbar(project)
-      }
-
-      frameHelper.frameOrNull?.isVisible = true
-    }
-    return reopeningEditorJob
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
@@ -232,6 +246,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 private fun CoroutineScope.showModalIndicatorForProjectLoading(
   windowDeferred: Deferred<Window>,
   title: @NlsContexts.ProgressTitle String,
+  isVisibleManaged: Boolean,
 ): Job {
   return launch(Dispatchers.IO) {
     delay(300L)
@@ -267,7 +282,9 @@ private fun CoroutineScope.showModalIndicatorForProjectLoading(
       }.invokeOnCompletion {
         dialog.close(DialogWrapper.OK_EXIT_CODE)
       }
-      window.isVisible = true
+      if (!isVisibleManaged) {
+        window.isVisible = true
+      }
       // will spin an inner event loop
       dialog.show()
     }
@@ -391,7 +408,11 @@ internal val OpenProjectTask.frameInfo: FrameInfo?
 internal val OpenProjectTask.frameManager: ProjectUiFrameManager?
   get() = (implOptions as OpenProjectImplOptions?)?.frameManager
 
+private val OpenProjectTask.isVisibleManaged: Boolean
+  get() = (implOptions as OpenProjectImplOptions?)?.isVisibleManaged ?: false
+
 internal data class OpenProjectImplOptions(
   @JvmField val frameInfo: FrameInfo? = null,
   @JvmField val frameManager: ProjectUiFrameManager? = null,
+  @JvmField val isVisibleManaged: Boolean = false,
 )

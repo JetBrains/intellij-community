@@ -165,13 +165,13 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
     myTree.setCellRenderer(new UpdateTreeCellRenderer());
     TreeUtil.installActions(myTree);
-    new TreeSpeedSearch(myTree, path -> {
+    new TreeSpeedSearch(myTree, true, path -> {
       Object last = path.getLastPathComponent();
       if (last instanceof AbstractTreeNode) {
         return ((AbstractTreeNode)last).getText();
       }
-      return TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING.convert(path);
-    }, true);
+      return TreeSpeedSearch.NODE_PRESENTATION_FUNCTION.apply(path);
+    });
 
     PopupHandler.installPopupMenu(myTree, "UpdateActionGroup", ActionPlaces.UPDATE_POPUP);
     EditSourceOnDoubleClickHandler.install(myTree);
@@ -396,6 +396,11 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES;
     }
@@ -416,6 +421,11 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private class GroupByChangeListAction extends ToggleAction implements DumbAware {
     GroupByChangeListAction() {
       super(VcsBundle.messagePointer("update.info.group.by.changelist"), AllIcons.Actions.ShowAsTree);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -483,6 +493,11 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     FilterAction() {
       super(VcsBundle.messagePointer("action.ToggleAction.text.scope.filter"),
             VcsBundle.messagePointer("settings.filter.update.project.info.by.scope"), AllIcons.General.Filter);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

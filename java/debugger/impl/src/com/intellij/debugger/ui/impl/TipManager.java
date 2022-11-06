@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.application.Topics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -279,6 +280,11 @@ public final class TipManager implements Disposable, PopupMenuListener {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTipPopup != null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private void installListeners() {
@@ -297,8 +303,6 @@ public final class TipManager implements Disposable, PopupMenuListener {
 
   @Override
   public void dispose() {
-    Disposer.dispose(this);
-
     hideTooltip(true);
 
     Toolkit.getDefaultToolkit().removeAWTEventListener(myHideCanceller);

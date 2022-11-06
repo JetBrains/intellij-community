@@ -4,6 +4,7 @@ package com.intellij.designer.palette;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -53,7 +54,7 @@ public class PaletteGroupComponent extends JCheckBox {
   @Override
   public Color getForeground() {
     if (isFocusOwner()) {
-      return UIUtil.getListSelectionForeground(true);
+      return NamedColorUtil.getListSelectionForeground(true);
     }
     return super.getForeground();
   }

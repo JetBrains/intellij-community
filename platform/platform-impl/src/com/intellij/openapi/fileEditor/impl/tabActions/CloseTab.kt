@@ -38,8 +38,7 @@ class CloseTab(c: JComponent,
                parentDisposable: Disposable): AnAction(), DumbAware {
 
   init {
-    ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c,
-                 parentDisposable)
+    ShadowAction(this, IdeActions.ACTION_CLOSE, c, parentDisposable)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

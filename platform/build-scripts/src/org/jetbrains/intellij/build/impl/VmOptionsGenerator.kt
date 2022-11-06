@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.ProductProperties
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -28,18 +27,19 @@ object VmOptionsGenerator {
     "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
     "-Djdk.attach.allowAttachSelf=true",
     "-Djdk.module.illegalAccess.silent=true",
-    "-Dkotlinx.coroutines.debug=off")
+    "-Dkotlinx.coroutines.debug=off"
+  )
 
   private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf(
     "-Xms" to "128m",
     "-Xmx" to "750m",
-    "-XX:ReservedCodeCacheSize=" to "512m")
+    "-XX:ReservedCodeCacheSize=" to "512m"
+  )
 
-  @JvmStatic
-  fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> =
-    computeVmOptions(isEAP, productProperties.customJvmMemoryOptions)
+  fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> {
+    return computeVmOptions(isEAP, productProperties.customJvmMemoryOptions)
+  }
 
-  @JvmStatic
   fun computeVmOptions(isEAP: Boolean, customJvmMemoryOptions: Map<String, String>?): List<String> {
     val result = ArrayList<String>()
 
@@ -63,8 +63,6 @@ object VmOptionsGenerator {
     return result
   }
 
-  @JvmStatic
-  @Throws(IOException::class)
   fun writeVmOptions(file: Path, vmOptions: List<String>, separator: String) {
     Files.writeString(file, vmOptions.joinToString(separator = separator, postfix = separator), StandardCharsets.US_ASCII)
   }

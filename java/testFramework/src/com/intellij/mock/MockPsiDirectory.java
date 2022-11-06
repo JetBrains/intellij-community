@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class MockPsiDirectory extends MockPsiElement implements PsiDirectory {
   private final PsiPackage myPackage;
   private final Project myProject;

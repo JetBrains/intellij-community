@@ -214,7 +214,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     TreeUtil.installActions(tree);
 
-    new TreeSpeedSearch(tree, o -> o.getLastPathComponent().toString(), true);
+    new TreeSpeedSearch(tree, true, o -> o.getLastPathComponent().toString());
 
     DefaultActionGroup group = new DefaultActionGroup();
     CommonActionsManager commonActionManager = CommonActionsManager.getInstance();

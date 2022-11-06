@@ -24,108 +24,116 @@ import com.siyeh.ipp.IPPTestCase;
 public class MergeNestedTryStatementsIntentionTest extends IPPTestCase {
   public void testSimple() {
     doTest(
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void foo(File file1, File file2) throws IOException {\n" +
-      "        /*_Merge nested 'try' statements*/try (FileInputStream in = new FileInputStream(file1)) {\n" +
-      "            try (FileOutputStream out = new FileOutputStream(file2)) {\n" +
-      "                System.out.println(in + \", \" + out);\n" +
-      "            }\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
+      """
+        import java.io.*;
+        class C {
+            void foo(File file1, File file2) throws IOException {
+                /*_Merge nested 'try' statements*/try (FileInputStream in = new FileInputStream(file1)) {
+                    try (FileOutputStream out = new FileOutputStream(file2)) {
+                        System.out.println(in + ", " + out);
+                    }
+                }
+            }
+        }""",
 
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void foo(File file1, File file2) throws IOException {\n" +
-      "        try (FileInputStream in = new FileInputStream(file1); FileOutputStream out = new FileOutputStream(file2)) {\n" +
-      "            System.out.println(in + \", \" + out);\n" +
-      "        }\n" +
-      "    }\n" +
-      "}");
+      """
+        import java.io.*;
+        class C {
+            void foo(File file1, File file2) throws IOException {
+                try (FileInputStream in = new FileInputStream(file1); FileOutputStream out = new FileOutputStream(file2)) {
+                    System.out.println(in + ", " + out);
+                }
+            }
+        }""");
   }
 
   public void testWithoutAndWithResources() {
     doTest(
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void foo(File file) {\n" +
-      "        /*_Merge nested 'try' statements*/try {\n" +
-      "            try (InputStreamReader r = new InputStreamReader(new FileInputStream(file), \"utf-8\")) {\n" +
-      "              System.out.println(r);\n" +
-      "            }\n" +
-      "        } catch (IOException e) {\n" +
-      "            throw new RuntimeException(e);\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
+      """
+        import java.io.*;
+        class C {
+            void foo(File file) {
+                /*_Merge nested 'try' statements*/try {
+                    try (InputStreamReader r = new InputStreamReader(new FileInputStream(file), "utf-8")) {
+                      System.out.println(r);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }""",
 
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void foo(File file) {\n" +
-      "        try (InputStreamReader r = new InputStreamReader(new FileInputStream(file), \"utf-8\")) {\n" +
-      "            System.out.println(r);\n" +
-      "        } catch (IOException e) {\n" +
-      "            throw new RuntimeException(e);\n" +
-      "        }\n" +
-      "    }\n" +
-      "}");
+      """
+        import java.io.*;
+        class C {
+            void foo(File file) {
+                try (InputStreamReader r = new InputStreamReader(new FileInputStream(file), "utf-8")) {
+                    System.out.println(r);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }""");
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "TryWithIdenticalCatches"})
   public void testOldStyle() {
     doTest(
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void foo(File file1) {\n" +
-      "        /*_Merge nested 'try' statements*/try {\n" +
-      "            try {\n" +
-      "                FileInputStream in = new FileInputStream(file1);\n" +
-      "            } catch (FileNotFoundException e) {\n" +
-      "                // log\n" +
-      "            }\n" +
-      "        } catch (Exception e) {\n" +
-      "            // log\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
+      """
+        import java.io.*;
+        class C {
+            void foo(File file1) {
+                /*_Merge nested 'try' statements*/try {
+                    try {
+                        FileInputStream in = new FileInputStream(file1);
+                    } catch (FileNotFoundException e) {
+                        // log
+                    }
+                } catch (Exception e) {
+                    // log
+                }
+            }
+        }""",
 
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void foo(File file1) {\n" +
-      "        try {\n" +
-      "            FileInputStream in = new FileInputStream(file1);\n" +
-      "        } catch (FileNotFoundException e) {\n" +
-      "            // log\n" +
-      "        } catch (Exception e) {\n" +
-      "            // log\n" +
-      "        }\n" +
-      "    }\n" +
-      "}");
+      """
+        import java.io.*;
+        class C {
+            void foo(File file1) {
+                try {
+                    FileInputStream in = new FileInputStream(file1);
+                } catch (FileNotFoundException e) {
+                    // log
+                } catch (Exception e) {
+                    // log
+                }
+            }
+        }""");
   }
 
   public void testMixedResources() {
     doTest(
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m() throws Exception {\n" +
-      "        Reader r1 = new StringReader();\n" +
-      "        /*_Merge nested 'try' statements*/try (r1) {\n" +
-      "            try (Reader r2 = new StringReader()) {\n" +
-      "                System.out.println(r1 + \", \" + r2);\n" +
-      "            }\n" +
-      "        }\n" +
-      "    }\n" +
-      "}",
+      """
+        import java.io.*;
+        class C {
+            void m() throws Exception {
+                Reader r1 = new StringReader();
+                /*_Merge nested 'try' statements*/try (r1) {
+                    try (Reader r2 = new StringReader()) {
+                        System.out.println(r1 + ", " + r2);
+                    }
+                }
+            }
+        }""",
 
-      "import java.io.*;\n" +
-      "class C {\n" +
-      "    void m() throws Exception {\n" +
-      "        Reader r1 = new StringReader();\n" +
-      "        try (r1; Reader r2 = new StringReader()) {\n" +
-      "            System.out.println(r1 + \", \" + r2);\n" +
-      "        }\n" +
-      "    }\n" +
-      "}");
+      """
+        import java.io.*;
+        class C {
+            void m() throws Exception {
+                Reader r1 = new StringReader();
+                try (r1; Reader r2 = new StringReader()) {
+                    System.out.println(r1 + ", " + r2);
+                }
+            }
+        }""");
   }
 }

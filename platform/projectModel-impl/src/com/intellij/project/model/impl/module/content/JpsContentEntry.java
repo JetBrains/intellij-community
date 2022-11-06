@@ -14,6 +14,7 @@ import com.intellij.project.model.impl.module.JpsRootModel;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -193,12 +194,34 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   }
 
   @Override
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                                      @NotNull JpsModuleSourceRootType<P> type,
+                                                                      @NotNull ProjectModelExternalSource externalSource) {
+    return addSourceFolder(url, type, type.createDefaultProperties());
+  }
+
+  @Override
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                                      @NotNull JpsModuleSourceRootType<P> type,
+                                                                      boolean useSourceOfContentRoot) {
+    return addSourceFolder(url, type, type.createDefaultProperties());
+  }
+
+  @Override
   @NotNull
   public  <P extends JpsElement> SourceFolder addSourceFolder(@NotNull  String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties) {
     final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, type, properties);
     final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
     mySourceFolders.add(sourceFolder);
     return sourceFolder;
+  }
+
+  @Override
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                                      @NotNull JpsModuleSourceRootType<P> type,
+                                                                      @NotNull P properties,
+                                                                      @Nullable ProjectModelExternalSource externalSource) {
+    return addSourceFolder(url, type, properties);
   }
 
   @Override
@@ -235,6 +258,11 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     myModule.getExcludeRootsList().addUrl(url);
     myExcludeFolders.add(folder);
     return folder;
+  }
+
+  @Override
+  public ExcludeFolder addExcludeFolder(@NotNull String url, ProjectModelExternalSource source) {
+    return addExcludeFolder(url);
   }
 
   @Override

@@ -97,7 +97,7 @@ import java.util.function.Function;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
-import static com.intellij.ui.treeStructure.Tree.MOUSE_PRESSED_NON_FOCUSED;
+import static com.intellij.ui.treeStructure.Tree.AUTO_SCROLL_FROM_SOURCE_BLOCKED;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, QuickActionProvider, BusyObject {
@@ -263,6 +263,28 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       myCurrentState.setFoldersAlwaysOnTop(selected);
       getDefaultState().setFoldersAlwaysOnTop(selected);
       getGlobalOptions().setFoldersAlwaysOnTop(selected);
+      if (updated) updatePanes(true);
+    }
+  };
+
+  private final Option myShowScratchesAndConsoles = new Option() {
+    @Override
+    public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
+      return pane.supportsShowScratchesAndConsoles();
+    }
+
+    @Override
+    public boolean isSelected() {
+      return myCurrentState.getShowScratchesAndConsoles();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      if (myProject.isDisposed()) return;
+      boolean updated = selected != isSelected();
+      myCurrentState.setShowScratchesAndConsoles(selected);
+      getDefaultState().setShowScratchesAndConsoles(selected);
+      getGlobalOptions().setShowScratchesAndConsoles(selected);
       if (updated) updatePanes(true);
     }
   };
@@ -1117,9 +1139,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (isCurrentSelectionObsolete(requestFocus)) return ActionCallback.REJECTED;
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane instanceof AbstractProjectViewPSIPane) {
+    if (viewPane instanceof AbstractProjectViewPaneWithAsyncSupport) {
       myAutoScrollOnFocusEditor.set(!requestFocus);
-      return ((AbstractProjectViewPSIPane)viewPane).selectCB(element, file, requestFocus);
+      return ((AbstractProjectViewPaneWithAsyncSupport)viewPane).selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
     return ActionCallback.DONE;
@@ -1441,14 +1463,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isAutoscrollFromSource(String paneId) {
+    return isAutoscrollFromSourceEnabled(paneId) && isAutoscrollFromSourceNotBlocked(paneId);
+  }
+
+  private boolean isAutoscrollFromSourceEnabled(String paneId) {
     if (myProject.isDisposed()) return false;
     if (!myAutoscrollFromSource.isSelected()) return false;
     if (!myAutoscrollFromSource.isEnabled(paneId)) return false;
+    return true;
+  }
+
+  private boolean isAutoscrollFromSourceNotBlocked(String paneId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
     if (pane == null) return false;
     JTree tree = pane.getTree();
     if (tree == null || !tree.isShowing()) return false;
-    return !UIUtil.isClientPropertyTrue(tree, MOUSE_PRESSED_NON_FOCUSED);
+    return !ClientProperty.isTrue(tree, AUTO_SCROLL_FROM_SOURCE_BLOCKED);
   }
 
   public void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
@@ -1545,6 +1575,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public boolean isShowURL(String paneId) {
     return Registry.is("project.tree.structure.show.url");
+  }
+
+  @Override
+  public boolean isShowScratchesAndConsoles(String paneId) {
+    return myShowScratchesAndConsoles.isEnabled(paneId) ? myShowScratchesAndConsoles.isSelected() : false;
   }
 
   @Override
@@ -1816,7 +1851,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   boolean isSelectOpenedFileEnabled() {
-    return !isAutoscrollFromSource(myCurrentViewId);
+    return !isAutoscrollFromSourceEnabled(myCurrentViewId);
   }
 
   @Nullable Runnable getSelectOpenedFile() {
@@ -1943,6 +1978,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     static final class FoldersAlwaysOnTop extends Action {
       FoldersAlwaysOnTop() {
         super(view -> view.myFoldersAlwaysOnTop);
+      }
+    }
+
+    static final class ShowScratchesAndConsoles extends Action {
+      ShowScratchesAndConsoles() {
+        super(view -> view.myShowScratchesAndConsoles);
       }
     }
 

@@ -20,10 +20,11 @@ import com.intellij.diagnostic.hprof.analysis.AnalysisContext;
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph;
 import com.intellij.diagnostic.hprof.analysis.AnalyzeGraph;
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis;
+import com.intellij.diagnostic.hprof.util.ListProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import kotlin.jvm.functions.Function2;
+import kotlin.jvm.functions.Function3;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -81,7 +82,7 @@ public final class Analyzer {
 
     Path hprofPath;
     ProgressIndicator progress;
-    Function2<AnalysisContext, ProgressIndicator, String> analysisCallback;
+    Function3<AnalysisContext, ListProvider, ProgressIndicator, String> analysisCallback;
     boolean onlyStrongReferences = false;
     boolean includeClassesAsRoots = true;
     int index = 0;
@@ -95,13 +96,13 @@ public final class Analyzer {
     if (args[index].equals("-plugin")) {
       index++;
       String pluginId = args[index];
-      analysisCallback = (analysisContext, progressIndicator) -> new AnalyzeClassloaderReferencesGraph(analysisContext, pluginId).analyze(progressIndicator);
+      analysisCallback = (analysisContext, listProvider, progressIndicator) -> new AnalyzeClassloaderReferencesGraph(analysisContext, listProvider, pluginId).analyze(progressIndicator).getMainReport().toString();
       onlyStrongReferences = true;
       includeClassesAsRoots = false;
       index++;
     }
     else {
-      analysisCallback = (analysisContext, progressIndicator) -> new AnalyzeGraph(analysisContext).analyze(progressIndicator);
+      analysisCallback = (analysisContext, listProvider, progressIndicator) -> new AnalyzeGraph(analysisContext, listProvider).analyze(progressIndicator).getMainReport().toString();
     }
     hprofPath = Paths.get(args[index]);
 

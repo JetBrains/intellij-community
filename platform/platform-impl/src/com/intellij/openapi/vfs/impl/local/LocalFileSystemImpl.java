@@ -6,23 +6,26 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PlatformNioHelper;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -34,15 +37,12 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
   private final WatchRootsManager myWatchRootsManager;
-  private final Runnable myAfterMarkDirtyCallback;
   private volatile boolean myDisposed;
 
-  public LocalFileSystemImpl() {
-    this(null);
-  }
+  private final ThreadLocal<Pair<VirtualFile, Map<String, FileAttributes>>> myFileAttributesCache = new ThreadLocal<>();
+  private final DiskQueryRelay<VirtualFile, Map<String, FileAttributes>> myChildrenAttrGetter = new DiskQueryRelay<>(dir -> listWithAttributes(dir));
 
-  public LocalFileSystemImpl(@Nullable Runnable afterMarkDirtyCallback) {
-    myAfterMarkDirtyCallback = afterMarkDirtyCallback;
+  public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
@@ -84,12 +84,13 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
       markPathsDirty(dirtyPaths.dirtyPaths);
       markFlatDirsDirty(dirtyPaths.dirtyDirectories);
       markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
-      if ((!dirtyPaths.dirtyPaths.isEmpty() || !dirtyPaths.dirtyDirectories.isEmpty() || !dirtyPaths.dirtyPathsRecursive.isEmpty())
-            && myAfterMarkDirtyCallback != null) {
-        myAfterMarkDirtyCallback.run();
+      if ((!dirtyPaths.dirtyPaths.isEmpty() || !dirtyPaths.dirtyDirectories.isEmpty() || !dirtyPaths.dirtyPathsRecursive.isEmpty())) {
+        statusRefreshed();
       }
     }
   }
+
+  protected void statusRefreshed() { }
 
   private void markPathsDirty(@NotNull Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
@@ -209,47 +210,99 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   @Override
-  public String toString() {
-    return "LocalFileSystem";
-  }
-
-  @Override
   @TestOnly
   public void cleanupForNextTest() {
     super.cleanupForNextTest();
     myWatchRootsManager.clear();
   }
 
-  private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent,
-                                                      @NotNull CharSequence name,
-                                                      @NotNull String symlinkTarget) {
+  private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
     if (startsWith(parent, name, symlinkTarget)) return true;
-
-    if (!(parent instanceof VirtualFileSystemEntry)) {
-      return false;
-    }
+    if (!(parent instanceof VirtualFileSystemEntry)) return false;
     // check if it's circular - any symlink above resolves to my target too
     for (VirtualFileSystemEntry p = (VirtualFileSystemEntry)parent; p != null; p = p.getParent()) {
-      // optimization: when the file has no symlinks up the hierarchy, it's not circular
+      // if the file has no symlinks up the hierarchy, it's not circular
       if (!p.thisOrParentHaveSymlink()) return false;
       if (p.is(VFileProperty.SYMLINK)) {
         String parentResolved = p.getCanonicalPath();
-        if (symlinkTarget.equals(parentResolved)) {
-          return true;
-        }
+        if (symlinkTarget.equals(parentResolved)) return true;
       }
     }
     return false;
   }
 
-  private static boolean startsWith(@Nullable VirtualFile parent,
-                                    @NotNull CharSequence name,
-                                    @NotNull String symlinkTarget) {
-    if (parent != null) {
-      String symlinkTargetParent = StringUtil.trimEnd(symlinkTarget, "/" + name);
-      return VfsUtilCore.isAncestorOrSelf(symlinkTargetParent, parent);
-    }
+  private static boolean startsWith(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
     // parent == null means name is root
-    return StringUtilRt.equal(name, symlinkTarget, SystemInfoRt.isFileSystemCaseSensitive);
+    //noinspection StaticMethodReferencedViaSubclass
+    return parent != null ? VfsUtilCore.isAncestorOrSelf(StringUtil.trimEnd(symlinkTarget, "/" + name), parent)
+                          : StringUtil.equal(name, symlinkTarget, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  @ApiStatus.Internal
+  public String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
+    if ((SystemInfo.isWindows || SystemInfo.isMac && CpuArch.isArm64()) && getClass() == LocalFileSystemImpl.class) {
+      Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
+      if (cache != null) {
+        LOG.error("unordered access to " + dir + " without cleaning after " + cache.first);
+      }
+      Map<String, FileAttributes> result = myChildrenAttrGetter.accessDiskWithCheckCanceled(dir);
+      myFileAttributesCache.set(new Pair<>(dir, result));
+      return ArrayUtil.toStringArray(result.keySet());
+    }
+    else {
+      return list(dir);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void clearListCache() {
+    myFileAttributesCache.remove();
+  }
+
+  @Override
+  public FileAttributes getAttributes(@NotNull VirtualFile file) {
+    Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
+    if (cache != null) {
+      if (!cache.first.equals(file.getParent())) {
+        LOG.error("unordered access to " + file + " outside " + cache.first);
+      }
+      else {
+        return cache.second.get(file.getName());
+      }
+    }
+
+    return super.getAttributes(file);
+  }
+
+  private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir) {
+    try {
+      var result = CollectionFactory.<FileAttributes>createFilePathMap(10, dir.isCaseSensitive());
+      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), (file, attrs) -> {
+        var fsuAttrs = attrs != null ? copyWithCustomTimestamp(file, FileAttributes.fromNio(file, attrs)) : null;
+        result.put(file.getFileName().toString(), fsuAttrs);
+        return true;
+      });
+      return result;
+    }
+    catch (InvalidPathException | SecurityException e) {
+      LOG.warn(e);
+      return Map.of();
+    }
+  }
+
+  private static @Nullable FileAttributes copyWithCustomTimestamp(Path file, FileAttributes attributes) {
+    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+      Long custom = provider.getTimestamp(file);
+      if (custom != null) {
+        return attributes.withTimeStamp(custom);
+      }
+    }
+
+    return attributes;
+  }
+
+  @Override
+  public String toString() {
+    return "LocalFileSystem";
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.safeDelete.usageInfo;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
 
@@ -37,6 +38,9 @@ public class SafeDeleteOverridingMethodUsageInfo extends SafeDeleteUsageInfo imp
 
   @Override
   public void performRefactoring() throws IncorrectOperationException {
-    getOverridingMethod().delete();
+    PsiElement element = getElement();
+    if (element != null) {
+      element.delete();
+    }
   }
 }

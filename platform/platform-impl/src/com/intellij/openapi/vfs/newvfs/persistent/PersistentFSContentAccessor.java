@@ -70,9 +70,15 @@ public final class PersistentFSContentAccessor {
   void deleteContent(int fileId) throws IOException {
     myLock.writeLock().lock();
     try {
-      int contentPage = myFSConnection.getRecords().getContentRecordId(fileId);
-      if (contentPage != 0) {
-        releaseContentRecord(contentPage);
+      final int contentRecordId = myFSConnection.getRecords().getContentRecordId(fileId);
+      if (contentRecordId != 0) {
+        //IDEA-302595: we really don't use refCounts for anything now, with contentHashes introduction
+        //             contentStorage really works as an append-only log, with no defrag/GC. And also
+        //             refCounting is prone to unexpected app shutdowns anyway.
+        final int refCount = myFSConnection.getContents().getRefCount(contentRecordId);
+        if (refCount > 0) {
+          releaseContentRecord(contentRecordId);
+        }
       }
     }
     finally {
@@ -96,31 +102,24 @@ public final class PersistentFSContentAccessor {
       PersistentFSConnection connection = myFSConnection;
       PersistentFSConnection.ensureIdIsValid(fileId);
 
-      boolean modified = false;
+      boolean modified;
       RefCountingContentStorage contentStorage = connection.getContents();
 
-      int page;
+      int contentRecordId;
       if (myUseContentHashes) {
-        page = findOrCreateContentRecord(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
+        contentRecordId = findOrCreateContentRecord(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
 
-        if (page < 0 || connection.getRecords().getContentRecordId(fileId) != page) {
-          modified = true;
-          int value = page > 0 ? page : -page;
-          connection.getRecords().setContentRecordId(fileId, value);
-        }
+        modified = connection.getRecords().setContentRecordId(fileId, (contentRecordId > 0 ? contentRecordId : -contentRecordId));
 
-        int value = page > 0 ? page : -page;
-        connection.getRecords().setContentRecordId(fileId, value);
-
-        if (page > 0) return modified;
-        page = -page;
+        if (contentRecordId > 0) return modified;
+        contentRecordId = -contentRecordId;
         fixedSize = true;
       }
       else {
-        page = connection.getRecords().getContentRecordId(fileId);
-        if (page == 0 || contentStorage.getRefCount(page) > 1) {
-          page = contentStorage.acquireNewRecord();
-          connection.getRecords().setContentRecordId(fileId, page);
+        contentRecordId = connection.getRecords().getContentRecordId(fileId);
+        if (contentRecordId == 0 || contentStorage.getRefCount(contentRecordId) > 1) {
+          contentRecordId = contentStorage.acquireNewRecord();
+          connection.getRecords().setContentRecordId(fileId, contentRecordId);
         }
       }
 
@@ -136,7 +135,7 @@ public final class PersistentFSContentAccessor {
         newBytes = bytes;
       }
 
-      contentStorage.writeBytes(page, newBytes, fixedSize);
+      contentStorage.writeBytes(contentRecordId, newBytes, fixedSize);
       return true;
     }
     finally {
@@ -167,12 +166,15 @@ public final class PersistentFSContentAccessor {
   }
 
   byte @Nullable [] getContentHash(int fileId) throws IOException {
-      if (!myUseContentHashes) return null;
+    if (!myUseContentHashes) return null;
 
-      int contentId = myFSConnection.getRecords().getContentRecordId(fileId);
-      return contentId <= 0 ? null : myFSConnection.getContentHashesEnumerator().valueOf(contentId);
+    int contentId = myFSConnection.getRecords().getContentRecordId(fileId);
+    return contentId <= 0 ? null : myFSConnection.getContentHashesEnumerator().valueOf(contentId);
   }
 
+  /**
+   * @return -recordId for newly created record, or recordId (>0) of existent record with matching hash
+   */
   private int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
     assert myUseContentHashes;
 
@@ -190,20 +192,23 @@ public final class PersistentFSContentAccessor {
 
     ContentHashEnumerator hashesEnumerator = myFSConnection.getContentHashesEnumerator();
     final int largestId = hashesEnumerator.getLargestId();
-    int page = hashesEnumerator.enumerate(contentHash);
+    int contentRecordId = hashesEnumerator.enumerate(contentHash);
 
-    if (page <= largestId) {
+    if (contentRecordId <= largestId) {
       ++reuses;
-      myFSConnection.getContents().acquireRecord(page);
+      myFSConnection.getContents().acquireRecord(contentRecordId);
       totalReuses += length;
 
-      return page;
+      return contentRecordId;
     }
     else {
       int newRecord = myFSConnection.getContents().acquireNewRecord();
-      assert page == newRecord : "Unexpected content storage modification: page="+page+"; newRecord="+newRecord;
+      assert contentRecordId == newRecord : "Unexpected content storage modification: contentRecordId=" +
+                                            contentRecordId +
+                                            "; newRecord=" +
+                                            newRecord;
 
-      return -page;
+      return -contentRecordId;
     }
   }
 
@@ -221,10 +226,10 @@ public final class PersistentFSContentAccessor {
     }
   }
 
-  void checkContentsStorageSanity(int id) throws IOException {
+  void checkContentsStorageSanity(int fileId) throws IOException {
     myLock.readLock().lock();
     try {
-      int recordId = myFSConnection.getRecords().getContentRecordId(id);
+      int recordId = myFSConnection.getRecords().getContentRecordId(fileId);
       assert recordId >= 0;
       if (recordId > 0) {
         myFSConnection.getContents().checkSanity(recordId);
@@ -241,7 +246,7 @@ public final class PersistentFSContentAccessor {
     return DigestUtil.sha1();
   }
 
-  private static byte @NotNull[] calculateHash(byte[] bytes, int offset, int length) {
+  private static byte @NotNull [] calculateHash(byte[] bytes, int offset, int length) {
     // Probably we don't need to hash the length and "\0000".
     MessageDigest digest = getContentHashDigest();
     digest.update(String.valueOf(length).getBytes(StandardCharsets.UTF_8));

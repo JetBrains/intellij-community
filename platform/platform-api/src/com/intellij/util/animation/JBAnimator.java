@@ -403,58 +403,53 @@ public final class JBAnimator implements Disposable {
   }
 
   private static FrameCounter create(@NotNull Type type, int period, int duration) {
-    switch (type) {
-      case EACH_FRAME:
-        return new FrameCounter() {
+    return switch (type) {
+      case EACH_FRAME -> new FrameCounter() {
 
-          final long frames = duration / period + ((duration % period == 0) ? 0 : 1);
-          long frame = 0;
+        final long frames = duration / period + ((duration % period == 0) ? 0 : 1);
+        long frame = 0;
 
-          @Override
-          public long getNextFrame(boolean isCyclic) {
-            var f = frame;
-            frame++;
-            if (isCyclic) {
-              frame %= frames;
-            }
-            return f;
+        @Override
+        public long getNextFrame(boolean isCyclic) {
+          var f = frame;
+          frame++;
+          if (isCyclic) {
+            frame %= frames;
           }
+          return f;
+        }
 
-          @Override
-          public long getTotalFrames() {
-            // at least one frame should be played
-            return Math.max(frames, 1);
-          }
+        @Override
+        public long getTotalFrames() {
+          // at least one frame should be played
+          return Math.max(frames, 1);
+        }
 
-          @Override
-          public long getDelay(long currentFrame) {
-            return period;
-          }
-        };
+        @Override
+        public long getDelay(long currentFrame) {
+          return period;
+        }
+      };
+      case IN_TIME -> new FrameCounter() {
 
-      case IN_TIME:
-        return new FrameCounter() {
+        final long startTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 
-          final long startTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+        @Override
+        public long getNextFrame(boolean isCyclic) {
+          return TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) - startTime;
+        }
 
-          @Override
-          public long getNextFrame(boolean isCyclic) {
-            return TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) - startTime;
-          }
+        @Override
+        public long getTotalFrames() {
+          return duration;
+        }
 
-          @Override
-          public long getTotalFrames() {
-            return duration;
-          }
-
-          @Override
-          public long getDelay(long currentFrame) {
-            return Math.min(duration - currentFrame, period);
-          }
-        };
-      default:
-        throw new AssertionError();
-    }
+        @Override
+        public long getDelay(long currentFrame) {
+          return Math.min(duration - currentFrame, period);
+        }
+      };
+    };
   }
 
   @ApiStatus.Internal

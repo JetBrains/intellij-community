@@ -18,10 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElementKt;
-import org.jetbrains.uast.UMethod;
-import org.jetbrains.uast.UParameter;
+import org.jetbrains.uast.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -65,14 +62,6 @@ public class SerializableCtorInspection extends DevKitUastInspectionBase {
 
   private static boolean hasFieldWithName(@NotNull UClass aClass, @NotNull String name) {
     return ContainerUtil.exists(aClass.getFields(), field -> name.equals(field.getName()));
-  }
-
-  private static ProblemsHolder createProblemsHolder(@NotNull UClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    PsiElement sourcePsi = aClass.getSourcePsi();
-    if (sourcePsi != null) {
-      return new ProblemsHolder(manager, sourcePsi.getContainingFile(), isOnTheFly);
-    }
-    throw new IllegalStateException("Could not create problems holder");
   }
 
   @NotNull

@@ -108,12 +108,8 @@ class JavaChangeSignatureUsageSearcher {
       return false;
     }
     for (int i = 0; i < components.length; i++) {
-      PsiPattern component = components[i];
-      if (!(component instanceof PsiTypeTestPattern)) {
-        return false;
-      }
-      PsiPatternVariable patternVar = ((PsiTypeTestPattern)component).getPatternVariable();
-      if (patternVar == null || !patternVar.getType().equals(parameters[i].getType())) {
+      PsiType type = JavaPsiPatternUtil.getPatternType(components[i]);
+      if (!parameters[i].getType().equals(type)) {
         return false;
       }
     }
@@ -296,8 +292,8 @@ class JavaChangeSignatureUsageSearcher {
           if (RefactoringUtil.isMethodUsage(element)) {
             PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(element);
             if (list == null || !method.isVarArgs() && list.getExpressionCount() != parameterCount) continue;
-            if (method.isVarArgs() && 
-                ref instanceof PsiReferenceExpression && 
+            if (method.isVarArgs() &&
+                ref instanceof PsiReferenceExpression &&
                 !((PsiReferenceExpression)ref).advancedResolve(true).isValidResult()) {
               continue;
             }

@@ -1,21 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entity
 
-import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.entities.model.api.*
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
@@ -42,7 +33,10 @@ open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
         return connections
     }
 
-    class Builder(val result: TestEntityData?): ModifiableWorkspaceEntityBase<TestEntity>(), TestEntity.Builder {
+  override val entitySource: EntitySource
+    get() = TODO("Not yet implemented")
+
+  class Builder(result: TestEntityData?): ModifiableWorkspaceEntityBase<TestEntity, TestEntityData>(result), TestEntity.Builder {
         constructor(): this(TestEntityData())
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -118,7 +112,6 @@ open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun getEntityData(): TestEntityData = result ?: super.getEntityData() as TestEntityData
         override fun getEntityClass(): Class<TestEntity> = TestEntity::class.java
     }
 }
@@ -132,7 +125,7 @@ class TestEntityData : WorkspaceEntityData<TestEntity>() {
     
     fun isAnotherFieldInitialized(): Boolean = ::anotherField.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<TestEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<TestEntity> {
         val modifiable = TestEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -149,7 +142,6 @@ class TestEntityData : WorkspaceEntityData<TestEntity>() {
         entity._name = name
         entity.count = count
         entity._anotherField = anotherField
-        entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
         return entity

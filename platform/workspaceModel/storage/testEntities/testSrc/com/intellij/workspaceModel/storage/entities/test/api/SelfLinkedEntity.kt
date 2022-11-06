@@ -6,7 +6,7 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
@@ -17,7 +17,7 @@ interface SelfLinkedEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SelfLinkedEntity, ModifiableWorkspaceEntity<SelfLinkedEntity>, ObjBuilder<SelfLinkedEntity> {
+  interface Builder : SelfLinkedEntity, WorkspaceEntity.Builder<SelfLinkedEntity>, ObjBuilder<SelfLinkedEntity> {
     override var entitySource: EntitySource
     override var parentEntity: SelfLinkedEntity?
   }

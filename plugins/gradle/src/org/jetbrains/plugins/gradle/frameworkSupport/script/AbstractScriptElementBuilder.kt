@@ -23,7 +23,12 @@ abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
   override fun code(text: List<String>) = CodeElement(text)
   override fun code(vararg text: String) = code(text.toList())
 
-  override fun assign(name: String, value: Expression) = AssignElement(name, value)
+  override fun assign(left: Expression, right: Expression) = AssignElement(left, right)
+  override fun assign(left: Expression, right: String) = assign(left, string(right))
+  override fun assign(left: Expression, right: Int) = assign(left, int(right))
+  override fun assign(left: Expression, right: Boolean) = assign(left, boolean(right))
+
+  override fun assign(name: String, value: Expression) = assign(code(name), value)
   override fun assign(name: String, value: String) = assign(name, string(value))
   override fun assign(name: String, value: Int) = assign(name, int(value))
   override fun assign(name: String, value: Boolean) = assign(name, boolean(value))

@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.posi
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupEditor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupMethodBody
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.codeInsight.template.TemplateBuilderImpl
@@ -15,7 +17,7 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateMethodFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -50,6 +52,15 @@ internal class CreateMethodAction(
     return message("create.element.in.class", kind.`object`(), what, where)
   }
 
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
+    val physicalRequest = request as? CreateMethodFromJavaUsageRequest ?: return IntentionPreviewInfo.EMPTY
+    val copyCall = PsiTreeUtil.findSameElementInCopy(physicalRequest.call, file)
+    val copyRequest = CreateMethodFromJavaUsageRequest(copyCall, physicalRequest.modifiers)
+    JavaMethodRenderer(project, abstract, copyClass, copyRequest).doMagic()
+    return IntentionPreviewInfo.DIFF
+  }
+
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     JavaMethodRenderer(project, abstract, target, request).doMagic()
   }
@@ -77,7 +88,7 @@ private class JavaMethodRenderer(
     startTemplate(method, template)
   }
 
-  private fun renderMethod(): PsiMethod {
+  fun renderMethod(): PsiMethod {
     val method = factory.createMethod(request.methodName, PsiType.VOID)
 
     val modifiersToRender = requestedModifiers.toMutableList()
@@ -143,13 +154,18 @@ private class MyMethodBodyListener(val project: Project, val editor: Editor, val
 
   override fun templateFinished(template: Template, brokenOff: Boolean) {
     if (brokenOff) return
-    runWriteCommandAction(project) {
-      PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-      val offset = editor.caretModel.offset
-      PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiMethod::class.java, false)?.let { method ->
-        setupMethodBody(method)
-        setupEditor(method, editor)
-      }
+    PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+    val offset = editor.caretModel.offset
+    val method = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiMethod::class.java, false) ?: return
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+      finishTemplate(method)
+    } else {
+      WriteCommandAction.runWriteCommandAction(project, message("create.method.body"), null, { finishTemplate(method) }, file)
     }
+  }
+
+  private fun finishTemplate(method: PsiMethod) {
+    setupMethodBody(method)
+    setupEditor(method, editor)
   }
 }

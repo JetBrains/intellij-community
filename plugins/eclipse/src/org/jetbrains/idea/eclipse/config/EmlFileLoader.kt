@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaSourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -20,7 +20,6 @@ import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 /**
  * Loads additional module configuration from *.eml file to [ModuleEntity]
@@ -224,7 +223,7 @@ internal class EmlFileLoader(
       .map { virtualFileManager.fromUrl(it) }
     if (excludedUrls.isNotEmpty()) {
       builder.modifyEntity(entity) {
-        this.excludedUrls.addAll(excludedUrls)
+        this.excludedUrls += excludedUrls.map { ExcludeUrlEntity(it, entitySource) }
       }
     }
   }

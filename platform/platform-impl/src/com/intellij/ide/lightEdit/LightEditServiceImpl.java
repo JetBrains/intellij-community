@@ -199,12 +199,9 @@ public final class LightEditServiceImpl implements LightEditService,
     dialog.show();
     if (dialog.isDontAsk()) {
       switch (dialog.getExitCode()) {
-        case LightEditConfirmationDialog.STAY_IN_LIGHT_EDIT:
+        case LightEditConfirmationDialog.STAY_IN_LIGHT_EDIT ->
           myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.LightEdit;
-          break;
-        case LightEditConfirmationDialog.PROCEED_TO_PROJECT:
-          myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.Project;
-          break;
+        case LightEditConfirmationDialog.PROCEED_TO_PROJECT -> myConfiguration.preferredMode = LightEditConfiguration.PreferredMode.Project;
       }
     }
     if (dialog.getExitCode() == LightEditConfirmationDialog.PROCEED_TO_PROJECT) {

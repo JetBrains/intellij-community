@@ -53,6 +53,10 @@
             qualifiedName="org.jetbrains.kotlin.kotlinTestFramework"
             interface="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.caches.resolve.resolveOptimizingOptionsProvider"
+            interface="org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -104,6 +108,17 @@
             parentId="project.propCompiler"/>
 
     <errorHandler implementation="org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter"/>
+    
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProvider"/>
+    <typeHierarchyProvider
+            language="JAVA"
+            order="last"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
@@ -118,7 +133,7 @@
     <lang.foldingBuilder
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
-
+    <stacktrace.fold substring="at kotlinx.coroutines."/>
 
     <codeInsight.linkHandler
             prefix="#kotlinClass/"
@@ -186,7 +201,19 @@
             description="Disables auto-completion inside expressions"
             defaultValue="false"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.deprioritize.flow.collect.in.completion"
+            description="Sink down Flow.collect method in auto completion list"
+            defaultValue="true"
+            restartRequired="false"/>
     <iconMapper mappingFile="KotlinIconMappings.json"/>
+  </extensions>
+
+  <!-- Line markers -->
+  <extensions defaultExtensionNs="com.intellij">
+    <runLineMarkerContributor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.KotlinRunLineMarkerContributor"/>
   </extensions>
 
   <projectListeners>
@@ -325,13 +352,19 @@
 
     <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.editor.KDocCopyPastePreProcessor"/>
 
-    <registryKey key="kotlin.lazy.import.suggestions"
-                 description="Calculate import quick fix suggestion lazy."
-                 defaultValue="false"
-                 restartRequired="true"/>
+    <registryKey
+            key="kotlin.enable.inlay.hint.for.lambda.return.type"
+            description="Show inlay hint for lambda return type"
+            defaultValue="false"
+            restartRequired="false"/>
 
     <registryKey key="kotlin.cache.packages.strong.map"
                  description="Hold info about packages using strong references instead of soft ones"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.resolve.cache.uses.perfile.cache"
+                 description="Allows ResolveElementCache to reuse analysis results of PerFileCache"
                  defaultValue="true"
                  restartRequired="true"/>
   </extensions>
@@ -409,7 +442,6 @@
 
     <directClassInheritorsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDirectInheritorsSearcher"/>
 
-    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDefinitionsSearcher"/>
     <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithFlexibleTypesSearcher"/>
     <indexPatternSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTodoSearcher"/>
 
@@ -421,9 +453,14 @@
     <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinConventionMethodReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.DefaultAnnotationMethodKotlinImplicitReferenceSearcher"/>
 
+    <refactoring.safeDelete.JavaSafeDeleteDelegate
+            id="kotlinJavaSafeDeleteDelegate"
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
+    <safeDelete.importSearcher implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinImportSearcher"/>
+
     <importFilteringRule implementation="org.jetbrains.kotlin.idea.findUsages.KotlinImportFilteringRule"/>
 
-    <elementDescriptionProvider order="first" implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProvider"/>
     <elementDescriptionProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinNonCodeSearchElementDescriptionProvider"/>
 
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
@@ -436,6 +473,8 @@
     <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector" id="kotlin"/>
 
     <dataflowIRProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.dfa.KotlinDataFlowIRProvider"/>
+
+    <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider$LibraryKindScanner"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
@@ -481,26 +520,6 @@
     <action id="KotlinCodeMigrationToggle" class="org.jetbrains.kotlin.idea.migration.CodeMigrationToggleAction">
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>
-
-    <group id="KotlinGenerateGroup">
-      <action id="KotlinGenerateTestMethod"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$Test"/>
-      <action id="KotlinGenerateSetUpMethod"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$SetUp"/>
-      <action id="KotlinGenerateTearDownMethod"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$TearDown"/>
-      <action id="KotlinGenerateDataMethod"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$Data"/>
-      <separator />
-      <action id="KotlinGenerateSecondaryConstructor"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateSecondaryConstructorAction"/>
-      <action id="KotlinGenerateEqualsAndHashCode"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction"/>
-      <action id="KotlinGenerateToString"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction"/>
-
-      <add-to-group group-id="GenerateGroup" anchor="first"/>
-    </group>
 
     <group id="InternalKotlin" internal="true">
       <separator/>

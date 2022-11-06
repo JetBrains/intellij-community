@@ -41,7 +41,7 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethod method = (PsiMethod)descriptor.getPsiElement().getParent();
       final PsiCodeBlock methodBody = method.getBody();
       final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(methodBody);

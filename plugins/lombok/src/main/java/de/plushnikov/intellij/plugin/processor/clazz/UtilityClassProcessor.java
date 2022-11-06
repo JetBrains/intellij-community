@@ -1,9 +1,8 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,22 +27,22 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     return validateOnRightType(psiClass, builder) && validateNoConstructorsDefined(psiClass, builder);
   }
 
-  private boolean validateNoConstructorsDefined(PsiClass psiClass, ProblemBuilder builder) {
+  private static boolean validateNoConstructorsDefined(PsiClass psiClass, ProblemSink builder) {
     Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassConstructorIntern(psiClass);
     if (!psiMethods.isEmpty()) {
-      builder.addError(LombokBundle.message("inspection.message.utility.classes.cannot.have.declared.constructors"));
+      builder.addErrorMessage("inspection.message.utility.classes.cannot.have.declared.constructors");
       return false;
     }
     return true;
   }
 
-  public static boolean validateOnRightType(PsiClass psiClass, ProblemBuilder builder) {
+  public static boolean validateOnRightType(PsiClass psiClass, ProblemSink builder) {
     if (checkWrongType(psiClass)) {
-      builder.addError(LombokBundle.message("inspection.message.utility.class.only.supported.on.class"));
+      builder.addErrorMessage("inspection.message.utility.class.only.supported.on.class");
       return false;
     }
     PsiElement context = psiClass.getContext();
@@ -62,11 +61,11 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
           if (isStatic || checkWrongType(psiClassUp)) {
             contextUp = contextUp.getContext();
           } else {
-            builder.addError(LombokBundle.message("inspection.message.utility.class.automatically.makes.class.static"));
+            builder.addErrorMessage("inspection.message.utility.class.automatically.makes.class.static");
             return false;
           }
         } else {
-          builder.addError(LombokBundle.message("inspection.message.utility.class.cannot.be.placed"));
+          builder.addErrorMessage("inspection.message.utility.class.cannot.be.placed");
           return false;
         }
       }

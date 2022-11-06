@@ -154,38 +154,23 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
     }
 
     private static String getInverseSimpleClassText(RegExpSimpleClass simpleClass) {
-      switch (simpleClass.getKind()) {
-        case DIGIT:
-          return "\\D";
-        case NON_DIGIT:
-          return "\\d";
-        case WORD:
-          return "\\W";
-        case NON_WORD:
-          return "\\w";
-        case SPACE:
-          return "\\S";
-        case NON_SPACE:
-          return "\\s";
-        case HORIZONTAL_SPACE:
-          return "\\H";
-        case NON_HORIZONTAL_SPACE:
-          return "\\h";
-        case VERTICAL_SPACE:
-          return "\\V";
-        case NON_VERTICAL_SPACE:
-          return "\\v";
-        case XML_NAME_START:
-          return "\\I";
-        case NON_XML_NAME_START:
-          return "\\i";
-        case XML_NAME_PART:
-          return "\\C";
-        case NON_XML_NAME_PART:
-          return "\\c";
-        default:
-          return null;
-      }
+      return switch (simpleClass.getKind()) {
+        case DIGIT -> "\\D";
+        case NON_DIGIT -> "\\d";
+        case WORD -> "\\W";
+        case NON_WORD -> "\\w";
+        case SPACE -> "\\S";
+        case NON_SPACE -> "\\s";
+        case HORIZONTAL_SPACE -> "\\H";
+        case NON_HORIZONTAL_SPACE -> "\\h";
+        case VERTICAL_SPACE -> "\\V";
+        case NON_VERTICAL_SPACE -> "\\v";
+        case XML_NAME_START -> "\\I";
+        case NON_XML_NAME_START -> "\\i";
+        case XML_NAME_PART -> "\\C";
+        case NON_XML_NAME_PART -> "\\c";
+        default -> null;
+      };
     }
 
     private static class RegExpSimplifiableFix implements LocalQuickFix {

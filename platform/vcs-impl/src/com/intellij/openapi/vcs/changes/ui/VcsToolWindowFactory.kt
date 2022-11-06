@@ -35,6 +35,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
       AppUIExecutor.onUiThread().expireWith(window.disposable).execute {
         updateState(window)
+        window.contentManagerIfCreated?.selectFirstContent()
       }
     })
     connection.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
@@ -45,7 +46,6 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     connection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
         updateState(window)
-        window.contentManagerIfCreated?.selectFirstContent()
       }
     })
     CommitModeManager.subscribeOnCommitModeChange(connection, object : CommitModeManager.CommitModeListener {
@@ -62,20 +62,20 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       // must be executed later, because we set toolWindow.isAvailable (cannot be called in the init directly)
       ApplicationManager.getApplication().invokeLater({ updateState(window) }, window.project.disposed)
     }
-
-    val contentManager = window.contentManager
-    contentManager.addDataProvider { dataId ->
-      when {
-        ChangesViewContentManager.CONTENT_TAB_NAME_KEY.`is`(dataId) -> contentManager.selectedContent?.tabName
-        else -> null
-      }
-    }
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     updateContent(toolWindow)
     ChangesViewContentManager.getInstance(project).attachToolWindow(toolWindow)
     toolWindow.component.putClientProperty(IS_CONTENT_CREATED, true)
+
+    val contentManager = toolWindow.contentManager
+    contentManager.addDataProvider { dataId ->
+      when {
+        ChangesViewContentManager.CONTENT_TAB_NAME_KEY.`is`(dataId) -> contentManager.selectedContent?.tabName
+        else -> null
+      }
+    }
   }
 
   protected open fun updateState(toolWindow: ToolWindow) {

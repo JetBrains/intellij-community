@@ -71,12 +71,14 @@ public final class LazyInitializer {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public abstract static class NullableValue<T> {
+  public static abstract class NotNullValue<T> implements Supplier<T> {
+    public NotNullValue() {
+    }
+
+    public abstract @NotNull T initialize();
+
     @SuppressWarnings("unchecked")
     private volatile T value = (T)UNINITIALIZED_VALUE;
-
-    @Nullable
-    public abstract T initialize();
 
     /**
      * Initializes the value if necessary and returns it.
@@ -105,18 +107,5 @@ public final class LazyInitializer {
     public String toString() {
       return String.valueOf(value);
     }
-  }
-
-  /**
-   * @deprecated Use {@link #create(Supplier)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static abstract class NotNullValue<T> extends NullableValue<T> implements Supplier<T> {
-    public NotNullValue() {
-    }
-
-    @Override
-    public abstract @NotNull T initialize();
   }
 }

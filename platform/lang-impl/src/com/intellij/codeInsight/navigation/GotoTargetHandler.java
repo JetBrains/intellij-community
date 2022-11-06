@@ -32,11 +32,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.*;
@@ -54,7 +58,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(getFeatureUsedKey());
+    String featureId = getFeatureUsedKey();
+    if (featureId != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(featureId);
+    }
 
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
@@ -74,6 +81,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<? super GotoData> successCallback) { }
 
   @NonNls
+  @Nullable
   protected abstract String getFeatureUsedKey();
 
   protected boolean useEditorFont() {
@@ -168,7 +176,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder<?>)builder).getScrollPane() : null;
     if (pane != null) {
-      pane.setBorder(null);
+      if (!ExperimentalUI.isNewUI()) {
+        pane.setBorder(null);
+      }
       pane.setViewportBorder(null);
     }
 
@@ -225,7 +235,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   /**
    * @deprecated use {@link #computePresentation}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @SuppressWarnings("rawtypes")
   public static PsiElementListCellRenderer createRenderer(@NotNull GotoData gotoData, @NotNull PsiElement eachTarget) {
     for (GotoTargetRendererProvider eachProvider : GotoTargetRendererProvider.EP_NAME.getExtensionList()) {

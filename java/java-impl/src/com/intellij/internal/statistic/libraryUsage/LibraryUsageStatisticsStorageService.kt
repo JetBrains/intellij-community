@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.XMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -17,6 +18,7 @@ import kotlin.concurrent.write
   reportStatistic = false,
   reloadable = false,
 )
+@ApiStatus.Internal
 class LibraryUsageStatisticsStorageService : PersistentStateComponent<LibraryUsageStatisticsStorageService.LibraryUsageStatisticsState> {
   private val lock = ReentrantReadWriteLock()
   private var statistics = Object2IntOpenHashMap<LibraryUsage>()
@@ -38,7 +40,7 @@ class LibraryUsageStatisticsStorageService : PersistentStateComponent<LibraryUsa
   }
 
   fun increaseUsages(libraries: Collection<LibraryUsage>): Unit = lock.write {
-    libraries.forEach {
+    for (it in libraries) {
       statistics.addTo(it, 1)
     }
   }

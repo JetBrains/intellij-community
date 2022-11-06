@@ -48,23 +48,8 @@ abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStrea
   }
 
   @Override
-  public DataFlavor getFlavor() {
+  public @Nullable DataFlavor getFlavor() {
     return myDataFlavor;
-  }
-
-  @Override
-  public int getOffsetCount() {
-    return 0;
-  }
-
-  @Override
-  public int getOffsets(int[] offsets, int index) {
-    return index;
-  }
-
-  @Override
-  public int setOffsets(int[] offsets, int index) {
-    return index;
   }
 
   @Override

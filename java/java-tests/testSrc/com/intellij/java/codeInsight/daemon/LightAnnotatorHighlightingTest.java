@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -122,9 +121,11 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
   private void runMyAnnotators() {
     @org.intellij.lang.annotations.Language("JAVA")
-    String text = "class X {\n" +
-                  "  //XXX\n" +
-                  "}\n";
+    String text = """
+      class X {
+        //XXX
+      }
+      """;
     configureFromFileText("x.java", text);
     ((EditorImpl)getEditor()).getScrollPane().getViewport().setSize(1000, 1000);
     assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
@@ -133,7 +134,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject()))
-      .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
+      .runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
   }
 
   public static class MyCrazyAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {

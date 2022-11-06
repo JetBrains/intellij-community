@@ -90,7 +90,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
 
     var notificationsCount = 0
     val version = WorkspaceModel.getInstance(project).entityStorage.version
-    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         notificationsCount++
       }

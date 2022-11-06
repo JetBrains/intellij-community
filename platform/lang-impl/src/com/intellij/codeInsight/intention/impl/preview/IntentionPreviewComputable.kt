@@ -18,6 +18,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.SideEffectGuard
+import com.intellij.model.SideEffectGuard.SideEffectNotAllowedException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -63,8 +64,15 @@ internal class IntentionPreviewComputable(private val project: Project,
     catch (e: ProcessCanceledException) {
       throw e
     }
+    catch (e: SideEffectNotAllowedException) {
+      val wrapper = RuntimeException(e.message)
+      wrapper.stackTrace = e.stackTrace
+      logger<IntentionPreviewComputable>().error("Side effect occurred on invoking the intention '${action.text}' on a copy of the file",
+                                                 wrapper)
+      return null
+    }
     catch (e: Exception) {
-      logger<IntentionPreviewComputable>().error("There are exceptions on invocation the intention: '${action.text}' on a copy of the file.", e)
+      logger<IntentionPreviewComputable>().error("Exceptions occurred on invoking the intention '${action.text}' on a copy of the file.", e)
       return null
     }
   }
@@ -74,6 +82,7 @@ internal class IntentionPreviewComputable(private val project: Project,
     val origPair = ShowIntentionActionsHandler.chooseFileForAction(originalFile, originalEditor, action) ?: return null
     val origFile: PsiFile
     val selection: TextRange
+    val caretOffset: Int
     val fileFactory = PsiFileFactory.getInstance(project)
     if (origPair.first != originalFile) {
       val manager = InjectedLanguageManager.getInstance(project)
@@ -84,27 +93,38 @@ internal class IntentionPreviewComputable(private val project: Project,
       val end = if (selectionModel.selectionEnd == selectionModel.selectionStart) start else
         mapInjectedOffsetToUnescaped(origPair.first, selectionModel.selectionEnd)
       selection = TextRange(start, end)
+      val caretModel = origPair.second.caretModel
+      caretOffset = when (caretModel.offset) {
+        selectionModel.selectionStart -> start
+        selectionModel.selectionEnd -> end
+        else -> mapInjectedOffsetToUnescaped(origPair.first, caretModel.offset)
+      }
     }
     else {
       origFile = originalFile
       selection = TextRange(originalEditor.selectionModel.selectionStart, originalEditor.selectionModel.selectionEnd)
+      caretOffset = originalEditor.caretModel.offset
     }
     ProgressManager.checkCanceled()
     val writable = originalEditor.document.isWritable
     try {
-      val (result: IntentionPreviewInfo, psiFileCopy: PsiFile?) = invokePreview(origFile, selection)
+      val (result: IntentionPreviewInfo, psiFileCopy: PsiFile?) = invokePreview(origFile, selection, caretOffset)
       ProgressManager.checkCanceled()
       val comparisonManager = ComparisonManager.getInstance()
       return when (result) {
         IntentionPreviewInfo.DIFF,
         IntentionPreviewInfo.DIFF_NO_TRIM -> {
           val document = psiFileCopy!!.viewProvider.document
+          val correctedOrigFile = psiFileCopy.originalFile
+          val anotherFile = correctedOrigFile != origFile
           val policy = if (result == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
           IntentionPreviewDiffResult(
             psiFile = psiFileCopy,
-            origFile = origFile,
+            origFile = correctedOrigFile,
             policy = policy,
-            lineFragments = comparisonManager.compareLines(origFile.text, document.text, policy, DumbProgressIndicator.INSTANCE))
+            fileName = if (anotherFile) psiFileCopy.name else null,
+            normalDiff = !anotherFile,
+            lineFragments = comparisonManager.compareLines(correctedOrigFile.text, document.text, policy, DumbProgressIndicator.INSTANCE))
         }
         IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
         is IntentionPreviewInfo.CustomDiff -> {
@@ -125,22 +145,24 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
   }
 
-  private fun invokePreview(origFile: PsiFile, selection: TextRange): Pair<IntentionPreviewInfo, PsiFile?> {
+  private fun invokePreview(origFile: PsiFile, selection: TextRange, caretOffset: Int): Pair<IntentionPreviewInfo, PsiFile?> {
     var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
-    val psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(origFile)
+    val fileToCopy = action.getElementToMakeWritable(origFile) ?. containingFile ?: origFile
+    val psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
     val editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
-    editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
+    if (fileToCopy == origFile) {
+      editorCopy.caretModel.moveToOffset(caretOffset)
+      editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
+    }
     originalEditor.document.setReadOnly(true)
     ProgressManager.checkCanceled()
     IntentionPreviewUtils.previewSession(editorCopy) {
       PostprocessReformattingAspect.getInstance(project)
         .postponeFormattingInside { info = action.generatePreview(project, editorCopy, psiFileCopy) }
     }
-    if (info == IntentionPreviewInfo.FALLBACK_DIFF) {
+    if (info == IntentionPreviewInfo.FALLBACK_DIFF && fileToCopy == origFile) {
       if (!action.startInWriteAction()) return info to null
       if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return info to null
-      // Use fallback algorithm only if invokeForPreview is not explicitly overridden
-      // in this case, the absence of diff could be intended, thus should not be logged as error
       val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return info to null
       val unwrapped = IntentionActionDelegate.unwrap(action)
       val cls = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.java

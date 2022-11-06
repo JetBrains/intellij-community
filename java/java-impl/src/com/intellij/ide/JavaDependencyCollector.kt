@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 
@@ -50,7 +50,7 @@ private class ProjectLoadedListener(private val project: Project) : JpsProjectLo
   override fun loaded() {
     if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) return
 
-    PluginFeatureEnabler.getInstance(project).enableSuggestedHelper()
+    PluginFeatureEnabler.getInstance(project).scheduleEnableSuggested()
   }
 }
 

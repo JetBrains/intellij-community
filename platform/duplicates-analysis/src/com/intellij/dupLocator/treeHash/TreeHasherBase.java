@@ -253,22 +253,16 @@ class TreeHasherBase extends AbstractTreeHasher {
       return Couple.of(0, 0);
     }
 
-    switch (childDescriptor.getType()) {
-      case OPTIONALLY_IN_PATTERN:
-      case DEFAULT:
+    return switch (childDescriptor.getType()) {
+      case OPTIONALLY_IN_PATTERN, DEFAULT -> {
         final TreeHashResult result = hash(element, parentFragment, nodeSpecificHasher);
-        return Couple.of(result.getHash(), result.getCost());
-
-      case CHILDREN_OPTIONALLY_IN_PATTERN:
-      case CHILDREN:
-        return hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 31);
-
-      case CHILDREN_IN_ANY_ORDER:
-        return hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 1);
-
-      default:
-        return Couple.of(0, 0);
-    }
+        yield Couple.of(result.getHash(), result.getCost());
+      }
+      case CHILDREN_OPTIONALLY_IN_PATTERN, CHILDREN ->
+        hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 31);
+      case CHILDREN_IN_ANY_ORDER -> hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 1);
+      default -> Couple.of(0, 0);
+    };
   }
 
   @NotNull
@@ -277,18 +271,11 @@ class TreeHasherBase extends AbstractTreeHasher {
                                       NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement[] elements = childDescriptor.getElements();
 
-    switch (childDescriptor.getType()) {
-
-      case OPTIONALLY_IN_PATTERN:
-      case DEFAULT:
-        return hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 31);
-
-      case IN_ANY_ORDER:
-        return hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 1);
-
-      default:
-        return Couple.of(0, 0);
-    }
+    return switch (childDescriptor.getType()) {
+      case OPTIONALLY_IN_PATTERN, DEFAULT -> hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 31);
+      case IN_ANY_ORDER -> hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 1);
+      default -> Couple.of(0, 0);
+    };
   }
 
   @NotNull

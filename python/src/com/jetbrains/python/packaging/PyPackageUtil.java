@@ -397,7 +397,7 @@ public final class PyPackageUtil {
    * @return whether packages were refreshed successfully, e.g. this update wasn't cancelled because of another refresh in progress
    */
   public static boolean updatePackagesSynchronouslyWithGuard(@NotNull PyPackageManager manager, @NotNull AtomicBoolean isUpdating) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (!isUpdating.compareAndSet(false, true)) {
       return false;
     }

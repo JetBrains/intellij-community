@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-/**
- * @author peter
- */
 public class GroovySpellcheckingStrategy extends SpellcheckingStrategy {
   private final GrDocCommentTokenizer myDocCommentTokenizer = new GrDocCommentTokenizer();
   private final Tokenizer<PsiElement> myStringTokenizer = new EscapeSequenceTokenizer<>() {

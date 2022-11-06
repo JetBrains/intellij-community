@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.options.RegistryManager;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.LoadingState;
@@ -11,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -286,29 +287,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
 
       @Override
-      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        if (isNewUIPlugin(pluginDescriptor)) {
-          ExperimentalUI.getInstance().onExpUIDisabled();
-        }
-      }
-
-      @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         isUpdatingPlugin = false;
         themeIdBeforePluginUpdate = null;
-        if (isNewUIPlugin(pluginDescriptor)) {
-          enableExpUI();
-        }
-      }
-
-      private boolean isNewUIPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        return pluginDescriptor.getPluginId().getIdString().equals("com.intellij.plugins.expui");
-      }
-
-      private void enableExpUI() {
-        if (!Registry.is("ide.experimental.ui")) {
-          ExperimentalUI.getInstance().onExpUIEnabled();
-        }
       }
     });
   }
@@ -333,12 +314,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UIManager.LookAndFeelInfo expectedLaf;
     if (systemIsDark) {
       expectedLaf = preferredDarkLaf;
+      if (expectedLaf == null && ExperimentalUI.isNewUI()) {
+        expectedLaf = findLafByName("Dark");
+      }
       if (expectedLaf == null) {
         expectedLaf = getDefaultDarkLaf();
       }
     }
     else {
       expectedLaf = preferredLightLaf;
+      if (expectedLaf == null && ExperimentalUI.isNewUI()) {
+        expectedLaf = findLafByName("Light");
+      }
       if (expectedLaf == null) {
         expectedLaf = getDefaultLightLaf();
       }
@@ -368,6 +355,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void loadState(@NotNull Element element) {
+    UIManager.LookAndFeelInfo oldLaF = myCurrentLaf;
+
     myCurrentLaf = loadLafState(element, ELEMENT_LAF);
     if (myCurrentLaf == null) {
       myCurrentLaf = loadDefaultLaf();
@@ -379,6 +368,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (autodetect) {
       getOrCreateLafDetector();
+    }
+
+    if (!isFirstSetup && !myCurrentLaf.equals(oldLaF)) {
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, myCurrentLaf, true, true);
     }
   }
 
@@ -585,6 +578,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     throw new IllegalStateException("No default L&F found: " + defaultLafName);
   }
 
+  private @Nullable UIManager.LookAndFeelInfo findLafByName(@NotNull String name) {
+    for (UIManager.LookAndFeelInfo laf : getInstalledLookAndFeels()) {
+      if (name.equals(laf.getName())) {
+        return laf;
+      }
+    }
+    return null;
+  }
+
   private @Nullable UIManager.LookAndFeelInfo findLaf(@NotNull String className) {
     UIManager.LookAndFeelInfo defaultLightLaf = getDefaultLightLaf();
     if (defaultLightLaf.getClassName().equals(className)) {
@@ -649,7 +651,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.clear();
     defaults.putAll(ourDefaults);
     if (!isFirstSetup) {
-      SVGLoader.setContextColorPatcher(null);
+      SVGLoader.setColorPatcherProvider(null);
       SVGLoader.setSelectionColorPatcherProvider(null);
     }
 
@@ -1031,31 +1033,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void patchLafFonts(UIDefaults uiDefaults) {
-    //if (JBUI.isHiDPI()) {
-    //  HashMap<Object, Font> newFonts = new HashMap<Object, Font>();
-    //  for (Object key : uiDefaults.keySet().toArray()) {
-    //    Object val = uiDefaults.get(key);
-    //    if (val instanceof Font) {
-    //      newFonts.put(key, JBFont.create((Font)val));
-    //    }
-    //  }
-    //  for (Map.Entry<Object, Font> entry : newFonts.entrySet()) {
-    //    uiDefaults.put(entry.getKey(), entry.getValue());
-    //  }
-    //} else
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getOverrideLafFonts()) {
+    if (uiSettings.getOverrideLafFonts() || IdeScaleTransformer.INSTANCE.getCurrentScale() != 1) {
       storeOriginalFontDefaults(uiDefaults);
-      float fontSize = uiSettings.getFontSize2D();
+      float fontSize = uiSettings.getFontSize2D() * IdeScaleTransformer.INSTANCE.getCurrentScale();
       StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, fontSize));
-      JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(fontSize));
+      float userScaleFactor = useInterFont() ? fontSize / INTER_SIZE : JBUIScale.getFontScale(fontSize);
+      JBUIScale.setUserScaleFactor(userScaleFactor);
     }
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults);
       StartupUiUtil.initFontDefaults(uiDefaults, getDefaultInterFont());
-      if (!uiSettings.getPresentationMode()) {
-        JBUIScale.setUserScaleFactor(getDefaultUserScaleFactor());
-      }
+      JBUIScale.setUserScaleFactor(getDefaultUserScaleFactor());
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -1142,6 +1131,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (autodetect) {
       detectAndSyncLaf();
     }
+    else if (ExperimentalUI.isNewUI()) {
+      if ("Light".equals(myCurrentLaf.getName()) && myCurrentLaf == preferredLightLaf) {
+        preferredLightLaf = null;
+      }
+      else if ("Dark".equals(myCurrentLaf.getName()) && myCurrentLaf == preferredDarkLaf) {
+        preferredDarkLaf = null;
+      }
+    }
   }
 
   @Override
@@ -1224,10 +1221,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
-        if (IdeaPopupMenuUI.isUnderPopup(contents) && IdeaPopupMenuUI.isRoundBorder()) {
+        if (IdeaPopupMenuUI.isUnderPopup(contents) && WindowRoundedCornersManager.isAvailable()) {
+          if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+            WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true));
+          }
+          else {
+            WindowRoundedCornersManager.setRoundedCorners(window);
+          }
           if (SystemInfoRt.isMac) {
-            rootPane.putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
-
             JComponent contentPane = (JComponent)((RootPaneContainer)window).getContentPane();
             contentPane.setOpaque(true);
             contentPane.setBackground(contents.getBackground());

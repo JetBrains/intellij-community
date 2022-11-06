@@ -5,12 +5,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.*
 import org.junit.Assume
 import org.junit.Before
@@ -133,7 +132,7 @@ class VirtualFileIndexTest {
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertEquals(entityB.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
 
-    diff.removeEntity(entityB)
+    diff.removeEntity(entityB.from(diff))
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertTrue(diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id).isEmpty())
     assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
@@ -165,7 +164,7 @@ class VirtualFileIndexTest {
     assertEquals(fileUrlB, entityB.fileProperty.url)
     assertEquals(entityB.fileProperty, virtualFile.first())
 
-    entityB = diff.modifyEntity(entityB as VFUEntity) {
+    entityB = diff.modifyEntity((entityB as VFUEntity).from(diff)) {
       fileProperty = virtualFileManager.fromUrl(fileUrlC)
     } as VFUEntityImpl
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())

@@ -298,17 +298,6 @@ public final class VMOptions {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated ignores write errors; please use {@link #setOption(MemoryKind, int)} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static void writeOption(@NotNull MemoryKind option, int value) {
-    try {
-      setOption(option.option, value + "m");
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-  }
 
   /** @deprecated ignores write errors; please use {@link #setProperty} instead */
   @Deprecated(forRemoval = true)
@@ -353,10 +342,5 @@ public final class VMOptions {
     return getUserOptionsFile();
   }
 
-  /** @deprecated the name is no longer accurate; please use {@link #getFileName()} instead */
-  @Deprecated(forRemoval = true)
-  public static @NotNull String getCustomVMOptionsFileName() {
-    return getFileName();
-  }
   //</editor-fold>
 }

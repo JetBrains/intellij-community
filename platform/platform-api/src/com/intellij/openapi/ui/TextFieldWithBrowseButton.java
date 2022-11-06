@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   public TextFieldWithBrowseButton(JTextField field, @Nullable ActionListener browseActionListener, @Nullable Disposable parent) {
     super(field, browseActionListener);
     if (!(field instanceof JBTextField)) {
-      UIUtil.addUndoRedoActions(field);
+      SwingUndoUtil.addUndoRedoActions(field);
     }
     installPathCompletion(FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), parent);
   }

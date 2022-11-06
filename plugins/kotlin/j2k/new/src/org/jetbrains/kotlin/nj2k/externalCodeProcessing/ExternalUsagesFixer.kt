@@ -1,14 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.j2k.AccessorKind
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
+import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
+import org.jetbrains.kotlin.j2k.AccessorKind.GETTER
+import org.jetbrains.kotlin.j2k.AccessorKind.SETTER
+import org.jetbrains.kotlin.lexer.KtTokens.*
+import org.jetbrains.kotlin.load.java.JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
@@ -32,10 +35,10 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
         run {
             val ktProperty = kotlinElement ?: return@run
             when {
-                javaUsages.isNotEmpty() && ktProperty.isSimpleProperty() ->
-                    ktProperty.addAnnotationIfThereAreNoJvmOnes(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
+                javaUsages.isNotEmpty() && ktProperty.canBeAnnotatedWithJvmField() ->
+                    ktProperty.addAnnotationIfThereAreNoJvmOnes(JVM_FIELD_ANNOTATION_FQ_NAME)
 
-                javaUsages.isNotEmpty() && isStatic && !ktProperty.hasModifier(KtTokens.CONST_KEYWORD) ->
+                javaUsages.isNotEmpty() && isStatic && !ktProperty.hasModifier(CONST_KEYWORD) ->
                     ktProperty.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
             }
         }
@@ -52,29 +55,45 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
     }
 
     private fun JKMethodData.fix(javaUsages: List<PsiElement>, kotlinUsages: List<KtElement>) {
-        usedAsAccessorOfProperty?.let { property ->
-            val accessorKind =
-                if (javaElement.name.startsWith("set")) AccessorKind.SETTER
-                else AccessorKind.GETTER
+        val member = usedAsAccessorOfProperty ?: this
+        val element = member.kotlinElement
+
+        when {
+            javaUsages.isNotEmpty() && element.canBeAnnotatedWithJvmField() ->
+                element?.addAnnotationIfThereAreNoJvmOnes(JVM_FIELD_ANNOTATION_FQ_NAME)
+
+            javaUsages.isNotEmpty() && isStatic && !element.isConstProperty() ->
+                element?.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
+        }
+
+        if (element.isSimpleProperty()) {
+            val accessorKind = if (javaElement.name.startsWith("set")) SETTER else GETTER
+            if (element?.hasJvmFieldAnnotation() == true) {
+                javaUsages.forEach { usage ->
+                    conversions += AccessorToPropertyJavaExternalConversion(member.name, accessorKind, usage)
+                }
+            }
 
             kotlinUsages.forEach { usage ->
-                conversions += AccessorToPropertyKotlinExternalConversion(property.name, accessorKind, usage)
+                conversions += AccessorToPropertyKotlinExternalConversion(member.name, accessorKind, usage)
             }
-        }
-        if (javaUsages.isNotEmpty() && isStatic) {
-            when (val accessorOf = usedAsAccessorOfProperty) {
-                null -> this
-                else -> accessorOf
-            }.kotlinElement?.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
         }
     }
 
-    private fun KtProperty.isSimpleProperty() =
-        getter == null
-                && setter == null
-                && !hasModifier(KtTokens.CONST_KEYWORD)
+    private fun KtNamedDeclaration?.isConstProperty(): Boolean =
+        this is KtProperty && hasModifier(CONST_KEYWORD)
 
-    private fun KtDeclaration.addAnnotationIfThereAreNoJvmOnes(fqName: FqName) {
+    private fun KtNamedDeclaration?.canBeAnnotatedWithJvmField(): Boolean {
+        if (this == null) return false
+        if (hasModifier(OVERRIDE_KEYWORD) || hasModifier(OPEN_KEYWORD) || hasModifier(CONST_KEYWORD)) return false
+        return isSimpleProperty()
+    }
+
+    private fun KtNamedDeclaration?.isSimpleProperty(): Boolean =
+        this?.isConstructorDeclaredProperty() == true ||
+                (this is KtProperty && getter == null && setter == null)
+
+    private fun KtNamedDeclaration.addAnnotationIfThereAreNoJvmOnes(fqName: FqName) {
         // we don't want to resolve here and as we are working with fqNames, just by-text comparing is OK
         if (annotationEntries.any { entry ->
                 USED_JVM_ANNOTATIONS.any { jvmAnnotation ->
@@ -86,13 +105,13 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
     }
 
     internal data class JKMemberInfoWithUsages(
-        val member: JKMemberData<*>,
+        val member: JKMemberData,
         val javaUsages: List<PsiElement>,
         val kotlinUsages: List<KtElement>
     )
 
     companion object {
         private val JVM_STATIC_FQ_NAME = FqName("kotlin.jvm.JvmStatic")
-        val USED_JVM_ANNOTATIONS = listOf(JVM_STATIC_FQ_NAME, JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
+        val USED_JVM_ANNOTATIONS = listOf(JVM_STATIC_FQ_NAME, JVM_FIELD_ANNOTATION_FQ_NAME)
     }
 }

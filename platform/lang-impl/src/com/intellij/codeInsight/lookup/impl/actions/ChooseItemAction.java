@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.lookup.impl.actions;
 
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -13,7 +12,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateCustomAction;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -55,18 +53,6 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
         ExpandLiveTemplateCustomAction.createExpandTemplateHandler(finishingChar).execute(editor, null, dataContext);
 
         return;
-      }
-
-      if (finishingChar == Lookup.NORMAL_SELECT_CHAR) {
-        if (!lookup.isFocused()) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER);
-        }
-      } else if (finishingChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER);
-      } else if (finishingChar == Lookup.REPLACE_SELECT_CHAR) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_REPLACE);
-      } else if (finishingChar == '.')  {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT);
       }
 
       SlowOperations.allowSlowOperations(() -> lookup.finishLookup(finishingChar));

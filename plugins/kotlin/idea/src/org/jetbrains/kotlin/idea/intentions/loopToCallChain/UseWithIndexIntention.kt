@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
+import com.intellij.codeInsight.FileModificationService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -19,31 +21,37 @@ class UseWithIndexIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,
     KotlinBundle.lazyMessage("use.withindex.instead.of.manual.index.increment")
 ) {
+
+    override fun startInWriteAction(): Boolean  = false
+
     override fun applicabilityRange(element: KtForExpression): TextRange? =
         if (matchIndexToIntroduce(element, reformat = false) != null) element.forKeyword.textRange else null
 
     override fun applyTo(element: KtForExpression, editor: Editor?) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
         val (indexVariable, initializationStatement, incrementExpression) = matchIndexToIntroduce(element, reformat = true)!!
 
         val factory = KtPsiFactory(element)
         val loopRange = element.loopRange!!
         val loopParameter = element.loopParameter!!
 
-        val newLoopRange = factory.createExpressionByPattern("$0.withIndex()", loopRange)
-        loopRange.replace(newLoopRange)
+        runWriteAction {
+            val newLoopRange = factory.createExpressionByPattern("$0.withIndex()", loopRange)
+            loopRange.replace(newLoopRange)
 
-        val multiParameter = (factory.createExpressionByPattern(
-            "for(($0, $1) in x){}",
-            indexVariable.nameAsSafeName,
-            loopParameter.text
-        ) as KtForExpression).loopParameter!!
-        loopParameter.replace(multiParameter)
+            val multiParameter = (factory.createExpressionByPattern(
+                "for(($0, $1) in x){}",
+                indexVariable.nameAsSafeName,
+                loopParameter.text
+            ) as KtForExpression).loopParameter!!
+            loopParameter.replace(multiParameter)
 
-        initializationStatement.delete()
-        if (incrementExpression.parent is KtBlockExpression) {
-            incrementExpression.delete()
-        } else {
-            removePlusPlus(incrementExpression, true)
+            initializationStatement.delete()
+            if (incrementExpression.parent is KtBlockExpression) {
+                incrementExpression.delete()
+            } else {
+                removePlusPlus(incrementExpression, true)
+            }
         }
     }
 }

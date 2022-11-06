@@ -5,6 +5,7 @@ name = "xplat-launcher"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.62.1"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -24,16 +25,23 @@ serde = { version="1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 is_executable = "1.0.1"
 simplelog = "0.12.0"
-thiserror = "1.0.30"
 jni = { version="0.19.0" }
 libloading = "0.7.3"
 jni-sys = "0.3.0"
 path-absolutize = "3.0.13"
+utils = { version = "0.1.0", path = "utils" }
+anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
+
+[build-dependencies]
+cargo-deny = "0.12.2" # checks licenses / vulns
+cargo-about = "0.5.1" # generates license report
 
 [dev-dependencies]
-junction = "0.2.0"
-fs_extra = "1.2.0"
-anyhow = "1.0.62"
+rstest = "0.15.0"
+tempfile = "3.3.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9.3"
+
+[target.'cfg(target_os = "windows")'.dev-dependencies]
+junction = "0.2.0"

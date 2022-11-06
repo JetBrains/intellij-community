@@ -9,78 +9,80 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
+import org.jetbrains.kotlin.nj2k.tree.Modality.OPEN
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
 import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.JKJavaVoidType
+import org.jetbrains.kotlin.nj2k.types.fqName
 import org.jetbrains.kotlin.nj2k.types.updateNullability
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        if (element !is JKClass) return recurse(element)
-        for (declaration in element.classBody.declarations) {
-            if (declaration !is JKMethodImpl) continue
-            if (fixToStringMethod(declaration)) continue
-            if (fixFinalizeMethod(declaration, element)) continue
-            if (fixCloneMethod(declaration)) {
-                val cloneableClass = JavaPsiFacade.getInstance(context.project)
-                    .findClass("java.lang.Cloneable", GlobalSearchScope.allScope(context.project)) ?: continue
-                val directlyImplementsCloneable = element.psi<PsiClass>()?.isInheritor(cloneableClass, false) ?: continue
-                val hasCloneableInSuperClasses =
-                    declaration.psi<PsiMethod>()
-                        ?.findSuperMethods()
-                        ?.any { superMethod ->
-                            superMethod.containingClass?.kotlinFqName?.asString() != "java.lang.Object"
-                        } == true
-                if (directlyImplementsCloneable && hasCloneableInSuperClasses) {
-                    val directCloneableSupertype = element.inheritance.implements.find {
-                        it.type.safeAs<JKClassType>()?.classReference?.fqName == "java.lang.Cloneable"
-                    } ?: continue
-                    element.inheritance.implements -= directCloneableSupertype
-                } else if (!directlyImplementsCloneable && !hasCloneableInSuperClasses) {
-                    element.inheritance.implements += JKTypeElement(
-                        JKClassType(
-                            context.symbolProvider.provideClassSymbol("kotlin.Cloneable"),
-                            nullability = NotNull
-                        )
-                    )
+        if (element is JKClass) {
+            element.classBody.declarations.forEach {
+                when {
+                    it !is JKMethodImpl -> return@forEach
+                    it.isToString() -> it.fixToString()
+                    it.isFinalize() -> it.fixFinalize()
+                    it.isClone() -> it.fixClone()
                 }
             }
         }
         return recurse(element)
     }
 
-    private fun fixToStringMethod(method: JKMethodImpl): Boolean {
-        if (method.name.value != "toString") return false
-        if (method.parameters.isNotEmpty()) return false
-        val type = (method.returnType.type as? JKClassType)
-            ?.takeIf { it.classReference.name == "String" }
-            ?.updateNullability(NotNull) ?: return false
-        method.returnType = JKTypeElement(type, method.returnType::annotationList.detached())
-        return true
+    private fun JKMethod.isToString(): Boolean =
+        name.value == "toString" && parameters.isEmpty() && returnType.type.fqName == "java.lang.String"
+
+    private fun JKMethod.isFinalize(): Boolean =
+        name.value == "finalize" && parameters.isEmpty() && returnType.type == JKJavaVoidType
+
+    private fun JKMethod.isClone(): Boolean =
+        name.value == "clone" && parameters.isEmpty() && returnType.type.fqName == "java.lang.Object"
+
+    private fun JKMethod.fixToString() {
+        val type = (returnType.type as? JKClassType)?.updateNullability(NotNull) ?: return
+        returnType = JKTypeElement(type, returnType::annotationList.detached())
     }
 
-    private fun fixCloneMethod(method: JKMethodImpl): Boolean {
-        if (method.name.value != "clone") return false
-        if (method.parameters.isNotEmpty()) return false
-        val type = (method.returnType.type as? JKClassType)
-            ?.takeIf { it.classReference.name == "Object" }
-            ?.updateNullability(NotNull) ?: return false
-        method.returnType = JKTypeElement(type, method.returnType::annotationList.detached())
-        return true
-    }
-
-    private fun fixFinalizeMethod(method: JKMethodImpl, containingClass: JKClass): Boolean {
-        if (method.name.value != "finalize") return false
-        if (method.parameters.isNotEmpty()) return false
-        if (method.returnType.type != JKJavaVoidType) return false
-        if (method.hasOtherModifier(OtherModifier.OVERRIDE)) {
-            method.modality =
-                if (containingClass.modality == Modality.OPEN) Modality.OPEN
-                else Modality.FINAL
-            method.otherModifierElements -= method.otherModifierElements.first { it.otherModifier == OtherModifier.OVERRIDE }
+    private fun JKMethod.fixFinalize() {
+        if (hasOtherModifier(OVERRIDE)) {
+            modality = if (parentOfType<JKClass>()?.modality == OPEN) OPEN else FINAL
+            otherModifierElements -= otherModifierElements.first { it.otherModifier == OVERRIDE }
         }
-        return true
     }
+
+    private fun JKMethod.fixClone() {
+        val type = (returnType.type as? JKClassType)?.updateNullability(NotNull) ?: return
+        returnType = JKTypeElement(type, returnType::annotationList.detached())
+
+        val containingClass = parentOfType<JKClass>() ?: return
+        val cloneableClass = findJavaLangCloneable() ?: return
+        val directlyImplementsCloneable = containingClass.psi<PsiClass>()?.isInheritor(cloneableClass, false) ?: return
+        val psiMethod = psi<PsiMethod>() ?: return
+        val hasCloneableInSuperClasses = psiMethod
+            .findSuperMethods()
+            .any { superMethod -> superMethod.containingClass?.kotlinFqName?.asString() != "java.lang.Object" }
+
+        if (directlyImplementsCloneable && hasCloneableInSuperClasses) {
+            val directCloneableSupertype = containingClass.inheritance.implements.find { typeElement ->
+                typeElement.type.fqName == "java.lang.Cloneable"
+            } ?: return
+            containingClass.inheritance.implements -= directCloneableSupertype
+        } else if (!directlyImplementsCloneable && !hasCloneableInSuperClasses) {
+            containingClass.inheritance.implements += JKTypeElement(
+                JKClassType(
+                    context.symbolProvider.provideClassSymbol("kotlin.Cloneable"),
+                    nullability = NotNull
+                )
+            )
+        }
+    }
+
+    private fun findJavaLangCloneable(): PsiClass? = JavaPsiFacade.getInstance(context.project)
+        .findClass("java.lang.Cloneable", GlobalSearchScope.allScope(context.project))
 }

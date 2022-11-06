@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
 
 @ApiStatus.Experimental
 interface FileTestFixture : IdeaTestFixture {
@@ -24,12 +25,8 @@ interface FileTestFixture : IdeaTestFixture {
 
   fun addIllegalOperationError(message: String)
 
-  interface Builder {
+  interface Builder : TestFilesConfiguration {
 
     fun excludeFiles(vararg relativePath: String)
-
-    fun withFile(relativePath: String, content: String)
-
-    fun withFiles(action: (VirtualFile) -> Unit)
   }
 }

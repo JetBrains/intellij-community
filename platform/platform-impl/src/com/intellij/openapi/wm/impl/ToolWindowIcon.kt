@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.ui.IconReplacer
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.icons.MenuBarIconProvider
 import com.intellij.util.IconUtil
@@ -15,11 +16,16 @@ import javax.swing.Icon
  */
 internal class ToolWindowIcon(private val icon: Icon,
                               private val toolWindowId: String) : RetrievableIcon, MenuBarIconProvider, ScalableIcon {
+
+  override fun replaceBy(replacer: IconReplacer): ToolWindowIcon {
+    return ToolWindowIcon(replacer.replaceIcon(icon), toolWindowId)
+  }
+
   override fun retrieveIcon() = icon
 
   override fun getMenuBarIcon(isDark: Boolean) = ToolWindowIcon(IconLoader.getMenuBarIcon(icon, isDark), toolWindowId)
 
-  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     icon.paintIcon(c, g, x, y)
   }
 

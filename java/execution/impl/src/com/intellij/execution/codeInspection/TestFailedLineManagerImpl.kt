@@ -7,16 +7,13 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.ExecutorRegistry
-import com.intellij.execution.ProgramRunnerUtil
-import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.TestStateStorage
+import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.stacktrace.StackTraceLine
+import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -63,7 +60,9 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
       }
     }
     if (info.record.failedLine == -1 || StringUtil.isEmpty(info.record.failedMethod)) return null
-    if (info.record.failedLine != document.getLineNumber(callSourcePsi.textOffset) + 1) return null
+    val textRange = callSourcePsi.textRange
+    val lineRange = document.getLineNumber(textRange.startOffset)..document.getLineNumber(textRange.endOffset)
+    if ((info.record.failedLine - 1) !in lineRange) return null
     if (info.record.failedMethod != call.methodName) return null
     info.pointer = SmartPointerManager.createPointer(callSourcePsi)
     return if (info.record.magnitude <= TestStateInfo.Magnitude.IGNORED_INDEX.value) null else info
@@ -73,6 +72,8 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     var record: TestStateStorage.Record,
     var pointer: SmartPsiElementPointer<PsiElement>? = null
   ) : TestFailedLineManager.TestInfo {
+    override fun getMagnitude(): Int = record.magnitude
+
     override fun getErrorMessage(): String = record.errorMessage
 
     override fun getTopStackTraceLine(): String = record.topStacktraceLine
@@ -83,7 +84,8 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     val javaClazz = containingClass.javaPsi
     val framework = TestFrameworks.detectFramework(javaClazz) ?: return null
     if (!framework.isTestMethod(method.javaPsi, false)) return null
-    val url = "java:test://" + ClassUtil.getJVMClassName(javaClazz) + "/" + method.name
+    val className = ClassUtil.getJVMClassName(javaClazz) ?: return null
+    val url = JavaTestLocator.createLocationUrl(JavaTestLocator.TEST_PROTOCOL, className, method.name)
     val state = testStorage.getState(url) ?: return null
     val vFile = method.getContainingUFile()?.sourcePsi?.virtualFile ?: return null
     val infoInFile = cache[vFile] ?: return null

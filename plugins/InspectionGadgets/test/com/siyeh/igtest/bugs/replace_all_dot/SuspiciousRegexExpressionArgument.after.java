@@ -1,3 +1,5 @@
+import java.io.File;
+
 class SuspicousRegexExpressionArgument {{
 
   "a.s.d.f".split("\\.");
@@ -6,4 +8,6 @@ class SuspicousRegexExpressionArgument {{
   "one two".split(" ");
   "[][][]".split("]");
   "{}{}{}".split("}");
+  
+  "a/b/c/d".split(File.separator);
 }}

@@ -1,4 +1,17 @@
 // WITH_STDLIB
+fun constants() {
+  val v1 = Double.POSITIVE_INFINITY
+  val v2 = Double.NEGATIVE_INFINITY
+  if (<warning descr="Condition 'v1 < v2' is always false">v1 < v2</warning>) {}
+  val a = Double.NaN
+  println(<warning descr="Condition 'a == a' is always false">a == a</warning>)
+}
+fun nan(v: Double) {
+  if (v == v) {}
+  var v1 = v
+  if (v1 == v1) {}
+  if (v1 == v) {}
+}
 fun test(x: Double, y: Double) {
     if (x > y) {}
     else if (x == y) {}

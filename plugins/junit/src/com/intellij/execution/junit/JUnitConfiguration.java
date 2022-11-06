@@ -50,6 +50,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport
@@ -218,18 +220,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String suggestedName() {
-    String repeat;
-    switch (getRepeatMode()) {
-      case RepeatCount.UNLIMITED :
-      case RepeatCount.UNTIL_FAILURE :
-        repeat = " [*]";
-        break;
-      case RepeatCount.N:
-        repeat = " [" + getRepeatCount() + "]";
-        break;
-      default:
-        repeat = "";
-    }
+    String repeat = switch (getRepeatMode()) {
+      case RepeatCount.UNLIMITED, RepeatCount.UNTIL_FAILURE -> " [*]";
+      case RepeatCount.N -> " [" + getRepeatCount() + "]";
+      default -> "";
+    };
     String generatedName = myData.getGeneratedName(getConfigurationModule());
     if (generatedName == null) return null;
     return generatedName + repeat;
@@ -305,7 +300,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String getAlternativeJrePath() {
-    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH) 
+    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH)
                                         : null;
   }
 
@@ -668,6 +663,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   public static class Data implements Cloneable {
+    private static final Pattern VALUE_SOURCE_PATTERN = Pattern.compile("valueSource\\s(\\d+)");
     public String PACKAGE_NAME;
     public @NlsSafe String MAIN_CLASS_NAME;
     public String METHOD_NAME;
@@ -788,7 +784,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       TEST_OBJECT = TEST_METHOD;
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
-    
+
     public void setTestMethodName(String methodName) {
       METHOD_NAME = methodName;
     }
@@ -863,10 +859,28 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
-        return className + '.' + getMethodName();
+        Integer index = getIndexFromParameters(PARAMETERS);
+        String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
+        return className + '.' + getMethodName() + indexStr;
       }
 
       return className;
+    }
+
+    public static Integer getIndexFromParameters(String parameters) {
+      Integer index = null;
+      if (parameters != null && !parameters.isEmpty()) {
+        Matcher matcher = VALUE_SOURCE_PATTERN.matcher(parameters);
+        if (matcher.find()) {
+          String group = matcher.group(1);
+          try {
+            index = Integer.parseInt(group);
+          }
+          catch (NumberFormatException ignored) {
+          }
+        }
+      }
+      return index;
     }
 
     public @NlsSafe @NotNull String getMainClassName() {

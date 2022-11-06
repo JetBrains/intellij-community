@@ -1,26 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.PatternContext;
 import com.intellij.structuralsearch.SSRBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 /**
  * @author Pavel.Dolgov
  */
 class FileTypeInfo {
   public static final FileTypeInfo[] EMPTY_ARRAY = new FileTypeInfo[0];
-
-  /** @see com.intellij.openapi.fileTypes.impl.FileTypeRenderer */
-  private static final Pattern CLEANUP = Pattern.compile("(?i)\\s+file(?:s)?$");
 
   private final LanguageFileType myFileType;
   private final Language myDialect;
@@ -33,7 +28,7 @@ class FileTypeInfo {
     myDialect = dialect;
     myContext = context;
     myNested = nested;
-    myDescription = getDescription(fileType);
+    myDescription = fileType.getDescription();
   }
 
   @NotNull
@@ -63,11 +58,6 @@ class FileTypeInfo {
     return myDescription;
   }
 
-  @NotNull
-  public String getSearchText() {
-    return (myDialect != null) ? myDialect.getDisplayName() : myFileType.getName();
-  }
-
   public boolean isNested() {
     return myNested;
   }
@@ -76,12 +66,6 @@ class FileTypeInfo {
     return (myFileType == fileType)
            && (dialect == null || myDialect == dialect)
            && (context == null || myContext == context);
-  }
-
-  @NotNull
-  private static String getDescription(@NotNull LanguageFileType fileType) {
-    final String description = fileType.getDescription();
-    return StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
   }
 
   @Override

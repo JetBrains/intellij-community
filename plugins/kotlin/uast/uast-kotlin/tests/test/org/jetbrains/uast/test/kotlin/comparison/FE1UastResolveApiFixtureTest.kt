@@ -13,7 +13,7 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     override val isFirUastPlugin: Boolean = false
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testResolveStringFromUast() {
         checkResolveStringFromUast(myFixture, project)
@@ -83,10 +83,6 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveSyntheticMethod(myFixture)
     }
 
-    fun testAssigningArrayElementType() {
-        checkAssigningArrayElementType(myFixture)
-    }
-
     fun testMapFunctions() {
         checkMapFunctions(myFixture)
     }
@@ -115,28 +111,8 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkArgumentMappingOOBE(myFixture)
     }
 
-    fun testDivByZero() {
-        checkDivByZero(myFixture)
-    }
-
-    fun testDetailsOfDeprecatedHidden() {
-        checkDetailsOfDeprecatedHidden(myFixture)
-    }
-
     fun testSyntheticEnumMethods() {
         checkSyntheticEnumMethods(myFixture)
-    }
-
-    fun testImplicitReceiverType() {
-        checkImplicitReceiverType(myFixture)
-    }
-
-    fun testSubstitutedReceiverType() {
-        checkSubstitutedReceiverType(myFixture)
-    }
-
-    fun testCallKindOfSamConstructor() {
-        checkCallKindOfSamConstructor(myFixture)
     }
 
     fun testArrayAccessOverloads() {
@@ -157,6 +133,14 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveToSubstituteOverride() {
         checkResolveToSubstituteOverride(myFixture)
+    }
+
+    fun testResolveEnumEntrySuperType() {
+        checkResolveEnumEntrySuperType(myFixture)
+    }
+
+    fun testResolveLambdaInvoke() {
+        checkLambdaInvoke(myFixture)
     }
 
 }

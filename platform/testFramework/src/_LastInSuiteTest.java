@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestApplicationManager;
@@ -92,5 +93,9 @@ public class _LastInSuiteTest extends TestCase {
 
   public void testFilenameIndexConsistency() {
     FSRecords.checkFilenameIndexConsistency();
+  }
+
+  public void testGlobalState() {
+    GlobalState.checkSystemStreams();
   }
 }

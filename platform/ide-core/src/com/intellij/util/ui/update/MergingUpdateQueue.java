@@ -238,6 +238,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     flush();
   }
 
+  /**
+   * executes all scheduled requests in the current thread.
+   * Please note that requests that started execution before this method call are not waited for completion.
+   */
   public void flush() {
     synchronized (myScheduledUpdates) {
       if (myScheduledUpdates.isEmpty()) {
@@ -253,34 +257,34 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     myFlushing = true;
-    Runnable toRun = () -> {
-      try {
-        List<Update> all;
-        synchronized (myScheduledUpdates) {
-          all = getAllScheduledUpdates();
-          myScheduledUpdates.clear();
-        }
-
-        for (Update each : all) {
-          each.setProcessed();
-        }
-        Update[] array = all.toArray(new Update[0]);
-        Arrays.sort(array, Comparator.comparingInt(Update::getPriority));
-        execute(array);
-      }
-      finally {
-        myFlushing = false;
-        if (isEmpty()) {
-          finishActivity();
-        }
-      }
-    };
-
     if (myExecuteInDispatchThread) {
-      EdtInvocationManager.invokeAndWaitIfNeeded(toRun);
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> doExecute());
     }
     else {
-      toRun.run();
+      doExecute();
+    }
+  }
+
+  private void doExecute() {
+    try {
+      List<Update> all;
+      synchronized (myScheduledUpdates) {
+        all = getAllScheduledUpdates();
+        myScheduledUpdates.clear();
+      }
+
+      for (Update each : all) {
+        each.setProcessed();
+      }
+      Update[] array = all.toArray(new Update[0]);
+      Arrays.sort(array, Comparator.comparingInt(Update::getPriority));
+      execute(array);
+    }
+    finally {
+      myFlushing = false;
+      if (isEmpty()) {
+        finishActivity();
+      }
     }
   }
 
@@ -488,12 +492,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   @TestOnly
-  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) {
-    try {
-      myWaiterForMerge.waitForAllExecuted(timeout, unit);
-    }
-    catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RuntimeException(e);
-    }
+  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+    myWaiterForMerge.waitForAllExecuted(timeout, unit);
   }
 }

@@ -4,13 +4,16 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.openapi.project.Project;
 
-final class VfsUsageCollector extends CounterUsagesCollector {
+public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP = new EventLogGroup("vfs", 5);
+  private static final EventLogGroup GROUP = new EventLogGroup("vfs", 6);
 
   private static final LongEventField WaitMs = EventFields.Long("wait_ms");  // -1 for synchronous refresh/events
+
+  private static final EventId1<Long> INITIAL_REFRESH = GROUP.registerEvent("initial_refresh", EventFields.DurationMs);
 
   private static final BooleanEventField RefreshRecursive = EventFields.Boolean("recursive");
   private static final RoundedIntEventField RefreshLocalRoots = EventFields.RoundedInt("roots_local");
@@ -42,6 +45,10 @@ final class VfsUsageCollector extends CounterUsagesCollector {
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
+  }
+
+  public static void logInitialRefresh(Project project, long duration) {
+    INITIAL_REFRESH.log(project, duration);
   }
 
   static void logRefreshSession(boolean recursive, int lfsRoots, int arcRoots, int otherRoots, boolean cancelled, long wait, long duration, int tries) {

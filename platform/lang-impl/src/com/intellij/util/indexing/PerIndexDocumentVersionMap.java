@@ -12,7 +12,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- * @author peter
  */
 final class PerIndexDocumentVersionMap {
   private static final int INVALID_STAMP = -1; // 0 isn't acceptable as Document has 0 stamp when loaded from unchanged file

@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers
 
-import com.intellij.ide.customize.transferSettings.models.*
+import com.intellij.ide.customize.transferSettings.models.PluginFeature
+import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -31,6 +32,7 @@ interface ImportPerformer {
 }
 
 private val logger = logger<DefaultImportPerformer>()
+
 class DefaultImportPerformer(private val partials: Collection<PartialImportPerformer>) : ImportPerformer {
   constructor() : this(arrayListOf(LookAndFeelImportPerformer(),
                                    SyntaxSchemeImportPerformer(),

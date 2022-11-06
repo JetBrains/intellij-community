@@ -101,14 +101,16 @@ public final class PsiLiteralUtil {
     }
   }
 
-  // convert text to number according to radix specified
-  // if number is more than maxBits bits long, throws NumberFormatException
+  /**
+   * convert text to number according to radix specified
+   * if number is more than maxBits bits long, throws NumberFormatException
+   */
   public static long parseDigits(final String text, final int bitsInRadix, final int maxBits) throws NumberFormatException {
-    final int radix = 1 << bitsInRadix;
     final int textLength = text.length();
     if (textLength == 0) {
       throw new NumberFormatException(text);
     }
+    final int radix = 1 << bitsInRadix;
     long integer = textLength == 1 ? 0 : Long.parseLong(text.substring(0, textLength - 1), radix);
     if ((integer & (-1L << (maxBits - bitsInRadix))) != 0) {
       throw new NumberFormatException(text);
@@ -143,29 +145,29 @@ public final class PsiLiteralUtil {
   }
 
   /**
-   * Convert a string that contains a character (e.g. ""\n"" or ""\\"", etc.)
+   * Convert a string that contains a single character (e.g. ""\n"" or ""\\"", etc.)
    * to a character literal string (e.g. "'\n'" or "'\\'", etc.)
    *
-   * @param text a string to convert
-   * @return the converted string
+   * @param expression  a single character string
+   * @return the character literal string
    */
-  @NotNull
-  public static String charLiteralForCharString(@NotNull final String text) {
-    final int length = text.length();
-    if (length <= 1) return text;
-
-    final String character = text.substring(1, length - 1);
-    final String charLiteral;
-    if ("'".equals(character)) {
-      charLiteral = "'\\''";
+  @Nullable
+  public static String charLiteralString(PsiLiteralExpression expression) {
+    final Object value = expression.getValue();
+    if (!(value instanceof String) || ((CharSequence)value).length() > 1) {
+      throw new IllegalArgumentException();
     }
-    else if ("\\\"".equals(character)) {
-      charLiteral = "'\"'";
+    final String content = expression.isTextBlock()
+                           ? getTextBlockText(expression)
+                           : getStringLiteralContent(expression);
+    if (content == null) {
+      return null;
     }
-    else {
-      charLiteral = '\'' + character + '\'';
+    switch (content) {
+      case "'": return "'\\''";
+      case "\\\"": return "'\"'";
+      default: return '\'' + content + '\'';
     }
-    return charLiteral;
   }
 
   /**
@@ -293,10 +295,9 @@ public final class PsiLiteralUtil {
     int i = parseBackSlash(s, start);
     if (i == -1) return -1;
     int prev = start;
-    int nextIdx;
     int nSlashes = 1;
     while (i < s.length()) {
-      nextIdx = parseBackSlash(s, i);
+      int nextIdx = parseBackSlash(s, i);
       if (nextIdx != -1) {
         result.append(s, prev, i);
         prev = i;
@@ -517,8 +518,8 @@ public final class PsiLiteralUtil {
     if (Character.isWhitespace(s.charAt(index))) return index;
     index = parseUnicodeEscapeBackwards(s, index, Character::isWhitespace);
     if (index < 0) return -1;
-    int nBackSlashes = 1;
     index--;
+    int nBackSlashes = 1;
     if (index >= 0 && s.charAt(index) == '\\') {
       nBackSlashes++;
       nBackSlashes += countBackSlashes(s, index - 1);
@@ -538,7 +539,7 @@ public final class PsiLiteralUtil {
   }
 
   private static int parseUnicodeEscapeBackwards(@NotNull String s, int index, @NotNull Predicate<? super Character> charPredicate) {
-    // \u1234 needs at least 6 positions
+    // \uFFFD needs at least 6 positions
     if (index - 5 < 0) return -1;
 
     int start = findSlashU(s, index - 4);
@@ -616,7 +617,7 @@ public final class PsiLiteralUtil {
     if (i >= line.length()) return -1;
     char c = line.charAt(i++);
     if (c == '\\') {
-      // like \u0020
+      // like \uFFFD
       char c1 = line.charAt(i++);
       if (c1 == 'u') {
         while (i < line.length() && line.charAt(i) == 'u') i++;
@@ -724,7 +725,6 @@ public final class PsiLiteralUtil {
 
         curOffset += linePrefixLength;
 
-        int charIdx;
         int nextIdx = 0;
         while (true) {
           if (from == charsSoFar) {
@@ -733,7 +733,7 @@ public final class PsiLiteralUtil {
           if (to == charsSoFar) {
             return new TextRange(mappedFrom, curOffset + nextIdx);
           }
-          charIdx = nextIdx;
+          int charIdx = nextIdx;
           nextIdx = getCharEndIndex(line, charIdx);
           if (nextIdx == -1) break;
           charsSoFar++;

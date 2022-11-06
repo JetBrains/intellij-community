@@ -34,6 +34,19 @@ internal class WorkspaceImportStats private constructor(private val project: Pro
     }
   }
 
+  fun recordCommitPhaseStats(durationInBackgroundNano: Long,
+                             durationInWriteActionNano: Long,
+                             durationOfWorkspaceUpdateCallNano: Long, attempts: Int) {
+    MavenImportCollector.WORKSPACE_COMMIT_STATS.log(
+      listOf(MavenImportCollector.ACTIVITY_ID.with(activity),
+             MavenImportCollector.DURATION_BACKGROUND_MS.with(durationInBackgroundNano.toMillis()),
+             MavenImportCollector.DURATION_WRITE_ACTION_MS.with(durationInWriteActionNano.toMillis()),
+             MavenImportCollector.DURATION_OF_WORKSPACE_UPDATE_CALL_MS.with(durationOfWorkspaceUpdateCallNano.toMillis()),
+             MavenImportCollector.ATTEMPTS.with(attempts)
+      )
+    )
+  }
+
   fun <T> recordConfigurator(configurator: MavenWorkspaceConfigurator,
                              key: LongEventField,
                              block: () -> T): T {

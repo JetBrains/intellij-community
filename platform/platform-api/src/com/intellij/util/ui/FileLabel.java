@@ -22,6 +22,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
+/**
+ * @deprecated unused
+ */
+@Deprecated(forRemoval = true)
 public class FileLabel extends JLabel {
   protected File myFile;
   private boolean myShowIcon = true;

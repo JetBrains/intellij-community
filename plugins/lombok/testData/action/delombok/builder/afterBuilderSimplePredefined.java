@@ -29,7 +29,7 @@ public class BuilderSimplePreDefined {
     }
 
     public BuilderSimplePreDefined build() {
-      return new BuilderSimplePreDefined(myInt, myString);
+      return new BuilderSimplePreDefined(this.myInt, this.myString);
     }
 
     public String toString() {

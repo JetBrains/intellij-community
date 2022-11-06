@@ -84,7 +84,7 @@ public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends Bas
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiDiamondTypeUtil.replaceDiamondWithExplicitTypes(descriptor.getPsiElement());
     }
   }

@@ -2,7 +2,6 @@
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -31,14 +30,15 @@ private val LOG = logger<ClientSessionImpl>()
 @ApiStatus.Internal
 abstract class ClientSessionImpl(
   final override val clientId: ClientId,
-  protected val sharedComponentManager: ClientAwareComponentManager
+  final override val type: ClientType,
+  private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(null, false), ClientSession {
-  override val isLocal = clientId.isLocal
 
   override val isLightServiceSupported = false
   override val isMessageBusSupported = false
 
   init {
+    @Suppress("LeakingThis")
     registerServiceInstance(ClientSession::class.java, this, fakeCorePluginDescriptor)
   }
 
@@ -66,9 +66,7 @@ abstract class ClientSessionImpl(
   }
 
   override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
-    return descriptor.client == ServiceDescriptor.ClientKind.ALL ||
-           isLocal && descriptor.client == ServiceDescriptor.ClientKind.LOCAL ||
-           !isLocal && descriptor.client == ServiceDescriptor.ClientKind.GUEST
+    return descriptor.client?.let { type.matches(it) } ?: false
   }
 
   /**
@@ -77,7 +75,7 @@ abstract class ClientSessionImpl(
   override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<Runnable>?) {
+                                  listenerCallbacks: MutableList<in Runnable>?) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)
       executeRegisterTaskForOldContent(rootModule) { module ->
@@ -99,7 +97,7 @@ abstract class ClientSessionImpl(
     val clientService = ClientId.withClientId(clientId) { super.doGetService(serviceClass, createIfNeeded) }
     if (clientService != null || !fallbackToShared) return clientService
 
-    if (createIfNeeded && !isLocal) {
+    if (createIfNeeded && !type.isLocal) {
       val sessionsManager = sharedComponentManager.getService(ClientSessionsManager::class.java)
       val localSession = sessionsManager?.getSession(ClientId.localId) as? ClientSessionImpl
 
@@ -125,6 +123,11 @@ abstract class ClientSessionImpl(
   }
 
   override val componentStore = ClientSessionComponentStore()
+
+  @Deprecated("sessions don't have their own message bus", level = DeprecationLevel.ERROR)
+  override fun getMessageBus(): MessageBus {
+    error("Not supported")
+  }
 
   override fun toString(): String {
     return clientId.toString()
@@ -179,13 +182,15 @@ class ClientSessionComponentStore : IComponentStore {
 @ApiStatus.Internal
 open class ClientAppSessionImpl(
   clientId: ClientId,
+  clientType: ClientType,
   application: ApplicationImpl
-) : ClientSessionImpl(clientId, application), ClientAppSession {
+) : ClientSessionImpl(clientId, clientType, application), ClientAppSession {
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.appContainerDescriptor
   }
 
   init {
+    @Suppress("LeakingThis")
     registerServiceInstance(ClientAppSession::class.java, this, fakeCorePluginDescriptor)
   }
 }
@@ -193,8 +198,9 @@ open class ClientAppSessionImpl(
 @ApiStatus.Internal
 open class ClientProjectSessionImpl(
   clientId: ClientId,
+  clientType: ClientType,
   final override val project: ProjectImpl,
-) : ClientSessionImpl(clientId, project), ClientProjectSession {
+) : ClientSessionImpl(clientId, clientType, project), ClientProjectSession {
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor
   }

@@ -13,14 +13,13 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.types.Variance
 
 object CreateComponentFunctionActionFactory : CreateCallableMemberFromUsageFactory<KtDestructuringDeclaration>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtDestructuringDeclaration? {
         val element = diagnostic.psiElement
 
-        @Suppress("RemoveExplicitTypeArguments")
         return element.findParentOfType<KtDestructuringDeclaration>(strict = false)
             ?: element.findParentOfType<KtForExpression>(strict = false)?.destructuringDeclaration
     }
@@ -29,9 +28,9 @@ object CreateComponentFunctionActionFactory : CreateCallableMemberFromUsageFacto
         val diagnosticWithParameters = Errors.COMPONENT_FUNCTION_MISSING.cast(diagnostic)
 
         val name = diagnosticWithParameters.a
-        if (!DataClassDescriptorResolver.isComponentLike(name)) return null
+        if (!DataClassResolver.isComponentLike(name)) return null
 
-        val componentNumber = DataClassDescriptorResolver.getComponentIndex(name.asString()) - 1
+        val componentNumber = DataClassResolver.getComponentIndex(name.asString()) - 1
 
         val targetType = diagnosticWithParameters.b
         val targetClassDescriptor = targetType.constructor.declarationDescriptor as? ClassDescriptor

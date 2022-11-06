@@ -10,5 +10,11 @@
     <psi.referenceContributor
             language="kotlin"
             implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.psi.KtFileClassProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl"/>
+    <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassContributor"/>
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoSymbolContributor"/>
+    <gotoPrimeSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoPrimeSymbolContributor"/>
   </extensions>
 </idea-plugin>

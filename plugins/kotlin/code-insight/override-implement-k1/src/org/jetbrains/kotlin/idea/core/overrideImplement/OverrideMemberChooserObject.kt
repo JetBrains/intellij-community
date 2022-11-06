@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.expectedDescriptors
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.core.OLD_EXPERIMENTAL_FQ_NAME
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
@@ -205,7 +207,7 @@ private val OVERRIDE_RENDERER = withOptions {
     annotationFilter = {
         val annotations = it.type.constructor.declarationDescriptor?.annotations
         annotations != null && (annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ||
-                annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME))
+                annotations.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME))
     }
     presentableUnresolvedTypes = true
     informativeErrorType = false
@@ -316,7 +318,7 @@ private fun generateFunction(
     } else ""
 
     val factory = KtPsiFactory(project)
-    val functionText = renderer.render(newDescriptor) + body
+    val functionText = "${renderer.render(newDescriptor)} $body"
     return when (descriptor) {
         is ClassConstructorDescriptor -> {
             if (descriptor.isPrimary) {

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBacken
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.isInsideInlineArgument
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression

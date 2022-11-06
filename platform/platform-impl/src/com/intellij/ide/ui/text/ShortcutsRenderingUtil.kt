@@ -3,11 +3,14 @@ package com.intellij.ide.ui.text
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
@@ -16,6 +19,7 @@ import javax.swing.KeyStroke
 @ApiStatus.Experimental
 @ApiStatus.Internal
 object ShortcutsRenderingUtil {
+  val SHORTCUT_PART_SEPARATOR = NON_BREAK_SPACE.repeat(3)
 
   /**
    * @param actionId
@@ -49,20 +53,12 @@ object ShortcutsRenderingUtil {
   private val KeyboardShortcut.isNumpadKey: Boolean
     get() = firstKeyStroke.keyCode in KeyEvent.VK_NUMPAD0..KeyEvent.VK_DIVIDE || firstKeyStroke.keyCode == KeyEvent.VK_NUM_LOCK
 
-  private fun specificKeyString(code: Int) = when (code) {
-    KeyEvent.VK_LEFT -> "←"
-    KeyEvent.VK_RIGHT -> "→"
-    KeyEvent.VK_UP -> "↑"
-    KeyEvent.VK_DOWN -> "↓"
-    else -> null
-  }
-
   fun getKeyboardShortcutData(shortcut: KeyboardShortcut?): Pair<@NlsSafe String, List<IntRange>> {
     if (shortcut == null) return Pair("", emptyList())
     val firstKeyStrokeData = getKeyStrokeData(shortcut.firstKeyStroke)
     val secondKeyStroke = shortcut.secondKeyStroke ?: return firstKeyStrokeData
     val secondKeyStrokeData = getKeyStrokeData(secondKeyStroke)
-    val firstPartString = firstKeyStrokeData.first + "\u00A0\u00A0\u00A0,\u00A0\u00A0\u00A0"
+    val firstPartString = firstKeyStrokeData.first + "$SHORTCUT_PART_SEPARATOR,$SHORTCUT_PART_SEPARATOR"
     val firstPartLength = firstPartString.length
 
     val shiftedList = secondKeyStrokeData.second.map { IntRange(it.first + firstPartLength, it.last + firstPartLength) }
@@ -72,20 +68,9 @@ object ShortcutsRenderingUtil {
 
   fun getKeyStrokeData(keyStroke: KeyStroke?): Pair<@NlsSafe String, List<IntRange>> {
     if (keyStroke == null) return Pair("", emptyList())
-    val modifiers = getModifiersText(keyStroke.modifiers)
-    val keyCode = keyStroke.keyCode
-    var key = specificKeyString(keyCode)
-              ?: if (SystemInfo.isMac) MacKeymapUtil.getKeyText(keyCode) else KeyEvent.getKeyText(keyCode)
+    val modifiers: List<String> = getModifiersText(keyStroke.modifiers)
+    val keyString = getKeyString(keyStroke.keyCode)
 
-    if (key.contains(' ')) {
-      key = key.replace(' ', '\u00A0')
-    }
-
-    if (key.length == 1) getStringForMacSymbol(key[0])?.let {
-      key = key + "\u00A0" + it
-    }
-
-    val separator = "\u00A0\u00A0\u00A0\u00A0"
     val intervals = mutableListOf<IntRange>()
     val builder = StringBuilder()
 
@@ -95,18 +80,12 @@ object ShortcutsRenderingUtil {
       intervals.add(IntRange(start, builder.length - 1))
     }
 
-    for (m in modifiers.getModifiers()) {
-      val part = if (SystemInfo.isMac) {
-        val modifierName = if (m.length == 1) getStringForMacSymbol(m[0]) else null
-        if (modifierName != null) m + "\u00A0" + modifierName else m
-      }
-      else m
-
-      addPart(part)
-      builder.append(separator)
+    for (m in modifiers) {
+      addPart(m)
+      builder.append(SHORTCUT_PART_SEPARATOR)
     }
 
-    addPart(key)
+    addPart(keyString)
     return Pair(builder.toString(), intervals)
   }
 
@@ -115,16 +94,15 @@ object ShortcutsRenderingUtil {
    * Example of input: Ctrl + Shift + T
    */
   fun getRawShortcutData(shortcut: String): Pair<@NlsSafe String, List<IntRange>> {
-    val parts = shortcut.split(Regex(""" *\+ *"""))
-    val separator = "\u00A0\u00A0\u00A0\u00A0"
+    val parts = shortcut.split(Regex(""" *\+ *""")).map(this::getPresentableModifier)
     val builder = StringBuilder()
     val ranges = mutableListOf<IntRange>()
     var curInd = 0
     for ((ind, part) in parts.withIndex()) {
-      builder.append(part)
+      builder.append(part.replaceSpacesWithNonBreakSpaces())
       ranges.add(curInd until builder.length)
       if (ind != parts.lastIndex) {
-        builder.append(separator)
+        builder.append(SHORTCUT_PART_SEPARATOR)
       }
       curInd = builder.length
     }
@@ -132,41 +110,69 @@ object ShortcutsRenderingUtil {
   }
 
   fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
+    val action = ActionManager.getInstance().getAction(actionId)
+    val actionName = if (action != null) {
+      action.templatePresentation.text.replaceSpacesWithNonBreakSpaces()
+    }
+    else {
+      thisLogger().error("Failed to find action with id: $actionId")
+      actionId
+    }
+
     val gotoActionShortcut = getShortcutByActionId("GotoAction")
     val gotoAction = getKeyboardShortcutData(gotoActionShortcut)
-    val actionName = ActionManager.getInstance().getAction(actionId).templatePresentation.text.replace(" ", "\u00A0")
     val updated = ArrayList<IntRange>(gotoAction.second)
     val start = gotoAction.first.length + 5
     updated.add(IntRange(start, start + actionName.length - 1))
     return Pair(gotoAction.first + "  →  " + actionName, updated)
   }
 
-  private fun getModifiersText(modifiers: Int): String {
-    return KeyEvent.getKeyModifiersText(modifiers)
-  }
-
-  private fun String.getModifiers(): Array<String> = this.split("[ +]".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-
-  private fun getStringForMacSymbol(c: Char): String? {
-    if (!SystemInfo.isMac) return null
-    when (c) {
-      '\u238B' -> return "Esc"
-      '\u21E5' -> return "Tab"
-      '\u21EA' -> return "Caps"
-      '\u21E7' -> return "Shift"
-      '\u2303' -> return "Ctrl"
-      '\u2325' -> return "Opt"
-      '\u2318' -> return "Cmd"
-      '\u23CE' -> return "Enter"
-      '\u232B' -> return "Backspace"
-      '\u2326' -> return "Del"
-      '\u2196' -> return "Home"
-      '\u2198' -> return "End"
-      '\u21DE' -> return "PageUp"
-      '\u21DF' -> return "PageDown"
-      '\u21ED' -> return "NumLock"
-      '\u2328' -> return "NumPad"
-      else -> return null
+  private fun getModifiersText(modifiers: Int): List<String> {
+    val modifiersString = if (SystemInfo.isMac) {
+      // returns glyphs if native shortcuts are enabled, text presentation otherwise
+      MacKeymapUtil.getModifiersText(modifiers, "+")
     }
+    else KeyEvent.getKeyModifiersText(modifiers)
+    return modifiersString
+      .split("[ +]+".toRegex())
+      .dropLastWhile { it.isEmpty() }
+      .map(this::getPresentableModifier)
   }
+
+  private fun getKeyString(code: Int) = when (code) {
+    KeyEvent.VK_LEFT -> "←"
+    KeyEvent.VK_RIGHT -> "→"
+    KeyEvent.VK_UP -> "↑"
+    KeyEvent.VK_DOWN -> "↓"
+    else -> if (SystemInfo.isMac) getMacKeyString(code) else getLinuxWinKeyString(code)
+  }.replaceSpacesWithNonBreakSpaces()
+
+  private fun getLinuxWinKeyString(code: Int) = when (code) {
+    KeyEvent.VK_ENTER -> "↩ Enter"
+    KeyEvent.VK_BACK_SPACE -> "← Backspace"
+    else -> KeyEvent.getKeyText(code)
+  }
+
+  private fun getMacKeyString(code: Int) = when (code) {
+    KeyEvent.VK_ENTER -> "↩ Return"
+    KeyEvent.VK_BACK_SPACE -> "⌫ Del"
+    KeyEvent.VK_ESCAPE -> "⎋ Esc"
+    KeyEvent.VK_TAB -> "⇥ Tab"
+    else -> KeyEvent.getKeyText(code)
+  }
+
+  private fun getPresentableModifier(rawModifier: String): String {
+    val modifier = if (KeymapUtil.isSimplifiedMacShortcuts()) getSimplifiedMacModifier(rawModifier) else rawModifier
+    return modifier.replaceSpacesWithNonBreakSpaces()
+  }
+
+  private fun getSimplifiedMacModifier(modifier: String) = when (modifier) {
+    "Ctrl" -> "⌃ Ctrl"
+    "Alt" -> "⌥ Opt"
+    "Shift" -> "⇧ Shift"
+    "Cmd" -> "⌘ Cmd"
+    else -> modifier
+  }
+
+  private fun String.replaceSpacesWithNonBreakSpaces() = this.replace(" ", NON_BREAK_SPACE)
 }

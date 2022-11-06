@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 object LibraryNameGenerator {

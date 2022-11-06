@@ -41,7 +41,7 @@ public class StorageDumper {
 
       for (final String arg : args) {
         switch (s) {
-          case 0: // Initial state
+          case 0 -> { // Initial state
             if (arg.equals("-o")) {
               s = 1;
             }
@@ -63,9 +63,8 @@ public class StorageDumper {
                 projectPath = arg;
               }
             }
-            break;
-
-          case 1: // -o
+          }
+          case 1 -> { // -o
             if (arg.startsWith("-")) {
               errors.append("Output path expected after \"-o\", but found: ");
               errors.append(arg);
@@ -82,6 +81,7 @@ public class StorageDumper {
               }
             }
             s = 0;
+          }
         }
       }
 

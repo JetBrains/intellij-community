@@ -26,13 +26,15 @@ public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
   }
 
   public void testFormatting() {
-    emmetWrap("<selection>one\n" +
-              "two\n" +
-              "three\n" +
-              "</selection>", "div", "<div><caret>one\n" +
-                                     "    two\n" +
-                                     "    three\n" +
-                                     "</div>");
+    emmetWrap("""
+                <selection>one
+                two
+                three
+                </selection>""", "div", """
+                <div><caret>one
+                    two
+                    three
+                </div>""");
   }
 
   public void testDoNoTrimSelection() {
@@ -40,13 +42,15 @@ public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
   }
 
   public void _testFormattingWeb6563() {
-    emmetWrap("<div id=\"testid\">\n" +
-              "<selection>    <p>par</p>\n" +
-              "</selection></div>", "first>span.cls>h1{text}+span.cls2", "<div id=\"testid\">\n" +
-                                                                         "    <first><span class=\"cls\">\n" +
-                                                                         "    <h1>text</h1>\n" +
-                                                                         "    <span class=\"cls2\"><p>par</p></span></span></first>\n" +
-                                                                         "</div>");
+    emmetWrap("""
+                <div id="testid">
+                <selection>    <p>par</p>
+                </selection></div>""", "first>span.cls>h1{text}+span.cls2", """
+                <div id="testid">
+                    <first><span class="cls">
+                    <h1>text</h1>
+                    <span class="cls2"><p>par</p></span></span></first>
+                </div>""");
   }
 
   //see IDEA-112134
@@ -71,23 +75,27 @@ public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
   }
 
   public void testMultiCaretWrapping() {
-    emmetWrap("<selection><caret><div></div></selection>\n" +
-              "\n" +
-              "<selection><caret><div></div></selection>", "div", "<div><caret>\n" +
-                                                                  "    <div></div>\n" +
-                                                                  "</div>\n" +
-                                                                  "\n" +
-                                                                  "<div><caret>\n" +
-                                                                  "    <div></div>\n" +
-                                                                  "</div>");
+    emmetWrap("""
+                <selection><caret><div></div></selection>
+
+                <selection><caret><div></div></selection>""", "div", """
+                <div><caret>
+                    <div></div>
+                </div>
+
+                <div><caret>
+                    <div></div>
+                </div>""");
   }
 
   public void testMultiCaretWrappingShouldStopAtFirstVariable() {
-    emmetWrap("<selection><caret>link text</selection>\n" +
-              "\n" +
-              "<selection><caret>other link text</selection>", "a", "<a href=\"<caret>\">link text</a>\n" +
-                                                                    "\n" +
-                                                                    "<a href=\"<caret>\">other link text</a>");
+    emmetWrap("""
+                <selection><caret>link text</selection>
+
+                <selection><caret>other link text</selection>""", "a", """
+                <a href="<caret>">link text</a>
+
+                <a href="<caret>">other link text</a>""");
   }
 
   public void testWrapUrlLikeContent() {

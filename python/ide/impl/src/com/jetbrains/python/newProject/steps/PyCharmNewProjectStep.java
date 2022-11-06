@@ -3,6 +3,7 @@ package com.jetbrains.python.newProject.steps;
 
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.ObjectUtils;

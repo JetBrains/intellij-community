@@ -69,6 +69,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.CoroutineContext$Key",
       "kotlin.Result",
       "kotlin.Result$Failure",
+      "kotlin.Result$Companion",
       // Even though it's internal class, it can leak (and it does) into API surface because it's exposed by public
       // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
       "kotlin.coroutines.intrinsics.CoroutineSingletons",
@@ -387,6 +388,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
             className.startsWith("kotlin.jvm.internal.MutablePropertyReference") ||
             className.startsWith("kotlin.jvm.internal.PropertyReference") ||
             className.startsWith("kotlin.jvm.internal.TypeReference") ||
+            className.equals("kotlin.jvm.internal.Lambda") ||
             className.startsWith("kotlin.jvm.internal.LocalVariableReference") ||
             className.startsWith("kotlin.jvm.internal.MutableLocalVariableReference") ||
             className.equals("kotlin.jvm.internal.ReflectionFactory") ||

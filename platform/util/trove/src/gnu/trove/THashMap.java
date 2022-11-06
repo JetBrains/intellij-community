@@ -88,18 +88,6 @@ public class THashMap<K, V> extends TObjectHash<K> implements Map<K, V> {
    *
    * @param initialCapacity an <code>int</code> value
    * @param loadFactor      a <code>float</code> value
-   */
-  public THashMap(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
-  }
-
-  /**
-   * Creates a new <code>THashMap</code> instance with a prime
-   * capacity equal to or greater than <tt>initialCapacity</tt> and
-   * with the specified load factor.
-   *
-   * @param initialCapacity an <code>int</code> value
-   * @param loadFactor      a <code>float</code> value
    * @param strategy        used to compute hash codes and to compare objects.
    */
   public THashMap(int initialCapacity, float loadFactor, TObjectHashingStrategy<K> strategy) {
@@ -113,7 +101,7 @@ public class THashMap<K, V> extends TObjectHash<K> implements Map<K, V> {
    * @param map a <code>Map</code> value
    */
   public THashMap(Map<K, V> map) {
-    this(map.size());
+    super(map.size());
     putAll(map);
   }
 
@@ -276,34 +264,6 @@ public class THashMap<K, V> extends TObjectHash<K> implements Map<K, V> {
       }
     }
     return true;
-  }
-
-  /**
-   * Retains only those entries in the map for which the procedure
-   * returns a true value.
-   *
-   * @param procedure determines which entries to keep
-   * @return true if the map was modified.
-   */
-  public boolean retainEntries(TObjectObjectProcedure<K, V> procedure) {
-    Object[] keys = _set;
-    V[] values = _values;
-    stopCompactingOnRemove();
-    boolean modified = false;
-    try {
-      for (int i = keys.length; i-- > 0; ) {
-        if (keys[i] != null
-            && keys[i] != REMOVED
-            && !procedure.execute((K)keys[i], values[i])) {
-          removeAt(i);
-          modified = true;
-        }
-      }
-    }
-    finally {
-      startCompactingOnRemove(modified);
-    }
-    return modified;
   }
 
   /**

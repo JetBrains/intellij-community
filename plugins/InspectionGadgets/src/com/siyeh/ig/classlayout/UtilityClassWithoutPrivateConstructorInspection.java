@@ -129,7 +129,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
       if (!(parent instanceof PsiClass)) {
@@ -162,7 +162,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
       if (!(parent instanceof PsiClass)) {

@@ -55,7 +55,7 @@ internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
     foldSize { maximumSize }
 
   override fun doLayout() {
-    val oldComponentHeights = components.sumBy { it.height }
+    val oldComponentHeights = components.sumOf { it.height }
 
     var totalY = insets.top
     forEveryComponent(Component::getPreferredSize) { component, newWidth, newHeight ->
@@ -68,7 +68,7 @@ internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
       totalY += newHeight
     }
 
-    val newComponentHeights = components.sumBy { it.height }
+    val newComponentHeights = components.sumOf { it.height }
     if (oldComponentHeights != newComponentHeights) {
       editor.notebookCellEditorScrollingPositionKeeper?.adjustScrollingPosition()
     }

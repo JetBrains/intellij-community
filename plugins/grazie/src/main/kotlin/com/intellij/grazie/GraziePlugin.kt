@@ -4,13 +4,15 @@ package com.intellij.grazie
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-internal object GraziePlugin {
+@ApiStatus.Internal
+object GraziePlugin {
   const val id = "tanvd.grazi"
 
   object LanguageTool {
-    const val version = "5.7"
+    const val version = "5.8"
     const val url = "https://resources.jetbrains.com/grazie/model/language-tool"
   }
 

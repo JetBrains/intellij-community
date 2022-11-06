@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
@@ -31,6 +31,5 @@ interface RenameUsage {
    * @param newName new name of the [RenameTarget] which is targeted by this usage
    * @return list of conflicts produced by this usage, or empty list if there are no conflicts
    */
-  @JvmDefault
   fun conflicts(newName: String): List<RenameConflict> = emptyList()
 }

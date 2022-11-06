@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.codeInsight.actions.ChangedRangesShifter;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonManagerImpl;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
+import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
@@ -29,12 +31,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListChange;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.ex.PartialCommitContent;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.impl.PartialChangesUtil;
+import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -60,7 +59,7 @@ import static java.util.Objects.requireNonNull;
  * @author irengrig
  */
 public class TodoCheckinHandlerWorker {
-  private final static Logger LOG = Logger.getInstance(TodoCheckinHandler.class);
+  private final static Logger LOG = Logger.getInstance(TodoCheckinHandlerWorker.class);
 
   private final Project myProject;
   private final Collection<? extends Change> myChanges;
@@ -70,7 +69,9 @@ public class TodoCheckinHandlerWorker {
   private final Set<TodoItem> myInChangedTodos = new HashSet<>();
   private final List<Pair<FilePath, String>> mySkipped = new SmartList<>();
 
-  public TodoCheckinHandlerWorker(@NotNull Project project, @NotNull Collection<? extends Change> changes, @Nullable TodoFilter todoFilter) {
+  public TodoCheckinHandlerWorker(@NotNull Project project,
+                                  @NotNull Collection<? extends Change> changes,
+                                  @Nullable TodoFilter todoFilter) {
     myProject = project;
     myChanges = changes;
     myTodoFilter = todoFilter;
@@ -91,9 +92,9 @@ public class TodoCheckinHandlerWorker {
       FilePath afterFilePath = afterRevision.getFile();
       VirtualFile afterFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterFilePath.getPath());
 
-      progress(afterFile != null ? ProjectUtil.calcRelativeToProjectPath(afterFile, myProject) : afterFilePath.getName());
-
       EditedFileProcessorBase fileProcessor = ReadAction.compute(() -> {
+        progress(afterFile != null ? ProjectUtil.calcRelativeToProjectPath(afterFile, myProject) : afterFilePath.getName());
+
         if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) {
           return null; // skip detection
         }
@@ -111,56 +112,31 @@ public class TodoCheckinHandlerWorker {
           return null;
         }
 
-        PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
-        if (tracker != null && tracker.hasPartialChangesToCommit() && change instanceof ChangeListChange) {
-          String changeListId = ((ChangeListChange)change).getChangeListId();
-          List<String> affectedChangelistIds = Collections.singletonList(changeListId);
-          PartialCommitContent partialCommitContent = tracker.getPartialCommitContent(affectedChangelistIds, true);
-          if (partialCommitContent == null) {
-            LOG.info(String.format("Can't check todo before commit for tracker %s, isOperational - %s", tracker, tracker.isOperational()));
-            mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
-            return null;
-          }
+        String beforeContent = getRevisionContent(beforeRevision);
+        if (beforeContent == null) {
+          mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
+          return null;
+        }
 
-          String beforeContent = partialCommitContent.getVcsContent().toString();
-          String afterContent = partialCommitContent.getCurrentContent().toString();
-          List<Range> ranges = ContainerUtil.map(partialCommitContent.getRangesToCommit(), it -> {
-            return new Range(it.getVcsLine1(), it.getVcsLine2(), it.getLine1(), it.getLine2());
-          });
+        Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
+        if (afterDocument == null) {
+          mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
+          return null;
+        }
+        String afterContent = afterDocument.getText();
+        List<? extends TodoItem> afterTodoItems = collectTodoItems(afterPsiFile, false);
 
-          List<TodoItem> newTodoItems = collectTodoItems(afterPsiFile, false);
-          return new PartialEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems, ranges);
+        if (afterRevision instanceof CurrentContentRevision) {
+          return new SimpleEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, afterTodoItems);
         }
         else {
-          String beforeContent = getRevisionContent(beforeRevision);
-          if (beforeContent == null) {
-            mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
+          String afterChangeContent = getRevisionContent(afterRevision);
+          if (afterChangeContent == null) {
+            mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
             return null;
           }
 
-          if (afterRevision instanceof CurrentContentRevision) {
-            Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
-            if (afterDocument == null) {
-              mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
-              return null;
-            }
-            String afterContent = afterDocument.getText();
-
-            List<TodoItem> newTodoItems = collectTodoItems(afterPsiFile, false);
-            return new SimpleEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems);
-          }
-          else {
-            String afterContent = getRevisionContent(afterRevision);
-            if (afterContent == null) {
-              mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
-              return null;
-            }
-
-            PsiFile realAfterPsiFile = PsiFileFactory.getInstance(myProject)
-              .createFileFromText("new" + afterFilePath.getName(), afterFilePath.getFileType(), afterContent);
-            List<TodoItem> newTodoItems = collectTodoItems(realAfterPsiFile, true);
-            return new NonLocalEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems);
-          }
+          return new NonLocalEditedFileProcessor(myProject, afterFilePath, beforeContent, afterChangeContent, afterContent, afterTodoItems);
         }
       });
 
@@ -216,53 +192,46 @@ public class TodoCheckinHandlerWorker {
                                       @NotNull FilePath afterFilePath,
                                       @NotNull String beforeContent,
                                       @NotNull String afterContent,
-                                      @NotNull List<? extends TodoItem> newTodoItems) {
-      super(project, afterFilePath, beforeContent, afterContent, newTodoItems);
+                                      @NotNull List<? extends TodoItem> afterTodoItems) {
+      super(project, afterFilePath, beforeContent, afterContent, afterTodoItems);
     }
 
     @Override
     protected @NotNull List<LineFragment> computeFragments() {
       ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
       return ComparisonManager.getInstance().compareLines(myBeforeContent, myAfterContent, ComparisonPolicy.DEFAULT, indicator);
-    }
-  }
-
-  private class PartialEditedFileProcessor extends EditedFileProcessorBase {
-    @NotNull private final List<Range> myRanges;
-
-    private PartialEditedFileProcessor(@NotNull Project project,
-                                       @NotNull FilePath afterFilePath,
-                                       @NotNull String beforeContent,
-                                       @NotNull String afterContent,
-                                       @NotNull List<? extends TodoItem> newTodoItems,
-                                       @NotNull List<Range> ranges) {
-      super(project, afterFilePath, beforeContent, afterContent, newTodoItems);
-      myRanges = ranges;
-    }
-
-    @Override
-    protected @NotNull List<LineFragment> computeFragments() {
-      LineOffsets afterLineOffsets = LineOffsetsUtil.create(myAfterContent);
-      LineOffsets beforeLineOffsets = LineOffsetsUtil.create(myBeforeContent);
-
-      DiffIterable iterable = DiffIterableUtil.create(myRanges, beforeLineOffsets.getLineCount(), afterLineOffsets.getLineCount());
-      return ComparisonManagerImpl.convertIntoLineFragments(beforeLineOffsets, afterLineOffsets, iterable);
     }
   }
 
   private final class NonLocalEditedFileProcessor extends EditedFileProcessorBase {
+    private final String myAfterChangeContent;
+
     private NonLocalEditedFileProcessor(@NotNull Project project,
                                         @NotNull FilePath afterFilePath,
                                         @NotNull String beforeContent,
+                                        @NotNull String afterChangeContent,
                                         @NotNull String afterContent,
-                                        @NotNull List<? extends TodoItem> newTodoItems) {
-      super(project, afterFilePath, beforeContent, afterContent, newTodoItems);
+                                        @NotNull List<? extends TodoItem> afterTodoItems) {
+      super(project, afterFilePath, beforeContent, afterContent, afterTodoItems);
+      myAfterChangeContent = afterChangeContent;
     }
 
     @Override
     protected @NotNull List<LineFragment> computeFragments() {
-      ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
-      return ComparisonManager.getInstance().compareLines(myBeforeContent, myAfterContent, ComparisonPolicy.DEFAULT, indicator);
+      LineOffsets beforeLineOffsets = LineOffsetsUtil.create(myBeforeContent);
+      LineOffsets afterChangeLineOffsets = LineOffsetsUtil.create(myAfterChangeContent);
+      LineOffsets afterLineOffsets = LineOffsetsUtil.create(myAfterContent);
+
+      FairDiffIterable committedLines = RangesBuilder.compareLines(myBeforeContent, myAfterChangeContent,
+                                                                   beforeLineOffsets, afterChangeLineOffsets);
+      FairDiffIterable localLines = RangesBuilder.compareLines(myAfterChangeContent, myAfterContent,
+                                                               afterChangeLineOffsets, afterLineOffsets);
+
+      ChangedRangesShifter builder = new ChangedRangesShifter();
+      List<Range> ranges = builder.execute(committedLines, localLines);
+
+      DiffIterable iterable = DiffIterableUtil.create(ranges, beforeLineOffsets.getLineCount(), afterLineOffsets.getLineCount());
+      return ComparisonManagerImpl.convertIntoLineFragments(beforeLineOffsets, afterLineOffsets, iterable);
     }
   }
 
@@ -277,12 +246,12 @@ public class TodoCheckinHandlerWorker {
                                     @NotNull FilePath afterFilePath,
                                     @NotNull String beforeContent,
                                     @NotNull String afterContent,
-                                    @NotNull List<? extends TodoItem> newTodoItems) {
+                                    @NotNull List<? extends TodoItem> afterTodoItems) {
       myProject = project;
       myAfterFile = afterFilePath;
       myBeforeContent = beforeContent;
       myAfterContent = afterContent;
-      myNewTodoItems = newTodoItems;
+      myNewTodoItems = afterTodoItems;
     }
 
     protected abstract @NotNull List<LineFragment> computeFragments();
@@ -341,14 +310,17 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
+  @NotNull
   public Set<TodoItem> getAddedOrEditedTodos() {
     return myAddedOrEditedTodos;
   }
 
+  @NotNull
   public Set<TodoItem> getInChangedTodos() {
     return myInChangedTodos;
   }
 
+  @NotNull
   public List<Pair<FilePath, String>> getSkipped() {
     return mySkipped;
   }
@@ -387,7 +359,7 @@ public class TodoCheckinHandlerWorker {
   private static final class LeftLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
     private final String myContent;
 
-    private LeftLineFragmentConvertor(String content) {myContent = content;}
+    private LeftLineFragmentConvertor(String content) { myContent = content; }
 
     @Override
     public TextRange convert(LineFragment o) {
@@ -401,7 +373,7 @@ public class TodoCheckinHandlerWorker {
   private static final class RightLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
     private final String myContent;
 
-    private RightLineFragmentConvertor(String content) {myContent = content;}
+    private RightLineFragmentConvertor(String content) { myContent = content; }
 
     @Override
     public TextRange convert(LineFragment o) {
@@ -412,6 +384,7 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
+  @NotNull
   public Set<TodoItem> inOneList() {
     final Set<TodoItem> set = new HashSet<>();
     set.addAll(getAddedOrEditedTodos());
@@ -419,6 +392,7 @@ public class TodoCheckinHandlerWorker {
     return set;
   }
 
+  @NotNull
   public List<Change> getChanges() {
     return new ArrayList<>(myChanges);
   }

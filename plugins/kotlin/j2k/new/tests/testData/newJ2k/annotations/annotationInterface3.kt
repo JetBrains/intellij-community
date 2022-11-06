@@ -4,7 +4,7 @@ internal annotation class Anon(val value: String) {
     }
 
     companion object {
-        var field = E.A
+        val field = E.A
     }
 }
 

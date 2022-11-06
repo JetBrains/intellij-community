@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +58,11 @@ public class ShowShortenNames extends ActionGroup implements DumbAware {
     SetShortNameTypeAction(ShortNameType type) {
       super(type.getDescription());
       myType = type;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

@@ -142,7 +142,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
             showErrorDialog(message("message.text.cannot.checkout", exception.getMessage()), message("dialog.title.check.out"));
           });
           return CloneStatus.FAILURE;
-        } finally {
+        }
+        finally {
           VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
           if (vf != null) {
             vf.refresh(true, true, () -> getApplication().invokeLater(() -> notifyListener()));
@@ -270,8 +271,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   @Override
-  public String getVcsName() {
-    return "_Subversion";
+  public @NotNull String getVcsName() {
+    return message("svn.name.with.mnemonic");
   }
 
   public static class CheckoutFormatFromUserProvider {

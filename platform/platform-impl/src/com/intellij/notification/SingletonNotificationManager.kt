@@ -56,13 +56,4 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   fun clear() {
     notification.getAndSet(null)?.expire()
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  @Deprecated("please use `#notify(String, String, Project)` instead")
-  @ApiStatus.ScheduledForRemoval
-  fun notify(@NotificationContent content: String, project: Project?): Boolean {
-    notify("", content, project) { }
-    return true
-  }
-  //</editor-fold>
 }

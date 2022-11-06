@@ -51,7 +51,7 @@ public final class StubTreeBuilder {
     return builder instanceof BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?>;
   }
 
-  static StubBuilderType getStubBuilderType(@NotNull IndexedFile file, boolean toBuild) {
+  public static StubBuilderType getStubBuilderType(@NotNull IndexedFile file, boolean toBuild) {
     FileType fileType = file.getFileType();
     final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
     if (builder != null) {

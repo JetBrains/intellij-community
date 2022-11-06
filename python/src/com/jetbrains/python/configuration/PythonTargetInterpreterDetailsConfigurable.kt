@@ -9,9 +9,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.NamedConfigurable
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -85,7 +85,7 @@ internal class PythonTargetInterpreterDetailsConfigurable(private val project: P
       }
       row(PyBundle.message("python.interpreter.label")) {
         textField().bindText(::pythonInterpreterPath)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .enabled(false)
       }
     }

@@ -25,9 +25,6 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.util.List;
 
-/**
- * @author peter
- */
 class SmartPointerListModel<T> extends AbstractListModel<T> implements ModelDiff.Model<T> {
   private final CollectionListModel<Object> myDelegate = new CollectionListModel<>();
 

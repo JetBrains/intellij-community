@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.idea" />
+    <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" />

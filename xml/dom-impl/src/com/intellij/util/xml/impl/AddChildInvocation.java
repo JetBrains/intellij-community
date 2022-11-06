@@ -19,9 +19,6 @@ import com.intellij.util.Function;
 
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public class AddChildInvocation implements Invocation{
   private final CollectionChildDescriptionImpl myDescription;
   private final Type myType;

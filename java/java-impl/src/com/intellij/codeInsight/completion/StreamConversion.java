@@ -28,9 +28,6 @@ import java.util.stream.Collector;
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 import static com.intellij.psi.CommonClassNames.*;
 
-/**
- * @author peter
- */
 final class StreamConversion {
 
   static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {

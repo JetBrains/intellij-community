@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -24,6 +25,6 @@ class CastDueToProgressionResolutionChangeMigrationInspection :
 
     override fun descriptionMessage(): String = KotlinBundle.message("inspection.progression.resolution.change.migration.display.name")
 
-    override val diagnosticFactory: DiagnosticFactoryWithPsiElement<PsiElement, *>
-        get() = Errors.PROGRESSIONS_CHANGING_RESOLVE.warningFactory
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<PsiElement, *> =
+        with(Errors.PROGRESSIONS_CHANGING_RESOLVE) { languageVersionSettings.chooseFactory() }
 }

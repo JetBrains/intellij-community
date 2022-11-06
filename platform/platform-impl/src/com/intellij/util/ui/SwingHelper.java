@@ -776,7 +776,7 @@ public class SwingHelper {
       bodyInnerHtml
     );
     String disabledHtml = buildHtml(
-      UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
+      UIUtil.getCssFontDeclaration(font, NamedColorUtil.getInactiveTextColor(), null, null),
       ObjectUtils.notNull(disabledBodyInnerHtml, bodyInnerHtml)
     );
 

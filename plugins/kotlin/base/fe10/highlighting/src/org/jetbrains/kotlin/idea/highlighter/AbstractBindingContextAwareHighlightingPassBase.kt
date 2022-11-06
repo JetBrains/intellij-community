@@ -35,7 +35,7 @@ abstract class AbstractBindingContextAwareHighlightingPassBase(
         }
     }
 
-    protected fun visitWithAnnotator(
+    private fun visitWithAnnotator(
         element: PsiElement,
         annotator: Annotator,
         holder: AnnotationHolder

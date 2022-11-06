@@ -18,7 +18,6 @@ import java.util.Set;
 
 /**
  * @author dsl
- * @author peter
  */
 public final class KeywordParser {
   private static final Logger LOG = Logger.getInstance(KeywordParser.class);

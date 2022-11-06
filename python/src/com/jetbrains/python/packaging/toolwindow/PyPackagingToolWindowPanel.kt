@@ -3,10 +3,14 @@ package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -20,15 +24,23 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.Alarm
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
+import com.intellij.util.childScope
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.common.PythonLocalPackageSpecification
+import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.common.PythonVcsPackageSpecification
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -38,7 +50,12 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 
-class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWindow: ToolWindow) : SimpleToolWindowPanel(false, true) {
+class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolWindow) : SimpleToolWindowPanel(false, true), Disposable  {
+  private val packagingScope = ApplicationManager.getApplication().coroutineScope.childScope(Dispatchers.Default)
+  private var selectedPackage: DisplayablePackage? = null
+  private var selectedPackageDetails: PythonPackageDetails? = null
+
+  // UI elements
   private val packageNameLabel = JLabel().apply { font = JBFont.h4().asBold(); isVisible = false }
   private val versionLabel = JLabel().apply { isVisible = false }
   private val documentationLink = HyperlinkLabel(message("python.toolwindow.packages.documentation.link")).apply {
@@ -53,12 +70,11 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
   private val progressBar: JProgressBar
   private val versionSelector: JBComboBoxLabel
   private val descriptionPanel: JCEFHtmlPanel
-  private var currentPackageInfo: PackageInfo? = null
   private var documentationUrl: String? = null
 
-  val packageListPanel: JPanel
-  val tablesView: PyPackagingTablesView
-  val noPackagePanel = JBPanelWithEmptyText().apply { emptyText.text = message("python.toolwindow.packages.description.panel.placeholder") }
+  private val packageListPanel: JPanel
+  private val tablesView: PyPackagingTablesView
+  private val noPackagePanel = JBPanelWithEmptyText().apply { emptyText.text = message("python.toolwindow.packages.description.panel.placeholder") }
 
   // layout
   private var mainPanel: JPanel? = null
@@ -81,6 +97,8 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
 
 
   init {
+    val service = project.service<PyPackagingToolWindowService>()
+    Disposer.register(service, this)
     withEmptyText(message("python.toolwindow.packages.no.interpreter.text"))
     descriptionPanel = PyPackagingJcefHtmlPanel(service.project)
     Disposer.register(toolWindow.disposable, descriptionPanel)
@@ -90,7 +108,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
       isVisible = false
       addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent?) {
-          val versions = listOf(latestText) + (currentPackageInfo?.availableVersions ?: emptyList())
+          val versions = listOf(latestText) + (selectedPackageDetails?.availableVersions ?: emptyList())
           JBPopupFactory.getInstance().createListPopup(
             object : BaseListPopupStep<String>(null, versions) {
               override fun onChosen(@NlsContexts.Label selectedValue: String, finalChoice: Boolean): PopupStep<*>? {
@@ -102,20 +120,22 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
       })
     }
 
-    // todo: add options to install with args
-    installButton = JBOptionButton(object : AbstractAction(message("python.toolwindow.packages.install.button")) {
-      override fun actionPerformed(e: ActionEvent?) {
-        val version = if (versionSelector.text == latestText) null else versionSelector.text
-        service.installSelectedPackage(version)
-      }
-    }, null).apply { isVisible = false }
-
+    // todo[akniazev]: add options to install with args
+    installButton = JBOptionButton(null, null).apply { isVisible = false }
 
     val uninstallToolbar = ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.TOOLWINDOW_CONTENT, DefaultActionGroup(DefaultActionGroup().apply {
         add(object : AnAction(message("python.toolwindow.packages.delete.package")) {
           override fun actionPerformed(e: AnActionEvent) {
-            service.deleteSelectedPackage()
+            if (selectedPackage is InstalledPackage) {
+              packagingScope.launch(Dispatchers.Main) {
+                startProgress()
+                withContext(Dispatchers.IO) {
+                  service.deletePackage(selectedPackage as InstalledPackage)
+                }
+                stopProgress()
+              }
+            } else error("Trying to delete package, that is not InstalledPackage")
           }
         })
         isPopup = true
@@ -124,7 +144,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
           icon = AllIcons.Actions.More
         }
       }), true)
-    uninstallToolbar.setTargetComponent(this)
+    uninstallToolbar.targetComponent = this
     uninstallAction = uninstallToolbar.component
 
     progressBar = JProgressBar(JProgressBar.HORIZONTAL).apply {
@@ -141,7 +161,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
       background = UIUtil.getListBackground()
     }
 
-    tablesView = PyPackagingTablesView(service, packageListPanel)
+    tablesView = PyPackagingTablesView(project, packageListPanel, this)
     leftPanel = ScrollPaneFactory.createScrollPane(packageListPanel, true)
 
     rightPanel = borderPanel {
@@ -219,29 +239,31 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
       }
     })
     val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_CONTENT, actionGroup,true)
-    actionToolbar.setTargetComponent(this)
+    actionToolbar.targetComponent = this
 
 
     val installFromLocationLink = DropDownLink(message("python.toolwindow.packages.add.package.action"),
                                                listOf(fromVcsText, fromDiscText)) {
-      val params = when (it) {
+      val specification = when (it) {
         fromDiscText -> showInstallFromDiscDialog(service)
         fromVcsText -> showInstallFromVcsDialog(service)
         else -> throw IllegalStateException("Unknown operation")
       }
-      if (params != null) {
-        service.installFromLocation(params.first, params.second)
+      if (specification != null) {
+        packagingScope.launch {
+          service.installPackage(specification)
+        }
       }
     }
 
     mainPanel = borderPanel {
       val topToolbar = boxPanel {
-        border = SideBorder(UIUtil.getBoundsColor(), SideBorder.BOTTOM)
+        border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
         preferredSize = Dimension(preferredSize.width, 30)
         minimumSize = Dimension(minimumSize.width, 30)
         maximumSize = Dimension(maximumSize.width, 30)
         add(searchTextField)
-        actionToolbar.component.maximumSize = Dimension(60, actionToolbar.component.maximumSize.height)
+        actionToolbar.component.maximumSize = Dimension(70, actionToolbar.component.maximumSize.height)
         add(actionToolbar.component)
         add(installFromLocationLink)
       }
@@ -251,7 +273,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
     setContent(mainPanel!!)
   }
 
-  private fun showInstallFromVcsDialog(service: PyPackagingToolWindowService): Pair<String, Boolean>? {
+  private fun showInstallFromVcsDialog(service: PyPackagingToolWindowService): PythonVcsPackageSpecification? {
     var editable = false
     var link = ""
     val systems = listOf(message("python.toolwindow.packages.add.package.vcs.git"),
@@ -267,7 +289,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
         textField()
           .columns(COLUMNS_MEDIUM)
           .bindText({ link }, { link = it })
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         checkBox(message("python.toolwindow.packages.add.package.as.editable"))
@@ -284,12 +306,13 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
         message("python.toolwindow.packages.add.package.vcs.bzr") -> "bzr+"
         else -> throw IllegalStateException("Unknown VCS")
       }
-      return Pair(prefix + link, editable)
+
+      return PythonVcsPackageSpecification(link, link, prefix, editable)
     }
     return null
   }
 
-  private fun showInstallFromDiscDialog(service: PyPackagingToolWindowService): Pair<String, Boolean>? {
+  private fun showInstallFromDiscDialog(service: PyPackagingToolWindowService): PythonLocalPackageSpecification? {
     var editable = false
 
     val textField = TextFieldWithBrowseButton().apply {
@@ -300,7 +323,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
       row(message("python.toolwindow.packages.add.package.path")) {
         cell(textField)
           .columns(COLUMNS_MEDIUM)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         checkBox(message("python.toolwindow.packages.add.package.as.editable"))
@@ -309,7 +332,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
     }
 
     val shouldInstall = dialog(message("python.toolwindow.packages.add.package.dialog.title"), panel, project = service.project, resizable = true).showAndGet()
-    return if (shouldInstall) Pair("file://${textField.text}", editable) else null
+    return if (shouldInstall) PythonLocalPackageSpecification(textField.text, textField.text, editable) else null
   }
 
   private fun trackOrientation(service: PyPackagingToolWindowService) {
@@ -330,6 +353,64 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
     })
   }
 
+
+
+  fun packageSelected(selectedPackage: DisplayablePackage) {
+    showHeaderForPackage(selectedPackage)
+    this.selectedPackage = selectedPackage
+    packagingScope.launch(Dispatchers.IO) {
+      val service = project.service<PyPackagingToolWindowService>()
+      val packageDetails = service.detailsForPackage(selectedPackage)
+
+      val installActions = PythonPackagingToolwindowActionProvider.EP_NAME
+        .extensionList
+        .firstNotNullOf {
+          it.getInstallActions(packageDetails, service.manager)
+        }
+
+      withContext(Dispatchers.Main) {
+        selectedPackageDetails = packageDetails
+
+        if (splitter?.secondComponent != rightPanel) {
+          splitter!!.secondComponent = rightPanel
+        }
+
+        val renderedDescription  = with(packageDetails) {
+          when {
+            !description.isNullOrEmpty() -> service.convertToHTML(descriptionContentType, description!!)
+            !summary.isNullOrEmpty() -> service.wrapHtml(summary!!)
+            else -> NO_DESCRIPTION
+          }
+        }
+
+        descriptionPanel.setHtml(renderedDescription)
+        documentationUrl = packageDetails.documentationUrl
+        documentationLink.isVisible = documentationUrl != null
+
+
+        installButton.action = wrapAction(installActions.first(), packageDetails)
+        if (installActions.size > 1) {
+          installButton.options = installActions
+            .asSequence().drop(1).map { wrapAction(it, packageDetails) }.toList().toTypedArray()
+        }
+
+        installButton.repaint()
+      }
+    }
+  }
+
+  private fun wrapAction(installAction: PythonPackageInstallAction, details: PythonPackageDetails): Action {
+    return object : AbstractAction(installAction.text) {
+      override fun actionPerformed(e: ActionEvent?) {
+        val version = if (versionSelector.text == latestText) null else versionSelector.text
+        packagingScope.launch(Dispatchers.IO) {
+          val specification = details.toPackageSpecification(version)
+          installAction.installPackage(specification)
+        }
+      }
+    }
+  }
+
   fun showSearchResult(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
     tablesView.showSearchResult(installed, repoData)
   }
@@ -337,18 +418,6 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
   fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>) {
     tablesView.resetSearch(installed, repos)
   }
-
-  fun displaySelectedPackageInfo(packageInfo: PackageInfo) {
-    currentPackageInfo = packageInfo
-    if (splitter?.secondComponent != rightPanel) {
-      splitter!!.secondComponent = rightPanel
-    }
-
-    descriptionPanel.setHtml(packageInfo.description)
-    documentationUrl = packageInfo.documentationUrl
-    documentationLink.isVisible = documentationUrl != null
-  }
-
 
   fun startProgress() {
     progressBar.isVisible = true
@@ -360,14 +429,14 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
     progressBar.isVisible = false
   }
 
-  fun showInstalledControls() {
+  private fun showInstalledControls() {
     hideInstallableControls()
     progressBar.isVisible = false
     versionLabel.isVisible = true
     uninstallAction.isVisible = true
   }
 
-  fun showInstallableControls() {
+  private fun showInstallableControls() {
     hideInstalledControls()
     progressBar.isVisible = false
     versionSelector.isVisible = true
@@ -385,20 +454,13 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
     versionSelector.isVisible = false
   }
 
-  fun packageInstalled(newFiltered: List<InstalledPackage>) {
-    tablesView.packagesAdded(newFiltered)
-  }
-
-  fun packageDeleted(deletedPackage: DisplayablePackage) {
-    tablesView.packageDeleted(deletedPackage)
-  }
-
-  fun showHeaderForPackage(selectedPackage: DisplayablePackage) {
+  private fun showHeaderForPackage(selectedPackage: DisplayablePackage) {
     packageNameLabel.text = selectedPackage.name
     packageNameLabel.isVisible = true
     documentationLink.isVisible = false
 
     if (selectedPackage is InstalledPackage) {
+      @Suppress("HardCodedStringLiteral")
       versionLabel.text = selectedPackage.instance.version
       showInstalledControls()
     }
@@ -415,16 +477,14 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
     splitter?.secondComponent = noPackagePanel
   }
 
+  override fun dispose() {
+    packagingScope.cancel()
+  }
 
   companion object {
     private const val HORIZONTAL_SPLITTER_KEY = "Python.PackagingToolWindow.Horizontal"
     private const val VERTICAL_SPLITTER_KEY = "Python.PackagingToolWindow.Vertical"
 
-
-    val REMOTE_INTERPRETER_TEXT: String
-      get() = message("python.toolwindow.packages.remote.interpreter.placeholder")
-    val REQUEST_FAILED_TEXT: String
-      get() = message("python.toolwindow.packages.request.failed")
     val NO_DESCRIPTION: String
       get() = message("python.toolwindow.packages.no.description.placeholder")
   }

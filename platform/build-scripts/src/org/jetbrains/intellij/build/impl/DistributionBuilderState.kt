@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.*
 
-class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, val context: BuildContext) {
+class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, private val context: BuildContext) {
   @JvmField
   val pluginsToPublish: Set<PluginLayout>
 
@@ -31,12 +31,12 @@ class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, val context:
   }
 
   val platformModules: Collection<String>
-    get() = platform.getIncludedModuleNames() + getToolModules()
+    get() = (platform.includedModuleNames + getToolModules().asSequence()).toList()
 
   fun getModulesForPluginsToPublish(): Set<String> {
     val result = LinkedHashSet<String>()
     result.addAll(platformModules)
-    pluginsToPublish.flatMapTo(result) { it.getIncludedModuleNames() }
+    pluginsToPublish.flatMapTo(result) { it.includedModuleNames }
     return result
   }
 
@@ -44,7 +44,9 @@ class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, val context:
     val result = LinkedHashSet<String>()
     result.addAll(platform.includedArtifacts.keys)
 
-    getPluginsByModules(getEnabledPluginModules(pluginsToPublish, context.productProperties), context)
+    getPluginLayoutsByJpsModuleNames(modules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish,
+                                                                       productProperties = context.productProperties),
+                                     productLayout = context.productProperties.productLayout)
       .flatMapTo(result) { it.includedArtifacts.keys }
     return result
   }
@@ -99,9 +101,9 @@ private fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, product
 private fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
 
-  for (plugin in getPluginsByModules(enabledPluginModules, context)) {
+  for (plugin in getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)) {
     val libsToUnpack = plugin.projectLibrariesToUnpack.values()
-    for (moduleName in plugin.getIncludedModuleNames()) {
+    for (moduleName in plugin.includedModuleNames) {
       val dependencies = JpsJavaExtensionService.dependencies(context.findRequiredModule(moduleName))
       dependencies.includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).processLibraries(com.intellij.util.Consumer {library ->
         if (!isProjectLibraryUsedByPlugin(library, plugin, libsToUnpack)) {
@@ -123,12 +125,12 @@ private fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, c
 /**
  * @return module names which are required to run necessary tools from build scripts
  */
-fun getToolModules(): List<String> {
+internal fun getToolModules(): List<String> {
   return java.util.List.of("intellij.java.rt", "intellij.platform.main",
                            /*required to build searchable options index*/ "intellij.platform.updater")
 }
 
-fun isProjectLibraryUsedByPlugin(library: JpsLibrary, plugin: BaseLayout, libsToUnpack: Collection<String>): Boolean {
+internal fun isProjectLibraryUsedByPlugin(library: JpsLibrary, plugin: BaseLayout, libsToUnpack: Collection<String>): Boolean {
   return library.createReference().parentReference !is JpsModuleReference &&
          !plugin.includedProjectLibraries.any {it.libraryName == library.name} &&
          !libsToUnpack.contains(library.name)

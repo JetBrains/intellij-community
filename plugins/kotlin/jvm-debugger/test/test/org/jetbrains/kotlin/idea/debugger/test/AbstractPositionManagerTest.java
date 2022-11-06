@@ -46,7 +46,6 @@ import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,7 +69,7 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE;
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance();
     }
 
     @NotNull

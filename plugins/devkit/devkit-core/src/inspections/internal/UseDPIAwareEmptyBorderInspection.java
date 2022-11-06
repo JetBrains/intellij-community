@@ -1,92 +1,119 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
-import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBBorderQuickFix;
+import org.jetbrains.uast.UCallExpression;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
-  private static final CallMatcher JBUI_BORDERS_EMPTY = 
-    CallMatcher.staticCall("com.intellij.util.ui.JBUI.Borders", "empty");
-  
+import javax.swing.border.EmptyBorder;
+
+public class UseDPIAwareEmptyBorderInspection extends AbstractUseDPIAwareBorderInspection {
+  private static final String SWING_EMPTY_BORDER_CLASS_NAME = EmptyBorder.class.getName();
+  private static final String JB_UI_CLASS_NAME = JBUI.class.getName();
+  private static final String JB_UI_BORDERS_CLASS_NAME = JB_UI_CLASS_NAME + ".Borders";
+
   @Override
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new JavaElementVisitor() {
-      @Override
-      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-        final ProblemDescriptor descriptor = checkMethodCallCanBeSimplified(expression, holder.getManager(), isOnTheFly);
-        if (descriptor != null) {
-          holder.registerProblem(descriptor);
-        }
-        super.visitMethodCallExpression(expression);
-      }
-
-      @Override
-      public void visitNewExpression(@NotNull PsiNewExpression expression) {
-        final ProblemDescriptor descriptor = checkNewExpression(expression, holder.getManager(), isOnTheFly);
-        if (descriptor != null) {
-          holder.registerProblem(descriptor);
-        }
-        super.visitNewExpression(expression);
-      }
-    };
+  protected boolean isAllowedConstructorCall(@NotNull UCallExpression expression) {
+    return false;
   }
 
-  private static ProblemDescriptor checkMethodCallCanBeSimplified(PsiMethodCallExpression expression,
-                                                                  InspectionManager manager,
-                                                                  boolean isOnTheFly) {
-    if (!JBUI_BORDERS_EMPTY.test(expression)) return null;
-    if (ConvertToJBBorderQuickFix.canSimplify(expression)) {
-      return manager.createProblemDescriptor(expression,
-                                             DevKitBundle.message("inspections.use.dpi.aware.empty.border.simplify"),
-                                             new ConvertToJBBorderQuickFix() {
-                                               @Override
-                                               public @IntentionFamilyName @NotNull String getFamilyName() {
-                                                 return DevKitBundle.message("inspections.use.dpi.aware.empty.border.family.name");
-                                               }
-                                             },
-                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-    }
-    return null;
+  @Override
+  protected @NotNull String getFactoryMethodContainingClassName() {
+    return JB_UI_BORDERS_CLASS_NAME;
   }
 
-  @Nullable
-  private static ProblemDescriptor checkNewExpression(PsiNewExpression expression, InspectionManager manager, boolean isOnTheFly) {
-    final Project project = manager.getProject();
-    final PsiType type = expression.getType();
-    final PsiExpressionList arguments = expression.getArgumentList();
-    if (type != null && arguments != null && type.equalsToText("javax.swing.border.EmptyBorder")) {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      final PsiClass jbuiClass = facade.findClass(JBUI.class.getName(), GlobalSearchScope.allScope(project));
-      if (jbuiClass != null && facade.getResolveHelper().isAccessible(jbuiClass, expression, jbuiClass)) {
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiNewExpression) {
-          final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
-          if (parentType == null || JBEmptyBorder.class.getName().equals(parentType.getCanonicalText())) return null;
-        }
-        if (arguments.getExpressionCount() == 4) {
-          return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.dpi.aware.empty.border.replace"),
-                                                 new ConvertToJBBorderQuickFix(),
-                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-        }
-      }
+  @Override
+  protected @NotNull String getFactoryMethodName() {
+    return "empty";
+  }
+
+  @Override
+  protected @NotNull String getNonDpiAwareClassName() {
+    return SWING_EMPTY_BORDER_CLASS_NAME;
+  }
+
+  @Override
+  protected @NotNull String getCanBeSimplifiedMessage() {
+    return DevKitBundle.message("inspections.use.dpi.aware.empty.border.can.be.simplified");
+  }
+
+  @Override
+  protected @NotNull LocalQuickFix createSimplifyFix() {
+    return new SimplifyJBUIEmptyBorderCreationQuickFix();
+  }
+
+  @Override
+  protected @NotNull String getNonDpiAwareObjectCreatedMessage() {
+    return DevKitBundle.message("inspections.use.dpi.aware.empty.border.not.dpi.aware");
+  }
+
+  @Override
+  protected @NotNull LocalQuickFix createConvertToDpiAwareMethodCall() {
+    return new ConvertToJBUIBorderQuickFix();
+  }
+
+  private static abstract class AbstractConvertToDpiAwareBorderQuickFix extends AbstractConvertToDpiAwareCallQuickFix {
+
+    @Override
+    protected @NotNull String getFactoryMethodContainingClassName() {
+      return JB_UI_BORDERS_CLASS_NAME;
     }
-    return null;
+
+    @Override
+    protected @NotNull String getEmptyFactoryMethodName() {
+      return "empty";
+    }
+
+    @Override
+    protected @NotNull String getTopFactoryMethodName() {
+      return "emptyTop";
+    }
+
+    @Override
+    protected @NotNull String getBottomFactoryMethodName() {
+      return "emptyBottom";
+    }
+
+    @Override
+    protected @NotNull String getLeftFactoryMethodName() {
+      return "emptyLeft";
+    }
+
+    @Override
+    protected @NotNull String getRightFactoryMethodName() {
+      return "emptyRight";
+    }
+
+    @Override
+    protected @NotNull String getAllSameFactoryMethodName() {
+      return "empty";
+    }
+
+    @Override
+    protected @NotNull String getTopBottomAndLeftRightSameFactoryMethodName() {
+      return "empty";
+    }
+
+    @Override
+    protected @NotNull String getAllDifferentFactoryMethodName() {
+      return "empty";
+    }
+  }
+
+  private static class SimplifyJBUIEmptyBorderCreationQuickFix extends AbstractConvertToDpiAwareBorderQuickFix {
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.use.dpi.aware.empty.border.simplify.fix.name");
+    }
+  }
+
+  private static class ConvertToJBUIBorderQuickFix extends AbstractConvertToDpiAwareBorderQuickFix {
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.use.dpi.aware.empty.border.convert.fix.name");
+    }
   }
 }

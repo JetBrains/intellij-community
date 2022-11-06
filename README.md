@@ -1,4 +1,4 @@
-# IntelliJ IDEA Community Edition [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+# IntelliJ IDEA Community Edition [![official JetBrains project](http://jb.gg/badges/official.svg)](https://github.com/JetBrains/.github/blob/main/profile/README.md)
 These instructions will help you build IntelliJ IDEA Community Edition from source code, which is the basis for IntelliJ Platform development.
 The following conventions will be used to refer to directories on your machine:
 * `<USER_HOME>` is your home directory.
@@ -46,11 +46,8 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 3. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
-   to enable the "Compile independent modules in parallel" option. Also, increase build process heap size:
-   * if you use IntelliJ IDEA 2020.3 or newer, set "User-local build process heap size" to 2048. 
-   * if you use IntelliJ IDEA 2020.2 or older, copy value from "Shared build process VM options" to "User-local build process VM options" and add `-Xmx2G` to it.
-    
-    These changes will greatly reduce compilation time.
+   to enable the "Compile independent modules in parallel" option and set "User-local build process heap size" to 3000.
+   These changes will greatly reduce compilation time.
 
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.

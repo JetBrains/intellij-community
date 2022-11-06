@@ -112,14 +112,15 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
         super.postProcess(module, mavenProject, changes, modifiableModelsProvider)
-        module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
+        val project = module.project
+        project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
             KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
-                module.project,
+                project,
                 version.rawVersion,
-                isDelegatedToExtBuild = MavenRunner.getInstance(module.project).settings.isDelegateBuildToMaven
+                isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven
             )
 
-            module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
+            project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
         }
 
         if (changes.hasDependencyChanges()) {
@@ -130,7 +131,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
                 modifiableModelsProvider.getModifiableRootModel(module).orderEntries().forEachLibrary { library ->
                     if ((library as LibraryEx).kind == null) {
                         val model = modifiableModelsProvider.getModifiableLibraryModel(library) as LibraryEx.ModifiableModelEx
-                        detectLibraryKind(model.getFiles(OrderRootType.CLASSES))?.let { model.kind = it }
+                        detectLibraryKind(library, project)?.let { model.kind = it }
                     }
                     true
                 }
@@ -315,12 +316,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         // TODO There should be a way to figure out the correct platform version
         val platform = detectPlatform(mavenProject)?.defaultPlatform
 
-        kotlinFacet.configureFacet(
-            compilerVersion,
-            platform,
-            modifiableModelsProvider,
-            emptySet()
-        )
+        kotlinFacet.configureFacet(compilerVersion, platform, modifiableModelsProvider)
 
         val facetSettings = kotlinFacet.configuration.settings
         val configuredPlatform = kotlinFacet.configuration.settings.targetPlatform!!

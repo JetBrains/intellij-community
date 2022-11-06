@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author peter
- */
 final class ExpectedAnnotationsProvider {
   static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_VALUE = or(
     PsiJavaPatterns.psiElement().withParent(PsiNameValuePair.class),

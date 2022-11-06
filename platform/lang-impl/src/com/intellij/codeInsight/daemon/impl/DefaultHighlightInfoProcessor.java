@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -12,6 +15,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -54,25 +58,32 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
-          ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-            ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
-            TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
-            if (highlightingPass != null) {
-              highlightingPass.doApplyInformationToEditor();
-            }
-          }, session.getProgressIndicator());
+          showAutoImportHints(editor, psiFile, session.getProgressIndicator());
         }
 
-        repaintErrorStripeAndIcon(editor, project);
+        repaintErrorStripeAndIcon(editor, project, psiFile);
       }
     });
   }
 
-  static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project) {
+  static void showAutoImportHints(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull ProgressIndicator progressIndicator) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
+      try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+        TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
+        if (highlightingPass != null) {
+          highlightingPass.doApplyInformationToEditor();
+        }
+      }
+    }, progressIndicator);
+  }
+
+  static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project, @Nullable PsiFile file) {
     MarkupModel markup = editor.getMarkupModel();
     if (markup instanceof EditorMarkupModelImpl) {
       ((EditorMarkupModelImpl)markup).repaintTrafficLightIcon();
-      ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
+      ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor, file);
     }
   }
 
@@ -98,7 +109,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                          ProperTextRange.create(priorityRange),
                                                          groupId);
       if (editor != null) {
-        repaintErrorStripeAndIcon(editor, project);
+        repaintErrorStripeAndIcon(editor, project, psiFile);
       }
     });
   }
@@ -162,7 +173,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
           myeditor = PsiEditorUtil.findEditor(file);
         }
         if (myeditor != null && !myeditor.isDisposed()) {
-          repaintErrorStripeAndIcon(myeditor, myProject);
+          repaintErrorStripeAndIcon(myeditor, myProject, file);
         }
       }, 50, null);
     }

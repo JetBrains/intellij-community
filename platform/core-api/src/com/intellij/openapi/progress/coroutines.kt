@@ -5,11 +5,14 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.replaceThreadContext
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -159,14 +162,31 @@ suspend fun <T> blockingContext(action: () -> T): T {
 @Internal
 suspend fun <T> runUnderIndicator(action: () -> T): T {
   val ctx = coroutineContext
-  return runUnderIndicator(ctx.job, ctx.progressSink, action)
+  return runUnderIndicator(ctx, action)
 }
 
 @Internal
-@Suppress("EXPERIMENTAL_API_USAGE_ERROR")
-fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
+fun <T> runUnderIndicator(ctx: CoroutineContext, action: () -> T): T {
+  val job = ctx.job
   job.ensureActive()
-  val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
+  val indicator = ctx.createIndicator()
+  return runUnderIndicator(job, indicator, action)
+}
+
+private fun CoroutineContext.createIndicator(): ProgressIndicator {
+  val contextModality = contextModality()
+                        ?: ModalityState.NON_MODAL
+  val progressSink = progressSink
+  return if (progressSink == null) {
+    EmptyProgressIndicator(contextModality)
+  }
+  else {
+    ProgressSinkIndicator(progressSink, contextModality)
+  }
+}
+
+@Internal
+fun <T> runUnderIndicator(job: Job, indicator: ProgressIndicator, action: () -> T): T {
   try {
     return ProgressManager.getInstance().runProcess(Computable {
       // Register handler inside runProcess to avoid cancelling the indicator before even starting the progress.

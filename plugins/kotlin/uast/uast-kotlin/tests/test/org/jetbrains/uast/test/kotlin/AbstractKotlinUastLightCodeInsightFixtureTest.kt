@@ -15,7 +15,7 @@ import java.io.File
 abstract class AbstractKotlinUastLightCodeInsightFixtureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     fun getVirtualFile(testName: String): VirtualFile {
         val testFile = TEST_KOTLIN_MODEL_DIR.listFiles { pathname -> pathname.nameWithoutExtension == testName }.first()

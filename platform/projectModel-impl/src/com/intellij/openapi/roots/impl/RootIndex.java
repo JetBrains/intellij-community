@@ -57,8 +57,8 @@ class RootIndex {
   private final ConcurrentBitSet myNonInterestingIds = ConcurrentBitSet.create();
   @NotNull private final Project myProject;
   private final RootFileSupplier myRootSupplier;
-  final PackageDirectoryCache myPackageDirectoryCache;
-  private OrderEntryGraph myOrderEntryGraph;
+  final PackageDirectoryCacheImpl myPackageDirectoryCache;
+  private volatile OrderEntryGraph myOrderEntryGraph;
 
   RootIndex(@NotNull Project project) {
     this(project, RootFileSupplier.INSTANCE);
@@ -100,12 +100,13 @@ class RootIndex {
     storeContentsBeneathExcluded(allRoots, hierarchies);
     storeOutsideProjectRootsButHasContentInside();
 
-    myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
-      @Override
-      protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
-        return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
-      }
-    };
+    myPackageDirectoryCache = new PackageDirectoryCacheImpl((packageName, result) -> {
+      PackageDirectoryCacheImpl.addValidDirectories(rootsByPackagePrefix.get(packageName), result);
+    }, this::isPackageDirectory);
+  }
+
+  private boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
+    return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
   }
 
   private void storeOutsideProjectRootsButHasContentInside() {
@@ -197,7 +198,7 @@ class RootIndex {
 
           info.excludedFromModule.put(excludeRoot, module);
         }
-        VirtualFile contentRoot = myRootSupplier.getContentRoot(contentEntry);
+        VirtualFile contentRoot = myRootSupplier.getContentRoot(contentEntry);//todo[lene] here!
         if (contentRoot != null && ensureValid(contentRoot, module)) {
           if (!info.contentRootOf.containsKey(contentRoot)) {
             info.contentRootOf.put(contentRoot, module);
@@ -342,7 +343,8 @@ class RootIndex {
                                                                 @NotNull EntityStorage snapshot) {
     Sequence<T> entities = snapshot.entities(provider.getEntityClass());
 
-    for (CustomEntityProjectModelInfoProvider.CustomContentRoot<T> customContentRoot : SequencesKt.asIterable(provider.getContentRoots(entities))) {
+    for (CustomEntityProjectModelInfoProvider.CustomContentRoot<T> customContentRoot :
+      SequencesKt.asIterable(provider.getContentRoots(entities, snapshot))) {
       VirtualFile root = myRootSupplier.correctRoot(customContentRoot.root, customContentRoot.generativeEntity, provider);
       if (root == null) {
         continue;
@@ -355,7 +357,7 @@ class RootIndex {
       }
     }
 
-    for (LibraryRoots<T> libraryRoots : SequencesKt.asIterable(provider.getLibraryRoots(entities))) {
+    for (LibraryRoots<T> libraryRoots : SequencesKt.asIterable(provider.getLibraryRoots(entities, snapshot))) {
       T entity = libraryRoots.generativeEntity;
       for (VirtualFile root : libraryRoots.sources) {
         VirtualFile librarySource = myRootSupplier.correctRoot(root, entity, provider);
@@ -364,6 +366,7 @@ class RootIndex {
         info.libraryOrSdkSources.add(librarySource);
         info.classAndSourceRoots.add(librarySource);
         info.sourceOfLibraries.putValue(librarySource, entity);
+        info.packagePrefix.put(librarySource, "");
       }
 
       for (VirtualFile root : libraryRoots.classes) {
@@ -373,6 +376,7 @@ class RootIndex {
         info.libraryOrSdkClasses.add(libraryClass);
         info.classAndSourceRoots.add(libraryClass);
         info.classOfLibraries.putValue(libraryClass, entity);
+        info.packagePrefix.put(libraryClass, "");
       }
 
       for (VirtualFile root : libraryRoots.excluded) {
@@ -389,7 +393,7 @@ class RootIndex {
       }
     }
     for (CustomEntityProjectModelInfoProvider.@NotNull ExcludeStrategy<T> excludeStrategy :
-      SequencesKt.asIterable(provider.getExcludeSdkRootStrategies(entities))) {
+      SequencesKt.asIterable(provider.getExcludeSdkRootStrategies(entities, snapshot))) {
       T entity = excludeStrategy.generativeEntity;
       List<VirtualFile> files = ContainerUtil.mapNotNull(excludeStrategy.excludeUrls, UtilsKt::getVirtualFile);
       info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileSupplier.ensureValid(file, entity, provider)));
@@ -459,7 +463,7 @@ class RootIndex {
   }
 
   @NotNull
-  private synchronized OrderEntryGraph getOrderEntryGraph() {
+  private OrderEntryGraph getOrderEntryGraph() {
     if (myOrderEntryGraph == null) {
       RootInfo rootInfo = buildRootInfo(myProject);
       Couple<MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
@@ -1017,17 +1021,10 @@ class RootIndex {
       for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
         if (library instanceof SyntheticLibrary) {
-          Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getExcludeFileCondition();
+          Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getUnitedExcludeCondition();
           if (exclusion != null) {
             exclusions.add(exclusion);
             if (exclusion.value(root)) {
-              continue;
-            }
-          }
-          Condition<VirtualFile> constantCondition = ((SyntheticLibrary)library).getConstantExcludeConditionAsCondition();
-          if (constantCondition != null) {
-            exclusions.add(constantCondition);
-            if (constantCondition.value(root)) {
               continue;
             }
           }

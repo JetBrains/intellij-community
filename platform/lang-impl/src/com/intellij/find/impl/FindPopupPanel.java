@@ -12,7 +12,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -245,10 +244,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         }
       };
       myDialog.setUndecorated(true);
-      if (SystemInfoRt.isMac && ExperimentalUI.isNewUI()) {
-        myDialog.getRootPane().putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
+      if (WindowRoundedCornersManager.isAvailable()) {
+        WindowRoundedCornersManager.setRoundedCorners(myDialog.getWindow());
       }
-      ApplicationManager.getApplication().getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      ApplicationManager.getApplication().getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
         public void projectClosed(@NotNull Project project) {
           closeImmediately();
@@ -259,7 +258,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       Window window = WindowManager.getInstance().suggestParentWindow(myProject);
       Component parent = UIUtil.findUltimateParent(window);
       RelativePoint showPoint = null;
-      Point screenPoint = DimensionService.getInstance().getLocation(SERVICE_KEY);
+      Point screenPoint = DimensionService.getInstance().getLocation(SERVICE_KEY, myProject);
       if (screenPoint != null) {
         if (parent != null) {
           SwingUtilities.convertPointFromScreen(screenPoint, parent);
@@ -287,7 +286,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       addMouseListener(windowListener);
       addMouseMotionListener(windowListener);
       Dimension panelSize = getPreferredSize();
-      Dimension prev = DimensionService.getInstance().getSize(SERVICE_KEY);
+      Dimension prev = DimensionService.getInstance().getSize(SERVICE_KEY, myProject);
       panelSize.width += JBUIScale.scale(24);//hidden 'loading' icon
       panelSize.height *= 2;
       if (prev != null && prev.height < panelSize.height) prev.height = panelSize.height;
@@ -560,11 +559,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     myResultsPreviewTable.setShowGrid(false);
     myResultsPreviewTable.setIntercellSpacing(JBUI.emptySize());
 
-    mySearchComponent = new JBTextAreaWithMixedAccessibleContext(myResultsPreviewTable.getAccessibleContext());
+    mySearchComponent = new JBTextAreaWithMixedAccessibleContext(myResultsPreviewTable.getAccessibleContext(),
+                                                                 FindBundle.message("find.popup.search.empty.text"));
     mySearchComponent.setColumns(25);
     mySearchComponent.setRows(1);
     mySearchComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.search.accessible.name"));
-    myReplaceComponent = new JBTextAreaWithMixedAccessibleContext(myResultsPreviewTable.getAccessibleContext());
+    myReplaceComponent = new JBTextAreaWithMixedAccessibleContext(myResultsPreviewTable.getAccessibleContext(),
+                                                                  FindBundle.message("find.popup.replace.empty.text"));
     myReplaceComponent.setColumns(25);
     myReplaceComponent.setRows(1);
     myReplaceComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.replace.accessible.name"));
@@ -811,6 +812,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       myPreviewSplitter.setBlindZone(() -> new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
       bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
       bottomPanel.setBackground(JBUI.CurrentTheme.Advertiser.background());
+      scrollPane.setBorder(JBUI.Borders.emptyBottom(4));
     } else {
       header.panel.setBorder(JBUI.Borders.empty(2, 5));
       mySearchTextArea.setBorder(JBUI.Borders.compound(
@@ -821,9 +823,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         JBUI.Borders.empty(1, 0, 2, 0)));
       scopesPanel.setBorder(JBUI.Borders.empty(3, 5));
       bottomPanel.setBorder(JBUI.Borders.empty(5));
+      scrollPane.setBorder(JBUI.Borders.empty());
     }
     PopupUtil.applyPreviewTitleInsets(myUsagePreviewTitle);
-    scrollPane.setBorder(JBUI.Borders.empty());
     add(header.panel, "growx, pushx, wrap");
 
     add(mySearchTextArea, "pushx, growx, wrap");
@@ -854,17 +856,23 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       Map<Integer, Usage> usages = getSelectedUsages();
       if (usages == null) return null;
+      return (DataProvider)slowId -> getSlowData(slowId, usages);
+    }
 
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Map<Integer, Usage> usages) {
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return usages.values().stream()
         .filter(usage -> usage instanceof UsageInfoAdapter)
         .flatMap(usage -> Arrays.stream(((UsageInfoAdapter)usage).getMergedInfos()))
         .map(info -> info.getElement())
-        .toArray(PsiElement[]::new );
+        .toArray(PsiElement[]::new);
     }
-
     return null;
   }
 
@@ -1983,8 +1991,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
     private UsageTableCellRenderer() {
       if (ExperimentalUI.isNewUI()) {
-        PopupUtil.configSelectablePanel(this);
-        setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
+        PopupUtil.configListRendererFixedHeight(this);
         RendererPanelsUtilsKt.resetHorizontalInsets(myUsageRenderer);
         Insets ipad = myFileAndLineNumber.getIpad();
         //noinspection UseDPIAwareInsets
@@ -2128,8 +2135,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
     private final AccessibleContext tableContext;
 
-    private JBTextAreaWithMixedAccessibleContext(AccessibleContext context) {
+    private JBTextAreaWithMixedAccessibleContext(AccessibleContext context, @NlsContexts.StatusText String emptyText) {
       tableContext = context;
+      getEmptyText().setText(emptyText);
     }
 
     @Override

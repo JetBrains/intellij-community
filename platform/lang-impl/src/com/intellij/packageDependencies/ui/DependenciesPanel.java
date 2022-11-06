@@ -16,6 +16,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -511,7 +513,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -535,7 +537,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -562,7 +564,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -586,7 +588,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -617,7 +619,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -827,12 +829,21 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
+      Pair<Set<PsiFile>, Set<PsiFile>> scopes =
+        Utils.getOrCreateUpdateSession(e).compute(this, "getSelectedScopes", ActionUpdateThread.EDT, () -> {
+          return Pair.create(getSelectedScope(myLeftTree), getSelectedScope(myRightTree));
+        });
       final boolean[] direct = new boolean[]{true};
-      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
+      processDependencies(scopes.first, scopes.second, path -> {
         direct [0] = false;
         return false;
       });
       e.getPresentation().setEnabled(!direct[0]);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -871,12 +882,19 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      e.getPresentation().setEnabled(getScope() != null);
+      Set<PsiFile> scope =
+        Utils.getOrCreateUpdateSession(e).compute(this, "getScope", ActionUpdateThread.EDT, () -> getSelectedScope(myRightTree));
+      e.getPresentation().setEnabled(getScope(scope) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      final AnalysisScope scope = getScope();
+      final AnalysisScope scope = getScope(getSelectedScope(myRightTree));
       LOG.assertTrue(scope != null);
       final DependenciesBuilder builder;
       if (!myForward) {
@@ -895,8 +913,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Nullable
-    private AnalysisScope getScope() {
-      final Set<PsiFile> selectedScope = getSelectedScope(myRightTree);
+    private AnalysisScope getScope(Set<PsiFile> selectedScope) {
       Set<PsiFile> result = new HashSet<>();
       ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
       selectedScope.removeAll(result);
@@ -1033,12 +1050,17 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
                                 (provider.createPackageSet(rightNode, true) != null || provider.createPackageSet(rightNode, false) != null));
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class ChooseScopeTypeAction extends ComboBoxAction {
     @Override
     @NotNull
-    protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {

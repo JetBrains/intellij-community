@@ -14,14 +14,13 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -271,21 +270,12 @@ public class Notification {
   }
 
   public static void fire(final @NotNull Notification notification, @NotNull AnAction action) {
-    fire(notification, action, null);
+    fire(notification, action, dataId -> KEY.is(dataId) ? notification : null);
   }
 
-  public static void fire(final @NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
-    DataContext contextWrapper = dataId -> {
-      if (context != null && PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) {
-        Component component = context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-        if (component != null && !component.isShowing()) {
-          return null;
-        }
-        return component;
-      }
-      return KEY.is(dataId) ? notification : context != null ? context.getData(dataId) : null;
-    };
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, contextWrapper);
+  public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
+    DataContext dataContext = ObjectUtils.notNull(context, DataContext.EMPTY_CONTEXT);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, dataContext);
     IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
   }
 
@@ -466,12 +456,6 @@ public class Notification {
   @Deprecated(forRemoval = true)
   public final void addActions(@NotNull List<? extends AnAction> actions) {
     addActions((Collection<? extends AnAction>)actions);
-  }
-
-  /** @deprecated use {@link #getCollapseDirection} */
-  @Deprecated(forRemoval = true)
-  public CollapseActionsDirection getCollapseActionsDirection() {
-    return myCollapseDirection;
   }
 
   /** @deprecated use {@link #setCollapseDirection} */

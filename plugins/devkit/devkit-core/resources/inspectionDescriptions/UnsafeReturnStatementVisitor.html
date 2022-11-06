@@ -3,10 +3,8 @@
 Reports unsafe use of <code>JavaRecursiveElementVisitor.visitReturnStatement()</code>.
 <p>
   Processing <code>PsiReturnStatement</code>s
-  even if they belong to another <code>PsiClass</code> or <code>PsiLambdaExpression</code> is a bug in most cases.
-</p>
-<p>
-  Quick-fix inserts necessary explicit <code>visitClass()/visitLambdaExpression()</code> method(s).
+  even if they belong to another <code>PsiClass</code> or <code>PsiLambdaExpression</code> is a bug in most cases, and a visitor most
+  probably should implement <code>visitClass()</code> and <code>visitLambdaExpression()</code> methods.
 </p>
 </body>
 </html>

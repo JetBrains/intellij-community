@@ -5,10 +5,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId;
+import kotlin.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.tree.dependency.*;
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -146,9 +149,7 @@ public class MavenModuleImportDependencyProvider {
     Element buildHelperCfg = mavenproject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact");
     if (buildHelperCfg == null) return null;
 
-    var classes = new ArrayList<String>();
-    var sources = new ArrayList<String>();
-    var javadocs = new ArrayList<String>();
+    var roots = new ArrayList<Pair<String, LibraryRootTypeId>>();
     var create = false;
 
     for (Element artifactsElement : buildHelperCfg.getChildren("artifacts")) {
@@ -161,19 +162,19 @@ public class MavenModuleImportDependencyProvider {
 
         String classifier = artifactElement.getChildTextTrim("classifier");
         if ("sources".equals(classifier)) {
-          sources.add(filePath);
+          roots.add(new Pair<>(filePath, LibraryRootTypeId.Companion.getSOURCES()));
         }
         else if ("javadoc".equals(classifier)) {
-          javadocs.add(filePath);
+          roots.add(new Pair<>(filePath, WorkspaceModuleImporter.Companion.getJAVADOC_TYPE()));
         }
         else {
-          classes.add(filePath);
+          roots.add(new Pair<>(filePath, LibraryRootTypeId.Companion.getCOMPILED()));
         }
 
         create = true;
       }
     }
 
-    return create ? new AttachedJarDependency(getAttachedJarsLibName(artifact), classes, sources, javadocs, scope) : null;
+    return create ? new AttachedJarDependency(getAttachedJarsLibName(artifact), roots, scope) : null;
   }
 }

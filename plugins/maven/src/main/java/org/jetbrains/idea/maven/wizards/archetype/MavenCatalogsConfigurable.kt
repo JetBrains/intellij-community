@@ -3,10 +3,9 @@ package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
@@ -24,8 +23,7 @@ class MavenCatalogsConfigurable(private val project: Project) : BoundSearchableC
     }
     row {
       cell(table.component)
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
         .bind(
           { table.catalogs },
           { _, it -> table.catalogs = it },

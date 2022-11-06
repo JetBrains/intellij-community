@@ -10,8 +10,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
-import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -96,9 +94,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
         if (file instanceof ProjectAwareVirtualFile) {
           return ((ProjectAwareVirtualFile)file).isInProject(Objects.requireNonNull(getProject()));
         }
-        DirectoryInfo info = ((ProjectFileIndexImpl)myProjectFileIndex).getInfoForFileOrDirectory(file);
-        return info.isInProject(file) &&
-               (info.getModule() != null || info.hasLibraryClassRoot() || info.isInLibrarySource(file));
+        return super.contains(file);
       }
     };
   }

@@ -20,7 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.SequencesKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -313,11 +313,10 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
     if (artifactsInfo.isEmpty()) {
       return;
     }
-
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    
     List<MavenArtifactInfo> externalArtifacts = new ArrayList<>();
     for (MavenArtifactInfo info : artifactsInfo) {
-      MavenProject mavenArtifact = projectsManager.findProject(new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion()));
+      MavenProject mavenArtifact = context.getMavenProjectsTree().findProject(new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion()));
       if (mavenArtifact == null) {
         externalArtifacts.add(info);
       }

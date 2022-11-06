@@ -6,17 +6,16 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectPaneSelectInTarget;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.scratch.ScratchUtil;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -24,7 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +37,7 @@ import java.awt.*;
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 import static java.awt.EventQueue.isDispatchThread;
 
-public class ProjectViewPane extends AbstractProjectViewPSIPane {
+public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   @NonNls public static final String ID = "ProjectPane";
 
   public ProjectViewPane(Project project) {
@@ -69,12 +67,6 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @Override
   public SelectInTarget createSelectInTarget() {
     return new ProjectPaneSelectInTarget(myProject);
-  }
-
-  @NotNull
-  @Override
-  protected AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder) {
-    return new ProjectViewTreeUpdater(treeBuilder);
   }
 
   @NotNull
@@ -156,40 +148,6 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     return 0;
   }
 
-  private final class ProjectViewTreeUpdater extends AbstractTreeUpdater {
-    private ProjectViewTreeUpdater(final AbstractTreeBuilder treeBuilder) {
-      super(treeBuilder);
-    }
-
-    @Override
-    public boolean addSubtreeToUpdateByElement(@NotNull Object element) {
-      if (element instanceof PsiDirectory && !myProject.isDisposed()) {
-        final PsiDirectory dir = (PsiDirectory)element;
-        final ProjectTreeStructure treeStructure = (ProjectTreeStructure)myTreeStructure;
-        PsiDirectory dirToUpdateFrom = dir;
-
-        // optimization
-        // isEmptyMiddleDirectory can be slow when project VFS is not fully loaded (initial dumb mode).
-        // It's easiest to disable the optimization in any dumb mode
-        if (!treeStructure.isFlattenPackages() && treeStructure.isHideEmptyMiddlePackages() && !DumbService.isDumb(myProject)) {
-          while (dirToUpdateFrom != null && ProjectViewDirectoryHelper.getInstance(myProject).isEmptyMiddleDirectory(dirToUpdateFrom, true)) {
-            dirToUpdateFrom = dirToUpdateFrom.getParentDirectory();
-          }
-        }
-        boolean addedOk;
-        while (!(addedOk = super.addSubtreeToUpdateByElement(dirToUpdateFrom == null? myTreeStructure.getRootElement() : dirToUpdateFrom))) {
-          if (dirToUpdateFrom == null) {
-            break;
-          }
-          dirToUpdateFrom = dirToUpdateFrom.getParentDirectory();
-        }
-        return addedOk;
-      }
-
-      return super.addSubtreeToUpdateByElement(element);
-    }
-  }
-
   protected class ProjectViewPaneTreeStructure extends ProjectTreeStructure implements ProjectViewSettings {
     protected ProjectViewPaneTreeStructure() {
       super(ProjectViewPane.this.myProject, ID);
@@ -226,11 +184,6 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
   }
 
-  @Override
-  protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel model) {
-    return null;
-  }
-
   public static boolean canBeSelectedInProjectView(@NotNull Project project, @NotNull VirtualFile file) {
     final VirtualFile archiveFile;
 
@@ -244,7 +197,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
            index.getContentRootForFile(file, false) != null ||
            index.isInLibrary(file) ||
            Comparing.equal(file.getParent(), project.getBaseDir()) ||
-           ScratchUtil.isScratch(file);
+           (ScratchUtil.isScratch(file) && ProjectView.getInstance(project).isShowScratchesAndConsoles(ID));
   }
 
   @Override
@@ -254,6 +207,11 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   public boolean supportsShowExcludedFiles() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsShowScratchesAndConsoles() {
     return true;
   }
 }

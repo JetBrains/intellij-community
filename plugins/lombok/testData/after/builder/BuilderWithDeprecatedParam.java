@@ -32,7 +32,7 @@ public class BuilderWithDeprecatedParam {
 
     @java.lang.SuppressWarnings("all")
     public java.util.Collection<String> build() {
-      return BuilderWithDeprecatedParam.creator(bar, foo);
+      return BuilderWithDeprecatedParam.creator(this.bar, this.foo);
     }
 
     @java.lang.Override

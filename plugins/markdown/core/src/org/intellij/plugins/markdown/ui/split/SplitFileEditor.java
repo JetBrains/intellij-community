@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * @deprecated Use {@link TextEditorWithPreview}
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEditor> extends UserDataHolderBase implements FileEditor {
   public static final Key<SplitFileEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
 

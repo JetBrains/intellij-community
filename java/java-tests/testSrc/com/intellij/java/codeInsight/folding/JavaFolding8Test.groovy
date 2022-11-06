@@ -23,9 +23,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.junit.Assume
 
-/**
- * @author peter
- */
 @CompileStatic
 class JavaFolding8Test extends JavaFoldingTestCase {
   @NotNull

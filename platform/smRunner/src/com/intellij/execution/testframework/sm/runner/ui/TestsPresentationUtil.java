@@ -248,39 +248,30 @@ public final class TestsPresentationUtil {
     return name;
   }
 
-  @Nullable
-  private static Icon getIcon(final SMTestProxy testProxy,
-                              final TestConsoleProperties consoleProperties) {
+  private static @NotNull Icon getIcon(final SMTestProxy testProxy,
+                                       final TestConsoleProperties consoleProperties) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
     final boolean hasErrors = testProxy.hasErrors();
     final boolean hasPassedTests = testProxy.hasPassedTests();
 
-    switch (magnitude) {
-      case ERROR_INDEX:
-        return ERROR_ICON;
-      case FAILED_INDEX:
-        return hasErrors ? FAILED_E_ICON : FAILED_ICON;
-      case IGNORED_INDEX:
-        return hasErrors ? IGNORED_E_ICON : (hasPassedTests ? PASSED_IGNORED : IGNORED_ICON);
-      case NOT_RUN_INDEX:
-        return NOT_RAN;
-      case COMPLETE_INDEX:
-      case PASSED_INDEX:
-        return hasErrors ? PASSED_E_ICON : PASSED_ICON;
-      case RUNNING_INDEX:
+    return switch (magnitude) {
+      case ERROR_INDEX -> ERROR_ICON;
+      case FAILED_INDEX -> hasErrors ? FAILED_E_ICON : FAILED_ICON;
+      case IGNORED_INDEX -> hasErrors ? IGNORED_E_ICON : (hasPassedTests ? PASSED_IGNORED : IGNORED_ICON);
+      case NOT_RUN_INDEX -> NOT_RAN;
+      case COMPLETE_INDEX, PASSED_INDEX -> hasErrors ? PASSED_E_ICON : PASSED_ICON;
+      case RUNNING_INDEX -> {
         if (consoleProperties.isPaused()) {
-          return hasErrors ? PAUSED_E_ICON : AllIcons.RunConfigurations.TestPaused;
+          yield hasErrors ? PAUSED_E_ICON : AllIcons.RunConfigurations.TestPaused;
         }
         else {
-          return hasErrors ? RUNNING_E_ICON : RUNNING_ICON;
+          yield hasErrors ? RUNNING_E_ICON : RUNNING_ICON;
         }
-      case SKIPPED_INDEX:
-        return hasErrors ? SKIPPED_E_ICON : SKIPPED_ICON;
-      case TERMINATED_INDEX:
-        return hasErrors ? TERMINATED_E_ICON : TERMINATED_ICON;
-    }
-    return null;
+      }
+      case SKIPPED_INDEX -> hasErrors ? SKIPPED_E_ICON : SKIPPED_ICON;
+      case TERMINATED_INDEX -> hasErrors ? TERMINATED_E_ICON : TERMINATED_ICON;
+    };
   }
 
   @Nullable

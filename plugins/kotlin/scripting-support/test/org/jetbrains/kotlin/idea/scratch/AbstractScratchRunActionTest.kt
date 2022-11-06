@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.scratch.output.InlayScratchFileRenderer
 import org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
@@ -311,7 +311,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
             testName.endsWith("WithKotlinTest") -> INSTANCE_WITH_KOTLIN_TEST
             testName.endsWith("NoRuntime") -> INSTANCE_WITHOUT_RUNTIME
             testName.endsWith("ScriptRuntime") -> INSTANCE_WITH_SCRIPT_RUNTIME
-            else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+            else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
         }
     }
 

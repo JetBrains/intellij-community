@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<?>>{
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
 
@@ -27,15 +24,6 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
     presentation.setItemTextBold(item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null);
     presentation.setTailText(getText2(item), item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null);
     presentation.setTypeText(getText3(item), null);
-  }
-
-  /**
-   * @deprecated use {@link #getRawIcon(LookupElement)}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public static Icon getRawIcon(final LookupElement item, boolean real) {
-    return getRawIcon(item);
   }
 
   @Nullable

@@ -68,7 +68,6 @@ public class RunAnythingManager {
 
         return true;
       })
-      .addUserData("SIMPLE_WINDOW") // NON-NLS
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(myProject, LOCATION_SETTINGS_KEY, true)

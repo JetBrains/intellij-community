@@ -71,6 +71,7 @@ class RatingComponent : JComponent() {
           myRating = 0
           firePropertyChange(RATING_PROPERTY, oldRating, 0)
         }
+        repaint()
       }
     })
 

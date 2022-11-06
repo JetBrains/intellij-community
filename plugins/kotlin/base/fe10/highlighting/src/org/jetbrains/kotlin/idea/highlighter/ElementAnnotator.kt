@@ -49,16 +49,16 @@ internal class ElementAnnotator(
 
     private fun registerSameFactoryDiagnosticsAnnotations(
         holder: HighlightInfoHolder,
-        diagnostics: Collection<Diagnostic>,
+        sameTypeDiagnostics: Collection<Diagnostic>,
         highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>?,
         highlightInfoByTextRange: MutableMap<TextRange, HighlightInfo>?,
         noFixes: Boolean,
         calculatingInProgress: Boolean
     ) {
-        val presentationInfo = presentationInfo(diagnostics) ?: return
+        val presentationInfo = presentationInfo(sameTypeDiagnostics) ?: return
         setUpAnnotations(
             holder,
-            diagnostics,
+            sameTypeDiagnostics,
             presentationInfo,
             highlightInfoByDiagnostic,
             highlightInfoByTextRange,
@@ -69,18 +69,18 @@ internal class ElementAnnotator(
 
     fun registerDiagnosticsQuickFixes(
         diagnostics: List<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
+        highlightInfoByDiagnostic: Map<Diagnostic, HighlightInfo>
     ) = diagnostics.groupBy { it.factory }
         .forEach { registerDiagnosticsSameFactoryQuickFixes(it.value, highlightInfoByDiagnostic) }
 
     private fun registerDiagnosticsSameFactoryQuickFixes(
-        diagnostics: List<Diagnostic>,
-        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
+        sameTypeDiagnostics: List<Diagnostic>,
+        highlightInfoByDiagnostic: Map<Diagnostic, HighlightInfo>
     ) {
-        val presentationInfo = presentationInfo(diagnostics) ?: return
-        val fixesMap = createFixesMap(diagnostics) ?: return
+        val presentationInfo = presentationInfo(sameTypeDiagnostics) ?: return
+        val fixesMap = createFixesMap(sameTypeDiagnostics) ?: return
 
-        diagnostics.forEach {
+        sameTypeDiagnostics.forEach {
             val highlightInfo = highlightInfoByDiagnostic[it] ?: return
 
             presentationInfo.applyFixes(fixesMap, it, highlightInfo)
@@ -128,10 +128,16 @@ internal class ElementAnnotator(
                     else -> {
                         AnnotationPresentationInfo(
                             ranges,
-                            highlightType = if (factory == Errors.INVISIBLE_REFERENCE)
-                                ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
-                            else
-                                null
+                            highlightType =
+                            when (factory) {
+                                Errors.INVISIBLE_REFERENCE, Errors.DELEGATE_SPECIAL_FUNCTION_MISSING, Errors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE, Errors.TOO_MANY_ARGUMENTS -> ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                                else -> null
+                            },
+                            textAttributes =
+                            when (factory) {
+                                Errors.DELEGATE_SPECIAL_FUNCTION_MISSING, Errors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE, Errors.TOO_MANY_ARGUMENTS -> CodeInsightColors.ERRORS_ATTRIBUTES
+                                else -> null
+                            },
                         )
                     }
                 }
@@ -163,26 +169,26 @@ internal class ElementAnnotator(
 
     private fun setUpAnnotations(
         holder: HighlightInfoHolder,
-        diagnostics: Collection<Diagnostic>,
+        sameTypeDiagnostics: Collection<Diagnostic>,
         data: AnnotationPresentationInfo,
         highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>?,
         highlightInfoByTextRange: MutableMap<TextRange, HighlightInfo>?,
         noFixes: Boolean,
         calculatingInProgress: Boolean
     ) {
-        val fixesMap = createFixesMap(diagnostics, noFixes)
-        data.processDiagnostics(holder, diagnostics, highlightInfoByDiagnostic, highlightInfoByTextRange, fixesMap, calculatingInProgress)
+        val fixesMap = createFixesMap(sameTypeDiagnostics, noFixes)
+        data.processDiagnostics(holder, sameTypeDiagnostics, highlightInfoByDiagnostic, highlightInfoByTextRange, fixesMap, calculatingInProgress)
     }
 
     private fun createFixesMap(
-        diagnostics: Collection<Diagnostic>,
+        sameTypeDiagnostics: Collection<Diagnostic>,
         noFixes: Boolean = false
-    ): MultiMap<Diagnostic, IntentionAction>? {
-        return if (noFixes) {
+    ): MultiMap<Diagnostic, IntentionAction>? =
+        if (noFixes) {
             null
         } else {
             try {
-                Fe10QuickFixProvider.getInstance(element.project).createQuickFixes(diagnostics)
+                Fe10QuickFixProvider.getInstance(element.project).createQuickFixes(sameTypeDiagnostics)
             } catch (e: Exception) {
                 if (e is ControlFlowException) {
                     throw e
@@ -191,7 +197,6 @@ internal class ElementAnnotator(
                 MultiMap()
             }
         }
-    }
 
     private fun isUnstableAbiClassDiagnosticForModulesWithEnabledUnstableAbi(diagnostic: Diagnostic): Boolean {
         val factory = diagnostic.factory

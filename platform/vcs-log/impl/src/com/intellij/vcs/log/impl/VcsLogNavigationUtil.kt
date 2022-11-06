@@ -1,26 +1,37 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
+import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.IntRef
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.data.DataPack
-import com.intellij.vcs.log.data.DataPackChangeListener
+import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.ui.VcsLogUiEx.JumpResult
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
@@ -131,14 +142,14 @@ object VcsLogNavigationUtil {
 
   private suspend fun MainVcsLogUi.showCommit(hash: Hash, root: VirtualFile,
                                               requestFocus: Boolean): Boolean {
-    val jumpResult = VcsLogUtil.jumpToCommit(this, hash, root, true, requestFocus).await()
+    val jumpResult = jumpToCommitInternal(hash, root, true, requestFocus).await()
     return when (jumpResult) {
-      VcsLogUiEx.JumpResult.SUCCESS -> true
-      null, VcsLogUiEx.JumpResult.COMMIT_NOT_FOUND -> {
+      JumpResult.SUCCESS -> true
+      null, JumpResult.COMMIT_NOT_FOUND -> {
         LOG.warn("Commit $hash for $root not found in $this")
         false
       }
-      VcsLogUiEx.JumpResult.COMMIT_DOES_NOT_MATCH -> false
+      JumpResult.COMMIT_DOES_NOT_MATCH -> false
     }
   }
 
@@ -186,5 +197,166 @@ object VcsLogNavigationUtil {
     catch (e: Throwable) {
       this.completeExceptionally(e)
     }
+  }
+
+  /**
+   * Asynchronously selects the commit node at the given [row].
+   * @param row      target row
+   * @param silently skip showing notification when the target is not found
+   * @param focus    focus the table
+   */
+  @JvmStatic
+  fun VcsLogUiEx.jumpToRow(row: Int, silently: Boolean, focus: Boolean) {
+    jumpTo(row, { visiblePack, r ->
+      if (visiblePack.visibleGraph.visibleCommitCount <= r) return@jumpTo -1
+      r
+    }, SettableFuture.create(), silently, focus)
+  }
+
+  /**
+   * Asynchronously selects the commit node at the given branch head.
+   * @param branchName name of the target branch
+   * @param silently   skip showing notification when the target is not found
+   * @param focus      focus the table
+   */
+  @JvmStatic
+  fun VcsLogUiEx.jumpToBranch(branchName: String, silently: Boolean, focus: Boolean) {
+    jumpTo(branchName, { visiblePack, branch ->
+      return@jumpTo getBranchRow(logData, visiblePack, branch)
+    }, SettableFuture.create(), silently, focus)
+  }
+
+  /**
+   * Asynchronously selects the commit node defined by the given reference (commit hash, branch or tag).
+   *
+   * Note: this function decides if the provided reference is a hash or a branch/tag once at the start.
+   * This may not work as expected when log is not up-to-date, since all the branches and tags are not available yet.
+   *
+   * @param reference target reference (commit hash, branch or tag)
+   * @param silently  skip showing notification when the target is not found
+   * @param focus     focus the table
+   * @return future result (success or failure)
+   */
+  @JvmStatic
+  fun VcsLogUiEx.jumpToRefOrHash(reference: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
+    if (StringUtil.isEmptyOrSpaces(reference)) return Futures.immediateFuture(false)
+    val future = SettableFuture.create<Boolean>()
+    val refs = dataPack.refs
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val matchingRefs = refs.stream().filter { ref -> ref.name.startsWith(reference) }.toList()
+      ApplicationManager.getApplication().invokeLater {
+        if (matchingRefs.isNotEmpty()) {
+          val ref = matchingRefs.minWith(VcsGoToRefComparator(dataPack.logProviders))
+          future.setFuture(jumpToCommit(ref.commitHash, ref.root, silently, focus))
+          return@invokeLater
+        }
+
+        future.setFuture(jumpToHash(reference, silently, focus))
+      }
+    }
+    return future
+  }
+
+  /**
+   * Asynchronously selects the commit node defined by the given hash.
+   *
+   * @param commitHash target commit hash
+   * @param silently   skip showing notification when the target is not found
+   * @param focus      focus the table
+   * @return future result (success or failure)
+   */
+  @JvmStatic
+  fun VcsLogUiEx.jumpToHash(commitHash: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
+    val trimmedHash = StringUtil.trim(commitHash) { ch -> !StringUtil.containsChar("()'\"`", ch) }
+
+    if (!VcsLogUtil.HASH_PREFIX_REGEX.matcher(trimmedHash).matches()) {
+      if (!silently) {
+        VcsBalloonProblemNotifier.showOverChangesView(logData.project,
+                                                      VcsLogBundle.message("vcs.log.string.is.not.a.hash", commitHash),
+                                                      MessageType.WARNING)
+      }
+      return Futures.immediateFuture(false)
+    }
+
+    val future = SettableFuture.create<JumpResult>()
+    jumpTo(trimmedHash, { visiblePack, partialHash -> getCommitRow(logData, visiblePack, partialHash) }, future, silently, focus)
+    return mapToJumpSuccess(future)
+  }
+
+  /**
+   * Asynchronously selects the given commit node.
+   *
+   * @param commitHash target commit hash
+   * @param root       target commit repository root
+   * @param silently   skip showing notification when the target is not found
+   * @param focus      focus the table
+   * @return future result (success or failure)
+   */
+  @JvmStatic
+  fun VcsLogUiEx.jumpToCommit(commitHash: Hash, root: VirtualFile, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
+    return mapToJumpSuccess(jumpToCommitInternal(commitHash, root, silently, focus))
+  }
+
+  @JvmStatic
+  private fun VcsLogUiEx.jumpToCommitInternal(commitHash: Hash,
+                                              root: VirtualFile,
+                                              silently: Boolean,
+                                              focus: Boolean): ListenableFuture<JumpResult> {
+    val future = SettableFuture.create<JumpResult>()
+    jumpTo(commitHash, { visiblePack, hash ->
+      if (!logData.storage.containsCommit(CommitId(hash, root))) return@jumpTo VcsLogUiEx.COMMIT_NOT_FOUND
+      getCommitRow(logData.storage, visiblePack, hash, root)
+    }, future, silently, focus)
+    return future
+  }
+
+  private fun getBranchRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, referenceName: String): Int {
+    val matchingRefs = visiblePack.refs.branches.filter { ref -> ref.name == referenceName }
+    if (matchingRefs.isEmpty()) {
+      return VcsLogUiEx.COMMIT_NOT_FOUND
+    }
+    val ref = matchingRefs.minWith(VcsGoToRefComparator(visiblePack.logProviders))
+    return getCommitRow(vcsLogData.storage, visiblePack, ref.commitHash, ref.root)
+  }
+
+  private fun getCommitRow(vcsLogData: VcsLogData, visiblePack: VisiblePack, partialHash: String): Int {
+    if (partialHash.length == VcsLogUtil.FULL_HASH_LENGTH) {
+      var row = VcsLogUiEx.COMMIT_NOT_FOUND
+      val candidateHash = HashImpl.build(partialHash)
+      for (candidateRoot in vcsLogData.roots) {
+        if (vcsLogData.storage.containsCommit(CommitId(candidateHash, candidateRoot))) {
+          val candidateRow = getCommitRow(vcsLogData.storage, visiblePack, candidateHash, candidateRoot)
+          if (candidateRow >= 0) return candidateRow
+          if (row == VcsLogUiEx.COMMIT_NOT_FOUND) row = candidateRow
+        }
+      }
+      return row
+    }
+    val row = IntRef(VcsLogUiEx.COMMIT_NOT_FOUND)
+    vcsLogData.storage.iterateCommits { candidate ->
+      if (CommitIdByStringCondition.matches(candidate, partialHash)) {
+        val candidateRow = getCommitRow(vcsLogData.storage, visiblePack, candidate.hash, candidate.root)
+        if (row.get() == VcsLogUiEx.COMMIT_NOT_FOUND) row.set(candidateRow)
+        return@iterateCommits candidateRow < 0
+      }
+      true
+    }
+    return row.get()
+  }
+
+  private fun getCommitRow(storage: VcsLogStorage, visiblePack: VisiblePack, hash: Hash, root: VirtualFile): Int {
+    val commitIndex = storage.getCommitIndex(hash, root)
+    val visibleGraph = visiblePack.visibleGraph
+    if (visibleGraph is VisibleGraphImpl<*>) {
+      val nodeId = (visibleGraph as VisibleGraphImpl<Int?>).permanentGraph.permanentCommitsInfo.getNodeId(commitIndex)
+      if (nodeId == VcsLogUiEx.COMMIT_NOT_FOUND) return VcsLogUiEx.COMMIT_NOT_FOUND
+      if (nodeId < 0) return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
+      return visibleGraph.linearGraph.getNodeIndex(nodeId) ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
+    }
+    return visibleGraph.getVisibleRowIndex(commitIndex) ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
+  }
+
+  private fun mapToJumpSuccess(future: ListenableFuture<JumpResult>): ListenableFuture<Boolean> {
+    return Futures.transform(future, { it == JumpResult.SUCCESS }, MoreExecutors.directExecutor())
   }
 }

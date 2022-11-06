@@ -8,7 +8,6 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
@@ -55,9 +54,7 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
         override fun getText() = KotlinJvmBundle.message("fix.0.in.the.project", super.getText())
 
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-            if (featureSupportEnabled) {
-                if (!checkUpdateRuntime(project, feature.sinceApiVersion)) return
-            }
+            if (featureSupportEnabled && !checkUpdateRuntime(project, feature.sinceApiVersion)) return
             KotlinCompilerSettings.getInstance(project).update {
                 additionalArguments = additionalArguments.replaceLanguageFeature(
                     feature,
@@ -73,43 +70,16 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
     }
 
     companion object : KotlinIntentionActionsFactory(), FeatureSupportIntentionActionsFactory {
-        private val supportedFeatures = listOf(LanguageFeature.InlineClasses)
+        private val supportedFeature = LanguageFeature.InlineClasses
 
-        @NlsContexts.DialogTitle
-        fun getFixText(feature: LanguageFeature, state: LanguageFeature.State) = getFixText(state, feature.presentableName)
-
-        override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
-            val module = ModuleUtilCore.findModuleForPsiElement(diagnostic.psiElement) ?: return emptyList()
-
-            return supportedFeatures.flatMap { feature ->
-                doCreateActions(
-                    diagnostic, feature, allowWarningAndErrorMode = false,
-                    quickFixConstructor = if (shouldConfigureInProject(module)) ::InProject else ::InModule
-                )
+        override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> =
+            diagnostic.takeIf {
+                it.factory == Errors.EXPERIMENTAL_FEATURE_WARNING &&
+                        Errors.EXPERIMENTAL_FEATURE_WARNING.cast(it).a.first == supportedFeature
             }
-        }
-
-        private fun doCreateActions(
-            diagnostic: Diagnostic,
-            feature: LanguageFeature,
-            allowWarningAndErrorMode: Boolean,
-            quickFixConstructor: (PsiElement, LanguageFeature, LanguageFeature.State) -> IntentionAction
-        ): List<IntentionAction> {
-            val newFeatureSupports = when (diagnostic.factory) {
-                Errors.EXPERIMENTAL_FEATURE_ERROR -> {
-                    if (Errors.EXPERIMENTAL_FEATURE_ERROR.cast(diagnostic).a.first != feature) return emptyList()
-                    if (!allowWarningAndErrorMode) listOf(LanguageFeature.State.ENABLED)
-                    else listOf(LanguageFeature.State.ENABLED_WITH_WARNING, LanguageFeature.State.ENABLED)
-                }
-                Errors.EXPERIMENTAL_FEATURE_WARNING -> {
-                    if (Errors.EXPERIMENTAL_FEATURE_WARNING.cast(diagnostic).a.first != feature) return emptyList()
-                    if (!allowWarningAndErrorMode) listOf(LanguageFeature.State.ENABLED)
-                    else listOf(LanguageFeature.State.ENABLED, LanguageFeature.State.ENABLED_WITH_ERROR)
-                }
-                else -> return emptyList()
-            }
-
-            return newFeatureSupports.map { quickFixConstructor(diagnostic.psiElement, feature, it) }
-        }
+                ?.let { ModuleUtilCore.findModuleForPsiElement(it.psiElement) }
+                ?.let { if (shouldConfigureInProject(it)) ::InProject else ::InModule }
+                ?.let { listOf(it(diagnostic.psiElement, supportedFeature, LanguageFeature.State.ENABLED)) }
+                ?: emptyList()
     }
 }

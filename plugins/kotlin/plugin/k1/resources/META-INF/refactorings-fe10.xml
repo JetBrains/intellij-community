@@ -33,21 +33,21 @@
     <refactoring.helper implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinOptimizeImportsRefactoringHelper"/>
 
     <refactoring.moveHandler
-            id="kotlin.moveFilesOrDirectories"
+            id="kotlin.moveMethod"
             order="first"
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.KotlinMoveFilesOrDirectoriesHandler"/>
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveMethod.MoveKotlinMethodHandler"/>
     <refactoring.moveHandler
             id="kotlin.moveTopLevelDeclarations"
-            order="first,before kotlin.moveFilesOrDirectories"
+            order="first, after kotlin.moveMethod"
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsHandler"/>
     <refactoring.moveHandler
             id="kotlinAwareJavaMoveClassesOrPackagesHandler"
-            order="first"
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareJavaMoveClassesOrPackagesHandler"/>
+            order="first, after kotlin.moveTopLevelDeclarations"
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareJavaMovePackagesHandler"/>
     <refactoring.moveHandler
-            id="kotlin.moveMethod"
-            order="first,before kotlin.moveTopLevelDeclarations"
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveMethod.MoveKotlinMethodHandler"/>
+            id="kotlin.moveFilesOrDirectories"
+            order="first, after kotlinAwareJavaMoveClassesOrPackagesHandler"
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.KotlinMoveFilesOrDirectoriesHandler"/>
 
     <refactoring.moveDirectoryWithClassesHelper
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.KotlinMoveDirectoryWithClassesHelper"
@@ -98,11 +98,6 @@
             implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteProcessor"
             order="before javaProcessor"/>
 
-    <refactoring.safeDelete.JavaSafeDeleteDelegate
-            id="kotlinJavaSafeDeleteDelegate"
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
-
     <refactoring.pullUpHelperFactory
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHelperFactory"/>
@@ -117,7 +112,11 @@
 
     <moveFileHandler
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinFileHandler"/>
-    
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K1ReferenceMutateService"/>
+
     <renamePsiElementProcessor id="KotlinAwareJavaGetter"
                                implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAwareJavaGetterRenameProcessor"
                                order="first"/>
@@ -142,7 +141,6 @@
                                id="JavaSyntheticPropertyFromKotlin"/>
 
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameDispatcherHandler"/>
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDirectoryAsPackageRenameHandler"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableRenamerFactory"/>
     <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableRenamerFactoryForJavaClass"/>
@@ -156,10 +154,6 @@
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineNamedFunctionHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineAnonymousFunctionHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineTypeAliasHandler"/>
-
-    <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.KotlinVetoRenameCondition"/>
-
-    <renameInputValidator implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDeclarationRenameInputValidator"/>
 
     <rename.inplace.resolveSnapshotProvider
             language="kotlin"
@@ -221,6 +215,26 @@
 
     <group id="KotlinRefactoringTesting" popup="true">
       <action id="TestMoveRefactiringAction" class="org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.MoveRefactoringAction"/>
+    </group>
+
+    <group id="KotlinGenerateGroup">
+      <action id="KotlinGenerateTestMethod"
+              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$Test"/>
+      <action id="KotlinGenerateSetUpMethod"
+              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$SetUp"/>
+      <action id="KotlinGenerateTearDownMethod"
+              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$TearDown"/>
+      <action id="KotlinGenerateDataMethod"
+              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$Data"/>
+      <separator />
+      <action id="KotlinGenerateSecondaryConstructor"
+              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateSecondaryConstructorAction"/>
+      <action id="KotlinGenerateEqualsAndHashCode"
+              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction"/>
+      <action id="KotlinGenerateToString"
+              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction"/>
+
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
   </actions>
 </idea-plugin>

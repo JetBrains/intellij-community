@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileTypes.StdFileTypes
@@ -14,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
@@ -24,6 +24,7 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManager {
+
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
 
   override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
@@ -87,18 +88,18 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
     return consumer(null)
   }
 
-  override fun write(path: String, content: ByteArray, size: Int): Boolean {
+  override fun write(path: String, content: ByteArray): Boolean {
     LOG.debug { "Write $path" }
 
     try {
       lock.write {
         val file = dir.resolve(path)
-        file.write(content, 0, size)
+        file.write(content)
         if (isPathIgnored(path)) {
           LOG.debug { "$path is ignored and will be not added to index" }
         }
         else {
-          addToIndex(file, path, content, size)
+          addToIndex(file, path, content)
         }
       }
     }
@@ -112,7 +113,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
   /**
    * path relative to repository root
    */
-  protected abstract fun addToIndex(file: Path, path: String, content: ByteArray, size: Int)
+  protected abstract fun addToIndex(file: Path, path: String, content: ByteArray)
 
   override fun delete(path: String): Boolean {
     LOG.debug { "Remove $path"}
@@ -153,7 +154,7 @@ suspend fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvi
   }
 
   var processedFiles: List<VirtualFile>? = null
-  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  withContext(Dispatchers.EDT) {
     val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, object : MergeDialogCustomizer() {
       override fun getMultipleFileDialogTitle() = icsMessage("merge.settings.dialog.title")
     })

@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -664,29 +663,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     if (SelectInContext.DATA_KEY.is(dataId)) {
       VirtualFile file = getSelectedPropertiesFile();
       return file == null ? null : new FileSelectInContext(myProject, file);
-    }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
-        if (entry.getValue() == mySelectedEditor) {
-          final VirtualFile f = entry.getKey();
-          final String name = getSelectedPropertyName();
-          if (name != null) {
-            final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(f, myProject);
-            LOG.assertTrue(file != null);
-            final List<IProperty> properties = file.findPropertiesByKey(name);
-            if (properties.isEmpty()) {
-              return new Navigatable[]{file.getContainingFile()};
-            } else {
-              return properties
-                .stream()
-                .map(IProperty::getPsiElement)
-                .map(PsiElement::getNavigationElement)
-                .filter(p -> p != null)
-                .toArray(Navigatable[]::new);
-            }
-          }
-        }
-      }
     }
     return null;
   }

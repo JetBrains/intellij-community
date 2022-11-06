@@ -54,9 +54,6 @@ import java.io.DataInput;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class InspectionValidatorWrapper implements Validator {
   private final InspectionValidator myValidator;
   private final PsiManager myPsiManager;

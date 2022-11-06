@@ -4,13 +4,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.Decompressor
-import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.exists
-import com.intellij.util.io.isDirectory
+import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -152,23 +151,37 @@ object FileManifestUtil {
     }
   }
 
+  private fun getFileFirstBytes(file: Path, @Suppress("SameParameterValue") length: Int): ByteArray {
+    val start = ByteBuffer.allocate(length)
+    FileChannel.open(file).use { channel -> channel.read(start, 0) }
+    start.flip()
+    check(start.remaining() == length) { "File $file is smaller than $length bytes" }
+    return start.toByteArray()
+  }
+
   fun decompressWithManifest(archiveFile: Path, targetDir: Path, includeInManifest: (Path) -> Boolean) {
     if (targetDir.exists()) error("$targetDir already exists, refusing to extract to it")
 
+    val start = getFileFirstBytes(archiveFile, 2)
+
     val manifestor = ManifestGenerator(targetDir, includeInManifest)
     when {
-      archiveFile.extension.equals("zip", ignoreCase = true) || archiveFile.extension.equals("sit", ignoreCase = true) ->
+      // 'PK' for zip files
+      start[0] == 0x50.toByte() && start[1] == 0x4B.toByte() ->
         Decompressor.Zip(archiveFile)
           .withZipExtensions()
           .allowEscapingSymlinks(false)
           .postProcessor(manifestor)
           .extract(targetDir)
-      archiveFile.name.endsWith(".tar.gz", ignoreCase = true) ->
+      // 0x1F 0x8B for gzip
+      start[0] == 0x1F.toByte() && start[1] == 0x8B.toByte() ->
         Decompressor.Tar(archiveFile)
           .allowEscapingSymlinks(false)
           .postProcessor(manifestor)
           .extract(targetDir)
-      else -> error("Unknown archive extension in file name: ${archiveFile.name}")
+      else -> error("Unsupported archive: " +
+                    "file:${archiveFile.name} " +
+                    "magic:${start.joinToString(" ") { "0x${Integer.toHexString(it.toInt())}" }}")
     }
 
     manifestor.writeToDisk(targetDir)

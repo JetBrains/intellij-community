@@ -123,15 +123,11 @@ public class DataPointHolderConversionIntention extends PsiElementBaseIntentionA
       return false;
     }
     final PsiStatement[] methodStatements = body.getStatements();
-    switch (methodStatements.length) {
-      case 1:
-        final PsiStatement methodStatement = methodStatements[0];
-        return methodStatement instanceof PsiReturnStatement;
-      case 0:
-        return true;
-      default:
-        return false;
-    }
+    return switch (methodStatements.length) {
+      case 1 -> methodStatements[0] instanceof PsiReturnStatement;
+      case 0 -> true;
+      default -> false;
+    };
   }
 
   @NotNull

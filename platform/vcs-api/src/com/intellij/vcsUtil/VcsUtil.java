@@ -529,6 +529,7 @@ public class VcsUtil {
                                             @NotNull String projectBaseDir,
                                             @NotNull FilePath filePath,
                                             boolean acceptEmptyPath) {
+    if (project.isDisposed()) return null;
     String path = filePath.getPath();
 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);

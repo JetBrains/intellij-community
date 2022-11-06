@@ -59,6 +59,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
       AbstractProjectViewPane updateTarget;
       @Override
       public void run() {
+        if (project.isDisposed()) return;
         if (updateTarget == null) {
           updateTarget = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
         }
@@ -168,6 +169,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
                                                          @NotNull Collection<AbstractTreeNode<?>> children,
                                                          ViewSettings settings) {
+    if (!settings.isShowScratchesAndConsoles()) return children;
     Project project = parent instanceof ProjectViewProjectNode ? parent.getProject() : null;
     if (project == null) return children;
     if (ApplicationManager.getApplication().isUnitTestMode()) return children;

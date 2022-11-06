@@ -11,7 +11,7 @@ class EditorConfigVirtualFileDescriptor(val file: VirtualFile) {
   private val cachedChildMappings = mutableMapOf<VirtualFile, Int>()
   private val cachedParentMappings = mutableMapOf<VirtualFile, Int>()
 
-  fun distanceToChild(child: VirtualFile): Int {
+  private fun distanceToChild(child: VirtualFile): Int {
     val cached = cachedChildMappings[child]
     if (cached != null) return cached
     val distance = calculateDistanceBetween(file, child)

@@ -201,12 +201,12 @@ public final class HgHistoryUtil {
       String firstPath;
       String secondPath;
       switch (type) {
-        case DELETED:
+        case DELETED -> {
           firstPath = change.beforeFile().getRelativePath();
           secondPath = null;
           if (copied.contains(firstPath)) continue; // file was renamed
-          break;
-        case MOVED:
+        }
+        case MOVED -> {
           firstPath = change.beforeFile().getRelativePath();
           secondPath = change.afterFile().getRelativePath();
           if (!deleted.contains(firstPath)) {
@@ -214,13 +214,12 @@ public final class HgHistoryUtil {
             firstPath = change.afterFile().getRelativePath();
             secondPath = null;
           }
-          break;
-        case MODIFICATION:
-        case NEW:
-        default:
+        }
+        //case MODIFICATION, NEW ->
+        default -> {
           firstPath = change.afterFile().getRelativePath();
           secondPath = null;
-          break;
+        }
       }
       result.add(new VcsFileStatusInfo(type, Objects.requireNonNull(firstPath), secondPath));
     }
@@ -229,22 +228,13 @@ public final class HgHistoryUtil {
 
   @Nullable
   private static Change.Type getType(@NotNull HgFileStatusEnum status) {
-    switch (status) {
-      case ADDED:
-        return Change.Type.NEW;
-      case MODIFIED:
-        return Change.Type.MODIFICATION;
-      case DELETED:
-        return Change.Type.DELETED;
-      case COPY:
-        return Change.Type.MOVED;
-      case UNVERSIONED:
-      case MISSING:
-      case UNMODIFIED:
-      case IGNORED:
-        return null;
-    }
-    return null;
+    return switch (status) {
+      case ADDED -> Change.Type.NEW;
+      case MODIFIED -> Change.Type.MODIFICATION;
+      case DELETED -> Change.Type.DELETED;
+      case COPY -> Change.Type.MOVED;
+      case UNVERSIONED, MISSING, UNMODIFIED, IGNORED -> null;
+    };
   }
 
 

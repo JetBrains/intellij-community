@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
+import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -447,6 +448,9 @@ public class GradleExecutionHelper {
     if (inputStream != null) {
       operation.setStandardInput(inputStream);
     }
+
+    GradleOperationHelperExtension.EP_NAME
+      .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings));
   }
 
   private static void setupTestLauncherArguments(
@@ -518,11 +522,11 @@ public class GradleExecutionHelper {
         && gradleLogLevel != null) {
           try {
             LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
-            switch(logLevel) {
-              case DEBUG: settings.withArgument("-d"); break;
-              case INFO: settings.withArgument("-i"); break;
-              case WARN: settings.withArgument("-w"); break;
-              case QUIET: settings.withArgument("-q"); break;
+            switch (logLevel) {
+              case DEBUG -> settings.withArgument("-d");
+              case INFO -> settings.withArgument("-i");
+              case WARN -> settings.withArgument("-w");
+              case QUIET -> settings.withArgument("-q");
             }
           } catch (IllegalArgumentException e) {
             LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
@@ -934,6 +938,14 @@ public class GradleExecutionHelper {
         if (FileUtilRt.getNameWithoutExtension(path).equals("gradle-api-" + GradleVersion.current().getBaseVersion())) {
           LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {" + aClass + "," + path + "}");
           return null;
+        }
+        if (FileUtil.normalize(path).endsWith("lib/app.jar")) {
+          final String message = "Attempting to pass whole IDEA app [" + path + "] into Gradle Daemon for class [" + aClass + "]";
+          if (Boolean.parseBoolean(System.getProperty("idea.is.integration.test"))) {
+            LOG.error(message);
+          } else {
+            LOG.warn(message);
+          }
         }
         return FileUtil.toCanonicalPath(path);
       }

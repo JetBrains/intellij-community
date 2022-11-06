@@ -6,23 +6,26 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.downloadAsBytes
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.createSkippableTask
-import java.util.concurrent.ForkJoinTask
+import org.jetbrains.intellij.build.impl.createSkippableJob
+import java.util.concurrent.CancellationException
 
 /**
  * Download a default version of feature usage statistics metadata to be bundled with IDE.
  */
-internal fun createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher: ModuleOutputPatcher,
-                                                                 context: BuildContext): ForkJoinTask<*>? {
+internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher: ModuleOutputPatcher,
+                                                                                context: BuildContext): Job? {
   val featureUsageStatisticsProperties = context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
-  return createSkippableTask(
+  return createSkippableJob(
     spanBuilder("bundle a default version of feature usage statistics"),
-    BuildOptions.FUS_METADATA_BUNDLE_STEP,
-    context
+    taskId = BuildOptions.FUS_METADATA_BUNDLE_STEP,
+    context = context
   ) {
     try {
       val recorderId = featureUsageStatisticsProperties.recorderId
@@ -31,6 +34,9 @@ internal fun createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPat
         path = "resources/event-log-metadata/$recorderId/events-scheme.json",
         content = download(appendProductCode(metadataServiceUri(featureUsageStatisticsProperties, context), context))
       )
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Throwable) {
       // do not halt build, just record exception
@@ -47,12 +53,12 @@ private fun appendProductCode(uri: String, context: BuildContext): String {
   return if (uri.endsWith('/')) "$uri$name" else "$uri/$name"
 }
 
-private fun download(url: String): ByteArray {
+private suspend fun download(url: String): ByteArray {
   Span.current().addEvent("download", Attributes.of(AttributeKey.stringKey("url"), url))
-  return org.jetbrains.intellij.build.io.download(url)
+  return downloadAsBytes(url)
 }
 
-private fun metadataServiceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext): String {
+private suspend fun metadataServiceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext): String {
   val providerUri = appendProductCode(featureUsageStatisticsProperties.metadataProviderUri, context)
   Span.current().addEvent("parsing", Attributes.of(AttributeKey.stringKey("url"), providerUri))
   val appInfo = context.applicationInfo

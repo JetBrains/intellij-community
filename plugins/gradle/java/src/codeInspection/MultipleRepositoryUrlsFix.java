@@ -4,8 +4,6 @@ package org.jetbrains.plugins.gradle.codeInspection;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -22,18 +20,15 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public class MultipleRepositoryUrlsFix extends GroovyFix {
-  @SuppressWarnings("ActionIsNotPreviewFriendly")
-  private final SmartPsiElementPointer<GrClosableBlock> myClosure;
   private final String myRepoType;
 
-  public MultipleRepositoryUrlsFix(@NotNull GrClosableBlock closure, @NotNull String repoType) {
-    myClosure = SmartPointerManager.getInstance(closure.getProject()).createSmartPsiElementPointer(closure);
+  public MultipleRepositoryUrlsFix(@NotNull String repoType) {
     myRepoType = repoType;
   }
 
   @Override
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-    GrClosableBlock closure = myClosure.getElement();
+    GrClosableBlock closure = (GrClosableBlock)descriptor.getPsiElement();
     if (closure == null) return;
     List<GrCallExpression> statements = MultipleRepositoryUrlsInspection.findUrlCallExpressions(closure);
     if (statements.size() <= 1) return;

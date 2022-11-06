@@ -10,8 +10,11 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.*;
@@ -37,6 +40,17 @@ import java.util.concurrent.locks.ReadWriteLock;
 public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
+  public enum PerFileElementTypeStubChangeTrackingSource {
+    Disabled,
+    ChangedFilesCollector
+  }
+  public static final PerFileElementTypeStubChangeTrackingSource PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE;
+  static {
+    int sourceId = SystemProperties.getIntProperty("stub.index.per.file.element.type.stub.change.tracking.source", 1);
+    PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE = PerFileElementTypeStubChangeTrackingSource.values()[sourceId];
+  }
+
+
   private static final class AsyncState {
     private final Map<StubIndexKey<?, ?>, UpdatableIndex<?, Void, FileContent, ?>> myIndices =
       CollectionFactory.createSmallMemoryFootprintMap();
@@ -47,6 +61,8 @@ public final class StubIndexImpl extends StubIndexEx {
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
+  private final @NotNull PerFileElementTypeStubModificationTracker myPerFileElementTypeStubModificationTracker;
+
   public StubIndexImpl() {
     StubIndexExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
@@ -54,6 +70,7 @@ public final class StubIndexImpl extends StubIndexEx {
         ID.unloadId(extension.getKey());
       }
     }, null);
+    myPerFileElementTypeStubModificationTracker = new PerFileElementTypeStubModificationTracker();
   }
 
   private AsyncState getAsyncState() {
@@ -170,6 +187,15 @@ public final class StubIndexImpl extends StubIndexEx {
     return -1;
   }
 
+  /**
+   * @implNote obtaining modification stamps might be expensive due to execution of StubIndex update on each invocation
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public ModificationTracker getIndexModificationTracker(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
+    return () -> getIndexModificationStamp(indexId, project);
+  }
+
   public void flush() throws StorageException {
     if (!myInitialized) {
       return;
@@ -216,6 +242,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   public void dispose() {
     try {
+      myPerFileElementTypeStubModificationTracker.dispose();
       for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.dispose();
       }
@@ -373,5 +400,26 @@ public final class StubIndexImpl extends StubIndexEx {
     protected String getInitializationFinishedMessage(AsyncState initializationResult) {
       return "Initialized stub indexes: " + initializationResult.myIndices.keySet() + ".";
     }
+  }
+
+  /**
+   * @param fileElementType {@link StubFileElementType} to track changes for
+   * @return {@link ModificationTracker} that changes stamp on every file update with corresponding {@link StubFileElementType}.
+   * Modification detector might react false-positively.
+   * @implNote doesn't track changes of files with binary content
+   */
+  @Override
+  public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType) {
+    return () -> {
+      if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
+        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+      }
+      return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementType);
+    };
+  }
+
+  @Override
+  public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor() {
+    return myPerFileElementTypeStubModificationTracker;
   }
 }

@@ -161,11 +161,11 @@ public class ImportSpecBuilder {
       }
       final boolean synchronous = myExecutionMode == ProgressExecutionMode.MODAL_SYNC;
 
-      PluginFeatureEnabler.getInstance(myProject).enableSuggestedHelper();
+      PluginFeatureEnabler.getInstance(myProject).scheduleEnableSuggested();
 
       ProjectDataManager.getInstance().importData(externalProject,
-                                                  myProject,
-                                                  synchronous);
+                                                  myProject
+      );
     }
   }
 }

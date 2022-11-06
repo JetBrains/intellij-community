@@ -11,8 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -77,16 +76,15 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
     if (myProject.isDefault()) {
       return Collections.emptyList();
     }
-    final DirectoryIndex dirIndex = DirectoryIndex.getInstance(myProject);
-    final DirectoryInfo info = dirIndex.getInfoForFile(myFile);
-    final Module module = info.getModule();
-    if (module == null) {
+    final @NotNull ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
+    final Module module = fileIndex.getModuleForFile(myFile);
+    if (module == null || !fileIndex.isInSourceContent(myFile)) {
       return Collections.emptyList();
     }
-    final JpsModuleSourceRootType<?> rootType = dirIndex.getSourceRootType(info);
-    if (rootType == null) {
-      return Collections.emptyList();
-    }
+    SourceFolder sourceFolder = fileIndex.getSourceFolder(myFile);
+    if (sourceFolder == null) return Collections.emptyList();
+
+    JpsModuleSourceRootType<?> rootType = sourceFolder.getRootType();
     final boolean isResource = rootType instanceof JavaResourceRootType;
     final ModuleSourceSet.Type type = rootType.isForTests()?
       isResource? ModuleSourceSet.Type.RESOURCES_TEST :  ModuleSourceSet.Type.TEST :

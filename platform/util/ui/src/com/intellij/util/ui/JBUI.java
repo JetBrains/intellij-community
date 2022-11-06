@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.*;
@@ -30,10 +29,6 @@ import java.util.Map;
  */
 @SuppressWarnings("UseJBColor")
 public final class JBUI {
-  static {
-    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
-  }
-
   /**
    * Returns the pixel scale factor, corresponding to the default monitor device.
    */
@@ -1193,30 +1188,6 @@ public final class JBUI {
       public static @NotNull Color linkColor() {
         return Foreground.ENABLED;
       }
-
-      /**
-       * @deprecated use {@link Foreground#HOVERED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkHoverColor() {
-        return Foreground.HOVERED;
-      }
-
-      /**
-       * @deprecated use {@link Foreground#PRESSED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkPressedColor() {
-        return Foreground.PRESSED;
-      }
-
-      /**
-       * @deprecated use {@link Foreground#VISITED} instead
-       */
-      @Deprecated(forRemoval = true)
-      public static @NotNull Color linkVisitedColor() {
-        return Foreground.VISITED;
-      }
     }
 
     public static final class Tooltip {
@@ -1399,6 +1370,10 @@ public final class JBUI {
         return JBColor.namedColor("List.Button.separatorColor", Popup.BACKGROUND);
       }
 
+      static int buttonSeparatorInset() {
+        return getInt("List.Button.separatorInset", 4);
+      }
+
       static Color lineHoverBackground(boolean focused) {
         return JBColor.namedColor("List.Line.hoverBackground", Selection.background(focused));
       }
@@ -1436,6 +1411,11 @@ public final class JBUI {
         private interface Inactive {
           Color BACKGROUND = JBColor.namedColor("List.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
         }
+      }
+
+      interface Tag {
+        Color BACKGROUND = JBColor.namedColor("List.Tag.background", new JBColor(0xEBECF0, 0x393B40));
+        Color FOREGROUND = JBColor.namedColor("List.Tag.foreground", new JBColor(0x494B57, 0xA8ADBD));
       }
     }
 
@@ -1530,6 +1510,17 @@ public final class JBUI {
           Color BACKGROUND = JBColor.namedColor("Tree.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
         }
       }
+    }
+
+    public final static class RunWidget {
+      public static final Color FOREGROUND = JBColor.namedColor("RunWidget.foreground", Color.WHITE);
+      public static final Color BACKGROUND = JBColor.namedColor("RunWidget.background", 0x3369D6);
+      public static final Color RUNNING_BACKGROUND = JBColor.namedColor("RunWidget.runningBackground", 0x599E5E);
+      public static final Color SEPARATOR = JBColor.namedColor("RunWidget.separatorColor", new Color(255, 255, 255, 64));
+
+      // these colors will be applied over background color
+      public static final Color HOVER_BACKGROUND = JBColor.namedColor("RunWidget.hoverBackground", new Color(0, 0, 0, 25));
+      public static final Color PRESSED_BACKGROUND = JBColor.namedColor("RunWidget.pressedBackground", new Color(0, 0, 0, 40));
     }
   }
 

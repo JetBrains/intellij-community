@@ -83,6 +83,16 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     }
   }
 
+  /**
+   * @return stored file indexer id. value < 0 means that no id is available for specified file
+   */
+  public int getStoredFileIndexerId(int fileId) throws IOException {
+    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, myFileAttribute)) {
+      if (stream == null) return UNINDEXED_STATE;
+      return DataInputOutputUtil.readINT(stream);
+    }
+  }
+
   public FileIndexingState getSubIndexerState(int fileId, @NotNull IndexedFile file) throws IOException {
     try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, myFileAttribute)) {
       if (stream != null) {
@@ -101,6 +111,10 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     SubIndexerVersion version = getVersion(file);
     if (version == null) return NULL_SUB_INDEXER;
     return myPersistentVersionEnumerator.enumerate(version);
+  }
+
+  public SubIndexerVersion getVersionByIndexerId(int indexerId) throws IOException {
+    return myPersistentVersionEnumerator.valueOf(indexerId);
   }
 
   @Nullable

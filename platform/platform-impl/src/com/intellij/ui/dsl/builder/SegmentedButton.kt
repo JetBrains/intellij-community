@@ -25,9 +25,13 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   override fun enabled(isEnabled: Boolean): SegmentedButton<T>
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T>
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T>
+
+  override fun align(align: Align): SegmentedButton<T>
 
   override fun resizableColumn(): SegmentedButton<T>
 

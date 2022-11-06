@@ -1,0 +1,4 @@
+<profile version="1.0">
+  <option name="myName" value="Custom name" />
+  <inspection_tool class="TodoComment" enabled="true" level="WARNING" enabled_by_default="false" />
+</profile>

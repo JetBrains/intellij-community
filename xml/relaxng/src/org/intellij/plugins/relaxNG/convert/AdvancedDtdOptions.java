@@ -100,6 +100,11 @@ public class AdvancedDtdOptions implements AdvancedOptions {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ((NamespaceMapModel)myNamespaceMap.getModel()).removeRow(myNamespaceMap.getSelectedRow());
       }

@@ -117,21 +117,14 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       return;
     }
     final SchemaType schemaType = provider.getSchemaType();
-    switch (schemaType) {
-      case schema:
-        JsonSchemaUsageTriggerCollector.trigger(SCHEMA_USAGE_KEY);
-        break;
-      case userSchema:
-        JsonSchemaUsageTriggerCollector.trigger(USER_USAGE_KEY);
-        break;
-      case embeddedSchema:
-        JsonSchemaUsageTriggerCollector.trigger(BUILTIN_USAGE_KEY);
-        break;
-      case remoteSchema:
+    JsonSchemaUsageTriggerCollector.trigger(switch (schemaType) {
+      case schema -> SCHEMA_USAGE_KEY;
+      case userSchema -> USER_USAGE_KEY;
+      case embeddedSchema -> BUILTIN_USAGE_KEY;
+      case remoteSchema ->
         // this works only for user-specified remote schemas in our settings, but not for auto-detected remote schemas
-        JsonSchemaUsageTriggerCollector.trigger(REMOTE_USAGE_KEY);
-        break;
-    }
+        REMOTE_USAGE_KEY;
+    });
   }
 
   private static class Worker {
@@ -502,14 +495,11 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       if (type == null) {
         return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
       }
-      switch (type) {
-        case _object:
-          return AllIcons.Json.Object;
-        case _array:
-          return AllIcons.Json.Array;
-        default:
-          return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
-      }
+      return switch (type) {
+        case _object -> AllIcons.Json.Object;
+        case _array -> AllIcons.Json.Array;
+        default -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
+      };
     }
 
     private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
@@ -619,7 +609,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
           if (finalType != null) {
             boolean hadEnter;
             switch (finalType) {
-              case _object:
+              case _object -> {
                 EditorModificationUtil.insertStringAtCaret(editor, insertColon ? ": " : " ",
                                                            false, true,
                                                            insertColon ? 2 : 1);
@@ -647,8 +637,8 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
                 if (stringToInsert != null && !invokeEnter) {
                   invokeEnterHandler(editor);
                 }
-                break;
-              case _boolean:
+              }
+              case _boolean -> {
                 String value = String.valueOf(Boolean.TRUE.toString().equals(defaultValueAsString));
                 stringToInsert = (insertColon ? ": " : " ") + value + comma;
                 SelectionModel model = editor.getSelectionModel();
@@ -660,8 +650,8 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
                 int start = editor.getSelectionModel().getSelectionStart();
                 model.setSelection(start - value.length(), start);
                 AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
-                break;
-              case _array:
+              }
+              case _array -> {
                 EditorModificationUtil.insertStringAtCaret(editor, insertColon ? ": " : " ",
                                                            false, true,
                                                            insertColon ? 2 : 1);
@@ -685,13 +675,10 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
                 if (stringToInsert != null) {
                   formatInsertedString(context, stringToInsert.length());
                 }
-                break;
-              case _string:
-              case _integer:
-              case _number:
+              }
+              case _string, _integer, _number ->
                 insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma, myWalker, insertColon);
-                break;
-              default:
+              default -> { }
             }
           }
           else {
@@ -704,8 +691,8 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     private static void invokeEnterHandler(Editor editor) {
       EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
       Caret caret = editor.getCaretModel().getCurrentCaret();
-      handler.execute(editor, caret,
-                      new CaretSpecificDataContext(DataManager.getInstance().getDataContext(editor.getContentComponent()), caret));
+      handler.execute(editor, caret, CaretSpecificDataContext.create(
+        DataManager.getInstance().getDataContext(editor.getContentComponent()), caret));
     }
 
     private boolean handleInsideQuotesInsertion(@NotNull InsertionContext context, @NotNull Editor editor, boolean hasValue) {

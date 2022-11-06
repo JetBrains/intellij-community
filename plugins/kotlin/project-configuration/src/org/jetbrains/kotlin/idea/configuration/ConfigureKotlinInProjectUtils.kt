@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.Module
@@ -37,7 +38,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinder
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinJavaScriptMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
@@ -142,15 +143,15 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
 
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
-            val kotlinFiles = nonBlockingReadActionSync {
-                FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
+            nonBlockingReadActionSync {
+                val kotlinFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
+                kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
+                    if (projectFileIndex.isInSourceContent(ktFile)) {
+                        projectFileIndex.getModuleForFile(ktFile)
+                    } else null
+                }
             }
 
-            kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
-                if (projectFileIndex.isInSourceContent(ktFile)) {
-                    projectFileIndex.getModuleForFile(ktFile)
-                } else null
-            }
         } else {
             // filter modules with Kotlin facet AND have at least a single Kotlin file in them
             nonBlockingReadActionSync {
@@ -350,7 +351,7 @@ class LibraryKindSearchScope(
         if (!super.contains(file)) return false
         val orderEntry = ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(file)
         if (orderEntry is LibraryOrderEntry) {
-            return LibraryEffectiveKindProvider.getInstance(module.project).getEffectiveKind(orderEntry.library as LibraryEx) == libraryKind
+            return module.project.service<LibraryEffectiveKindProvider>().getEffectiveKind(orderEntry.library as LibraryEx) == libraryKind
         }
         return true
     }

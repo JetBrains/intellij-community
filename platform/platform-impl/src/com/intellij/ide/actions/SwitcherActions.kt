@@ -50,7 +50,7 @@ internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAct
 
 internal class ShowRecentFilesAction : LightEditCompatible, BaseRecentFilesAction(false)
 internal class ShowRecentlyEditedFilesAction : BaseRecentFilesAction(true)
-internal abstract class BaseRecentFilesAction(val onlyEditedFiles: Boolean) : DumbAwareAction() {
+internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boolean) : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = event.project != null
   }
@@ -61,10 +61,8 @@ internal abstract class BaseRecentFilesAction(val onlyEditedFiles: Boolean) : Du
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
-    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected } ?: run {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files")
-      SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
-    }
+    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
+    ?: SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
   }
 }
 
@@ -191,7 +189,7 @@ internal class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Cons
   private val wasMetaDown = true == event?.isMetaDown
   val isEnabled = wasAltDown || wasAltGraphDown || wasControlDown || wasMetaDown
 
-  val initialModifiers = if (!isEnabled) null
+  private val initialModifiers = if (!isEnabled) null
   else StringBuilder().apply {
     if (wasAltDown) append("alt ")
     if (wasAltGraphDown) append("altGraph ")

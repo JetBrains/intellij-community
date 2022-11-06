@@ -8,7 +8,7 @@ import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 
@@ -37,7 +37,7 @@ interface ModuleBridge : ModuleEx {
                          modules: List<IdeaPluginDescriptorImpl>,
                          precomputedExtensionModel: PrecomputedExtensionModel?,
                          app: Application?,
-                         listenerCallbacks: MutableList<Runnable>?)
+                         listenerCallbacks: MutableList<in Runnable>?)
 
   fun callCreateComponents()
 

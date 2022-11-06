@@ -458,7 +458,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return area;
   }
 
-  private float computeTextWidth(@NotNull Font font, final boolean mainTextOnly) {
+  private float computeTextWidth(@NotNull Font font, boolean mainTextOnly) {
     float result = 0;
     int baseSize = font.getSize();
     boolean wasSmaller = false;
@@ -471,7 +471,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       wasSmaller = isSmaller;
 
-      result += computeStringWidth(fragment, font);
+      result += computeStringWidth(fragment, i, font);
 
       final int fixedWidth = fragment.padding;
       if (fixedWidth > 0 && result < fixedWidth) {
@@ -483,7 +483,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   @NotNull
-  private Font getBaseFont() {
+  protected Font getBaseFont() {
     Font font = getFont();
     if (font == null) font = StartupUiUtil.getLabelFont();
     return font;
@@ -508,10 +508,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     fragment.getAndCacheRenderer(font, frc).draw(g, x, y);
   }
 
-  private float computeStringWidth(@NotNull ColoredFragment fragment, Font font) {
+  private float computeStringWidth(@NotNull ColoredFragment fragment, int index, Font font) {
     if (StringUtil.isEmpty(fragment.text)) return 0;
-    int index = myFragments.indexOf(fragment);
-    ColoredFragment nextFragment = index != -1 && index < myFragments.size() - 1 ? myFragments.get(index + 1) : null;
+    if (myFragments.get(index) != fragment) {
+      return 0; // assertion?
+    }
+    ColoredFragment nextFragment = index < myFragments.size() - 1 ? myFragments.get(index + 1) : null;
     FontRenderContext frc = getFontRenderContext(font);
     if (!SystemInfo.isMacOSCatalina
         || !fragment.attributes.isSearchMatch()
@@ -612,7 +614,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         }
         wasSmaller = isSmaller;
 
-        final float curWidth = computeStringWidth(fragment, font);
+        float curWidth = computeStringWidth(fragment, i, font);
         if (x >= curX && x < curX + curWidth) {
           return i;
         }
@@ -836,7 +838,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         g.setFont(font);
         final FontMetrics metrics = g.getFontMetrics(font);
 
-        final float fragmentWidth = computeStringWidth(fragment, font);
+        float fragmentWidth = computeStringWidth(fragment, i, font);
 
         final int fragmentPadding = fragment.padding;
 
@@ -846,7 +848,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
           doPaintFragmentBackground(g, i, bgColor, (int)offset, 0, (int)fragmentWidth, height);
         }
 
-        Color color = isEnabled() ? getActiveTextColor(attributes.getFgColor()) : UIUtil.getInactiveTextColor();
+        Color color;
+        color = isEnabled() ? getActiveTextColor(attributes.getFgColor()) : NamedColorUtil.getInactiveTextColor();
         g.setColor(color);
 
         final int fragmentAlignment = fragment.alignment;
@@ -952,9 +955,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       try {
         clippedGraphics.setClip(new Rectangle2D.Float(x1, 0, x2 - x1, getHeight()));
 
-        if (prevFragment != null) x1 -= computeStringWidth(prevFragment, font);
+        if (prevFragment != null) x1 -= computeStringWidth(prevFragment, index - 1, font);
         clippedGraphics.drawString(mergedText, x1, baseline);
-      } finally {
+      }
+      finally {
         clippedGraphics.dispose();
       }
       return true;
@@ -1104,7 +1108,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @NotNull
   private String logSwingPath() {
-    //noinspection HardCodedStringLiteral
     final StringBuilder buffer = new StringBuilder("Components hierarchy:\n");
     for (Container c = this; c != null; c = c.getParent()) {
       buffer.append('\n');

@@ -46,9 +46,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
   @Nullable
   private final Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;

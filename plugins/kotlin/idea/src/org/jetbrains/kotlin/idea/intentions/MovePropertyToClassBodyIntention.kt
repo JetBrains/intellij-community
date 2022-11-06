@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
+import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -24,7 +25,7 @@ class MovePropertyToClassBodyIntention : SelfTargetingIntention<KtParameter>(
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         if (!element.isPropertyParameter()) return false
         val containingClass = element.containingClass() ?: return false
-        return !containingClass.isAnnotation() && !containingClass.isData() && !containingClass.isInline() && !containingClass.isValue()
+        return !containingClass.mustHaveOnlyPropertiesInPrimaryConstructor()
     }
 
     override fun applyTo(element: KtParameter, editor: Editor?) {

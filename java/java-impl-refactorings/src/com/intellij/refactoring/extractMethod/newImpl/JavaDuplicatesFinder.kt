@@ -120,9 +120,9 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
     return duplicate.copy(changedExpressions = changedExpressions)
   }
 
-  fun traverseAndCollectChanges(pattern: List<PsiElement>,
-                                candidate: List<PsiElement>,
-                                changedExpressions: MutableList<ChangedExpression>): Boolean {
+  private fun traverseAndCollectChanges(pattern: List<PsiElement>,
+                                        candidate: List<PsiElement>,
+                                        changedExpressions: MutableList<ChangedExpression>): Boolean {
     if (candidate.size != pattern.size) return false
     val notEqualElements = pattern.zip(candidate).filterNot { (pattern, candidate) ->
       pattern !in predefinedChanges &&
@@ -134,7 +134,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
     return true
   }
 
-  fun areEquivalent(pattern: PsiElement, candidate: PsiElement): Boolean {
+  private fun areEquivalent(pattern: PsiElement, candidate: PsiElement): Boolean {
     return when {
       pattern is PsiTypeElement && candidate is PsiTypeElement -> canBeReplaced(pattern.type, candidate.type)
       pattern is PsiJavaCodeReferenceElement && candidate is PsiJavaCodeReferenceElement ->

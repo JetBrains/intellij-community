@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
@@ -17,7 +18,7 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
   public void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo info) {
     PsiElement parent = errorElement.getParent();
     String description = errorElement.getErrorDescription();
-    if (description.equals(JavaPsiBundle.message("expected.semicolon"))) {
+    if (parent instanceof PsiStatement && description.equals(JavaPsiBundle.message("expected.semicolon"))) {
       QuickFixAction.registerQuickFixAction(info, new InsertMissingTokenFix(";"));
       HighlightFixUtil.registerFixesForExpressionStatement(info, parent);
     }
@@ -33,17 +34,18 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
       PsiElement child = errorElement.getFirstChild();
       if (child instanceof PsiIdentifier) {
         switch (child.getText()) {
-          case PsiKeyword.RECORD:
-            HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.RECORDS, new QuickFixActionRegistrarImpl(info));
+          case PsiKeyword.RECORD -> {
+            HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.RECORDS,
+                                                             new QuickFixActionRegistrarImpl(info));
             if (ConvertRecordToClassFix.tryMakeRecord(errorElement) != null) {
-              QuickFixAction.registerQuickFixAction(info, PriorityIntentionActionWrapper.lowPriority(new ConvertRecordToClassFix(errorElement)));
+              QuickFixAction.registerQuickFixAction(info,
+                                                    PriorityIntentionActionWrapper.lowPriority(new ConvertRecordToClassFix(errorElement)));
             }
-            break;
-          case PsiKeyword.SEALED:
-            HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.SEALED_CLASSES, new QuickFixActionRegistrarImpl(info));
-            break;
-          default:
-            break;
+          }
+          case PsiKeyword.SEALED -> HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.SEALED_CLASSES,
+                                                                                     new QuickFixActionRegistrarImpl(info));
+          default -> {
+          }
         }
       }
     }

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 
 class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
     override fun execute(context: CompileContext): Boolean {

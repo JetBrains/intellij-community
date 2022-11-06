@@ -9,10 +9,11 @@ import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 public class UnwrapSwitchExpressionTest extends UnwrapTestCase {
 
   public void testSimple() {
-    assertUnwrapped("boolean b = switch(0) {\n" +
-                    "            case 1 -> <caret>false;\n" +
-                    "            default -> true;\n" +
-                    "        };",
+    assertUnwrapped("""
+                      boolean b = switch(0) {
+                                  case 1 -> <caret>false;
+                                  default -> true;
+                              };""",
                     "boolean b = false;");
   }
 }

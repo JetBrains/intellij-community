@@ -3,13 +3,11 @@ package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.util.whenDisposed
-import com.intellij.openapi.ui.isComponentUnderMouse
 import com.intellij.util.ui.TimerUtil
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.UnaryOperator
 
 @Suppress("SameParameterValue")
 @ApiStatus.Internal
@@ -36,16 +34,14 @@ class TransparentComponentAnimator(
   }
 
   fun scheduleShow() = executor.executeOrSkip {
-    state.updateAndGet(::nextShowingState)
-    startTimerIfNeeded()
+    updateState(::nextShowingState)
   }
 
   fun scheduleHide() {
-    state.updateAndGet(::nextHidingState)
-    startTimerIfNeeded()
+    updateState(::nextHidingState)
   }
 
-  internal fun hideImmediately() {
+  fun hideImmediately() {
     updateState { State.Invisible }
   }
 
@@ -53,24 +49,35 @@ class TransparentComponentAnimator(
     updateState(::nextState)
   }
 
-  private fun updateState(nextState: UnaryOperator<State>) {
-    val state = state.updateAndGet(nextState)
-    if (state is State.Invisible ||
-        state is State.Visible && !component.autoHideable) {
-      stopTimerIfNeeded()
+  private fun updateState(nextState: (State) -> State) {
+    lateinit var oldState: State
+    val state = state.updateAndGet {
+      oldState = it
+      nextState(it)
     }
-    updateComponent(state)
+    updateTimer(state)
+    invokeLaterIfNeeded {
+      updateComponent(oldState, state)
+    }
   }
 
-  private fun updateComponent(state: State) {
-    invokeLaterIfNeeded {
-      component.opacity = getOpacity(state)
-      when (isVisible(state)) {
-        true -> component.showComponent()
-        else -> component.hideComponent()
-      }
-      component.component.repaint()
+  private fun updateTimer(state: State) {
+    when {
+      state is State.Invisible -> stopTimerIfNeeded()
+      state is State.Visible && !component.autoHideable -> stopTimerIfNeeded()
+      else -> startTimerIfNeeded()
     }
+  }
+
+  private fun updateComponent(oldState: State, state: State) {
+    component.setOpacity(getOpacity(state))
+    val wasVisible = oldState.isVisible()
+    val isVisible = state.isVisible()
+    when {
+      !wasVisible && isVisible -> component.showComponent()
+      wasVisible && !isVisible -> component.hideComponent()
+    }
+    component.repaintComponent()
   }
 
   private fun nextShowingState(state: State): State {
@@ -111,10 +118,6 @@ class TransparentComponentAnimator(
     }
   }
 
-  private fun TransparentComponent.isComponentUnderMouse(): Boolean {
-    return component.parent?.isComponentUnderMouse() == true
-  }
-
   private fun getOpacity(state: State): Float {
     return when (state) {
       is State.Invisible -> 0.0f
@@ -126,10 +129,6 @@ class TransparentComponentAnimator(
 
   private fun getOpacity(count: Int, maxCount: Int): Float {
     return maxOf(0.0f, minOf(1.0f, count / maxCount.toFloat()))
-  }
-
-  private fun isVisible(state: State): Boolean {
-    return state !is State.Invisible
   }
 
   init {
@@ -144,6 +143,10 @@ class TransparentComponentAnimator(
     data class Visible(val count: Int) : State
     data class Hiding(val count: Int) : State
     data class Showing(val count: Int) : State
+
+    fun isVisible(): Boolean {
+      return this !is Invisible
+    }
   }
 
   companion object {

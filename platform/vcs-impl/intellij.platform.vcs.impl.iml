@@ -37,7 +37,7 @@
     <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
   </component>

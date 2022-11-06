@@ -30,7 +30,7 @@ public class BuilderAndAllArgsConstructor {
 
     @java.lang.SuppressWarnings("all")
     public BuilderAndAllArgsConstructor build() {
-      return new BuilderAndAllArgsConstructor(field1, field2);
+      return new BuilderAndAllArgsConstructor(this.field1, this.field2);
     }
 
     @java.lang.Override

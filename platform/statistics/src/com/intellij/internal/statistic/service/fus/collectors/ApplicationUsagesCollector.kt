@@ -55,5 +55,9 @@ abstract class ApplicationUsagesCollector : FeatureUsagesCollector() {
     internal fun getExtensions(invoker: UsagesCollectorConsumer): Set<ApplicationUsagesCollector> {
       return getExtensions(invoker, EP_NAME)
     }
+
+    internal fun getExtensions(invoker: UsagesCollectorConsumer, allowedOnStartupOnly: Boolean): Set<ApplicationUsagesCollector> {
+      return getExtensions(invoker, EP_NAME, allowedOnStartupOnly)
+    }
   }
 }

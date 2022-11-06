@@ -47,7 +47,7 @@ object ChangeVisibilityFixFactories {
             }
         }
 
-    val makePublicExplicitApplicator = getApplicator(KtTokens.PUBLIC_KEYWORD, true)
+    private val makePublicExplicitApplicator = getApplicator(KtTokens.PUBLIC_KEYWORD, true)
 
     val noExplicitVisibilityInApiMode =
         diagnosticFixFactory(KtFirDiagnostic.NoExplicitVisibilityInApiMode::class, makePublicExplicitApplicator) { diagnostic ->

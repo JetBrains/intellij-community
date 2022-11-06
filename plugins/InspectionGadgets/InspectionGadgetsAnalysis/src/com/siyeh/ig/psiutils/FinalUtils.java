@@ -58,8 +58,8 @@ public final class FinalUtils {
       if (ControlFlowUtil.isVariableAssignedInLoop(ref, variable)) return false;
       if (variable instanceof PsiField) {
         if (PsiUtil.findEnclosingConstructorOrInitializer(ref) == null) return false;
-        PsiElement innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, ref);
-        if (innerClass != null && innerClass != ((PsiField)variable).getContainingClass()) return false;
+        PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, ref);
+        if (innerScope != null && innerScope != ((PsiField)variable).getContainingClass()) return false;
       }
       return HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, ref, finalVarProblems) == null;
     };

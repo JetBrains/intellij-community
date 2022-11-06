@@ -9,12 +9,13 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -31,7 +32,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     libraryEntities().forEach { addLibrary(it, builder) }
   }
 
-  internal fun libraryEntities(): Sequence<LibraryEntity> {
+  private fun libraryEntities(): Sequence<LibraryEntity> {
     return moduleBridge.entityStorage.current.referrers(moduleBridge.moduleEntityId, LibraryEntity::class.java)
   }
 
@@ -58,15 +59,15 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     val library = LibraryBridgeImpl(
       libraryTable = this,
       project = module.project,
-      initialId = entity.persistentId,
+      initialId = entity.symbolicId,
       initialEntityStorage = moduleBridge.entityStorage,
-      targetBuilder = null
+      targetBuilder = storageBuilder
     )
     if (storageBuilder != null) {
       storageBuilder.mutableLibraryMap.addMapping(entity, library)
     }
     else {
-      WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent("Add module library mapping") {
         it.mutableLibraryMap.addMapping(entity, library)
       }
     }

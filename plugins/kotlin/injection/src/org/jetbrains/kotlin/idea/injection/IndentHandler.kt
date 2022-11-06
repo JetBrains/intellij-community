@@ -17,7 +17,7 @@ internal object NoIndentHandler: IndentHandler {
     override fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange> = listOf(givenRange)
 }
 
-internal class TrimIndentHandler(val marginChar: String? = null) : IndentHandler {
+internal class TrimIndentHandler(private val marginChar: String? = null) : IndentHandler {
     override fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange> {
         val text = literal.text
 

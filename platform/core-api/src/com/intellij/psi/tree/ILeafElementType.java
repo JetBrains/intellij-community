@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * if you want to override some methods in LeafElement.
  *
  * @see ICompositeElementType
- * @author peter
  */
 public interface ILeafElementType {
 

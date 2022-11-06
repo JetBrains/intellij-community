@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class MethodParenthesesHandler extends ParenthesesInsertHandler<LookupElement> {
   private final PsiMethod myMethod;
   private final boolean myOverloadsMatter;

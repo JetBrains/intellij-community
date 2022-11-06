@@ -11,6 +11,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.Fe10OverrideImplementFacility"/>
 
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
@@ -36,6 +39,8 @@
     <lang.importOptimizer
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer"/>
+
+    <javaMainMethodProvider implementation="org.jetbrains.kotlin.idea.codeInsight.runner.KotlinMainMethodProvider"/>
 
     <codeInsight.parameterInfo
             language="kotlin"
@@ -69,16 +74,6 @@
                                 implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMembersHandler"/>
 
 
-    <typeHierarchyProvider
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
-    <typeHierarchyProvider
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProvider"/>
-    <typeHierarchyProvider
-            language="JAVA"
-            order="last"
-            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
     <callHierarchyProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCallHierarchyProvider"/>
@@ -97,11 +92,18 @@
     <lang.jvm.actions.jvmElementActionsFactory
             implementation="org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory"/>
 
-    <referenceImporter implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter" id="KotlinReferenceImporter"/>
+    <referenceImporter
+            id="KotlinReferenceImporter"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+            id="kotlinUnresolvedReferenceQuickFixProvider"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUnresolvedReferenceQuickFixProvider"/>
 
     <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.kotlin.idea.KotlinDocumentationProvider" order="first"/>
     <documentationProvider implementation="org.jetbrains.kotlin.idea.KotlinDocumentationProvider"/>
 
+    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDefinitionsSearcher"/>
 
   </extensions>
 
@@ -129,8 +131,6 @@
                                     implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinRecursiveCallLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="kotlin"
                                     implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinSuspendCallLineMarkerProvider"/>
-    <runLineMarkerContributor language="kotlin"
-                              implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinFE10MainRunLineMarkerContributor"/>
   </extensions>
 
   <!-- Inlay hints -->
@@ -159,9 +159,7 @@
 
   <!-- Go to declaration -->
   <extensions defaultExtensionNs="com.intellij">
-    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoSymbolContributor"/>
-    <gotoPrimeSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoPrimeSymbolContributor"/>
-    <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassContributor"/>
+    
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinImportAliasGotoDeclarationHandler"/>
     <gotoRelatedProvider implementation="org.jetbrains.kotlin.idea.goto.KotlinExpectOrActualGotoRelatedProvider"/>
 
@@ -182,6 +180,8 @@
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsCopyPasteProcessor"/>
 
     <filePasteProvider implementation="org.jetbrains.kotlin.idea.conversion.copy.KotlinFilePasteProvider" order="first"/>
+    
+    <elementDescriptionProvider order="first" implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -193,7 +193,7 @@
   <!-- Navigation -->
   <extensions defaultExtensionNs="com.intellij">
 
-    <applicationService
+    <projectService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KtIdeReferenceProviderService"/>
   </extensions>

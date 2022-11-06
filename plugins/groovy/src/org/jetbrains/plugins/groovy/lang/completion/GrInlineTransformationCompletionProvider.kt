@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.lang.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformerEx
 import org.jetbrains.plugins.groovy.transformations.inline.getHierarchicalInlineTransformationPerformer
 
@@ -20,6 +20,6 @@ class GrInlineTransformationCompletionProvider : CompletionProvider<CompletionPa
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val position = parameters.position
     val performer = getHierarchicalInlineTransformationPerformer(position) ?: return
-    performer.castSafelyTo<GroovyInlineASTTransformationPerformerEx>()?.computeCompletionVariants(parameters, result)
+    performer.asSafely<GroovyInlineASTTransformationPerformerEx>()?.computeCompletionVariants(parameters, result)
   }
 }

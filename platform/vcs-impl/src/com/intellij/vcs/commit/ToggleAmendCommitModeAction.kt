@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
+import com.intellij.openapi.vcs.actions.commit.getContextCommitWorkflowHandler
 import javax.swing.JComponent
 
 class ToggleAmendCommitModeAction : CheckboxAction(), DumbAware {

@@ -1,0 +1,8 @@
+interface Interface {
+    val gav: Int
+        get() = 42
+}
+
+abstract class AbstractDerived : Interface {
+    override val gav = 13
+}

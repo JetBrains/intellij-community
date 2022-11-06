@@ -43,7 +43,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -208,6 +208,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       applyScannersToFile(fileOrDir, sessions);
       return true;
     }, IndexableFilesDeduplicateFilter.create());
+    finishVisitors(sessions);
+  }
+
+  public static void finishVisitors(List<IndexableFileScanner.IndexableFileVisitor> sessions) {
+    for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
+      session.visitingFinished();
+    }
   }
 
   private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
@@ -337,8 +344,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   public static void scanProject(@NotNull Project project,
                                  @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Stream<Runnable> tasksStream;
-    //noinspection deprecation
-    if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
+    if (StandardContributorsKt.shouldIndexProjectBasedOnIndexableEntityProviders()) {
       Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
                                                                     WorkspaceModel.getInstance(project).getEntityStorage().
                                                                       getCurrent().entities(ModuleEntity.class));

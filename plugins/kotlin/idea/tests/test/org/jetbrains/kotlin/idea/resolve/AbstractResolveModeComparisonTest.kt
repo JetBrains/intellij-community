@@ -24,7 +24,7 @@ import java.io.File
  * "Targeted" resolve for selected expression is used for analysis.
  */
 abstract class AbstractResolveModeComparisonTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun doTest(unused: String) {
         val testPath = dataFilePath(fileName())

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
@@ -66,16 +67,21 @@ enum class HintType(
         false
     ) {
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
-            (e as? KtNamedFunction)?.let { namedFunc ->
-                namedFunc.valueParameterList?.let { paramList ->
-                    provideTypeHint(namedFunc, paramList.endOffset)?.let { return listOf(it) }
+            e.safeAs<KtNamedFunction>()?.let { namedFunction ->
+                namedFunction.valueParameterList?.let { paramList ->
+                    provideTypeHint(namedFunction, paramList.endOffset)?.let { return listOf(it) }
                 }
+            }
+            e.safeAs<KtExpression>()?.let { expression ->
+                provideLambdaReturnTypeHints(expression)?.let { return listOf(it) }
             }
             return emptyList()
         }
 
-        override fun isApplicable(e: PsiElement): Boolean =
-            e is KtNamedFunction && !(e.hasBlockBody() || e.hasDeclaredReturnType())
+        override fun isApplicable(e: PsiElement): Boolean {
+            return e is KtNamedFunction && !(e.hasBlockBody() || e.hasDeclaredReturnType()) ||
+                    Registry.`is`("kotlin.enable.inlay.hint.for.lambda.return.type") && e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable(allowOneLiner = true)
+        }
     },
 
     PARAMETER_TYPE_HINT(
@@ -239,6 +245,12 @@ data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInf
 
 sealed class InlayInfoDetail(val text: String)
 
-class TextInlayInfoDetail(text: String, val smallText: Boolean = true): InlayInfoDetail(text)
-class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text)
-class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text)
+class TextInlayInfoDetail(text: String, val smallText: Boolean = true): InlayInfoDetail(text) {
+    override fun toString(): String = "[$text]"
+}
+class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text) {
+    override fun toString(): String = "[$text :$fqName]"
+}
+class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text) {
+    override fun toString(): String = "[$text @ $element]"
+}

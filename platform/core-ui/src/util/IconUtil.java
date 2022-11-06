@@ -7,6 +7,7 @@ import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.fileTypes.DirectoryFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -17,6 +18,8 @@ import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.*;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.CopyableIcon;
+import com.intellij.ui.icons.ImageDescriptor;
+import com.intellij.ui.paint.PaintUtilKt;
 import com.intellij.ui.scale.*;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
@@ -28,6 +31,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -35,6 +39,7 @@ import java.util.function.ToIntFunction;
 
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
+import static com.intellij.util.SVGLoader.getStrokePatcher;
 
 /**
  * @author Konstantin Bulenkov
@@ -70,8 +75,10 @@ public final class IconUtil {
 
     double scale = 1.0f;
     if (image instanceof JBHiDPIScaledImage) {
-      scale = ((JBHiDPIScaledImage)image).getScale();
-      image = ((JBHiDPIScaledImage)image).getDelegate();
+      JBHiDPIScaledImage hdpi = ((JBHiDPIScaledImage)image);
+      scale = hdpi.getScale();
+      if (hdpi.getDelegate() != null)
+        image = hdpi.getDelegate();
     }
 
     BufferedImage bi = ImageUtil.toBufferedImage(Objects.requireNonNull(image));
@@ -147,7 +154,7 @@ public final class IconUtil {
     flags = filterFileIconFlags(file, flags);
 
     Icon providersIcon = getProvidersIcon(file, flags, project);
-    Icon icon = providersIcon != null ? providersIcon : computeBaseFileIcon(file);
+    Icon icon = providersIcon != null ? providersIcon : computeFileTypeIcon(file, false);
 
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     for (FileIconPatcher patcher : FileIconPatcher.EP_NAME.getExtensionList()) {
@@ -198,11 +205,16 @@ public final class IconUtil {
    * @see FileType#getIcon()
    */
   public static @NotNull Icon computeBaseFileIcon(@NotNull VirtualFile vFile) {
+    return computeFileTypeIcon(vFile, true);
+  }
+
+  private static @NotNull Icon computeFileTypeIcon(@NotNull VirtualFile vFile, boolean onlyFastChecks) {
     Icon icon = TypePresentationService.getService().getIcon(vFile);
     if (icon != null) {
       return icon;
     }
-    FileType fileType = vFile.getFileType();
+    FileType fileType = onlyFastChecks ? FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.getName())
+                                       : vFile.getFileType();
     if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
       return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
     }
@@ -953,16 +965,19 @@ public final class IconUtil {
 
   @ApiStatus.Internal
   public static Icon toRetinaAwareIcon(BufferedImage image) {
+    return toRetinaAwareIcon(image, JBUIScale.sysScale());
+  }
+
+  @ApiStatus.Internal
+  public static Icon toRetinaAwareIcon(BufferedImage image, float sysScale) {
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        // [tav] todo: the icon is created in def screen scale
-        if (UIUtil.isJreHiDPI()) {
+        if (isJreHiDPI()) {
           Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
-          float s = JBUIScale.sysScale();
-          newG.scale(1.0 / s, 1.0 / s);
+          PaintUtilKt.alignToInt(newG);
+          newG.scale(1.0 / sysScale, 1.0 / sysScale);
           newG.drawImage(image, 0, 0, null);
-          newG.scale(1.0, 1.0);
           newG.dispose();
         }
         else {
@@ -972,13 +987,53 @@ public final class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return UIUtil.isJreHiDPI() ? (int)(image.getWidth() / JBUIScale.sysScale()) : image.getWidth();
+        return isJreHiDPI() ? (int)(image.getWidth() / sysScale) : image.getWidth();
       }
 
       @Override
       public int getIconHeight() {
-        return UIUtil.isJreHiDPI() ? (int)(image.getHeight() / JBUIScale.sysScale()) : image.getHeight();
+        return isJreHiDPI() ? (int)(image.getHeight() / sysScale) : image.getHeight();
+      }
+
+      private boolean isJreHiDPI() {
+        return JreHiDpiUtil.isJreHiDPI(sysScale);
       }
     };
+  }
+
+  public static @NotNull Icon toStrokeIcon(@NotNull Icon original, @NotNull Color resultColor) {
+    List<String> strokeColors = List.of("black", "#000000",
+                                        "white", "#ffffff",
+                                        "#818594",
+                                        "#6c707e",
+                                        "#3574f0",
+                                        "#5fb865",
+                                        "#e35252",
+                                        "#eb7171",
+                                        "#e3ae4d",
+                                        "#fcc75b",
+                                        "#f28c35",
+                                        "#955ae0");
+    List<String> backgroundColors = List.of("#ebecf0", "#e7effd", "#dff2e0", "#f2fcf3", "#ffe8e8", "#fff5f5", "#fff8e3", "#fff4eb", "#eee0ff");
+    SVGLoader.SvgElementColorPatcherProvider palettePatcher = getStrokePatcher(resultColor, strokeColors, backgroundColors);
+    SVGLoader.SvgElementColorPatcherProvider strokeReplacer = getStrokePatcher(resultColor, List.of("white", "#ffffff"), List.of());
+
+    return IconLoader.replaceCachedImageIcons(original, (cachedImageIcon) -> {
+      SVGLoader.SvgElementColorPatcherProvider patcher = palettePatcher;
+      int flags = cachedImageIcon.getImageFlags();
+      if ((flags & ImageDescriptor.HAS_STROKE) == ImageDescriptor.HAS_STROKE) {
+        Icon strokeIcon = cachedImageIcon.createStrokeIcon();
+        //noinspection UseJBColor
+        if (Color.WHITE.equals(resultColor)) {
+          // will be nothing to patch actually
+          return strokeIcon;
+        }
+        if (strokeIcon instanceof IconLoader.CachedImageIcon) {
+          cachedImageIcon = (IconLoader.CachedImageIcon) strokeIcon;
+          patcher = strokeReplacer;
+        }
+      }
+      return IconLoader.patchColorsInCacheImageIcon(cachedImageIcon, patcher, false);
+    });
   }
 }

@@ -421,7 +421,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ProgressManager.checkCanceled();
 
     if (!myHandler.isTestingMode()) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
 
     LookupElement lookupElement = item.getLookupElement();

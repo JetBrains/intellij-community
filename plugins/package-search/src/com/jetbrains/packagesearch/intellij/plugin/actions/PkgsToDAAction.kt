@@ -71,11 +71,11 @@ internal class PkgsToDAAction : AnAction(
                 dependencyAnalyzerSupportedUsages.forEach { usage ->
                     add(usage.projectModule.name) {
                         navigateToDA(
-                            group = data.groupId,
-                            artifact = data.artifactId,
-                            version = usage.getResolvedVersionOrFallback().versionName,
-                            module = usage.projectModule.nativeModule,
-                            systemId = usage.projectModule.buildSystemType.dependencyAnalyzerKey!!
+                          group = data.groupId,
+                          artifact = data.artifactId,
+                          version = usage.getDeclaredVersionOrFallback().versionName,
+                          module = usage.projectModule.nativeModule,
+                          systemId = usage.projectModule.buildSystemType.dependencyAnalyzerKey!!
                         )
                     }
                 }
@@ -96,11 +96,11 @@ internal class PkgsToDAAction : AnAction(
         } else {
             val usage = data.usageInfo.single()
             navigateToDA(
-                group = data.groupId,
-                artifact = data.artifactId,
-                version = usage.getResolvedVersionOrFallback().versionName,
-                module = usage.projectModule.nativeModule,
-                systemId = usage.projectModule.buildSystemType.dependencyAnalyzerKey!!
+              group = data.groupId,
+              artifact = data.artifactId,
+              version = usage.getDeclaredVersionOrFallback().versionName,
+              module = usage.projectModule.nativeModule,
+              systemId = usage.projectModule.buildSystemType.dependencyAnalyzerKey!!
             )
         }
     }

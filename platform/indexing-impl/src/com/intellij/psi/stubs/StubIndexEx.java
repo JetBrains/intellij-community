@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
@@ -540,4 +541,23 @@ public abstract class StubIndexEx extends StubIndex {
   public boolean areAllProblemsProcessedInTheCurrentThread() {
     return myStubProcessingHelper.areAllProblemsProcessedInTheCurrentThread();
   }
+
+  @ApiStatus.Internal
+  public void cleanCaches() {
+    myCachedStubIds.clear();
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  abstract public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public interface FileUpdateProcessor {
+    void processUpdate(@NotNull VirtualFile file);
+    default void endUpdatesBatch() {};
+  }
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  abstract public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor();
 }

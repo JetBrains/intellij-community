@@ -1,0 +1,69 @@
+{
+  "language": "Python",
+  "projectPath": "EVALUATION_PROJECT",
+  "outputDir": "EVALUATION_OUTPUT",
+  "actions": {
+    "evaluationRoots": [
+      "models/cognitive_mapping_and_planning/scripts/__init__.py",
+      "models/slim/nets/inception_v2.py",
+      "models/slim/nets/inception.py",
+      "models/object_detection/core/minibatch_sampler_test.py",
+      "models/object_detection/utils/shape_utils_test.py",
+      "models/inception/inception/slim/losses.py",
+      "models/transformer/spatial_transformer.py",
+      "models/learning_to_remember_rare_events/train.py",
+      "models/slim/datasets/cifar10.py",
+      "models/syntaxnet/syntaxnet/util/registry.py",
+      "models/object_detection/meta_architectures/__init__.py",
+      "models/slim/preprocessing/preprocessing_factory.py",
+      "models/attention_ocr/python/model.py",
+      "models/object_detection/data_decoders/tf_example_decoder.py",
+      "models/object_detection/box_coders/faster_rcnn_box_coder.py",
+      "models/pcl_rl/optimizers.py",
+      "models/object_detection/utils/__init__.py",
+      "models/swivel/wordsim.py",
+      "models/object_detection/builders/__init__.py",
+      "models/object_detection/core/minibatch_sampler.py",
+      "models/next_frame_prediction/cross_conv/eval.py",
+      "models/skip_thoughts/skip_thoughts/train.py",
+      "models/real_nvp/celeba_formatting.py",
+      "models/tutorials/image/alexnet/__init__.py",
+      "models/skip_thoughts/skip_thoughts/skip_thoughts_model.py",
+      "models/object_detection/meta_architectures/ssd_meta_arch_test.py",
+      "models/attention_ocr/python/datasets/fsns_test.py",
+      "models/object_detection/box_coders/mean_stddev_box_coder.py",
+      "models/object_detection/builders/matcher_builder.py",
+      "models/tutorials/image/cifar10/cifar10_input.py",
+      "models/slim/nets/resnet_utils.py",
+      "models/im2txt/im2txt/show_and_tell_model_test.py",
+      "models/tutorials/embedding/word2vec_optimized_test.py",
+      "models/street/python/errorcounter_test.py"
+    ],
+    "strategy": {
+      "completeAllTokens": true,
+      "codeGolf": true,
+      "context": "ALL",
+      "prefix": {
+        "name": "NoPrefix"
+      }
+    }
+  },
+  "interpret": {
+    "codeGolfSettings": {
+      "topN": 5,
+      "checkToken": "CHECK_TOKEN",
+      "checkLine": "CHECK_LINE",
+      "source": "SUGGESTION_SOURCE"
+    },
+    "completionType": "EVAL_TYPE",
+    "saveLogs": false,
+    "completeTokenProbability": 1.0,
+    "completeTokenSeed": null,
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "EVAL_TITLE: BS=@beam_size, NI=@num_iterations, DG=@diversity_groups, DS=@diversity_strength, M=@model, OFL=@only_full_lines, LP=@len_power, LB=@len_base",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

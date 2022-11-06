@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.impl;
 
@@ -235,6 +235,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           }
         });
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private void updatePredefinedFiltersLater() {
@@ -1205,6 +1210,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       e.getPresentation().setEnabled(console != null);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Nullable
     private static ConsoleViewImpl getRunningConsole(@NotNull DataContext context) {
       Editor editor = CommonDataKeys.EDITOR.getData(context);
@@ -1591,6 +1601,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getHyperlinks().getLinkNavigationRunnable(getEditor().getCaretModel().getLogicalPosition()) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

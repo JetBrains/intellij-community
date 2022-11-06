@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.checkin.PostCommitChangeConverter;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -105,7 +106,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   }
 
   @Override
-  public @NotNull RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+  public @NotNull RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel,
+                                                             @NotNull CommitContext commitContext) {
     return new GitCheckinOptions(commitPanel, commitContext, isAmendCommitOptionSupported(commitPanel, this));
   }
 
@@ -212,7 +214,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
         }
       }
 
-      exceptions.addAll(commitRepository(repository, toCommit, commitMessage));
+      exceptions.addAll(commitRepository(repository, toCommit, commitMessage, commitContext));
     }
 
     if (isPushAfterCommit(commitContext) && exceptions.isEmpty()) {
@@ -233,7 +235,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
   private @NotNull List<VcsException> commitRepository(@NotNull GitRepository repository,
                                                        @NotNull Collection<? extends CommitChange> changes,
-                                                       @NotNull @NonNls String message) {
+                                                       @NotNull @NonNls String message,
+                                                       @NotNull CommitContext commitContext) {
     List<VcsException> exceptions = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
@@ -259,6 +262,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       if (isSubmodule(repository)) {
         VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(repository.getRoot().getParent());
       }
+
+      GitPostCommitChangeConverter.markRepositoryCommit(commitContext, repository);
     }
     catch (VcsException e) {
       exceptions.add(e);
@@ -471,7 +476,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   }
 
   private static @Nullable <T> T computeAfterLSTManagerUpdate(@NotNull Project project, final @NotNull Computable<T> computation) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     FutureResult<T> ref = new FutureResult<>();
     LineStatusTrackerManager.getInstance(project).invokeAfterUpdate(() -> {
       try {
@@ -888,6 +893,11 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       }
     }
     return rc;
+  }
+
+  @Override
+  public @NotNull PostCommitChangeConverter getPostCommitChangeConverter() {
+    return new GitPostCommitChangeConverter(myProject);
   }
 
   private static @NotNull Map<GitRepository, Collection<Change>> sortChangesByGitRoot(@NotNull Project project,

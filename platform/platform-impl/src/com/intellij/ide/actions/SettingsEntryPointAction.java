@@ -42,6 +42,8 @@ import java.util.List;
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
+  private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
+  private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   public SettingsEntryPointAction() {
@@ -189,14 +191,39 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     if (ourShowPlatformUpdateIcon) {
       return ExperimentalUI.isNewUI()
              ? GEAR_ICON.getWarningIcon()
-             : AllIcons.Ide.Notification.IdeUpdate;
+             : getCustomizedIcon(IDE_UPDATE_ICON);
     }
     if (ourShowPluginsUpdateIcon) {
       return ExperimentalUI.isNewUI()
              ? GEAR_ICON.getInfoIcon()
-             : AllIcons.Ide.Notification.PluginUpdate;
+             : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
-    return GEAR_ICON.getOriginalIcon();
+    return getCustomizedIcon(GEAR_ICON);
+  }
+
+  private static @NotNull Icon getCustomizedIcon(@NotNull BadgeIconSupplier supplier) {
+    for (IconCustomizer customizer : IconCustomizer.EP_NAME.getExtensionList()) {
+      Icon icon = customizer.getCustomIcon(supplier);
+      if (icon != null) return icon;
+    }
+    return supplier.getOriginalIcon();
+  }
+
+  /**
+   * Allows to modify a base icon provided by {@link BadgeIconSupplier}. The icon of the first extension which returns a non-null value
+   * will be used.
+   */
+  public interface IconCustomizer {
+    ExtensionPointName<IconCustomizer> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointIconCustomizer");
+
+    /**
+     * Returns a customized icon optionally based on the given {@link BadgeIconSupplier}. For example, {@code supplier.getInfoIcon()}.
+     *
+     * @param supplier The supplier to use for a base icon.
+     *
+     * @return A customized icon using {@link BadgeIconSupplier} or an alternative (custom) icon.
+     */
+    @Nullable Icon getCustomIcon(@NotNull BadgeIconSupplier supplier);
   }
 
   private static UISettingsListener mySettingsListener;
@@ -240,7 +267,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public @Nls @NotNull String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return IdeBundle.message("settings.entry.point.widget.name");
     }
 

@@ -5,11 +5,11 @@ import com.intellij.ide.lightEdit.LightEditServiceListener
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import kotlinx.coroutines.coroutineScope
 
-class WindowDressing : ProjectManagerListener, LightEditServiceListener {
+class WindowDressing : ProjectCloseListener, LightEditServiceListener {
   companion object {
     @JvmStatic
     val windowActionGroup: ProjectWindowActionGroup

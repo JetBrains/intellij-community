@@ -331,7 +331,7 @@ public final class WelcomeScreenComponentFactory {
 
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
     JPanel panel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
-    panel.setBorder(JBUI.Borders.empty(10, 0, 0, 4));
+    panel.setBorder(JBUI.Borders.empty(10, 0, 0, 3));
     panel.add(createErrorsLink(parentDisposable));
     panel.add(createEventLink("", parentDisposable));
     return panel;

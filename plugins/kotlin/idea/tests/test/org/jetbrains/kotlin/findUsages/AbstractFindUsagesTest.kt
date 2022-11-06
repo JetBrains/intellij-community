@@ -57,13 +57,12 @@ import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.TestFixtureExtension
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.utils.IgnoreTests.DIRECTIVES.IGNORE_FIR_LOG
 import java.io.File
 
 
@@ -83,12 +82,12 @@ abstract class AbstractFindUsagesWithDisableComponentSearchTest : AbstractFindUs
 }
 
 abstract class AbstractKotlinScriptFindUsagesTest : AbstractFindUsagesTest() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_SCRIPT_RUNTIME
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithScriptRuntime()
 }
 
 abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_NO_SOURCES
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 
     // used in Spring tests (outside main project!)
     protected open fun extraConfig(path: String) {

@@ -2,6 +2,7 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -11,17 +12,21 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class IntroduceVariableHandler extends IntroduceVariableBase implements JavaIntroduceVariableHandlerBase {
+public class IntroduceVariableHandler extends IntroduceVariableBase implements JavaIntroduceVariableHandlerBase,
+                                                                               PreviewableRefactoringActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiExpression expression) {
@@ -88,5 +93,22 @@ public class IntroduceVariableHandler extends IntroduceVariableBase implements J
   @Override
   protected boolean acceptLocalVariable() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull PsiElement element) {
+    if (!(element instanceof PsiExpression expression)) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    final PsiType type = CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(expression);
+    if (type == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    final PsiExpression[] occurrences = PsiExpression.EMPTY_ARRAY;
+    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, expression, occurrences);
+    final IntroduceVariableSettings settings =
+      super.getSettings(project, null, expression, occurrences, typeSelectorManager, false, false, null, expression, JavaReplaceChoice.NO);
+    new VariableExtractor(project, expression, null, expression, occurrences, settings).extractVariable();
+    return IntentionPreviewInfo.DIFF;
   }
 }

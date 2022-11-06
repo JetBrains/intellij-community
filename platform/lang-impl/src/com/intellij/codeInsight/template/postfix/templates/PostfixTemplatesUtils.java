@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
@@ -144,7 +145,8 @@ public final class PostfixTemplatesUtils {
     Element templateChild = template.getChild(TemplateSettings.TEMPLATE);
     if (templateChild == null) return null;
 
-    return TemplateSettings.readTemplateFromElement("", templateChild, provider.getClass().getClassLoader());
+    return TemplateSettings.readTemplateFromElement("", templateChild, provider.getClass().getClassLoader(),
+                                                    LiveTemplateContextService.getInstance());
   }
 
   public static boolean readExternalTopmostAttribute(@NotNull Element template) {

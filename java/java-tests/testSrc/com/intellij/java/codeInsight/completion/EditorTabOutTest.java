@@ -79,17 +79,19 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
   }
 
   public void testAddImport() {
-    configureJava("class C {\n" +
-                  "  java.util.List<caret>\n" +
-                  "}");
+    configureJava("""
+                    class C {
+                      java.util.List<caret>
+                    }""");
     type("<ArrayList");
     runImportClassIntention();
     tabOut();
-    checkResult("import java.util.ArrayList;\n" +
-                "\n" +
-                "class C {\n" +
-                "  java.util.List<ArrayList><caret>\n" +
-                "}");
+    checkResult("""
+                  import java.util.ArrayList;
+
+                  class C {
+                    java.util.List<ArrayList><caret>
+                  }""");
   }
 
   public void testSemicolon() {
@@ -149,15 +151,16 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
 
   public void testAnonymousClass() {
     myFixture.addClass("package p; public class ABC<T> {}");
-    configureJava("class Main {\n" +
-                  "  static {\n" +
-                  "    new Runnable() {\n" +
-                  "      {\n" +
-                  "      A<caret>\n" +
-                  "      }\n" +
-                  "    };\n" +
-                  "  }\n" +
-                  "}");
+    configureJava("""
+                    class Main {
+                      static {
+                        new Runnable() {
+                          {
+                          A<caret>
+                          }
+                        };
+                      }
+                    }""");
 
     final LookupElement[] elements = myFixture.completeBasic();
     final LookupElement element = findLookupElementContainingText(elements, "ABC");
@@ -166,27 +169,31 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
     lookup.finishLookup('<', element);
 
     waitForParameterInfo();
-    checkResult("import p.ABC;\n\n" +
-                "class Main {\n" +
-                "  static {\n" +
-                "    new Runnable() {\n" +
-                "      {\n" +
-                "          ABC<<caret>>\n" +
-                "      }\n" +
-                "    };\n" +
-                "  }\n" +
-                "}");
+    checkResult("""
+                  import p.ABC;
+
+                  class Main {
+                    static {
+                      new Runnable() {
+                        {
+                            ABC<<caret>>
+                        }
+                      };
+                    }
+                  }""");
     tabOut();
-    checkResult("import p.ABC;\n\n" +
-                "class Main {\n" +
-                "  static {\n" +
-                "    new Runnable() {\n" +
-                "      {\n" +
-                "          ABC<><caret>\n" +
-                "      }\n" +
-                "    };\n" +
-                "  }\n" +
-                "}");
+    checkResult("""
+                  import p.ABC;
+
+                  class Main {
+                    static {
+                      new Runnable() {
+                        {
+                            ABC<><caret>
+                        }
+                      };
+                    }
+                  }""");
   }
 
   private void tabOut() {

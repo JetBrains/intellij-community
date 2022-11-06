@@ -238,7 +238,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   protected JPanel createAndFillContentPanel() {
-    WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper();
+    WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper(this);
     if (myProjectGenerator instanceof WebProjectTemplate) {
       getPeer().buildUI(settingsStep);
     }

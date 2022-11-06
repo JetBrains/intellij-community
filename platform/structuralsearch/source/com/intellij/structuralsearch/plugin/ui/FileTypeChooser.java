@@ -144,7 +144,7 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
   }
 
   @Override
-  protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
     for (FileTypeInfo fileTypeInfo : myFileTypeInfos) {
       group.add(new FileTypeInfoAction(fileTypeInfo));

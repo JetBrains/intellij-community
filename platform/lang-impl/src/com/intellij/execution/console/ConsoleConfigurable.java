@@ -38,9 +38,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class ConsoleConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(ConsoleConfigurable.class);
 

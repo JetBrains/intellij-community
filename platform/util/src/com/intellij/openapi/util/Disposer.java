@@ -49,7 +49,7 @@ public final class Disposer {
   }
 
   /**
-   * @return new {@link Disposable} instance with the given name which is visible in its {@link Disposable#toString()}.
+   * @return new {@link Disposable} instance with the given name which is visible in its {@link Object#toString()}.
    * Please be aware of increased memory consumption due to storing this name inside the object instance.
    */
   @NotNull
@@ -97,7 +97,7 @@ public final class Disposer {
   }
 
   /**
-   * @param debugName a name to render in {@link Disposable#toString()}
+   * @param debugName a name to render in this instance {@link Object#toString()}
    * @return new {@link Disposable} instance which tracks its own invalidation
    * <p>
    * Please be aware of increased memory consumption due to storing the debug name
@@ -249,10 +249,12 @@ public final class Disposer {
     return ourTree;
   }
 
+  @ApiStatus.Internal
   public static void assertIsEmpty() {
     assertIsEmpty(false);
   }
 
+  @ApiStatus.Internal
   public static void assertIsEmpty(boolean throwError) {
     if (ourDebugMode) {
       ourTree.assertIsEmpty(throwError);

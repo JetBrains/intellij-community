@@ -22,7 +22,7 @@ import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
@@ -86,7 +86,7 @@ class GitGpgConfigDialog(
       row {
         errorLabel = label("")
           .visible(false)
-          .applyToComponent { foreground = UIUtil.getErrorForeground() }
+          .applyToComponent { foreground = NamedColorUtil.getErrorForeground() }
       }
       row {
         docLinkLabel = link(message("gpg.error.see.documentation.link.text")) {

@@ -37,6 +37,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -54,6 +55,7 @@ import org.xml.sax.Locator;
 
 import javax.xml.namespace.QName;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 
@@ -130,10 +132,15 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   @Override
   public final XmlElementDescriptor getElementDescriptor(final XmlTag childTag, XmlTag contextTag) {
-    final XmlElementDescriptor value = getCachedValue(childTag, this, DESCR_KEY, p -> {
-      final XmlElementDescriptor descriptor = p.findElementDescriptor(childTag);
-      return CachedValueProvider.Result.create(descriptor, p.getDependencies(), childTag);
-    });
+    final ConcurrentMap<RngElementDescriptor, CachedValue<XmlElementDescriptor>> descriptorMap =
+      CachedValuesManager.getCachedValue(
+        childTag, () -> CachedValueProvider.Result.create(ContainerUtil.createConcurrentWeakMap(), ModificationTracker.NEVER_CHANGED));
+    final XmlElementDescriptor value = descriptorMap.computeIfAbsent(this,  descr -> {
+      return CachedValuesManager.getManager(childTag.getProject()).createCachedValue(() -> {
+        final XmlElementDescriptor descriptor = descr.findElementDescriptor(childTag);
+        return CachedValueProvider.Result.create(descriptor, descr.getDependencies(), childTag);
+      });
+    }).getValue();
     return value == NULL ? null : value;
   }
 

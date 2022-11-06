@@ -18,13 +18,11 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.util.ArrayUtil
 import com.intellij.util.childScope
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
@@ -53,7 +51,7 @@ private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
-) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx {
+) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
@@ -77,7 +75,7 @@ abstract class ComponentManagerImpl(
 
     // not as file level function to avoid scope cluttering
     @ApiStatus.Internal
-    fun createAllServices(componentManager: ComponentManagerImpl, exclude: Set<String>) {
+    fun createAllServices(componentManager: ComponentManagerImpl, requireEdt: Set<String>, requireReadAction: Set<String>) {
       for (o in componentManager.componentKeyToAdapter.values) {
         if (o !is ServiceComponentAdapter) {
           continue
@@ -89,18 +87,12 @@ abstract class ComponentManagerImpl(
             // NPE in RunnerContentUi.setLeftToolbar
             continue
           }
-          if (implementation == "org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.GspTagDescriptorService") {
-            // requires a read action
-            continue
-          }
 
-          if (exclude.contains(implementation)) {
-            invokeAndWaitIfNeeded {
-              o.getInstance<Any>(componentManager, null)
-            }
-          }
-          else {
-            o.getInstance<Any>(componentManager, null)
+          val init = { o.getInstance<Any>(componentManager, null) }
+          when {
+            requireEdt.contains(implementation) -> invokeAndWaitIfNeeded(null, init)
+            requireReadAction.contains(implementation) -> runReadAction(init)
+            else -> init()
           }
         }
         catch (e: Throwable) {
@@ -210,7 +202,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  final override fun getMessageBus(): MessageBus {
+  override fun getMessageBus(): MessageBus {
     if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
       ProgressManager.checkCanceled()
       throw AlreadyDisposedException("Already disposed: $this")
@@ -249,7 +241,7 @@ abstract class ComponentManagerImpl(
   open fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                               app: Application?,
                               precomputedExtensionModel: PrecomputedExtensionModel?,
-                              listenerCallbacks: MutableList<Runnable>?) {
+                              listenerCallbacks: MutableList<in Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
     var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
@@ -330,7 +322,7 @@ abstract class ComponentManagerImpl(
   }
 
   private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
-                                                                    listenerCallbacks: List<Runnable>?) {
+                                                                    listenerCallbacks: MutableList<in Runnable>?) {
     assert(extensionArea.extensionPoints.isEmpty())
     val n = precomputedExtensionModel.pluginDescriptors.size
     if (n == 0) {
@@ -604,7 +596,7 @@ abstract class ComponentManagerImpl(
     if (adapter == null) {
       checkCanceledIfNotInClassInit()
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        throwAlreadyDisposedError(key.name, this, ProgressManager.getGlobalProgressIndicator())
+        throwAlreadyDisposedError(key.name, this)
       }
       return null
     }
@@ -619,7 +611,7 @@ abstract class ComponentManagerImpl(
       }
 
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        adapter.throwAlreadyDisposedError(this, ProgressManager.getGlobalProgressIndicator())
+        adapter.throwAlreadyDisposedError(this)
       }
       return adapter.getInstance(adapter.componentManager, key)
     }
@@ -676,13 +668,13 @@ abstract class ComponentManagerImpl(
     val adapter = componentKeyToAdapter.get(key)
     if (adapter is ServiceComponentAdapter) {
       if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        throwAlreadyDisposedError(adapter.toString(), this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+        throwAlreadyDisposedError(adapter.toString(), this)
       }
       return adapter.getInstance(this, serviceClass, createIfNeeded)
     }
     else if (adapter is LightServiceComponentAdapter) {
       if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        throwAlreadyDisposedError(adapter.toString(), this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+        throwAlreadyDisposedError(adapter.toString(), this)
       }
 
       @Suppress("UNCHECKED_CAST")
@@ -700,7 +692,7 @@ abstract class ComponentManagerImpl(
       if (!createIfNeeded) {
         return null
       }
-      throwAlreadyDisposedError(serviceClass.name, this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+      throwAlreadyDisposedError(serviceClass.name, this)
     }
 
     if (parent != null) {
@@ -737,7 +729,7 @@ abstract class ComponentManagerImpl(
       LoadingState.COMPONENTS_REGISTERED.checkOccurred()
 
       var result: T? = null
-      if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+      if (!isUnderIndicatorOrJob()) {
         result = createLightService(serviceClass)
       }
       else {
@@ -754,7 +746,7 @@ abstract class ComponentManagerImpl(
 
   private fun checkThatCreatingOfLightServiceIsAllowed(serviceClass: Class<*>) {
     if (isDisposed) {
-      throwAlreadyDisposedError("light service ${serviceClass.name}", this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+      throwAlreadyDisposedError("light service ${serviceClass.name}", this)
     }
 
     // assertion only for non-platform plugins
@@ -764,7 +756,7 @@ abstract class ComponentManagerImpl(
         val error = AlreadyDisposedException(
           "Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this"
         )
-        throw if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) error else ProcessCanceledException(error)
+        throw if (!isUnderIndicatorOrJob()) error else ProcessCanceledException(error)
       }
     }
   }
@@ -1246,6 +1238,11 @@ abstract class ComponentManagerImpl(
     return adapter?.getInstance(this, keyClass = null)
   }
 
+  fun getServiceImplementation(key: Class<*>): Class<*>? {
+    checkState()
+    return (componentKeyToAdapter.get(key.name) as? ServiceComponentAdapter?)?.componentImplementation
+  }
+
   open fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean = descriptor.client == null
 
   protected open fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
@@ -1408,22 +1405,6 @@ abstract class ComponentManagerImpl(
   final override fun hasComponent(componentKey: Class<*>): Boolean {
     val adapter = componentKeyToAdapter.get(componentKey) ?: componentKeyToAdapter.get(componentKey.name)
     return adapter != null || (parent != null && parent.hasComponent(componentKey))
-  }
-
-  @Deprecated(message = "Use extensions", level = DeprecationLevel.ERROR)
-  final override fun <T : Any> getComponents(baseClass: Class<T>): Array<T> {
-    checkState()
-    val result = mutableListOf<T>()
-    for (componentAdapter in componentAdapters.getImmutableSet()) {
-      val implementationClass = componentAdapter.getImplementationClass()
-      if (baseClass === implementationClass || baseClass.isAssignableFrom(implementationClass)) {
-        val instance = componentAdapter.getInstance<T>(componentManager = this, keyClass = null, createIfNeeded = false)
-        if (instance != null) {
-          result.add(instance)
-        }
-      }
-    }
-    return ArrayUtil.toObjectArray(result, baseClass)
   }
 
   final override fun isSuitableForOs(os: ExtensionDescriptor.Os): Boolean {

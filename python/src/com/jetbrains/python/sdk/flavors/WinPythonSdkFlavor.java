@@ -2,8 +2,10 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
@@ -21,7 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxFiles;
 import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxProduct;
@@ -30,7 +34,7 @@ import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxProduct;
  * This class knows how to find python in Windows Registry according to
  * <a href="https://www.python.org/dev/peps/pep-0514/">PEP 514</a>
  */
-public class WinPythonSdkFlavor extends CPythonSdkFlavor {
+public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   @NotNull
   private static final String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
   /**
@@ -61,13 +65,17 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     return SystemInfo.isWindows;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
-    return candidates;
+    return ContainerUtil.map(candidates, Path::of);
   }
 
   private void findInCandidatePaths(Set<String> candidates, String... exe_names) {
@@ -81,16 +89,36 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   }
 
   @Override
+  public boolean sdkSeemsValid(@NotNull Sdk sdk,
+                               PyFlavorData.@NotNull Empty flavorData,
+                               @Nullable TargetEnvironmentConfiguration targetConfig) {
+    if (super.sdkSeemsValid(sdk, flavorData, targetConfig)) {
+      return true;
+    }
+    if (targetConfig != null) {
+      // non-local, cant check for appx
+      return true;
+    }
+    var path = sdk.getHomePath();
+    return path != null && isLocalPathValidPython(Path.of(path));
+
+  }
+
+  @Override
   public boolean isValidSdkHome(@NotNull final String path) {
     if (super.isValidSdkHome(path)) {
       return true;
     }
 
-    if (myAppxCache.getValue().contains(path)) {
+    return isLocalPathValidPython(Path.of(path));
+  }
+
+  private boolean isLocalPathValidPython(@NotNull Path path) {
+    if (myAppxCache.getValue().contains(path.toString())) {
       return true;
     }
 
-    final File file = new File(path);
+    final File file = path.toFile();
     return StringUtils.contains(getAppxProduct(file), APPX_PRODUCT) && isValidSdkPath(file);
   }
 

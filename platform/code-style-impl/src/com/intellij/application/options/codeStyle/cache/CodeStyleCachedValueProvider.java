@@ -57,6 +57,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
     final PsiFile file = myFileRef.get();
     if (file != null && myComputationLock.tryLock()) {
       try {
+        file.putUserData(CodeStyleCachingService.CALL_TRACE, Thread.currentThread().getStackTrace());
         return CachedValuesManager.getCachedValue(file, this);
       }
       finally {
@@ -216,6 +217,7 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
         }
       }
       finally {
+        file.putUserData(CodeStyleCachingService.CALL_TRACE, null);
         myComputationLock.unlock();
       }
     }

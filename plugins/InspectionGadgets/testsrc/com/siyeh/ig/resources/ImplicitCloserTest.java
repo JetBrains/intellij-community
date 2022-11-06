@@ -18,14 +18,15 @@ public class ImplicitCloserTest extends LightJavaInspectionTestCase {
   };
 
   public void testImplicitCloser() {
-    doTest("import java.io.*;\n" +
-           "\n" +
-           "class X {\n" +
-           "  private static void example(int a) throws IOException {\n" +
-           "    FileInputStream closed = new FileInputStream(\"file1\");\n" +
-           "    FileInputStream another = new <warning descr=\"'FileInputStream' used without 'try'-with-resources statement\">FileInputStream</warning>(\"file2\");\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             import java.io.*;
+
+             class X {
+               private static void example(int a) throws IOException {
+                 FileInputStream closed = new FileInputStream("file1");
+                 FileInputStream another = new <warning descr="'FileInputStream' used without 'try'-with-resources statement">FileInputStream</warning>("file2");
+               }
+             }""");
   }
 
   @Override

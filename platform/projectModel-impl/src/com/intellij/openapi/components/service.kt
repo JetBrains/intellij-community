@@ -4,6 +4,7 @@ package com.intellij.openapi.components
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * This is primarily intended to be used by the service implementation. When introducing a new service,
@@ -48,16 +49,14 @@ inline fun <reified T : Any> serviceOrNull(): T? = ApplicationManager.getApplica
 /**
  * Contrary to [serviceOrNull], doesn't try to initialize the service if not yet initialized
  */
-inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getApplication().getServiceIfCreated(T::class.java)
+inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getApplication()?.getServiceIfCreated(T::class.java)
 
+/**
+ * @deprecated Use override accepting {@link ClientKind} for better control over kinds of clients the services are requested for.
+ */
+@ApiStatus.Experimental
+@Deprecated("Use override accepting {@link ClientKind} for better control over kinds of clients the services are requested for")
 inline fun <reified T : Any> services(includeLocal: Boolean): List<T> = ApplicationManager.getApplication().getServices(T::class.java, includeLocal)
 
 val ComponentManager.stateStore: IComponentStore
-  get() {
-    return when (this) {
-      is ComponentManagerEx -> this.componentStore
-      else -> {
-        getService(IComponentStore::class.java)
-      }
-    }
-  }
+  get() = if (this is ComponentStoreOwner) this.componentStore else service()

@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Can be implemented by {@link Converter} instance, or used with
  * {@link Referencing} annotation.
- *
- * @author peter
  */
 public interface CustomReferenceConverter<T> {
 

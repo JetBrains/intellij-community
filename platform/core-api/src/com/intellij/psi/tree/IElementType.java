@@ -2,7 +2,6 @@
 package com.intellij.psi.tree;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -25,8 +24,6 @@ import java.util.stream.Stream;
  * @see com.intellij.lang.ASTNode#getElementType()
  */
 public class IElementType {
-  private static final Logger LOG = Logger.getInstance(IElementType.class);
-
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   public static final ArrayFactory<IElementType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new IElementType[count];
 
@@ -118,8 +115,9 @@ public class IElementType {
           Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
           Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
           List<IElementType> types = max.getValue();
-          LOG.error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
-                    " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));
+          Logger.getInstance(IElementType.class)
+            .error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
+                   " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));
         }
         IElementType[] newRegistry =
           myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;

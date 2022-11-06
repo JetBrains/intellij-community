@@ -12,7 +12,7 @@ import com.intellij.xdebugger.XDebuggerUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -96,17 +96,9 @@ inline fun <reified T : PsiElement> getElementsAtLineIfAny(file: KtFile, line: I
     return findElementsOfClassInRange(file, start, end, T::class.java).filterIsInstance<T>()
 }
 
-fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
-    val allLiterals = getElementsAtLineIfAny<KtFunction>(file, line)
-        // filter function literals and functional expressions
+fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> =
+    getElementsAtLineIfAny<KtFunction>(file, line)
         .filter { it is KtFunctionLiteral || it.name == null }
-        .toSet()
-
-    return allLiterals.filter {
-        val statement = it.bodyBlockExpression?.statements?.firstOrNull() ?: it
-        statement.getLineNumber() == line && statement.getLineNumber(false) == line
-    }
-}
 
 fun KtCallableDeclaration.isInlineOnly(): Boolean {
     if (!hasModifier(KtTokens.INLINE_KEYWORD)) {

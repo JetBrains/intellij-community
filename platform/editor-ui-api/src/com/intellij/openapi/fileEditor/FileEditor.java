@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -142,5 +143,12 @@ public interface FileEditor extends UserDataHolder, Disposable {
   default @NotNull List<@NotNull VirtualFile> getFilesToRefresh() {
     VirtualFile file = getFile();
     return file == null ? Collections.emptyList() : Collections.singletonList(file);
+  }
+
+  /**
+   * Returns an action group that will be displayed on the right side of the Editor tabs
+   */
+  default @Nullable ActionGroup getTabActions() {
+    return null;
   }
 }

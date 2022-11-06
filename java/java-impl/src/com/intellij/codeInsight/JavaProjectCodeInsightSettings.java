@@ -22,9 +22,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author peter
- */
 @State(name = "JavaProjectCodeInsightSettings", storages = @Storage("codeInsightSettings.xml"))
 public class JavaProjectCodeInsightSettings implements PersistentStateComponent<JavaProjectCodeInsightSettings> {
   private static final ConcurrentMap<String, Pattern> ourPatterns = ConcurrentFactoryMap.createWeakMap(PatternUtil::fromMask);

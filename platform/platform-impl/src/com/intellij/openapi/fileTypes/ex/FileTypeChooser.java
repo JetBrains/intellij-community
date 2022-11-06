@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListSpeedSearch;
@@ -21,6 +23,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +105,7 @@ public final class FileTypeChooser extends DialogWrapper {
       public void customize(@NotNull JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
         super.customize(list, value, index, selected, hasFocus);
         if (!myOpenInIdea.isSelected()) {
-          setForeground(selected ? UIUtil.getListSelectionForeground(hasFocus) : UIUtil.getComboBoxDisabledForeground());
+          setForeground(selected ? NamedColorUtil.getListSelectionForeground(hasFocus) : UIUtil.getComboBoxDisabledForeground());
           setBackground(selected ? UIUtil.getListSelectionBackground(hasFocus) : UIUtil.getComboBoxDisabledBackground());
         }
       }
@@ -126,7 +129,7 @@ public final class FileTypeChooser extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myList;
+    return myList.isEnabled() ? myList : myDetectFileType;
   }
 
   private void updateButtonsState() {
@@ -145,13 +148,15 @@ public final class FileTypeChooser extends DialogWrapper {
 
   /**
    * If fileName is already associated any known file type returns it.
-   * Otherwise asks user to select file type and associates it with fileName extension if any selected.
+   * Otherwise, asks user to select file type and associates it with fileName extension if any selected.
    * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
    */
   @Nullable
   public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
     if (project != null && !(file instanceof FakeVirtualFile)) {
-      PsiManagerEx.getInstanceEx(project).getFileManager().findFile(file); // autodetect text file if needed
+      // autodetect text file if needed
+      FileManager fileManager = PsiManagerEx.getInstanceEx(project).getFileManager();
+      ReadAction.nonBlocking(() -> fileManager.findFile(file)).executeSynchronously();
     }
     FileType type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
@@ -161,7 +166,7 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   /**
-   * Speculates if file with newName would have known file type
+   * Speculates if file with newName had known file type
    */
   @Nullable
   public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile parent, @NotNull String newName, @Nullable Project project) {

@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -43,7 +42,6 @@ public class DeleteLineAction extends TextComponentEditorAction {
 
     @Override
     public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("editor.delete.line");
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();
       final Document document = editor.getDocument();

@@ -4,6 +4,7 @@ package com.intellij.feedback.npw.dialog
 import com.intellij.feedback.common.*
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.adjustBehaviourForFeedbackForm
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.npw.bundle.NPWFeedbackBundle
 import com.intellij.feedback.npw.state.ProjectCreationInfoService
@@ -27,8 +28,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import java.awt.event.ActionEvent
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
 import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.JComponent
@@ -251,21 +250,7 @@ class ProjectCreationFeedbackDialog(
           .columns(textAreaOverallFeedbackColumnSize)
           .label(NPWFeedbackBundle.message("dialog.created.project.textarea.label"), LabelPosition.TOP)
           .applyToComponent {
-            wrapStyleWord = true
-            lineWrap = true
-            addKeyListener(object : KeyAdapter() {
-              override fun keyPressed(e: KeyEvent) {
-                if (e.keyCode == KeyEvent.VK_TAB) {
-                  if ((e.modifiersEx and KeyEvent.SHIFT_DOWN_MASK) != 0) {
-                    transferFocusBackward()
-                  }
-                  else {
-                    transferFocus()
-                  }
-                  e.consume()
-                }
-              }
-            })
+            adjustBehaviourForFeedbackForm()
           }
       }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.SMALL)
 
@@ -294,9 +279,9 @@ class ProjectCreationFeedbackDialog(
       }
 
       row {
-        cell(createFeedbackAgreementComponent(project) {
+        feedbackAgreement(project) {
           showProjectCreationFeedbackSystemInfoDialog(project, systemInfoData)
-        })
+        }
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))

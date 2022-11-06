@@ -156,21 +156,6 @@ public class UsageViewPresentation {
     myCodeUsages = codeUsages;
   }
 
-  /**
-   * @deprecated please avoid using this method, because it leads to string concatenations that are shown in UI
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public @Nls String getUsagesWord() {
-    return UsageViewBundle.message("usage.name", 1);
-  }
-
-  /**
-   * @deprecated no-op
-   */
-  @Deprecated(forRemoval = true)
-  public void setUsagesWord(@NotNull @Nls String usagesWord) {}
-
   public @NlsContexts.TabTitle String getTabName() {
     return myTabName;
   }

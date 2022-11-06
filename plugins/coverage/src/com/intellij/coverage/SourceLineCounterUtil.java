@@ -20,6 +20,7 @@ public final class SourceLineCounterUtil {
     final ClassReader reader = new ClassReader(content);
     final String qualifiedName = ClassNameUtil.convertToFQName(reader.getClassName());
     final ProjectData projectData = new ProjectData();
+    IDEACoverageRunner.setExcludeAnnotations(project, projectData);
     final boolean ignoreEmptyPrivateConstructors = JavaCoverageOptionsProvider.getInstance(project).ignoreEmptyPrivateConstructors();
     SaveHook.appendUnloadedClass(projectData, qualifiedName, reader, isSampling, false, ignoreEmptyPrivateConstructors);
     final ClassData classData = projectData.getClassData(qualifiedName);

@@ -155,7 +155,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiLiteralExpression expression = (PsiLiteralExpression)descriptor.getPsiElement();
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
       if (!(parent instanceof PsiExpression)) {

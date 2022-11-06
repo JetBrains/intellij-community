@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
@@ -13,14 +13,13 @@ import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.EditorTextField
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -144,7 +143,7 @@ private fun KtQualifiedExpression.findCallChain(): CallChain? {
 
     val lastCall = calls.last()
     val receiverType = lastCall.receiverType(context)
-    if (receiverType?.isIterable(DefaultBuiltIns.Instance) != true) return null
+    if (receiverType?.isIterable() != true) return null
 
     val firstCall = calls.first()
     val qualified = firstCall.getQualifiedExpressionForSelector() ?: firstCall.getQualifiedExpressionForReceiver() ?: return null
@@ -221,6 +220,12 @@ internal val collectionTransformationFunctionNames = listOf(
     "plus",
     "plusElement",
     "requireNoNulls",
+    "runningFold",
+    "runningFoldIndexed",
+    "runningReduce",
+    "runningReduceIndexed",
+    "scan",
+    "scanIndexed",
     "sorted",
     "sortedBy",
     "sortedByDescending",
@@ -299,12 +304,6 @@ internal val collectionTerminationFunctionNames = listOf(
     "reduceIndexed",
     "reduceIndexedOrNull",
     "reduceOrNull",
-    "runningFold",
-    "runningFoldIndexed",
-    "runningReduce",
-    "runningReduceIndexed",
-    "scan",
-    "scanIndexed",
     "single",
     "singleOrNull",
     "sum",

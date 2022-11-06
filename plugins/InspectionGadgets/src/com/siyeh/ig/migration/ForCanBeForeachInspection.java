@@ -940,7 +940,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement forElement = descriptor.getPsiElement();
       final PsiElement parent = forElement.getParent();
       if (!(parent instanceof PsiForStatement)) {

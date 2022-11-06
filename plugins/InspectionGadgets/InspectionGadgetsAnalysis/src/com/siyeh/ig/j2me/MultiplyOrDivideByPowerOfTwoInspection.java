@@ -126,7 +126,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementShift(expression, commentTracker);

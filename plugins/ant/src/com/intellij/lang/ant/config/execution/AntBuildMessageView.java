@@ -268,14 +268,15 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
                                                   AntBundle.message("starting.ant.build.dialog.title"), Messages.getQuestionIcon());
 
       switch (result) {
-        case Messages.YES:  // yes
+        case Messages.YES -> {  // yes
           buildMessageView.stopProcess();
           ijMessageView.getContentManager().removeContent(content, true);
-          continue;
-        case Messages.NO: // no
-          continue;
-        default: // cancel
+        }
+        case Messages.NO -> { // no
+        }
+        default -> { // cancel
           return null;
+        }
       }
     }
 

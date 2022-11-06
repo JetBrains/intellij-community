@@ -26,7 +26,7 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
     doTest()
   }
 
-  fun testPersistentId() {
+  fun testSymbolicId() {
     doTest()
   }
 

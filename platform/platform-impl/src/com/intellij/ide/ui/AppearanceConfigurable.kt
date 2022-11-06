@@ -45,6 +45,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.Window
@@ -170,7 +171,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .accessibleName(message("label.font.name"))
           .component
 
-        val fontSize = fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size },
+        val fontSize = fontSizeComboBox({ settings.fontSize },
                          { settings.fontSize = it },
                          settings.fontSize)
           .label(message("label.font.size"))
@@ -207,7 +208,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .enabled(!isOverridden)
 
           comment(if (isOverridden) message("overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
-                  else message("support.screen.readers.comment"))
+                  else message("ide.restart.required.comment"))
         }
 
         row {
@@ -260,8 +261,14 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield({ checkBox(cdUseCompactTreeIndents) })
           yield({ checkBox(cdEnableMenuMnemonics) })
           yield({ checkBox(cdEnableControlsMnemonics) })
-          if (SystemInfo.isWindows && ExperimentalUI.isNewUI()) {
-            yield({ checkBox(cdSeparateMainMenu) })
+          if ((SystemInfo.isWindows || SystemInfo.isXWindow) && ExperimentalUI.isNewUI()) {
+            yield({
+                    checkBox(cdSeparateMainMenu).apply {
+                      if (SystemInfo.isXWindow) {
+                        comment(message("ide.restart.required.comment"))
+                      }
+                    }
+                  })
           }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
@@ -280,7 +287,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                     if (overridden) {
                       contextHelp(message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
                     }
-                    comment(message("checkbox.merge.main.menu.with.window.title.comment"))
+                    comment(message("ide.restart.required.comment"))
                   })
           }
           yield({ checkBox(cdFullPathsInTitleBar) })
@@ -427,7 +434,7 @@ private fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defau
   return fontSizeComboBox(MutableProperty({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
 }
 
-private fun Row.fontSizeComboBox(prop: MutableProperty<String?>): Cell<ComboBox<String>> {
+private fun Row.fontSizeComboBox(prop: MutableProperty<@Nls String?>): Cell<ComboBox<String>> {
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
   return comboBox(model)
     .accessibleName(message("presentation.mode.fon.size"))

@@ -23,14 +23,11 @@ public class SplitByLetterPolicy extends FilePathSplittingPolicy{
   }
 
   private static String dots(int count) {
-    switch (count) {
-      case 1:
-        return ".";
-      case 2:
-        return "..";
-      default:
-        return "...";
-    }
+    return switch (count) {
+      case 1 -> ".";
+      case 2 -> "..";
+      default -> "...";
+    };
   }
 
 

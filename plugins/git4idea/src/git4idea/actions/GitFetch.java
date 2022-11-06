@@ -50,14 +50,14 @@ public class GitFetch extends DumbAwareAction {
       @Override
       public void onFinished() {
         if (result != null) {
-          onFetchFinished(result);
+          onFetchFinished(project, result);
         }
       }
     });
   }
 
   @RequiresEdt
-  protected void onFetchFinished(@NotNull GitFetchResult result) {
+  protected void onFetchFinished(@NotNull Project project, @NotNull GitFetchResult result) {
     result.showNotification();
   }
 }

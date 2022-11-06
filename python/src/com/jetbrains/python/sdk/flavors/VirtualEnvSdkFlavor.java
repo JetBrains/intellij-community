@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * User : catherine
  */
-public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
+public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   private VirtualEnvSdkFlavor() {
   }
   private final static Set<String> NAMES = Set.of("jython", "pypy", "python", "jython.bat", "pypy.exe", "python.exe");
@@ -44,10 +44,14 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
-    return ReadAction.compute(() -> {
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+    return ContainerUtil.map(ReadAction.compute(() -> {
       final List<String> candidates = new ArrayList<>();
       final VirtualFile baseDirFromModule = module == null ? null : BasePySdkExtKt.getBaseDir(module);
       final Path baseDirFromContext = context == null ? null : context.getUserData(PySdkExtKt.getBASE_DIR());
@@ -73,7 +77,7 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       }
 
       return ContainerUtil.filter(candidates, PythonSdkUtil::isVirtualEnv);
-    });
+    }), Path::of);
   }
 
   @Nullable

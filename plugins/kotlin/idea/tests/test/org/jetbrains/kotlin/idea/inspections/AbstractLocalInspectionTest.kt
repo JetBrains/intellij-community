@@ -6,6 +6,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -16,16 +18,16 @@ import com.intellij.util.io.write
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.executeCommand
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
-import kotlin.io.path.Path
+import java.nio.file.Path
 import kotlin.io.path.createFile
 import kotlin.io.path.div
 
@@ -46,7 +48,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     private val fixTextDirectiveName: String
         get() = "FIX"
 
-    private fun createInspection(testDataFile: File): AbstractKotlinInspection {
+    private fun createInspection(testDataFile: File): LocalInspectionTool {
         val candidateFiles = mutableListOf<File>()
 
         var current: File? = testDataFile.parentFile
@@ -72,7 +74,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
 
         val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
-        return Class.forName(className).getDeclaredConstructor().newInstance() as AbstractKotlinInspection
+        return Class.forName(className).getDeclaredConstructor().newInstance() as LocalInspectionTool
     }
 
     protected open fun doTest(path: String) {
@@ -138,7 +140,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected fun runInspectionWithFixesAndCheck(
-        inspection: AbstractKotlinInspection,
+        inspection: LocalInspectionTool,
         expectedProblemString: String?,
         expectedHighlightString: String?,
         localFixTextString: String?,
@@ -190,7 +192,13 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        val allLocalFixActions = highlightInfos.flatMap { it.quickFixActionMarkers ?: emptyList() }.map { it.first.action }
+        val allLocalFixActions:MutableList<IntentionAction> = ArrayList()
+        highlightInfos.forEach { info ->
+            info.findRegisteredQuickFix<Any?> { desc, _ ->
+                allLocalFixActions.add(desc.action)
+                null
+            }
+        }
 
         val localFixActions = if (localFixTextString == null || localFixTextString == "none") {
             allLocalFixActions
@@ -218,8 +226,12 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             localFixAction != null
         )
 
-        project.executeWriteCommand(localFixAction!!.text, null) {
-            localFixAction.invoke(project, editor, file)
+        project.executeCommand(localFixAction!!.text, null) {
+            if (localFixAction.startInWriteAction()) {
+                runWriteAction { localFixAction.invoke(project, editor, file) }
+            } else {
+                localFixAction.invoke(project, editor, file)
+            }
         }
         return true
     }
@@ -245,7 +257,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
     }
 
-    protected open fun doTestFor(mainFile: File, inspection: AbstractKotlinInspection, fileText: String) {
+    protected open fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
         val mainFilePath = mainFile.name
         val expectedProblemString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $expectedProblemDirectiveName: "
@@ -257,28 +269,28 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             fileText, "// $fixTextDirectiveName: "
         )
 
+        val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
+        val canonicalPathToExpectedPath = testDataDirectory.toPath() / canonicalPathToExpectedFile
         if (!runInspectionWithFixesAndCheck(inspection, expectedProblemString, expectedHighlightString, localFixTextString)) {
+            assertFalse("$canonicalPathToExpectedFile should not exists as no action could be applied", Files.exists(canonicalPathToExpectedPath))
             return
         }
 
-        val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
-        createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile)
+        createAfterFileIfItDoesNotExist(canonicalPathToExpectedPath)
         try {
             myFixture.checkResultByFile(canonicalPathToExpectedFile)
         } catch (e: ComparisonFailure) {
             KotlinTestUtils.assertEqualsToFile(
-                File(testDataPath, canonicalPathToExpectedFile),
+                File(testDataDirectory, canonicalPathToExpectedFile),
                 editor.document.text
             )
         }
     }
 
-    private fun createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile: String) {
-        val path = Path(testDataPath) / canonicalPathToExpectedFile
-
+    private fun createAfterFileIfItDoesNotExist(path: Path) {
         if (!Files.exists(path)) {
             path.createFile().write(editor.document.text)
-            error("File $canonicalPathToExpectedFile was not found and thus was generated")
+            error("File $path was not found and thus was generated")
         }
     }
 

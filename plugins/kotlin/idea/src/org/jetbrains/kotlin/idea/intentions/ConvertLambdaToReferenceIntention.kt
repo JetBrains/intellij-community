@@ -103,7 +103,8 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         // No references with type parameters
         if (calleeDescriptor.typeParameters.isNotEmpty() && lambdaExpression.parentValueArgument() == null) return false
         // No references to Java synthetic properties
-        if (calleeDescriptor is SyntheticJavaPropertyDescriptor) return false
+        if (!languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties) &&
+            calleeDescriptor is SyntheticJavaPropertyDescriptor) return false
 
         val descriptorHasReceiver = with(calleeDescriptor) {
             // No references to both member / extension

@@ -16,19 +16,14 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.ide.todo.nodes.ToDoRootNode;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Collection;
+import java.util.List;
 
 public class ChangeListTodosTreeStructure extends TodoTreeStructure {
   public ChangeListTodosTreeStructure(Project project) {
@@ -42,35 +37,8 @@ public class ChangeListTodosTreeStructure extends TodoTreeStructure {
     VirtualFile file = psiFile.getVirtualFile();
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
 
-    FileStatus status = changeListManager.getStatus(file);
-    if (status == FileStatus.NOT_CHANGED) return false;
-
-    FilePath filePath = VcsUtil.getFilePath(file);
-    Collection<Change> changes = changeListManager.areChangeListsEnabled()
-                                 ? changeListManager.getDefaultChangeList().getChanges()
-                                 : changeListManager.getAllChanges();
-    for (Change change : changes) {
-      ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null && afterRevision.getFile().equals(filePath)) {
-        return (myTodoFilter != null && myTodoFilter.accept(mySearchHelper, psiFile) ||
-                (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0));
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean getIsPackagesShown() {
-    return myArePackagesShown;
-  }
-
-  @Override
-  Object getFirstSelectableElement() {
-    return ((ToDoRootNode)myRootElement).getSummaryNode();
-  }
-
-  @Override
-  protected AbstractTreeNode createRootElement() {
-    return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
+    List<LocalChangeList> changeLists = changeListManager.getChangeLists(file);
+    return ContainerUtil.exists(changeLists, list -> list.isDefault()) &&
+           acceptTodoFilter(psiFile);
   }
 }

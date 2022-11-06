@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -66,7 +67,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     if (text.length() > 0) {
       final JLabel label = new JLabel(text);
       //label.setFont(label.getFont().deriveFont(Font.ITALIC));
-      label.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
+      label.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : NamedColorUtil.getInactiveTextColor());
       label.setBorder(JBUI.Borders.emptyLeft(3));
       myComponent.add(label);
     }
@@ -88,6 +89,6 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
   }
 
   public void setTextFieldFg(boolean inactive) {
-    myField.getTextEditor().setForeground(inactive ? UIUtil.getInactiveTextColor() : UIUtil.getActiveTextColor());
+    myField.getTextEditor().setForeground(inactive ? NamedColorUtil.getInactiveTextColor() : UIUtil.getActiveTextColor());
   }
 }

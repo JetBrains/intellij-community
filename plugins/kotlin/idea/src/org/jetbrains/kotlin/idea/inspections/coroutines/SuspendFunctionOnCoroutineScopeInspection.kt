@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.inspections.UnusedReceiverParameterInspection
 import org.jetbrains.kotlin.idea.intentions.ConvertReceiverToParameterIntention
 import org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -153,10 +154,12 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
                     val selectorExpression = it.selectorExpression
                     if (receiverExpression?.getTargetLabel() != null && selectorExpression != null) {
                         if (context[BindingContext.REFERENCE_TARGET, receiverExpression.instanceReference] == functionDescriptor) {
-                            if (it === expressionToWrap) {
-                                expressionToWrap = it.replaced(selectorExpression)
-                            } else {
-                                it.replace(selectorExpression)
+                            runWriteAction {
+                                if (it === expressionToWrap) {
+                                    expressionToWrap = it.replaced(selectorExpression)
+                                } else {
+                                    it.replace(selectorExpression)
+                                }
                             }
                         }
                     }

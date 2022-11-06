@@ -15,11 +15,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class OptimizeImportsOnSaveActionInfo extends FormatOnSaveActionInfoBase<OptimizeImportsOnSaveOptions> {
+class OptimizeImportsOnSaveActionInfo extends FormatOnSaveActionInfoBase<OptimizeImportsOnSaveOptions> {
 
   private static final Key<OptimizeImportsOnSaveOptions> CURRENT_UI_STATE_KEY = Key.create("optimize.imports.on.save.options");
 
-  public OptimizeImportsOnSaveActionInfo(@NotNull ActionOnSaveContext context) {
+  OptimizeImportsOnSaveActionInfo(@NotNull ActionOnSaveContext context) {
     super(context, CodeInsightBundle.message("actions.on.save.page.checkbox.optimize.imports"), CURRENT_UI_STATE_KEY);
   }
 
@@ -29,7 +29,7 @@ public class OptimizeImportsOnSaveActionInfo extends FormatOnSaveActionInfoBase<
   }
 
   @Override
-  protected void addApplicableFileTypes(@NotNull Collection<FileType> result) {
+  protected void addApplicableFileTypes(@NotNull Collection<? super FileType> result) {
     ExtensionPoint<KeyedLazyInstance<ImportOptimizer>> ep = LanguageImportStatements.INSTANCE.getPoint();
     if (ep != null) {
       for (KeyedLazyInstance<ImportOptimizer> instance : ep.getExtensionList()) {

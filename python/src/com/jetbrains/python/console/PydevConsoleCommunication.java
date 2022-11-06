@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -443,16 +442,15 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       throw new PyDebuggerException("Documentation in Python Console shouldn't be called from Dispatch Thread!");
     }
 
-    return executeBackgroundTask(
-      () ->
-      {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    indicator.setText(createRuntimeMessage(PyBundle.message("console.getting.documentation")));
+    return ApplicationUtil.runWithCheckCanceled(
+      () -> {
         final String resultDescription = getPythonConsoleBackendClient().getDescription(text);
         myPrevNameToDescription = Pair.create(text, resultDescription);
         return resultDescription;
       },
-      true,
-      createRuntimeMessage(PyBundle.message("console.getting.documentation")),
-      "Error when Getting Description in Python Console: ");
+      indicator);
   }
 
   /**

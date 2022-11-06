@@ -43,7 +43,6 @@ class JUnitRunConfigurationProperties(
                                 ?.flatMap { it.children("artifact").map { it.getAttributeValue("name")!! } }
                                 ?.toList()
                               ?: emptyList()
-      @Suppress("SpellCheckingInspection")
       val vmParameters = getVmParameters(options) + (if ("pattern" == testKind) listOf("-Dintellij.build.test.patterns.escaped=true") else emptyList())
       val envVariables = getEnv(configuration)
       return JUnitRunConfigurationProperties(name = configuration.getAttributeValue("name")!!,

@@ -10,12 +10,13 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
@@ -63,6 +64,7 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
@@ -579,10 +581,14 @@ public final class HighlightUtil {
     return highlightInfo;
   }
 
-  static HighlightInfo checkReturnFromSwitchExpr(@NotNull PsiStatement statement) {
+  static HighlightInfo checkReturnFromSwitchExpr(@NotNull PsiReturnStatement statement) {
     if (PsiImplUtil.findEnclosingSwitchExpression(statement) != null) {
       String message = JavaErrorBundle.message("return.outside.switch.expr");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+      if (statement.getReturnValue() != null) {
+        QuickFixAction.registerQuickFixAction(info, new ReplaceWithYieldFix(statement));
+      }
+      return info;
     }
 
     return null;
@@ -2135,7 +2141,7 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo checkExpressionRequired(@NotNull PsiReferenceExpression expression,
-                                               @NotNull JavaResolveResult resultForIncompleteCode) {
+                                               @NotNull JavaResolveResult resultForIncompleteCode, @NotNull PsiFile containingFile) {
     if (expression.getNextSibling() instanceof PsiErrorElement) return null;
 
     PsiElement resolved = resultForIncompleteCode.getElement();
@@ -2150,7 +2156,7 @@ public final class HighlightUtil {
     HighlightInfo info =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     if (info != null) {
-      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(expression, new QuickFixActionRegistrarImpl(info));
+      UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(expression, info);
     }
     return info;
   }
@@ -2350,7 +2356,7 @@ public final class HighlightUtil {
   }
 
 
-  static HighlightInfo checkIllegalType(@NotNull PsiTypeElement typeElement) {
+  static HighlightInfo checkIllegalType(@NotNull PsiTypeElement typeElement, @NotNull PsiFile containingFile) {
     PsiElement parent = typeElement.getParent();
     if (parent instanceof PsiTypeElement) return null;
 
@@ -2370,11 +2376,10 @@ public final class HighlightUtil {
         }
         String canonicalText = componentType.getCanonicalText();
         String description = JavaErrorBundle.message("unknown.class", canonicalText);
-        HighlightInfo info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
         PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
         if (referenceElement != null && info != null) {
-          UnresolvedReferenceQuickFixProvider.registerReferenceFixes(referenceElement, new QuickFixActionRegistrarImpl(info));
+          UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(referenceElement, info);
         }
         return info;
       }
@@ -3052,7 +3057,7 @@ public final class HighlightUtil {
       color = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground();
     }
     else {
-      color = UIUtil.getErrorForeground();
+      color = NamedColorUtil.getErrorForeground();
     }
     return HtmlChunk.tag("font").attr("color", ColorUtil.toHtmlColor(color))
       .addText(shortType || type instanceof PsiCapturedWildcardType ? type.getPresentableText() : type.getCanonicalText());
@@ -3157,7 +3162,7 @@ public final class HighlightUtil {
         QuickFixAction.registerQuickFixAction(info, new RemoveNewKeywordFix(outerParent));
       }
       if (info != null) {
-        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
+        UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(ref, info);
       }
 
       return info;
@@ -3184,7 +3189,7 @@ public final class HighlightUtil {
           }
         }
         if (info != null) {
-          UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
+          UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(ref, info);
         }
         return info;
       }
@@ -3250,7 +3255,6 @@ public final class HighlightUtil {
       return field != null && field.hasModifierProperty(PsiModifier.STATIC);
     }
     PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
-    if (methods.length == 0) return false;
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = method.getContainingClass();

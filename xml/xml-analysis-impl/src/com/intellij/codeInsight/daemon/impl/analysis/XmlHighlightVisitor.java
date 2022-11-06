@@ -10,9 +10,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
@@ -488,7 +487,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         }
       }
       if (info != null) {
-        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
+        UnresolvedReferenceQuickFixUpdater.getInstance(value.getProject()).registerQuickFixesLater(reference, info);
       }
     }
   }

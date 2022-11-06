@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
-import java.nio.file.Paths
 
 abstract class WindowsDistributionCustomizer {
   /**
@@ -52,7 +53,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Paths to files which will be used to overwrite the standard *.nsi files
    */
-  var customNsiConfigurationFiles: MutableList<String> = mutableListOf()
+  var customNsiConfigurationFiles: PersistentList<String> = persistentListOf()
 
   /**
    * Path to a file which contains set of properties to manage UI options when installing the product in silent mode. If {@code null}
@@ -77,8 +78,13 @@ abstract class WindowsDistributionCustomizer {
    * @param targetDirectory contents of this directory will be packed into zip archive and exe installer, so when the product is installed
    * it'll be placed under its root directory.
    */
-  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-    RepairUtilityBuilder.bundle(context, OsFamily.WINDOWS, JvmArchitecture.x64, Paths.get(targetDirectory))
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String, arch: JvmArchitecture) {
+    RepairUtilityBuilder.bundle(context, OsFamily.WINDOWS, arch, Path.of(targetDirectory))
+
+    copyAdditionalFilesBlocking(context, targetDirectory)
+  }
+
+  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
   }
 
   /**
@@ -92,7 +98,7 @@ abstract class WindowsDistributionCustomizer {
   open fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String =
     appInfo.shortCompanyName + " " + getFullNameIncludingEdition(appInfo)
 
-  open fun getUninstallFeedbackPageUrl(applicationInfo: ApplicationInfoProperties): String? {
+  open fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String? {
     return null
   }
 

@@ -7,9 +7,6 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpressionPattern<T,Self>> extends PsiJavaElementPattern<T,Self> {
   protected PsiExpressionPattern(final Class<T> aClass) {
     super(aClass);

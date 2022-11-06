@@ -4,7 +4,7 @@ import java.lang.Integer;
 
 class A{
   void test(){
-    Integer integer = null;
+    Integer integer = Math.random() > 0.5 ? null : 1.0;
     int i = integer.to<caret>String().length();
   }
 }

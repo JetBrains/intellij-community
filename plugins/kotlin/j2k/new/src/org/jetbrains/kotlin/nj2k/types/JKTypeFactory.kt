@@ -70,8 +70,10 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
             when (target) {
                 null ->
                     JKClassType(JKUnresolvedClassSymbol(type.rawType().canonicalText, this), parameters)
+
                 is PsiTypeParameter ->
                     JKTypeParameterType(symbolProvider.provideDirectSymbol(target) as JKTypeParameterSymbol)
+
                 is PsiAnonymousClass -> {
                     /*
                      If anonymous class is declared inside the converting code, we will not be able to access JKUniverseClassSymbol's target
@@ -79,6 +81,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                     */
                     createPsiType(target.baseClassType)
                 }
+
                 else -> {
                     JKClassType(
                         target.let { symbolProvider.provideDirectSymbol(it) as JKClassSymbol },
@@ -87,10 +90,12 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                 }
             }
         }
+
         is PsiArrayType -> JKJavaArrayType(fromPsiType(type.componentType))
         is PsiPrimitiveType -> JKJavaPrimitiveType.fromPsi(type)
         is PsiDisjunctionType ->
             JKJavaDisjunctionType(type.disjunctions.map { fromPsiType(it) })
+
         is PsiWildcardType ->
             when {
                 type.isExtends ->
@@ -98,19 +103,25 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                         JKVarianceTypeParameterType.Variance.OUT,
                         fromPsiType(type.extendsBound)
                     )
+
                 type.isSuper ->
                     JKVarianceTypeParameterType(
                         JKVarianceTypeParameterType.Variance.IN,
                         fromPsiType(type.superBound)
                     )
+
                 else -> JKStarProjectionTypeImpl
             }
+
         is PsiCapturedWildcardType ->
             JKCapturedType(fromPsiType(type.wildcard) as JKWildCardType)
+
         is PsiIntersectionType -> // TODO what to do with intersection types? old j2k just took the first conjunct
             fromPsiType(type.representative)
+
         is PsiLambdaParameterType -> // Probably, means that we have erroneous Java code
             JKNoType
+
         is PsiLambdaExpressionType -> type.expression.functionalInterfaceType?.let(::createPsiType) ?: JKNoType
         is PsiMethodReferenceType -> type.expression.functionalInterfaceType?.let(::createPsiType) ?: JKNoType
         else -> JKNoType
@@ -126,7 +137,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                 )
 
             else -> JKClassType(
-                symbolProvider.provideClassSymbol(type.getJetTypeFqName(false)),//TODO constructor fqName
+                symbolProvider.provideClassSymbol(type.getJetTypeFqName(false)), //TODO constructor fqName
                 type.arguments.map { typeArgument ->
                     if (typeArgument.isStarProjection) JKStarProjectionTypeImpl
                     else fromKotlinType(typeArgument.type)

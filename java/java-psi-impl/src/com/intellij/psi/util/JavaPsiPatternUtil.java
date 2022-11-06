@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -117,15 +118,21 @@ public final class JavaPsiPatternUtil {
    */
   @Contract(value = "null -> null", pure = true)
   @Nullable
-  public static PsiPatternVariable getPatternVariable(@Nullable PsiPattern pattern) {
+  public static PsiPatternVariable getPatternVariable(@Nullable PsiCaseLabelElement pattern) {
     if (pattern instanceof PsiGuardedPattern) {
       return getPatternVariable(((PsiGuardedPattern)pattern).getPrimaryPattern());
+    }
+    if (pattern instanceof PsiPatternGuard) {
+      return getPatternVariable(((PsiPatternGuard)pattern).getPattern());
     }
     if (pattern instanceof PsiParenthesizedPattern) {
       return getPatternVariable(((PsiParenthesizedPattern)pattern).getPattern());
     }
     if (pattern instanceof PsiTypeTestPattern) {
       return ((PsiTypeTestPattern)pattern).getPatternVariable();
+    }
+    if (pattern instanceof PsiDeconstructionPattern) {
+      return ((PsiDeconstructionPattern)pattern).getPatternVariable();
     }
     return null;
   }
@@ -186,46 +193,52 @@ public final class JavaPsiPatternUtil {
 
   @Contract(value = "null, _ -> false", pure = true)
   public static boolean isTotalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type) {
-    return isTotalForType(pattern, type, true);
+    return isTotalForType(pattern, type, false);
   }
 
-  public static boolean isTotalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean checkComponents) {
+  public static boolean isTotalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean forDomination) {
     if (pattern == null) return false;
     if (pattern instanceof PsiPatternGuard) {
       PsiPatternGuard guarded = (PsiPatternGuard)pattern;
       Object constVal = evaluateConstant(guarded.getGuardingExpression());
-      return isTotalForType(guarded.getPattern(), type, checkComponents) && Boolean.TRUE.equals(constVal);
+      return isTotalForType(guarded.getPattern(), type, forDomination) && Boolean.TRUE.equals(constVal);
     }
     if (pattern instanceof PsiGuardedPattern) {
       PsiGuardedPattern guarded = (PsiGuardedPattern)pattern;
       Object constVal = evaluateConstant(guarded.getGuardingExpression());
-      return isTotalForType(guarded.getPrimaryPattern(), type, checkComponents) && Boolean.TRUE.equals(constVal);
+      return isTotalForType(guarded.getPrimaryPattern(), type, forDomination) && Boolean.TRUE.equals(constVal);
     }
     else if (pattern instanceof PsiParenthesizedPattern) {
-      return isTotalForType(((PsiParenthesizedPattern)pattern).getPattern(), type, checkComponents);
+      return isTotalForType(((PsiParenthesizedPattern)pattern).getPattern(), type, forDomination);
     }
     else if (pattern instanceof PsiDeconstructionPattern) {
-      if (!dominates(getPatternType(pattern), type)) return false;
-      if (checkComponents) {
-        PsiPattern[] patternComponents = ((PsiDeconstructionPattern)pattern).getDeconstructionList().getDeconstructionComponents();
-        PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (selectorClass == null) return false;
-        PsiRecordComponent[] recordComponents = selectorClass.getRecordComponents();
-        if (patternComponents.length != recordComponents.length) return false;
-        for (int i = 0; i < patternComponents.length; i++) {
-          PsiPattern patternComponent = patternComponents[i];
-          PsiType componentType = recordComponents[i].getType();
-          if (!isTotalForType(patternComponent, componentType, true)) {
-            return false;
-          }
-        }
-      }
-      return true;
+      return forDomination && dominates(getPatternType(pattern), type);
     }
     else if (pattern instanceof PsiTypeTestPattern) {
       return dominates(getPatternType(pattern), type);
     }
     return false;
+  }
+
+  /**
+   * @param pattern deconstruction pattern to check
+   * @return true if all components of a pattern are total
+   */
+  public static boolean hasTotalComponents(@NotNull PsiDeconstructionPattern pattern) {
+    PsiType type = pattern.getTypeElement().getType();
+    PsiPattern[] patternComponents = pattern.getDeconstructionList().getDeconstructionComponents();
+    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (selectorClass == null) return false;
+    PsiRecordComponent[] recordComponents = selectorClass.getRecordComponents();
+    if (patternComponents.length != recordComponents.length) return false;
+    for (int i = 0; i < patternComponents.length; i++) {
+      PsiPattern patternComponent = patternComponents[i];
+      PsiType componentType = recordComponents[i].getType();
+      if (!isTotalForType(patternComponent, componentType)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static boolean dominates(@Nullable PsiType who, @Nullable PsiType overWhom) {
@@ -248,7 +261,7 @@ public final class JavaPsiPatternUtil {
   public static boolean dominates(@Nullable PsiCaseLabelElement who, @NotNull PsiCaseLabelElement overWhom) {
     if (who == null) return false;
     PsiType overWhomType = getPatternType(overWhom);
-    if (overWhomType == null || !isTotalForType(who, overWhomType, false)) {
+    if (overWhomType == null || !isTotalForType(who, overWhomType, true)) {
       return false;
     }
     PsiDeconstructionPattern whoDeconstruction = findDeconstructionPattern(who);
@@ -303,6 +316,55 @@ public final class JavaPsiPatternUtil {
       overWhomType = overWhom;
     }
     return overWhomType != null && TypeConversionUtil.areTypesConvertible(overWhomType, whoType);
+  }
+
+  @Contract(pure = true)
+  @Nullable
+  public static PsiRecordComponent getRecordComponentForPattern(@NotNull PsiPattern pattern) {
+    PsiDeconstructionList deconstructionList = ObjectUtils.tryCast(pattern.getParent(), PsiDeconstructionList.class);
+    if (deconstructionList == null) return null;
+    @NotNull PsiPattern @NotNull [] patterns = deconstructionList.getDeconstructionComponents();
+    int index = ArrayUtil.indexOf(patterns, pattern);
+    PsiDeconstructionPattern deconstructionPattern = ObjectUtils.tryCast(deconstructionList.getParent(), PsiDeconstructionPattern.class);
+    if (deconstructionPattern == null) return null;
+    PsiClassType classType = ObjectUtils.tryCast(deconstructionPattern.getTypeElement().getType(), PsiClassType.class);
+    if (classType == null) return null;
+    PsiClass aClass = classType.resolve();
+    if (aClass == null) return null;
+    PsiRecordComponent[] components = aClass.getRecordComponents();
+    if (components.length <= index) return null;
+    return components[index];
+  }
+
+  public static @Nullable PsiType getDeconstructedImplicitPatternVariableType(@NotNull PsiPatternVariable parameter) {
+    PsiRecordComponent recordComponent = getRecordComponentForPattern(parameter.getPattern());
+    if (recordComponent != null) {
+      PsiTypeTestPattern pattern = (PsiTypeTestPattern)parameter.getParent();
+      PsiDeconstructionList deconstructionList = ObjectUtils.tryCast(pattern.getParent(), PsiDeconstructionList.class);
+      if (deconstructionList == null) return null;
+      PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)deconstructionList.getParent();
+      PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
+      PsiClassType patternType = (PsiClassType)typeElement.getType();
+      PsiType[] parameters = patternType.getParameters();
+      PsiType recordComponentType = recordComponent.getType();
+      PsiClass recordClass = recordComponent.getContainingClass();
+      if (recordClass != null) {
+        PsiTypeParameter[] typeParameters = recordClass.getTypeParameters();
+        HashMap<PsiTypeParameter, PsiType> substitutor = new HashMap<>();
+        int index = Math.min(typeParameters.length, parameters.length);
+        for (int i = 0; i < index; i++) {
+          PsiTypeParameter typeParameter = typeParameters[i];
+          PsiType param = parameters[i];
+          substitutor.put(typeParameter, param);
+        }
+        for (int i = index; i < typeParameters.length; i++) {
+          PsiTypeParameter typeParam = typeParameters[i];
+          substitutor.put(typeParam, null);
+        }
+        return PsiSubstitutor.createSubstitutor(substitutor).substitute(recordComponentType);
+      }
+    }
+    return null;
   }
 
   private static void collectPatternVariableCandidates(@NotNull PsiExpression scope, @NotNull PsiExpression expression,
@@ -439,7 +501,12 @@ public final class JavaPsiPatternUtil {
 
     @Override
     public String getEffectiveInitializerText() {
-      return myParent.getName() + "." + myRecordComponent.getName() + "()";
+      String text = myParent.getName() + "." + myRecordComponent.getName() + "()";
+      PsiType type = getVariable().getType();
+      if (!type.equals(myRecordComponent.getType())) {
+        return "(" + type.getCanonicalText() + ")" + text;
+      }
+      return text;
     }
   }
 

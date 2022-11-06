@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.assignmentStatement
+import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.symbols.JKUniverseFieldSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
@@ -49,6 +49,7 @@ class MoveConstructorsAfterFieldsConversion(context: NewJ2kConverterContext) : R
                         }
                     }
                 }
+
                 declaration is JKField && declaration.hasOtherModifier(OtherModifier.STATIC) == isStatic -> {
                     if (declaration.initializer !is JKStubExpression && declaration in forwardlyReferencedFields) {
                         val assignment = createFieldAssignmentInitDeclaration(declaration, isStatic)
@@ -62,7 +63,18 @@ class MoveConstructorsAfterFieldsConversion(context: NewJ2kConverterContext) : R
         return DeclarationsData(order, moveAfter, declarationsToAdd)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
+    private fun findAllUsagesOfFieldsIn(scope: JKTreeElement, owningClass: JKClassBody, filter: (JKField) -> Boolean): Collection<JKField> {
+        val result = mutableSetOf<JKField>()
+        scope.forEachDescendantOfType<JKExpression> { expression ->
+            val symbol = expression.unboxFieldReference()?.identifier as? JKUniverseFieldSymbol ?: return@forEachDescendantOfType
+            val field = symbol.target as? JKField ?: return@forEachDescendantOfType
+            if (!filter(field)) return@forEachDescendantOfType
+            if (field.parent != owningClass) return@forEachDescendantOfType
+            result.add(field)
+        }
+        return result
+    }
+
     private fun collectNewDeclarations(
         element: JKClassBody,
         data: DeclarationsData,

@@ -25,6 +25,7 @@ abstract class KotlinUsageTypeProvider : UsageTypeProviderEx {
             is KtDestructuringDeclarationEntry -> return READ
             is KtPropertyDelegate -> return PROPERTY_DELEGATION
             is KtStringTemplateExpression -> return USAGE_IN_STRING_LITERAL
+            is KtConstructorDelegationReferenceExpression -> return CONSTRUCTOR_DELEGATION_REFERENCE
         }
 
         val refExpr = element?.getNonStrictParentOfType<KtReferenceExpression>() ?: return null
@@ -175,5 +176,7 @@ enum class UsageTypeEnum {
     CLASS_NEW_OPERATOR,
     NAMED_ARGUMENT,
 
-    USAGE_IN_STRING_LITERAL
+    USAGE_IN_STRING_LITERAL,
+
+    CONSTRUCTOR_DELEGATION_REFERENCE,
 }

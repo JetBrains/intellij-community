@@ -23,20 +23,38 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed extension no highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
+        @JvmField
         @org.junit.jupiter.api.extension.RegisterExtension
         val myRule5 = Rule5()
         class Rule5 : org.junit.jupiter.api.extension.Extension { }
       }
     """.trimIndent())
   }
-  fun `test malformed extension highlighting`() {
+  fun `test malformed extension subtype highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
+        @JvmField
         @org.junit.jupiter.api.extension.RegisterExtension
-        val <warning descr="'A.Rule5' should implement 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = Rule5()
+        val <warning descr="Field 'myRule5' annotated with '@RegisterExtension' should be of type 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = Rule5()
         class Rule5 { }
       }
     """.trimIndent())
+  }
+  fun `test malformed extension make public quickfix`() {
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      class A {
+        @org.junit.jupiter.api.extension.RegisterExtension
+        val myRule<caret>5 = Rule5()
+        class Rule5 { }
+      }
+    """.trimIndent(), """
+      class A {
+        @JvmField
+        @org.junit.jupiter.api.extension.RegisterExtension
+        val myRule5 = Rule5()
+        class Rule5 { }
+      }
+    """.trimIndent(), "Fix 'myRule5' field signature")
   }
 
   /* Malformed nested class */
@@ -52,7 +70,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
-        class <warning descr="Only non-static nested classes can serve as '@Nested' test classes">B</warning> { }
+        class <warning descr="Class 'B' annotated with '@Nested' should be non-static">B</warning> { }
       }
     """.trimIndent())
   }
@@ -106,6 +124,10 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = ["title"])
         fun implicitConversionClass(book: Book) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.ValueSource(strings = ["6.7.1", "7.3.3", "7.5.1"])
+        fun test(gradleVersion: String, @org.junit.jupiter.api.io.TempDir projectDir: java.io.File) { }
 
         class Book(val title: String) { }
       }
@@ -179,6 +201,18 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         public fun shouldExecuteWithParameterizedMethodSource(arguments: String) { }
       
         public fun getParameters(): java.util.stream.Stream<String> { return java.util.Arrays.asList( "Another execution", "Last execution").stream() }
+      }
+      
+      class JUnit3TestWithMethodSource : junit.framework.TestCase() {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("bar")
+        fun testX(foo: String, bar: String) { }
+              
+        companion object {
+        @JvmStatic
+        fun bar(): java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> = 
+          java.util.stream.Stream.of(org.junit.jupiter.params.provider.Arguments.of("a", "b"))
+        }
       }
       
       class EnumSource { 
@@ -909,7 +943,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed setup highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class C : junit.framework.TestCase() {
-        private fun <warning descr="Method 'setUp' should be a non-private, non-static, have no parameters and be of type void">setUp</warning>(i: Int) { System.out.println(i) }
+        private fun <warning descr="Method 'setUp' should be non-private, non-static, have no parameters and of type void">setUp</warning>(i: Int) { System.out.println(i) }
       }  
     """.trimIndent())
   }
@@ -1002,7 +1036,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         private var <warning descr="Field 'x' annotated with '@ClassRule' should be public">x</warning> = SomeTestRule()
       
         @org.junit.ClassRule
-        private var <warning descr="Field 'y' annotated with '@ClassRule' should be public and be of type 'org.junit.rules.TestRule'">y</warning> = 0
+        private var <warning descr="Field 'y' annotated with '@ClassRule' should be public and of type 'org.junit.rules.TestRule'">y</warning> = 0
       }
     """.trimIndent())
   }
@@ -1048,13 +1082,13 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       public class JUnit3TestMethodIsPublicVoidNoArg : junit.framework.TestCase() {
         fun testOne() { }
-        public fun <warning descr="Method 'testTwo' should be a public, non-static, have no parameters and be of type void">testTwo</warning>(): Int { return 2 }
-        public fun <warning descr="Method 'testFour' should be a public, non-static, have no parameters and be of type void">testFour</warning>(i: Int) { println(i) }
+        public fun <warning descr="Method 'testTwo' should be public, non-static, have no parameters and of type void">testTwo</warning>(): Int { return 2 }
+        public fun <warning descr="Method 'testFour' should be public, non-static, have no parameters and of type void">testFour</warning>(i: Int) { println(i) }
         public fun testFive() { }
         private fun testSix(i: Int) { println(i) } //ignore when method doesn't look like test anymore
         companion object {
           @JvmStatic
-          public fun <warning descr="Method 'testThree' should be a public, non-static, have no parameters and be of type void">testThree</warning>() { }
+          public fun <warning descr="Method 'testThree' should be public, non-static, have no parameters and of type void">testThree</warning>() { }
         }
       }
     """.trimIndent())
@@ -1101,7 +1135,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed suite highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Junit3Suite : junit.framework.TestCase() {          
-          fun <warning descr="Method 'suite' should be a non-private, static and have no parameters">suite</warning>() = junit.framework.TestSuite()
+          fun <warning descr="Method 'suite' should be non-private, static and have no parameters">suite</warning>() = junit.framework.TestSuite()
       }
     """.trimIndent())
   }

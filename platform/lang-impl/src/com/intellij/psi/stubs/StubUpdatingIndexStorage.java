@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, SerializedStubTree, StubUpdatingIndexStorage.Data> {
+public final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, SerializedStubTree, StubUpdatingIndexStorage.Data> {
   private static final Logger LOG = Logger.getInstance(StubUpdatingIndexStorage.class);
 
   private StubIndexImpl myStubIndex;

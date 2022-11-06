@@ -5,6 +5,8 @@ import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
 import com.intellij.ide.customize.transferSettings.models.PluginFeature
 
 object KnownPlugins {
+  val ReSharper = BuiltInFeature("ReSharper", isHidden = true)
+
   val Git = BuiltInFeature("Git")
   val editorconfig = BuiltInFeature("editorconfig")
   @Suppress("HardCodedStringLiteral")
@@ -33,10 +35,6 @@ object KnownPlugins {
 
   val Monokai = PluginFeature("monokai-pro", "Monokai")
   val Solarized = PluginFeature("com.tylerthrailkill.intellij.solarized", "Solarized")
-
-  val XcodeKeymap = PluginFeature("com.intellij.plugins.xcodekeymap", "Xcode keymap")
-  val VSCodeKeymap = PluginFeature("com.intellij.plugins.vscodekeymap", "VSCode keymap")
-  val VSMacKeymap = PluginFeature("com.intellij.plugins.visualstudioformackeymap", "Visual Studio for Mac keymap")
 
   val DummyBuiltInFeature = BuiltInFeature("")
   val DummyPlugin = PluginFeature("", "")

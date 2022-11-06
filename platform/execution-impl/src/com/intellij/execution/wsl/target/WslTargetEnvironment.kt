@@ -9,6 +9,7 @@ import com.intellij.execution.target.*
 import com.intellij.execution.target.local.toLocalPtyOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslProxy
+import com.intellij.execution.wsl.rootMappings
 import com.intellij.execution.wsl.runCommand
 import com.intellij.execution.wsl.sync.WslSync
 import com.intellij.openapi.diagnostic.logger
@@ -22,7 +23,7 @@ import java.nio.file.Path
 import java.util.*
 
 class WslTargetEnvironment constructor(override val request: WslTargetEnvironmentRequest,
-                                       private val distribution: WSLDistribution) : TargetEnvironment(request) {
+                                       private val distribution: WSLDistribution) : TargetEnvironment(request), ExternallySynchronized {
 
   private val myUploadVolumes: MutableMap<UploadRoot, UploadableVolume> = HashMap()
   private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
@@ -30,6 +31,10 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
   private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = HashMap()
   private val proxies = mutableMapOf<Int, WslProxy>() //port to proxy
   private val remoteDirsToDelete = mutableListOf<String>()
+
+  override val synchronizedVolumes: List<SynchronizedVolume> = distribution.rootMappings.map {
+    SynchronizedVolume(Path.of(it.localRoot), it.remoteRoot)
+  }
 
   override val uploadVolumes: Map<UploadRoot, UploadableVolume>
     get() = Collections.unmodifiableMap(myUploadVolumes)
@@ -80,6 +85,10 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     }
   }
 
+  // TODO Breaks encapsulation. Instead, targetPortBinding should contain hosts to connect to.
+  fun getWslIpAddress(): String =
+    distribution.wslIp
+
   private fun getWslPort(localPort: Int): Int {
     proxies[localPort]?.wslIngressPort?.let {
       return it
@@ -94,7 +103,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
 
   private val TargetPath.remoteRoot: String
     get() = when (this) {
-      is TargetPath.Temporary -> distribution.runCommand("mktemp", "-d").also { remoteDirsToDelete += it }
+      is TargetPath.Temporary -> distribution.runCommand("mktemp", "-d").getOrThrow().also { remoteDirsToDelete += it }
       is TargetPath.Persistent -> absolutePath
     }
 

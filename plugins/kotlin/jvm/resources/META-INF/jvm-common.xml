@@ -49,7 +49,7 @@
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
-        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector"
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector"
                             serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionDetector"/>
 
         <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
@@ -110,6 +110,7 @@
     <extensions defaultExtensionNs="org.jetbrains.uast">
         <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin"/>
         <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.analysis.KotlinUastAnalysisPlugin"/>
+        <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -119,6 +120,9 @@
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10CommonIdePlatformKindTooling"/>
 
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
+
+        <assignResolutionAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.IdeAssignPluginResolutionAltererExtension"/>
+        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.IdeAssignmentContainerContributor"/>
 
         <declarationAttributeAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>

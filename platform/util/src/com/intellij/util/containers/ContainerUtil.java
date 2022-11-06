@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -425,6 +426,10 @@ public final class ContainerUtil {
 
     public @NotNull ImmutableMapBuilder<K, V> put(K key, V value) {
       myMap.put(key, value);
+      return this;
+    }
+    public @NotNull ImmutableMapBuilder<K, V> putAll(@NotNull Map<? extends K, ? extends V> fromMap) {
+      myMap.putAll(fromMap);
       return this;
     }
 
@@ -2188,43 +2193,26 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from all collections in order
-   */
-  @Contract(pure = true)
-  public static @NotNull <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<? extends E>> collections) {
-    int totalSize = 0;
-    for (Iterable<? extends E> list : collections) {
-      totalSize += list instanceof Collection ? ((Collection<?>)list).size() : 10;
-    }
-    List<E> result = new ArrayList<>(totalSize);
-    for (Iterable<? extends E> list : collections) {
-      for (E e : list) {
-        result.add(e);
-      }
-    }
-    return result.isEmpty() ? emptyList() : result;
-  }
-
-  /**
    * @return read-only list consisting of the elements from all collections returned by the mapping function,
    * or a read-only view of the list returned by the mapping function, if it only returned a single list that was not empty
    */
-  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<V>> mapping) {
+  public static @NotNull <T, V> List<V> flatMap(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends @NotNull List<? extends V>> mapping) {
     // GC optimization for critical clients
     List<V> result = null;
     boolean isOriginal = true;
 
     for (T each : iterable) {
-      List<V> toAdd = mapping.fun(each);
+      List<? extends V> toAdd = mapping.fun(each);
       if (toAdd.isEmpty()) continue;
 
       if (result == null) {
-        result = toAdd;
+        //noinspection unchecked
+        result = (List<V>)toAdd;
         continue;
       }
 
       if (isOriginal) {
-        List<V> original = result;
+        List<? extends V> original = result;
         result = new ArrayList<>(Math.max(10, result.size() + toAdd.size()));
         result.addAll(original);
         isOriginal = false;
@@ -2785,5 +2773,22 @@ public final class ContainerUtil {
     int numberOfChunks = listSize / chunkSize;
     return IntStream.range(0, numberOfChunks * chunkSize == listSize ? numberOfChunks : numberOfChunks + 1)
       .mapToObj(i -> list.subList(i * chunkSize, Math.min(listSize, i * chunkSize + chunkSize)));
+  }
+
+  public static <T> @NotNull List<List<T>> groupSublistRuns(@NotNull List<T> list,
+                                                            @NotNull BiPredicate<? super T, ? super T> equality) {
+    if (list.isEmpty()) {
+      return emptyList();
+    }
+
+    List<List<T>> result = new ArrayList<>();
+    int lastIndex = 0;
+    for (int i = 0, size = list.size(); i < size; i++) {
+      if (i == size - 1 || !equality.test(list.get(i), list.get(i + 1))) {
+        result.add(list.subList(lastIndex, i + 1));
+        lastIndex = i + 1;
+      }
+    }
+    return result;
   }
 }

@@ -14,7 +14,7 @@ interface PluginFeatureEnabler {
   @RequiresReadLockAbsence
   suspend fun enableSuggested(): Boolean
 
-  fun enableSuggestedHelper()
+  fun scheduleEnableSuggested()
 
   companion object {
 

@@ -408,7 +408,7 @@ public final class InspectionEngine {
     Map<String, Boolean> resultsNoDialects = new HashMap<>();
     return ContainerUtil.filter(tools, tool -> {
       String language = tool.getLanguage();
-      if (language == null) return true;
+      if (language == null || language.isBlank() || "any".equals(language)) return true;
 
       boolean applyToDialects = tool.applyToDialects();
       Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;

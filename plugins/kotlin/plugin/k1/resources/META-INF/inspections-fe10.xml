@@ -163,13 +163,6 @@
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.RemoveUnnecessaryParenthesesIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.InsertCurlyBracesToTemplateIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
@@ -297,13 +290,6 @@
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertForEachToForLoopIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.ConvertToForEachFunctionCallIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
@@ -450,13 +436,6 @@
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.AddJvmInlineIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveArgumentNameIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
@@ -472,13 +451,6 @@
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.IterateExpressionIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.quickfix.AddConstModifierIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
@@ -605,13 +577,6 @@
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.copyConcatenatedStringToClipboard.CopyConcatenatedStringToClipboardIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.RemoveConstructorKeywordIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
@@ -1195,7 +1160,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WEAK WARNING"
+                     level="INFORMATION"
                      language="kotlin"
                      key="inspection.replace.until.with.rangeUntil.operator.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1255,14 +1220,6 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.introduce.when.subject.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RemoveCurlyBracesFromTemplateInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.remove.curly.braces.from.template.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.SimplifyBooleanWithConstantsInspection"
                      groupPath="Kotlin"
@@ -1325,14 +1282,6 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.unsafe.cast.from.dynamic.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.kdoc.KDocUnresolvedReferenceInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.k.doc.unresolved.reference.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.kdoc.KDocMissingDocumentationInspection"
                      groupPath="Kotlin"
@@ -1508,15 +1457,6 @@
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.modality.modifier.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantSemicolonInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.redundant.semicolon.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantUnitReturnTypeInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
@@ -1575,14 +1515,6 @@
                      language="kotlin"
                      key="inspection.convert.reference.to.lambda.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RemoveSetterParameterTypeInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.remove.setter.parameter.type.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceCallWithBinaryOperatorInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
@@ -1607,15 +1539,6 @@
                      level="WEAK WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.to.string.in.string.template.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveEmptyParenthesesFromLambdaCallInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WEAK WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.remove.empty.parentheses.from.lambda.call.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceArrayEqualityOpWithArraysEqualsInspection"
                      groupPath="Kotlin"
@@ -1828,14 +1751,6 @@
                      language="kotlin"
                      key="inspection.nullable.boolean.elvis.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.WrapUnaryOperatorInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.wrap.unary.operator.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.EmptyRangeInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
@@ -2007,6 +1922,13 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.naming.conventions"
                      enabledByDefault="true"
                      level="WEAK WARNING" key="inspection.object.property.name.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ObjectPrivatePropertyNameInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.naming.conventions"
+                     enabledByDefault="true"
+                     level="WEAK WARNING" key="inspection.object.private.property.name.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.PrivatePropertyNameInspection"
                      language="kotlin"
@@ -2187,14 +2109,6 @@
                      language="kotlin"
                      key="inspection.may.be.constant.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.TrailingCommaInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.trailing.comma.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.FakeJvmFieldConstantInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
@@ -2265,7 +2179,7 @@
                      enabledByDefault="true"
                      level="WEAK WARNING"
                      language="kotlin"
-                     key="inspection.can.sealed.sub.class.be.object.display.name" bundle="messages.KotlinBundle"/>
+                     key="inspection.can.sealed.subclass.be.object.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.MoveLambdaOutsideParenthesesInspection"
                      groupPath="Kotlin"
@@ -2447,6 +2361,14 @@
                      language="kotlin"
                      key="inspection.this.class.does.not.have.a.constructor" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.DeclaringClassMigrationInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     enabledByDefault="false"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.deprecated.enum.declaring.class.property" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NonExhaustiveWhenStatementMigrationInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
@@ -2467,7 +2389,7 @@
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.ObsoleteExperimentalCoroutinesInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
-                     enabledByDefault="true"
+                     enabledByDefault="false"
                      cleanupTool="true"
                      level="ERROR"
                      language="kotlin"
@@ -2476,7 +2398,7 @@
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.ObsoleteKotlinJsPackagesInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
-                     enabledByDefault="true"
+                     enabledByDefault="false"
                      cleanupTool="true"
                      level="ERROR"
                      language="kotlin"
@@ -2585,14 +2507,6 @@
                      level="WEAK WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.main.parameter.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.DelegationToVarPropertyInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.delegation.to.var.property.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.MapGetWithNotNullAssertionOperatorInspection"
                      groupPath="Kotlin"
@@ -2732,6 +2646,14 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.self.reference.constructor.parameter.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ConvertObjectToDataObjectInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.convert.object.to.data.object.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.jdk2k.ReplaceJavaStaticMethodWithKotlinAnalogInspection"
                      groupPath="Kotlin"
@@ -2962,6 +2884,16 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.readline.with.readln.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceWithStringBuilderAppendRangeInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.replace.with.string.builder.append.range.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 
 </idea-plugin>

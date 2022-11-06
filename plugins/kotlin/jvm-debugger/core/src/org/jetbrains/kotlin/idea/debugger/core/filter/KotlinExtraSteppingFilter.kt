@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.*
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 
 class KotlinExtraSteppingFilter : ExtraSteppingFilter {
     override fun isApplicable(context: SuspendContext?): Boolean {

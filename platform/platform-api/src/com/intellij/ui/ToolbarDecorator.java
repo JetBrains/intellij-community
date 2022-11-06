@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
@@ -441,6 +442,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     installDnD();
     panel.putClientProperty(DECORATOR_KEY, Boolean.TRUE);
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
+    panel.putClientProperty(DslComponentProperty.LABEL_FOR, contextComponent);
 
     panel.setBorder(myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL));
     Border scrollPaneBorder = null;
@@ -494,17 +496,12 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   @NotNull
   static Object getPlacement(@NotNull ActionToolbarPosition position) {
-    switch (position) {
-      case TOP:
-        return BorderLayout.NORTH;
-      case LEFT:
-        return BorderLayout.WEST;
-      case BOTTOM:
-        return BorderLayout.SOUTH;
-      case RIGHT:
-        return BorderLayout.EAST;
-    }
-    return BorderLayout.SOUTH;
+    return switch (position) {
+      case TOP -> BorderLayout.NORTH;
+      case LEFT -> BorderLayout.WEST;
+      case BOTTOM -> BorderLayout.SOUTH;
+      case RIGHT -> BorderLayout.EAST;
+    };
   }
 
   private CommonActionsPanel.Buttons @NotNull [] getButtons() {

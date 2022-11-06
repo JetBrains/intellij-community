@@ -120,6 +120,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testCompleteIfNextLineBraceStyle2() { myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE; doTest(); }
   public void testSCR36110() { doTest(); }
   public void testSCR37331() { doTest(); }
+  public void testGenericBeforeVar() { doTest(); }
 
   public void testIDEADEV434() {
     mySettings.getCommonSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
@@ -214,6 +215,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
     doTest();
   }
   public void testSwitchAtTheEndOfClass() { doTest(); }
+  public void testAddMissingLambdaBody() { doTest(); }
+  public void testAddMissingLambdaBody2() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -33,7 +34,6 @@ class AnnotationPresentationInfo(
 ) {
     companion object {
         private const val KOTLIN_COMPILER_WARNING_ID = "KotlinCompilerWarningOptions"
-        private const val KOTLIN_COMPILER_ERROR_ID = "KotlinCompilerErrorOptions"
     }
 
     fun processDiagnostics(
@@ -66,25 +66,30 @@ class AnnotationPresentationInfo(
         diagnostic: Diagnostic,
         info: HighlightInfo
     ) {
-        val warning = diagnostic.severity == Severity.WARNING
-        val error = diagnostic.severity == Severity.ERROR
+        val isWarning = diagnostic.severity == Severity.WARNING
+        val isError = diagnostic.severity == Severity.ERROR
+
+        val element = diagnostic.psiElement
 
         val fixes = quickFixes[diagnostic].takeIf { it.isNotEmpty() }
-            ?: if (warning) listOf(CompilerWarningIntentionAction(diagnostic.factory.name)) else emptyList()
+            ?: if (isWarning) listOf(CompilerWarningIntentionAction(diagnostic.factory.name)) else emptyList()
 
-        val keyForSuppressOptions = when {
-            error -> HighlightDisplayKey.findOrRegister(
-                KOTLIN_COMPILER_ERROR_ID,
-                KotlinBaseFe10HighlightingBundle.message("kotlin.compiler.error")
-            )
-            else -> HighlightDisplayKey.findOrRegister(
+        val keyForSuppressOptions = if (isWarning) {
+            HighlightDisplayKey.findOrRegister(
                 KOTLIN_COMPILER_WARNING_ID,
                 KotlinBaseFe10HighlightingBundle.message("kotlin.compiler.warning")
             )
-        }
+        } else null
 
         for (fix in fixes) {
             if (fix !is IntentionAction) {
+                continue
+            }
+
+            if (fix == RegisterQuickFixesLaterIntentionAction) {
+                element.reference?.let {
+                    UnresolvedReferenceQuickFixUpdater.getInstance(element.project).registerQuickFixesLater(it, info)
+                }
                 continue
             }
 
@@ -96,10 +101,10 @@ class AnnotationPresentationInfo(
 
             val problemGroup = info.problemGroup
             if (problemGroup is SuppressableProblemGroup) {
-                options += problemGroup.getSuppressActions(diagnostic.psiElement).mapNotNull { it as IntentionAction }
+                options += problemGroup.getSuppressActions(element).mapNotNull { it as IntentionAction }
             }
 
-            val message = KotlinBaseFe10HighlightingBundle.message(if (error) "kotlin.compiler.error" else "kotlin.compiler.warning")
+            val message = KotlinBaseFe10HighlightingBundle.message(if (isError) "kotlin.compiler.error" else "kotlin.compiler.warning")
             info.registerFix(fix, options, message, null, keyForSuppressOptions)
         }
     }
@@ -174,11 +179,7 @@ class AnnotationPresentationInfo(
             null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING ->
                 when (severity) {
                     Severity.ERROR -> CodeInsightColors.ERRORS_ATTRIBUTES
-                    Severity.WARNING -> {
-                        if (highlightType == ProblemHighlightType.WEAK_WARNING) {
-                            CodeInsightColors.WEAK_WARNING_ATTRIBUTES
-                        } else CodeInsightColors.WARNINGS_ATTRIBUTES
-                    }
+                    Severity.WARNING -> CodeInsightColors.WARNINGS_ATTRIBUTES
                     Severity.INFO -> CodeInsightColors.WARNINGS_ATTRIBUTES
                     else -> null
                 }

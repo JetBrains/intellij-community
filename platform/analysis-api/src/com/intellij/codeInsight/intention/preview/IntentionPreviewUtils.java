@@ -21,6 +21,9 @@ public class IntentionPreviewUtils {
   private static final ThreadLocal<Editor> PREVIEW_EDITOR = new ThreadLocal<>();
 
   /**
+   * This method is a part of internal implementation of intention preview mechanism.
+   * It's not intended to be called in the client code.
+   * 
    * @param file file to get the preview copy
    * @return a preview copy of the file
    */
@@ -103,5 +106,12 @@ public class IntentionPreviewUtils {
    */
   public static @Nullable Editor getPreviewEditor() {
     return PREVIEW_EDITOR.get();
+  }
+
+  /**
+   * @return true if intention preview is currently being computed in this thread
+   */
+  public static boolean isIntentionPreviewActive() {
+    return PREVIEW_EDITOR.get() != null;
   }
 }

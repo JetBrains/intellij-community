@@ -29,9 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T>, SemElement {
   private static final DomGenericInfo EMPTY_DOM_GENERIC_INFO = new DomGenericInfo() {
     @Override

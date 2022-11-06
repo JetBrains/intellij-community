@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -20,7 +19,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ProjectModelTestEntityImpl : ProjectModelTestEntity, WorkspaceEntityBase() {
+open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,21 +29,21 @@ open class ProjectModelTestEntityImpl : ProjectModelTestEntity, WorkspaceEntityB
 
   }
 
-  @JvmField
-  var _info: String? = null
   override val info: String
-    get() = _info!!
+    get() = dataSource.info
 
-  @JvmField
-  var _descriptor: Descriptor? = null
   override val descriptor: Descriptor
-    get() = _descriptor!!
+    get() = dataSource.descriptor
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ProjectModelTestEntityData?) : ModifiableWorkspaceEntityBase<ProjectModelTestEntity>(), ProjectModelTestEntity.Builder {
+  class Builder(result: ProjectModelTestEntityData?) : ModifiableWorkspaceEntityBase<ProjectModelTestEntity, ProjectModelTestEntityData>(
+    result), ProjectModelTestEntity.Builder {
     constructor() : this(ProjectModelTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,6 +61,9 @@ open class ProjectModelTestEntityImpl : ProjectModelTestEntity, WorkspaceEntityB
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -88,9 +90,9 @@ open class ProjectModelTestEntityImpl : ProjectModelTestEntity, WorkspaceEntityB
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ProjectModelTestEntity
-      this.entitySource = dataSource.entitySource
-      this.info = dataSource.info
-      this.descriptor = dataSource.descriptor
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.info != dataSource.info) this.info = dataSource.info
+      if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
       if (parents != null) {
       }
     }
@@ -100,7 +102,7 @@ open class ProjectModelTestEntityImpl : ProjectModelTestEntity, WorkspaceEntityB
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -109,7 +111,7 @@ open class ProjectModelTestEntityImpl : ProjectModelTestEntity, WorkspaceEntityB
       get() = getEntityData().info
       set(value) {
         checkModificationAllowed()
-        getEntityData().info = value
+        getEntityData(true).info = value
         changedProperty.add("info")
       }
 
@@ -117,12 +119,11 @@ open class ProjectModelTestEntityImpl : ProjectModelTestEntity, WorkspaceEntityB
       get() = getEntityData().descriptor
       set(value) {
         checkModificationAllowed()
-        getEntityData().descriptor = value
+        getEntityData(true).descriptor = value
         changedProperty.add("descriptor")
 
       }
 
-    override fun getEntityData(): ProjectModelTestEntityData = result ?: super.getEntityData() as ProjectModelTestEntityData
     override fun getEntityClass(): Class<ProjectModelTestEntity> = ProjectModelTestEntity::class.java
   }
 }
@@ -134,26 +135,21 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
   fun isInfoInitialized(): Boolean = ::info.isInitialized
   fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ProjectModelTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ProjectModelTestEntity> {
     val modifiable = ProjectModelTestEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): ProjectModelTestEntity {
-    val entity = ProjectModelTestEntityImpl()
-    entity._info = info
-    entity._descriptor = descriptor
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ProjectModelTestEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -178,7 +174,7 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ProjectModelTestEntityData
 
@@ -190,7 +186,7 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ProjectModelTestEntityData
 

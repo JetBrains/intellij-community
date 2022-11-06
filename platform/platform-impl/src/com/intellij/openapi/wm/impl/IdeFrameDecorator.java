@@ -10,7 +10,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.ui.mac.MacWinTabsHandler;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +40,11 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
   public void setProject() {
   }
+
+  public boolean isTabbedWindow() {
+    return false;
+  }
+
   /**
    * Returns applied state or rejected promise if it cannot be applied.
    */
@@ -67,13 +71,6 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
     }
 
     return null;
-  }
-
-  public static @NotNull JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
-    if (SystemInfo.isMac) {
-      return MacWinTabsHandler.wrapRootPaneNorthSide(rootPane, northComponent);
-    }
-    return northComponent;
   }
 
   protected void notifyFrameComponents(boolean state) {
@@ -209,6 +206,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   private static final AtomicReference<Boolean> isCustomDecorationActiveCache = new AtomicReference<>();
+
   public static boolean isCustomDecorationActive() {
     UISettings settings = UISettings.getInstanceOrNull();
     if (settings == null) {

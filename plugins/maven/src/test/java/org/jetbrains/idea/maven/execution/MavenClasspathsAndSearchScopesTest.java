@@ -1409,18 +1409,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImporti
     createOutputDirectories();
     Module module = getModule(moduleName);
 
-    GlobalSearchScope searchScope = null;
-    switch (scope) {
-      case MODULE:
-        searchScope = module.getModuleScope();
-        break;
-      case COMPILE:
-        searchScope = module.getModuleWithDependenciesAndLibrariesScope(type == Type.TESTS);
-        break;
-      case RUNTIME:
-        searchScope = module.getModuleRuntimeScope(type == Type.TESTS);
-        break;
-    }
+    GlobalSearchScope searchScope = switch (scope) {
+      case MODULE -> module.getModuleScope();
+      case COMPILE -> module.getModuleWithDependenciesAndLibrariesScope(type == Type.TESTS);
+      case RUNTIME -> module.getModuleRuntimeScope(type == Type.TESTS);
+    };
 
     assertSearchScope(searchScope, expectedPaths);
   }

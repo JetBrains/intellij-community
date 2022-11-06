@@ -13,13 +13,13 @@ public class KdslGradleIntellijPluginFrameworkSupportProvider extends GradleInte
                 "intellij {\n" +
                 "    version.set(\"" + ideVersion + "\")\n" +
                 "}\n")
-      .addOther("tasks {\n" +
-                "    patchPluginXml {\n" +
-                "        changeNotes.set(\"\"\"\n" +
-                "            Add change notes here.<br>\n" +
-                "            <em>most HTML tags may be used</em>" +
-                "        \"\"\".trimIndent())\n" +
-                "    }\n" +
-                "}");
+      .addOther("""
+                  tasks {
+                      patchPluginXml {
+                          changeNotes.set(""\"
+                              Add change notes here.<br>
+                              <em>most HTML tags may be used</em>        ""\".trimIndent())
+                      }
+                  }""");
   }
 }

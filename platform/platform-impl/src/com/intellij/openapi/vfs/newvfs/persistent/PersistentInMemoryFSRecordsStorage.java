@@ -26,6 +26,9 @@ import static java.nio.file.StandardOpenOption.WRITE;
 /**
  * This implementation keeps all FSRecords always in RAM, but it still loads them from file,
  * and persist changes into the file on {@linkplain #close()}
+ *
+ * Intended for use as a reference implementation, to compare other impls against
+ * (e.g. by performance)
  */
 public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStorage {
 
@@ -76,9 +79,9 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   private final Path storagePath;
 
 
-  public PersistentInMemoryFSRecordsStorage(final Path file,
+  public PersistentInMemoryFSRecordsStorage(final Path path,
                                             final int maxRecords) throws IOException {
-    storagePath = Objects.requireNonNull(file, "file");
+    storagePath = Objects.requireNonNull(path, "path");
     if (maxRecords <= 0) {
       throw new IllegalArgumentException("maxRecords(=" + maxRecords + ") should be >0");
     }
@@ -86,24 +89,26 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
     //this.records = new UnsafeBuffer(maxRecords * RECORD_SIZE_IN_BYTES+ HEADER_SIZE);
     this.records = ByteBuffer.allocate(maxRecords * RECORD_SIZE_IN_BYTES + HEADER_SIZE);
 
-    final long fileSize = Files.size(file);
-    if (fileSize > records.capacity()) {
-      final long recordsInFile = (fileSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
-      throw new IllegalArgumentException(
-        "[" + file + "](=" + fileSize + "b) contains " + recordsInFile + " records > maxRecords(=" + maxRecords + ") " +
-        "=> can't load all the records from file!");
-    }
-
-    try (ByteChannel channel = Files.newByteChannel(file)) {
-      final int actualBytesRead = channel.read(records);
-      final int recordsRead = (actualBytesRead - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
-      final int recordExcess = (actualBytesRead - HEADER_SIZE) % RECORD_SIZE_IN_BYTES;
-      if (recordExcess > 0) {
-        throw new IOException(
-          "[" + file + "] likely truncated: (" + actualBytesRead + "b) " +
-          " = (" + recordsRead + " whole records) + " + recordExcess + "b excess");
+    if(Files.exists(path)) {
+      final long fileSize = Files.size(path);
+      if (fileSize > records.capacity()) {
+        final long recordsInFile = (fileSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
+        throw new IllegalArgumentException(
+          "[" + path + "](=" + fileSize + "b) contains " + recordsInFile + " records > maxRecords(=" + maxRecords + ") " +
+          "=> can't load all the records from file!");
       }
-      allocatedRecordsCount.set(recordsRead);
+
+      try (ByteChannel channel = Files.newByteChannel(path)) {
+        final int actualBytesRead = channel.read(records);
+        final int recordsRead = (actualBytesRead - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
+        final int recordExcess = (actualBytesRead - HEADER_SIZE) % RECORD_SIZE_IN_BYTES;
+        if (recordExcess > 0) {
+          throw new IOException(
+            "[" + path + "] likely truncated: (" + actualBytesRead + "b) " +
+            " = (" + recordsRead + " whole records) + " + recordExcess + "b excess");
+        }
+        allocatedRecordsCount.set(recordsRead);
+      }
     }
     globalModCount.set(getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET));
   }
@@ -204,8 +209,8 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   }
 
   @Override
-  public void setModCount(final int recordId, int counter) throws IOException {
-    setIntField(recordId, MOD_COUNT_OFFSET, counter);
+  public void markRecordAsModified(final int recordId) throws IOException {
+    setIntField(recordId, MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
   }
 
   @Override
@@ -214,24 +219,27 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   }
 
   @Override
-  public void setContentRecordId(final int recordId,
-                                 final int contentRef) throws IOException {
-    setIntField(recordId, CONTENT_REF_OFFSET, contentRef);
+  public boolean setContentRecordId(final int recordId,
+                                    final int contentRef) throws IOException {
+    final boolean reallyChanged = getIntField(recordId, CONTENT_REF_OFFSET) != contentRef;
+    if (reallyChanged) {
+      setIntField(recordId, CONTENT_REF_OFFSET, contentRef);
+    }
+    return reallyChanged;
   }
 
   @Override
-  public void setAttributesAndIncModCount(final int recordId,
-                                          final long timestamp,
-                                          final long length,
-                                          final int flags,
-                                          final int nameId,
-                                          final int parentId,
-                                          final boolean overwriteMissed) throws IOException {
-    //FIXME RC: method name setAttributesAndIncModCount, but there is no modCount increment here!
+  public void fillRecord(final int recordId,
+                         final long timestamp,
+                         final long length,
+                         final int flags,
+                         final int nameId,
+                         final int parentId,
+                         final boolean overwriteAttrRef) throws IOException {
     setParent(recordId, parentId);
     setNameId(recordId, nameId);
     setFlags(recordId, flags);
-    if (overwriteMissed) {
+    if (overwriteAttrRef) {
       setAttributeRecordId(recordId, 0);
     }
     putTimestamp(recordId, timestamp);
@@ -275,6 +283,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   public void setVersion(final int version) throws IOException {
     setIntHeaderField(HEADER_VERSION_OFFSET, version);
     setLongHeaderField(HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
+    globalModCount.incrementAndGet();
   }
 
   @Override
@@ -288,12 +297,20 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   }
 
   @Override
-  public int incGlobalModCount() {
-    return globalModCount.incrementAndGet();
+  public long length() {
+    final int recordsCount = allocatedRecordsCount.get();
+    final boolean anythingChanged = globalModCount.get() > 0;
+    if (recordsCount == 0 && !anythingChanged) {
+      //Try to mimic other implementations behavior: they return actual file size, which is 0
+      //  before first record allocated -- should be >0, since even no-record storage contains
+      //  header, but other implementations use 0-th record as header...
+      //TODO RC: it is better to have recordsCount() method
+      return 0;
+    }
+    return actualDataLength();
   }
 
-  @Override
-  public long length() {
+  public long actualDataLength() {
     final int recordsCount = allocatedRecordsCount.get();
     return (RECORD_SIZE_IN_INTS * (long)recordsCount) * Integer.BYTES + HEADER_SIZE;
   }
@@ -319,12 +336,13 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
     if (dirty.get()) {
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
 
-      final long actualDataLength = length();
+      final long actualDataLength = actualDataLength();
       records.position(0)
         .limit((int)actualDataLength);
       try (final SeekableByteChannel channel = Files.newByteChannel(storagePath, WRITE, CREATE)) {
         channel.write(records);
       }
+      records.clear();  //position <- 0, limit <- capacity
       markNotDirty();
     }
   }

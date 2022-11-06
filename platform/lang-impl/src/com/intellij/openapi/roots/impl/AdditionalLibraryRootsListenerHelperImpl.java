@@ -10,6 +10,8 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +32,7 @@ public class AdditionalLibraryRootsListenerHelperImpl implements AdditionalLibra
     if (directoryIndex instanceof DirectoryIndexImpl) {
       ((DirectoryIndexImpl)directoryIndex).reset();
     }
+    ((WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project)).resetCustomContributors();
     additionalLibraryRootsChanged(project, presentableLibraryName, oldRoots, newRoots, libraryNameForDebug);
   }
 
@@ -63,6 +66,6 @@ public class AdditionalLibraryRootsListenerHelperImpl implements AdditionalLibra
         AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
 
     new UnindexedFilesUpdater(project, indexableFilesIterators, null, "On updated roots of library '" + presentableLibraryName + "'").
-      queue(project);
+      queue();
   }
 }

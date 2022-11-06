@@ -63,17 +63,11 @@ public class CompareFilesAction extends BaseShowDiffAction {
           text = ActionsBundle.message("action.compare.text");
         }
         else {
-          switch (types.iterator().next()) {
-            case FILE:
-              text = ActionsBundle.message("action.compare.files.text");
-              break;
-            case DIRECTORY:
-              text = ActionsBundle.message("action.CompareDirs.text");
-              break;
-            case ARCHIVE:
-              text = ActionsBundle.message("action.compare.archives.text");
-              break;
-          }
+          text = ActionsBundle.message(switch (types.iterator().next()) {
+            case FILE -> "action.compare.files.text";
+            case DIRECTORY -> "action.CompareDirs.text";
+            case ARCHIVE -> "action.compare.archives.text";
+          });
         }
       }
     }

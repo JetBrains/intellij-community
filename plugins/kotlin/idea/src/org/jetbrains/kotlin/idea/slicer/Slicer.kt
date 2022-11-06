@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.cfg.pseudocode.getContainingPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.KtElementInstruction
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.*
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.psi.hasInlineModifier
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -34,7 +35,6 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchReques
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.expectedDescriptor
-import org.jetbrains.kotlin.idea.util.hasInlineModifier
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains

@@ -24,6 +24,8 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -99,6 +101,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   private final List<Sdk> removedSdks = new SmartList<>();
   private PathAssembler.LocalDistribution myDistribution;
+
+  private final Ref<Couple<String>> deprecationError = Ref.create();
 
   @Override
   public void setUp() throws Exception {
@@ -260,6 +264,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
         TestDialogManager.setTestDialog(TestDialog.DEFAULT);
         CompilerTestUtil.deleteBuildSystemDirectory(myProject);
       },
+      () -> {
+        deprecationError.set(null);
+        if (isGradleNewerOrSameAs("7.0")) {
+          GradleSystemSettings.getInstance().setGradleVmOptions("");
+        }
+      },
       super::tearDown
     ).run();
   }
@@ -334,7 +344,24 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @Override
   protected void importProject(@NonNls @Language("Groovy") String config, Boolean skipIndexing) throws IOException {
     config = injectRepo(config);
+    if (isGradleNewerOrSameAs("7.0")) {
+      GradleSystemSettings.getInstance().setGradleVmOptions("-Dorg.gradle.warning.mode=fail");
+    }
     super.importProject(config, skipIndexing);
+    handleDeprecationError(deprecationError.get());
+  }
+
+  protected void handleDeprecationError(Couple<String> errorInfo) {
+    if (errorInfo == null) return;
+    handleImportFailure(errorInfo.first, errorInfo.second);
+  }
+
+  @Override
+  protected void printOutput(@NotNull String text, boolean stdOut) {
+    if (text.contains("This is scheduled to be removed in Gradle")) {
+      deprecationError.set(Couple.of("Deprecation warning from Gradle", text));
+    }
+    super.printOutput(text, stdOut);
   }
 
   public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
@@ -369,13 +396,15 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @NotNull
   protected String injectRepo(@NonNls @Language("Groovy") String config) {
     String mavenRepositoryPatch =
-      "allprojects {\n" +
-      "    repositories {\n" +
-      "        maven {\n" +
-      "            url 'https://repo.labs.intellij.net/repo1'\n" +
-      "        }\n" +
-      "    }\n" +
-      "}\n";
+      """
+        allprojects {
+            repositories {
+                maven {
+                    url 'https://repo.labs.intellij.net/repo1'
+                }
+            }
+        }
+        """;
     if (config.contains(MAVEN_REPOSITORY_PATCH_PLACE)) {
       return config.replace(MAVEN_REPOSITORY_PATCH_PLACE, mavenRepositoryPatch);
     }

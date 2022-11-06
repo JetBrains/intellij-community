@@ -20,7 +20,7 @@ class CodeVisionListPainter(
 
   val theme: CodeVisionTheme = theme ?: CodeVisionTheme()
 
-  var loadingPainter: CodeVisionStringPainter = CodeVisionStringPainter("Loading...")
+  private var loadingPainter: CodeVisionStringPainter = CodeVisionStringPainter("Loading...")
 
   private fun getRelativeBounds(
     editor: Editor,

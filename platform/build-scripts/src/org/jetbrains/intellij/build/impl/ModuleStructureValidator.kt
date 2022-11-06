@@ -39,21 +39,24 @@ private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object")
 private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.tests")
 
-class ModuleStructureValidator(private val context: BuildContext, moduleJars: MultiMap<String, String>) {
+class ModuleStructureValidator(
+  private val context: BuildContext,
+  moduleJars: Map<String, List<String>>,
+) {
   private val moduleJars = MultiMap<String, String>()
   private val moduleNames = HashSet<String>()
   private val errors = ArrayList<AssertionError>()
   private val libraryFiles = HashMap<JpsLibrary, Set<String>>()
 
   init {
-    for (moduleJar in moduleJars.entrySet()) {
+    for ((jar, modules) in moduleJars) {
       // filter out jars with relative paths in name
-      if (moduleJar.key.contains("\\") || moduleJar.key.contains('/')) {
+      if (jar.contains("\\") || jar.contains('/')) {
         continue
       }
 
-      this.moduleJars.put(moduleJar.key, moduleJar.value)
-      this.moduleNames.addAll(moduleJar.value)
+      this.moduleJars.put(jar, modules)
+      this.moduleNames.addAll(modules)
     }
   }
 

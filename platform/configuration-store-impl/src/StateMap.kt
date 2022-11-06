@@ -8,8 +8,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SystemProperties
-import net.jpountz.lz4.LZ4FrameInputStream
-import net.jpountz.lz4.LZ4FrameOutputStream
 import org.jdom.Element
 import java.io.ByteArrayInputStream
 import java.util.*
@@ -17,14 +15,14 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 
 private fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
-  LZ4FrameOutputStream(byteOut, LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB).use {
+  byteOut.use {
     serializeElementToBinary(state, it)
   }
   return byteOut
 }
 
 private fun unarchiveState(state: ByteArray): Element {
-  return LZ4FrameInputStream(ByteArrayInputStream(state)).use {
+  return ByteArrayInputStream(state).use {
     deserializeElementFromBinary(it)
   }
 }

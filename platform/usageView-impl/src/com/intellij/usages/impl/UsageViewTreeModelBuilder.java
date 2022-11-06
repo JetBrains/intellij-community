@@ -80,6 +80,10 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
     return (UsageNode)getFirstChildOfType(myRootNode, UsageNode.class);
   }
 
+  @Nullable GroupNode getFirstGroupNode() {
+    return (GroupNode)getFirstChildOfType(myRootNode, GroupNode.class);
+  }
+
   private static TreeNode getFirstChildOfType(@NotNull TreeNode parent, @NotNull Class<?> type) {
     int childCount = parent.getChildCount();
     for (int idx = 0; idx < childCount; idx++) {

@@ -1,14 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
-import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
@@ -33,6 +32,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.history.FileHistoryPaths.fileHistory
 import com.intellij.vcs.log.history.FileHistoryPaths.withFileHistory
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
+import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.*
@@ -52,6 +52,8 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
   private val vcsLogFilterer = VcsLogFiltererImpl(logProviders, storage, logData.topCommitsCache, logData.commitDetailsGetter, index)
 
   private var fileHistoryTask: FileHistoryTask? = null
+
+  private val vcsLogObjectsFactory: VcsLogObjectsFactory get() = project.service()
 
   override fun filter(dataPack: DataPack,
                       oldVisiblePack: VisiblePack,
@@ -75,29 +77,37 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
     fileHistoryTask = null
   }
 
-  private fun createFileHistoryTask(vcs: AbstractVcs, root: VirtualFile, filePath: FilePath, hash: Hash?, isInitial: Boolean): FileHistoryTask {
+  private fun createFileHistoryTask(vcs: AbstractVcs,
+                                    root: VirtualFile,
+                                    filePath: FilePath,
+                                    hash: Hash?,
+                                    isInitial: Boolean): FileHistoryTask {
     val oldHistoryTask = fileHistoryTask
     if (oldHistoryTask != null && !oldHistoryTask.isCancelled && !isInitial &&
         oldHistoryTask.filePath == filePath && oldHistoryTask.hash == hash) return oldHistoryTask
 
     cancelLastTask(false)
 
-    val factory = project.service<VcsLogObjectsFactory>()
+    val factory = vcsLogObjectsFactory
     val newHistoryTask = object : FileHistoryTask(vcs, filePath, hash, createProgressIndicator()) {
       override fun createCommitMetadataWithPath(revision: VcsFileRevision): CommitMetadataWithPath {
-        val revisionEx = revision as VcsFileRevisionEx
-        val commitHash = factory.createHash(revisionEx.revisionNumber.asString())
-        val metadata = factory.createCommitMetadata(commitHash, emptyList(), revisionEx.revisionDate.time, root,
-                                                    CommitPresentationUtil.getSubject(revisionEx.commitMessage!!),
-                                                    revisionEx.author!!, revisionEx.authorEmail!!,
-                                                    revisionEx.commitMessage!!,
-                                                    revisionEx.committerName!!, revisionEx.committerEmail!!, revisionEx.authorDate!!.time)
-        return CommitMetadataWithPath(storage.getCommitIndex(commitHash, root), metadata,
-                                      MaybeDeletedFilePath(revisionEx.path, revisionEx.isDeleted))
+        return factory.createCommitMetadataWithPath(revision as VcsFileRevisionEx, root)
       }
     }
     fileHistoryTask = newHistoryTask
     return newHistoryTask
+  }
+
+  private fun VcsLogObjectsFactory.createCommitMetadataWithPath(revision: VcsFileRevisionEx,
+                                                                root: VirtualFile): CommitMetadataWithPath {
+    val commitHash = createHash(revision.revisionNumber.asString())
+    val metadata = createCommitMetadata(commitHash, emptyList(), revision.revisionDate.time, root,
+                                        CommitPresentationUtil.getSubject(revision.commitMessage!!),
+                                        revision.author!!, revision.authorEmail!!,
+                                        revision.commitMessage!!,
+                                        revision.committerName!!, revision.committerEmail!!, revision.authorDate!!.time)
+    return CommitMetadataWithPath(storage.getCommitIndex(commitHash, root), metadata,
+                                  MaybeDeletedFilePath(revision.path, revision.isDeleted))
   }
 
   private fun createProgressIndicator(): ProgressIndicator {
@@ -117,6 +127,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
                sortType: PermanentGraph.SortType,
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
+      val start = System.currentTimeMillis()
       TraceManager.getTracer("vcs").spanBuilder("computing history").useWithScope { scope ->
         val isInitial = commitCount == CommitCountStage.INITIAL
 
@@ -125,6 +136,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
         if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull) {
           cancelLastTask(false)
           val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
+          LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
           scope.setAttribute("type", "index")
           if (checkNotEmpty(dataPack, visiblePack, true)) {
             return Pair(visiblePack, commitCount)
@@ -134,8 +146,10 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
         ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
           if (vcs.vcsHistoryProvider != null) {
             try {
-              val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, isInitial)
+              val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, commitCount)
               scope.setAttribute("type", "history provider")
+              LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
+                        " for computing history for $filePath with history provider")
               checkNotEmpty(dataPack, visiblePack, false)
               return@filter Pair(visiblePack, commitCount)
             }
@@ -168,12 +182,24 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
                                    dataPack: DataPack,
                                    sortType: PermanentGraph.SortType,
                                    filters: VcsLogFilterCollection,
-                                   isInitial: Boolean): VisiblePack {
-      val (revisions, isDone) = createFileHistoryTask(vcs, root, filePath, hash, isInitial).waitForRevisions()
+                                   commitCount: CommitCountStage): VisiblePack {
+      val historyHandler = logProviders[root]?.fileHistoryHandler
+      val isFastStart = commitCount == CommitCountStage.INITIAL && historyHandler != null
+      val (revisions, isDone) = if (isFastStart) {
+        cancelLastTask(false)
+        historyHandler!!.getHistoryFast(root, filePath, hash, commitCount.count).map {
+          vcsLogObjectsFactory.createCommitMetadataWithPath(it, root)
+        } to false
+      }
+      else {
+        createFileHistoryTask(vcs, root, filePath, hash,
+                              (commitCount == CommitCountStage.FIRST_STEP && historyHandler != null) ||
+                              commitCount == CommitCountStage.INITIAL).waitForRevisions()
+      }
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
-      if (dataPack.isFull) {
+      if (dataPack.isFull && !isFastStart) {
         val pathsMap = revisions.associate { Pair(it.commit, it.path) }
         val visibleGraph = createVisibleGraph(dataPack, sortType, null, pathsMap.keys)
         return VisiblePack(dataPack, visibleGraph, !isDone, filters)
@@ -192,7 +218,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
       return VisiblePack(fakeDataPack, visibleGraph, !isDone, filters)
         .withFileHistory(FileHistory(revisions.associate { Pair(it.commit, it.path) }))
         .apply {
-          putUserData(NO_PARENTS_INFO, true)
+          putUserData(VisiblePack.NO_GRAPH_INFORMATION, true)
           putUserData(FileHistorySpeedSearch.COMMIT_METADATA, revisions.associate { Pair(it.commit, it.metadata) })
         }
     }
@@ -254,20 +280,20 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
       TraceManager.getTracer("vcs").spanBuilder("collecting renames").useWithScope {
         val handler = logProviders[root]?.fileHistoryHandler ?: return MultiMap.empty()
 
-        val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull {
-          val parentHash = storage.getCommitId(it.parent)!!.hash
-          val childHash = storage.getCommitId(it.child)!!.hash
-          if (it.isAddition) handler.getRename(root, it.filePath, parentHash, childHash)
-          else handler.getRename(root, it.filePath, childHash, parentHash)
+        val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull { ad ->
+          val parentHash = storage.getCommitId(ad.parent)!!.hash
+          val childHash = storage.getCommitId(ad.child)!!.hash
+          if (ad.isAddition) handler.getRename(root, ad.filePath, parentHash, childHash)
+          else handler.getRename(root, ad.filePath, childHash, parentHash)
         }.map { r ->
           Rename(r.filePath1, r.filePath2, storage.getCommitIndex(r.hash1, root), storage.getCommitIndex(r.hash2, root))
         }
 
         it.setAttribute("renamesSize", renames.size.toLong())
-        it.setAttribute("numberOfAdditionDeletions",fileHistory.unmatchedAdditionsDeletions.size.toLong())
+        it.setAttribute("numberOfAdditionDeletions", fileHistory.unmatchedAdditionsDeletions.size.toLong())
 
         val result = MultiMap<UnorderedPair<Int>, Rename>()
-        renames.forEach { result.putValue(it.commits, it) }
+        renames.forEach { rename -> result.putValue(rename.commits, rename) }
         return result
       }
     }
@@ -289,9 +315,6 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
 
   companion object {
     private val LOG = logger<FileHistoryFilterer>()
-
-    @JvmField
-    val NO_PARENTS_INFO = Key.create<Boolean>("NO_PARENTS_INFO")
 
     private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
 

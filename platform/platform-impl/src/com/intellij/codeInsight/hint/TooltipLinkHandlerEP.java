@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLinkHandler> {
   public static final ExtensionPointName<TooltipLinkHandlerEP> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.linkHandler");
 

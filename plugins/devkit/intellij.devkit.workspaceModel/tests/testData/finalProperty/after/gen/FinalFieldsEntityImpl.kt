@@ -19,7 +19,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
+open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -29,16 +29,18 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _descriptor: AnotherDataClass? = null
   override val descriptor: AnotherDataClass
-    get() = _descriptor!!
+    get() = dataSource.descriptor
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity>(), FinalFieldsEntity.Builder {
+  class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(
+    result), FinalFieldsEntity.Builder {
     constructor() : this(FinalFieldsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -56,6 +58,9 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -79,8 +84,8 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FinalFieldsEntity
-      this.entitySource = dataSource.entitySource
-      this.descriptor = dataSource.descriptor
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
       if (parents != null) {
       }
     }
@@ -90,7 +95,7 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -99,12 +104,11 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
       get() = getEntityData().descriptor
       set(value) {
         checkModificationAllowed()
-        getEntityData().descriptor = value
+        getEntityData(true).descriptor = value
         changedProperty.add("descriptor")
 
       }
 
-    override fun getEntityData(): FinalFieldsEntityData = result ?: super.getEntityData() as FinalFieldsEntityData
     override fun getEntityClass(): Class<FinalFieldsEntity> = FinalFieldsEntity::class.java
   }
 }
@@ -114,25 +118,21 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
 
   fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FinalFieldsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FinalFieldsEntity> {
     val modifiable = FinalFieldsEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): FinalFieldsEntity {
-    val entity = FinalFieldsEntityImpl()
-    entity._descriptor = descriptor
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FinalFieldsEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -157,7 +157,7 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FinalFieldsEntityData
 
@@ -168,7 +168,7 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FinalFieldsEntityData
 

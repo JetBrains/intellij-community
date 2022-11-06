@@ -13,7 +13,6 @@ import com.intellij.openapi.project.impl.projectInitListeners
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndex
-import kotlinx.coroutines.coroutineScope
 import java.io.File
 import java.nio.file.Path
 
@@ -33,11 +32,9 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
     customizeRegisteredComponents()
     componentStore.setPath(projectPath, false, null)
     runUnderModalProgressIfIsEdt {
-      coroutineScope {
-        preloadServicesAndCreateComponents(project = this@LightEditProjectImpl, preloadServices = true)
-        projectInitListeners {
-          it.containerConfigured(this@LightEditProjectImpl)
-        }
+      preloadServicesAndCreateComponents(project = this@LightEditProjectImpl, preloadServices = true)
+      projectInitListeners {
+        it.execute(this@LightEditProjectImpl)
       }
     }
   }
@@ -65,10 +62,10 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
                     implementation = LightEditDumbService::class.java,
                     pluginDescriptor = pluginDescriptor,
                     override = true)
-    registerComponent(key = FileEditorManager::class.java,
-                      implementation = LightEditFileEditorManagerImpl::class.java,
-                      pluginDescriptor = pluginDescriptor,
-                      override = true)
+    registerService(serviceInterface = FileEditorManager::class.java,
+                    implementation = LightEditFileEditorManagerImpl::class.java,
+                    pluginDescriptor = pluginDescriptor,
+                    override = true)
   }
 
   override fun setProjectName(value: String) {

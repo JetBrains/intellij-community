@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ModalityState
@@ -46,7 +46,6 @@ interface ModifiableModelsProviderProxy {
   fun getModifiableLibraryModel(library: Library): Library.ModifiableModel?
   fun trySubstitute(module: Module, entry: LibraryOrderEntry, id: ProjectId)
 }
-
 
 class ModifiableModelsProviderProxyImpl(private val project: Project,
                                         val diff : MutableEntityStorage) : ModifiableModelsProviderProxy {
@@ -106,9 +105,8 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
       (model as ModifiableRootModelBridge).prepareForCommit()
     }
 
-    WorkspaceModel.getInstance(project).updateProjectModel<Any?> { builder: MutableEntityStorage ->
+    WorkspaceModel.getInstance(project).updateProjectModel("Modifiable model provider proxy commit") { builder: MutableEntityStorage ->
       builder.addDiff(diff)
-      null
     }
 
     for (model in rootModels) {
@@ -130,7 +128,7 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
     val toSubstitute: MutableMap<String, String> = HashMap()
     val projectDataManager = ProjectDataManager.getInstance()
 
-    ExternalSystemManager.EP_NAME.iterable.asSequence()
+    ExternalSystemManager.EP_NAME.lazySequence()
       .flatMap { projectDataManager.getExternalProjectsData(project, it.systemId) }
       .mapNotNull { it.externalProjectStructure }
       .flatMap { ExternalSystemApiUtil.findAll(it, ProjectKeys.LIBRARY) }

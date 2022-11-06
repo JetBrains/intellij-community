@@ -52,6 +52,16 @@ class RunToolbarSlotManager(private val project: Project) {
 
   private val processController = RWProcessController(project)
 
+  internal var initialized: Boolean = false
+    set(value) {
+      if (field == value) return
+      field = value
+      if(value) {
+        activeListener.initialize()
+      }
+    }
+
+
   internal var active: Boolean = false
     set(value) {
       if (field == value) return
@@ -152,6 +162,7 @@ class RunToolbarSlotManager(private val project: Project) {
 
   private fun clear() {
     dataIds.clear()
+    mainSlotData.clear()
 
     slotsData.clear()
     slotsData[mainSlotData.id] = mainSlotData

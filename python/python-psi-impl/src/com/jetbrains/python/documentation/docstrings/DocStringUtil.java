@@ -101,18 +101,13 @@ public final class DocStringUtil {
 
   @NotNull
   public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull Substring content) {
-    switch (format) {
-      case REST:
-        return new SphinxDocString(content);
-      case EPYTEXT:
-        return new EpydocString(content);
-      case GOOGLE:
-        return new GoogleCodeStyleDocString(content);
-      case NUMPY:
-        return new NumpyDocString(content);
-      default:
-        return new PlainDocString(content);
-    }
+    return switch (format) {
+      case REST -> new SphinxDocString(content);
+      case EPYTEXT -> new EpydocString(content);
+      case GOOGLE -> new GoogleCodeStyleDocString(content);
+      case NUMPY -> new NumpyDocString(content);
+      case PLAIN -> new PlainDocString(content);
+    };
   }
 
   @NotNull
@@ -178,10 +173,11 @@ public final class DocStringUtil {
 
   public static boolean isLikeSphinxDocString(@NotNull String text) {
     return text.contains(":param ") ||
-           text.contains(":key ") ||  text.contains(":keyword ") ||
+           text.contains(":key ") || text.contains(":keyword ") ||
            text.contains(":return:") || text.contains(":returns:") ||
            text.contains(":raise ") || text.contains(":raises ") || text.contains(":except ") || text.contains(":exception ") ||
-           text.contains(":rtype") || text.contains(":type");
+           text.contains(":rtype") || text.contains(":type") ||
+           text.contains(":var") || text.contains(":ivar") || text.contains(":cvar");
   }
 
   public static boolean isLikeEpydocDocString(@NotNull String text) {
@@ -189,7 +185,8 @@ public final class DocStringUtil {
            text.contains("@kwarg ") || text.contains("@keyword ") || text.contains("@kwparam ") ||
            text.contains("@raise ") || text.contains("@raises ") || text.contains("@except ") || text.contains("@exception ") ||
            text.contains("@return:") ||
-           text.contains("@rtype") || text.contains("@type");
+           text.contains("@rtype") || text.contains("@type") ||
+           text.contains("@var") || text.contains("@ivar") || text.contains("@cvar");
   }
 
   public static boolean isLikeGoogleDocString(@NotNull String text) {

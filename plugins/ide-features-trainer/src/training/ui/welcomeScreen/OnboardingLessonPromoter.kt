@@ -23,6 +23,7 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.ui.showOnboardingFeedbackNotification
+import training.util.enableLessonsAndPromoters
 import training.util.resetPrimaryLanguage
 import javax.swing.Icon
 import javax.swing.JLabel
@@ -43,6 +44,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
     return super.getPromotion(isEmptyState)
   }
   override fun canCreatePromo(isEmptyState: Boolean): Boolean =
+    enableLessonsAndPromoters &&
     !PropertiesComponent.getInstance().getBoolean(PROMO_HIDDEN, false) &&
     RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size < 5
 
@@ -64,7 +66,8 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
       logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
       return
     }
-    val primaryLanguage = lesson.module.primaryLanguage ?: error("No primary language for promoting lesson ${lesson.name}")
+    val primaryLanguage: String = lesson.module.primaryLanguage?.primaryLanguage
+                                  ?: error("No primary language for promoting lesson ${lesson.name}")
     resetPrimaryLanguage(primaryLanguage)
     LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
       OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson, selectedSdk)

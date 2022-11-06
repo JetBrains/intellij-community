@@ -37,8 +37,8 @@ internal class CheckProjectActivity : StartupActivity.DumbAware {
       return
     }
 
-    val watcher = (LocalFileSystem.getInstance() as? LocalFileSystemImpl ?: return).fileWatcher
-    if (!watcher.isOperational) {
+    val watcher = (LocalFileSystem.getInstance() as? LocalFileSystemImpl)?.fileWatcher
+    if (watcher == null || !watcher.isOperational) {
       ProjectFsStatsCollector.watchedRoots(project, -1)
       return
     }

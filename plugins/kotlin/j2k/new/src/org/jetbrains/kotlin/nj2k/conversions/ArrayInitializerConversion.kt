@@ -2,10 +2,11 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.PrimitiveType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.toArgumentList
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
@@ -22,7 +23,7 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApp
                 else
                     ArrayFqNames.ARRAY_OF_FUNCTION.asString()
             val typeArguments =
-                if (primitiveArrayType == null) JKTypeArgumentList(listOf(element::type.detached()))
+                if (primitiveArrayType == null) JKTypeArgumentList(element::type.detached())
                 else JKTypeArgumentList()
             newElement = JKCallExpressionImpl(
                 symbolProvider.provideMethodSymbol("kotlin.$arrayConstructorName"),
@@ -44,13 +45,12 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApp
                 JKCallExpressionImpl(
                     symbolProvider.provideMethodSymbol("kotlin.arrayOfNulls"),
                     JKArgumentList(dimensions[0]),
-                    JKTypeArgumentList(listOf(JKTypeElement(type)))
+                    JKTypeArgumentList(type)
                 )
             } else {
                 JKNewExpression(
                     symbolProvider.provideClassSymbol(type.arrayFqName()),
-                    JKArgumentList(dimensions[0]),
-                    JKTypeArgumentList(emptyList())
+                    JKArgumentList(dimensions[0])
                 )
             }
         }
@@ -67,7 +67,7 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApp
                         emptyList()
                     )
                 ),
-                JKTypeArgumentList(listOf(JKTypeElement(arrayType)))
+                JKTypeArgumentList(arrayType)
             )
         }
         var resultType = JKClassType(
@@ -85,7 +85,7 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApp
         return JKCallExpressionImpl(
             symbolProvider.provideMethodSymbol("kotlin.arrayOfNulls"),
             JKArgumentList(dimensions[0]),
-            JKTypeArgumentList(listOf(JKTypeElement(resultType)))
+            JKTypeArgumentList(resultType)
         )
     }
 }

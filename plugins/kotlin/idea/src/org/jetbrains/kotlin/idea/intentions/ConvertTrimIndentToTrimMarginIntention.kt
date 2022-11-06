@@ -7,9 +7,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ConvertTrimIndentToTrimMarginIntention : SelfTargetingIntention<KtCallExpression>(
     KtCallExpression::class.java, KotlinBundle.lazyMessage("convert.to.trim.margin")
@@ -31,12 +33,12 @@ class ConvertTrimIndentToTrimMarginIntention : SelfTargetingIntention<KtCallExpr
         val newTemplate = buildString {
             template.entries.forEach { entry ->
                 val text = entry.text
-                if (text.isLineBreakOrBlank()) {
-                    append(text)
-                } else {
+                if (entry.isStartOfLine()) {
                     append(indent)
                     append("|")
                     append(text.drop(indent.length))
+                } else {
+                    append(text)
                 }
             }
         }
@@ -49,13 +51,17 @@ class ConvertTrimIndentToTrimMarginIntention : SelfTargetingIntention<KtCallExpr
             return listOfNotNull(entries.firstOrNull(), entries.lastOrNull()).all { it.text.isLineBreakOrBlank() }
         }
 
-        fun String.isLineBreakOrBlank(): Boolean =
-            this == "\n" || this.isBlank()
+        private fun String.isLineBreakOrBlank(): Boolean = this == "\n" || this.isBlank()
 
         fun KtStringTemplateExpression.calculateIndent(): String =
-            entries.asSequence().mapNotNull { stringTemplateEntry ->
-                val text = stringTemplateEntry.text
-                if (text.isLineBreakOrBlank()) null else text.takeWhile { it.isWhitespace() }
-            }.minByOrNull { it.length } ?: ""
+            entries
+                .asSequence()
+                .mapNotNull { entry -> if (entry.isStartOfLine()) entry.text.takeWhile { it.isWhitespace() } else null }
+                .minByOrNull { it.length } ?: ""
+
+        fun KtStringTemplateEntry.isStartOfLine(): Boolean =
+            this.text != "\n" &&
+                    prevSibling.safeAs<KtStringTemplateEntry>()?.text == "\n" &&
+                    nextSibling.safeAs<KtStringTemplateEntry>() != null
     }
 }

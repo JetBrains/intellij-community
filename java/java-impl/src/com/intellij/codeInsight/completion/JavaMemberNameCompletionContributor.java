@@ -39,9 +39,6 @@ import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiField;
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author peter
- */
 public final class JavaMemberNameCompletionContributor extends CompletionContributor implements DumbAware {
   public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().
     afterLeaf(psiElement().withText("?").andOr(

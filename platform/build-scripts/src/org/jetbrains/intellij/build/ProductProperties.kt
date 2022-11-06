@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
@@ -13,12 +15,12 @@ import java.util.function.BiPredicate
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and build distribution of your product.
  */
-abstract class ProductProperties {
+abstract class ProductProperties() {
   /**
-   * The base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case
+   *  The base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case
    * (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip).
    */
-  lateinit var baseFileName: String
+  abstract val baseFileName: String
 
   /**
    * Deprecated: specify product code in 'number' attribute in 'build' tag in *ApplicationInfo.xml file instead (see its schema for details);
@@ -31,7 +33,8 @@ abstract class ProductProperties {
   /**
    * This value overrides specified product code in 'number' attribute in 'build' tag in *ApplicationInfo.xml file.
    */
-  var customProductCode: String? = null
+  open val customProductCode: String?
+    get() = null
 
   /**
    * Value of 'idea.platform.prefix' property. It's also used as a prefix for 'ApplicationInfo.xml' product descriptor.
@@ -96,7 +99,7 @@ abstract class ProductProperties {
   /**
    * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
    */
-  var customJvmMemoryOptions: MutableMap<String, String> = mutableMapOf()
+  var customJvmMemoryOptions: PersistentMap<String, String> = persistentMapOf()
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
@@ -225,7 +228,7 @@ abstract class ProductProperties {
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
    * todo(nik) get rid of this
    */
-  var additionalModulesToCompile: List<String> = emptyList()
+  var additionalModulesToCompile: PersistentList<String> = persistentListOf()
 
   /**
    * Specified modules which tests need to be compiled when product is built.
@@ -240,12 +243,12 @@ abstract class ProductProperties {
    * to allow users to customize location of the product runtime (`<PRODUCT>_JDK` variable),
    * *.vmoptions file (`<PRODUCT>_VM_OPTIONS`), `idea.properties` file (`<PRODUCT>_PROPERTIES`).
    */
-  open fun getEnvironmentVariableBaseName(applicationInfo: ApplicationInfoProperties) = applicationInfo.upperCaseProductName
+  open fun getEnvironmentVariableBaseName(appInfo: ApplicationInfoProperties) = appInfo.upperCaseProductName
 
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
   }
 
   /**
@@ -290,5 +293,12 @@ abstract class ProductProperties {
    * <p>
    * It's particularly useful when you want to limit modules used to calculate compatible plugins on the marketplace.
    */
-  open fun customizeBuiltinModules(context: BuildContext, builtinModulesFile: Path) { }
+  open fun customizeBuiltinModules(context: BuildContext, builtinModulesFile: Path) {}
+
+  /**
+   * When set to true, invokes keymap and inspections description generators during build.
+   * These generators produce artifacts utilized by documentation
+   * authoring tools and builds.
+   */
+  var buildDocAuthoringAssets: Boolean = false
 }

@@ -64,9 +64,6 @@ public class UnconditionalWaitInspection extends BaseInspection {
 
     private void checkBody(PsiCodeBlock body) {
       final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
-        return;
-      }
       for (final PsiStatement statement : statements) {
         if (isConditional(statement)) {
           return;

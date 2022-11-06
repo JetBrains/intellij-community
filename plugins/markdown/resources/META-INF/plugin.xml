@@ -325,6 +325,8 @@ Includes the following features:</p>
     <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
 
+    <focusModeProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownFocusModeProvider"/>
+
     <intentionAction>
       <language>Markdown</language>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
@@ -345,6 +347,14 @@ Includes the following features:</p>
                      groupKey="markdown.inspection.group.ruby.name"
                      enabledByDefault="true"
                      implementationClass="org.intellij.plugins.markdown.editor.toc.OutdatedTableOfContentsInspection"/>
+
+    <localInspection language="Markdown"
+                     shortName="MarkdownLinkDestinationWithSpaces"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.link.destination.with.spaces.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     implementationClass="org.intellij.plugins.markdown.lang.references.paths.MarkdownLinkDestinationWithSpacesInspection"/>
 
     <notificationGroup id="Markdown" displayType="BALLOON" bundle="messages.MarkdownBundle" key="notification.group.markdown"/>
 
@@ -433,17 +443,21 @@ Includes the following features:</p>
     <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
 
     <!--suppress PluginXmlValidity -->
-    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
+    <fenceGeneratingProvider order="last"
+                             implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>
 
-    <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
-    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
+    <fenceLanguageProvider id="DefaultMermaidCodeFenceLanguageProvider"
+                           implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
+    <browserPreviewExtensionProvider id="DefaultMermaidBrowserExtensionProvider"
+                                     implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
     <!--suppress PluginXmlValidity -->
-    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
+    <fenceGeneratingProvider id="DefaultMermaidCodeGeneratingProviderExtension"
+                             implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceCopyButtonBrowserExtension$Provider"/>
 

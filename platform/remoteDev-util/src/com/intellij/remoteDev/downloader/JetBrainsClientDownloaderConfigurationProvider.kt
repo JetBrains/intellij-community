@@ -7,10 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.util.getJetBrainsSystemCachesDir
 import com.intellij.remoteDev.util.onTerminationOrNow
-import com.intellij.util.io.exists
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.isFile
-import com.intellij.util.io.size
+import com.intellij.util.io.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Signal
 import com.sun.net.httpserver.HttpHandler
@@ -37,8 +34,13 @@ interface JetBrainsClientDownloaderConfigurationProvider {
 
   val verifySignature: Boolean
 
+  /**
+   * Due to macOS limitations, it's only possible to append to vmoptions, not patch it
+   */
   fun patchVmOptions(vmOptionsFile: Path)
   val clientLaunched: Signal<Unit>
+
+  val downloadLatestBuildFromCDNForSnapshotHost: Boolean
 }
 
 @ApiStatus.Experimental
@@ -60,6 +62,8 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override fun patchVmOptions(vmOptionsFile: Path) { }
   override val clientLaunched: Signal<Unit> = Signal()
+
+  override val downloadLatestBuildFromCDNForSnapshotHost = true
 }
 
 @ApiStatus.Experimental
@@ -87,6 +91,9 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override var verifySignature: Boolean = true
 
   override val clientLaunched: Signal<Unit> = Signal()
+
+  override val downloadLatestBuildFromCDNForSnapshotHost = false
+
   override fun patchVmOptions(vmOptionsFile: Path) {
     thisLogger().info("Patching $vmOptionsFile")
 

@@ -3,7 +3,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +89,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
       return;
     }
     if (component instanceof JTextComponent) {
-      UIUtil.addUndoRedoActions((JTextComponent)component);
+      SwingUndoUtil.addUndoRedoActions((JTextComponent)component);
     }
     setFocusedComponentImpl(component, e);
     setNearestFocusableComponent(component.getParent());

@@ -7,6 +7,7 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -23,7 +24,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.FileAnnotation.RevisionChangesProvider;
-import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
@@ -37,11 +37,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumberListener {
+final class ShowDiffFromAnnotation extends DumbAwareAction {
   private final @NotNull Project myProject;
   private final FileAnnotation myFileAnnotation;
   private final RevisionChangesProvider myChangesProvider;
-  private int currentLine = -1;
 
   ShowDiffFromAnnotation(@NotNull Project project,
                          @NotNull FileAnnotation fileAnnotation) {
@@ -53,20 +52,20 @@ final class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLi
   }
 
   @Override
-  public void consume(Integer integer) {
-    currentLine = integer;
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final int number = currentLine;
+    final int number = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
     e.getPresentation().setVisible(myChangesProvider != null);
     e.getPresentation().setEnabled(myChangesProvider != null && number >= 0 && number < myFileAnnotation.getLineCount());
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final int actualNumber = currentLine;
+    final int actualNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
     if (actualNumber < 0) return;
 
     VcsRevisionNumber revisionNumber = myFileAnnotation.getLineRevisionNumber(actualNumber);

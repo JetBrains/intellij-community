@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -20,7 +19,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class IntEntityImpl : IntEntity, WorkspaceEntityBase() {
+open class IntEntityImpl(val dataSource: IntEntityData) : IntEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,13 +29,16 @@ open class IntEntityImpl : IntEntity, WorkspaceEntityBase() {
 
   }
 
-  override var data: Int = 0
+  override val data: Int get() = dataSource.data
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: IntEntityData?) : ModifiableWorkspaceEntityBase<IntEntity>(), IntEntity.Builder {
+  class Builder(result: IntEntityData?) : ModifiableWorkspaceEntityBase<IntEntity, IntEntityData>(result), IntEntity.Builder {
     constructor() : this(IntEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -54,6 +56,9 @@ open class IntEntityImpl : IntEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -74,8 +79,8 @@ open class IntEntityImpl : IntEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as IntEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
       }
     }
@@ -85,7 +90,7 @@ open class IntEntityImpl : IntEntity, WorkspaceEntityBase() {
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -94,11 +99,10 @@ open class IntEntityImpl : IntEntity, WorkspaceEntityBase() {
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): IntEntityData = result ?: super.getEntityData() as IntEntityData
     override fun getEntityClass(): Class<IntEntity> = IntEntity::class.java
   }
 }
@@ -107,25 +111,21 @@ class IntEntityData : WorkspaceEntityData<IntEntity>() {
   var data: Int = 0
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<IntEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<IntEntity> {
     val modifiable = IntEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): IntEntity {
-    val entity = IntEntityImpl()
-    entity.data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = IntEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -150,7 +150,7 @@ class IntEntityData : WorkspaceEntityData<IntEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as IntEntityData
 
@@ -161,7 +161,7 @@ class IntEntityData : WorkspaceEntityData<IntEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as IntEntityData
 

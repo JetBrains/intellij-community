@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.messages.Topic;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -28,8 +29,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.IntStream;
+import java.util.Map;
+import java.util.Set;
 
 import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.addGroupValues;
 
@@ -45,6 +46,9 @@ public class PyStackFrame extends XStackFrame {
   private final XSourcePosition myPosition;
 
   private @Nullable Map<String, PyDebugValueDescriptor> myChildrenDescriptors;
+
+  @Topic.AppLevel
+  public static final Topic<PyStackFrameRefreshedListener> TOPIC = new Topic<>(PyStackFrameRefreshedListener.class);
 
   public PyStackFrame(@NotNull Project project,
                       @NotNull final PyFrameAccessor debugProcess,
@@ -170,6 +174,7 @@ public class PyStackFrame extends XStackFrame {
       addGroupValues(PyBundle.message("debugger.stack.frame.special.variables"),
                      PythonIcons.Python.Debug.SpecialVar, node, null, myDebugProcess, ProcessDebugger.GROUP_TYPE.SPECIAL, null);
     }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).stackFrameRefreshed();
   }
 
   public String getThreadId() {
@@ -217,5 +222,9 @@ public class PyStackFrame extends XStackFrame {
       }
       value.setDescriptor(descriptor);
     }
+  }
+
+  public interface PyStackFrameRefreshedListener {
+    void stackFrameRefreshed();
   }
 }

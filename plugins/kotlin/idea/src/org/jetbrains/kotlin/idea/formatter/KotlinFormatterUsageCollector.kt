@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -12,10 +12,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.*
-import org.jetbrains.kotlin.idea.search.containsKotlinFile
 
 class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
     override fun requiresReadAccess() = true
@@ -23,7 +23,7 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-        if (KotlinPlatformUtils.isAndroidStudio || project.runReadActionInSmartMode { !project.containsKotlinFile() }) {
+        if (KotlinPlatformUtils.isAndroidStudio || project.runReadActionInSmartMode { !project.containsNonScriptKotlinFile() }) {
             return emptySet()
         }
 

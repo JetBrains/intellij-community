@@ -76,18 +76,16 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
 
   @Test
   public void testAddManagedLibraryDependency() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<dependencyManagement>\n" +
-                  "    <dependencies>\n" +
-                  "        <dependency>\n" +
-                  "            <groupId>commons-io</groupId>\n" +
-                  "            <artifactId>commons-io</artifactId>\n" +
-                  "            <version>2.4</version>\n" +
-                  "        </dependency>\n" +
-                  "    </dependencies>\n" +
-                  "</dependencyManagement>");
+    importProject("""
+                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>commons-io</groupId>
+                                <artifactId>commons-io</artifactId>
+                                <version>2.4</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>""");
 
     Promise<Void> result =
       getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,
@@ -99,19 +97,17 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
 
   @Test
   public void testAddManagedLibraryDependencyWithDifferentScope() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<dependencyManagement>\n" +
-                  "    <dependencies>\n" +
-                  "        <dependency>\n" +
-                  "            <groupId>commons-io</groupId>\n" +
-                  "            <artifactId>commons-io</artifactId>\n" +
-                  "            <version>2.4</version>\n" +
-                  "            <scope>test</scope>\n" +
-                  "        </dependency>\n" +
-                  "    </dependencies>\n" +
-                  "</dependencyManagement>");
+    importProject("""
+                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>commons-io</groupId>
+                                <artifactId>commons-io</artifactId>
+                                <version>2.4</version>
+                                <scope>test</scope>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>""");
 
     Promise<Void> result =
       getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), COMMONS_IO_LIBRARY_DESCRIPTOR_2_4,

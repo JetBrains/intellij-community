@@ -19,7 +19,7 @@ import com.intellij.util.ui.WrapLayout
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModel
-import org.jetbrains.plugins.github.util.CollectionDelta
+import com.intellij.collaboration.util.CollectionDelta
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture

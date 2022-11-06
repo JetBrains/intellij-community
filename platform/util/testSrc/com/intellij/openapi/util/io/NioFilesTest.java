@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
@@ -17,10 +20,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
+import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertSame;
 
 public class NioFilesTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -161,5 +164,39 @@ public class NioFilesTest {
     assertThat(NioFiles.list(dir)).containsExactlyInAnyOrder(f1, f2);
     assertThat(NioFiles.list(f1)).isEmpty();
     assertThat(NioFiles.list(dir.resolve("missing_file"))).isEmpty();
+  }
+
+  @Test
+  public void circularSymlinkAttributesReading() throws IOException {
+    assumeSymLinkCreationIsSupported();
+    var symlink = tempDir.getRootPath().resolve("symlink");
+    Files.createSymbolicLink(symlink, symlink);
+    assertTrue(NioFiles.readAttributes(symlink).isSymbolicLink());
+    assertSame(FileAttributes.BROKEN_SYMLINK, FileSystemUtil.getAttributes(symlink.toString()));
+  }
+
+  @Test
+  public void wslSymlinkAttributesReading() throws IOException {
+    var distribution = assumeWorkingWslDistribution();
+    var tempDirPrefix = UsefulTestCase.TEMP_DIR_MARKER + "wslSymlinkAttributesReading" + "_";
+    var tempDir = Files.createTempDirectory(Path.of("\\\\wsl$\\" + distribution + "\\tmp"), tempDirPrefix);
+    var tmpPath = "/tmp/" + tempDir.getFileName() + '/';
+    try {
+      var fileLink = tempDir.resolve("fileLink");
+      var dirLink = tempDir.resolve("dirLink");
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine("wsl", "-d", distribution, "-e", "ln", "-s", "file", tmpPath + fileLink.getFileName()));
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine("wsl", "-d", distribution, "-e", "ln", "-s", "dir", tmpPath + dirLink.getFileName()));
+      Files.writeString(tempDir.resolve("file"), "...");
+      Files.createDirectories(tempDir.resolve("dir"));
+
+      assertSame(NioFiles.BROKEN_SYMLINK, NioFiles.readAttributes(fileLink));
+      assertSame(NioFiles.BROKEN_SYMLINK, NioFiles.readAttributes(dirLink));
+
+      assertSame(FileAttributes.BROKEN_SYMLINK, FileSystemUtil.getAttributes(fileLink.toString()));
+      assertSame(FileAttributes.BROKEN_SYMLINK, FileSystemUtil.getAttributes(dirLink.toString()));
+    }
+    finally {
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine("wsl", "-d", distribution, "-e", "rm", "-rf", tmpPath));
+    }
   }
 }

@@ -42,7 +42,7 @@ public abstract class AbstractProcessor implements Processor {
    * @param supportedAnnotationClasses annotations this processor supports
    */
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                              @NotNull String... supportedAnnotationClasses) {
+                              @NotNull String @NotNull ... supportedAnnotationClasses) {
     this.configDiscovery = ConfigDiscovery.getInstance();
     this.supportedClass = supportedClass;
     this.supportedAnnotationClasses = supportedAnnotationClasses;

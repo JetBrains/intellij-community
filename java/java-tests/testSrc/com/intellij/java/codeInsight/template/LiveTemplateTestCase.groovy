@@ -12,9 +12,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 abstract class LiveTemplateTestCase extends LightJavaCodeInsightFixtureTestCase {
   @Override

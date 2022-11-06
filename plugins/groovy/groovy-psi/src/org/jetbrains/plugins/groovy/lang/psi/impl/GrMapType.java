@@ -17,9 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public abstract class GrMapType extends GrLiteralClassType {
   private final NotNullLazyValue<PsiType[]> myParameters = NotNullLazyValue.volatileLazy(() -> {
     final PsiType[] keyTypes = getAllKeyTypes();

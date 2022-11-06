@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -99,22 +98,15 @@ public class InjectedLanguageUtilBase {
     @NotNull public final IElementType type;
     @NotNull public final ProperTextRange rangeInsideInjectionHost;
     public final int shredIndex;
-    /**
-     * @deprecated Use textAttributesKeys
-     */
-    @Deprecated(forRemoval = true)
-    public final TextAttributes attributes;
     public final TextAttributesKey @NotNull [] textAttributesKeys;
 
     public TokenInfo(@NotNull IElementType type,
                      @NotNull ProperTextRange rangeInsideInjectionHost,
                      int shredIndex,
-                     @NotNull TextAttributes attributes,
                      TextAttributesKey @NotNull [] textAttributesKeys) {
       this.type = type;
       this.rangeInsideInjectionHost = rangeInsideInjectionHost;
       this.shredIndex = shredIndex;
-      this.attributes = attributes;
       this.textAttributesKeys = textAttributesKeys;
     }
   }
@@ -141,7 +133,7 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated use {@link InjectedLanguageManager#enumerate(PsiElement, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static boolean enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
     PsiUtilCore.ensureValid(containingFile);
@@ -151,7 +143,7 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated use {@link InjectedLanguageManager#enumerateEx(PsiElement, PsiFile, boolean, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static boolean enumerate(@NotNull PsiElement host,
                                   @NotNull PsiFile containingFile,
                                   boolean probeUp,
@@ -431,7 +423,7 @@ public class InjectedLanguageUtilBase {
    * @deprecated use {@link InjectedLanguageManager#getCachedInjectedDocumentsInRange(PsiFile, TextRange)} instead
    */
   @NotNull
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static ConcurrentList<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
     // modification of cachedInjectedDocuments must be under InjectedLanguageManagerImpl.ourInjectionPsiLock only
     List<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);

@@ -54,6 +54,11 @@ public abstract class BackspaceHandlerTestGenerated extends AbstractBackspaceHan
             runTest("testData/editor/backspaceHandler/betweenOpenBraceAndParenthesis.kt");
         }
 
+        @TestMetadata("FileStart.kt")
+        public void testFileStart() throws Exception {
+            runTest("testData/editor/backspaceHandler/FileStart.kt");
+        }
+
         @TestMetadata("rawStringDelete.kt")
         public void testRawStringDelete() throws Exception {
             runTest("testData/editor/backspaceHandler/rawStringDelete.kt");

@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Companion.calculateIndent
-import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Companion.isLineBreakOrBlank
+import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Companion.isStartOfLine
 import org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention.Companion.isSurroundedByLineBreaksOrBlanks
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -28,9 +28,8 @@ class ConvertTrimMarginToTrimIndentIntention : SelfTargetingIntention<KtCallExpr
         if (!template.isSurroundedByLineBreaksOrBlanks()) return false
 
         val marginPrefix = element.marginPrefix() ?: return false
-        return template.entries.drop(1).dropLast(1).all { stringTemplateEntry ->
-            val text = stringTemplateEntry.text
-            text.isLineBreakOrBlank() || text.dropWhile { it.isWhitespace() }.startsWith(marginPrefix)
+        return template.entries.all { entry ->
+            !entry.isStartOfLine() || entry.text.dropWhile { it.isWhitespace() }.startsWith(marginPrefix)
         }
     }
 
@@ -42,11 +41,11 @@ class ConvertTrimMarginToTrimIndentIntention : SelfTargetingIntention<KtCallExpr
         val newTemplate = buildString {
             template.entries.forEach { entry ->
                 val text = entry.text
-                if (text.isLineBreakOrBlank()) {
-                    append(text)
-                } else {
+                if (entry.isStartOfLine()) {
                     append(indent)
                     append(entry.text.dropWhile { it.isWhitespace() }.replaceFirst(marginPrefix, ""))
+                } else {
+                    append(text)
                 }
             }
         }

@@ -24,22 +24,24 @@ public class DataFlowInspectionCancellingTest extends DataFlowInspectionTestCase
   }
 
   public void testCancelledStreamInlining() {
-    @Language("Java") String content = "import java.util.*;\n" +
-                                       "import java.util.function.*;\n" +
-                                       "import java.util.stream.*;\n" +
-                                       "\n" +
-                                       "/** @noinspection ConstantConditions*/ class X {\n" +
-                                       "  List<Integer> testTryCatchInStream(List<String> input) {\n" +
-                                       "    return input.stream().map(a -> {\n" +
-                                       "      try {\n" +
-                                       "        return Integer.parseInt(a);\n" +
-                                       "      }\n" +
-                                       "      catch (NumberFormatException ex) {\n" +
-                                       "        return -1;\n" +
-                                       "      }\n" +
-                                       "    }).filter(Objects::nonNull).collect(Collectors.toList());\n" +
-                                       "  }\n" +
-                                       "}\n";
+    @Language("Java") String content = """
+      import java.util.*;
+      import java.util.function.*;
+      import java.util.stream.*;
+
+      /** @noinspection ConstantConditions*/ class X {
+        List<Integer> testTryCatchInStream(List<String> input) {
+          return input.stream().map(a -> {
+            try {
+              return Integer.parseInt(a);
+            }
+            catch (NumberFormatException ex) {
+              return -1;
+            }
+          }).filter(Objects::nonNull).collect(Collectors.toList());
+        }
+      }
+      """;
     PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, content);
     PsiMethod method = file.getClasses()[0].getMethods()[0];
     PsiCodeBlock body = method.getBody();

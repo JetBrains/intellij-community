@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -9,23 +9,21 @@ import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class UnwrapSwitchLabelFix implements LocalQuickFix {
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -45,8 +43,8 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     if (block == null) return;
     List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class);
     boolean shouldKeepDefault = block instanceof PsiSwitchExpression &&
-                                !(labelStatement instanceof PsiSwitchLabeledRuleStatement &&
-                                  ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
+                                !(labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement &&
+                                  ruleStatement.getBody() instanceof PsiExpressionStatement);
     for (PsiSwitchLabelStatementBase otherLabel : labels) {
       if (otherLabel == labelStatement) continue;
       if (!shouldKeepDefault || !SwitchUtils.isDefaultLabel(otherLabel)) {
@@ -69,17 +67,18 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     if (labelElementList != null) {
       for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
         if (labelElement instanceof PsiDefaultCaseLabelElement) continue;
-        new CommentTracker().deleteAndRestoreComments(labelElement);      }
+        new CommentTracker().deleteAndRestoreComments(labelElement);
+      }
     }
   }
 
   private static void tryUnwrap(@NotNull PsiSwitchLabelStatementBase labelStatement, @NotNull PsiCaseLabelElement label,
                                 @NotNull PsiSwitchBlock block) {
-    if (block instanceof PsiSwitchStatement) {
+    if (block instanceof PsiSwitchStatement switchStatement) {
       BreakConverter converter = BreakConverter.from(block);
       if (converter == null) return;
       converter.process();
-      unwrapStatement(labelStatement, label, (PsiSwitchStatement)block);
+      unwrapStatement(labelStatement, label, switchStatement);
     }
     else {
       unwrapExpression((PsiSwitchExpression)block, label);
@@ -89,21 +88,18 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
   private static void unwrapStatement(@NotNull PsiSwitchLabelStatementBase labelStatement, @NotNull PsiCaseLabelElement label,
                                       @NotNull PsiSwitchStatement switchStatement) {
     PsiCodeBlock block = switchStatement.getBody();
-    PsiStatement body =
-      labelStatement instanceof PsiSwitchLabeledRuleStatement ? ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() : null;
-    List<PsiLocalVariable> variables = Collections.emptyList();
+    PsiStatement body = labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement ? ruleStatement.getBody() : null;
+    List<PsiLocalVariable> variables;
     if (body == null) {
-      if (block != null) {
-        variables = createVariables(label, switchStatement, block);
-      }
+      variables = block != null ? collectVariables(label, switchStatement) : Collections.emptyList();
       new CommentTracker().deleteAndRestoreComments(labelStatement);
     }
-    else if (body instanceof PsiBlockStatement) {
-      variables = createVariables(label, switchStatement, body);
-      block = ((PsiBlockStatement)body).getCodeBlock();
+    else if (body instanceof PsiBlockStatement blockStatement) {
+      variables = collectVariables(label, switchStatement);
+      block = blockStatement.getCodeBlock();
     }
     else {
-      variables = createVariables(label, switchStatement, body);
+      variables = collectVariables(label, switchStatement);
       new CommentTracker().replaceAndRestoreComments(labelStatement, body);
     }
     PsiCodeBlock parent = ObjectUtils.tryCast(switchStatement.getParent(), PsiCodeBlock.class);
@@ -114,24 +110,50 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       ct.insertCommentsBefore(switchStatement);
       PsiElement firstElementAdded = BlockUtils.inlineCodeBlock(switchStatement, block);
       if (firstElementAdded != null) {
-        for (PsiLocalVariable variable : variables) {
-          addVariable(variable, firstElementAdded, parent);
-        }
+        variables.replaceAll(variable -> addVariable(variable, firstElementAdded, parent));
+        inline(variables, parent);
       }
     }
     else if (block != null) {
+      PsiBlockStatement element = (PsiBlockStatement)ct.replaceAndRestoreComments(switchStatement, ct.text(block));
       if (!variables.isEmpty()) {
-        PsiStatement firstStatement = ArrayUtil.getFirstElement(block.getStatements());
+        PsiStatement firstStatement = ArrayUtil.getFirstElement(element.getCodeBlock().getStatements());
         if (firstStatement != null) {
-          for (PsiLocalVariable variable : variables) {
-            block.addBefore(variable, firstStatement);
-          }
+          PsiCodeBlock variableParent = element.getCodeBlock();
+          variables.replaceAll(variable -> addVariable(variable, firstStatement, variableParent));
+          inline(variables, variableParent);
         }
       }
-      ct.replaceAndRestoreComments(switchStatement, ct.text(block));
     }
     else {
       ct.deleteAndRestoreComments(switchStatement);
+    }
+  }
+
+  private static void inline(@NotNull List<PsiLocalVariable> variables, @NotNull PsiElement variableParent) {
+    if (variables.isEmpty()) return;
+    var inlineUtil = CommonJavaInlineUtil.getInstance();
+    for (int i = variables.size() - 1; i > 0; i--) {
+      inline(variables.get(i), inlineUtil);
+    }
+    PsiLocalVariable firstVariable = variables.get(0);
+    if (VariableAccessUtils.isLocalVariableCopy(firstVariable)) {
+      inline(firstVariable, inlineUtil);
+    }
+    else if (!VariableAccessUtils.variableIsUsed(firstVariable, variableParent)) {
+      firstVariable.delete();
+    }
+  }
+
+  private static void inline(@NotNull PsiLocalVariable variable, @NotNull CommonJavaInlineUtil inlineUtil) {
+    final PsiExpression initializer = variable.getInitializer();
+    assert initializer != null;
+    final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+    for (PsiReference reference : references) {
+      inlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference, null);
+    }
+    if (!VariableAccessUtils.variableIsAssigned(variable)) {
+      variable.delete();
     }
   }
 
@@ -148,12 +170,11 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     PsiCodeBlock body = switchExpression.getBody();
     if (body == null) return;
     PsiStatement[] statements = body.getStatements();
-    if (statements.length != 1 || !(statements[0] instanceof PsiSwitchLabeledRuleStatement)) return;
-    PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)statements[0];
+    if (statements.length != 1 || !(statements[0] instanceof PsiSwitchLabeledRuleStatement rule)) return;
     PsiStatement ruleBody = rule.getBody();
-    if (!(ruleBody instanceof PsiExpressionStatement)) return;
+    if (!(ruleBody instanceof PsiExpressionStatement expressionStatement)) return;
     if (label == null) {
-      new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());
+      new CommentTracker().replaceAndRestoreComments(switchExpression, expressionStatement.getExpression());
       return;
     }
     CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(switchExpression);
@@ -164,150 +185,112 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       ruleBody = rule.getBody();
       if (ruleBody == null) return;
       label = Objects.requireNonNull(rule.getCaseLabelElementList()).getElements()[0];
-      List<PsiLocalVariable> variables = createVariables(label, switchExpression, ruleBody);
+      List<PsiLocalVariable> variables = collectVariables(label, switchExpression);
       if (variables.isEmpty()) {
         new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());
+        surroundResult.collapse();
         return;
       }
       new CommentTracker().replaceAndRestoreComments(switchExpression, ((PsiExpressionStatement)ruleBody).getExpression());
-      for (PsiLocalVariable variable : variables) {
-        addVariable(variable, surroundResult.getAnchor(), surroundResult.getAnchor().getParent());
-      }
+      variables.replaceAll(variable -> addVariable(variable, surroundResult.getAnchor(), surroundResult.getAnchor().getParent()));
+      inline(variables, surroundResult.getAnchor().getParent());
     }
   }
 
   /**
    * @param label       a switch label element
    * @param switchBlock a considered switch block
-   * @param body        a body of either switch labeled rule if <code>switchBlock</code> consists of labeled rules,
-   *                    or a body of the entire switch statement
    * @return a list of local variables extracted from a pattern variable if it's possible and necessary.
-   * If a pattern variable type is not total for selector type, a type cast expression will be created then.
    */
   @NotNull
-  private static List<PsiLocalVariable> createVariables(@NotNull PsiCaseLabelElement label,
-                                                        @NotNull PsiSwitchBlock switchBlock,
-                                                        @NotNull PsiElement body) {
-    if (!(label instanceof PsiPattern)) return Collections.emptyList();
+  private static List<PsiLocalVariable> collectVariables(@NotNull PsiCaseLabelElement label,
+                                                         @NotNull PsiSwitchBlock switchBlock) {
+    PsiPrimaryPattern pattern = JavaPsiPatternUtil.getTypedPattern(label);
+    if (pattern == null) return Collections.emptyList();
+    PsiType type = JavaPsiPatternUtil.getPatternType(pattern);
+    if (type == null) return Collections.emptyList();
     PsiExpression selector = switchBlock.getExpression();
     if (selector == null) return Collections.emptyList();
     PsiType selectorType = selector.getType();
     if (selectorType == null) return Collections.emptyList();
-    String selectorText = selector.getText();
-    VariablesCreator variablesCreator;
-    if (label instanceof PsiDeconstructionPattern) {
-      variablesCreator = new DeconstructionPatternVariablesCreator((PsiDeconstructionPattern)label, selectorType, selectorText, body);
-      if (!variablesCreator.myPatterns.hasNext()) return Collections.emptyList();
+    PsiPatternVariable topLevelVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
+    String declarationStatementText = type.getPresentableText() + " ";
+    if (topLevelVariable != null) {
+      declarationStatementText += topLevelVariable.getName() + "=";
     }
     else {
-      variablesCreator = new PatternVariablesCreator((PsiPattern)label, selectorType, selectorText, body);
+      VariableNameGenerator generator = new VariableNameGenerator(switchBlock, VariableKind.LOCAL_VARIABLE);
+      String newVarName = generator.byType(JavaPsiPatternUtil.getPatternType(label)).generate(true);
+      declarationStatementText += newVarName + "=";
     }
-    return variablesCreator.createVariables();
+    if (!type.isAssignableFrom(selectorType)) {
+      declarationStatementText += "(" + type.getPresentableText() + ")";
+    }
+    declarationStatementText += selector.getText() + ";";
+    PsiLocalVariable newVariable = createVariable(declarationStatementText, label);
+    if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
+      PsiFile copy = (PsiFile)switchBlock.getContainingFile().copy();
+      PsiElement contextCopy = PsiTreeUtil.findSameElementInCopy(switchBlock.getParent(), copy);
+      contextCopy.add(newVariable);
+      ArrayList<PsiLocalVariable> list = new ArrayList<>();
+      list.add(newVariable);
+      return collectVariables(deconstructionPattern, newVariable, contextCopy, list);
+    }
+    return new SmartList<>(newVariable);
   }
 
-  abstract static class VariablesCreator {
-
-    private final @NotNull PsiPattern myLabel;
-    protected final @NotNull String mySelectorText;
-    protected final @NotNull PsiType mySelectorType;
-    protected final @NotNull Iterator<PsiPattern> myPatterns;
-    private final @NotNull PsiElement myBody;
-
-    protected VariablesCreator(@NotNull PsiPattern label,
-                               @NotNull PsiType selectorType,
-                               @NotNull String selectorText,
-                               @NotNull Iterator<PsiPattern> patterns, @NotNull PsiElement body) {
-      myLabel = label;
-      mySelectorText = selectorText;
-      mySelectorType = selectorType;
-      myPatterns = patterns;
-      myBody = body;
-    }
-
-    @NotNull
-    public SmartList<PsiLocalVariable> createVariables() {
-      JBIterable<PsiReferenceExpression> bodyTraverser = SyntaxTraverser.psiTraverser(myBody).filter(PsiReferenceExpression.class);
-      PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(myLabel, PsiSwitchLabelStatementBase.class);
-      if (labelStatement instanceof PsiSwitchLabelStatement) {
-        bodyTraverser =
-          bodyTraverser.filter(expr -> PsiTreeUtil.getParentOfType(expr, PsiSwitchLabelStatementBase.class) != labelStatement);
-      }
-      SmartList<PsiLocalVariable> result = new SmartList<>();
-      while (myPatterns.hasNext()) {
-        PsiPatternVariable patternVar = JavaPsiPatternUtil.getPatternVariable(myPatterns.next());
-        PsiLocalVariable variable = createVariable(myLabel, bodyTraverser, patternVar);
-        ContainerUtil.addIfNotNull(result, variable);
-      }
-      return result;
-    }
-
-    @Nullable
-    private PsiLocalVariable createVariable(@NotNull PsiCaseLabelElement label,
-                                            @NotNull JBIterable<PsiReferenceExpression> bodyTraverser,
-                                            @Nullable PsiPatternVariable patternVar) {
-      if (patternVar == null) return null;
-      if (bodyTraverser.find(expr -> expr.resolve() == patternVar) == null) return null;
-      String declarationStatementText = Objects.requireNonNull(patternVar.getPattern()).getText() + "=" + getVariableAssigment(patternVar);
-      return (PsiLocalVariable)((PsiDeclarationStatement)JavaPsiFacade.getInstance(label.getProject()).getParserFacade()
-        .createStatementFromText(declarationStatementText, label)).getDeclaredElements()[0];
-    }
-
-    @NotNull
-    abstract String getVariableAssigment(PsiPatternVariable patternVar);
-  }
-
-  static class DeconstructionPatternVariablesCreator extends VariablesCreator {
-    private final @NotNull Iterator<PsiRecordComponent> myRecordComponents;
-
-    DeconstructionPatternVariablesCreator(@NotNull PsiDeconstructionPattern pattern,
-                                          @NotNull PsiType selectorType,
-                                          @NotNull String selectorText,
-                                          @NotNull PsiElement body) {
-      super(pattern, selectorType, selectorText, ContainerUtil.iterate(getDeconstructionComponents(pattern)), body);
-      PsiClass aClass = ((PsiClassType)selectorType).resolve();
-      if (aClass != null) {
-        PsiRecordComponent[] recordComponents = aClass.getRecordComponents();
-        if (getDeconstructionComponents(pattern).length == recordComponents.length) {
-          myRecordComponents = ContainerUtil.iterate(recordComponents);
-          return;
-        }
-      }
-      myPatterns.forEachRemaining((ignore) -> {});
-      myRecordComponents = Collections.emptyIterator();
-    }
-
-    private static @NotNull PsiPattern @NotNull [] getDeconstructionComponents(@NotNull PsiDeconstructionPattern pattern) {
-      return pattern.getDeconstructionList().getDeconstructionComponents();
-    }
-
-    @Override
-    @NotNull
-    String getVariableAssigment(PsiPatternVariable ignore) {
-      return mySelectorText + "." + myRecordComponents.next().getName() + "();";
-    }
-  }
-
-  static class PatternVariablesCreator extends VariablesCreator {
-
-    PatternVariablesCreator(@NotNull PsiPattern pattern,
-                            @NotNull PsiType selectorType,
-                            @NotNull String selectorText,
-                            @NotNull PsiElement body) {
-      super(pattern, selectorType, selectorText, Collections.singleton(pattern).iterator(), body);
-    }
-
-    @Override
-    @NotNull
-    String getVariableAssigment(PsiPatternVariable patternVar) {
-      String typeCastIfNeeded;
-      if (!JavaPsiPatternUtil.isTotalForType(patternVar.getPattern(), mySelectorType)) {
-        typeCastIfNeeded = "(" + patternVar.getTypeElement().getType().getPresentableText() + ")";
+  /**
+   * @param pattern  record pattern for which component variables are extracted
+   * @param variable variable already extracted for the record pattern under consideration
+   * @param context  record patterns may not have variables, so it is necessary to generate variable names for such patterns.
+   *                 To avoid naming conflicts, this context will be used and extracted variables will be added to it
+   * @param result   the list to collect all extracted variables
+   * @return a list of local variables extracted from a pattern variable if it's possible and necessary
+   */
+  private static List<PsiLocalVariable> collectVariables(@NotNull PsiDeconstructionPattern pattern,
+                                                         @NotNull PsiLocalVariable variable,
+                                                         @NotNull PsiElement context,
+                                                         @NotNull List<PsiLocalVariable> result) {
+    PsiClassType classType = ObjectUtils.tryCast(pattern.getTypeElement().getType(), PsiClassType.class);
+    if (classType == null) return Collections.emptyList();
+    PsiClass aClass = classType.resolve();
+    if (aClass == null) return Collections.emptyList();
+    PsiRecordComponent[] components = aClass.getRecordComponents();
+    PsiPattern[] deconstructionComponents = pattern.getDeconstructionList().getDeconstructionComponents();
+    if (components.length != deconstructionComponents.length) return Collections.emptyList();
+    for (int i = 0; i < deconstructionComponents.length; i++) {
+      PsiPattern deconstructionComponent = deconstructionComponents[i];
+      PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(deconstructionComponent);
+      if (patternVariable == null && !(deconstructionComponent instanceof PsiDeconstructionPattern)) return Collections.emptyList();
+      PsiType type = JavaPsiPatternUtil.getPatternType(deconstructionComponent);
+      if (type == null) return Collections.emptyList();
+      String declarationStatementText = type.getPresentableText() + " ";
+      if (patternVariable != null) {
+        declarationStatementText += patternVariable.getName() + "=";
       }
       else {
-        typeCastIfNeeded = "";
+        VariableNameGenerator generator = new VariableNameGenerator(context, VariableKind.LOCAL_VARIABLE);
+        String newVarName = generator.byType(type).generate(true);
+        declarationStatementText += newVarName + "=";
       }
-      return typeCastIfNeeded + mySelectorText + ";";
+      if (!type.isAssignableFrom(components[i].getType())) {
+        declarationStatementText += "(" + type.getPresentableText() + ")";
+      }
+      declarationStatementText += variable.getName() + "." + components[i].getName() + "();";
+      PsiLocalVariable newVariable = createVariable(declarationStatementText, pattern);
+      context.add(newVariable);
+      result.add(newVariable);
+      if (deconstructionComponent instanceof PsiDeconstructionPattern deconstructionPattern) {
+        collectVariables(deconstructionPattern, newVariable, context, result);
+      }
     }
+    return result;
+  }
+
+  private static @NotNull PsiLocalVariable createVariable(@NotNull String declarationStatementText, @NotNull PsiElement context) {
+    PsiJavaParserFacade facade = JavaPsiFacade.getInstance(context.getProject()).getParserFacade();
+    PsiDeclarationStatement statement = (PsiDeclarationStatement)facade.createStatementFromText(declarationStatementText, context);
+    return (PsiLocalVariable)statement.getDeclaredElements()[0];
   }
 
   /**
@@ -318,20 +301,26 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
    * @param variableSibling is used as anchor for <code>variable</code> to be added
    * @param variableParent  parent for both <code>variable</code> and <code>variableSibling</code>.
    *                        Mostly used to detect a conflict and to add <code>variable</code> as a child.
+   * @return the element which was actually added
    */
-  private static void addVariable(@NotNull PsiLocalVariable variable, @NotNull PsiElement variableSibling, @NotNull PsiElement variableParent) {
+  private static @NotNull PsiLocalVariable addVariable(@NotNull PsiLocalVariable variable,
+                                                       @NotNull PsiElement variableSibling,
+                                                       @NotNull PsiElement variableParent) {
     boolean hasConflictingDeclaration = hasConflictingDeclaration(variable, variableParent);
     PsiStatement declaration = JavaPsiFacade.getInstance(variableSibling.getProject()).getParserFacade()
       .createStatementFromText(variable.getText(), variableSibling);
     variable = (PsiLocalVariable)((PsiDeclarationStatement)variableParent.addBefore(declaration, variableSibling)).getDeclaredElements()[0];
-    if (!hasConflictingDeclaration) return;
-    String newVarName = JavaCodeStyleManager.getInstance(variableParent.getProject())
-      .suggestUniqueVariableName(variable.getName(), variableParent, true);
-    for (PsiReference ref : VariableAccessUtils.getVariableReferences(variable, variableParent)) {
-      ref.handleElementRename(newVarName);
+    if (hasConflictingDeclaration) {
+      String newVarName = JavaCodeStyleManager.getInstance(variableParent.getProject())
+        .suggestUniqueVariableName(variable.getName(), variableParent, true);
+      for (PsiReference ref : VariableAccessUtils.getVariableReferences(variable, variableParent)) {
+        ref.handleElementRename(newVarName);
+      }
+      variable.setName(newVarName);
     }
-    variable.setName(newVarName);
+    return variable;
   }
+
 
   private static boolean hasConflictingDeclaration(@NotNull PsiLocalVariable variable, @NotNull PsiElement context) {
     return !JavaCodeStyleManager.getInstance(context.getProject()).suggestUniqueVariableName(variable.getName(), context, true)

@@ -2,25 +2,23 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters.Companion.isOpenedInBulk
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.concurrency.Semaphore
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
+import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 
 class AsyncEditorLoader internal constructor(private val textEditor: TextEditorImpl,
@@ -33,25 +31,17 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
   private val loadingFinished = AtomicBoolean()
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val executor: Executor = object : Executor {
-    private val dispatcher = Dispatchers.IO.limitedParallelism(2)
-
-    override fun execute(command: Runnable) {
-      project.coroutineScope.launch(dispatcher) {
-        command.run()
-      }
-    }
-  }
+  private val dispatcher = Dispatchers.Default.limitedParallelism(2)
 
   init {
     editor.putUserData(ASYNC_LOADER, this)
-    editorComponent.contentPanel.isVisible = false
+    editorComponent.editor.component.isVisible = false
   }
 
   companion object {
     private val ASYNC_LOADER = Key.create<AsyncEditorLoader>("ASYNC_LOADER")
     private const val SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200
-    private const val DOCUMENT_COMMIT_WAITING_TIME_MS = 5000
+    private const val DOCUMENT_COMMIT_WAITING_TIME_MS = 5000L
     private val LOG = Logger.getInstance(AsyncEditorLoader::class.java)
 
     private fun <T> resultInTimeOrNull(future: CompletableFuture<T>): T? {
@@ -66,8 +56,8 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
     }
 
     @JvmStatic
+    @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
       val loader = editor.getUserData(ASYNC_LOADER)
       loader?.delayedActions?.add(runnable) ?: runnable.run()
     }
@@ -78,10 +68,15 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
     }
   }
 
+  @RequiresEdt
   fun start() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    val asyncLoading = scheduleLoading()
-    var showProgress = true
+    val asyncLoading = project.coroutineScope.async(dispatcher) {
+      doLoad()
+    }
+    asyncLoading.cancelOnDispose(editorComponent)
+
+    // we can't return the result of async call because it's only finished on EDT later,
+    // but we need to get the result of bg calculation in the same EDT event, if it's quick
     if (worthWaiting()) {
       /*
        * Possible alternatives:
@@ -91,65 +86,58 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
        * 4. freeze EDT a bit and hope that for small editors it'll suffice and for big ones show "Loading" after that.
        * This strategy seems to produce minimal blinking annoyance.
        */
-      val continuation = resultInTimeOrNull(asyncLoading)
-      if (continuation != null) {
-        showProgress = false
+      resultInTimeOrNull(asyncLoading.asCompletableFuture())?.let {
+        loadingFinished(it)
+        return
+      }
+    }
+
+    editorComponent.startLoading()
+    project.coroutineScope.async(dispatcher) {
+      val continuation = asyncLoading.await()
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         loadingFinished(continuation)
       }
     }
-    if (showProgress) {
-      editorComponent.startLoading()
+  }
+
+  private suspend fun doLoad(): Runnable? {
+    waitForCommit()
+
+    try {
+      return readAction { textEditor.loadEditorInBackground() }
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: IndexOutOfBoundsException) {
+      // EA-232290 investigation
+      val filePathAttachment = Attachment("filePath.txt", textEditor.file.toString())
+      val threadDumpAttachment = Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString())
+      threadDumpAttachment.isIncluded = true
+      LOG.error("Error during async editor loading", e, filePathAttachment, threadDumpAttachment)
+      return null
+    }
+    catch (e: Exception) {
+      LOG.error("Error during async editor loading", e)
+      return null
     }
   }
 
-  private fun scheduleLoading(): CompletableFuture<Runnable> {
-    val commitDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DOCUMENT_COMMIT_WAITING_TIME_MS.toLong())
-
-    // we can't return the result of "nonBlocking" call below because it's only finished on EDT later,
-    // but we need to get the result of bg calculation in the same EDT event, if it's quick
-    val future = CompletableFuture<Runnable>()
-    ReadAction.nonBlocking<Runnable> {
-      waitForCommit(commitDeadline)
-      val runnable = ProgressManager.getInstance().computePrioritized<Runnable, RuntimeException> {
-        try {
-          return@computePrioritized textEditor.loadEditorInBackground()
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: IndexOutOfBoundsException) {
-          // EA-232290 investigation
-          val filePathAttachment = Attachment("filePath.txt", textEditor.file.toString())
-          val threadDumpAttachment = Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString())
-          threadDumpAttachment.isIncluded = true
-          LOG.error("Error during async editor loading", e,
-                    filePathAttachment, threadDumpAttachment)
-          return@computePrioritized null
-        }
-        catch (e: Exception) {
-          LOG.error("Error during async editor loading", e)
-          return@computePrioritized null
-        }
-      }
-      future.complete(runnable)
-      runnable
-    }
-      .expireWith(editorComponent)
-      .expireWith(project)
-      .finishOnUiThread(ModalityState.any(), ::loadingFinished)
-      .submit(executor)
-    return future
-  }
-
-  private fun waitForCommit(commitDeadlineNs: Long) {
+  private suspend fun waitForCommit() {
     val document = editor.document
-    val pdm = PsiDocumentManager.getInstance(project)
-    if (!pdm.isCommitted(document) && System.nanoTime() < commitDeadlineNs) {
-      val semaphore = Semaphore(1)
-      pdm.performForCommittedDocument(document) { semaphore.up() }
-      while (System.nanoTime() < commitDeadlineNs && !semaphore.waitFor(10)) {
-        ProgressManager.checkCanceled()
-      }
+    val psiDocumentManager = PsiDocumentManager.getInstance(project)
+    if (psiDocumentManager.isCommitted(document)) {
+      return
+    }
+
+    val deferred = CompletableDeferred<Unit>()
+    psiDocumentManager.performForCommittedDocument(document) { deferred.complete(Unit) }
+    withTimeoutOrNull(DOCUMENT_COMMIT_WAITING_TIME_MS) {
+      deferred.join()
     }
   }
 

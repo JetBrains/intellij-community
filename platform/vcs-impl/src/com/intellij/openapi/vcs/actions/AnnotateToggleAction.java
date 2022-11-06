@@ -6,6 +6,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -28,8 +29,10 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,11 +46,18 @@ import java.util.*;
  * @author lesya
  */
 public final class AnnotateToggleAction extends ToggleAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(AnnotateToggleAction.class);
+
   public static final ExtensionPointName<Provider> EP_NAME =
     new ExtensionPointName<>("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
 
   public AnnotateToggleAction() {
     setEnabledInModalContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -126,7 +136,10 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
       if (Math.abs(expectedLines - actualLines) > 1) { // 1 - for different conventions about files ending with line separator
-        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false)));
+        LOG.warn("Unexpected annotation lines number. Expected: " + expectedLines + ", actual: " + actualLines);
+        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> {
+          doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false);
+        }));
         return;
       }
     }
@@ -364,12 +377,16 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
   }
 
   public interface Provider {
+    @CalledInAny
     boolean isEnabled(AnActionEvent e);
 
+    @CalledInAny
     boolean isSuspended(@NotNull AnActionEvent e);
 
+    @CalledInAny
     boolean isAnnotated(AnActionEvent e);
 
+    @RequiresEdt
     void perform(@NotNull AnActionEvent e, boolean selected);
 
     default @Nls(capitalization = Nls.Capitalization.Title) String getActionName(@NotNull AnActionEvent e) {

@@ -388,7 +388,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
   @NotNull
-  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
+  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly, boolean isInContent);
 
   @NotNull
   public abstract IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);
@@ -615,4 +615,12 @@ public abstract class QuickFixFactory {
    * @return a fix that converts an anonymous class to an inner class
    */
   public abstract @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass);
+
+  public abstract @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction();
+
+  /**
+   * @param variable variable to make an effectively final
+   * @return a fix that refactors code to make variable effectively final when possible. Null, if it cannot create such a fix.
+   */
+  public abstract @Nullable IntentionAction createMakeVariableEffectivelyFinalFix(@NotNull PsiVariable variable);
 }

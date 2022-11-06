@@ -1,152 +1,53 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util
 
-import com.intellij.collaboration.async.CancellingScopedDisposable
-import com.intellij.collaboration.async.ScopedDisposable
-import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.collaboration.hosting.GitHostingUrlUtil
-import com.intellij.dvcs.repo.VcsRepositoryManager
-import com.intellij.dvcs.repo.VcsRepositoryMappingListener
+import com.intellij.collaboration.async.disposingScope
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryChangeListener
-import git4idea.repo.GitRepositoryManager
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import git4idea.remote.GitRemoteUrlCoordinates
+import git4idea.remote.hosting.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 
 @Service
-class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposable by CancellingScopedDisposable() {
+class GHHostedRepositoriesManager(project: Project) : HostedGitRepositoriesManager<GHGitRepositoryMapping>, Disposable {
 
-  private val accountManager: GHAccountManager get() = service()
-  private val repositoryManager: GitRepositoryManager get() = project.service()
-  private val metadataLoader: GHEnterpriseServerMetadataLoader get() = service()
+  @VisibleForTesting
+  internal val knownRepositoriesFlow = run {
+    val gitRemotesFlow = gitRemotesFlow(project).distinctUntilChanged()
 
-  val knownRepositoriesState: StateFlow<Set<GHGitRepositoryMapping>>
-  val knownRepositories: Set<GHGitRepositoryMapping>
-    get() = knownRepositoriesState.value
+    val accountsServersFlow = service<GHAccountManager>().accountsState.map { accounts ->
+      mutableSetOf(GithubServerPath.DEFAULT_SERVER) + accounts.map { it.server }
+    }.distinctUntilChanged()
 
-  init {
-    val accountsServersFlow = createAccountsServersFlow().also {
-      checkServerVersions(it)
+    val discoveredServersFlow = gitRemotesFlow.discoverServers(accountsServersFlow) {
+      checkForDedicatedServer(it)
+    }.runningFold(emptySet<GithubServerPath>()) { accumulator, value ->
+      accumulator + value
+    }.distinctUntilChanged()
+
+    val serversFlow = accountsServersFlow.combine(discoveredServersFlow) { servers1, servers2 ->
+      servers1 + servers2
     }
 
-    val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
-    if (unitTestMode) {
-      checkServerVersions(accountsServersFlow)
-    }
-
-    val remotesFlow = createRemotesFlow()
-    val discoveredServersState = if (unitTestMode) {
-      MutableStateFlow(emptySet())
-    }
-    else {
-      startServerDiscovery(accountsServersFlow, remotesFlow)
-    }
-
-    val knownServersFlow = combineState(scope, accountsServersFlow, discoveredServersState, ::collectServers)
-
-    knownRepositoriesState = combineState(scope, knownServersFlow, remotesFlow, ::collectMappings)
-  }
-
-  private fun createAccountsServersFlow(): StateFlow<Set<GithubServerPath>> {
-    val flow = MutableStateFlow<Set<GithubServerPath>>(emptySet())
-    accountManager.addListener(this, object : AccountsListener<GithubAccount> {
-      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-        flow.value = new.map { it.server }.toSet()
-      }
-    })
-    flow.value = accountManager.accounts.map { it.server }.toSet()
-    return flow
-  }
-
-  private fun createRemotesFlow(): StateFlow<Set<GitRemoteUrlCoordinates>> {
-    val flow = MutableStateFlow(collectRemotes())
-    project.messageBus.connect(this).subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
-      flow.update { collectRemotes() }
-    })
-    project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-      flow.update { collectRemotes() }
-    })
-    // update after initial bc can happen outside EDT
-    flow.update { collectRemotes() }
-    return flow
-  }
-
-  private fun collectRemotes(): Set<GitRemoteUrlCoordinates> {
-    val gitRepositories = repositoryManager.repositories
-    if (gitRepositories.isEmpty()) {
-      LOG.debug("No repositories found")
-      return emptySet()
-    }
-
-    return gitRepositories.flatMap { repo ->
-      repo.remotes.flatMap { remote ->
-        remote.urls.mapNotNull { url ->
-          GitRemoteUrlCoordinates(url, remote, repo)
-        }
-      }
-    }.toSet()
-  }
-
-  private fun startServerDiscovery(accountsServersFlow: StateFlow<Set<GithubServerPath>>,
-                                   remotesFlow: StateFlow<Collection<GitRemoteUrlCoordinates>>): StateFlow<Set<GithubServerPath>> {
-    val stateFlow = MutableStateFlow<Set<GithubServerPath>>(emptySet())
-
-    scope.launch {
-      combine(accountsServersFlow, remotesFlow) { servers, remotes ->
-        remotes.filter { remote -> servers.none { it.matches(remote.url) } }
-      }.collect { remotes ->
-        remotes.chunked(URLS_CHECK_PARALLELISM).forEach { remotesChunk ->
-          remotesChunk.map { remote ->
-            async {
-              val server = checkForEnterpriseServer(remote)
-              if (server != null) stateFlow.update { it + server }
-            }
-          }.awaitAll()
-        }
-      }
-    }
-    return stateFlow
-  }
-
-  private fun collectServers(accountsServers: Set<GithubServerPath>, discoveredServers: Set<GithubServerPath>): Set<GithubServerPath> {
-    val servers = mutableSetOf<GithubServerPath>(GithubServerPath.DEFAULT_SERVER)
-    servers.addAll(accountsServers)
-    servers.addAll(discoveredServers)
-    return servers
-  }
-
-  private fun collectMappings(servers: Set<GithubServerPath>, remotes: Collection<GitRemoteUrlCoordinates>): Set<GHGitRepositoryMapping> {
-    val mappings = HashSet<GHGitRepositoryMapping>()
-    for (remote in remotes) {
-      val repository = servers.find { it.matches(remote.url) }?.let { GHGitRepositoryMapping.create(it, remote) }
-      if (repository != null) {
-        mappings.add(repository)
-      }
-    }
-    LOG.debug("New list of known repos: $mappings")
-    return mappings
-  }
-
-  fun findKnownRepositories(repository: GitRepository): List<GHGitRepositoryMapping> {
-    return knownRepositoriesState.value.filter {
-      it.gitRemoteUrlCoordinates.repository == repository
+    gitRemotesFlow.mapToServers(serversFlow) { server, remote ->
+      GHGitRepositoryMapping.create(server, remote)
+    }.onEach {
+      LOG.debug("New list of known repos: $it")
     }
   }
 
-  private suspend fun checkForEnterpriseServer(remote: GitRemoteUrlCoordinates): GithubServerPath? {
+  override val knownRepositoriesState: StateFlow<Set<GHGitRepositoryMapping>> =
+    knownRepositoriesFlow.stateIn(disposingScope(), getStateSharingStartConfig(), emptySet())
+
+  private suspend fun checkForDedicatedServer(remote: GitRemoteUrlCoordinates): GithubServerPath? {
     val uri = GitHostingUrlUtil.getUriFromRemoteUrl(remote.url)
     LOG.debug("Extracted URI $uri from remote ${remote.url}")
     if (uri == null) return null
@@ -163,7 +64,7 @@ class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposab
     )) {
       LOG.debug("Looking for GHE server at $server")
       try {
-        metadataLoader.loadMetadata(server).await()
+        service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).await()
         LOG.debug("Found GHE server at $server")
         return server
       }
@@ -173,28 +74,12 @@ class GHHostedRepositoriesManager(private val project: Project) : ScopedDisposab
     return null
   }
 
-  private fun checkServerVersions(serversFlow: Flow<Set<GithubServerPath>>) {
-    scope.launch {
-      serversFlow.collectLatest { servers ->
-        for (server in servers) {
-          if (server.isGithubDotCom) {
-            continue
-          }
-
-          try {
-            val metadata = metadataLoader.loadMetadata(server).await()
-            GHPRStatisticsCollector.logEnterpriseServerMeta(project, server, metadata)
-          }
-          catch (ignore: Exception) {
-          }
-        }
-      }
-    }
-  }
+  override fun dispose() = Unit
 
   companion object {
     private val LOG = logger<GHHostedRepositoriesManager>()
 
-    private const val URLS_CHECK_PARALLELISM = 10
+    private fun getStateSharingStartConfig() =
+      if (ApplicationManager.getApplication().isUnitTestMode) SharingStarted.Eagerly else SharingStarted.Lazily
   }
 }

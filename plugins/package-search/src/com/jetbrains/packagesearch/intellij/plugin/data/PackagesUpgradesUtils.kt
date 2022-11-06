@@ -29,55 +29,62 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.upgradeCandidateVersionOrNull
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
+import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logError
+import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import org.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
+import kotlin.time.measureTime
 
 internal suspend fun computePackageUpgrades(
     installedPackages: List<PackageModel.Installed>,
     onlyStable: Boolean,
     normalizer: PackageVersionNormalizer,
     repos: KnownRepositories.All,
-    nativeModulesMap: Map<ProjectModule, ModuleModel>
+    nativeModulesMap: Map<ProjectModule, ModuleModel>,
+    trace: TraceInfo
 ): PackagesToUpgrade {
-    val operationFactory = PackageSearchOperationFactory()
+    logTrace(trace) { "Starting computation for ${installedPackages.size} installed packages" }
     val updatesByModule = mutableMapOf<Module, MutableSet<PackagesToUpgrade.PackageUpgradeInfo>>()
-    for (installedPackageModel in installedPackages) {
-        val availableVersions = installedPackageModel.getAvailableVersions(onlyStable)
-        if (installedPackageModel.remoteInfo == null || availableVersions.isEmpty()) continue
+    val time = measureTime {
+        val operationFactory = PackageSearchOperationFactory()
+        for (installedPackageModel in installedPackages) {
+            val availableVersions = installedPackageModel.getAvailableVersions(onlyStable)
+            if (installedPackageModel.remoteInfo == null || availableVersions.isEmpty()) continue
 
-        for (usageInfo in installedPackageModel.usageInfo) {
-            val currentVersion = usageInfo.getResolvedVersionOrFallback()
-            if (currentVersion !is PackageVersion.Named) continue
+            for (usageInfo in installedPackageModel.usageInfo) {
+                val currentVersion = usageInfo.getDeclaredVersionOrFallback()
+                if (currentVersion !is PackageVersion.Named) continue
 
-            val normalizedPackageVersion = runCatching { normalizer.parse(currentVersion) }
-                .onFailure { logError(throwable = it) { "Unable to normalize version: $currentVersion" } }
-                .getOrNull() ?: continue
-
-            val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(normalizedPackageVersion, availableVersions)
-            val moduleModel = nativeModulesMap[usageInfo.projectModule]
-            if (upgradeVersion != null && upgradeVersion.originalVersion is PackageVersion.Named && moduleModel != null) {
-                @Suppress("UNCHECKED_CAST") // The if guards us against cast errors
-                updatesByModule.getOrPut(usageInfo.projectModule.nativeModule) { mutableSetOf() } +=
-                    PackagesToUpgrade.PackageUpgradeInfo(
-                        packageModel = installedPackageModel,
-                        usageInfo = usageInfo,
-                        targetVersion = upgradeVersion as NormalizedPackageVersion<PackageVersion.Named>,
-                        computeUpgradeOperationsForSingleModule = computeUpgradeOperationsForSingleModule(
+                val normalizedPackageVersion = runCatching { normalizer.parse(currentVersion) }
+                    .onFailure { logError(throwable = it) { "Unable to normalize version: $currentVersion" } }
+                    .getOrNull() ?: continue
+                if (updatesByModule.size % 100 == 0 && updatesByModule.isNotEmpty()) logTrace(trace) { "updatesByModule.size = ${updatesByModule.size}" }
+                val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(normalizedPackageVersion, availableVersions)
+                val moduleModel = nativeModulesMap[usageInfo.projectModule]
+                if (upgradeVersion != null && upgradeVersion.originalVersion is PackageVersion.Named && moduleModel != null) {
+                    @Suppress("UNCHECKED_CAST") // The if guards us against cast errors
+                    updatesByModule.getOrPut(usageInfo.projectModule.nativeModule) { mutableSetOf() } +=
+                        PackagesToUpgrade.PackageUpgradeInfo(
                             packageModel = installedPackageModel,
-                            targetModule = moduleModel,
-                            knownRepositoriesInTargetModules = repos.filterOnlyThoseUsedIn(TargetModules.One(moduleModel)),
-                            onlyStable = onlyStable,
-                            operationFactory = operationFactory
+                            usageInfo = usageInfo,
+                            targetVersion = upgradeVersion as NormalizedPackageVersion<PackageVersion.Named>,
+                            computeUpgradeOperationsForSingleModule = computeUpgradeOperationsForSingleModule(
+                                packageModel = installedPackageModel,
+                                targetModule = moduleModel,
+                                knownRepositoriesInTargetModules = repos.filterOnlyThoseUsedIn(TargetModules.One(moduleModel)),
+                                onlyStable = onlyStable,
+                                operationFactory = operationFactory
+                            )
                         )
-                    )
+                }
             }
         }
     }
-
+    logTrace(trace) { "Finished in $time" }
     return PackagesToUpgrade(updatesByModule)
 }
 
-internal inline fun computeUpgradeOperationsForSingleModule(
+private fun computeUpgradeOperationsForSingleModule(
     packageModel: PackageModel.Installed,
     targetModule: ModuleModel,
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,

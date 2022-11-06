@@ -6,9 +6,6 @@ import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.intellij.plugins.relaxNG.model.annotation.ModelAnnotator;
 import org.intellij.plugins.relaxNG.xml.dom.*;
 
-/**
-* @author peter
-*/
 public class RngDomFileDescription<T> extends DomFileDescription<T> {
   public RngDomFileDescription(Class<T> elementClass, String rootTagName) {
     super(elementClass, rootTagName);

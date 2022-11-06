@@ -55,7 +55,7 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
         }
         reportError("Mirror highlighter " + this + "(prev state: " + oldStart + "-" + oldEnd +
                     ") diverged from base one " + myHighlighter + extendedHighlighterInfo + " after " + e);
-        setRange(TextRangeScalarUtil.toScalarRange(myHighlighter.getStartOffset(), myHighlighter.getEndOffset()));
+        setRange(TextRangeScalarUtil.toScalarRange(myHighlighter));
       }
     }
     else if (isValid()) {

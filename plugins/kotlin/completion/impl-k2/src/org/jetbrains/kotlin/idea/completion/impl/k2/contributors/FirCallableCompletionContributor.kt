@@ -170,6 +170,9 @@ internal open class FirCallableCompletionContributor(
             symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, context, visibilityChecker)
 
             symbol is KtNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope -> {
+                if (symbol.classKind == KtClassKind.ENUM_CLASS) {
+                    collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
+                }
                 collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker, scopeNameFilter).forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
                         context,
@@ -290,6 +293,8 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ): Sequence<KtCallableSymbol> {
+        if (receiverTypes.isEmpty()) return emptySequence()
+
         val implicitReceiverNames = findAllNamesOfTypes(receiverTypes)
         val topLevelExtensions = indexHelper.getTopLevelExtensions(scopeNameFilter, implicitReceiverNames)
 
@@ -349,13 +354,14 @@ internal class FirCallableReferenceCompletionContributor(
         when (val resolved = explicitReceiver.reference()?.resolveToSymbol()) {
             is KtPackageSymbol -> return
             is KtNamedClassOrObjectSymbol -> {
-                resolved.getMemberScope()
-                    .getCallableSymbols(scopeNameFilter)
-                    .filter { visibilityChecker.isVisible(it) }
-                    .forEach { symbol ->
-                        addCallableSymbolToCompletion(context.withoutExpectedType(), symbol, getOptions(symbol))
+                fun process(callable: KtCallableSymbol) {
+                    if (visibilityChecker.isVisible(callable)) {
+                        addCallableSymbolToCompletion(context.withoutExpectedType(), callable, getOptions(callable))
                     }
+                }
 
+                resolved.getMemberScope().getCallableSymbols(scopeNameFilter).forEach(::process)
+                resolved.companionObject?.getMemberScope()?.getCallableSymbols(scopeNameFilter)?.forEach(::process)
             }
 
             else -> {

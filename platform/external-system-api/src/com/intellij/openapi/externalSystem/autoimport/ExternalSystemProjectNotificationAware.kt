@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
@@ -45,7 +46,6 @@ interface ExternalSystemProjectNotificationAware {
     /**
      * Happens when notification should be shown or hidden.
      */
-    @JvmDefault
     fun onNotificationChanged(project: Project) {
     }
   }
@@ -63,13 +63,8 @@ interface ExternalSystemProjectNotificationAware {
      * Function for simple subscription onto notification change events
      * @see ExternalSystemProjectNotificationAware.Listener.onNotificationChanged
      */
-    fun whenNotificationChanged(project: Project, listener: () -> Unit) = whenNotificationChanged(project, listener, null)
-
-    /**
-     * Function for simple subscription onto notification change events
-     * @see ExternalSystemProjectNotificationAware.Listener.onNotificationChanged
-     */
-    fun whenNotificationChanged(project: Project, listener: () -> Unit, parentDisposable: Disposable? = null) {
+    fun whenNotificationChanged(project: Project, listener: () -> Unit) = whenNotificationChanged(project, null, listener)
+    fun whenNotificationChanged(project: Project, parentDisposable: Disposable?, listener: () -> Unit) {
       val aProject = project
       val messageBus = ApplicationManager.getApplication().messageBus
       val connection = messageBus.connect(parentDisposable ?: project)
@@ -80,6 +75,17 @@ interface ExternalSystemProjectNotificationAware {
           }
         }
       })
+    }
+
+    fun isNotificationVisibleProperty(project: Project, systemId: ProjectSystemId): ObservableProperty<Boolean> {
+      return object : ObservableProperty<Boolean> {
+        override fun get() = systemId in getInstance(project).getSystemIds()
+        override fun afterChange(listener: (Boolean) -> Unit, parentDisposable: Disposable) {
+          whenNotificationChanged(project, parentDisposable) {
+            listener(get())
+          }
+        }
+      }
     }
   }
 }

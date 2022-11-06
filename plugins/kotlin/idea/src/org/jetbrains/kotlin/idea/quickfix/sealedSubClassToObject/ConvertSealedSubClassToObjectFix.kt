@@ -8,20 +8,29 @@ import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
 import org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.createDeclarationByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class ConvertSealedSubClassToObjectFix : LocalQuickFix {
 
-    override fun getFamilyName() = KotlinBundle.message("convert.sealed.sub.class.to.object.fix.family.name")
+    override fun getFamilyName() = KotlinBundle.message("convert.sealed.subclass.to.object.fix.family.name")
+
+    override fun startInWriteAction(): Boolean = false
 
     companion object {
         val JAVA_LANG = Language.findLanguageByID("JAVA")
@@ -30,25 +39,34 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val klass = descriptor.psiElement.getParentOfType<KtClass>(false) ?: return
+        val ktClassSmartPointer: SmartPsiElementPointer<KtClass> = SmartPointerManager.createPointer(klass)
 
-        changeInstances(klass)
-        changeDeclaration(klass)
+        changeInstances(ktClassSmartPointer)
+        changeDeclaration(ktClassSmartPointer)
     }
 
     /**
      * Changes declaration of class to object.
      */
-    private fun changeDeclaration(element: KtClass) {
-        val factory = KtPsiFactory(element)
+    private fun changeDeclaration(pointer: SmartPsiElementPointer<KtClass>) {
+        runWriteAction {
+            val element = pointer.element ?: return@runWriteAction
+            val factory = KtPsiFactory(element)
 
-        element.changeToObject(factory)
-        element.transformToObject(factory)
+            element.changeToObject(factory)
+            element.transformToObject(factory)
+        }
     }
 
     private fun KtClass.changeToObject(factory: KtPsiFactory) {
         secondaryConstructors.forEach { ConvertSecondaryConstructorToPrimaryIntention().applyTo(it, null) }
         primaryConstructor?.delete()
-        getClassOrInterfaceKeyword()?.replace(factory.createExpression(KtTokens.OBJECT_KEYWORD.value))
+        getClassOrInterfaceKeyword()?.replace(
+            if (!isData() && languageVersionSettings.supportsFeature(LanguageFeature.DataObjects))
+                factory.createDeclarationByPattern("${KtTokens.DATA_KEYWORD.value} ${KtTokens.OBJECT_KEYWORD.value}")
+            else
+                factory.createExpression(KtTokens.OBJECT_KEYWORD.value)
+        )
     }
 
     private fun KtClass.transformToObject(factory: KtPsiFactory) {
@@ -58,19 +76,26 @@ class ConvertSealedSubClassToObjectFix : LocalQuickFix {
     /**
      * Replace instantiations of the class with links to the singleton instance of the object.
      */
-    private fun changeInstances(klass: KtClass) {
-        mapReferencesByLanguage(klass)
+    private fun changeInstances(pointer: SmartPsiElementPointer<KtClass>) {
+        mapReferencesByLanguage(pointer)
             .apply {
-                replaceKotlin(klass)
-                replaceJava(klass)
+                runWriteAction {
+                    val ktClass = pointer.element ?: return@runWriteAction
+                    replaceKotlin(ktClass)
+                    replaceJava(ktClass)
+                }
             }
     }
 
     /**
      * Map references to this class by language
      */
-    private fun mapReferencesByLanguage(klass: KtClass) = ReferencesSearch.search(klass)
-        .groupBy({ it.element.language }, { it.element.parent })
+    private fun mapReferencesByLanguage(pointer: SmartPsiElementPointer<KtClass>): Map<Language, List<PsiElement>> =
+        pointer.project.runSynchronouslyWithProgressIfEdt(KotlinBundle.message("progress.looking.up.sealed.subclass.usage"), true) {
+            pointer.element?.let { ktClass ->
+                ReferencesSearch.search(ktClass).groupBy({ it.element.language }, { it.element.parent })
+            } ?: emptyMap()
+        } ?: emptyMap()
 
     /**
      * Replace Kotlin instantiations to a straightforward call to the singleton.

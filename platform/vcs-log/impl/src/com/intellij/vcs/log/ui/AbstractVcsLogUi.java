@@ -9,7 +9,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.CheckedDisposable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +30,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
@@ -40,7 +44,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @NotNull protected final VcsLogColorManager myColorManager;
   @NotNull protected final VcsLogImpl myLog;
   @NotNull protected final VisiblePackRefresher myRefresher;
-  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
+  @NotNull protected final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
   @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
@@ -139,7 +143,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
             handleCommitNotFound(commitId, result == JumpResult.COMMIT_DOES_NOT_MATCH, rowGetter);
           }
         }
-        catch (InterruptedException | ExecutionException ignore) {
+        catch (InterruptedException | ExecutionException | CancellationException ignore) {
         }
       }, MoreExecutors.directExecutor());
     }
@@ -184,29 +188,23 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @NotNull
   @Nls
   protected static <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
-    return exists ? VcsLogBundle.message("vcs.log.commit.does.not.match", getCommitPresentation(commitId)) :
-           VcsLogBundle.message("vcs.log.commit.not.found", getCommitPresentation(commitId));
+    String commitPresentation = getCommitPresentation(commitId);
+    return exists ? VcsLogBundle.message("vcs.log.commit.does.not.match", commitPresentation) :
+           VcsLogBundle.message("vcs.log.commit.not.found", commitPresentation);
   }
 
   @NotNull
   protected static <T> String getCommitPresentation(@NotNull T commitId) {
     if (commitId instanceof Hash) {
-      return ((Hash)commitId).toShortString();
+      return VcsLogBundle.message("vcs.log.commit.prefix", ((Hash)commitId).toShortString());
     }
-    else if (commitId instanceof String) {
-      return VcsLogUtil.getShortHash((String)commitId);
+    if (commitId instanceof String) {
+      String commitString = (String)commitId;
+      if (VcsLogUtil.HASH_PREFIX_REGEX.matcher(commitString).matches()) {
+        return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", VcsLogUtil.getShortHash(commitString));
+      }
     }
-    return commitId.toString();
-  }
-
-  protected void showWarningWithLink(@Nls @NotNull String mainText, @Nls @NotNull String linkText, @NotNull Runnable onClick) {
-    VcsBalloonProblemNotifier.showOverChangesView(myProject, mainText, MessageType.WARNING,
-                                                  new NamedRunnable(linkText) {
-                                                    @Override
-                                                    public void run() {
-                                                      onClick.run();
-                                                    }
-                                                  });
+    return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", commitId.toString());
   }
 
   @Override
@@ -239,7 +237,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
 
   @Override
   public void dispose() {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.debug("Disposing VcsLogUi '" + myId + "'");
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();

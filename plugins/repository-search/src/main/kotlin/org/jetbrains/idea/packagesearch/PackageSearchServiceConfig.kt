@@ -18,25 +18,40 @@ package org.jetbrains.idea.packagesearch
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.http.HttpProtocolVersion
+import io.ktor.http.URLProtocol
+import org.jetbrains.idea.packagesearch.api.buildHeaders
+import org.jetbrains.idea.packagesearch.api.simple
 import org.jetbrains.idea.reposearch.PluginEnvironment
+import org.jetbrains.idea.reposearch.logTrace
+import kotlin.time.Duration
 
 interface PackageSearchServiceConfig {
-  val baseUrl: String
+  val host: String
 
   val userAgent: String
     get() = ApplicationNamesInfo.getInstance().productName + "/" + ApplicationInfo.getInstance().fullVersion
 
-  val headers: List<Pair<String, String>>
-    get() = listOf(
-      Pair("JB-Plugin-Version", PluginEnvironment.pluginVersion),
-      Pair("JB-IDE-Version", PluginEnvironment.ideVersion)
-    )
+  val headers
+    get() = buildHeaders(2) {
+      append("JB-Plugin-Version", PluginEnvironment.pluginVersion)
+      append("JB-IDE-Version", PluginEnvironment.ideVersion)
+    }
 
-  val timeoutInSeconds: Int
+  val timeout: Duration
 
   val useCache: Boolean
     get() = false
 
-  val forceHttps: Boolean
-    get() = true
+  val protocol
+    get() = URLProtocol.HTTPS
+
+  val logLevel
+    get() = LogLevel.HEADERS
+
+  val logger
+    get() = Logger.simple { logTrace(it) }
+
 }

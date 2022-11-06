@@ -835,19 +835,10 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (text.length() != 1) {
       return true;
     }
-    switch(text.charAt(0)) {
-      case '<':
-      case '>':
-      case '(':
-      case ')':
-      case '{':
-      case '}':
-      case '[':
-      case ']':
-        return false;
-      default:
-        return true;
-    }
+    return switch (text.charAt(0)) {
+      case '<', '>', '(', ')', '{', '}', '[', ']' -> false;
+      default -> true;
+    };
   }
 
   @Override

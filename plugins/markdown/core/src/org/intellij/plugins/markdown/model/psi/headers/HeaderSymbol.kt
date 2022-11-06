@@ -55,13 +55,10 @@ data class HeaderSymbol(
   override val maximalSearchScope: SearchScope
     get() = GlobalSearchScope.allScope(file.project)
 
-  override val presentation: TargetPresentation
-    get() = targetPresentation
-
-  override val usageHandler: UsageHandler<*>
+  override val usageHandler: UsageHandler
     get() = UsageHandler.createEmptyUsageHandler(anchorText)
 
-  override fun getTargetPresentation(): TargetPresentation {
+  override fun presentation(): TargetPresentation {
     val virtualFile = file.containingFile.virtualFile
     val builder = TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Header_level_up)
     val presentation = when (virtualFile) {

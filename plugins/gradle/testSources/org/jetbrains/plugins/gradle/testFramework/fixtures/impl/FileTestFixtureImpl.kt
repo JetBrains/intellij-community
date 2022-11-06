@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.common.runAll
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.XmlSerializer
+import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
 import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
@@ -51,6 +52,8 @@ internal class FileTestFixtureImpl(
     fixtureRoot = createFixtureRoot(relativePath)
     fixtureStateFile = createFixtureStateFile()
 
+    val oldState = readFixtureState()
+
     installFixtureFilesWatcher()
 
     val configuration = createFixtureConfiguration()
@@ -60,14 +63,12 @@ internal class FileTestFixtureImpl(
       .toSet()
 
     withSuppressedErrors {
-      repairFixtureCaches()
-      dumpFixtureState()
+      repairFixtureCaches(oldState)
     }
-
+    dumpFixtureState()
 
     withSuppressedErrors {
       configureFixtureCaches(configuration)
-      root.refreshAndWait()
     }
 
     isInitialized = true
@@ -99,8 +100,7 @@ internal class FileTestFixtureImpl(
     }
   }
 
-  private fun repairFixtureCaches() {
-    val state = readFixtureState()
+  private fun repairFixtureCaches(state: State) {
     val isInitialized = state.isInitialized ?: false
     val isSuppressedErrors = state.isSuppressedErrors ?: false
     val errors = state.errors ?: emptyList()
@@ -149,33 +149,14 @@ internal class FileTestFixtureImpl(
 
   private fun configureFixtureCaches(configuration: Configuration) {
     runCatching {
-      if (!areContentsEqual(configuration.files)) {
+      if (!configuration.areContentsEqual(root)) {
         invalidateFixtureCaches()
-        createFiles(configuration.files)
-        configuration.builders.forEach { it(root) }
+        configuration.createFiles(root)
       }
+      root.refreshAndWait()
     }
       .onFailureCatching { invalidateFixtureCaches() }
       .getOrThrow()
-  }
-
-  private fun areContentsEqual(files: Map<String, String>): Boolean {
-    for ((path, expectedContent) in files) {
-      val content = loadText(path)
-      if (expectedContent != content) {
-        return false
-      }
-    }
-    return true
-  }
-
-  private fun createFiles(files: Map<String, String>) {
-    runWriteActionAndWait {
-      for ((path, content) in files) {
-        val file = root.createFile(path)
-        file.text = content
-      }
-    }
   }
 
   override fun isModified(): Boolean {
@@ -262,13 +243,16 @@ internal class FileTestFixtureImpl(
       override fun isProcessRecursively(): Boolean = true
 
       override fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean {
-        val path = file.toNioPath()
         return !file.isDirectory &&
                file != fixtureStateFile &&
                VfsUtil.isAncestor(root, file, false) &&
-               path !in snapshots &&
-               path !in excludedFiles &&
-               excludedFiles.all { !FileUtil.isAncestor(it, path, false) }
+               run {
+                 val path = file.toNioPath() // file can have no nio.Path, check root is its ancestor firstly
+
+                 path !in snapshots &&
+                 path !in excludedFiles &&
+                 excludedFiles.all { !FileUtil.isAncestor(it, path, false) }
+               }
       }
 
       override fun updateFile(file: VirtualFile, event: VFileEvent) {
@@ -278,22 +262,14 @@ internal class FileTestFixtureImpl(
     installBulkVirtualFileListener(listener, testRootDisposable)
   }
 
-  private class Configuration : FileTestFixture.Builder {
+  private class Configuration
+    : TestFilesConfigurationImpl(),
+      FileTestFixture.Builder {
 
-    val files = HashMap<String, String>()
-    val builders = ArrayList<(VirtualFile) -> Unit>()
     val excludedFiles = HashSet<String>()
 
     override fun excludeFiles(vararg relativePath: String) {
       excludedFiles.addAll(relativePath)
-    }
-
-    override fun withFile(relativePath: String, content: String) {
-      files[relativePath] = content
-    }
-
-    override fun withFiles(action: (VirtualFile) -> Unit) {
-      builders.add(action)
     }
   }
 

@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.addAnnotation
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.js.PredefinedAnnotation
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -34,17 +35,14 @@ class MigrateExternalExtensionFix(declaration: KtNamedDeclaration) : KotlinQuick
     override fun getText() = KotlinBundle.message("fix.with.asdynamic")
     override fun getFamilyName() = text
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val declaration = element ?: return
 
         when {
             isMemberExtensionDeclaration(declaration) -> fixExtensionMemberDeclaration(declaration, editor)
-            isMemberDeclaration(declaration) -> {
-                val containingClass = declaration.containingClassOrObject
-                if (containingClass != null) {
-                    fixNativeClass(containingClass)
-                }
-            }
+            isMemberDeclaration(declaration) -> declaration.containingClassOrObject?.let(::fixNativeClass)
             declaration is KtClassOrObject -> fixNativeClass(declaration)
         }
     }
@@ -64,7 +62,9 @@ class MigrateExternalExtensionFix(declaration: KtNamedDeclaration) : KotlinQuick
                 annotations.nativeAnnotation.delete()
             } else {
                 val externalDeclaration = ConvertMemberToExtensionIntention.convert(memberDeclaration)
-                fixExtensionMemberDeclaration(externalDeclaration, null) // editor is null as we are not going to open any live templates
+                runWriteAction {
+                    fixExtensionMemberDeclaration(externalDeclaration, null) // editor is null as we are not going to open any live templates
+                }
             }
         }
 
@@ -114,75 +114,82 @@ class MigrateExternalExtensionFix(declaration: KtNamedDeclaration) : KotlinQuick
     private fun fixExtensionMemberDeclaration(declaration: KtNamedDeclaration, editor: Editor?) {
         val name = declaration.nameAsSafeName
         val annotations = fetchJsNativeAnnotations(declaration)
-        fixAnnotations(declaration, annotations, editor)
+        runWriteAction {
+            fixAnnotations(declaration, annotations, editor)
 
-        val ktPsiFactory = KtPsiFactory(declaration)
-        val body = ktPsiFactory.buildExpression {
-            appendName(Name.identifier("asDynamic"))
-            when {
-                annotations.isGetter -> {
-                    appendFixedText("()")
-                    if (declaration is KtNamedFunction) {
-                        appendParameters(declaration, "[", "]")
+            val ktPsiFactory = KtPsiFactory(declaration)
+            val body = ktPsiFactory.buildExpression {
+                appendName(Name.identifier("asDynamic"))
+                when {
+                    annotations.isGetter -> {
+                        appendFixedText("()")
+                        if (declaration is KtNamedFunction) {
+                            appendParameters(declaration, "[", "]")
+                        }
                     }
-                }
-                annotations.isSetter -> {
-                    appendFixedText("()")
-                    if (declaration is KtNamedFunction) {
-                        appendParameters(declaration, "[", "]", skipLast = true)
-                        declaration.valueParameters.last().nameAsName?.let {
-                            appendFixedText(" = ")
-                            appendName(it)
+
+                    annotations.isSetter -> {
+                        appendFixedText("()")
+                        if (declaration is KtNamedFunction) {
+                            appendParameters(declaration, "[", "]", skipLast = true)
+                            declaration.valueParameters.last().nameAsName?.let {
+                                appendFixedText(" = ")
+                                appendName(it)
+                            }
+                        }
+                    }
+
+                    annotations.isInvoke -> {
+                        appendFixedText("()")
+                        if (declaration is KtNamedFunction) {
+                            appendParameters(declaration, "(", ")")
+                        }
+                    }
+
+                    else -> {
+                        appendFixedText("().")
+                        appendName(name)
+                        if (declaration is KtNamedFunction) {
+                            appendParameters(declaration, "(", ")")
                         }
                     }
                 }
-                annotations.isInvoke -> {
-                    appendFixedText("()")
-                    if (declaration is KtNamedFunction) {
-                        appendParameters(declaration, "(", ")")
+            }
+
+            if (declaration is KtNamedFunction) {
+                declaration.bodyExpression?.delete()
+                declaration.equalsToken?.delete()
+
+                if (annotations.isSetter || annotations.isInvoke) {
+                    val blockBody = ktPsiFactory.createSingleStatementBlock(body)
+                    declaration.add(blockBody)
+                } else {
+                    declaration.add(ktPsiFactory.createEQ())
+                    declaration.add(body)
+                }
+            } else if (declaration is KtProperty) {
+                declaration.setter?.delete()
+                declaration.getter?.delete()
+                val getter = ktPsiFactory.createPropertyGetter(body)
+                declaration.add(getter)
+
+                if (declaration.isVar) {
+                    val setterBody = ktPsiFactory.buildExpression {
+                        appendName(Name.identifier("asDynamic"))
+                        appendFixedText("().")
+                        appendName(name)
+                        appendFixedText(" = ")
+                        appendName(Name.identifier("value"))
                     }
-                }
-                else -> {
-                    appendFixedText("().")
-                    appendName(name)
-                    if (declaration is KtNamedFunction) {
-                        appendParameters(declaration, "(", ")")
-                    }
+
+                    val setterStubProperty = ktPsiFactory.createProperty("val x: Unit set(value) { Unit }")
+                    val block = setterStubProperty.setter!!.bodyBlockExpression!!
+                    block.statements.single().replace(setterBody)
+                    declaration.add(setterStubProperty.setter!!)
                 }
             }
-        }
 
-        if (declaration is KtNamedFunction) {
-            declaration.bodyExpression?.delete()
-            declaration.equalsToken?.delete()
-
-            if (annotations.isSetter || annotations.isInvoke) {
-                val blockBody = ktPsiFactory.createSingleStatementBlock(body)
-                declaration.add(blockBody)
-            } else {
-                declaration.add(ktPsiFactory.createEQ())
-                declaration.add(body)
-            }
-        } else if (declaration is KtProperty) {
-            declaration.setter?.delete()
-            declaration.getter?.delete()
-            val getter = ktPsiFactory.createPropertyGetter(body)
-            declaration.add(getter)
-
-            if (declaration.isVar) {
-                val setterBody = ktPsiFactory.buildExpression {
-                    appendName(Name.identifier("asDynamic"))
-                    appendFixedText("().")
-                    appendName(name)
-                    appendFixedText(" = ")
-                    appendName(Name.identifier("value"))
-                }
-
-                val setterStubProperty = ktPsiFactory.createProperty("val x: Unit set(value) { Unit }")
-                val block = setterStubProperty.setter!!.bodyBlockExpression!!
-                block.statements.single().replace(setterBody)
-                declaration.add(setterStubProperty.setter!!)
-            }
+            Unit
         }
     }
 

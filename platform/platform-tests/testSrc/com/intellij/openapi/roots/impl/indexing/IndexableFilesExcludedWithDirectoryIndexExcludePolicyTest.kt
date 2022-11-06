@@ -77,7 +77,7 @@ class IndexableFilesExcludedWithDirectoryIndexExcludePolicyTest : IndexableFiles
       }
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdkName")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdkName") { sdkModificator ->
       sdkModificator.addRoot(classesDir.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesDir.file, OrderRootType.SOURCES)
     }

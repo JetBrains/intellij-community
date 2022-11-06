@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVaria
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.KotlinStepOverFilter
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.KotlinStepOverParamDefaultImplsMethodFilter
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.LocationToken
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration

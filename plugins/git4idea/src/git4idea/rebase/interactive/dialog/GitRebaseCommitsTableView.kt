@@ -3,6 +3,7 @@ package git4idea.rebase.interactive.dialog
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
@@ -137,6 +138,10 @@ internal open class GitRebaseCommitsTableView(
   }
 
   private abstract class DisabledDuringRewordAction(protected val table: GitRebaseCommitsTableView) : DumbAwareAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun update(e: AnActionEvent) {
       super.update(e)
       val presentation = e.presentation

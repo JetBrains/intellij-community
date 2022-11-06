@@ -40,11 +40,7 @@ UFile (package = ) [  ]
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [  ]
             UMethod (name = build) [  ]
             UMethod (name = self) [  ]
-            UMethod (name = Builder) [ /**
-     * Abstract [Pizza] builder
-     *
-     * @param P well-known hack to solve abstract builder chain problem, see [self]
-     */ ]
+            UMethod (name = Builder) [  ]
     UClass (name = Margherita) [ /**
  * Pizza Margherita
  *

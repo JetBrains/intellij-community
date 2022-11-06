@@ -21,9 +21,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChildrenDescription, Comparable<AbstractDomChildDescriptionImpl> {
   private final Type myType;
   private Map<Class<? extends Annotation>, Annotation> myCustomAnnotations;

@@ -74,7 +74,7 @@ object SerializationRoundTripChecker {
 
     // Assert indexes
     assertBiLongMultiMap(expected.indexes.softLinks.index, actual.indexes.softLinks.index)
-    assertBiMap(expected.indexes.persistentIdIndex.index, actual.indexes.persistentIdIndex.index)
+    assertBiMap(expected.indexes.symbolicIdIndex.index, actual.indexes.symbolicIdIndex.index)
     // External index should not be persisted
     assertTrue(actual.indexes.externalMappings.isEmpty())
     // Just checking that all properties have been asserted

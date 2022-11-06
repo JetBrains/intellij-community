@@ -144,6 +144,8 @@ public interface ActionToolbar {
 
   void setSecondaryActionsIcon(Icon icon, boolean hideDropdownIcon);
 
+  @NotNull ActionGroup getActionGroup();
+
   @NotNull List<AnAction> getActions();
 
   void setMiniMode(boolean minimalMode);

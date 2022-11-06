@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaModuleSettingsEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,13 +36,8 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
     setDefault(project.isDefault() ? true : null);
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(
-      project.getMessageBus().connect(),
+    project.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED,
       new WorkspaceModelChangeListener() {
-        @Override
-        public void beforeChanged(@NotNull VersionedStorageChange event) {
-        }
-
         @Override
         public void changed(@NotNull VersionedStorageChange event) {
           if (event.getChanges(JavaModuleSettingsEntity.class).stream().anyMatch(change ->

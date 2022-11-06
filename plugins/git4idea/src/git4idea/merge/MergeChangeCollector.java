@@ -173,19 +173,13 @@ public class MergeChangeCollector {
         continue;
       }
       String path = root + "/" + GitUtil.unescapePath(relative);
-      switch (status) {
-        case 'M':
-          updated.add(path);
-          break;
-        case 'A':
-          created.add(path);
-          break;
-        case 'D':
-          removed.add(path);
-          break;
-        default:
-          throw new IllegalStateException("Unexpected status: " + status);
-      }
+      Collection<? super String> collection = switch (status) {
+        case 'M' -> updated;
+        case 'A' -> created;
+        case 'D' -> removed;
+        default -> throw new IllegalStateException("Unexpected status: " + status);
+      };
+      collection.add(path);
     }
   }
 

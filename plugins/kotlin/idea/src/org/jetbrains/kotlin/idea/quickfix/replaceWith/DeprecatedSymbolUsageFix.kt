@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
@@ -24,7 +25,8 @@ class DeprecatedSymbolUsageFix(
 
     override fun invoke(replacementStrategy: UsageReplacementStrategy, project: Project, editor: Editor?) {
         val element = element ?: return
-        val result = replacementStrategy.createReplacer(element)?.invoke() ?: return
+        val replacer = replacementStrategy.createReplacer(element) ?: return
+        val result = replacer() ?: return
 
         if (editor != null) {
             val offset = (result.getCalleeExpressionIfAny() ?: result).textOffset

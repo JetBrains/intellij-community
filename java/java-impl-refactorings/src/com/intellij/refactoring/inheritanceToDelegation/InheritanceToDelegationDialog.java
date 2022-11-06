@@ -5,9 +5,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
@@ -20,7 +17,6 @@ import com.intellij.refactoring.util.classMembers.InterfaceMemberDependencyGraph
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,11 +126,11 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
     for (MemberInfo memberInfo : selectedMemberInfos) {
       final PsiElement member = memberInfo.getMember();
-      if (member instanceof PsiClass && Boolean.FALSE.equals(memberInfo.getOverrides())) {
-        implementedInterfaces.add((PsiClass)member);
+      if (member instanceof PsiClass aClass && Boolean.FALSE.equals(memberInfo.getOverrides())) {
+        implementedInterfaces.add(aClass);
       }
-      else if (member instanceof PsiMethod) {
-        delegatedMethods.add((PsiMethod)member);
+      else if (member instanceof PsiMethod method) {
+        delegatedMethods.add(method);
       }
     }
     invokeRefactoring(new InheritanceToDelegationProcessor(myProject, myClass,
@@ -252,14 +248,9 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
   private void updateTargetClass() {
     final PsiClass targetClass = getSelectedTargetClass();
-    PsiManager psiManager = myClass.getManager();
-    PsiType superType = JavaPsiFacade.getElementFactory(psiManager.getProject()).createType(targetClass);
-    SuggestedNameInfo suggestedNameInfo =
-      JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(VariableKind.FIELD, null, null, superType);
-    myFieldNameField.setSuggestions(suggestedNameInfo.names);
+    myFieldNameField.setSuggestions(InheritanceToDelegationHandler.suggestFieldNames(myClass, targetClass));
     myInnerClassNameField.getComponent().setEnabled(InheritanceToDelegationUtil.isInnerClassNeeded(myClass, targetClass));
-    @NonNls final String suggestion = "My" + targetClass.getName();
-    myInnerClassNameField.setSuggestions(new String[]{suggestion});
+    myInnerClassNameField.setSuggestions(new String[]{InheritanceToDelegationHandler.suggestTargetClassName(targetClass)});
 
     myDataChangedListener = () -> validateButtons();
     myInnerClassNameField.addDataChangedListener(myDataChangedListener);

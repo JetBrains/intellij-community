@@ -4,8 +4,8 @@ package com.jetbrains.python.run
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
-import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
 import com.intellij.execution.target.value.joinToStringFunction
+import com.intellij.execution.target.value.targetPath
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
@@ -99,7 +99,7 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
   }
 
   override fun putTargetPathValue(name: String, localPath: String) {
-    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(Path.of(localPath))
+    val targetValue = targetPath(Path.of(localPath))
     envs[name] = targetValue
   }
 
@@ -110,7 +110,7 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
 
   override fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence) {
     envs[name] = localPaths
-      .map { localPath -> targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(Path.of(localPath)) }
+      .map { localPath -> targetPath(Path.of(localPath)) }
       .joinToStringFunction(separator)
   }
 
@@ -120,7 +120,7 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
   }
 
   override fun appendTargetPathToPathsValue(name: String, localPath: String) {
-    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(Path.of(localPath))
+    val targetValue = targetPath(Path.of(localPath))
     envs.merge(name, targetValue) { originalValue, additionalValue ->
       listOf(originalValue, additionalValue).joinToPathValue(targetEnvironmentRequest.targetPlatform)
     }

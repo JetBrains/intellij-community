@@ -5,15 +5,13 @@ import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LombokUtilsGetterTest {
 
-  private static final AccessorsInfo DEFAULT_ACCESSORS = AccessorsInfo.build(false, false, false);
-
-  private String makeResults(String fieldName, boolean isBoolean) {
-    String lombokResult = LombokHandlerUtil.toGetterName(DEFAULT_ACCESSORS, fieldName, isBoolean);
-    String result = LombokUtils.toGetterName(DEFAULT_ACCESSORS, fieldName, isBoolean);
+  private static String makeResults(String fieldName, boolean isBoolean) {
+    String lombokResult = LombokHandlerUtil.toGetterName(AccessorsInfo.DEFAULT, fieldName, isBoolean);
+    String result = LombokUtils.toGetterName(AccessorsInfo.DEFAULT, fieldName, isBoolean);
 
     assertThat(result, is(lombokResult));
     return result;

@@ -6,15 +6,52 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.SyntheticLibrary
-
+import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
+import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.LibraryRoots
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import org.jetbrains.deft.annotations.Child
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.ucache.scriptsAsEntities
 import javax.swing.Icon
 
-class KotlinScriptDependenciesLibraryRootProvider: AdditionalLibraryRootsProvider() {
-    override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
+/**
+ * See recommendations for custom entities indexing
+ * [here](https://youtrack.jetbrains.com/articles/IDEA-A-239/Integration-of-custom-workspace-entities-with-platform-functionality)
+ */
+class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvider<KotlinScriptEntity> {
+    override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
+
+    override fun getLibraryRoots(
+        entities: Sequence<KotlinScriptEntity>,
+        entityStorage: EntityStorage
+    ): Sequence<LibraryRoots<KotlinScriptEntity>> =
+        if (!scriptsAsEntities) { // see KotlinScriptDependenciesLibraryRootProvider
+            emptySequence()
+        } else {
+            entities.flatMap { scriptEntity ->
+                scriptEntity.dependencies.map<@Child LibraryEntity, LibraryRoots<KotlinScriptEntity>> { libEntity ->
+                    val (classes, sources) = libEntity.roots.partition { it.type == LibraryRootTypeId.COMPILED }
+                    val classFiles = classes.mapNotNull { it.url.virtualFile }
+                    val sourceFiles = sources.mapNotNull { it.url.virtualFile }
+                    LibraryRoots(scriptEntity, sourceFiles, classFiles, emptyList(), null)
+                }
+            }
+        }
+}
+
+
+class KotlinScriptDependenciesLibraryRootProvider : AdditionalLibraryRootsProvider() {
+
+    override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> { // RootIndex & FileBasedIndexEx need it
+        if (scriptsAsEntities) return emptyList() // see KotlinScriptProjectModelInfoProvider
+
         val manager = ScriptConfigurationManager.getInstance(project)
         val classes = manager.getAllScriptsDependenciesClassFiles().filterValid()
         val sources = manager.getAllScriptDependenciesSources().filterValid()
@@ -34,8 +71,11 @@ class KotlinScriptDependenciesLibraryRootProvider: AdditionalLibraryRootsProvide
 
     private fun Collection<VirtualFile>.filterValid() = this.filterTo(LinkedHashSet(), VirtualFile::isValid)
 
-    override fun getRootsToWatch(project: Project): Collection<VirtualFile> =
+    override fun getRootsToWatch(project: Project): Collection<VirtualFile> = if (scriptsAsEntities) {
+        emptyList()
+    } else {
         ScriptConfigurationManager.allExtraRoots(project).filterValid()
+    }
 
     private data class KotlinScriptDependenciesLibrary(val classes: Collection<VirtualFile>, val sources: Collection<VirtualFile>) :
         SyntheticLibrary("KotlinScriptDependenciesLibrary", null), ItemPresentation {

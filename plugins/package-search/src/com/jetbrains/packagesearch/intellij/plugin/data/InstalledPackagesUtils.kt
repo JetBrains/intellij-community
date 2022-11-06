@@ -35,6 +35,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
@@ -42,6 +43,9 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,6 +74,7 @@ internal suspend fun installedPackages(
     traceInfo: TraceInfo
 ): List<PackageModel.Installed> {
     val usageInfoByDependency = mutableMapOf<UnifiedDependency, MutableList<DependencyUsageInfo>>()
+    logTrace(traceInfo) { "installedPackages started" }
     for (module in dependenciesByModule.keys) {
         dependenciesByModule[module]?.forEach { (dependency, resolvedVersion, declarationIndexInBuildFile) ->
             yield()
@@ -83,14 +88,16 @@ internal suspend fun installedPackages(
                 declarationIndexInBuildFile = declarationIndexInBuildFile
             )
             val usageInfoList = usageInfoByDependency.getOrPut(dependency) { mutableListOf() }
+            if (usageInfoByDependency.size % 100 == 0) logTrace(traceInfo) { "usageInfoByDependency.size = ${usageInfoByDependency.size}" }
             usageInfoList.add(usageInfo)
         }
     }
-
+    logTrace(traceInfo) { "usageInfoByDependency.size = ${usageInfoByDependency.size}" }
     val installedDependencies = dependenciesByModule.values.flatten()
         .mapNotNull { InstalledDependency.from(it.dependency) }
 
     val dependencyRemoteInfoMap = dataProvider.fetchInfoFor(installedDependencies, traceInfo)
+    logTrace(traceInfo) { "dependencyRemoteInfoMap.size = ${dependencyRemoteInfoMap.size}" }
 
     return usageInfoByDependency.parallelMap { (dependency, usageInfo) ->
         val installedDependency = InstalledDependency.from(dependency)
@@ -187,7 +194,8 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     val resolvedDependenciesMap = resolvedDependenciesMapJob.await()
 
     val dependencies: List<ResolvedUnifiedDependency> = declaredDependencies.map {
-        ResolvedUnifiedDependency(it.unifiedDependency, resolvedDependenciesMap[it.unifiedDependency.key], dependenciesLocationMap[it]) }
+        ResolvedUnifiedDependency(it.unifiedDependency, resolvedDependenciesMap[it.unifiedDependency.key], dependenciesLocationMap[it])
+    }
 
     nativeModule.project.lifecycleScope.launch {
         val jsonText = json.encodeToString(

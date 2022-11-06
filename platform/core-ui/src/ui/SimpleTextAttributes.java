@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +16,6 @@ import java.awt.*;
 import java.util.Objects;
 
 public final class SimpleTextAttributes {
-
   @MagicConstant(flags = {
     STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE,
     STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE,
@@ -43,12 +42,15 @@ public final class SimpleTextAttributes {
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
   public static final SimpleTextAttributes REGULAR_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, null);
-  public static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getErrorForeground());
+  public static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, NamedColorUtil.getErrorForeground());
 
-  public static final SimpleTextAttributes GRAYED_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getInactiveTextColor());
-  public static final SimpleTextAttributes GRAYED_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, UIUtil.getInactiveTextColor());
-  public static final SimpleTextAttributes GRAYED_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, UIUtil.getInactiveTextColor());
-  public static final SimpleTextAttributes GRAYED_SMALL_ATTRIBUTES = new SimpleTextAttributes(STYLE_SMALLER, UIUtil.getInactiveTextColor());
+  public static final SimpleTextAttributes GRAYED_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, NamedColorUtil.getInactiveTextColor());
+  public static final SimpleTextAttributes GRAYED_BOLD_ATTRIBUTES =
+    new SimpleTextAttributes(STYLE_BOLD, NamedColorUtil.getInactiveTextColor());
+  public static final SimpleTextAttributes GRAYED_ITALIC_ATTRIBUTES =
+    new SimpleTextAttributes(STYLE_ITALIC, NamedColorUtil.getInactiveTextColor());
+  public static final SimpleTextAttributes GRAYED_SMALL_ATTRIBUTES =
+    new SimpleTextAttributes(STYLE_SMALLER, NamedColorUtil.getInactiveTextColor());
 
   public static final SimpleTextAttributes SHORTCUT_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Tooltip.shortcutForeground());
 
@@ -60,8 +62,8 @@ public final class SimpleTextAttributes {
 
   public static final SimpleTextAttributes DARK_TEXT = new SimpleTextAttributes(STYLE_PLAIN, new Color(112, 112, 164));
   public static final SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, new JBColor(Gray._0, Gray._187));
-  public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES =
-    new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground(true));
+  public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES
+    = new SimpleTextAttributes(STYLE_PLAIN, NamedColorUtil.getListSelectionForeground(true));
   public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, JBColor.GRAY);
 
   public static final SimpleTextAttributes LINK_PLAIN_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.Foreground.ENABLED);
@@ -321,5 +323,10 @@ public final class SimpleTextAttributes {
   @Override
   public int hashCode() {
     return Objects.hash(myBgColor, myFgColor, myWaveColor, myStyle);
+  }
+
+  @Override
+  public String toString() {
+    return "[" + myBgColor + ", " + myFgColor + ", " + myWaveColor + ", " + myStyle + "]";
   }
 }

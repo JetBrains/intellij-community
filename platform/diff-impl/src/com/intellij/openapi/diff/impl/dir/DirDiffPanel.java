@@ -10,7 +10,6 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffPlaces;
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.util.PropertiesComponent;
@@ -41,6 +40,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
@@ -189,7 +189,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
     if (model.isOperationsEnabled()) {
       final JBLabel label = new JBLabel(DiffBundle.message("use.space.button.or.mouse.click"), SwingConstants.CENTER);
-      label.setForeground(UIUtil.getInactiveTextColor());
+      label.setForeground(NamedColorUtil.getInactiveTextColor());
       UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
       filesPanel.addToBottom(label);
     }
@@ -590,14 +590,16 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
     @Override
     protected void goToNextChange(boolean fromDifferences) {
-      selectRow(getNextRow(), false);
-      updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
+      goToNextChangeImpl(fromDifferences, () -> {
+        selectRow(getNextRow(), false);
+      });
     }
 
     @Override
     protected void goToPrevChange(boolean fromDifferences) {
-      selectRow(getPrevRow(), false);
-      updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
+      goToPrevChangeImpl(fromDifferences, () -> {
+        selectRow(getPrevRow(), false);
+      });
     }
 
     @Override

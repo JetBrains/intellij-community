@@ -130,9 +130,9 @@ public final class TextDiffViewerUtil {
     if (sameDocuments) {
       StringBuilder message = new StringBuilder();
       message.append("DiffRequest with same documents detected\n");
-      message.append(request.toString()).append("\n");
+      message.append(request).append("\n");
       for (DiffContent content : contents) {
-        message.append(content.toString()).append("\n");
+        message.append(content).append("\n");
       }
       LOG.warn(message.toString());
     }
@@ -192,6 +192,11 @@ public final class TextDiffViewerUtil {
     private DefaultActionGroup myActions;
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setText(getText(getValue()));
@@ -199,7 +204,7 @@ public final class TextDiffViewerUtil {
 
     @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       return getActions();
     }
 
@@ -229,6 +234,11 @@ public final class TextDiffViewerUtil {
       @NotNull private final T myOption;
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void update(@NotNull AnActionEvent e) {
         Toggleable.setSelected(e.getPresentation(), getValue() == myOption);
       }
@@ -245,7 +255,7 @@ public final class TextDiffViewerUtil {
     }
   }
 
-  public static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
+  public static abstract class EnumPolicySettingAction<T extends Enum<T>> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
     private final T @NotNull [] myPolicies;
 
     public EnumPolicySettingAction(T @NotNull [] policies) {
@@ -262,7 +272,6 @@ public final class TextDiffViewerUtil {
     @NotNull
     @Override
     protected List<T> getAvailableOptions() {
-      //noinspection unchecked
       return ContainerUtil.sorted(Arrays.asList(myPolicies));
     }
 
@@ -387,6 +396,11 @@ public final class TextDiffViewerUtil {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return mySettings.isEnableSyncScroll();
     }
@@ -405,6 +419,11 @@ public final class TextDiffViewerUtil {
       super(DiffBundle.message("collapse.unchanged.fragments"), AllIcons.Actions.Collapseall);
       mySettings = settings;
       myFoldingSupport = foldingSupport;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -444,6 +463,11 @@ public final class TextDiffViewerUtil {
       if (isVisible()) { // apply default state
         setSelected(isSelected());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

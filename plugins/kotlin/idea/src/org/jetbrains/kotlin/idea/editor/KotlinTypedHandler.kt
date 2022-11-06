@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -283,7 +284,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                     parentElement = parentElement.getParent()
                     if (parentElement is KtClass) {
                         val klassElement = parentElement
-                        contextMatched = klassElement.isData() || klassElement.hasModifier(KtTokens.INLINE_KEYWORD)
+                        contextMatched = klassElement.mustHaveNonEmptyPrimaryConstructor()
                     }
                 }
             }

@@ -4,6 +4,7 @@ package git4idea.fetch
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
 import com.intellij.externalProcessAuthHelper.AuthenticationGate
+import com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -12,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -26,7 +28,6 @@ import git4idea.GitUtil.mention
 import git4idea.commands.Git
 import git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS
 import git4idea.commands.GitImpl
-import com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
 import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
@@ -95,6 +96,10 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
 
   override fun fetch(repository: GitRepository, remote: GitRemote, refspec: @NonNls String): GitFetchResult {
     return fetch(listOf(RemoteRefCoordinates(repository, remote, refspec)))
+  }
+
+  override fun fetchRemotes(remotes: Collection<Pair<GitRepository, GitRemote>>): GitFetchResult {
+    return fetch(remotes.map { RemoteRefCoordinates(it.first, it.second) })
   }
 
   private fun fetch(arguments: List<RemoteRefCoordinates>): GitFetchResult {

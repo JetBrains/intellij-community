@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
@@ -43,10 +44,8 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.plaf.TreeUI;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -115,7 +114,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setShowsRootHandles(true);
     setOpaque(false);
     if (withSpeedSearch) {
-      new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, false);
+      new TreeSpeedSearch(this, false, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction());
     }
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
@@ -137,11 +136,33 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     if (Registry.is("vcs.changes.tree.use.fixed.height.renderer")) {
       putClientProperty(DefaultTreeUI.LARGE_MODEL_ALLOWED, true);
-      ChangesBrowserFilePathNode sampleNode = new ChangesBrowserFilePathNode(VcsUtil.getFilePath("ChangesTreeDummy.java"), null);
-      Component component = nodeRenderer.getTreeCellRendererComponent(this, sampleNode, true, true, true, 0, true);
-      setRowHeight(component.getPreferredSize().height);
       setLargeModel(true);
+
+      updateFixedRowHeight();
     }
+  }
+
+  private void updateFixedRowHeight() {
+    if (!isLargeModel()) return;
+
+    int fixedRowHeight = UIManager.getInt("Tree.rowHeight");
+    if (fixedRowHeight > 0) return; // leave hardcoded value from BasicTreeUI.installDefaults
+
+    TreeCellRenderer renderer = getCellRenderer();
+    if (renderer == null) return;
+
+    ChangesBrowserNode<?> sampleNode = new FixedHeightSampleChangesBrowserNode();
+    Component component = renderer.getTreeCellRendererComponent(this, sampleNode, true, true, true, 0, true);
+    int rendererHeight = component.getPreferredSize().height;
+    if (rendererHeight <= 0) return;
+
+    setRowHeight(rendererHeight);
+  }
+
+  @Override
+  public void setUI(TreeUI ui) {
+    super.setUI(ui);
+    updateFixedRowHeight();
   }
 
   /**
@@ -348,6 +369,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       myCheckBoxClickHandler.uninstall(this);
       myCheckBoxClickHandler = null;
     }
+    updateFixedRowHeight();
     repaint();
   }
 
@@ -757,7 +779,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
     if (component instanceof ChangesBrowserNode<?>) {
-      return ((ChangesBrowserNode<?>)component).getBackgroundColor(myProject);
+      return ((ChangesBrowserNode<?>)component).getBackgroundColorCached(myProject);
     }
     return null;
   }
@@ -863,6 +885,25 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       else {
         tree.resetTreeState();
       }
+    }
+  }
+
+  static class FixedHeightSampleChangesBrowserNode extends ChangesBrowserNode<Object> {
+    private static final Object FIXED_HEIGHT_SAMPLE_NODE_VALUE = new Object();
+
+    private FixedHeightSampleChangesBrowserNode() {
+      super(FIXED_HEIGHT_SAMPLE_NODE_VALUE);
+    }
+
+    @Override
+    public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+      renderer.append("ChangesTreeDummy.java");
+      renderer.setIcon(AllIcons.FileTypes.Any_type);
+    }
+
+    @Override
+    public String toString() {
+      return "FixedHeightSampleChangesBrowserNode";
     }
   }
 }

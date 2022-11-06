@@ -6,59 +6,69 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
+import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
+import java.util.concurrent.Callable
 
 @VisibleForTesting
 const val LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME = "kotlin.updates.whats.new.shown.for"
 
 class ExternalKotlinCompilerProjectDataImportListener(private val project: Project) : ProjectDataImportListener {
     override fun onImportFinished(projectPath: String?) {
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
-            showNewKotlinCompilerAvailableNotificationIfNeeded(project)
-        }
+        showNewKotlinCompilerAvailableNotificationIfNeeded(project)
     }
 }
 
-@RequiresBackgroundThread
 fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
     val bundledCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
     if (!bundledCompilerVersion.isRelease) return
 
-    fun findExternalVersion() =
-        (ExternalCompilerVersionProvider.findLatest(project) ?: KotlinPluginLayout.standaloneCompilerVersion).kotlinVersion
+    ReadAction.nonBlocking(Callable {
+        if (!project.containsNonScriptKotlinFile()) return@Callable null
 
-    val bundledKotlinVersion = bundledCompilerVersion.kotlinVersion
-    if (!newExternalKotlinCompilerShouldBePromoted(bundledKotlinVersion, ::findExternalVersion)) return
+        fun findExternalVersion(): KotlinVersion {
+            return (ExternalCompilerVersionProvider.findLatest(project) ?: KotlinPluginLayout.standaloneCompilerVersion).kotlinVersion
+        }
 
-    invokeLater {
-        // Show the notification once for a project&version (checked in 'newExternalKotlinCompilerShouldBePromoted()')
-        disableNewKotlinCompilerAvailableNotification(bundledKotlinVersion)
-    }
+        val bundledKotlinVersion = bundledCompilerVersion.kotlinVersion
+        if (!newExternalKotlinCompilerShouldBePromoted(bundledKotlinVersion, ::findExternalVersion)) return@Callable null
+        bundledKotlinVersion
+    })
+        .inSmartMode(project)
+        .coalesceBy(bundledCompilerVersion)
+        .expireWith(KotlinPluginDisposable.getInstance(project))
+        .finishOnUiThread(ModalityState.defaultModalityState()) { bundledKotlinVersion ->
+            if (bundledKotlinVersion == null) return@finishOnUiThread
 
-    NotificationGroupManager.getInstance()
-        .getNotificationGroup("kotlin.external.compiler.updates")
-        .createNotification(
-            KotlinMigrationBundle.message("kotlin.external.compiler.updates.notification.content.0", bundledKotlinVersion),
-            NotificationType.INFORMATION,
-        )
-        .setSuggestionType(true)
-        .addAction(createWhatIsNewAction(bundledKotlinVersion))
-        .setIcon(KotlinIcons.SMALL_LOGO)
-        .setImportant(true)
-        .notify(project)
+            // Show the notification once for a project&version (checked in 'newExternalKotlinCompilerShouldBePromoted()')
+            disableNewKotlinCompilerAvailableNotification(bundledKotlinVersion)
+
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup("kotlin.external.compiler.updates")
+                .createNotification(
+                    KotlinMigrationBundle.message("kotlin.external.compiler.updates.notification.content.0", bundledKotlinVersion),
+                    NotificationType.INFORMATION,
+                )
+                .setSuggestionType(true)
+                .addAction(createWhatIsNewAction(bundledKotlinVersion))
+                .setIcon(KotlinIcons.SMALL_LOGO)
+                .setImportant(true)
+                .notify(project)
+        }
+        .submit(AppExecutorUtil.getAppExecutorService())
 }
 
 fun disableNewKotlinCompilerAvailableNotification(version: KotlinVersion): Unit = runWriteAction {

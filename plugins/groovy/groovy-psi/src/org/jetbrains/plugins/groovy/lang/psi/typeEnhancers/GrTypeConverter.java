@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.Convers
 
 import java.util.Collection;
 
-/**
- * @author peter
- */
 public abstract class GrTypeConverter {
 
   public static final ExtensionPointName<GrTypeConverter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.typeConverter");

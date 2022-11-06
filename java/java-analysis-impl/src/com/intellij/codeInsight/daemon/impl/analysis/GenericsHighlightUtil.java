@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
+import com.intellij.codeInsight.daemon.impl.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.core.JavaPsiBundle;
@@ -897,16 +897,29 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkGenericArrayCreation(@NotNull PsiElement element, @Nullable PsiType type) {
-    if (type instanceof PsiArrayType) {
-      if (!JavaGenericsUtil.isReifiableType(((PsiArrayType)type).getComponentType())) {
+  public static HighlightInfo checkGenericArrayCreation(@NotNull PsiElement element, @Nullable PsiType type) {
+    if (type instanceof PsiArrayType arrayType) {
+      if (!JavaGenericsUtil.isReifiableType(arrayType.getComponentType())) {
         String description = JavaErrorBundle.message("generic.array.creation");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       }
 
-      if (element instanceof PsiNewExpression && ((PsiNewExpression)element).getTypeArguments().length > 0) {
-        String description = JavaErrorBundle.message("array.creation.with.type.arguments");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+      if (element instanceof PsiNewExpression newExpression) {
+        if (newExpression.getTypeArguments().length > 0) {
+          String description = JavaErrorBundle.message("array.creation.with.type.arguments");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        }
+        PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+        if (classReference != null) {
+          PsiReferenceParameterList parameterList = classReference.getParameterList();
+          if (parameterList != null) {
+            PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+            if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
+              String description = JavaErrorBundle.message("cannot.create.array.with.empty.diamond");
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+            }
+          }
+        }
       }
     }
 

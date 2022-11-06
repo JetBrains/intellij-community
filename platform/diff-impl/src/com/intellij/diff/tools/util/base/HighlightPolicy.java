@@ -54,17 +54,10 @@ public enum HighlightPolicy {
 
   @NotNull
   public InnerFragmentsPolicy getFragmentsPolicy() {
-    switch (this) {
-      case BY_WORD:
-      case BY_WORD_SPLIT:
-        return InnerFragmentsPolicy.WORDS;
-      case BY_CHAR:
-        return InnerFragmentsPolicy.CHARS;
-      case BY_LINE:
-      case DO_NOT_HIGHLIGHT:
-        return InnerFragmentsPolicy.NONE;
-      default:
-        throw new IllegalArgumentException(this.name());
-    }
+    return switch (this) {
+      case BY_WORD, BY_WORD_SPLIT -> InnerFragmentsPolicy.WORDS;
+      case BY_CHAR -> InnerFragmentsPolicy.CHARS;
+      case BY_LINE, DO_NOT_HIGHLIGHT -> InnerFragmentsPolicy.NONE;
+    };
   }
 }

@@ -25,22 +25,23 @@ public class JavacQuirksInspectionTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   public void testMethodReferenceRefersInaccessibleType() {
-    myFixture.addClass("package foo;\n" +
-                       "\n" +
-                       "public class Foo {\n" +
-                       "\n" +
-                       "    public static <T extends Private> T m0() {return null;}\n" +
-                       "    public static Private m1() {return null;}\n" +
-                       "    public static Private[] m2() {return null;}\n" +
-                       "    public static Package m3() {return null;}\n" +
-                       "    public static Protected m4() {return null;}\n" +
-                       "    public static Public m5() {return null;}\n" +
-                       "\n" +
-                       "    private static class Private {}\n" +
-                       "    static class Package {}\n" +
-                       "    protected static class Protected {}\n" +
-                       "    public static class Public {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package foo;
+
+                         public class Foo {
+
+                             public static <T extends Private> T m0() {return null;}
+                             public static Private m1() {return null;}
+                             public static Private[] m2() {return null;}
+                             public static Package m3() {return null;}
+                             public static Protected m4() {return null;}
+                             public static Public m5() {return null;}
+
+                             private static class Private {}
+                             static class Package {}
+                             protected static class Protected {}
+                             public static class Public {}
+                         }""");
     doTest();
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -74,6 +75,7 @@ internal class DependencySupportBean() : PluginAware {
   var displayName: String = ""
 
   companion object {
+
     val EP_NAME = ExtensionPointName.create<DependencySupportBean>("com.intellij.dependencySupport")
   }
 
@@ -85,7 +87,16 @@ internal class DependencySupportBean() : PluginAware {
   }
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    this.pluginDescriptor = pluginDescriptor
+    if (pluginDescriptor is IdeaPluginDescriptorImpl && pluginDescriptor.moduleName == null) {
+      this.pluginDescriptor = pluginDescriptor
+    }
+    else {
+      val descriptorPath = (pluginDescriptor as? IdeaPluginDescriptor)?.descriptorPath
+      throw PluginException(
+        "$DEPENDENCY_SUPPORT_FEATURE should be registered only in a `${PluginManagerCore.PLUGIN_XML_PATH}` file, actual descriptor path: `$descriptorPath`",
+        pluginDescriptor.pluginId,
+      )
+    }
   }
 }
 

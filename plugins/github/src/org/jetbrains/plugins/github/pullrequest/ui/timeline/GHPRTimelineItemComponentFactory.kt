@@ -201,7 +201,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun userAvatar(user: GHGitActor?): JLabel {
-    return LinkLabel<Any>("", avatarIconsProvider.getIcon(user?.avatarUrl), LinkListener { _, _ ->
+    return LinkLabel<Any>("", avatarIconsProvider.getIcon(user?.avatarUrl, GHUIUtil.AVATAR_SIZE), LinkListener { _, _ ->
       user?.url?.let { BrowserUtil.browse(it) }
     })
   }
@@ -244,7 +244,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     fun getDefaultSize() = Dimension(GHUIUtil.getPRTimelineWidth(), -1)
 
     fun userAvatar(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): JLabel {
-      return LinkLabel<Any>("", avatarIconsProvider.getIcon(user?.avatarUrl), LinkListener { _, _ ->
+      return LinkLabel<Any>("", avatarIconsProvider.getIcon(user?.avatarUrl, GHUIUtil.AVATAR_SIZE), LinkListener { _, _ ->
         user?.url?.let { BrowserUtil.browse(it) }
       })
     }

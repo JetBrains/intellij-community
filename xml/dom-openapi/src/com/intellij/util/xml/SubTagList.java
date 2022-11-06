@@ -24,8 +24,6 @@ import java.lang.annotation.Target;
 
 /**
  * Annotates a collection children getter, which should return generic {@link java.util.Collection} or {@link java.util.List}. 
- *
- * @author peter
  */
 
 @Retention(RetentionPolicy.RUNTIME)

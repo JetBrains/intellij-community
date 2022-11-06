@@ -13,12 +13,12 @@ import java.util.*
 
 private sealed class PendingValue {
     class Ordinary(val name: String, val field: Field, val container: Container) : PendingValue() {
-        override fun addTo(existingVariables: ExistingVariables): CapturedValueData? {
+        override fun addTo(existingVariables: ExistingVariables): CapturedAsFieldValueData? {
             if (!existingVariables.add(ExistingVariable.Ordinary(name))) {
                 return null
             }
 
-            return CapturedValueData(name, container.value, field)
+            return CapturedAsFieldValueData(name, container.value, field)
         }
     }
 

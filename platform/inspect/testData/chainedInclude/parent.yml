@@ -1,0 +1,5 @@
+$schema: https://json.schemastore.org/idea-inspection-profile-1.0.json
+
+include:
+  - "first.yml"
+  - "top/second.yml"

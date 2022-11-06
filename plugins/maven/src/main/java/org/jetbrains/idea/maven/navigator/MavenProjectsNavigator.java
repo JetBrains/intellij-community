@@ -60,6 +60,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenProjectNavigator", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
@@ -279,6 +280,11 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
   void initToolWindow() {
     initTree();
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    toolWindowManager.invokeLater(() -> initializeToolWindow(toolWindowManager));
+  }
+
+  private void initializeToolWindow(ToolWindowManager toolWindowManager) {
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
     AnAction removeAction = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.RemoveRunConfiguration"));
@@ -286,7 +292,6 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     AnAction editSource = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.EditRunConfiguration"));
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {
       builder.icon = MavenIcons.ToolWindowMaven;
       builder.anchor = ToolWindowAnchor.RIGHT;

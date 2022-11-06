@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xcontext-receivers" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xcontext-receivers" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -34,5 +34,7 @@
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" />
+    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
   </component>
 </module>

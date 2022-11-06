@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
@@ -103,7 +102,7 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
   }
   
   @Nullable
-  private static PyFile getPyFile(Project project, VirtualFile virtualFile) {
+  private static PyFile getPyFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     VirtualFile targetFile = Arrays.stream(FileEditorManager.getInstance(project).getAllEditors(virtualFile))
       .map(editor -> editor.getFile())
       .filter(file -> file instanceof BackedVirtualFile)

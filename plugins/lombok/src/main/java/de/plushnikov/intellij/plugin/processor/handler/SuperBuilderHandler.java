@@ -3,9 +3,8 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -33,17 +32,17 @@ public class SuperBuilderHandler extends BuilderHandler {
   @Override
   protected boolean validateBuilderConstructor(@NotNull PsiClass psiClass,
                                                Collection<BuilderInfo> builderInfos,
-                                               @NotNull ProblemBuilder problemBuilder) {
+                                               @NotNull ProblemSink problemSink) {
     return true;
   }
 
   @Override
-  public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
+  public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemSink problemSink) {
     final Optional<PsiClass> existingInnerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
 
     if (existingInnerBuilderClass.isPresent()) {
 
-      if (!validateInvalidAnnotationsOnBuilderClass(existingInnerBuilderClass.get(), problemBuilder)) {
+      if (!validateInvalidAnnotationsOnBuilderClass(existingInnerBuilderClass.get(), problemSink)) {
         return false;
       }
 
@@ -52,7 +51,7 @@ public class SuperBuilderHandler extends BuilderHandler {
         .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.ABSTRACT));
 
       if (isStaticAndAbstract.isEmpty()) {
-        problemBuilder.addError(LombokBundle.message("inspection.message.existing.builder.must.be.abstract.static.inner.class"));
+        problemSink.addErrorMessage("inspection.message.existing.builder.must.be.abstract.static.inner.class");
         return false;
       }
     }
@@ -133,11 +132,11 @@ public class SuperBuilderHandler extends BuilderHandler {
     return Optional.of(methodBuilder);
   }
 
-  public Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass,
-                                                              @NotNull PsiClass builderBaseClass,
-                                                              @NotNull PsiClass builderImplClass,
-                                                              @NotNull PsiAnnotation psiAnnotation,
-                                                              @NotNull PsiClassType psiTypeBaseWithGenerics) {
+  public static Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass,
+                                                                     @NotNull PsiClass builderBaseClass,
+                                                                     @NotNull PsiClass builderImplClass,
+                                                                     @NotNull PsiAnnotation psiAnnotation,
+                                                                     @NotNull PsiClassType psiTypeBaseWithGenerics) {
     if (!shouldGenerateToBuilderMethods(psiAnnotation)) {
       return Optional.empty();
     }
@@ -155,11 +154,11 @@ public class SuperBuilderHandler extends BuilderHandler {
     return Optional.of(methodBuilder);
   }
 
-  private boolean shouldGenerateToBuilderMethods(@NotNull PsiAnnotation psiAnnotation) {
+  private static boolean shouldGenerateToBuilderMethods(@NotNull PsiAnnotation psiAnnotation) {
     return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false);
   }
 
-  private String selectNonClashingNameFor(String classGenericName, Collection<String> typeParamStrings) {
+  private static String selectNonClashingNameFor(String classGenericName, Collection<String> typeParamStrings) {
     String result = classGenericName;
     if (typeParamStrings.contains(classGenericName)) {
       int counter = 2;
@@ -244,7 +243,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     return builderInfos;
   }
 
-  private void initBuilderInfosBuilderClassType(@NotNull List<BuilderInfo> builderInfos, @NotNull PsiClassType bType) {
+  private static void initBuilderInfosBuilderClassType(@NotNull List<BuilderInfo> builderInfos, @NotNull PsiClassType bType) {
     for (BuilderInfo builderInfo : builderInfos) {
       builderInfo.withBuilderClassType(bType);
     }
@@ -440,13 +439,13 @@ public class SuperBuilderHandler extends BuilderHandler {
   }
 
   @NotNull
-  public PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
+  public static PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
     final PsiWildcardType wildcardType = PsiWildcardType.createUnbounded(psiClass.getManager());
     return getTypeWithSpecificTypeParameters(psiClass, wildcardType, wildcardType);
   }
 
   @NotNull
-  private PsiClassType getTypeWithSpecificTypeParameters(@NotNull PsiClass psiClass, @NotNull PsiType... psiTypes) {
+  private static PsiClassType getTypeWithSpecificTypeParameters(@NotNull PsiClass psiClass, PsiType @NotNull... psiTypes) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
     final int substituteTypesCount = psiTypes.length;

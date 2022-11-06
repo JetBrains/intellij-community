@@ -7,6 +7,8 @@ import com.intellij.internal.statistic.eventLog.events.EventId3;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
+import com.intellij.internal.statistic.local.ActionExtendedSummary;
+import com.intellij.internal.statistic.local.ActionsLocalSummary;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -19,6 +21,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -135,6 +138,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
         }
       }
     }
+    adjustFeatureUsageInfo();
 
     try {
       FIRST_RUN_TIME = Long.parseLong(element.getAttributeValue(ATT_FIRST_RUN));
@@ -156,6 +160,22 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     HAVE_BEEN_SHOWN = Boolean.valueOf(element.getAttributeValue(ATT_HAVE_BEEN_SHOWN)).booleanValue();
     SHOW_IN_OTHER_PROGRESS = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IN_OTHER, Boolean.toString(true))).booleanValue();
     SHOW_IN_COMPILATION_PROGRESS = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IN_COMPILATION, Boolean.toString(true))).booleanValue();
+  }
+
+  private static void adjustFeatureUsageInfo() {
+    ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+    if (registry == null) return;
+
+    ActionsLocalSummary actionsSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary.class);
+    registry.getFeatureIds().stream()
+      .map(id -> registry.getFeatureDescriptor(id))
+      .forEach(feature -> {
+        List<ActionExtendedSummary> summary = ContainerUtil.mapNotNull(feature.getActionEvents(),
+                                                                       action -> actionsSummary.getActionStatsById(action.getActionId()));
+        int adjustedUsageCount = summary.stream().map(s -> s.usageCount).reduce(Integer::sum).orElse(0);
+        long adjustedLastTimeUsed = summary.stream().map(s -> s.lastUsedTimestamp).max(Long::compare).orElse(0L);
+        feature.adjustUsageInfo(adjustedUsageCount, adjustedLastTimeUsed);
+      });
   }
 
   @Override

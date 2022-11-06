@@ -75,8 +75,17 @@ public final class JpsBuild {
     runBuild(modules.stream().map(JpsNamedElement::getName).collect(Collectors.toSet()), false);
   }
 
+  /**
+   * @see com.intellij.space.java.jps.SpaceDependencyAuthenticationDataProvider
+   */
   public void resolveProjectDependencies() throws Exception {
     info("Resolving project dependencies...");
+    var spaceUsername = System.getProperty("jps.auth.spaceUsername");
+    var spacePassword = System.getProperty("jps.auth.spacePassword");
+    if (spaceUsername == null || spaceUsername.isBlank() || spacePassword == null || spacePassword.isBlank()) {
+      warn("Space credentials are not provided via -Djps.auth.spaceUsername and -Djps.auth.spacePassword. " +
+        "Private Space Maven dependencies, if not available locally, will fail to be resolved.");
+    }
 
     final long buildStart = System.currentTimeMillis();
 

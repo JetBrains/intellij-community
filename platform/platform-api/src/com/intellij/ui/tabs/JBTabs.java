@@ -106,14 +106,10 @@ public interface JBTabs extends DropAreaAware {
     if (getTabCount() > 0) {
       Rectangle bounds = getTabLabel(getTabAt(0)).getBounds();
       switch (getPresentation().getTabsPosition()) {
-        case top: insets.top = bounds.height;
-          break;
-        case left: insets.left = bounds.width;
-          break;
-        case bottom: insets.bottom = bounds.height;
-          break;
-        case right: insets.right = bounds.width;
-          break;
+        case top -> insets.top = bounds.height;
+        case left -> insets.left = bounds.width;
+        case bottom -> insets.bottom = bounds.height;
+        case right -> insets.right = bounds.width;
       }
     }
     JBInsets.removeFrom(r, insets);

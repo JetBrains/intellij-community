@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageView;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ui.UIUtil;
@@ -14,16 +15,19 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Objects;
 
+import static com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logNavigateToUsageClicked;
+
 public class LocationLinkComponent {
 
   @NotNull
   private final ActionLink myLabel;
 
-  public LocationLinkComponent(@NotNull UsageInfo item) {
+  public LocationLinkComponent(@NotNull JComponent component, @NotNull UsageView usageView, @NotNull UsageInfo item) {
     PsiFile file = item.getFile();
     myLabel = new ActionLink(Objects.requireNonNull(file).getName(), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        logNavigateToUsageClicked(item.getProject(), component.getClass(), usageView);
         PsiNavigateUtil.navigate(item.getElement());
       }
     });

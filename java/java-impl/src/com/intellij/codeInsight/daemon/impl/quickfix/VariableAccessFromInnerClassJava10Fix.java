@@ -89,8 +89,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     if (variable == null) return;
     final String variableText = getFieldText(variable);
 
-    PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myContext, PsiLambdaExpression.class);
-    if (lambdaExpression == null) return;
     DeclarationInfo declarationInfo = DeclarationInfo.findExistingAnonymousClass(variable);
 
     if (declarationInfo != null) {

@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownPreviewFileEditorProvider extends WeighedFileEditorProvider {
+final class MarkdownPreviewFileEditorProvider extends WeighedFileEditorProvider {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) return false;

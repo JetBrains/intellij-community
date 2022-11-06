@@ -58,7 +58,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +72,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
@@ -227,7 +225,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
                                       int itemsNumberToInsert) {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<RunAnythingItem> items = StreamEx.of(listModel.getItems()).select(RunAnythingItem.class).collect(Collectors.toList());
+      List<RunAnythingItem> items = ContainerUtil.filterIsInstance(listModel.getItems(), RunAnythingItem.class);
       RunAnythingGroup.SearchResult result;
       try {
         result = ProgressManager.getInstance().runProcess(
@@ -618,8 +616,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       wrapped.setSelectionColor(bg);
       wrapped.setForeground(foreground);
       if (ExperimentalUI.isNewUI()) {
-        PopupUtil.configSelectablePanel(wrapped);
-        wrapped.setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
+        PopupUtil.configListRendererFixedHeight(wrapped);
       }
       else {
         wrapped.setBorder(RENDERER_BORDER);
@@ -773,6 +770,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     actionGroup.addAction(new RunAnythingShowFilterAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("run.anything.toolbar", actionGroup, true);
+    toolbar.setTargetComponent(mySearchField);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(false);

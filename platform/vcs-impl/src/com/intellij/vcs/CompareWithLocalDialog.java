@@ -176,7 +176,7 @@ public class CompareWithLocalDialog {
       List<AnAction> actions = new ArrayList<>();
       actions.add(new MyRefreshAction());
       actions.addAll(super.createToolbarActions());
-      actions.add(new MyGetVersionAction());
+      actions.add(ActionManager.getInstance().getAction("Vcs.GetVersion"));
       return actions;
     }
 
@@ -185,16 +185,15 @@ public class CompareWithLocalDialog {
     protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
-        new MyGetVersionAction()
+        ActionManager.getInstance().getAction("Vcs.GetVersion")
       );
     }
   }
 
-  private static class MyGetVersionAction extends DumbAwareAction {
-    private MyGetVersionAction() {
-      super(VcsBundle.messagePointer("action.name.get.file.content.from.repository"),
-            VcsBundle.messagePointer("action.description.get.file.content.from.repository"), AllIcons.Actions.Download);
-      copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.GetVersion"));
+  public static class GetVersionActionProvider implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return e.getData(MyLoadingChangesPanel.DATA_KEY) != null;
     }
 
     @Override
@@ -251,12 +250,14 @@ public class CompareWithLocalDialog {
       }
 
       @Override
-      public byte @Nullable [] getContent() throws VcsException {
+      public @Nullable GetVersionAction.FileRevisionContent getContent() throws VcsException {
         ContentRevision revision = myLocalContent == LocalContent.AFTER ? myChange.getBeforeRevision()
                                                                         : myChange.getAfterRevision();
         if (revision == null) return null;
+        byte[] bytes = ChangesUtil.loadContentRevision(revision);
 
-        return ChangesUtil.loadContentRevision(revision);
+        FilePath oldFilePath = myChange.isMoved() || myChange.isRenamed() ? revision.getFile() : null;
+        return new GetVersionAction.FileRevisionContent(bytes, oldFilePath);
       }
     }
   }

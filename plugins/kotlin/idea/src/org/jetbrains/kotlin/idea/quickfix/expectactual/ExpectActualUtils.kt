@@ -10,30 +10,31 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
+import org.jetbrains.kotlin.idea.base.psi.mustHaveValOrVar
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.findOrCreateDirectoryForPackage
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
-import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EmptyOrTemplate
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.NoBody
+import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.Companion.create
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeNotActual
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.hasInlineModifier
+import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.isEffectivelyActual
-import org.jetbrains.kotlin.idea.util.mustHaveValOrVar
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -171,7 +172,7 @@ internal fun KtPsiFactory.generateClassOrObject(
         }
         generatedClass.addDeclaration(generatedDeclaration)
     }
-    if (!originalClass.isAnnotation() && !originalClass.hasInlineModifier()) {
+    if (!originalClass.isAnnotation() && originalClass.safeAs<KtClass>()?.isInlineOrValue() == false) {
         for (originalProperty in originalClass.primaryConstructorParameters) {
             if (!originalProperty.hasValOrVar() || !originalProperty.hasActualModifier()) continue
             val descriptor = originalProperty.toDescriptor() as? PropertyDescriptor ?: continue
@@ -260,7 +261,7 @@ private val forbiddenAnnotationFqNames = setOf(
     OptionalAnnotationUtil.OPTIONAL_EXPECTATION_FQ_NAME,
     FqName("kotlin.ExperimentalMultiplatform"),
     OptInNames.OPT_IN_FQ_NAME,
-    OptInNames.OLD_USE_EXPERIMENTAL_FQ_NAME
+    FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 )
 
 internal fun generateCallable(

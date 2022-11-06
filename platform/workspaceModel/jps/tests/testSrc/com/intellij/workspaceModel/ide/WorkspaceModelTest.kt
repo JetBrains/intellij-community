@@ -10,11 +10,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import junit.framework.Assert.*
 import org.junit.*
 
@@ -89,12 +90,11 @@ class WorkspaceModelTest {
     val secondModuleName = "AnotherModule"
 
 
-    WorkspaceModelTopics.getInstance(projectModel.project)
-      .subscribeImmediately(projectModel.project.messageBus.connect(), object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          throw IllegalAccessError()
-        }
-      })
+    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun beforeChanged(event: VersionedStorageChange) {
+        throw IllegalAccessError()
+      }
+    })
 
     val model = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
     model.userWarningLoggingLevel = true
@@ -131,8 +131,8 @@ class WorkspaceModelTest {
   @Test(expected = RuntimeException::class)
   @Ignore
   fun `recursive update silent`() {
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
+    (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
         println("So much updates")
       }
     }
@@ -142,8 +142,8 @@ class WorkspaceModelTest {
   @Ignore
   fun `recursive update mixed 1`() {
     ApplicationManager.getApplication().runWriteAction {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
-        WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
+        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
           println("So much updates")
         }
       }
@@ -154,8 +154,8 @@ class WorkspaceModelTest {
   @Ignore
   fun `recursive update mixed 2`() {
     ApplicationManager.getApplication().runWriteAction {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
+        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
           println("So much updates")
         }
       }

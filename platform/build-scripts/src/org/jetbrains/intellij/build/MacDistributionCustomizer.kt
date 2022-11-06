@@ -7,7 +7,9 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 import java.util.function.Predicate
 
-abstract class MacDistributionCustomizer {
+abstract class MacDistributionCustomizer(
+  internal val extraExecutables: List<String> = emptyList(),
+) {
   /**
    * Path to icns file containing product icon bundle for macOS distribution
    * For full description of icns files see <a href="https://en.wikipedia.org/wiki/Apple_Icon_Image_format">Apple Icon Image Format</a>
@@ -38,20 +40,20 @@ abstract class MacDistributionCustomizer {
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
    * Example:
-   * <pre>
-   * &lt;dict&gt;
-   *   &lt;key&gt;CFBundleTypeExtensions&lt;/key&gt;
-   *   &lt;array&gt;
-   *     &lt;string&gt;extension&lt;/string&gt;
-   *   &lt;/array&gt;
-   *   &lt;key&gt;CFBundleTypeIconFile&lt;/key&gt;
-   *   &lt;string&gt;path_to_icons.icns&lt;/string&gt;
-   *   &lt;key&gt;CFBundleTypeName&lt;/key&gt;
-   *   &lt;string&gt;File type description&lt;/string&gt;
-   *   &lt;key&gt;CFBundleTypeRole&lt;/key&gt;
-   *   &lt;string&gt;Editor&lt;/string&gt;
-   * &lt;/dict&gt;
-   * </pre>
+   * ```
+   * <dict>
+   *   <key>CFBundleTypeExtensions</key>
+   *   <array>
+   *     <string>extension</string>
+   *   </array>
+   *   <key>CFBundleTypeIconFile</key>
+   *   <string>path_to_icons.icns</string>
+   *   <key>CFBundleTypeName</key>
+   *   <string>File type description</string>
+   *   <key>CFBundleTypeRole</key>
+   *   <string>Editor</string>
+   * </dict>
+   * ```
    */
   var additionalDocTypes = ""
 
@@ -77,12 +79,6 @@ abstract class MacDistributionCustomizer {
    * If {@code true} *.ipr files will be associated with the product in Info.plist
    */
   var associateIpr = false
-
-
-  /**
-   * Relative paths to files in macOS distribution which should take 'executable' permissions
-   */
-  var extraExecutables: MutableList<String> = mutableListOf()
 
   /**
    * Filter for files that is going to be put to `<distribution>/bin` directory.
@@ -112,10 +108,10 @@ abstract class MacDistributionCustomizer {
 
   /**
    * Custom properties to be added to the properties file. They will be used for launched product, e.g. you can add additional logging in EAP builds
-   * @param applicationInfo application info that can be used to check for EAP and building version
+   * @param appInfo application info that can be used to check for EAP and building version
    * @return map propertyName-&gt;propertyValue
    */
-  open fun getCustomIdeaProperties(applicationInfo: ApplicationInfoProperties): Map<String, String> = emptyMap()
+  open fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> = emptyMap()
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries
@@ -124,6 +120,10 @@ abstract class MacDistributionCustomizer {
    * @param targetDirectory application bundle directory
    */
   open fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+    copyAdditionalFilesBlocking(context, targetDirectory)
+  }
+
+  protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
   }
 
   /**
@@ -136,7 +136,11 @@ abstract class MacDistributionCustomizer {
    * @param targetDirectory application bundle directory
    * @param arch distribution target architecture, not null
    */
-  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
     RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, targetDirectory)
+    copyAdditionalFilesBlocking(context, targetDirectory, arch)
+  }
+
+  protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
   }
 }

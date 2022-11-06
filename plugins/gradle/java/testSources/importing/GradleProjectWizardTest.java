@@ -147,25 +147,26 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
     VirtualFile buildScript = VfsUtilCore.findRelativeFile("build.gradle", root);
     assertNotNull(buildScript);
-    assertEquals("plugins {\n" +
-                 "    id 'java'\n" +
-                 "}\n" +
-                 "\n" +
-                 "group 'org.example'\n" +
-                 "version '1.0-SNAPSHOT'\n" +
-                 "\n" +
-                 "repositories {\n" +
-                 "    mavenCentral()\n" +
-                 "}\n" +
-                 "\n" +
-                 "dependencies {\n" +
-                 "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'\n" +
-                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'\n" +
-                 "}\n" +
-                 "\n" +
-                 "test {\n" +
-                 "    useJUnitPlatform()\n" +
-                 "}",
+    assertEquals("""
+                   plugins {
+                       id 'java'
+                   }
+
+                   group 'org.example'
+                   version '1.0-SNAPSHOT'
+
+                   repositories {
+                       mavenCentral()
+                   }
+
+                   dependencies {
+                       testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+                       testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+                   }
+
+                   test {
+                       useJUnitPlatform()
+                   }""",
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildScript)));
 
 
@@ -187,8 +188,11 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                   projectName + ".childModule", projectName + ".childModule.main", projectName + ".childModule.test");
 
     assertEquals("childModule", childModule.getName());
-    assertEquals(String.format("rootProject.name = '%s'\n" +
-                               "include '%s'\n\n", projectName, childModule.getName()),
+    assertEquals(String.format("""
+                                 rootProject.name = '%s'
+                                 include '%s'
+
+                                 """, projectName, childModule.getName()),
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(settingsScript)));
   }
 

@@ -155,7 +155,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   /**
    * @deprecated use acquire(Target, Parameters, ProgressIndicator)
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
     return acquire(target, configuration, null);
   }

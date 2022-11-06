@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xcontext-receivers" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xcontext-receivers" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -39,7 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.editor" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.annotate;
 
 import com.intellij.idea.ActionsBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentati
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -50,6 +51,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +108,6 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
   @Override
   public String getActionName() {
-    //noinspection DialogTitleCapitalization
     return ActionsBundle.message("action.Annotate.with.Blame.text");
   }
 
@@ -145,10 +146,22 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       fileAnnotation = doAnnotate(root, filePath, null, file);
     }
 
-    loadFileHistoryInBackground(fileAnnotation);
-    loadCommitMessagesFromLog(root, fileAnnotation);
+    if (fileAnnotation.getRevisions() == null) {
+      loadFileHistoryInBackground(fileAnnotation);
+      loadCommitMessagesFromLog(root, fileAnnotation);
+    }
 
     return fileAnnotation;
+  }
+
+  @ApiStatus.Experimental
+  public interface GitRawAnnotationProvider {
+    @Nullable
+    GitFileAnnotation annotate(@NotNull Project project,
+                               @NotNull VirtualFile root,
+                               @NotNull FilePath filePath,
+                               @Nullable VcsRevisionNumber revision,
+                               @NotNull VirtualFile file) throws VcsException;
   }
 
   @NotNull
@@ -156,6 +169,14 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                        @NotNull FilePath filePath,
                                        @Nullable VcsRevisionNumber revision,
                                        @NotNull VirtualFile file) throws VcsException {
+    GitRawAnnotationProvider another = myProject.getService(GitRawAnnotationProvider.class);
+    if (another != null) {
+      GitFileAnnotation res = another.annotate(myProject, root, filePath, revision, file);
+      if (res != null) {
+        return res;
+      }
+    }
+
     if (revision == null) {
       LOG.warn("Computing annotations for implicitly passed HEAD revision");
     }
@@ -275,6 +296,10 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                              @NotNull VirtualFile root,
                                              @NotNull String output) throws VcsException {
     Interner<FilePath> pathInterner = new HashSetInterner<>();
+
+    if (StringUtil.isEmpty(output)) {
+      LOG.warn("Git annotations are empty for file " + file.getPath() + " in revision " + revision);
+    }
 
     try {
       List<LineInfo> lines = new ArrayList<>();

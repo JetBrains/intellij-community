@@ -29,26 +29,26 @@ public class RegExpSimpleClassImpl extends RegExpElementImpl implements RegExpSi
     @Override
     @NotNull
     public Kind getKind() {
-        switch (getUnescapedText()) {
-            case ".": return Kind.ANY;
-            case "\\d": return Kind.DIGIT;
-            case "\\D": return Kind.NON_DIGIT;
-            case "\\w": return Kind.WORD;
-            case "\\W": return Kind.NON_WORD;
-            case "\\s": return Kind.SPACE;
-            case "\\S": return Kind.NON_SPACE;
-            case "\\h": return Kind.HORIZONTAL_SPACE;
-            case "\\H": return Kind.NON_HORIZONTAL_SPACE;
-            case "\\v": return Kind.VERTICAL_SPACE;
-            case "\\V": return Kind.NON_VERTICAL_SPACE;
-            case "\\i": return Kind.XML_NAME_START;
-            case "\\I": return Kind.NON_XML_NAME_START;
-            case "\\c": return Kind.XML_NAME_PART;
-            case "\\C": return Kind.NON_XML_NAME_PART;
-            case "\\X": return Kind.UNICODE_GRAPHEME;
-            case "\\R": return Kind.UNICODE_LINEBREAK;
-            default: throw new AssertionError("unknown character class '" + getUnescapedText() + "'");
-        }
+      return switch (getUnescapedText()) {
+        case "." -> Kind.ANY;
+        case "\\d" -> Kind.DIGIT;
+        case "\\D" -> Kind.NON_DIGIT;
+        case "\\w" -> Kind.WORD;
+        case "\\W" -> Kind.NON_WORD;
+        case "\\s" -> Kind.SPACE;
+        case "\\S" -> Kind.NON_SPACE;
+        case "\\h" -> Kind.HORIZONTAL_SPACE;
+        case "\\H" -> Kind.NON_HORIZONTAL_SPACE;
+        case "\\v" -> Kind.VERTICAL_SPACE;
+        case "\\V" -> Kind.NON_VERTICAL_SPACE;
+        case "\\i" -> Kind.XML_NAME_START;
+        case "\\I" -> Kind.NON_XML_NAME_START;
+        case "\\c" -> Kind.XML_NAME_PART;
+        case "\\C" -> Kind.NON_XML_NAME_PART;
+        case "\\X" -> Kind.UNICODE_GRAPHEME;
+        case "\\R" -> Kind.UNICODE_LINEBREAK;
+        default -> throw new AssertionError("unknown character class '" + getUnescapedText() + "'");
+      };
     }
 
     @Override

@@ -1,0 +1,13 @@
+// "Specify super type 'I' explicitly" "true"
+
+interface I {
+    fun foo(): String = "default"
+}
+
+abstract class A {
+    abstract fun foo(): String
+}
+
+class B : A(), I {
+    override fun foo(): String = super<A>.<caret>foo()
+}

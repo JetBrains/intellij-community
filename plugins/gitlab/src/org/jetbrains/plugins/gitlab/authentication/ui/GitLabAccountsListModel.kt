@@ -2,31 +2,10 @@
 package org.jetbrains.plugins.gitlab.authentication.ui
 
 import com.intellij.collaboration.auth.ui.AccountsListModel
-import com.intellij.collaboration.auth.ui.AccountsListModelBase
-import com.intellij.openapi.project.Project
-import com.intellij.ui.awt.RelativePoint
-import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
+import com.intellij.collaboration.auth.ui.MutableAccountsListModel
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import javax.swing.JComponent
 
-internal class GitLabAccountsListModel(private val project: Project)
-  : AccountsListModelBase<GitLabAccount, String>(),
-    AccountsListModel.WithDefault<GitLabAccount, String> {
-
+internal class GitLabAccountsListModel : MutableAccountsListModel<GitLabAccount, String>(),
+                                         AccountsListModel.WithDefault<GitLabAccount, String> {
   override var defaultAccount: GitLabAccount? = null
-
-  override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
-    // ignoring the point since we know there will be a simple dialog for now
-    val (account, token) = GitLabLoginUtil.logInViaToken(project, parentComponent, ::isAccountUnique) ?: return
-    add(account, token)
-  }
-
-  override fun editAccount(parentComponent: JComponent, account: GitLabAccount) {
-    val token = GitLabLoginUtil.updateToken(project, parentComponent, account, ::isAccountUnique) ?: return
-    update(account, token)
-  }
-
-  private fun isAccountUnique(serverPath: GitLabServerPath, username: String) =
-    accounts.none { it.server == serverPath || it.name == username }
 }

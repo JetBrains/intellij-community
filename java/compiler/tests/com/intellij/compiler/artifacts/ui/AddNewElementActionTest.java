@@ -19,9 +19,10 @@ public class AddNewElementActionTest extends ArtifactEditorTestCase {
     createEditor(addArtifact(root().dir("dir")));
     selectNode("dir");
     myArtifactEditor.addNewPackagingElement(ProductionModuleOutputElementType.ELEMENT_TYPE);
-    assertLayout("<root>\n" +
-                 " dir/\n" +
-                 "  module:mod");
+    assertLayout("""
+                   <root>
+                    dir/
+                     module:mod""");
   }
 
   public void testAddSourcesToDirectory() {
@@ -29,9 +30,10 @@ public class AddNewElementActionTest extends ArtifactEditorTestCase {
     createEditor(addArtifact(root().dir("dir")));
     selectNode("dir");
     myArtifactEditor.addNewPackagingElement(ProductionModuleSourceElementType.ELEMENT_TYPE);
-    assertLayout("<root>\n" +
-                 " dir/\n" +
-                 "  module sources:mod");
+    assertLayout("""
+                   <root>
+                    dir/
+                     module sources:mod""");
   }
 
   public void testAddToDirectoryInIncludedArtifact() {
@@ -40,10 +42,11 @@ public class AddNewElementActionTest extends ArtifactEditorTestCase {
     createEditor(addArtifact(root().artifact(included)), true);
     selectNode("dir");
     myArtifactEditor.addNewPackagingElement(ProductionModuleOutputElementType.ELEMENT_TYPE);
-    assertLayout("<root>\n" +
-                 " artifact:included\n" +
-                 " dir/\n" +
-                 "  module:mod");
+    assertLayout("""
+                   <root>
+                    artifact:included
+                    dir/
+                     module:mod""");
   }
 
   public void testDoNotAddIntoIncludedArchive() {

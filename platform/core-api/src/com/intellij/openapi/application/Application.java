@@ -19,9 +19,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
- * Provides access to core application-wide functionality and methods for working with the IDE's thread model.
+ * Provides access to the core application-wide functionality and methods for working with the IDE thread model.
  * <p>
- * The thread model defines three types of locks which provide access the PSI and other IDE data structures:
+ * The thread model defines three types of locks which provide access to the PSI and other IDE data structures:
  * <ul>
  *   <li><b>Read lock</b> provides read access to the data. Can be obtained from any thread concurrently with other Read locks
  *   and Write Intent lock.</li>
@@ -198,21 +198,13 @@ public interface Application extends ComponentManager {
   @ApiStatus.Experimental
   void assertIsWriteThread();
 
-  /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
-  @Deprecated
-  void addApplicationListener(@NotNull ApplicationListener listener);
-
   /**
    * Adds an {@link ApplicationListener}.
    *
    * @param listener the listener to add
-   * @param parent   the parent disposable which dispose will trigger this listener removal
+   * @param parent   the parent disposable, whose disposal will trigger this listener's removal
    */
   void addApplicationListener(@NotNull ApplicationListener listener, @NotNull Disposable parent);
-
-  /** @deprecated call {@code Disposer.dispose(disposable);} on disposable passed to {@link #addApplicationListener(ApplicationListener, Disposable)} */
-  @Deprecated
-  void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /**
    * Saves all open documents, settings of all open projects, and application settings.
@@ -273,13 +265,6 @@ public interface Application extends ComponentManager {
   @ApiStatus.Experimental
   @Contract(pure = true)
   boolean isWriteThread();
-
-  /**
-   * @return a facade, which lets to call all those `invokeLater()` with an `ActionCallback` handle returned.
-   * @deprecated use corresponding {@link Application#invokeLater} methods
-   */
-  @Deprecated
-  @NotNull ModalityInvokator getInvokator();
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
@@ -394,7 +379,7 @@ public interface Application extends ComponentManager {
   @NotNull ModalityState getAnyModalityState();
 
   /**
-   * Returns the time of IDE start, in milliseconds since midnight, January 1, 1970 (UTC).
+   * Returns the IDE start timestamp (UNIX time, in milliseconds).
    */
   long getStartTime();
 
@@ -407,7 +392,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is currently running unit tests. No UI should be shown when unit
    * tests are being executed.
    * This method may also be used for additional debug checks or logging in test mode.
-   * 
+   * <p>
    * Please avoid doing things differently depending on the result of this method, because this leads to
    * testing something synthetic instead of what really happens in production.
    * So you'll be able to catch less of production bugs and might instead lose your time on debugging test-only issues.
@@ -438,7 +423,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is running as a command line applet or in unit test mode.
    * UI can be shown (e.g. diff frame)
    *
-   * @return {@code true} if IDE is running in command line  mode, {@code false} otherwise
+   * @return {@code true} if IDE is running in command line mode, {@code false} otherwise
    */
   boolean isCommandLine();
 
@@ -472,12 +457,6 @@ public interface Application extends ComponentManager {
    */
   @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
-  /** @deprecated use {@link #isDisposed()} instead */
-  @Deprecated
-  default boolean isDisposeInProgress() {
-    return isDisposed();
-  }
-
   /**
    * Checks if IDE is capable of restarting itself on the current platform and with the current execution mode.
    *
@@ -486,7 +465,7 @@ public interface Application extends ComponentManager {
   boolean isRestartCapable();
 
   /**
-   * Exits and restarts IDE. If the current platform is not restart capable, only exits.
+   * Exits and restarts IDE. If the current platform is not restart-capable, only exits.
    */
   void restart();
 
@@ -497,14 +476,6 @@ public interface Application extends ComponentManager {
    */
   boolean isActive();
 
-  /** @deprecated use {@link #runReadAction(Runnable)} instead */
-  @Deprecated
-  @NotNull AccessToken acquireReadActionLock();
-
-  /** @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)}, or {@link WriteAction#compute} instead */
-  @Deprecated
-  @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
-
   /**
    * Checks if IDE is running in
    * <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a>
@@ -514,16 +485,45 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
+  /**
+   * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
+   * Instead, use Disposable application service approach described here https://youtrack.jetbrains.com/articles/IDEA-A-237338670
+   */
+  @Deprecated
   @ApiStatus.Internal
-  @ApiStatus.Experimental
   CoroutineScope getCoroutineScope();
 
-  // in some cases we cannot get service by class
-  /**
-   * @deprecated Internal.
-   */
-  @SuppressWarnings("override")
+  //<editor-fold desc="Deprecated stuff">
+  /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
+  @Deprecated
+  void addApplicationListener(@NotNull ApplicationListener listener);
+
+  /** @deprecated call {@code Disposer.dispose(disposable);} on disposable passed to {@link #addApplicationListener(ApplicationListener, Disposable)} */
+  @Deprecated
+  void removeApplicationListener(@NotNull ApplicationListener listener);
+
+  /** @deprecated use corresponding {@link Application#invokeLater} methods */
+  @Deprecated
+  @NotNull ModalityInvokator getInvokator();
+
+  /** @deprecated use {@link #isDisposed()} instead */
+  @Deprecated
+  default boolean isDisposeInProgress() {
+    return isDisposed();
+  }
+
+  /** @deprecated use {@link #runReadAction(Runnable)} instead */
+  @Deprecated
+  @NotNull AccessToken acquireReadActionLock();
+
+  /** @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)}, or {@link WriteAction#compute} instead */
+  @Deprecated
+  @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
+
+  /** @deprecated Internal API */
   @ApiStatus.Internal
   @Deprecated
+  @SuppressWarnings({"override", "DeprecatedIsStillUsed"})
   <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
+  //</editor-fold>
 }

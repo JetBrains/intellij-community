@@ -9,7 +9,6 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
-import junit.framework.Assert
 import org.jetbrains.kotlin.analysis.providers.createModuleWithoutDependenciesOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
@@ -18,10 +17,13 @@ import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.junit.Assert
 import java.io.File
 
 class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = error("Should not be called")
+
+    override fun isFirPlugin(): Boolean = true
 
     fun testThatModuleOutOfBlockChangeInfluenceOnlySingleModule() {
         val moduleA = createModuleInTmpDir("a") {
@@ -51,6 +53,60 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
             "Out of block modification count for module C without out of block should not change after typing, modification count is ${moduleCWithTracker.modificationCount}",
             moduleCWithTracker.changed()
         )
+    }
+
+    fun testThatDeleteSymbolInBodyDoesNotLeadToOutOfBlockChange() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "fun main() {\n" +
+                            "val v = <caret>\n" +
+                            "}"
+                )
+            )
+        }
+
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
+        configureByExistingFile(virtualFile)
+        backspace()
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertFalse(
+            "Out of block modification count for module A should not change after deleting, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertEquals("fun main() {\n" +
+                                    "val v =\n" + 
+                                    "}", ktFile.text)
+    }
+    
+    fun testThatAddModifierDoesLeadToOutOfBlockChange() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "<caret>inline fun main() {}"
+                )
+            )
+        }
+
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
+        configureByExistingFile(virtualFile)
+        type("private ")
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertTrue(
+            "Out of block modification count for module A should be changed after specifying return type, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+        Assert.assertEquals("private inline fun main() {}", ktFile.text)
     }
 
     fun testThatInEveryModuleOutOfBlockWillHappenAfterContentRootChange() {
@@ -128,7 +184,7 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
         Assert.assertEquals(textAfterTyping, ktFile.text)
     }
 
-    abstract class WithModificationTracker(protected val modificationTracker: ModificationTracker) {
+    abstract class WithModificationTracker(private val modificationTracker: ModificationTracker) {
         private val initialModificationCount = modificationTracker.modificationCount
         val modificationCount: Long get() = modificationTracker.modificationCount
 

@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="module" module-name="intellij.platform.util.immutableKeyValueStore" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
+    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ExperimentalFeature;

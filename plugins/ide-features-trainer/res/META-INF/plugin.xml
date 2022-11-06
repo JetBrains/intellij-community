@@ -17,6 +17,10 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
+  <content>
+    <module name="intellij.vcs.git.featuresTrainer"/>
+  </content>
+
   <resource-bundle>messages.LearnBundle</resource-bundle>
 
   <projectListeners>
@@ -31,7 +35,7 @@
 
   <extensionPoints>
     <extensionPoint name="ift.language.extension"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+                    beanClass="training.lang.LangSupportBean" dynamic="true">
       <with attribute="implementationClass" implements="training.lang.LangSupport"/>
     </extensionPoint>
 
@@ -62,6 +66,7 @@
       serviceImplementation="training.statistic.LearnProjectState"/>
 
     <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>
+    <interactiveCourseFactory id="EduToolsInteractiveCourse" implementation="training.ui.welcomeScreen.EduToolsInteractiveCourse" order="after IFTInteractiveCourse"/>
 
     <tipAndTrickPromotionFactory implementation="training.ui.IftTipAndTrickPromoter"/>
 
@@ -132,6 +137,10 @@
                  restartRequired="false"/>
     <registryKey key="ift.adapt.to.not.native.localization"
                  description="Lessons logic will be changed like using not native localization."
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
+    <registryKey key="ift.enable.in.new.ui"
+                 description="Whether IFT lessons and promoters should be enabled in new UI."
                  defaultValue="FALSE"
                  restartRequired="false"/>
   </extensions>

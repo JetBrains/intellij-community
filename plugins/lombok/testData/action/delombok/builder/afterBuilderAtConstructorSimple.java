@@ -34,7 +34,7 @@ public class BuilderAtConstructorSimple {
     }
 
     public BuilderAtConstructorSimple build() {
-      return new BuilderAtConstructorSimple(myInt, myString);
+      return new BuilderAtConstructorSimple(this.myInt, this.myString);
     }
 
     public String toString() {

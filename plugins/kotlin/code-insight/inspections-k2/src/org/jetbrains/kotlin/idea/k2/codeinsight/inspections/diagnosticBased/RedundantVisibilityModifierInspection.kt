@@ -27,10 +27,8 @@ internal class RedundantVisibilityModifierInspection :
     override fun getApplicabilityRange() = ApplicabilityRanges.VISIBILITY_MODIFIER
 
     override fun getApplicator() =
-        ModifierApplicators.removeModifierApplicator(
+        ModifierApplicators.removeRedundantModifierApplicator(
             KtTokens.VISIBILITY_MODIFIERS,
             KotlinBundle.lazyMessage("redundant.visibility.modifier")
-        ).with {
-            actionName { _, (modifier) -> KotlinBundle.message("remove.redundant.0.modifier", modifier.value) }
-        }
+        )
 }

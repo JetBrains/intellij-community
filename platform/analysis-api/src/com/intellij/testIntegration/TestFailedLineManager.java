@@ -17,6 +17,8 @@ public interface TestFailedLineManager {
   LocalQuickFix getDebugQuickFix(PsiElement element, String topStackTraceLine);
 
   interface TestInfo {
+    int getMagnitude();
+
     String getErrorMessage();
 
     String getTopStackTraceLine();

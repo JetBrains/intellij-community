@@ -22,6 +22,7 @@ package com.intellij.lang.properties.parsing;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.psi.PropertyStub;
@@ -36,7 +37,7 @@ import java.io.IOException;
 
 class PropertyStubElementType extends ILightStubElementType<PropertyStub, Property> {
   PropertyStubElementType() {
-    super("PROPERTY", PropertiesElementTypes.LANG);
+    super("PROPERTY", PropertiesLanguage.INSTANCE);
   }
 
   @Override

@@ -8,8 +8,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.similarity.statistics.SimilarUsagesCollector;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.ui.JBUI;
@@ -26,50 +25,50 @@ import java.util.Set;
 public class SimilarUsagesComponent extends JPanel implements Disposable {
 
   public static final int SNIPPET_LIMIT = 10;
-  private int alreadyShown = 0;
+  private int myAlreadyProcessedUsages = 0;
+  private int myAlreadyRenderedUsages = 0;
   private final @NotNull UsageInfo myOriginalUsage;
+  private final @NotNull UsageView myUsageView;
 
-  private final @NotNull ClusteringSearchSession mySession;
-
-  public SimilarUsagesComponent(@NotNull ClusteringSearchSession session, @NotNull UsageInfo originalUsage, @NotNull Disposable parent) {
+  public SimilarUsagesComponent(@NotNull UsageView usageView, @NotNull UsageInfo originalUsage, @NotNull Disposable parent) {
     myOriginalUsage = originalUsage;
-    mySession = session;
+    myUsageView = usageView;
     setLayout(new VerticalLayout(0));
     setBackground(UIUtil.getTextFieldBackground());
     Disposer.register(parent, this);
   }
 
   public void renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
-    if (alreadyShown < similarUsagesGroupUsages.size() - 1) {
-      similarUsagesGroupUsages.stream().skip(alreadyShown).limit(SNIPPET_LIMIT).forEach(usage -> {
-        final UsageInfo info = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-        if (myOriginalUsage != info) {
-          renderUsage(info);
-          alreadyShown++;
-        }
-      });
-    }
+    similarUsagesGroupUsages.stream().skip(myAlreadyProcessedUsages).limit(SNIPPET_LIMIT).forEach(usage -> {
+      final UsageInfo info = usage.getUsageInfo();
+      if (myOriginalUsage != info) {
+        renderUsage(info);
+      }
+      myAlreadyProcessedUsages++;
+    });
   }
 
   private void renderUsage(@NotNull UsageInfo info) {
     PsiElement element = info.getElement();
     if (element == null) return;
-    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(info.getElement());
+    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(info.getElement(), info.getRangeInElement());
     Disposer.register(this, codeSnippet);
     Color color = codeSnippet.getEditor().getBackgroundColor();
     add(getHeaderPanelForUsage(myOriginalUsage, info, color));
     add(codeSnippet);
+    myAlreadyRenderedUsages++;
   }
 
   public void renderOriginalUsage() {
     renderUsage(myOriginalUsage);
   }
 
-  public static @NotNull JPanel getHeaderPanelForUsage(@NotNull UsageInfo originalUsage,
-                                                       @NotNull UsageInfo usageInfo, @NotNull Color backGroundColor) {
+  public @NotNull JPanel getHeaderPanelForUsage(@NotNull UsageInfo originalUsage,
+                                                @NotNull UsageInfo usageInfo,
+                                                @NotNull Color backGroundColor) {
     final JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT));
     header.setBackground(backGroundColor);
-    final JComponent link = new LocationLinkComponent(usageInfo).getComponent();
+    final JComponent link = new LocationLinkComponent(this, myUsageView, usageInfo).getComponent();
     header.add(link);
     if (usageInfo == originalUsage) {
       final SimpleColoredComponent component = new SimpleColoredComponent();
@@ -88,10 +87,11 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   public @NotNull JScrollPane createLazyLoadingScrollPane(@NotNull Set<SimilarUsage> usagesToRender) {
     JScrollPane similarUsagesScrollPane = ScrollPaneFactory.createScrollPane(this, true);
     renderOriginalUsage();
-    renderSimilarUsages(usagesToRender);
     BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {
-      SimilarUsagesCollector.logMoreUsagesLoaded(mySession.hashCode());
-      renderSimilarUsages(usagesToRender);
+      if (myAlreadyProcessedUsages < usagesToRender.size()) {
+        renderSimilarUsages(usagesToRender);
+        SimilarUsagesCollector.logMoreUsagesLoaded(myOriginalUsage.getProject(), myUsageView, myAlreadyRenderedUsages);
+      }
       return Unit.INSTANCE;
     });
     return similarUsagesScrollPane;

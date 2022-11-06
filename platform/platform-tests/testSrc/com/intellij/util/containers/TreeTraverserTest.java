@@ -577,25 +577,27 @@ public class TreeTraverserTest extends TestCase {
 
     Object nil = null;
     JBTreeTraverser<Object> t1 = JBTreeTraverser.from(o -> JBIterable.of(nil, nil)).withRoots(Arrays.asList(nil));
-    assertEquals("BI_ORDER_DFS [null, null]\n" +
-                 "INTERLEAVED_DFS [null]\n" +
-                 "LEAVES_BFS [null]\n" +
-                 "LEAVES_DFS [null]\n" +
-                 "PLAIN_BFS [null]\n" +
-                 "POST_ORDER_DFS [null]\n" +
-                 "PRE_ORDER_DFS [null]\n" +
-                 "TRACING_BFS [null]",
+    assertEquals("""
+                   BI_ORDER_DFS [null, null]
+                   INTERLEAVED_DFS [null]
+                   LEAVES_BFS [null]
+                   LEAVES_DFS [null]
+                   PLAIN_BFS [null]
+                   POST_ORDER_DFS [null]
+                   PRE_ORDER_DFS [null]
+                   TRACING_BFS [null]""",
                  StringUtil.join(traversals.map(o -> o + " " + t1.traverse(o).toList()), "\n"));
 
     JBTreeTraverser<Object> t2 = JBTreeTraverser.from(o -> JBIterable.of(nil, nil)).withRoots(Arrays.asList(42));
-    assertEquals("BI_ORDER_DFS [42, null, null, null, null, 42]\n" +
-                 "INTERLEAVED_DFS [42, null, null]\n" +
-                 "LEAVES_BFS [null, null]\n" +
-                 "LEAVES_DFS [null, null]\n" +
-                 "PLAIN_BFS [42, null, null]\n" +
-                 "POST_ORDER_DFS [null, null, 42]\n" +
-                 "PRE_ORDER_DFS [42, null, null]\n" +
-                 "TRACING_BFS [42, null]",
+    assertEquals("""
+                   BI_ORDER_DFS [42, null, null, null, null, 42]
+                   INTERLEAVED_DFS [42, null, null]
+                   LEAVES_BFS [null, null]
+                   LEAVES_DFS [null, null]
+                   PLAIN_BFS [42, null, null]
+                   POST_ORDER_DFS [null, null, 42]
+                   PRE_ORDER_DFS [42, null, null]
+                   TRACING_BFS [42, null]""",
                  StringUtil.join(traversals.map(o -> o + " " + t2.traverse(o).toList()), "\n"));
   }
 

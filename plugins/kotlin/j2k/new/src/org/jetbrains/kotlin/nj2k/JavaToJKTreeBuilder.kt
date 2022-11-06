@@ -8,6 +8,8 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.JavaTokenType.SUPER_KEYWORD
 import com.intellij.psi.JavaTokenType.THIS_KEYWORD
+import com.intellij.psi.impl.light.LightRecordMethod
+import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.ChildRole
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.java.PsiClassObjectAccessExpressionImpl
@@ -17,6 +19,7 @@ import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.infos.MethodCandidateInfo
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
 import com.intellij.psi.util.TypeConversionUtil.calcTypeForBinaryExpression
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -34,6 +37,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.*
+import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
+import org.jetbrains.kotlin.nj2k.tree.Mutability.UNKNOWN
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -205,6 +210,7 @@ class JavaToJKTreeBuilder constructor(
                 elseExpression.toJK(),
                 type.toJK()
             )
+
             is PsiPolyadicExpression -> {
                 val token = JKOperatorToken.fromElementType(operationTokenType)
                 val jkOperandsWithPsiTypes = operands.map { it.toJK().withLineBreaksFrom(it).parenthesizeIfCompoundExpression() to it.type }
@@ -217,6 +223,7 @@ class JavaToJKTreeBuilder constructor(
                     else folded
                 }
             }
+
             is PsiArrayInitializerExpression -> toJK()
             is PsiLambdaExpression -> toJK()
             is PsiClassObjectAccessExpressionImpl -> toJK()
@@ -243,13 +250,25 @@ class JavaToJKTreeBuilder constructor(
             }
         }
 
-        fun PsiInstanceOfExpression.toJK(): JKIsExpression =
-            JKIsExpression(
-                operand.toJK(),
-                with(declarationMapper) { JKTypeElement(checkType?.type?.toJK() ?: JKNoType, checkType.annotationList()) }
-            ).also {
-                it.withFormattingFrom(this)
+        fun PsiInstanceOfExpression.toJK(): JKIsExpression {
+            val pattern = pattern.safeAs<PsiTypeTestPattern>()
+            val psiTypeElement = checkType ?: pattern?.checkType
+            val type = psiTypeElement?.type?.toJK() ?: JKNoType
+            val typeElement = with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
+            val expr = JKIsExpression(operand.toJK(), typeElement).also { it.withFormattingFrom(this) }
+            val patternVariable = pattern?.patternVariable
+            if (patternVariable != null) {
+                val name = expr.expression.safeAs<JKFieldAccessExpression>()?.identifier?.name ?: patternVariable.name
+                val typeElementForPattern =
+                    with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
+                // Executed for the side effect of binding the symbol to a valid target
+                JKParameter(typeElementForPattern, JKNameIdentifier(name)).also {
+                    symbolProvider.provideUniverseSymbol(patternVariable, it)
+                    it.psi = this
+                }
             }
+            return expr
+        }
 
         fun PsiAssignmentExpression.toJK(): JKJavaAssignmentExpression {
             return JKJavaAssignmentExpression(
@@ -269,6 +288,7 @@ class JavaToJKTreeBuilder constructor(
                         operationSign.tokenType == JavaTokenType.EQEQ -> JKOperatorToken.fromElementType(KtTokens.EQEQEQ)
                         else -> JKOperatorToken.fromElementType(KtTokens.EXCLEQEQEQ)
                     }
+
                 else -> JKOperatorToken.fromElementType(operationSign.tokenType)
             }
             return JKBinaryExpression(
@@ -291,6 +311,7 @@ class JavaToJKTreeBuilder constructor(
                 JavaTokenType.TRUE_KEYWORD -> JKLiteralExpression("true", BOOLEAN)
                 JavaTokenType.FALSE_KEYWORD -> JKLiteralExpression("false", BOOLEAN)
                 JavaTokenType.STRING_LITERAL -> JKLiteralExpression(text, STRING)
+                JavaTokenType.TEXT_BLOCK_LITERAL -> JKLiteralExpression(text, TEXT_BLOCK)
                 JavaTokenType.CHARACTER_LITERAL -> JKLiteralExpression(text, CHAR)
                 JavaTokenType.INTEGER_LITERAL -> JKLiteralExpression(text, INT)
                 JavaTokenType.LONG_LITERAL -> JKLiteralExpression(text, LONG)
@@ -356,7 +377,13 @@ class JavaToJKTreeBuilder constructor(
             val arguments = argumentList
             val typeArguments = getExplicitTypeArguments().toJK()
             val qualifier = methodExpression.qualifierExpression?.toJK()?.withLineBreaksFrom(methodExpression.qualifierExpression)
-            val target = methodExpression.resolve()
+            var target = methodExpression.resolve()
+            if (target is PsiMethodImpl && target.name.canBeGetterOrSetterName()) {
+                val baseCallable = target.findSuperMethods().firstOrNull()
+                if (baseCallable is KtLightMethod) {
+                    target = baseCallable
+                }
+            }
             val symbol = target?.let {
                 symbolProvider.provideDirectSymbol(it)
             } ?: JKUnresolvedMethod(methodExpression, typeFactory)
@@ -396,6 +423,7 @@ class JavaToJKTreeBuilder constructor(
                                 ).qualified(qualifier)
                             }
                         }
+
                         is KtProperty, is KtPropertyAccessor, is KtParameter -> {
                             origin.kotlinFqName?.also { importStorage.addImport(it) }
                             val property =
@@ -426,6 +454,7 @@ class JavaToJKTreeBuilder constructor(
                                         createOperator(JavaTokenType.EQ, type) //TODO correct type
                                     )
                                 }
+
                                 else -> createErrorExpression("expected getter or setter call")
                             }
                         }
@@ -440,11 +469,19 @@ class JavaToJKTreeBuilder constructor(
                     }
                 }
 
+                target is LightRecordMethod -> {
+                    val field = getFieldForComponent(target.recordComponent) ?: return createErrorExpression()
+                    JKFieldAccessExpression(symbolProvider.provideDirectSymbol(field) as JKFieldSymbol)
+                        .qualified(qualifier ?: JKThisExpression(JKLabelEmpty()))
+                }
+
                 symbol is JKMethodSymbol ->
                     JKCallExpressionImpl(symbol, arguments.toJK(), typeArguments)
                         .qualified(qualifier)
+
                 symbol is JKFieldSymbol ->
                     JKFieldAccessExpression(symbol).qualified(qualifier)
+
                 else -> createErrorExpression()
             }.also {
                 it.withFormattingFrom(this)
@@ -646,6 +683,7 @@ class JavaToJKTreeBuilder constructor(
                 withBody = true
                 trueBranch().also { withBody = false }
             }
+
             else -> elseBranch()
         }
 
@@ -675,13 +713,30 @@ class JavaToJKTreeBuilder constructor(
                 annotationList(this),
                 otherModifiers(),
                 visibility(),
-                modality()
+                modality(),
+                recordComponents()
             ).also { klass ->
                 klass.psi = this
                 symbolProvider.provideUniverseSymbol(this, klass)
                 klass.withFormattingFrom(this)
             }
 
+        private fun PsiClass.recordComponents(): List<JKJavaRecordComponent> =
+            recordComponents.map { component ->
+                val psiTypeElement = component.typeElement
+                val type = psiTypeElement?.type?.toJK() ?: JKNoType
+                val typeElement = with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
+                JKJavaRecordComponent(
+                    typeElement,
+                    JKNameIdentifier(component.name),
+                    component.isVarArgs,
+                    component.annotationList(docCommentOwner = this)
+                ).also {
+                    it.withFormattingFrom(component)
+                    symbolProvider.provideUniverseSymbol(component, it)
+                    it.psi = component
+                }
+            }
 
         fun PsiClass.inheritanceInfo(): JKInheritanceInfo {
             val implementsTypes = implementsList?.referencedTypes?.map { type ->
@@ -795,7 +850,9 @@ class JavaToJKTreeBuilder constructor(
             otherModifiers(),
             visibility(),
             modality(),
-            JKMutabilityModifierElement(Mutability.UNKNOWN)
+            JKMutabilityModifierElement(
+                if (containingClass?.isInterface == true) IMMUTABLE else UNKNOWN
+            )
         ).also {
             symbolProvider.provideUniverseSymbol(this, it)
             it.psi = this
@@ -860,6 +917,7 @@ class JavaToJKTreeBuilder constructor(
                 is PsiAnnotation -> toJK()
                 is PsiArrayInitializerMemberValue ->
                     JKKtAnnotationArrayInitializerExpression(initializers.map { it.toJK() })
+
                 else -> createErrorExpression()
             }.also {
                 it.withFormattingFrom(this)
@@ -919,9 +977,10 @@ class JavaToJKTreeBuilder constructor(
             val type =
                 if (isVarArgs && rawType is JKJavaArrayType) JKTypeElement(rawType.type, typeElement.annotationList())
                 else rawType.asTypeElement(typeElement.annotationList())
+            val name = if (nameIdentifier != null) nameIdentifier.toJK() else JKNameIdentifier(name)
             return JKParameter(
                 type,
-                nameIdentifier.toJK(),
+                name,
                 isVarArgs,
                 annotationList = annotationList(null)
             ).also {
@@ -944,8 +1003,7 @@ class JavaToJKTreeBuilder constructor(
                 nameIdentifier.toJK(),
                 with(expressionTreeMapper) { initializer.toJK() },
                 JKMutabilityModifierElement(
-                    if (hasModifierProperty(PsiModifier.FINAL)) Mutability.IMMUTABLE
-                    else Mutability.UNKNOWN
+                    if (hasModifierProperty(PsiModifier.FINAL)) IMMUTABLE else UNKNOWN
                 ),
                 annotationList(null)
             ).also { i ->
@@ -961,14 +1019,18 @@ class JavaToJKTreeBuilder constructor(
             is PsiExpressionListStatement -> expressionList.expressions.map { expression ->
                 JKExpressionStatement(with(expressionTreeMapper) { expression.toJK() })
             }
+
             else -> listOf(toJK())
         }
 
         fun PsiStatement?.toJK(): JKStatement {
             return when (this) {
                 null -> JKExpressionStatement(JKStubExpression())
+
                 is PsiExpressionStatement -> JKExpressionStatement(with(expressionTreeMapper) { expression.toJK() })
+
                 is PsiReturnStatement -> JKReturnStatement(with(expressionTreeMapper) { returnValue.toJK() })
+
                 is PsiDeclarationStatement ->
                     JKDeclarationStatement(declaredElements.mapNotNull {
                         when (it) {
@@ -977,10 +1039,12 @@ class JavaToJKTreeBuilder constructor(
                             else -> null
                         }
                     })
+
                 is PsiAssertStatement ->
                     JKJavaAssertStatement(
                         with(expressionTreeMapper) { assertCondition.toJK() },
                         with(expressionTreeMapper) { assertDescription?.toJK() } ?: JKStubExpression())
+
                 is PsiIfStatement ->
                     with(expressionTreeMapper) {
                         JKIfElseStatement(condition.toJK(), thenBranch.toJK(), elseBranch.toJK())
@@ -993,32 +1057,42 @@ class JavaToJKTreeBuilder constructor(
                     update.asJKStatementsList(),
                     body.toJK()
                 )
+
                 is PsiForeachStatement ->
                     JKForInStatement(
                         iterationParameter.toJK(),
                         with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
                         body?.toJK() ?: blockStatement()
                     )
+
                 is PsiBlockStatement -> JKBlockStatement(codeBlock.toJK())
+
                 is PsiWhileStatement -> JKWhileStatement(with(expressionTreeMapper) { condition.toJK() }, body.toJK())
+
                 is PsiDoWhileStatement -> JKDoWhileStatement(body.toJK(), with(expressionTreeMapper) { condition.toJK() })
 
                 is PsiSwitchStatement -> JKJavaSwitchStatement(with(expressionTreeMapper) { expression.toJK() }, collectSwitchCases())
+
                 is PsiBreakStatement ->
                     JKBreakStatement(labelIdentifier?.let { JKLabelText(JKNameIdentifier(it.text)) } ?: JKLabelEmpty())
+
                 is PsiContinueStatement -> {
                     val label = labelIdentifier?.let {
                         JKLabelText(JKNameIdentifier(it.text))
                     } ?: JKLabelEmpty()
                     JKContinueStatement(label)
                 }
+
                 is PsiLabeledStatement -> {
                     val (labels, statement) = collectLabels()
                     JKLabeledExpression(statement.toJK(), labels.map { JKNameIdentifier(it.text) }).asStatement()
                 }
+
                 is PsiEmptyStatement -> JKEmptyStatement()
+
                 is PsiThrowStatement ->
-                    JKJavaThrowStatement(with(expressionTreeMapper) { exception.toJK() })
+                    JKThrowExpression(with(expressionTreeMapper) { exception.toJK() }).asStatement()
+
                 is PsiTryStatement ->
                     JKJavaTryStatement(
                         resourceList?.toList()?.map { (it as PsiResourceListElement).toJK() }.orEmpty(),
@@ -1026,12 +1100,15 @@ class JavaToJKTreeBuilder constructor(
                         finallyBlock?.toJK() ?: JKBodyStub,
                         catchSections.map { it.toJK() }
                     )
+
                 is PsiSynchronizedStatement ->
                     JKJavaSynchronizedStatement(
                         with(expressionTreeMapper) { lockExpression?.toJK() } ?: JKStubExpression(),
                         body?.toJK() ?: JKBodyStub
                     )
+
                 is PsiYieldStatement -> JKJavaYieldStatement(with(expressionTreeMapper) { expression.toJK() })
+
                 else -> createErrorStatement()
             }.also {
                 if (this != null) {
@@ -1090,6 +1167,7 @@ class JavaToJKTreeBuilder constructor(
                     val type = factory.createType(psi)
                     JKTypeElement(type.toJK().updateNullabilityRecursively(NotNull))
                 } else null
+
             else -> null
         }?.let { JKTreeRoot(it) }
 
@@ -1118,6 +1196,7 @@ class JavaToJKTreeBuilder constructor(
                             emptyList()
                         )
                     }.withFormattingFrom(statement)
+
                 is PsiSwitchLabeledRuleStatement -> {
                     val body = statement.body.toJK()
                     cases += when {
@@ -1132,6 +1211,7 @@ class JavaToJKTreeBuilder constructor(
                         }
                     }.withFormattingFrom(statement)
                 }
+
                 else ->
                     cases.lastOrNull()?.also { it.statements = it.statements + statement.toJK() } ?: run {
                         cases += JKJavaClassicLabelSwitchCase(

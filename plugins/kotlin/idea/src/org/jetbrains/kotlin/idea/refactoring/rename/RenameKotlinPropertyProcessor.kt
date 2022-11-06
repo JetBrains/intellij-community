@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
@@ -51,10 +51,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import org.jetbrains.kotlin.utils.DFS
@@ -483,7 +480,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
         val adjustedUsages = if (element is KtParameter) usages.filterNot {
             val refTarget = it.reference?.resolve()
-            refTarget is KtLightMethod && DataClassDescriptorResolver.isComponentLike(Name.guessByFirstCharacter(refTarget.name))
+            refTarget is KtLightMethod && DataClassResolver.isComponentLike(Name.guessByFirstCharacter(refTarget.name))
         } else usages.toList()
 
         val refKindUsages = adjustedUsages.groupBy { usage: UsageInfo ->

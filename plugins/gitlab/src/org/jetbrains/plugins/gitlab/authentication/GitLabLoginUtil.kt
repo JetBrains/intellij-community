@@ -15,11 +15,12 @@ object GitLabLoginUtil {
 
   internal fun logInViaToken(
     project: Project, parentComponent: JComponent,
+    serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
   ): Pair<GitLabAccount, String>? {
 
     val model = GitLabTokenLoginPanelModel(uniqueAccountPredicate).apply {
-      serverUri = GitLabServerPath.DEFAULT_SERVER.uri
+      serverUri = serverPath.uri
     }
     val loginState = showLoginDialog(project, parentComponent, model, false)
     if (loginState is LoginModel.LoginState.Connected) {

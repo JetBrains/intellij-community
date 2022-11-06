@@ -299,7 +299,7 @@ class LiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestCase() {
 
     private fun checkAfter() {
         TestCase.assertNull(templateState)
-        myFixture.checkResultByExpectedPath(".exp")
+        myFixture.checkContentByExpectedPath(".exp")
     }
 
     private fun typeAndNextTab(s: String) {

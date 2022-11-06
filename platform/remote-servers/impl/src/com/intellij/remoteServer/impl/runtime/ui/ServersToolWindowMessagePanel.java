@@ -4,6 +4,7 @@ package com.intellij.remoteServer.impl.runtime.ui;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,8 @@ class ServersToolWindowMessagePanel implements RemoteServersDeploymentManager.Me
       return;
     }
     myMessageArea.setText(CloudBundle.message("editor.pane.text.empty.text", UIUtil.getCssFontDeclaration(StartupUiUtil.getLabelFont(), null, null, null),
-                                     ColorUtil.toHex(UIUtil.getPanelBackground()), ColorUtil.toHex(UIUtil.getInactiveTextColor()), text));
+                                              ColorUtil.toHex(UIUtil.getPanelBackground()), ColorUtil.toHex(
+        NamedColorUtil.getInactiveTextColor()), text));
     myCurrentText = text;
   }
 

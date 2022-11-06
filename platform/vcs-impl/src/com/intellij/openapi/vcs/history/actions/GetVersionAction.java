@@ -3,15 +3,13 @@ package com.intellij.openapi.vcs.history.actions;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.ExtendableAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.TriggerAdditionOrDeletion;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -22,17 +20,15 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,50 +38,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class GetVersionAction extends AnAction implements DumbAware {
+public class GetVersionAction extends ExtendableAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(GetVersionAction.class);
 
+  private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.openapi.vcs.history.actions.GetVersionAction.ExtensionProvider");
+
   public GetVersionAction() {
-    super(VcsBundle.messagePointer("action.name.get.file.content.from.repository"),
-          VcsBundle.messagePointer("action.description.get.file.content.from.repository"), AllIcons.Actions.Download);
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-    VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
-
-    if (e.getProject() == null || filePath == null || revision == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      e.getPresentation().setEnabledAndVisible(isContentAvailable(filePath, revision, e));
-    }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  protected boolean isContentAvailable(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull AnActionEvent e) {
-    VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
-    if (historySession == null) {
-      return false;
-    }
-    return historySession.isContentAvailable(revision) && !filePath.isDirectory();
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
-
-    VcsFileRevision revision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION);
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-
-    doGet(project, revision, filePath);
+    super(EP_NAME);
   }
 
   public static void doGet(@NotNull Project project, @NotNull VcsFileRevision revision, @NotNull FilePath filePath) {
@@ -136,21 +96,21 @@ public class GetVersionAction extends AnAction implements DumbAware {
         Object commandGroup = new Object();
 
         for (FileRevisionProvider provider : myProviders) {
-          FilePath filePath = provider.getFilePath();
-          byte[] revisionContent = provider.getContent();
+          FilePath localFilePath = provider.getFilePath();
+          FileRevisionContent revisionContent = provider.getContent();
 
           Ref<IOException> exRef = new Ref<>();
           ApplicationManager.getApplication().invokeAndWait(() -> {
             try {
               CommandProcessor.getInstance().executeCommand(myProject, () -> {
-                VirtualFile virtualFile = filePath.getVirtualFile();
+                VirtualFile virtualFile = localFilePath.getVirtualFile();
                 if (revisionContent == null && virtualFile == null) return;
 
                 if (revisionContent == null) {
-                  trigger.prepare(Collections.emptyList(), Collections.singletonList(filePath));
+                  trigger.prepare(Collections.emptyList(), Collections.singletonList(localFilePath));
                 }
                 else if (virtualFile == null) {
-                  trigger.prepare(Collections.singletonList(filePath), Collections.emptyList());
+                  trigger.prepare(Collections.singletonList(localFilePath), Collections.emptyList());
                 }
 
                 ApplicationManager.getApplication().runWriteAction(() -> {
@@ -159,10 +119,14 @@ public class GetVersionAction extends AnAction implements DumbAware {
                       writeDeletion(virtualFile);
                     }
                     else if (virtualFile == null) {
-                      writeCreation(filePath, revisionContent);
+                      FilePath path = ObjectUtils.chooseNotNull(revisionContent.oldFilePath, localFilePath);
+                      writeCreation(path, revisionContent.bytes);
                     }
                     else {
-                      writeModification(virtualFile, revisionContent);
+                      if (revisionContent.oldFilePath != null && !localFilePath.equals(revisionContent.oldFilePath)) {
+                        writeRename(virtualFile, revisionContent.oldFilePath);
+                      }
+                      writeModification(virtualFile, revisionContent.bytes);
                     }
                   }
                   catch (IOException e) {
@@ -215,6 +179,20 @@ public class GetVersionAction extends AnAction implements DumbAware {
       FileDocumentManager.getInstance().reloadFiles(virtualFile);
     }
 
+    private static void writeRename(@NotNull VirtualFile virtualFile, @NotNull FilePath filePath) throws IOException {
+      FilePath parentPath = filePath.getParentPath();
+      if (parentPath != null) {
+        VirtualFile parentFile = VfsUtil.createDirectories(parentPath.getPath());
+        if (parentFile != null && !parentFile.equals(virtualFile.getParent())) {
+          virtualFile.move(MyWriteVersionTask.class, parentFile);
+        }
+      }
+
+      if (!virtualFile.getName().equals(filePath.getName())) {
+        virtualFile.rename(MyWriteVersionTask.class, filePath.getName());
+      }
+    }
+
     @Override
     public void onFinished() {
       if (myOnFinished != null) myOnFinished.run();
@@ -228,7 +206,7 @@ public class GetVersionAction extends AnAction implements DumbAware {
     /**
      * @return file content at some revision. Return <code>null</code> if file does not exist in this revision.
      */
-    byte @Nullable [] getContent() throws VcsException;
+    @Nullable FileRevisionContent getContent() throws VcsException;
   }
 
   private static class VcsFileRevisionProvider implements FileRevisionProvider {
@@ -247,13 +225,24 @@ public class GetVersionAction extends AnAction implements DumbAware {
     }
 
     @Override
-    public byte @Nullable [] getContent() throws VcsException {
+    public @Nullable FileRevisionContent getContent() throws VcsException {
       try {
-        return VcsHistoryUtil.loadRevisionContent(myRevision);
+        byte[] bytes = VcsHistoryUtil.loadRevisionContent(myRevision);
+        return new FileRevisionContent(bytes, null);
       }
       catch (IOException e) {
         throw new VcsException(e);
       }
+    }
+  }
+
+  public static class FileRevisionContent {
+    public final byte @NotNull [] bytes;
+    public final @Nullable FilePath oldFilePath;
+
+    public FileRevisionContent(byte @NotNull [] bytes, @Nullable FilePath oldFilePath) {
+      this.bytes = bytes;
+      this.oldFilePath = oldFilePath;
     }
   }
 }

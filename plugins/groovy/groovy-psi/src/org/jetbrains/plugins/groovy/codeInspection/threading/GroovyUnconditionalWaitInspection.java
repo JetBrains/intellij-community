@@ -72,9 +72,6 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
 
     private void checkBody(GrCodeBlock body) {
       final GrStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
-        return;
-      }
       for (final GrStatement statement : statements) {
         if (isConditional(statement)) {
           return;

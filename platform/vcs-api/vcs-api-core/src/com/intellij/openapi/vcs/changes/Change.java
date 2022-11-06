@@ -54,13 +54,9 @@ public class Change {
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
-    myOtherLayers = null;
   }
 
-  protected Change(@NotNull Change change) {
-    myBeforeRevision = change.getBeforeRevision();
-    myAfterRevision = change.getAfterRevision();
-    myFileStatus = change.getFileStatus();
+  protected void copyFieldsFrom(@NotNull Change change) {
     myOtherLayers = change.myOtherLayers != null ? new HashMap<>(change.myOtherLayers) : null;
     myIsReplaced = change.isIsReplaced();
   }
@@ -71,6 +67,11 @@ public class Change {
     return FileStatus.MODIFIED;
   }
 
+  /**
+   * For SVN: used to show 'file property' changes.
+   *
+   * @see com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider
+   */
   public void addAdditionalLayerElement(@NonNls String name, final Change change) {
     if (myOtherLayers == null) myOtherLayers = new HashMap<>(1);
     myOtherLayers.put(name, change);
@@ -218,16 +219,12 @@ public class Change {
   @NonNls
   public String toString() {
     final Type type = getType();
-    switch (type) {
-      case NEW:
-        return "A: " + myAfterRevision;
-      case DELETED:
-        return "D: " + myBeforeRevision;
-      case MOVED:
-        return "M: " + myBeforeRevision + " -> " + myAfterRevision;
-      default:
-        return "M: " + myAfterRevision;
-    }
+    return switch (type) {
+      case NEW -> "A: " + myAfterRevision;
+      case DELETED -> "D: " + myBeforeRevision;
+      case MOVED -> "M: " + myBeforeRevision + " -> " + myAfterRevision;
+      default -> "M: " + myAfterRevision;
+    };
   }
 
   @Nullable
@@ -255,6 +252,9 @@ public class Change {
     return VcsBundle.message("change.file.moved.from.text", getMoveRelativePath(project));
   }
 
+  /**
+   * For SVN: the file was scheduled for deletion, and then a new file was scheduled for addition on its place.
+   */
   public boolean isIsReplaced() {
     return myIsReplaced;
   }

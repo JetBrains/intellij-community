@@ -7,7 +7,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 
 class KotlinSdkCreationChecker {
     private val projectJdkTable: ProjectJdkTable

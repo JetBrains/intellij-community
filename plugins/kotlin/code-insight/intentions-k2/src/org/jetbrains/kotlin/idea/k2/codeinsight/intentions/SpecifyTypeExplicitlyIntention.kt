@@ -2,47 +2,48 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator.getTypeInfo
 import org.jetbrains.kotlin.psi.*
 
 internal class SpecifyTypeExplicitlyIntention :
-    AbstractKotlinApplicatorBasedIntention<KtCallableDeclaration, CallableReturnTypeUpdaterApplicator.TypeInfo>(KtCallableDeclaration::class) {
+    KotlinApplicableIntentionWithContext<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
+
+    override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
+    override fun getActionName(element: KtCallableDeclaration, context: TypeInfo): String = when (element) {
+        is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
+        else -> KotlinBundle.message("specify.type.explicitly")
+    }
+
     override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
 
-    override fun getApplicator() =
-        CallableReturnTypeUpdaterApplicator.applicator.with {
-            isApplicableByPsi { declaration: KtCallableDeclaration ->
-                if (declaration is KtConstructor<*> || declaration is KtFunctionLiteral) return@isApplicableByPsi false
-                declaration.typeReference == null && (declaration as? KtNamedFunction)?.hasBlockBody() != true
-            }
+    override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean {
+        if (element is KtConstructor<*> || element is KtFunctionLiteral) return false
+        return element.typeReference == null && (element as? KtNamedFunction)?.hasBlockBody() != true
+    }
 
-            familyName(KotlinBundle.lazyMessage("specify.type.explicitly"))
-
-            actionName { declaration, _ ->
-                when (declaration) {
-                    is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
-                    else -> KotlinBundle.message("specify.type.explicitly")
-                }
-            }
-        }
-
-    override fun getInputProvider() = inputProvider<KtCallableDeclaration, _> { declaration ->
-        val diagnostics = declaration.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtCallableDeclaration): TypeInfo? {
         // Avoid redundant intentions
+        val diagnostics = element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         if (diagnostics.any { diagnostic ->
                 diagnostic is KtFirDiagnostic.AmbiguousAnonymousTypeInferred
                         || diagnostic is KtFirDiagnostic.PropertyWithNoTypeNoInitializer
                         || diagnostic is KtFirDiagnostic.MustBeInitialized
-            }
-        ) {
-            return@inputProvider null
-        }
-        getTypeInfo(declaration)
+        }) return null
+
+        return getTypeInfo(element)
     }
+
+    override fun apply(element: KtCallableDeclaration, context: TypeInfo, project: Project, editor: Editor?) =
+        updateType(element, context, project, editor)
 }

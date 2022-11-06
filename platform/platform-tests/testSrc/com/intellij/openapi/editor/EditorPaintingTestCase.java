@@ -121,14 +121,14 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
         int yStart = y + lineHeight / 4;
         int yEnd = y + lineHeight * 3 / 4;
         switch (drawingType) {
-          case BEFORE_SOFT_WRAP_LINE_FEED:
+          case BEFORE_SOFT_WRAP_LINE_FEED -> {
             g.drawLine(xEnd, yStart, xEnd, yEnd);
             g.drawLine(xStart, yEnd, xEnd, yEnd);
-            break;
-          case AFTER_SOFT_WRAP:
+          }
+          case AFTER_SOFT_WRAP -> {
             g.drawLine(xStart, yStart, xStart, yEnd);
             g.drawLine(xStart, yEnd, xEnd, yEnd);
-            break;
+          }
         }
         return charWidthInPixels;
       }

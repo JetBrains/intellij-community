@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.idea.base.util.writeWithCheckCanceled
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.script.ScriptTemplatesProvider
 import org.jetbrains.kotlin.scripting.definitions.*
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -402,7 +402,6 @@ interface ScriptDefinitionContributor {
     @Deprecated("migrating to new configuration refinement: use ScriptDefinitionsSource instead")
     fun getDefinitions(): List<KotlinScriptDefinition>
 
-    @JvmDefault
     @Deprecated("migrating to new configuration refinement: drop usages")
     fun isReady() = true
 

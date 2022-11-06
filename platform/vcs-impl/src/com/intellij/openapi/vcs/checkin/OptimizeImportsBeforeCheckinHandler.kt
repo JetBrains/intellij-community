@@ -5,73 +5,36 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
-import com.intellij.openapi.vcs.checkin.OptimizeImportsBeforeCheckinHandler.Companion.COMMAND_NAME
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.vcs.commit.isBackgroundCommitChecks
-import com.intellij.vcs.commit.isNonModalCommit
+import com.intellij.openapi.vfs.VirtualFile
 
-open class OptimizeOptionsCheckinHandlerFactory : CheckinHandlerFactory() {
+class OptimizeOptionsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    if (isBackgroundCommitChecks() && panel.isNonModalCommit) BackgroundOptimizeImportsCheckinHandler(panel)
-    else OptimizeImportsBeforeCheckinHandler(panel.project, panel)
+    OptimizeImportsBeforeCheckinHandler(panel.project)
 }
 
-open class OptimizeImportsBeforeCheckinHandler(
-  @JvmField protected val myProject: Project,
-  private val panel: CheckinProjectPanel
-) : CheckinHandler(),
-    CheckinMetaHandler {
-
-  private val settings get() = VcsConfiguration.getInstance(myProject)
-
+class OptimizeImportsBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandler(project) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    BooleanCommitOption(panel, VcsBundle.message("checkbox.checkin.options.optimize.imports"), true,
+    BooleanCommitOption(project, VcsBundle.message("checkbox.checkin.options.optimize.imports"), true,
                         settings::OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT)
 
-  override fun runCheckinHandlers(runnable: Runnable) {
-    val saveAndContinue = {
-      FileDocumentManager.getInstance().saveAllDocuments()
-      runnable.run()
-    }
+  override fun isEnabled(): Boolean = settings.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT
 
-    if (settings.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-      OptimizeImportsProcessor(myProject, getPsiFiles(myProject, panel.virtualFiles), COMMAND_NAME, saveAndContinue).run()
-    }
-    else {
-      runnable.run()
-    }
-  }
+  override fun getProgressMessage(): String = VcsBundle.message("progress.text.optimizing.imports")
+
+  override fun createCodeProcessor(files: List<VirtualFile>): AbstractLayoutCodeProcessor =
+    OptimizeImportsProcessor(project, getPsiFiles(project, files), COMMAND_NAME, null)
 
   companion object {
     @JvmField
     @NlsSafe
     val COMMAND_NAME: String = CodeInsightBundle.message("process.optimize.imports.before.commit")
   }
-}
-
-private class BackgroundOptimizeImportsCheckinHandler(commitPanel: CheckinProjectPanel) : CodeProcessorCheckinHandler(commitPanel) {
-  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    OptimizeImportsBeforeCheckinHandler(project, commitPanel).beforeCheckinConfigurationPanel
-
-  override fun isEnabled(): Boolean = settings.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT
-
-  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
-    indicator.text = VcsBundle.message("progress.text.optimizing.imports")
-
-    return super.runCheck(indicator)
-  }
-
-  override fun createCodeProcessor(): AbstractLayoutCodeProcessor =
-    OptimizeImportsProcessor(project, getPsiFiles(project, commitPanel.virtualFiles), COMMAND_NAME, null)
 }

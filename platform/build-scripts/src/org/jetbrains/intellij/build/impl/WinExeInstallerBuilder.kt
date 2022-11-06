@@ -1,16 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
+import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.runProcess
@@ -18,7 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.hours
 
 private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistributionCustomizer, context: BuildContext) {
   val targetFilePath = context.paths.artifactDir.resolve("silent.config")
@@ -34,11 +34,11 @@ private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistr
     customConfigPath
   }
   else {
-    context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/resources/win/nsis/silent.config")
+    context.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/nsis/silent.config")
   }
 
   Files.createDirectories(targetFilePath.parent)
-  Files.copy(silentConfigTemplate, targetFilePath)
+  Files.copy(silentConfigTemplate, targetFilePath, StandardCopyOption.REPLACE_EXISTING)
 
   val extensionsList = getFileAssociations(customizer)
   var associations = "\n\n; List of associations. To create an association change value to 1.\n"
@@ -59,94 +59,97 @@ private fun getFileAssociations(customizer: WindowsDistributionCustomizer): List
 }
 
 @Suppress("SpellCheckingInspection")
-internal fun buildNsisInstaller(winDistPath: Path,
-                                additionalDirectoryToInclude: Path,
-                                suffix: String,
-                                customizer: WindowsDistributionCustomizer,
-                                jreDir: Path,
-                                context: BuildContext): Path? {
+internal suspend fun buildNsisInstaller(winDistPath: Path,
+                                        additionalDirectoryToInclude: Path,
+                                        suffix: String,
+                                        customizer: WindowsDistributionCustomizer,
+                                        jreDir: Path,
+                                        context: BuildContext): Path? {
   if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
-    context.messages.warning("Windows installer can be built only under Windows or Linux")
+    Span.current().addEvent("Windows installer can be built only under Windows or Linux")
     return null
   }
 
   val communityHome = context.paths.communityHomeDir
   val outFileName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
-  context.messages.progress("Building Windows installer $outFileName")
+  Span.current().setAttribute(outFileName, outFileName)
 
-  val box = context.paths.tempDir.resolve("winInstaller")
+  val box = context.paths.tempDir.resolve("winInstaller${suffix}")
   //noinspection SpellCheckingInspection
   val nsiConfDir = box.resolve("nsiconf")
-  Files.createDirectories(nsiConfDir)
+  withContext(Dispatchers.IO) {
+    Files.createDirectories(nsiConfDir)
+    copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
+    generateInstallationConfigFileForSilentMode(customizer, context)
 
-  copyDir(context.paths.communityHomeDir.communityRoot.resolve("build/conf/nsis"), nsiConfDir)
-
-  generateInstallationConfigFileForSilentMode(customizer, context)
-
-  if (SystemInfoRt.isLinux) {
-    val ideaNsiPath = nsiConfDir.resolve("idea.nsi")
-    Files.writeString(ideaNsiPath, BuildUtils.replaceAll(text = Files.readString(ideaNsiPath),
-                                                         replacements = mapOf("\${IMAGES_LOCATION}\\" to "\${IMAGES_LOCATION}/"),
-                                                         marker = ""))
-  }
-
-  val generator = NsisFileListGenerator()
-  generator.addDirectory(context.paths.distAllDir.toString())
-  generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/*.vmoptions"))
-  generator.addDirectory(additionalDirectoryToInclude.toString())
-  generator.addDirectory(jreDir.toString())
-  generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh").toFile())
-  generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh").toFile())
-
-  prepareConfigurationFiles(nsiConfDir = nsiConfDir, winDistPath = winDistPath, customizer = customizer, context = context)
-  customizer.customNsiConfigurationFiles.forEach {
-    val file = Path.of(it)
-    Files.copy(file, nsiConfDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
-  }
-
-  // Log final nsi directory to make debugging easier
-  val logDir = Path.of(context.paths.buildOutputRoot, "log")
-  val nsiLogDir = logDir.resolve("nsi")
-  deleteDir(nsiLogDir)
-  copyDir(nsiConfDir, nsiLogDir)
-
-  Decompressor.Zip(communityHome.communityRoot.resolve("build/tools/NSIS.zip")).withZipExtensions().extract(box)
-  spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope {
-    val timeoutMs = TimeUnit.HOURS.toMillis(2)
-    if (SystemInfoRt.isWindows) {
-      runProcess(
-        args = listOf(
-          "${box}/NSIS/makensis.exe",
-          "/V2",
-          "/DCOMMUNITY_DIR=${communityHome.communityRoot}",
-          "/DIPR=${customizer.associateIpr}",
-          "/DOUT_DIR=${context.paths.artifacts}",
-          "/DOUT_FILE=${outFileName}",
-          "${box}/nsiconf/idea.nsi",
-        ),
-        workingDir = box,
-        logger = context.messages,
-        timeoutMillis = timeoutMs,
-      )
+    if (SystemInfoRt.isLinux) {
+      val ideaNsiPath = nsiConfDir.resolve("idea.nsi")
+      Files.writeString(ideaNsiPath, BuildUtils.replaceAll(text = Files.readString(ideaNsiPath),
+                                                           replacements = mapOf("\${IMAGES_LOCATION}\\" to "\${IMAGES_LOCATION}/"),
+                                                           marker = ""))
     }
-    else {
-      val makeNsis = "${box}/NSIS/Bin/makensis"
-      NioFiles.setExecutable(Path.of(makeNsis))
-      runProcess(
-        args = listOf(
-          makeNsis,
-          "-V2",
-          "-DCOMMUNITY_DIR=${communityHome.communityRoot}",
-          "-DIPR=${customizer.associateIpr}",
-          "-DOUT_DIR=${context.paths.artifacts}",
-          "-DOUT_FILE=${outFileName}",
-          "${box}/nsiconf/idea.nsi",
-        ),
-        workingDir = box,
-        logger = context.messages,
-        timeoutMillis = timeoutMs,
-        additionalEnvVariables = mapOf("NSISDIR" to "${box}/NSIS"),
-      )
+
+    val generator = NsisFileListGenerator()
+    generator.addDirectory(context.paths.distAllDir.toString())
+    generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/*.vmoptions"))
+    generator.addDirectory(additionalDirectoryToInclude.toString())
+    generator.addDirectory(jreDir.toString())
+    generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
+    generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh"))
+
+    prepareConfigurationFiles(nsiConfDir = nsiConfDir, winDistPath = winDistPath, customizer = customizer, context = context)
+    for (it in customizer.customNsiConfigurationFiles) {
+      val file = Path.of(it)
+      Files.copy(file, nsiConfDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
+    }
+
+    // Log final nsi directory to make debugging easier
+    val logDir = Path.of(context.paths.buildOutputRoot, "log")
+    val nsiLogDir = logDir.resolve("nsi$suffix")
+    deleteDir(nsiLogDir)
+    copyDir(nsiConfDir, nsiLogDir)
+
+    val nsisZip = downloadFileToCacheLocation(
+      url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/" +
+            "NSIS-${context.dependenciesProperties.property("nsisBuild")}.zip",
+      communityRoot = context.paths.communityHomeDirRoot,
+    )
+    Decompressor.Zip(nsisZip).withZipExtensions().extract(box)
+    spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope2 {
+      val timeout = 2.hours
+      if (SystemInfoRt.isWindows) {
+        runProcess(
+          args = listOf(
+            "${box}/NSIS/makensis.exe",
+            "/V2",
+            "/DCOMMUNITY_DIR=${communityHome}",
+            "/DIPR=${customizer.associateIpr}",
+            "/DOUT_DIR=${context.paths.artifacts}",
+            "/DOUT_FILE=${outFileName}",
+            "${box}/nsiconf/idea.nsi",
+          ),
+          workingDir = box,
+          timeout = timeout,
+        )
+      }
+      else {
+        val makeNsis = "${box}/NSIS/Bin/makensis${if (JvmArchitecture.currentJvmArch == JvmArchitecture.x64) "" else "-${JvmArchitecture.currentJvmArch.fileSuffix}"}"
+        NioFiles.setExecutable(Path.of(makeNsis))
+        runProcess(
+          args = listOf(
+            makeNsis,
+            "-V2",
+            "-DCOMMUNITY_DIR=${communityHome}",
+            "-DIPR=${customizer.associateIpr}",
+            "-DOUT_DIR=${context.paths.artifacts}",
+            "-DOUT_FILE=${outFileName}",
+            "${box}/nsiconf/idea.nsi",
+          ),
+          workingDir = box,
+          timeout = timeout,
+          additionalEnvVariables = mapOf("NSISDIR" to "${box}/NSIS"),
+        )
+      }
     }
   }
 
@@ -202,7 +205,7 @@ private fun prepareConfigurationFiles(nsiConfDir: Path,
 
 !define VER_BUILD ${context.buildNumber}
 !define INSTALL_DIR_AND_SHORTCUT_NAME "$installDirAndShortcutName"
-!define PRODUCT_WITH_VER "\$\{MUI_PRODUCT} $versionString"
+!define PRODUCT_WITH_VER "${"$"}{MUI_PRODUCT} $versionString"
 !define PRODUCT_PATHS_SELECTOR "${context.systemSelector}"
 """)
 }

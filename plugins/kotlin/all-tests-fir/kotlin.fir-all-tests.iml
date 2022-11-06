@@ -9,6 +9,7 @@
     <orderEntry type="module" module-name="kotlin.plugin.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight.tests-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
@@ -27,11 +28,16 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.navigation.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.refactorings.tests.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.search.test.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
   </component>
 </module>

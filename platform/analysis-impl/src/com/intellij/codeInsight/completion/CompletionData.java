@@ -21,7 +21,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -121,15 +120,6 @@ public class CompletionData {
   };
 
   /**
-   * @deprecated {@link CompletionUtil#findReferencePrefix} instead
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
-    return CompletionUtil.findReferencePrefix(insertedElement, offsetInFile);
-  }
-
-  /**
    * @deprecated Use {@link CompletionUtil} methods instead
    */
   @Deprecated(forRemoval = true)
@@ -140,7 +130,7 @@ public class CompletionData {
     assert document != null;
     LOG.assertTrue(!PsiDocumentManager.getInstance(insertedElement.getProject()).isUncommited(document), "Uncommitted");
 
-    final String prefix = getReferencePrefix(insertedElement, offsetInFile);
+    final String prefix = CompletionUtil.findReferencePrefix(insertedElement, offsetInFile);
     if (prefix != null) return prefix;
 
     if (insertedElement.getTextRange().equals(insertedElement.getContainingFile().getTextRange()) || insertedElement instanceof PsiComment) {

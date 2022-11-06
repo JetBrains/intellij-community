@@ -90,7 +90,7 @@ public class RefsModel implements VcsLogRefs {
   @Override
   @NotNull
   public Stream<VcsRef> stream() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     return myRefs.values().stream().flatMap(CompressedRefs::stream);
   }
 

@@ -122,7 +122,8 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
 
   @Override
   public boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset) {
-    if (myWhiteSpaceStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset) {
+    Language startElementLanguage = getLanguageByOffset(startOffset);
+    if (myWhiteSpaceStrategy.check(startElementLanguage, myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset) {
       return true;
     }
     PsiElement injectedElement = InjectedLanguageUtilBase.findElementAtNoCommit(myFile, startOffset);
@@ -165,5 +166,15 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
     return !psiDocumentManager.isUncommited(document) &&
            !psiDocumentManager.isDocumentBlockedByPsi(document) &&
            file.getText().equals(document.getText());
+  }
+
+  private Language getLanguageByOffset(int offset) {
+    if (offset < myFile.getTextLength()) {
+      PsiElement element = myFile.findElementAt(offset);
+      if (element != null) {
+        return element.getLanguage();
+      }
+    }
+    return null;
   }
 }

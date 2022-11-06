@@ -278,8 +278,11 @@ public final class LombokUtils {
     "com.fasterxml.jackson.databind.annotation.JsonNaming"};
 
   public static String getGetterName(final @NotNull PsiField psiField) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    return getGetterName(psiField, accessorsInfo);
+  }
 
+  public static String getGetterName(@NotNull PsiField psiField, AccessorsInfo accessorsInfo) {
     final String psiFieldName = psiField.getName();
     final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
@@ -287,12 +290,12 @@ public final class LombokUtils {
   }
 
   public static String getSetterName(@NotNull PsiField psiField) {
-    return getSetterName(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    return getSetterName(psiField, accessorsInfo);
   }
 
-  public static String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
-    return toSetterName(accessorsInfo, psiField.getName(), isBoolean);
+  public static String getSetterName(@NotNull PsiField psiField, AccessorsInfo accessorsInfo) {
+    return toSetterName(accessorsInfo, psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
   }
 
   /**
@@ -386,14 +389,14 @@ public final class LombokUtils {
     if (useBooleanPrefix) {
       if (fieldName.startsWith("is") && fieldName.length() > 2 && !Character.isLowerCase(fieldName.charAt(2))) {
         final String baseName = fieldName.substring(2);
-        result = buildName(booleanPrefix, baseName);
+        result = buildName(booleanPrefix, baseName, accessorsInfo.getCapitalizationStrategy());
       }
       else {
-        result = buildName(booleanPrefix, fieldName);
+        result = buildName(booleanPrefix, fieldName, accessorsInfo.getCapitalizationStrategy());
       }
     }
     else {
-      result = buildName(normalPrefix, fieldName);
+      result = buildName(normalPrefix, fieldName, accessorsInfo.getCapitalizationStrategy());
     }
     return result;
   }
@@ -454,34 +457,35 @@ public final class LombokUtils {
       return result;
     }
 
+    final CapitalizationStrategy capitalizationStrategy = accessorsInfo.getCapitalizationStrategy();
     if (isBoolean) {
-      result.add(buildName(normalPrefix, fieldName));
-      result.add(buildName(booleanPrefix, fieldName));
+      result.add(buildName(normalPrefix, fieldName, capitalizationStrategy));
+      result.add(buildName(booleanPrefix, fieldName, capitalizationStrategy));
 
       if (fieldName.startsWith("is") && fieldName.length() > 2 && !Character.isLowerCase(fieldName.charAt(2))) {
         final String baseName = fieldName.substring(2);
-        result.add(buildName(normalPrefix, baseName));
-        result.add(buildName(booleanPrefix, baseName));
+        result.add(buildName(normalPrefix, baseName, capitalizationStrategy));
+        result.add(buildName(booleanPrefix, baseName, capitalizationStrategy));
       }
     }
     else {
-      result.add(buildName(normalPrefix, fieldName));
+      result.add(buildName(normalPrefix, fieldName, capitalizationStrategy));
     }
     return result;
   }
 
-  public static String buildAccessorName(String prefix, String suffix) {
-    if (prefix.isEmpty()) {
-      return suffix;
-    }
+  public static String buildAccessorName(String prefix, String suffix, CapitalizationStrategy capitalizationStrategy) {
     if (suffix.isEmpty()) {
       return prefix;
     }
-    return buildName(prefix, suffix);
+    if (prefix.isEmpty()) {
+      return suffix;
+    }
+    return buildName(prefix, suffix, capitalizationStrategy);
   }
 
-  private static String buildName(String prefix, String suffix) {
-    return prefix + StringUtil.capitalize(suffix);
+  private static String buildName(String prefix, String suffix, CapitalizationStrategy capitalizationStrategy) {
+    return prefix + capitalizationStrategy.capitalize(suffix);
   }
 
   public static String camelCaseToConstant(String fieldName) {

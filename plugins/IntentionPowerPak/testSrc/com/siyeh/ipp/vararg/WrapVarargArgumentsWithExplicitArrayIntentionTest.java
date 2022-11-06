@@ -50,50 +50,54 @@ public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCa
 
   public void testCapturedWildcard1() {
     doTest(
-      "class X {\n" +
-      "    interface I<T> {\n" +
-      "        String m(T... t);\n" +
-      "    }\n" +
-      "    public static void run() {\n" +
-      "        I<? super Integer> i = null;\n" +
-      "        i.m(/*_Wrap vararg arguments with explicit array creation*/1, 2, 3);\n" +
-      "    }\n" +
-      "}",
+      """
+        class X {
+            interface I<T> {
+                String m(T... t);
+            }
+            public static void run() {
+                I<? super Integer> i = null;
+                i.m(/*_Wrap vararg arguments with explicit array creation*/1, 2, 3);
+            }
+        }""",
 
-      "class X {\n" +
-      "    interface I<T> {\n" +
-      "        String m(T... t);\n" +
-      "    }\n" +
-      "    public static void run() {\n" +
-      "        I<? super Integer> i = null;\n" +
-      "        i.m(new Integer[]{1, 2, 3});\n" +
-      "    }\n" +
-      "}"
+      """
+        class X {
+            interface I<T> {
+                String m(T... t);
+            }
+            public static void run() {
+                I<? super Integer> i = null;
+                i.m(new Integer[]{1, 2, 3});
+            }
+        }"""
     );
   }
 
   public void testCapturedWildcard2() {
     doTestIntentionNotAvailable(
-      "class Y {\n" +
-      "    interface I<T> {\n" +
-      "        String m(T... t);\n" +
-      "    }\n" +
-      "    public static void run() {\n" +
-      "        I<?> i = null;\n" +
-      "        i.m(/*_Wrap vararg arguments with explicit array creation*/1, 2, 3);\n" +
-      "    }\n" +
-      "}");
+      """
+        class Y {
+            interface I<T> {
+                String m(T... t);
+            }
+            public static void run() {
+                I<?> i = null;
+                i.m(/*_Wrap vararg arguments with explicit array creation*/1, 2, 3);
+            }
+        }""");
   }
   
   public void testNonReifiable() {
     doTestIntentionNotAvailable(
-      "import java.util.*;\n" +
-      "class Y {\n" +
-      "    <T> void m(Set<T>... t){}\n" +
-      "    public static void run(Set<?> s) {\n" +
-      "        m(/*_Wrap vararg arguments with explicit array creation*/s);\n" +
-      "    }\n" +
-      "}");
+      """
+        import java.util.*;
+        class Y {
+            <T> void m(Set<T>... t){}
+            public static void run(Set<?> s) {
+                m(/*_Wrap vararg arguments with explicit array creation*/s);
+            }
+        }""");
   }
 
   @SuppressWarnings("ALL")
@@ -119,11 +123,10 @@ public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCa
   @SuppressWarnings("RedundantArrayCreation")
   public void testClassWildcard() {
     doTestIntentionNotAvailable(
-      "class Y {" +
-      "  void test() throws NoSuchMethodException {\n" +
-      "    String.class.getMethod(\"indexOf\", new Class[]/*_Wrap vararg arguments with explicit array creation*/ {int.class});\n" +
-      "  }" +
-      "}"
+      """
+        class Y {  void test() throws NoSuchMethodException {
+            String.class.getMethod("indexOf", new Class[]/*_Wrap vararg arguments with explicit array creation*/ {int.class});
+          }}"""
     );
   }
 

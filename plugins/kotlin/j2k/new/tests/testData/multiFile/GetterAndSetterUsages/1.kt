@@ -2,6 +2,7 @@
 package test
 
 class AAA {
+    @JvmField
     var x = 42
 
     fun foo() {

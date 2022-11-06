@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="26" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="895" height="906"/>
+      <xy x="20" y="20" width="895" height="1021"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -150,7 +150,7 @@
           </component>
         </children>
       </grid>
-      <grid id="7fb78" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="7fb78" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="10" right="0"/>
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -173,12 +173,22 @@
             </constraints>
             <properties/>
           </component>
-          <component id="a42a0" class="javax.swing.JCheckBox" binding="myStoreProjectFilesExternally">
+          <component id="a42a0" class="javax.swing.JCheckBox" binding="myStoreProjectFilesUnderProjectRoot">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.importing.project.store.externally"/>
+            </properties>
+          </component>
+          <component id="5c0e9" class="com.intellij.ui.components.JBLabel" binding="myStoreProjectFilesUnderProjectRootHint">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="3" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <componentStyle value="SMALL"/>
+              <fontColor value="BRIGHTER"/>
+              <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.importing.project.store.externally.hint"/>
             </properties>
           </component>
         </children>

@@ -2,6 +2,7 @@
 package com.intellij.ide.starters.shared.ui
 
 import com.intellij.ide.starters.JavaStartersBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -59,6 +60,10 @@ class LibrariesSearchTextField : SearchTextField() {
     object : AnAction() {
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = text.isNotEmpty()
+      }
+
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
       }
 
       override fun actionPerformed(e: AnActionEvent) {

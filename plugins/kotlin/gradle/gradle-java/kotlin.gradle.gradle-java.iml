@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -75,6 +75,5 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" />
   </component>
 </module>

@@ -23,8 +23,10 @@ public abstract class FileEditorManager {
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
 
   public static FileEditorManager getInstance(@NotNull Project project) {
-    return project.getComponent(FileEditorManager.class);
+    return project.getService(FileEditorManager.class);
   }
+
+  public abstract @Nullable FileEditorComposite getComposite(@NotNull VirtualFile file);
 
   /**
    * @param file file to open. File should be valid.
@@ -114,9 +116,7 @@ public abstract class FileEditorManager {
    * but at the same time editor notifications should be shown to all users.
    */
   @ApiStatus.Experimental
-  public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
-    return getOpenFiles();
-  }
+  public abstract @NotNull List<VirtualFile> getOpenFilesWithRemotes();
 
   public boolean hasOpenFiles() {
     return getOpenFiles().length > 0;

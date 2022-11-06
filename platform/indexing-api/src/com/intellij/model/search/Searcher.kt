@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.search
 
 import com.intellij.util.Query
@@ -25,7 +25,6 @@ interface Searcher<P : SearchParameters<R>, R : Any> {
    * meaning they don't require indexes or otherwise long-running computations
    */
   @RequiresReadLock
-  @JvmDefault
   fun collectImmediateResults(parameters: P): Collection<@JvmWildcard R> {
     return emptyList()
   }
@@ -35,7 +34,6 @@ interface Searcher<P : SearchParameters<R>, R : Any> {
    * @see collectSearchRequest
    */
   @RequiresReadLock
-  @JvmDefault
   fun collectSearchRequests(parameters: P): Collection<@JvmWildcard Query<out R>> {
     return listOfNotNull(collectSearchRequest(parameters))
   }
@@ -47,7 +45,6 @@ interface Searcher<P : SearchParameters<R>, R : Any> {
    */
   @OverrideOnly
   @RequiresReadLock
-  @JvmDefault
   fun collectSearchRequest(parameters: P): Query<out R>? {
     return null
   }

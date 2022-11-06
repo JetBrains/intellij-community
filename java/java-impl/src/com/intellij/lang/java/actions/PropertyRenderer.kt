@@ -39,7 +39,7 @@ internal abstract class PropertyRenderer(
     codeStyleManager.propertyNameToVariableName(propertyName, kind)
   }
 
-  protected fun generatePrototypeField(): PsiField {
+  fun generatePrototypeField(): PsiField {
     val prototypeType = if (propertyKind == PropertyKind.BOOLEAN_GETTER || isBooleanSetter()) PsiType.BOOLEAN else  PsiType.VOID
     return factory.createField(suggestedFieldName, prototypeType).setStatic(isStatic)
   }

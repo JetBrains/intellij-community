@@ -57,7 +57,7 @@ class BuilderWithAccessors {
 
 		@java.lang.SuppressWarnings("all")
 		public BuilderWithAccessors build() {
-			return new BuilderWithAccessors(plower, upper, foo, _bar);
+			return new BuilderWithAccessors(this.plower, this.upper, this.foo, this._bar);
 		}
 
 		@java.lang.Override

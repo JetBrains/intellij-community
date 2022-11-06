@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
@@ -23,14 +22,6 @@ import java.util.function.Supplier;
  * @author Bas Leijdekkers
  */
 public abstract class FilterAction extends DumbAwareAction implements Filter {
-
-  /**
-   * This extension points causes memory leaks and other problems, because FilterActions have state.
-   * @deprecated Please use {@link FilterProvider} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static final ExtensionPointName<FilterAction> EP_NAME = ExtensionPointName.create("com.intellij.structuralsearch.filter");
-
   private static final AtomicInteger myFilterCount = new AtomicInteger();
 
   protected final SimpleColoredComponent myLabel = new SimpleColoredComponent();

@@ -5,7 +5,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=kotlin.RequiresOptIn" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.RequiresOptIn" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -83,8 +83,8 @@
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
-    <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
   </component>
 </module>

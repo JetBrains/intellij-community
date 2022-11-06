@@ -33,6 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
+/**
+ * @deprecated unused
+ */
+@Deprecated(forRemoval = true)
 class Line {
   private final String myValue;
   private final TextAttributes myTextAttributes;
@@ -51,6 +55,10 @@ class Line {
   }
 }
 
+/**
+ * @deprecated unused
+ */
+@Deprecated(forRemoval = true)
 public class EditorAdapter {
   private static final Logger LOG = Logger.getInstance(EditorAdapter.class);
 

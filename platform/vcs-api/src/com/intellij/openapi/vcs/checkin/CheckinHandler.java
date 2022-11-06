@@ -21,11 +21,12 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * A callback which can be used to extend the user interface of the Checkin Project/Checkin File
  * dialogs and to perform actions before commit, on successful commit and on failed commit.
+ * <p>
+ * Handlers may also implement {@link CommitCheck} interface, that supersedes {@link #beforeCheckin} method.
  *
- * @author lesya
  * @see BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)
  * @see CodeAnalysisBeforeCheckinHandler
- * @see CheckinMetaHandler
+ * @see CheckinModificationHandler
  */
 public abstract class CheckinHandler {
   /**
@@ -73,6 +74,8 @@ public abstract class CheckinHandler {
    * {@link CheckinProjectPanel} instance passed to
    * {@link BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)} to
    * get information about the files to be checked in.
+   * <p>
+   * This method will not be called if {@link CommitCheck} interface is implemented.
    *
    * @param executor the commit executor, or {@code null} if the standard commit operation is executed.
    * @return the code indicating whether the check-in operation should be performed or aborted.

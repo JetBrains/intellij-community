@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
@@ -29,7 +30,7 @@ import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -156,7 +157,12 @@ class KotlinLineBreakpointType :
         val ordinal = properties.lambdaOrdinal ?: return null
         val javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint) as? LineBreakpoint<*> ?: return null
         val position = javaBreakpoint.sourcePosition ?: return null
-        return getLambdaByOrdinal(position, ordinal)?.textRange
+
+        // Since lambda breakpoints are placed on the first lambda statement,
+        // we should find the function parent to highlight lambda breakpoints properly
+        val function = position.elementAt.parentOfType<KtFunction>() ?: return null
+        val updatedPosition = SourcePosition.createFromElement(function) ?: return null
+        return getLambdaByOrdinal(updatedPosition, ordinal)?.textRange
     }
 
     override fun getSourcePosition(breakpoint: XBreakpoint<JavaLineBreakpointProperties>): XSourcePosition? =
@@ -167,9 +173,9 @@ class KotlinLineBreakpointType :
         val sourcePosition = createLineSourcePosition(breakpoint as XLineBreakpointImpl<*>) ?: return null
         val ordinal = javaBreakpointProperties.lambdaOrdinal
         val function = getLambdaByOrdinal(sourcePosition, ordinal) ?: return null
-        val bodyElement = function.bodyExpression ?: return null
+        val firstStatement = function.bodyBlockExpression?.statements?.firstOrNull() ?: return null
         return runReadAction {
-            val linePosition = SourcePosition.createFromElement(bodyElement) ?: return@runReadAction null
+            val linePosition = SourcePosition.createFromElement(firstStatement) ?: return@runReadAction null
             DebuggerUtilsEx.toXSourcePosition(
                 PositionManagerImpl.JavaSourcePosition(linePosition, ordinal)
             )

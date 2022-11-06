@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConstPropertyName")
+
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.ActivityImpl
@@ -6,6 +8,7 @@ import com.intellij.diagnostic.ThreadNameManager
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
 private const val pooledPrefix = "ApplicationImpl pooled thread "
+private val regex = Regex(" *@coroutine#\\d+$")
 
 internal class IdeThreadNameManager : ThreadNameManager {
   // ConcurrencyUtil.runUnderThreadName is used in our code (to make thread dumps more clear) and changes thread name,
@@ -35,6 +38,9 @@ internal class IdeThreadNameManager : ThreadNameManager {
       name.startsWith("StatisticsFileEventLogger: ") -> "StatFileEventLogger"
       else -> name
     }
+
+    //main @coroutine#4946
+    result = result.replace(regex, "")
     idToName.put(event.threadId, result)
     return result
   }

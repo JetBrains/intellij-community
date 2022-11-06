@@ -9,15 +9,18 @@ import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.writer.allFields
+import com.intellij.workspaceModel.codegen.writer.javaName
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
-    class Builder(val result: $javaDataName?): ${ModifiableWorkspaceEntityBase::class.fqn}<$javaFullName>(), $javaBuilderName {
+    class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase::class.fqn}<$javaFullName, $javaDataName>(result), $javaBuilderName {
         constructor(): this($javaDataName())
         
 ${
@@ -36,6 +39,9 @@ ${
         line("this.snapshot = builder")
         line("addToBuilder()")
         line("this.id = getEntityData().createEntityId()")
+        lineComment("After adding entity data to the builder, we need to unbind it and move the control over entity data to builder")
+        lineComment("Builder may switch to snapshot at any moment and lock entity data to modification")
+        line("this.currentEntityData = null")
         line()
         list(vfuFields) {
           val suffix = if (valueType is ValueType.Collection<*, *>) ".toHashSet()" else ""
@@ -55,7 +61,7 @@ ${
 
       section("fun checkInitialization()") {
         line("val _diff = diff")
-        list(allFields.noPersistentId().noOptional().noDefaultValue()) { lineBuilder, field ->
+        list(allFields.noSymbolicId().noOptional().noDefaultValue()) { lineBuilder, field ->
           lineBuilder.implWsBuilderIsInitializedCode(field)
         }
       }
@@ -64,12 +70,32 @@ ${
       section("override fun connectionIdList(): List<${ConnectionId::class.fqn}>") { 
         line("return connections")
       }
-      
       line()
+
+      val collectionFields = allFields.noRefs().filter { it.valueType is ValueType.Collection<*,*> }
+      if (collectionFields.isNotEmpty()) {
+        section("override fun afterModification()") {
+          collectionFields.forEach { field ->
+            line("val collection_${field.javaName} = getEntityData().${field.javaName}")
+            if (field.valueType is ValueType.List<*>) {
+              `if`("collection_${field.javaName} is ${MutableWorkspaceList::class.fqn}<*>") {
+                line("collection_${field.javaName}.cleanModificationUpdateAction()")
+              }
+            }
+            if (field.valueType is ValueType.Set<*>) {
+              `if`("collection_${field.javaName} is ${MutableWorkspaceSet::class.fqn}<*>") {
+              line("collection_${field.javaName}.cleanModificationUpdateAction()")
+              }
+            }
+          }
+        }
+        line()
+      }
+
       lineComment("Relabeling code, move information from dataSource to this builder")
       section("override fun relabel(dataSource: ${WorkspaceEntity::class.fqn}, parents: Set<WorkspaceEntity>?)") {
         line("dataSource as $javaFullName")
-        list(allFields.noPersistentId().noRefs()) { lineBuilder, field ->
+        list(allFields.noSymbolicId().noRefs()) { lineBuilder, field ->
           var type = field.valueType
           var qm = ""
           if (type is ValueType.Optional<*>) {
@@ -77,10 +103,10 @@ ${
             type = type.type
           }
           when (type) {
-            is ValueType.List<*> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableList()")
-            is ValueType.Set<*> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableSet()")
-            is ValueType.Map<*, *> -> lineBuilder.line("this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableMap()")
-            else -> lineBuilder.line("this.${field.name} = dataSource.${field.name}")
+            is ValueType.List<*> -> lineBuilder.line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableList()")
+            is ValueType.Set<*> -> lineBuilder.line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableSet()")
+            is ValueType.Map<*, *> -> lineBuilder.line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource${qm}.${field.name}${qm}.toMutableMap()")
+            else -> lineBuilder.line("if (this.${field.name} != dataSource${qm}.${field.name}) this.${field.name} = dataSource.${field.name}")
           }
         }
 
@@ -88,9 +114,15 @@ ${
           allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
             val parentType = it.valueType
             if (parentType is ValueType.Optional) {
-              line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
+              line("val ${it.name}New = parents.filterIsInstance<${parentType.javaType}>().singleOrNull()")
+              `if`("(${it.name}New == null && this.${it.name} != null) || (${it.name}New != null && this.${it.name} == null) || (${it.name}New != null && this.${it.name} != null && (this.${it.name} as WorkspaceEntityBase).id != (${it.name}New as WorkspaceEntityBase).id)") {
+                line("this.${it.name} = ${it.name}New")
+              }
             } else {
-              line("this.${it.name} = parents.filterIsInstance<${parentType.javaType}>().single()")
+              line("val ${it.name}New = parents.filterIsInstance<${parentType.javaType}>().single()")
+              `if`("(this.${it.name} as WorkspaceEntityBase).id != (${it.name}New as WorkspaceEntityBase).id") {
+                line("this.${it.name} = ${it.name}New")
+              }
             }
           }
         }
@@ -112,9 +144,8 @@ ${
     }
   }
         
-        ${allFields.filter { it.name != "persistentId" }.lines("        ") { implWsBuilderFieldCode }.trimEnd()}
+        ${allFields.filter { it.name != "symbolicId" }.lines("        ") { implWsBuilderFieldCode }.trimEnd()}
         
-        override fun getEntityData(): $javaDataName${if (openness.extendable) "<T>" else ""} = result ?: super.getEntityData() as $javaDataName${if (openness.extendable) "<T>" else ""}
         override fun getEntityClass(): Class<$javaFullName> = $javaFullName::class.java
     }
     """.trimIndent()

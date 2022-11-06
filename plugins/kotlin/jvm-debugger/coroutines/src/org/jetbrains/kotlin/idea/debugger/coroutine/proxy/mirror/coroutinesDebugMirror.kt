@@ -36,7 +36,7 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext) =
         MirrorOfDebugProbesImpl(value, instance, isInstalled)
 
-    fun isInstalled(context: DefaultExecutionContext): Boolean =
+    private fun isInstalled(context: DefaultExecutionContext): Boolean =
             isInstalledInDebugMethod.value(instance, context)?.booleanValue() ?:
             isInstalledInCoreMethod.value(instance, context)?.booleanValue()  ?:
             false

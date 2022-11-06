@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
@@ -18,9 +17,9 @@ abstract class ClientAwareComponentManager constructor(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
 ) : ComponentManagerImpl(parent, setExtensionsRootArea) {
-  override fun <T : Any> getServices(serviceClass: Class<T>, includeLocal: Boolean): List<T> {
+  override fun <T : Any> getServices(serviceClass: Class<T>, clientKind: ClientKind): List<T> {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    return sessionsManager.getSessions(includeLocal).mapNotNull {
+    return sessionsManager.getSessions(clientKind).mapNotNull {
       (it as? ClientSessionImpl)?.doGetService(serviceClass = serviceClass, createIfNeeded = true, fallbackToShared = false)
     }
   }
@@ -28,7 +27,7 @@ abstract class ClientAwareComponentManager constructor(
   override fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val sessionsManager = if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       if (createIfNeeded) {
-        throwAlreadyDisposedError(serviceClass.name, this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+        throwAlreadyDisposedError(serviceClass.name, this)
       }
       super.doGetService(ClientSessionsManager::class.java, false)
     }
@@ -43,11 +42,11 @@ abstract class ClientAwareComponentManager constructor(
   override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<Runnable>?) {
+                                  listenerCallbacks: MutableList<in Runnable>?) {
     super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    for (session in sessionsManager.getSessions(true)) {
+    for (session in sessionsManager.getSessions(ClientKind.ALL)) {
       (session as? ClientSessionImpl)?.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
     }
   }
@@ -56,7 +55,7 @@ abstract class ClientAwareComponentManager constructor(
     super.unloadServices(services, pluginId)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    for (session in sessionsManager.getSessions(true)) {
+    for (session in sessionsManager.getSessions(ClientKind.ALL)) {
       (session as? ClientSessionImpl)?.unloadServices(services, pluginId)
     }
   }
@@ -66,7 +65,7 @@ abstract class ClientAwareComponentManager constructor(
                                    syncScope: CoroutineScope,
                                    onlyIfAwait: Boolean) {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
-    for (session in sessionsManager.getSessions(true)) {
+    for (session in sessionsManager.getSessions(ClientKind.ALL)) {
       session as? ClientSessionImpl ?: continue
       session.preloadServices(modules, activityPrefix, syncScope, onlyIfAwait)
     }

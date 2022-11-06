@@ -8,43 +8,74 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSp
 import java.util.function.BiConsumer;
 
 public class MavenSimpleConsoleEventsBuffer {
-  private final StringBuilder myBuffer = new StringBuilder();
-  private final BiConsumer<String, Key> myConsumer;
+  private final TypedBuffer myBuffer;
+  private final BiConsumer<String, Key<String>> myConsumer;
   private final boolean myShowSpyOutput;
-  private boolean isProcessingSpyNow;
 
-  public MavenSimpleConsoleEventsBuffer(BiConsumer<String, Key> consumer, boolean showSpyOutput) {
+  public MavenSimpleConsoleEventsBuffer(BiConsumer<String, Key<String>> consumer, boolean showSpyOutput) {
     myConsumer = consumer;
     myShowSpyOutput = showSpyOutput;
+    myBuffer = new TypedBuffer(consumer);
   }
 
-  public void addText(@NotNull String text, @NotNull Key outputType) {
+  public void addText(@NotNull String text, @NotNull Key<String> outputType) {
     if (myShowSpyOutput) {
       myConsumer.accept(text, outputType);
       return;
     }
 
-    boolean lastChunk = text.charAt(text.length() - 1) == '\n';
-    if (isProcessingSpyNow) {
-      myBuffer.setLength(0);
+    myBuffer.append(text, outputType);
+  }
 
-      isProcessingSpyNow = !lastChunk;
-      return;
+  private static final class TypedBuffer {
+    private final BiConsumer<String, @NotNull Key<String>> myConsumer;
+    private final StringBuilder myBuilder = new StringBuilder();
+    private Key<String> myOutputType;
+    private boolean myIsProcessingSpyNow;
+
+    private TypedBuffer(BiConsumer<String, @NotNull Key<String>> consumer)
+    {
+      this.myConsumer = consumer;
     }
 
+    private void reset() {
+      myBuilder.setLength(0);
+      myOutputType = null;
+    }
 
-    String textToSend = myBuffer.length() == 0 ? text : myBuffer + text;
-    if (textToSend.length() >= MavenSpyOutputParser.PREFIX.length() || lastChunk) {
-      myBuffer.setLength(0);
-      if (!MavenSpyOutputParser.isSpyLog(textToSend)) {
-        myConsumer.accept(textToSend, outputType);
+    private void sendAndReset() {
+      myConsumer.accept(getText(), myOutputType);
+      reset();
+    }
+
+    private String getText() {
+      return myBuilder.toString();
+    }
+
+    private boolean canAppend(@NotNull Key<String> outputType) {
+      return null == myOutputType || myOutputType.toString().equals(outputType.toString());
+    }
+
+    public void append(@NotNull String text, @NotNull Key<String> outputType) {
+      boolean lastChunk = text.charAt(text.length() - 1) == '\n';
+      if (myIsProcessingSpyNow) {
+        myIsProcessingSpyNow = !lastChunk;
+        return;
       }
-      else {
-        isProcessingSpyNow = !lastChunk;
+      if (!canAppend(outputType)){
+        sendAndReset();
+      }
+      myBuilder.append(text);
+      myOutputType = outputType;
+      if (myBuilder.length() >= MavenSpyOutputParser.PREFIX.length() || lastChunk) {
+        if (!MavenSpyOutputParser.isSpyLog(getText())) {
+          sendAndReset();
+        } else {
+          myIsProcessingSpyNow = !lastChunk;
+          reset();
+        }
       }
     }
-    else {
-      myBuffer.append(text);
-    }
+
   }
 }

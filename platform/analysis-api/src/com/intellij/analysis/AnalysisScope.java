@@ -173,7 +173,7 @@ public class AnalysisScope {
     if (filter != null && !filter.contains(virtualFile)) {
       return true;
     }
-    return !myIncludeTestSource && TestSourcesFilter.isTestSources(virtualFile, myProject);
+    return !myIncludeTestSource && ReadAction.compute(() -> TestSourcesFilter.isTestSources(virtualFile, myProject));
   }
 
   @NotNull
@@ -214,21 +214,17 @@ public class AnalysisScope {
   protected VirtualFileSet createFilesSet() {
     VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet();
     switch (myType) {
-      case FILE:
+      case FILE -> {
         fileSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
         fileSet.freeze();
-        break;
-      case DIRECTORY:
-      case PROJECT:
-      case MODULES:
-      case MODULE:
-      case CUSTOM:
+      }
+      case DIRECTORY, PROJECT, MODULES, MODULE, CUSTOM -> {
         long timeStamp = System.currentTimeMillis();
         accept(createFileSearcher(fileSet));
         fileSet.freeze();
         LOG.info("Scanning scope took " + (System.currentTimeMillis() - timeStamp) + " ms");
-        break;
-      case VIRTUAL_FILES:
+      }
+      case VIRTUAL_FILES -> {
         ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
         for (VirtualFile vFile : myVFiles) {
           VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
@@ -244,9 +240,8 @@ public class AnalysisScope {
           });
         }
         fileSet.freeze();
-        break;
-      default:
-        throw new IllegalStateException("Invalid type: "+myType+"; can't create file set off it");
+      }
+      default -> throw new IllegalStateException("Invalid type: " + myType + "; can't create file set off it");
     }
     return fileSet;
   }
@@ -399,22 +394,19 @@ public class AnalysisScope {
   }
 
   public boolean containsModule(@NotNull Module module) {
-    switch (myType) {
-      case PROJECT:
-        return true;
-      case MODULE:
-        return myModule == module;
-      case MODULES:
-        return myModules.contains(module);
-      case CUSTOM:
-        if (module.isDisposed()) return false;
+    return switch (myType) {
+      case PROJECT -> true;
+      case MODULE -> myModule == module;
+      case MODULES -> myModules.contains(module);
+      case CUSTOM -> {
+        if (module.isDisposed()) yield false;
         for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots()) {
-          if (myScope.contains(file)) return true;
+          if (myScope.contains(file)) yield true;
         }
-        return false;
-      default:
-        return false;
-    }
+        yield false;
+      }
+      default -> false;
+    };
   }
 
   private static void doProcessFile(@NotNull PsiElementVisitor visitor, @NotNull PsiManager psiManager, @NotNull VirtualFile vFile) {
@@ -459,62 +451,42 @@ public class AnalysisScope {
 
   @NotNull
   public @Nls String getDisplayName() {
-    switch (myType) {
-      case CUSTOM:
-        return myScope.getDisplayName();
-
-      case MODULE:
-        return AnalysisBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
-
-      case MODULES:
+    return switch (myType) {
+      case CUSTOM -> myScope.getDisplayName();
+      case MODULE -> AnalysisBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
+      case MODULES -> {
         String modules = StringUtil.join(myModules, module -> pathToName(module.getModuleFilePath()), ", ");
-
-        return AnalysisBundle.message("scope.module.list", modules, myModules.size());
-
-      case PROJECT:
-        return AnalysisBundle.message("scope.project", myProject.getName());
-
-      case FILE:
-        return AnalysisBundle.message("scope.file", displayProjectRelativePath((PsiFileSystemItem)myElement));
-      case DIRECTORY:
-        return AnalysisBundle.message("scope.directory", displayProjectRelativePath((PsiFileSystemItem)myElement));
-
-      case VIRTUAL_FILES:
-        return AnalysisBundle.message("scope.virtual.files");
-    }
-
-    return "";
+        yield AnalysisBundle.message("scope.module.list", modules, myModules.size());
+      }
+      case PROJECT -> AnalysisBundle.message("scope.project", myProject.getName());
+      case FILE -> AnalysisBundle.message("scope.file", displayProjectRelativePath((PsiFileSystemItem)myElement));
+      case DIRECTORY -> AnalysisBundle.message("scope.directory", displayProjectRelativePath((PsiFileSystemItem)myElement));
+      case VIRTUAL_FILES -> AnalysisBundle.message("scope.virtual.files");
+      default -> "";
+    };
   }
 
   @NotNull
   public @Nls String getShortenName(){
-    switch (myType) {
-      case CUSTOM:
-        return myScope.getDisplayName();
-
-      case MODULE:
-        return AnalysisBundle.message("scope.option.module", myModule.getName());
-
-      case MODULES:
+    return switch (myType) {
+      case CUSTOM -> myScope.getDisplayName();
+      case MODULE -> AnalysisBundle.message("scope.option.module", myModule.getName());
+      case MODULES -> {
         String modules = StringUtil.join(myModules, Module::getName, ", ");
-        return AnalysisBundle.message("scope.module.list", modules, myModules.size());
-
-      case PROJECT:
-        return AnalysisBundle.message("scope.project", myProject.getName());
-
-      case FILE:
+        yield AnalysisBundle.message("scope.module.list", modules, myModules.size());
+      }
+      case PROJECT -> AnalysisBundle.message("scope.project", myProject.getName());
+      case FILE -> {
         String relativePath = getRelativePath();
-        return AnalysisBundle.message("scope.file", relativePath);
-
-      case DIRECTORY:
+        yield AnalysisBundle.message("scope.file", relativePath);
+      }
+      case DIRECTORY -> {
         String relativeDirPath = getRelativePath();
-        return AnalysisBundle.message("scope.directory", relativeDirPath);
-
-      case VIRTUAL_FILES:
-        return AnalysisBundle.message("scope.selected.files");
-    }
-
-    return "";
+        yield AnalysisBundle.message("scope.directory", relativeDirPath);
+      }
+      case VIRTUAL_FILES -> AnalysisBundle.message("scope.selected.files");
+      default -> "";
+    };
   }
 
   @NotNull
@@ -668,43 +640,42 @@ public class AnalysisScope {
   @NotNull
   public SearchScope toSearchScope() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    switch (myType) {
-      case CUSTOM:
-        return myScope;
-      case DIRECTORY:
-        return GlobalSearchScopesCore.directoryScope((PsiDirectory)myElement, true);
-      case FILE:
-        return GlobalSearchScope.fileScope((PsiFile)myElement);
-      case INVALID:
-        return LocalSearchScope.EMPTY;
-      case MODULE:
+    return switch (myType) {
+      case CUSTOM -> myScope;
+      case DIRECTORY -> GlobalSearchScopesCore.directoryScope((PsiDirectory)myElement, true);
+      case FILE -> GlobalSearchScope.fileScope((PsiFile)myElement);
+      case INVALID -> LocalSearchScope.EMPTY;
+      case MODULE -> {
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
-        return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScopesCore.projectTestScope(myModule.getProject())).intersectWith(moduleScope);
-      case MODULES:
-        return GlobalSearchScope.union(myModules.stream().map(m -> GlobalSearchScope.moduleScope(m)).toArray(GlobalSearchScope[]::new));
-      case PROJECT:
-        return myIncludeTestSource ? GlobalSearchScope.projectScope(myProject) : GlobalSearchScopesCore.projectProductionScope(myProject);
-      case VIRTUAL_FILES:
-        return new GlobalSearchScope() {
-          @Override
-          public boolean contains(@NotNull VirtualFile file) {
-            return getFileSet().contains(file);
-          }
+        yield myIncludeTestSource
+              ? moduleScope
+              : GlobalSearchScope.notScope(GlobalSearchScopesCore.projectTestScope(myModule.getProject())).intersectWith(moduleScope);
+      }
+      case MODULES ->
+        GlobalSearchScope.union(myModules.stream().map(m -> GlobalSearchScope.moduleScope(m)).toArray(GlobalSearchScope[]::new));
+      case PROJECT ->
+        myIncludeTestSource ? GlobalSearchScope.projectScope(myProject) : GlobalSearchScopesCore.projectProductionScope(myProject);
+      case VIRTUAL_FILES -> new GlobalSearchScope() {
+        @Override
+        public boolean contains(@NotNull VirtualFile file) {
+          return getFileSet().contains(file);
+        }
 
-          @Override
-          public boolean isSearchInModuleContent(@NotNull Module aModule) {
-            return false;
-          }
+        @Override
+        public boolean isSearchInModuleContent(@NotNull Module aModule) {
+          return false;
+        }
 
-          @Override
-          public boolean isSearchInLibraries() {
-            return false;
-          }
-        };
-      default:
+        @Override
+        public boolean isSearchInLibraries() {
+          return false;
+        }
+      };
+      default -> {
         LOG.error("invalid type " + myType);
-        return LocalSearchScope.EMPTY;
-    }
+        yield LocalSearchScope.EMPTY;
+      }
+    };
   }
 
   /**

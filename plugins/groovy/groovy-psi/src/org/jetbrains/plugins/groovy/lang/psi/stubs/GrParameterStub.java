@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-/**
- * @author peter
- */
 public class GrParameterStub extends GrVariableStubBase<GrParameter> {
 
   private final int myFlags;

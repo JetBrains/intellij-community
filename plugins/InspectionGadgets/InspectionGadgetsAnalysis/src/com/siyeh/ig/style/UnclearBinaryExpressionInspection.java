@@ -61,7 +61,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       replaceElement(descriptor.getPsiElement());
     }
   }

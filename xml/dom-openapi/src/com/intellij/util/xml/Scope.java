@@ -22,8 +22,6 @@ import java.lang.annotation.RetentionPolicy;
  * {@link DomFileDescription#getIdentityScope(DomElement)} and
  * {@link DomFileDescription#getResolveScope(GenericDomValue)}
  * use this annotation first to get the corresponding scopes.
- *
- * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Scope {

@@ -28,7 +28,7 @@ class BuilderSimpleProtected<T> {
 
 		@java.lang.SuppressWarnings("all")
 		public BuilderSimpleProtected<T> build() {
-			return new BuilderSimpleProtected<T>(also);
+			return new BuilderSimpleProtected<T>(this.also);
 		}
 
 		@java.lang.Override

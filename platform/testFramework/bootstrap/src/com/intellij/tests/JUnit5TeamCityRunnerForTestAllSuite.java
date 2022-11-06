@@ -51,7 +51,7 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
         System.exit(42);
       }
     }
-    catch(Throwable x) {
+    catch (Throwable x) {
       x.printStackTrace();
     }
     finally {
@@ -101,16 +101,16 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
     private TestPlan myTestPlan;
     private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
-    
+
     public TCExecutionListener() {
       myPrintStream = System.out;
       myPrintStream.println("##teamcity[enteredTheMatrix]");
     }
-    
+
     public boolean smthExecuted() {
       return myCurrentTestStart > 0;
     }
-  
+
     @Override
     public void reportingEntryPublished(TestIdentifier testIdentifier, ReportEntry entry) {
       StringBuilder builder = new StringBuilder();
@@ -119,22 +119,22 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
       builder.append("\n");
       myPrintStream.println("##teamcity[testStdOut" + idAndName(testIdentifier) + " out = '" + escapeName(builder.toString()) + "']");
     }
-  
+
     @Override
     public void testPlanExecutionStarted(TestPlan testPlan) {
       myTestPlan = testPlan;
     }
-  
+
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
     }
-  
+
     @Override
     public void executionSkipped(TestIdentifier testIdentifier, String reason) {
-      executionStarted (testIdentifier);
+      executionStarted(testIdentifier);
       executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, reason);
     }
-  
+
     @Override
     public void executionStarted(TestIdentifier testIdentifier) {
       if (testIdentifier.isTest()) {
@@ -146,7 +146,7 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
         myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + "]");
       }
     }
-  
+
     @Override
     public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
       final Throwable throwable = testExecutionResult.getThrowable().orElse(null);
@@ -161,7 +161,7 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
         executionFinished(testIdentifier, testExecutionResult.getStatus(), throwable, null);
       }
     }
-  
+
     private void executionFinished(TestIdentifier testIdentifier,
                                    TestExecutionResult.Status status,
                                    Throwable throwableOptional,
@@ -178,7 +178,7 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
         testFinished(testIdentifier, duration);
         myFinishCount++;
       }
-      else if (hasNonTrivialParent(testIdentifier)){
+      else if (hasNonTrivialParent(testIdentifier)) {
         String messageName = null;
         if (status == TestExecutionResult.Status.FAILED) {
           messageName = ServiceMessageTypes.TEST_FAILED;
@@ -194,12 +194,13 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
             testFailure("CLASS_CONFIGURATION", getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason);
             myPrintStream.println("##teamcity[testFinished" + nameAndId + "]");
           }
-  
+
           final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
           if (!descendants.isEmpty() && myFinishCount == 0) {
             for (TestIdentifier childIdentifier : descendants) {
               testStarted(childIdentifier);
-              testFailure(childIdentifier, ServiceMessageTypes.TEST_IGNORED, status == TestExecutionResult.Status.ABORTED ? throwableOptional : null, 0, reason);
+              testFailure(childIdentifier, ServiceMessageTypes.TEST_IGNORED,
+                          status == TestExecutionResult.Status.ABORTED ? throwableOptional : null, 0, reason);
               testFinished(childIdentifier, 0);
             }
             myFinishCount = 0;
@@ -208,23 +209,24 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
         myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "]");
       }
     }
-  
+
     private static boolean hasNonTrivialParent(TestIdentifier testIdentifier) {
       return testIdentifier.getParentId().isPresent();
     }
-  
+
     protected long getDuration() {
       return System.currentTimeMillis() - myCurrentTestStart;
     }
-  
+
     private void testStarted(TestIdentifier testIdentifier) {
       myPrintStream.println("##teamcity[testStarted" + idAndName(testIdentifier) + " captureStandardOutput='true']");
     }
-    
+
     private void testFinished(TestIdentifier testIdentifier, long duration) {
-      myPrintStream.println("##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration='" + duration + "'" : "") + "]");
+      myPrintStream.println(
+        "##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration='" + duration + "'" : "") + "]");
     }
-  
+
     private void testFailure(TestIdentifier testIdentifier,
                              String messageName,
                              Throwable ex,
@@ -232,7 +234,7 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
                              String reason) {
       testFailure(getName(testIdentifier), getId(testIdentifier), getParentId(testIdentifier), messageName, ex, duration, reason);
     }
-  
+
     private static String getName(TestIdentifier testIdentifier) {
       String displayName = testIdentifier.getDisplayName();
       return testIdentifier.getSource()
@@ -244,13 +246,13 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
               return displayName;
             }
             String withDisplayName = "." + displayName;
-            return className.endsWith(withDisplayName) ? className 
+            return className.endsWith(withDisplayName) ? className
                                                        : className + withDisplayName;
           }
           return s instanceof MethodSource ? ((MethodSource)s).getClassName() + "." + displayName : null;
         }).orElse(displayName);
     }
-  
+
     private void testFailure(String methodName,
                              String id,
                              String parentId,
@@ -288,10 +290,10 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
           }
           else {
             Class<? extends Throwable> aClass = ex.getClass();
-            if (isComparisonFailure(aClass)){
+            if (isComparisonFailure(aClass)) {
               try {
-                String expected = (String)aClass.getDeclaredMethod("getExpected").invoke(ex);
-                String actual = (String)aClass.getDeclaredMethod("getActual").invoke(ex);
+                String expected = (String)aClass.getMethod("getExpected").invoke(ex);
+                String actual = (String)aClass.getMethod("getActual").invoke(ex);
 
                 attrs.put("expected", expected);
                 attrs.put("actual", actual);
@@ -312,46 +314,45 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
     private static boolean isComparisonFailure(Class<?> aClass) {
       if (aClass == null) return false;
       final String throwableClassName = aClass.getName();
-      if (throwableClassName.equals("junit.framework.ComparisonFailure") || 
+      if (throwableClassName.equals("junit.framework.ComparisonFailure") ||
           throwableClassName.equals("org.junit.ComparisonFailure")) {
         return true;
       }
       return isComparisonFailure(aClass.getSuperclass());
     }
-  
+
     protected String getTrace(Throwable ex) {
       final StringWriter stringWriter = new StringWriter();
       final PrintWriter writer = new PrintWriter(stringWriter);
       ex.printStackTrace(writer);
       return stringWriter.toString();
     }
-  
+
     private static String getId(TestIdentifier identifier) {
       return identifier.getUniqueId();
     }
-  
+
     private String idAndName(TestIdentifier testIdentifier) {
       return idAndName(testIdentifier, getName(testIdentifier));
     }
-  
+
     private String idAndName(TestIdentifier testIdentifier, String displayName) {
       return " id='" + escapeName(getId(testIdentifier)) +
              "' name='" + escapeName(displayName) +
              "' nodeId='" + escapeName(getId(testIdentifier)) +
              "' parentNodeId='" + escapeName(getParentId(testIdentifier)) + "'";
     }
-  
+
     private String getParentId(TestIdentifier testIdentifier) {
       Optional<TestIdentifier> parent = myTestPlan.getParent(testIdentifier);
-      
+
       return parent
         .map(identifier -> identifier.getUniqueId())
         .orElse("0");
     }
-  
+
     private static String escapeName(String str) {
       return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER2);
     }
-    
   }
 }

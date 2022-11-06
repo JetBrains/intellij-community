@@ -46,67 +46,75 @@ public class JsonSchemaInjectionTest extends JsonSchemaHighlightingTestBase {
   }
 
   public void testXml() {
-    doTest("{\n" +
-           "  \"properties\": {\n" +
-           "    \"X\": {\n" +
-           "      \"x-intellij-language-injection\": \"XML\"\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "{\n" +
-                "  \"X\": \"<a<caret>></a>\"\n" +
-                "}", true);
+    doTest("""
+             {
+               "properties": {
+                 "X": {
+                   "x-intellij-language-injection": "XML"
+                 }
+               }
+             }""", """
+             {
+               "X": "<a<caret>></a>"
+             }""", true);
   }
 
   public void testNoInjection() {
-    doTest("{\n" +
-           "  \"properties\": {\n" +
-           "    \"X\": {\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "{\n" +
-                "  \"X\": \"<a<caret>></a>\"\n" +
-                "}", false);
+    doTest("""
+             {
+               "properties": {
+                 "X": {
+                 }
+               }
+             }""", """
+             {
+               "X": "<a<caret>></a>"
+             }""", false);
   }
 
   public void testOneOfSchema() {
-    @Language("JSON") String schema = "{\n" +
-                                      "  \"additionalProperties\": {\n" +
-                                      "    \"oneOf\": [\n" +
-                                      "      {\n" +
-                                      "        \"type\": \"string\",\n" +
-                                      "        \"x-intellij-language-injection\": \"XML\"\n" +
-                                      "      },\n" +
-                                      "      {\n" +
-                                      "        \"type\": \"array\",\n" +
-                                      "        \"items\": {\n" +
-                                      "          \"type\": \"string\",\n" +
-                                      "          \"x-intellij-language-injection\": \"XML\"\n" +
-                                      "        }\n" +
-                                      "      }\n" +
-                                      "    ]\n" +
-                                      "  }\n" +
-                                      "}";
-    doTest(schema, "{\n" +
-                "  \"foo\": \"<caret><a/>\",\n" +
-                "  \"bar\": [\"<a/>\"]\n" +
-                "}", true);
-    doTest(schema, "{\n" +
-                "  \"foo\": \"<a/>\",\n" +
-                "  \"bar\": [\"<caret><a/>\"]\n" +
-                "}", true);
+    @Language("JSON") String schema = """
+      {
+        "additionalProperties": {
+          "oneOf": [
+            {
+              "type": "string",
+              "x-intellij-language-injection": "XML"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "x-intellij-language-injection": "XML"
+              }
+            }
+          ]
+        }
+      }""";
+    doTest(schema, """
+      {
+        "foo": "<caret><a/>",
+        "bar": ["<a/>"]
+      }""", true);
+    doTest(schema, """
+      {
+        "foo": "<a/>",
+        "bar": ["<caret><a/>"]
+      }""", true);
   }
 
   public void testPrefixSuffix() {
-    doTest("{\n" +
-           "  \"properties\": {\n" +
-           "    \"x\": {\n" +
-           "      \"x-intellij-language-injection\": {\n" +
-           "        \"language\": \"XML\",\n" +
-           "        \"prefix\": \"<\",\n" +
-           "        \"suffix\": \">\"\n" +
-           "      }\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "{\"x\": \"x><caret></\"}", true);
+    doTest("""
+             {
+               "properties": {
+                 "x": {
+                   "x-intellij-language-injection": {
+                     "language": "XML",
+                     "prefix": "<",
+                     "suffix": ">"
+                   }
+                 }
+               }
+             }""", "{\"x\": \"x><caret></\"}", true);
   }
 }

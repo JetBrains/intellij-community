@@ -19,6 +19,8 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.send
+import com.jetbrains.packagesearch.intellij.plugin.util.toNioPathOrNull
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -45,10 +47,11 @@ open class FileWatcherSignalProvider(private val paths: List<Path>) : FlowModule
         return channelFlow {
             project.filesChangedEventFlow.flatMapMerge { it.asFlow() }
                 .filter { vFileEvent -> paths.any { it.name == vFileEvent.file?.name } } // check the file name before resolving the absolute path string
-                .filter { vFileEvent -> absolutePathStrings.any { it == vFileEvent.file?.toNioPath()?.absolutePathString() } }
-                .onEach { send(Unit) }
+                .filter { vFileEvent -> absolutePathStrings.any { it == vFileEvent.file?.toNioPathOrNull()?.absolutePathString() } }
+                .onEach { send() }
                 .launchIn(this)
             awaitClose { watchRequests.forEach { request -> localFs.removeWatchedRoot(request) } }
         }
     }
 }
+

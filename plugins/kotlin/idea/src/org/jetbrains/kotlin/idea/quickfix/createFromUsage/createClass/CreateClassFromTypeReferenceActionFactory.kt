@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass
 
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -18,7 +20,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.ifEmpty
 import java.util.*
 
-object CreateClassFromTypeReferenceActionFactory : CreateClassFromUsageFactory<KtUserType>() {
+object CreateClassFromTypeReferenceActionFactory : CreateClassFromUsageFactory<KtUserType>(), UnresolvedReferenceQuickFixFactory {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtUserType? {
         return diagnostic.psiElement.findParentOfType(strict = false)
     }
@@ -55,7 +57,7 @@ object CreateClassFromTypeReferenceActionFactory : CreateClassFromUsageFactory<K
         val containingClass = getStrictParentOfType<KtClass>() ?: return false
         return !containingClass.hasModifier(KtTokens.ANNOTATION_KEYWORD)
                 && !containingClass.hasModifier(KtTokens.ENUM_KEYWORD)
-                && !containingClass.hasModifier(KtTokens.INLINE_KEYWORD)
+                && !containingClass.isInlineOrValue()
     }
 
     private fun getExpectedUpperBound(element: KtUserType, context: BindingContext): KotlinType? {

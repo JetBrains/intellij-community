@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
 import com.intellij.psi.search.SearchScope
+import com.intellij.refactoring.rename.impl.EmptyRenameValidator
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * The thing being renamed.
@@ -30,7 +33,6 @@ interface RenameTarget {
    * Returns maximal search scope where usages to this target might exist, or `null` to search everywhere.
    * Returning [com.intellij.psi.search.LocalSearchScope] will also make search scope unavailable to change in the UI.
    */
-  @JvmDefault
   val maximalSearchScope: SearchScope?
     get() = null
 
@@ -41,12 +43,22 @@ interface RenameTarget {
    * and [presentable text][TargetPresentation.presentableText] are used)
    * @see com.intellij.find.usages.api.SearchTarget.presentation
    */
-  val presentation: TargetPresentation
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  fun presentation(): TargetPresentation
 
   /**
    * The single [RenameTarget] might be referenced differently in different contexts,
    * e.g. we search for short name of a Java class in strings and comments, and fully qualified name in plain text.
    */
-  @JvmDefault
   fun textTargets(context: ReplaceTextTargetContext): Collection<ReplaceTextTarget> = emptyList()
+
+  /**
+   * @return validator to be used when checking validity of new name during refactoring.
+   *
+   * TODO consider an EP
+   */
+  @JvmDefault
+  fun validator(): RenameValidator = RenameValidator.empty()
+
 }

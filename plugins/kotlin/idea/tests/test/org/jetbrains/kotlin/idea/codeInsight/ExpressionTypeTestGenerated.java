@@ -63,6 +63,26 @@ public class ExpressionTypeTestGenerated extends AbstractExpressionTypeTest {
         runTest("testData/codeInsight/expressionType/Lambda.kt");
     }
 
+    @TestMetadata("LambdaParameterWithType.kt")
+    public void testLambdaParameterWithType() throws Exception {
+        runTest("testData/codeInsight/expressionType/LambdaParameterWithType.kt");
+    }
+
+    @TestMetadata("LambdaParameterWithoutType.kt")
+    public void testLambdaParameterWithoutType() throws Exception {
+        runTest("testData/codeInsight/expressionType/LambdaParameterWithoutType.kt");
+    }
+
+    @TestMetadata("LoopVariableWithType.kt")
+    public void testLoopVariableWithType() throws Exception {
+        runTest("testData/codeInsight/expressionType/LoopVariableWithType.kt");
+    }
+
+    @TestMetadata("LoopVariableWithoutType.kt")
+    public void testLoopVariableWithoutType() throws Exception {
+        runTest("testData/codeInsight/expressionType/LoopVariableWithoutType.kt");
+    }
+
     @TestMetadata("MethodName.kt")
     public void testMethodName() throws Exception {
         runTest("testData/codeInsight/expressionType/MethodName.kt");

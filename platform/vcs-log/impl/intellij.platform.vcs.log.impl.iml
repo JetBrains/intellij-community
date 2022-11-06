@@ -36,8 +36,7 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-guava" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
-    <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
   </component>
 </module>

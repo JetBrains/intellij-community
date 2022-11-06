@@ -225,6 +225,8 @@ class CoroutineDumpPanel(
             }
             updateCoroutinesList()
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
 
     private inner class MergeStackTracesAction : ToggleAction(
@@ -241,6 +243,8 @@ class CoroutineDumpPanel(
             UISettings.getInstance().state.mergeEqualStackTraces = state
             updateCoroutinesList()
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
 
     private class CopyToClipboardAction(private val myCoroutinesDump: List<CompleteCoroutineInfoData>, private val myProject: Project) :

@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.github.authentication.accounts
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.collaboration.async.disposingScope
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
@@ -21,20 +23,15 @@ import java.time.temporal.ChronoUnit
 class GithubAccountInformationProvider : Disposable {
 
   private val informationCache = Caffeine.newBuilder()
-    .expireAfterAccess(Duration.of(30, ChronoUnit.MINUTES))
+    .expireAfterWrite(Duration.of(30, ChronoUnit.MINUTES))
     .build<GithubAccount, GithubAuthenticatedUser>()
 
   init {
-    service<GHAccountManager>().addListener(this, object : AccountsListener<GithubAccount> {
-      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-        val cache = getInstance().informationCache
-        for (account in (old - new)) {
-          cache.invalidate(account)
-        }
+    disposingScope().launch {
+      service<GHAccountManager>().accountsState.collect {
+        informationCache.invalidateAll()
       }
-
-      override fun onAccountCredentialsChanged(account: GithubAccount) = getInstance().informationCache.invalidate(account)
-    })
+    }
   }
 
   @RequiresBackgroundThread

@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public abstract class DomManager extends CompositeModificationTracker implements ModificationTracker {
   public static final Key<Module> MOCK_ELEMENT_MODULE = Key.create("MockElementModule");
 
@@ -108,20 +105,10 @@ public abstract class DomManager extends CompositeModificationTracker implements
   public abstract <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator);
 
   /**
-   * Registers a new {@link DomFileDescription} within the manager. The description parameter describes some DOM
-   * parameters and restrictions to the particular XML files, that need DOM support. Should be called on
-   * {@link com.intellij.openapi.components.ProjectComponent} loading.
-   * @param description The description in question
-   * @deprecated Make your file description an extension (see {@link DomFileDescription#EP_NAME})
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void registerFileDescription(DomFileDescription<?> description);
-
-  /**
    * @return {@link ConverterManager} instance
    * @deprecated This will be moved at the application level
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public abstract ConverterManager getConverterManager();
 
   public abstract ModelMerger createModelMerger();

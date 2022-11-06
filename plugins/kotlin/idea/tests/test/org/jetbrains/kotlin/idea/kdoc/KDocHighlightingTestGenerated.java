@@ -27,9 +27,4 @@ public class KDocHighlightingTestGenerated extends AbstractKDocHighlightingTest 
     public void testMissingDocumentation() throws Exception {
         runTest("testData/kdoc/highlighting/MissingDocumentation.kt");
     }
-
-    @TestMetadata("UnresolvedReference.kt")
-    public void testUnresolvedReference() throws Exception {
-        runTest("testData/kdoc/highlighting/UnresolvedReference.kt");
-    }
 }

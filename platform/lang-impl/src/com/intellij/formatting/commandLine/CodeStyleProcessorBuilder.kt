@@ -10,12 +10,12 @@ import java.nio.charset.Charset
 
 private val LOG = Logger.getInstance(CodeStyleProcessorBuilder::class.java)
 
-class CodeStyleProcessorBuilder(val messageOutput: MessageOutput) {
-  var isDryRun = false
+class CodeStyleProcessorBuilder(private val messageOutput: MessageOutput) {
+  private var isDryRun = false
   var isRecursive = false
-  var primaryCodeStyle: CodeStyleSettings? = null
-  var defaultCodeStyle: CodeStyleSettings? = null
-  var fileMasks = emptyList<Regex>()
+  private var primaryCodeStyle: CodeStyleSettings? = null
+  private var defaultCodeStyle: CodeStyleSettings? = null
+  private var fileMasks = emptyList<Regex>()
   val entries = arrayListOf<File>()
   var charset: Charset? = null
 

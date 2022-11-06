@@ -6,10 +6,10 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.io.Decompressor
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.get
-import org.jetbrains.intellij.build.httpClient
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
+import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
+import org.jetbrains.jps.cache.model.BuildTargetState
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
@@ -26,7 +26,7 @@ internal class PortableCompilationCacheDownloader(
 ) {
   private val remoteCacheUrl = remoteCacheUrl.trimEnd('/')
 
-  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.paths.buildOutputDir)
+  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
 
   /**
    * If true then latest commit in current repository will be used to download caches.
@@ -35,14 +35,27 @@ internal class PortableCompilationCacheDownloader(
 
   private val lastCommits by lazy { git.log(COMMITS_COUNT) }
 
-  private fun downloadString(url: String) = httpClient.get(url).useSuccessful { it.body.string() }
+  private fun downloadString(url: String): String = retryWithExponentialBackOff {
+    if (url.isS3()) {
+      awsS3Cli("cp", url, "-")
+    }
+    else {
+      httpClient.get(url).useSuccessful { it.body.string() }
+    }
+  }
 
   private fun downloadToFile(url: String, file: Path, spanName: String) {
     TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").useWithScope {
       Files.createDirectories(file.parent)
-      httpClient.get(url).useSuccessful { response ->
-        Files.newOutputStream(file).use {
-          response.body.byteStream().transferTo(it)
+      retryWithExponentialBackOff {
+        if (url.isS3()) {
+          awsS3Cli("cp", url, "$file")
+        } else {
+          httpClient.get(url).useSuccessful { response ->
+            Files.newOutputStream(file).use {
+              response.body.byteStream().transferTo(it)
+            }
+          }
         }
       }
     }
@@ -55,7 +68,7 @@ internal class PortableCompilationCacheDownloader(
   }
 
   private val availableCachesKeys by lazy {
-    val json = downloadString("$remoteCacheUrl/${CommitsHistory.JSON_FILE}")
+    val json = downloadString("${this.remoteCacheUrl}/${CommitsHistory.JSON_FILE}")
     CommitsHistory(json).commitsForRemote(gitUrl)
   }
 

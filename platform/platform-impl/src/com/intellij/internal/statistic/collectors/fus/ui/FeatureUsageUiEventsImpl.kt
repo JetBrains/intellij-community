@@ -51,7 +51,7 @@ class SettingsCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
     private val GROUP = EventLogGroup("ui.settings", 61)
 
-    val CONFIGURABLE_CLASS = EventFields.Class("configurable")
+    private val CONFIGURABLE_CLASS = EventFields.Class("configurable")
     val SELECT = GROUP.registerEvent("select", CONFIGURABLE_CLASS)
     val APPLY = GROUP.registerEvent("apply", CONFIGURABLE_CLASS)
     val RESET = GROUP.registerEvent("reset", CONFIGURABLE_CLASS)

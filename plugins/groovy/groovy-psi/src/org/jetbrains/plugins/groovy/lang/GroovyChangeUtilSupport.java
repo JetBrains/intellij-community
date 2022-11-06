@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Map;
 
-/**
- * @author peter
- */
 public class GroovyChangeUtilSupport implements TreeCopyHandler {
 
   @Override

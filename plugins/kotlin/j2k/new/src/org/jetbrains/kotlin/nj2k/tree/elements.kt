@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.tree
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
-
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKType
 
@@ -157,13 +156,30 @@ class JKAnnotationList(annotations: List<JKAnnotation> = emptyList()) : JKTreeEl
 
 class JKAnnotation(
     var classSymbol: JKClassSymbol,
-    arguments: List<JKAnnotationParameter> = emptyList()
+    arguments: List<JKAnnotationParameter> = emptyList(),
+    var useSiteTarget: UseSiteTarget? = null
 ) : JKAnnotationMemberValue() {
     var arguments: List<JKAnnotationParameter> by children(arguments)
     override fun accept(visitor: JKVisitor) = visitor.visitAnnotation(this)
+
+    @Suppress("unused")
+    enum class UseSiteTarget(val renderName: String) {
+        FIELD("field"),
+        FILE("file"),
+        PROPERTY("property"),
+        PROPERTY_GETTER("get"),
+        PROPERTY_SETTER("set"),
+        RECEIVER("receiver"),
+        CONSTRUCTOR_PARAMETER("param"),
+        SETTER_PARAMETER("setparam"),
+        PROPERTY_DELEGATE_FIELD("delegate")
+    }
 }
 
 class JKTypeArgumentList(typeArguments: List<JKTypeElement> = emptyList()) : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
+    constructor(vararg typeArguments: JKTypeElement) : this(typeArguments.toList())
+    constructor(vararg types: JKType) : this(types.map { JKTypeElement(it) })
+
     var typeArguments: List<JKTypeElement> by children(typeArguments)
     override fun accept(visitor: JKVisitor) = visitor.visitTypeArgumentList(this)
 }
@@ -287,7 +303,7 @@ class JKJavaResourceDeclaration(declaration: JKLocalVariable) : JKJavaResourceEl
     var declaration by child(declaration)
 }
 
-interface JKErrorElement: JKElement {
+interface JKErrorElement : JKElement {
     val psi: PsiElement?
     val reason: String?
 }

@@ -16,6 +16,9 @@ from _pydev_bundle.pydev_console_types import CodeFragment, Command
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle import pydevd_vars, pydevd_save_locals
 from _pydevd_bundle.pydevd_console_pytest import enable_pytest_output
+from _pydevd_bundle.pydevd_constants import IS_ASYNCIO_DEBUGGER_ENV
+from _pydevd_asyncio_util.pydevd_asyncio_utils import asyncio_command_compiler, exec_async_code
+from _pydevd_asyncio_util.pydevd_nest_asyncio import apply
 
 try:
     import __builtin__
@@ -192,6 +195,8 @@ def console_exec(thread_id, frame_id, expression, dbg):
         enable_pytest_output()
 
     if IPYTHON:
+        if IS_ASYNCIO_DEBUGGER_ENV:
+            apply()
         need_more, exception_occurred = ipython_exec_code(CodeFragment(expression), updated_globals, updated_globals, dbg)
         if not need_more:
             update_frame_local_variables_and_save(frame, updated_globals)
@@ -199,29 +204,35 @@ def console_exec(thread_id, frame_id, expression, dbg):
 
     interpreter = ConsoleWriter()
 
-    if not is_multiline:
-        try:
-            code = compile_command(expression)
-        except (OverflowError, SyntaxError, ValueError):
-            # Case 1
-            interpreter.showsyntaxerror()
-            return False, True
-        if code is None:
-            # Case 2
-            return True, False
-    else:
-        code = expression
+    try:
+        if IS_ASYNCIO_DEBUGGER_ENV:
+            code = asyncio_command_compiler(expression)
+        else:
+            if not is_multiline:
+                code = compile_command(expression)
+            else:
+                code = expression
+    except (OverflowError, SyntaxError, ValueError):
+        # Case 1
+        interpreter.showsyntaxerror()
+        return False, True
+    if code is None:
+        # Case 2
+        return True, False
 
     # Case 3
     code_executor = get_code_executor()
     code_executor.interruptable = True
     exception_occurred = False
     try:
-        # It is important that globals and locals we pass to the exec function are the same object.
-        # Otherwise generator expressions can confuse their scope. Passing updated_globals dictionary seems to be a safe option here
-        # because it contains globals and locals in the right precedence.
-        # See: https://stackoverflow.com/questions/15866398/why-is-a-python-generator-confusing-its-scope-with-global-in-an-execd-script.
-        Exec(code, updated_globals, updated_globals)
+        if IS_ASYNCIO_DEBUGGER_ENV:
+            exec_async_code(code, updated_globals)
+        else:
+            # It is important that globals and locals we pass to the exec function are the same object.
+            # Otherwise generator expressions can confuse their scope. Passing updated_globals dictionary seems to be a safe option here
+            # because it contains globals and locals in the right precedence.
+            # See: https://stackoverflow.com/questions/15866398/why-is-a-python-generator-confusing-its-scope-with-global-in-an-execd-script.
+            Exec(code, updated_globals, updated_globals)
     except:
         interpreter.showtraceback()
         exception_occurred = True

@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports redundant escapes in the replacement string of regex methods.
+It is possible to escape any character in a regex replacement string,
+but if a literal <code>$</code> or <code>\</code> is required is escaping necessary.
+<p><b>Example:</b></p>
+<pre><code>
+  string.replaceAll("a", "\\b");
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  string.replaceAll("a", "b");
+</code></pre>
+<!-- tooltip end -->
+<p><small>New in 2022.3</small>
+</body>
+</html>

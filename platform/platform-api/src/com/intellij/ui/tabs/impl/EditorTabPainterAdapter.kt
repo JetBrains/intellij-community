@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.impl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.tabs.JBTabPainter
+import com.intellij.ui.tabs.JBTabsPosition
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -30,7 +31,9 @@ class EditorTabPainterAdapter : TabPainterAdapter {
       paintBorders(g2d, label, tabs)
     }
     else {
-      if (ExperimentalUI.isNewUI() && isHovered) {
+      if (ExperimentalUI.isNewUI() && isHovered
+          && tabs.tabsPosition == JBTabsPosition.top
+          && (tabs as JBEditorTabs).shouldPaintBottomBorder()) {
         rect.height -= 1
       }
       painter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info), isHovered)

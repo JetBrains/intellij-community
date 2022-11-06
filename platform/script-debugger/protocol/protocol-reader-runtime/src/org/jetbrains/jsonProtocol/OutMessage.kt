@@ -110,7 +110,7 @@ open class OutMessage {
     for (item in value) {
       try {
         if (isNotFirst) {
-          buffer.writeByte(','.toInt()).writeByte(' '.toInt())
+          buffer.writeByte(','.code).writeByte(' '.code)
         }
         else {
           isNotFirst = true

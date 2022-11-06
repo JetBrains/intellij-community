@@ -38,5 +38,6 @@
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="library" scope="TEST" name="Log4J" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

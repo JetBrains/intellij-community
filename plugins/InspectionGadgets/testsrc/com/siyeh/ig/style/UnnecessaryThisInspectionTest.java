@@ -153,15 +153,16 @@ public class UnnecessaryThisInspectionTest extends LightJavaInspectionTestCase {
   }
   
   public void testYield() {
-    doTest("class Main {\n" +
-           "  void test() {\n" +
-           "    this.yield();\n" +
-           "    /*'this' is unnecessary in this context*/this/**/.yield1();\n" +
-           "  }\n" +
-           "  \n" +
-           "  void yield() {}\n" +
-           "  void yield1() {}\n" +
-           "}");
+    doTest("""
+             class Main {
+               void test() {
+                 this.yield();
+                 /*'this' is unnecessary in this context*/this/**/.yield1();
+               }
+              \s
+               void yield() {}
+               void yield1() {}
+             }""");
   }
 
   public void testNewExpression(){

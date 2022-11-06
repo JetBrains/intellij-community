@@ -159,8 +159,9 @@ class MavenCommandLineSetup(private val project: Project,
     if (generalSettings.isAlwaysUpdateSnapshots) {
       commandLine.addParameter("--update-snapshots")
     }
-    if (!generalSettings.threads.isNullOrBlank()) {
-      commandLine.addParameters("-T", generalSettings.threads)
+    val threads = generalSettings.threads
+    if (!threads.isNullOrBlank()) {
+      commandLine.addParameters("-T", threads)
     }
     generalSettings.failureBehavior.commandLineOption.nullize(true)?.also { commandLine.addParameter(it) }
     generalSettings.checksumPolicy.commandLineOption.nullize(true)?.also { commandLine.addParameter(it) }

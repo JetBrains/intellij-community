@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.IoTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,11 +55,17 @@ public class DigesterTest extends UpdaterTestCase {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File simpleLink = getTempFile("Readme.simple.link");
-    IoTestUtil.createSymbolicLink(simpleLink.toPath(), Paths.get("Readme.txt"));
+    @NotNull Path link2 = simpleLink.toPath();
+    @NotNull Path target2 = Paths.get("Readme.txt");
+    Files.createSymbolicLink(link2, target2);
     File relativeLink = getTempFile("Readme.relative.link");
-    IoTestUtil.createSymbolicLink(relativeLink.toPath(), Paths.get("./Readme.txt"));
+    @NotNull Path link1 = relativeLink.toPath();
+    @NotNull Path target1 = Paths.get("./Readme.txt");
+    Files.createSymbolicLink(link1, target1);
     File absoluteLink = getTempFile("Readme.absolute.link");
-    IoTestUtil.createSymbolicLink(absoluteLink.toPath(), Paths.get(dataDir.getPath() + "/Readme.txt"));
+    @NotNull Path link = absoluteLink.toPath();
+    @NotNull Path target = Paths.get(dataDir.getPath() + "/Readme.txt");
+    Files.createSymbolicLink(link, target);
 
     assertEquals(CHECKSUMS.LINK_TO_README_TXT, Digester.digestRegularFile(simpleLink, false));
     assertEquals(CHECKSUMS.LINK_TO_DOT_README_TXT, Digester.digestRegularFile(relativeLink, false));

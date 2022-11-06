@@ -3,18 +3,20 @@ package org.jetbrains.intellij.build.impl.productInfo
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.util.lang.ImmutableZipFile
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import kotlinx.serialization.decodeFromString
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
 /**
  * Checks that product-info.json file located in `archivePath` archive in `pathInArchive` subdirectory is correct
@@ -42,7 +44,7 @@ internal fun validateProductJson(jsonText: String,
                                  installationDirectories: List<Path>,
                                  installationArchives: List<Pair<Path, String>>,
                                  context: CompilationContext) {
-  val schemaPath = context.paths.communityHomeDir.communityRoot
+  val schemaPath = context.paths.communityHomeDir
     .resolve("platform/build-scripts/src/org/jetbrains/intellij/build/product-info.schema.json")
   val messages = context.messages
   verifyJsonBySchema(jsonText, schemaPath, messages)
@@ -52,15 +54,26 @@ internal fun validateProductJson(jsonText: String,
                   relativePathToProductJson = relativePathToProductJson,
                   installationDirectories = installationDirectories,
                   installationArchives = installationArchives)
-  for ((os, launcherPath, javaExecutablePath, vmOptionsFilePath) in productJson.launch) {
-    if (OsFamily.ALL.none { it.osName == os }) {
-      messages.error("Incorrect os name \'$os\' in $relativePathToProductJson/product-info.json")
+  for (item in productJson.launch) {
+    val os = item.os
+    check(OsFamily.ALL.any { it.osName == os }) {
+      "Incorrect os name \'$os\' in $relativePathToProductJson/product-info.json"
     }
-    checkFileExists(launcherPath, "$os launcher", relativePathToProductJson, installationDirectories, installationArchives)
-    checkFileExists(javaExecutablePath, "$os java executable", relativePathToProductJson, installationDirectories,
-                    installationArchives)
-    checkFileExists(vmOptionsFilePath, "$os VM options file", relativePathToProductJson, installationDirectories,
-                    installationArchives)
+    checkFileExists(path = item.launcherPath,
+                    description = "$os launcher",
+                    relativePathToProductJson = relativePathToProductJson,
+                    installationDirectories = installationDirectories,
+                    installationArchives = installationArchives)
+    checkFileExists(path = item.javaExecutablePath,
+                    description = "$os java executable",
+                    relativePathToProductJson = relativePathToProductJson,
+                    installationDirectories = installationDirectories,
+                    installationArchives = installationArchives)
+    checkFileExists(path = item.vmOptionsFilePath,
+                    description = "$os VM options file",
+                    relativePathToProductJson = relativePathToProductJson,
+                    installationDirectories = installationDirectories,
+                    installationArchives = installationArchives)
   }
 }
 
@@ -99,8 +112,11 @@ private fun joinPaths(parent: String, child: String): String {
 private fun archiveContainsEntry(archiveFile: Path, entryPath: String): Boolean {
   val fileName = archiveFile.fileName.toString()
   if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
-    ImmutableZipFile.load(archiveFile).use {
-      return it.getResource(entryPath) != null
+    // don't use ImmutableZipFile - archive maybe more than 2GB
+    FileChannel.open(archiveFile, StandardOpenOption.READ).use { channel ->
+      ZipFile(channel).use {
+        return it.getEntry(entryPath) != null
+      }
     }
   }
   else if (fileName.endsWith(".tar.gz")) {
@@ -122,8 +138,11 @@ private fun archiveContainsEntry(archiveFile: Path, entryPath: String): Boolean 
 private fun loadEntry(archiveFile: Path, entryPath: String): ByteArray? {
   val fileName = archiveFile.fileName.toString()
   if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
-    ImmutableZipFile.load(archiveFile).use {
-      return it.getResource(entryPath)?.data
+    // don't use ImmutableZipFile - archive maybe more than 2GB
+    FileChannel.open(archiveFile, StandardOpenOption.READ).use { channel ->
+      ZipFile(channel).use {
+        return it.getInputStream(it.getEntry(entryPath)).readAllBytes()
+      }
     }
   }
   else if (fileName.endsWith(".tar.gz")) {
@@ -136,6 +155,9 @@ private fun loadEntry(archiveFile: Path, entryPath: String): ByteArray? {
         }
       }
     }
+    return null
   }
-  return null
+  else {
+    return null
+  }
 }

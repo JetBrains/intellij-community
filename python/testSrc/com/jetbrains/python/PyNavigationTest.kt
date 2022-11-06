@@ -46,7 +46,7 @@ class PyNavigationTest : PyTestCase() {
 
   fun testGoToClassField() {
     myFixture.configureByFile("${getTestName(true)}.py")
-    val model = GotoSymbolModel2(myFixture.project)
+    val model = GotoSymbolModel2(myFixture.project, myFixture.testRootDisposable)
     val elements = model.getElementsByName("some_field", false, "")
     assertSize(1, elements)
     assertInstanceOf(elements.first(), PyTargetExpression::class.java)
@@ -220,7 +220,7 @@ class PyNavigationTest : PyTestCase() {
 
   private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {
     myFixture.configureByText("a.py", text)
-    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcome(myFixture.editor, myFixture.file, myFixture.caretOffset)
+    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(myFixture.editor, myFixture.file, myFixture.caretOffset)
     assertEquals(expectedOutcome, actualOutcome)
   }
 

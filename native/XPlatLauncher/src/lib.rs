@@ -30,9 +30,7 @@ unused_results,
 variant_size_differences
 )]
 
-mod errors;
 mod java;
-mod utils;
 mod remote_dev;
 mod default;
 
@@ -44,13 +42,22 @@ use log::{debug, error, LevelFilter};
 use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
-use crate::errors::{err_from_string, LauncherError, Result};
+use anyhow::{bail, Result};
 use crate::remote_dev::RemoteDevLaunchConfiguration;
-use crate::utils::canonical_non_unc;
 
 pub fn main_lib() {
+    let show_error_ui = match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
+        Ok(_) => false,
+        Err(_) => {
+            let cmd_args: Vec<String> = env::args().collect();
+            let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
+
+            !is_remote_dev
+        }
+    };
+
     let main_result = main_impl();
-    unwrap_with_human_readable_error(main_result);
+    unwrap_with_human_readable_error(main_result, show_error_ui);
 }
 
 fn main_impl() -> Result<()> {
@@ -125,10 +132,7 @@ impl ProductInfo {
             self.launch.iter().find(|&l| l.os.to_lowercase() == current_os);
 
         match os_specific_launch_field {
-            None => {
-                let message = format!("Could not find current os {current_os} launch element in product-info.json 'launch' field");
-                err_from_string(message)
-            }
+            None => bail!("Could not find current os {current_os} launch element in product-info.json 'launch' field"),
             Some(x) => Ok(x),
         }
     }
@@ -144,15 +148,23 @@ trait LaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
+pub fn is_remote_dev(cmd_args: &[String]) -> bool {
+    // 0 arg is binary itself
+    let args = cmd_args.join(" ");
+    debug!("cmd_args={args}");
+
+    cmd_args.len() > 1 && cmd_args[1] == "--remote-dev"
+}
+
 fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
-
-    // 0 arg is binary itself
-    let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
+    
+    let is_remote_dev = is_remote_dev(&cmd_args);
+    debug!("is_remote_dev={is_remote_dev}");
 
     let (remote_dev_project_path, ij_args) = match is_remote_dev {
         true => {
-            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args[2..])?;
+            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args)?;
             (remote_dev_args.project_path, remote_dev_args.ij_args)
         },
         false => (None, cmd_args)
@@ -177,26 +189,15 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
 
 pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
 
-fn unwrap_with_human_readable_error<S>(result: Result<S>) -> S {
+fn unwrap_with_human_readable_error<S>(result: Result<S>, show_error_ui: bool) -> S {
     match result {
         Ok(x) => { x }
         Err(e) => {
-            let message =
-                match e {
-                    LauncherError::HumanReadableError(e) => {
-                        e.message
-                    }
-                    _ => {
-                        format!("{e:?}")
-                    }
-                };
+            eprintln!("{e:?}");
+            error!("{e:?}");
 
-            eprintln!("{}", message);
-            error!("{}", message);
-
-            match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
-                Ok(_) => {  }
-                Err(_) => { show_fail_to_start_message("Failed to start", format!("{message:?}").as_str()) }
+            if show_error_ui {
+                show_fail_to_start_message("Failed to start", format!("{e:?}").as_str())
             }
 
             std::process::exit(1);
@@ -242,8 +243,7 @@ fn get_class_path_separator<'a>() -> &'a str {
 
 #[cfg(target_os = "windows")]
 fn get_class_path_separator<'a>() -> &'a str {
-    ";
-            }"
+    ";"
 }
 
 fn show_fail_to_start_message(title: &str, text: &str) {

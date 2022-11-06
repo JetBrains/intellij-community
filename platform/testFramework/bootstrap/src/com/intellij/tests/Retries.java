@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * TeamCity note: <a href="https://www.jetbrains.com/help/teamcity/2021.1/build-failure-conditions.html#test-retry">test retry support</a> should be enabled for previously failed tests to be muted
@@ -61,15 +60,17 @@ public final class Retries {
   }
 
   private static Optional<Method> getMethodFromClass(Class<?> clazz, String methodName) {
-    @SuppressWarnings("SSBasedInspection")
-    var methods = Arrays.stream(clazz.getDeclaredMethods())
-      .filter(method -> methodName.equals(method.getName())).toList();
-    if (methods.size() == 1) {
-      return Optional.of(methods.get(0));
+    for (; clazz != null && clazz != Object.class; clazz = clazz.getSuperclass()) {
+      var methods = Arrays.stream(clazz.getDeclaredMethods())
+        .filter(method -> methodName.equals(method.getName()) && method.getParameterCount() == 0).toList();
+      if (methods.size() > 1) {
+        break;
+      }
+      if (methods.size() == 1) {
+        return Optional.of(methods.get(0));
+      }
     }
-    else {
-      return Optional.empty();
-    }
+    return Optional.empty();
   }
 
   public static void testFinished(Test test, boolean isSuccessful) {

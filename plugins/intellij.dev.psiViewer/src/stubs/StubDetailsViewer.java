@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dev.psiViewer.stubs;
 
+import com.intellij.dev.psiViewer.DevPsiViewerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -12,7 +14,6 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
 import java.lang.reflect.Modifier;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -45,7 +45,7 @@ public class StubDetailsViewer {
   public AnAction addComponent(JBSplitter splitter) {
     updateStubDetailsTreeView(PropertiesComponent.getInstance().getBoolean(PROPERTY_NAME, DEFAULT_SHOW_STUB_DETAILS), splitter);
 
-    return new ToggleAction("Show Stub Details", null, AllIcons.Actions.PreviewDetails) {
+    return new ToggleAction(DevPsiViewerBundle.message("action.show.stub.details.text"), null, AllIcons.Actions.PreviewDetails) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return PropertiesComponent.getInstance().getBoolean(PROPERTY_NAME, DEFAULT_SHOW_STUB_DETAILS);
@@ -57,8 +57,12 @@ public class StubDetailsViewer {
         updateStubDetailsTreeView(state, splitter);
         if (state) {
           valueChanged(myStubViewerTree.getSelectedStub());
-          ((AsyncTreeModel)myStubDetailsTree.getModel()).treeStructureChanged(null);
         }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
   }
@@ -74,8 +78,7 @@ public class StubDetailsViewer {
       StructureTreeModel<?> model = new StructureTreeModel<>(
         new StubDetailsTreeStructure(stub), null, Invoker.forEventDispatchThread(treeModelDisposable), treeModelDisposable
       );
-      TreeModel asyncTreeModel = new AsyncTreeModel(model, false, treeModelDisposable);
-      myStubDetailsTree.setModel(asyncTreeModel);
+      myStubDetailsTree.setModel(model);
       myStubDetailsTree.expandRow(0);
       myStubDetailsTree.treeDidChange();
     }

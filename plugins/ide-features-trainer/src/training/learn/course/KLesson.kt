@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.course
 
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -11,7 +13,9 @@ import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.waitSmartModeStep
 import training.learn.LearnBundle
+import training.learn.LessonsBundle
 import training.ui.LearningUiHighlightingManager
+import training.util.enableLessonsAndPromoters
 
 abstract class KLesson(@NonNls id: String, @Nls name: String) : Lesson(id, name) {
   protected abstract val lessonContent: LessonContext.() -> Unit
@@ -19,9 +23,20 @@ abstract class KLesson(@NonNls id: String, @Nls name: String) : Lesson(id, name)
   override lateinit var module: IftModule
     internal set
 
-  val fullLessonContent: LessonContext.() -> Unit get() = {
+  open val fullLessonContent: LessonContext.() -> Unit get() = {
+    showWarningIfLessonsDisabled()
     showIndexingTask()
     lessonContent()
+  }
+
+  private fun LessonContext.showWarningIfLessonsDisabled() = task {
+    stateCheck { enableLessonsAndPromoters }
+    showWarning(LessonsBundle.message("new.ui.warning", action("ShowSettings"),
+                                      strong(OptionsBundle.message("configurable.group.appearance.settings.display.name")),
+                                      strong(IdeBundle.message("configurable.new.ui.name")),
+                                      strong(IdeBundle.message("checkbox.enable.new.ui")))) {
+      !enableLessonsAndPromoters
+    }
   }
 
   private fun LessonContext.showIndexingTask() {

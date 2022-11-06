@@ -91,11 +91,11 @@ public final class ExperimentsDialog extends DialogWrapper {
       @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
         String id = features[rowIndex].id;
-        switch (columnIndex) {
-          case 0: return id;
-          case 1: return Experiments.getInstance().isFeatureEnabled(id);
-          default: throw new IllegalArgumentException("Wrong column number");
-        }
+        return switch (columnIndex) {
+          case 0 -> id;
+          case 1 -> Experiments.getInstance().isFeatureEnabled(id);
+          default -> throw new IllegalArgumentException("Wrong column number");
+        };
       }
 
       @Override
@@ -105,11 +105,11 @@ public final class ExperimentsDialog extends DialogWrapper {
 
       @Override
       public String getColumnName(int column) {
-        switch (column) {
-          case 0: return ApplicationBundle.message("column.name");
-          case 1: return IdeBundle.message("column.enabled");
-          default: throw new IllegalArgumentException("Wrong column number");
-        }
+        return switch (column) {
+          case 0 -> ApplicationBundle.message("column.name");
+          case 1 -> IdeBundle.message("column.enabled");
+          default -> throw new IllegalArgumentException("Wrong column number");
+        };
       }
 
       @Override

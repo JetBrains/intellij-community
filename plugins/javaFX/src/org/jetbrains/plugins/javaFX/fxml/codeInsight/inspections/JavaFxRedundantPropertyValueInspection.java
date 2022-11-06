@@ -129,24 +129,16 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
       return defaultValue.equals(attributeValue);
     }
     try {
-      switch (boxedQName) {
-        case CommonClassNames.JAVA_LANG_BOOLEAN:
-          return Boolean.parseBoolean(defaultValue) == Boolean.parseBoolean(attributeValue);
-        case CommonClassNames.JAVA_LANG_DOUBLE:
-          return Double.compare(Double.parseDouble(defaultValue), Double.parseDouble(attributeValue)) == 0;
-        case CommonClassNames.JAVA_LANG_FLOAT:
-          return Float.compare(Float.parseFloat(defaultValue), Float.parseFloat(attributeValue)) == 0;
-        case CommonClassNames.JAVA_LANG_INTEGER:
-          return Integer.parseInt(defaultValue) == Integer.parseInt(attributeValue);
-        case CommonClassNames.JAVA_LANG_LONG:
-          return Long.parseLong(defaultValue) == Long.parseLong(attributeValue);
-        case CommonClassNames.JAVA_LANG_SHORT:
-          return Short.parseShort(defaultValue) == Short.parseShort(attributeValue);
-        case CommonClassNames.JAVA_LANG_BYTE:
-          return Byte.parseByte(defaultValue) == Byte.parseByte(attributeValue);
-        default:
-          return defaultValue.equals(attributeValue);
-      }
+      return switch (boxedQName) {
+        case CommonClassNames.JAVA_LANG_BOOLEAN -> Boolean.parseBoolean(defaultValue) == Boolean.parseBoolean(attributeValue);
+        case CommonClassNames.JAVA_LANG_DOUBLE -> Double.compare(Double.parseDouble(defaultValue), Double.parseDouble(attributeValue)) == 0;
+        case CommonClassNames.JAVA_LANG_FLOAT -> Float.compare(Float.parseFloat(defaultValue), Float.parseFloat(attributeValue)) == 0;
+        case CommonClassNames.JAVA_LANG_INTEGER -> Integer.parseInt(defaultValue) == Integer.parseInt(attributeValue);
+        case CommonClassNames.JAVA_LANG_LONG -> Long.parseLong(defaultValue) == Long.parseLong(attributeValue);
+        case CommonClassNames.JAVA_LANG_SHORT -> Short.parseShort(defaultValue) == Short.parseShort(attributeValue);
+        case CommonClassNames.JAVA_LANG_BYTE -> Byte.parseByte(defaultValue) == Byte.parseByte(attributeValue);
+        default -> defaultValue.equals(attributeValue);
+      };
     }
     catch (NumberFormatException ignored) {
       return false;

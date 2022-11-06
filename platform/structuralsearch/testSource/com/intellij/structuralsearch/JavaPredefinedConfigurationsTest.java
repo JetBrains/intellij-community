@@ -262,45 +262,48 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "    default:" +
            "  }");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.comments.containing.word")),
-           "// bug\n" +
-           "/* bugs are here */\n" +
-           "/**\n" +
-           "* may\n" +
-           "* contain\n" +
-           "* one bug\n" +
-           "*/\n" +
-           "/* buggy */\n" +
-           "// bug?",
+           """
+             // bug
+             /* bugs are here */
+             /**
+             * may
+             * contain
+             * one bug
+             */
+             /* buggy */
+             // bug?""",
            "// bug",
-           "/**\n"+
-           "* may\n" +
-           "* contain\n" +
-           "* one bug\n" +
-           "*/",
+           """
+             /**
+             * may
+             * contain
+             * one bug
+             */""",
            "// bug?");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.all.fields.of.the.class")),
-           "interface I {\n" +
-           "  public static final String S = \"\";\n" +
-           "}\n" +
-           "enum E { A, B }\n" +
-           "class C extends ThreadLocal {\n" +
-           "  private int i = 0;\n" +
-           "}\n",
+           """
+             interface I {
+               public static final String S = "";
+             }
+             enum E { A, B }
+             class C extends ThreadLocal {
+               private int i = 0;
+             }
+             """,
            "private int i = 0;",
            "private final int threadLocalHashCode = nextHashCode();",
            "private static AtomicInteger nextHashCode = new AtomicInteger();",
            "private static final int HASH_INCREMENT = 1640531527;");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.fields.of.the.class")),
-           "interface I {\n" +
-           "  public static final String S = \"\";\n" +
-           "}\n" +
-           "enum E { A, B }\n" +
-           "record R(int i) {" +
-           "  private static final int X = 1;" +
-           "}" +
-           "class C extends ThreadLocal {\n" +
-           "  private int i = 0;\n" +
-           "}\n",
+           """
+             interface I {
+               public static final String S = "";
+             }
+             enum E { A, B }
+             record R(int i) {  private static final int X = 1;}class C extends ThreadLocal {
+               private int i = 0;
+             }
+             """,
            "private int i = 0;");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.records")),
            "class X {}" +
@@ -395,14 +398,15 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "}",
            "/** comment */  int i;");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.javadoc.tags")),
-           "class X {\n" +
-           "  /**\n" +
-           "   * comment\n" +
-           "   * @version 1\n" +
-           "   */\n" +
-           "  int i;\n" +
-           "  int j;\n" +
-           "}",
+           """
+             class X {
+               /**
+                * comment
+                * @version 1
+                */
+               int i;
+               int j;
+             }""",
            "@version");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());

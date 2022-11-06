@@ -118,7 +118,7 @@ public class PackageChooserDialog extends PackageChooser {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));
 
-    new TreeSpeedSearch(myTree, path -> {
+    new TreeSpeedSearch(myTree, false, path -> {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object object = node.getUserObject();
       if (object instanceof PsiPackage) return ((PsiPackage)object).getName();
@@ -405,6 +405,11 @@ public class PackageChooserDialog extends PackageChooser {
     public void update(@NotNull AnActionEvent event) {
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(getTreeSelection() != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     public void enableInModalConext() {

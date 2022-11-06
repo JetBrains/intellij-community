@@ -232,7 +232,7 @@ public final class InitializerProcessor {
 
     for (Exprent expr : lst) {
       switch (expr.type) {
-        case Exprent.EXPRENT_VAR:
+        case Exprent.EXPRENT_VAR -> {
           VarVersionPair varPair = new VarVersionPair((VarExprent)expr);
           if (!method.varproc.getExternalVars().contains(varPair)) {
             String varName = method.varproc.getVarName(varPair);
@@ -240,9 +240,10 @@ public final class InitializerProcessor {
               return false;
             }
           }
-          break;
-        case Exprent.EXPRENT_FIELD:
+        }
+        case Exprent.EXPRENT_FIELD -> {
           return false;
+        }
       }
     }
 

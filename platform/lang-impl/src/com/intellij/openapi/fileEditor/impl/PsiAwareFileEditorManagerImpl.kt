@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.PowerSaveMode
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
@@ -16,24 +15,20 @@ import com.intellij.problems.ProblemListener
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.util.ui.EdtInvocationManager
 
-open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerExImpl(project) {
-  companion object {
-    private val LOG = logger<FileEditorManagerImpl>()
-  }
-
-  private val problemSolver: WolfTheProblemSolver
+open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerImpl(project) {
+  private val problemSolver by lazy(LazyThreadSafetyMode.NONE) { WolfTheProblemSolver.getInstance(getProject()) }
 
   /**
    * Updates icons for open files when project roots change
    */
   init {
-    problemSolver = WolfTheProblemSolver.getInstance(project)
     @Suppress("LeakingThis")
     registerExtraEditorDataProvider(TextEditorPsiDataProvider(), null)
 
     // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
     // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types attributes in LayeredLexerEditorHighlighter
-    val connection = project.messageBus.connect()
+    @Suppress("LeakingThis")
+    val connection = project.messageBus.connect(this)
     connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener {
       EdtInvocationManager.invokeLaterIfNeeded {
         for (editor in EditorFactory.getInstance().allEditors) {
@@ -46,9 +41,10 @@ open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerEx
 
   override fun isProblem(file: VirtualFile) = problemSolver.isProblemFile(file)
 
+  @Suppress("HardCodedStringLiteral")
   override fun getFileTooltipText(file: VirtualFile, window: EditorWindow): String {
     val tooltipText: @NlsSafe StringBuilder = StringBuilder()
-    if (Registry.`is`("ide.tab.tooltip.module")) {
+    if (Registry.`is`("ide.tab.tooltip.module", false)) {
       val module = ModuleUtilCore.findModuleForFile(file, project)
       if (module != null && ModuleManager.getInstance(project).modules.size > 1) {
         tooltipText.append('[')

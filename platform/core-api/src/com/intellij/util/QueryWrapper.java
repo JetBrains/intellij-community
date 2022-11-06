@@ -7,6 +7,6 @@ import org.jetbrains.annotations.NotNull;
 @Experimental
 @FunctionalInterface
 public interface QueryWrapper<Result> {
-  boolean wrapExecution(@NotNull Processor<@NotNull Processor<? super Result>> executor,
+  boolean wrapExecution(@NotNull Processor<? super @NotNull Processor<? super Result>> executor,
                         @NotNull Processor<? super Result> consumer);
 }

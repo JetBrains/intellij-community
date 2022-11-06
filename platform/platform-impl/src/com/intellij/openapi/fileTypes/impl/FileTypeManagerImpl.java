@@ -47,6 +47,7 @@ import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -493,8 +494,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           fileType = (FileType)field.get(null);
         }
       }
-      catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-        LOG.error(new PluginException(e, pluginId));
+      catch (ProcessCanceledException | CancellationException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        // no need to wrap into PluginException - instantiateClass and loadClass both do this if needed
+        LOG.error(e);
         return null;
       }
 
@@ -573,7 +578,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public void initializeComponent() {
     initStandardFileTypes();
 
-    if (!myUnresolvedMappings.isEmpty()) {
+    if (!myPendingFileTypes.isEmpty()) {
       instantiatePendingFileTypes();
     }
 
@@ -692,10 +697,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
     if (fixedType != null && fixedType.getFirst().equals(file)) {
       FileType fileType = fixedType.getSecond();
-      if (toLog()) {
-        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
+      if (fileType != null) {
+        if (toLog()) {
+          log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
+        }
+        return fileType.equals(requestedFileType);
       }
-      return fileType.equals(requestedFileType);
     }
 
     if (file instanceof LightVirtualFile) {

@@ -16,7 +16,8 @@ class KotlinSourceSetProto(
     private val regularDependencies: () -> Array<KotlinDependencyId>,
     private val intransitiveDependencies: () -> Array<KotlinDependencyId>,
     val dependsOnSourceSets: Set<String>,
-    val additionalVisibleSourceSets: Set<String>
+    val additionalVisibleSourceSets: Set<String>,
+    val androidSourceSetInfo: KotlinAndroidSourceSetInfo?
 ) {
     fun buildKotlinSourceSetImpl(
         doBuildDependencies: Boolean,
@@ -28,9 +29,13 @@ class KotlinSourceSetProto(
         resourceDirs = resourceDirs,
         regularDependencies = if (doBuildDependencies) regularDependencies() else emptyArray(),
         intransitiveDependencies = if (doBuildDependencies) intransitiveDependencies() else emptyArray(),
-        declaredDependsOnSourceSets = dependsOnSourceSets,
-        allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames),
-        additionalVisibleSourceSets = additionalVisibleSourceSets
+
+        // .toMutableSet, because Android IDE plugin depends on this
+        //  KotlinAndroidMPPGradleProjectResolver.kt: private fun KotlinMPPGradleModel.mergeSourceSets
+        declaredDependsOnSourceSets = dependsOnSourceSets.toMutableSet(),
+        allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames).toMutableSet(),
+        additionalVisibleSourceSets = additionalVisibleSourceSets.toMutableSet(),
+        androidSourceSetInfo = androidSourceSetInfo
     )
 }
 
@@ -41,6 +46,18 @@ fun KotlinSourceSetProto.allDependsOnSourceSets(sourceSetsByName: Map<String, Ko
             addAll(dependsOnSourceSet.allDependsOnSourceSets(sourceSetsByName))
         }
     }
+}
+
+class KotlinAndroidSourceSetInfoImpl(
+    override val kotlinSourceSetName: String,
+    override val androidSourceSetName: String,
+    override val androidVariantNames: Set<String>
+): KotlinAndroidSourceSetInfo {
+    constructor(info: KotlinAndroidSourceSetInfo) : this(
+        kotlinSourceSetName = info.kotlinSourceSetName,
+        androidSourceSetName = info.androidSourceSetName,
+        androidVariantNames = info.androidVariantNames.toSet()
+    )
 }
 
 class KotlinSourceSetImpl(
@@ -54,8 +71,9 @@ class KotlinSourceSetImpl(
     @Suppress("OverridingDeprecatedMember")
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
+    override val androidSourceSetInfo: KotlinAndroidSourceSetInfo?,
     actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
-    isTestComponent: Boolean = false
+    isTestComponent: Boolean = false,
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
@@ -71,6 +89,7 @@ class KotlinSourceSetImpl(
         declaredDependsOnSourceSets = HashSet(kotlinSourceSet.declaredDependsOnSourceSets),
         allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
         additionalVisibleSourceSets = HashSet(kotlinSourceSet.additionalVisibleSourceSets),
+        androidSourceSetInfo = kotlinSourceSet.androidSourceSetInfo?.let(::KotlinAndroidSourceSetInfoImpl),
         actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
     ) {
         this.isTestComponent = kotlinSourceSet.isTestComponent
@@ -298,7 +317,8 @@ data class KotlinMPPGradleModelImpl(
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
     override val cacheAware: CompilerArgumentsCacheAware,
-    override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf()
+    override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf(),
+    override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 ) : KotlinMPPGradleModel {
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
         sourceSetsByName = mppModel.sourceSetsByName.mapValues { initialSourceSet ->
@@ -317,7 +337,8 @@ data class KotlinMPPGradleModelImpl(
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
         cacheAware = CompilerArgumentsCacheAwareImpl(mppModel.cacheAware),
-        kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) }
+        kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) },
+        kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse()
     )
 
     @Deprecated(

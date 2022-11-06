@@ -14,9 +14,6 @@ import com.intellij.util.ref.GCWatcher
 
 import java.util.function.Predicate
 
-/**
- * @author peter
- */
 class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test AST should be on a soft reference, for changed files as well"() {

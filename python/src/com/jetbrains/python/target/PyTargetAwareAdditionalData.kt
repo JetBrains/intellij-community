@@ -9,7 +9,8 @@ import com.intellij.remote.RemoteSdkProperties
 import com.intellij.remote.RemoteSdkPropertiesHolder
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import org.jdom.Element
 import java.nio.file.Path
@@ -21,16 +22,13 @@ import java.util.*
  * used.
  */
 class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPropertiesHolder,
-                                                      flavor: PythonSdkFlavor?) : PythonSdkAdditionalData(flavor),
-                                                                                  TargetBasedSdkAdditionalData,
-                                                                                  RemoteSdkProperties by b,
-                                                                                  PyRemoteSdkAdditionalDataMarker {
+                                                      flavorAndData: PyFlavorAndData<*, *>?,
+                                                      targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : PythonSdkAdditionalData(
+  flavorAndData),
+                                                                                                                                TargetBasedSdkAdditionalData,
+                                                                                                                                RemoteSdkProperties by b,
+                                                                                                                                PyRemoteSdkAdditionalDataMarker {
 
-  /**
-   * Persistent UUID of SDK.  Could be used to point to "this particular" SDK.
-   */
-  var uuid: UUID = UUID.randomUUID()
-    internal set
 
   /**
    * The source of truth for the target configuration.
@@ -40,7 +38,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
   /**
    * The backing field for [targetEnvironmentConfiguration].
    */
-  private var _targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null
+  private var _targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = targetEnvironmentConfiguration
 
   /**
    * The target configuration.
@@ -55,7 +53,12 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
       _targetEnvironmentConfiguration = value
     }
 
-  constructor(flavor: PythonSdkFlavor?) : this(RemoteSdkPropertiesHolder(DEFAULT_PYCHARM_HELPERS_DIR_NAME), flavor)
+  constructor(flavorAndData: PyFlavorAndData<*, *>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
+    RemoteSdkPropertiesHolder(DEFAULT_PYCHARM_HELPERS_DIR_NAME), flavorAndData, targetEnvironmentConfiguration)
+
+  init {
+    this.targetEnvironmentConfiguration = targetEnvironmentConfiguration
+  }
 
   override fun save(rootElement: Element) {
     // store "interpeter paths" (i.e. `PYTHONPATH` elements)
@@ -64,7 +67,6 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     b.save(rootElement)
     // store target configuration
     saveTargetBasedSdkAdditionalData(rootElement, targetState)
-    rootElement.setAttribute(SDK_UUID_FIELD_NAME, uuid.toString())
   }
 
   override fun load(element: Element?) {
@@ -84,14 +86,14 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     // add Python language runtime for the loaded configuration
     if (loadedConfiguration != null) {
       val pythonLanguageRuntimeConfiguration = PythonLanguageRuntimeConfiguration()
-      pythonLanguageRuntimeConfiguration.pythonInterpreterPath = interpreterPath
+      interpreterPath?.let {
+        pythonLanguageRuntimeConfiguration.pythonInterpreterPath = it
+      }
       loadedConfiguration.addLanguageRuntime(pythonLanguageRuntimeConfiguration)
     }
     targetState = loadedState
     _targetEnvironmentConfiguration = loadedConfiguration
-    element.getAttributeValue(SDK_UUID_FIELD_NAME)?.let {
-      uuid = UUID.fromString(it)
-    }
+
   }
 
   /**
@@ -109,7 +111,6 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
   private val Collection<VirtualFile>.asMappings get() = associate { it.toNioPath() to b.pathMappings.convertToRemote(it.path) }
 
   companion object {
-    private const val SDK_UUID_FIELD_NAME = "SDK_UUID"
     private const val DEFAULT_PYCHARM_HELPERS_DIR_NAME = ".pycharm_helpers"
 
     private val LOG = logger<PyTargetAwareAdditionalData>()
@@ -135,7 +136,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     fun loadTargetAwareData(sdk: Sdk, element: Element): PyTargetAwareAdditionalData? {
       val homePath = sdk.homePath ?: throw IllegalStateException("Home path must not be null")
       // TODO Python flavor identifier must be stored in `element` and taken from it here
-      val data = PyTargetAwareAdditionalData(flavor = UnixPythonSdkFlavor.getInstance())
+      val data = PyTargetAwareAdditionalData(flavorAndData = PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()))
       data.interpreterPath = homePath
       data.load(element)
       // TODO [targets] Load `SKELETONS_PATH` for Target-based Python SDK from `Element`
@@ -143,4 +144,6 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
       return if (data.targetEnvironmentConfiguration != null) data else null
     }
   }
+
+  private sealed class DataOrFlavor
 }

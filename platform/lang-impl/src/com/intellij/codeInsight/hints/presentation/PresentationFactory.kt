@@ -270,7 +270,6 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   @Contract(pure = true)
   fun referenceOnHover(base: InlayPresentation, clickListener: ClickListener): InlayPresentation {
-    val delegate = DynamicDelegatePresentation(base)
     val hovered = onClick(
       base = withReferenceAttributes(base),
       buttons = EnumSet.of(MouseButton.Left, MouseButton.Middle),
@@ -278,18 +277,8 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
         clickListener.onClick(e, p)
       }
     )
-    return OnHoverPresentation(delegate, object : HoverListener {
-      override fun onHover(event: MouseEvent, translated: Point) {
-        val handCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        editor.setCustomCursor(this@PresentationFactory, handCursor)
-        delegate.delegate = hovered
-      }
-
-      override fun onHoverFinished() {
-        delegate.delegate = base
-        editor.setCustomCursor(this@PresentationFactory, null)
-      }
-    })
+    val delegate = ChangeOnHoverPresentation(base, { hovered })
+    return WithCursorOnHoverPresentation(delegate, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR), editor)
   }
 
   private fun referenceInternal(base: InlayPresentation,
@@ -329,6 +318,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     }
   }
 
+  @Contract(pure = true)
+  fun withCursorOnHover(base: InlayPresentation, cursor: Cursor): InlayPresentation {
+    return WithCursorOnHoverPresentation(base, cursor, editor)
+  }
+
+  @Contract(pure = true)
   fun withReferenceAttributes(noHighlightReference: InlayPresentation): WithAttributesPresentation {
     return attributes(noHighlightReference, REFERENCE_HYPERLINK_COLOR,
                       WithAttributesPresentation.AttributesFlags().withSkipEffects(true))
@@ -428,7 +423,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
       var hint: LightweightHint? = null
       onHover(base, object : HoverListener {
         override fun onHover(event: MouseEvent, translated: Point) {
-          if (hint?.isVisible != true) {
+          if (hint?.isVisible != true && editor.contentComponent.isShowing) {
             hint = showTooltip(editor, event, tooltip)
           }
         }

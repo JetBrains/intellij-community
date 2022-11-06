@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.idea.refactoring.getAffectedCallables
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.searchReferencesOrMethodReferences
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -113,6 +113,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
             val newParameterName = Fe10KotlinNameSuggester.suggestNamesByType(data.lambdaReceiverType, validator, "p").first()
             val newParameterRefExpression = psiFactory.createExpression(newParameterName)
 
+            val replacementFunctions = mutableListOf<() -> Unit>()
             lambda.accept(object : KtTreeVisitorVoid() {
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     super.visitSimpleNameExpression(expression)
@@ -124,13 +125,17 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
                         val parent = expression.parent
                         if (parent is KtCallExpression && expression == parent.calleeExpression) {
                             if ((parent.parent as? KtQualifiedExpression)?.receiverExpression !is KtThisExpression) {
-                                parent.replace(psiFactory.createExpressionByPattern("$0.$1", newParameterName, parent))
+                                replacementFunctions.add {
+                                    parent.replace(psiFactory.createExpressionByPattern("$0.$1", newParameterName, parent))
+                                }
                             }
                         } else if (parent is KtQualifiedExpression && parent.receiverExpression is KtThisExpression) {
                             // do nothing
                         } else {
                             val referencedName = expression.getReferencedName()
-                            expression.replace(psiFactory.createExpressionByPattern("$newParameterName.$referencedName"))
+                            replacementFunctions.add {
+                                expression.replace(psiFactory.createExpressionByPattern("$newParameterName.$referencedName"))
+                            }
                         }
                     }
                 }
@@ -140,10 +145,13 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
                     if (resolvedCall.resultingDescriptor == lambdaDispatchReceiver ||
                         resolvedCall.resultingDescriptor == lambdaExtensionReceiver
                     ) {
-                        expression.replace(newParameterRefExpression.copy())
+                        replacementFunctions.add {
+                            expression.replace(newParameterRefExpression.copy())
+                        }
                     }
                 }
             })
+            replacementFunctions.forEach { it() }
 
             val lambdaParameterList = lambda.getOrCreateParameterList()
             if (lambda.valueParameters.isEmpty() && lambdaDescriptor.valueParameters.isNotEmpty()) {

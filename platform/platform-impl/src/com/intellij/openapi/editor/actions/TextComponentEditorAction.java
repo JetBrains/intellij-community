@@ -8,8 +8,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +18,10 @@ import javax.swing.text.JTextComponent;
 
 
 public abstract class TextComponentEditorAction extends EditorAction {
+  static {
+    TextComponentEditorImpl.ensureRequiredClassesAreLoaded();
+  }
+
   private final boolean allowSpeedSearch;
 
   protected TextComponentEditorAction(@NotNull EditorActionHandler defaultHandler) {
@@ -29,6 +31,16 @@ public abstract class TextComponentEditorAction extends EditorAction {
   protected TextComponentEditorAction(@NotNull EditorActionHandler defaultHandler, boolean allowSpeedSearch) {
     super(defaultHandler);
     this.allowSpeedSearch = allowSpeedSearch;
+    ensureHandlerChainIsLoaded();
+  }
+
+  @Override
+  public synchronized void setInjectedContext(boolean worksInInjected) {
+    throw new UnsupportedOperationException("TextComponentEditorAction is updated on EDT only and must not work in injected context");
+  }
+
+  private void ensureHandlerChainIsLoaded() {
+    getHandler().runForAllCarets(); // triggers DynamicEditorActionHandler.getHandlerChain
   }
 
   @Override
@@ -47,7 +59,8 @@ public abstract class TextComponentEditorAction extends EditorAction {
 
   private static @Nullable Editor getEditorFromContext(@NotNull DataContext dataContext, boolean allowSpeedSearch) {
     // try to get host editor in case of injections during action update in EDT
-    Editor editor = EDT.isCurrentThreadEdt() && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) ?
+    boolean isEDT = EDT.isCurrentThreadEdt();
+    Editor editor = isEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) ?
                     CommonDataKeys.HOST_EDITOR.getData(dataContext) : null;
     if (editor == null) {
       editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -62,24 +75,10 @@ public abstract class TextComponentEditorAction extends EditorAction {
     if (data instanceof JTextComponent) {
       return new TextComponentEditorImpl(project, (JTextComponent)data);
     }
-    if (allowSpeedSearch && data instanceof JComponent) {
-      JTextField field = findActiveSpeedSearchTextField((JComponent)data);
-      if (field != null) {
-        return new TextComponentEditorImpl(project, field);
-      }
-    }
-    return null;
-  }
-
-  private static JTextField findActiveSpeedSearchTextField(JComponent c) {
-    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(c);
-    if (supply instanceof SpeedSearchBase) {
-      return ((SpeedSearchBase<?>)supply).getSearchField();
-    }
-    if (c instanceof DataProvider) {
-      Object component = PlatformDataKeys.SPEED_SEARCH_COMPONENT.getData((DataProvider)c);
+    if (allowSpeedSearch) {
+      Object component = PlatformDataKeys.SPEED_SEARCH_COMPONENT.getData(dataContext);
       if (component instanceof JTextField) {
-        return (JTextField)component;
+        return new TextComponentEditorImpl(project, (JTextField)component);
       }
     }
     return null;

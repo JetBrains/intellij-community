@@ -16,10 +16,6 @@ Supports Maven and Gradle projects.
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider"
                         dynamic="true"/>
 
-        <extensionPoint qualifiedName="com.intellij.packagesearch.dependenciesToolwindowTabProvider"
-                        interface="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.DependenciesToolwindowTabProvider"
-                        dynamic="true"/>
-
         <extensionPoint qualifiedName="com.intellij.packagesearch.coroutineProjectModuleOperationProvider"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider"
                         dynamic="true"/>
@@ -84,10 +80,10 @@ Supports Maven and Gradle projects.
         <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.ExternalProjectSignalProvider"/>
 
-        <packagesearch.dependenciesToolwindowTabProvider
+        <dependenciesToolWindow.tabProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider"/>
 
-        <packagesearch.dependenciesToolwindowTabProvider
+        <dependenciesToolWindow.tabProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.RepositoryManagementPanelProvider"/>
 
         <projectService
@@ -97,10 +93,10 @@ Supports Maven and Gradle projects.
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
         <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService"/>
 
         <applicationService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesService"/>
 
         <recoveryAction implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.DeletePackageSearchProjectCachesAction"/>
 
@@ -110,7 +106,7 @@ Supports Maven and Gradle projects.
                      key="packagesearch.plugin.debug.logging"
                      defaultValue="false"
                      description="Emit in-depth debug logging (warning: very spammy, only useful for debugging data flow issues). Make sure you have this line in Help | Diagnostic Tools | Debug Log Settings: '#com.jetbrains.packagesearch.intellij-plugin:trace'."
-                     restartRequired="true"/>
+                     restartRequired="false"/>
 
         <registryKey id="packagesearch.plugin.repositories.tab"
                      key="packagesearch.plugin.repositories.tab"
@@ -126,10 +122,6 @@ Supports Maven and Gradle projects.
 
         <statistics.counterUsagesCollector
                 implementationClass="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger"/>
-
-        <statistics.validation.customValidationRule implementation="com.jetbrains.packagesearch.intellij.plugin.fus.TopPackageIdValidationRule"/>
-
-        <backgroundPostStartupActivity implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory"/>
 
         <!--suppress PluginXmlCapitalization -->
         <notificationGroup displayType="BALLOON"

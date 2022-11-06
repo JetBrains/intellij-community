@@ -5,9 +5,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class PsiElementRef<T extends PsiElement> {
   private volatile PsiRefColleague<T> myColleague;
 

@@ -185,22 +185,12 @@ public class DTree {
         if (src instanceof ComparableDiffElement) equals = ((ComparableDiffElement)src).isContentEqual(trg);
         if (equals == null && trg instanceof ComparableDiffElement) equals = ((ComparableDiffElement)trg).isContentEqual(src);
         if (equals == null) {
-          switch (settings.compareMode) {
-            case CONTENT:
-              equals = isEqualContents(src, trg);
-              break;
-            case TEXT:
-              equals = isEqualContentsAsText(src, trg);
-              break;
-            case SIZE:
-              equals = isEqualSizes(src, trg);
-              break;
-            case TIMESTAMP:
-              equals = isEqualTimestamps(src, trg, settings);
-              break;
-            default:
-              throw new IllegalStateException(settings.compareMode.name());
-          }
+          equals = switch (settings.compareMode) {
+            case CONTENT -> isEqualContents(src, trg);
+            case TEXT -> isEqualContentsAsText(src, trg);
+            case SIZE -> isEqualSizes(src, trg);
+            case TIMESTAMP -> isEqualTimestamps(src, trg, settings);
+          };
         }
         tree.setType(equals ? DiffType.EQUAL : DiffType.CHANGED);
       }
@@ -227,24 +217,13 @@ public class DTree {
       if (myType == null) {
         myVisible = true;
       } else {
-      switch (myType) {
-        case SOURCE:
-          myVisible = settings.showNewOnSource;
-          break;
-        case TARGET:
-          myVisible = settings.showNewOnTarget;
-          break;
-        case SEPARATOR:
-        case ERROR:
-          myVisible = true;
-          break;
-        case CHANGED:
-          myVisible = settings.showDifferent;
-          break;
-        case EQUAL:
-          myVisible = settings.showEqual;
-          break;
-      }
+        myVisible = switch (myType) {
+          case SOURCE -> settings.showNewOnSource;
+          case TARGET -> settings.showNewOnTarget;
+          case SEPARATOR, ERROR -> true;
+          case CHANGED -> settings.showDifferent;
+          case EQUAL -> settings.showEqual;
+        };
       }
     } else {
       myVisible = false;

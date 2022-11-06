@@ -28,9 +28,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 
-/**
- * @author peter
- */
 public class JavaDirectoryServiceHeavyTest extends JavaCodeInsightFixtureTestCase {
   public void testCreatingEnumInLanguageLevel3Project() {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);

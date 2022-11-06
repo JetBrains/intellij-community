@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
-import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.CodeVisionPlaceholderCollector
+import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -23,7 +23,6 @@ interface DaemonBoundCodeVisionProvider {
     val extensionPoint: ExtensionPointName<DaemonBoundCodeVisionProvider> = ExtensionPointName.create(EP_NAME)
   }
 
-  @JvmDefault
   fun preparePreview(editor: Editor, file: PsiFile) {
 
   }
@@ -38,7 +37,6 @@ interface DaemonBoundCodeVisionProvider {
    * Computes code lens data in read action in background for a given editor.
    */
   @Suppress("DEPRECATION")
-  @JvmDefault
   fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
   fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
@@ -49,11 +47,9 @@ interface DaemonBoundCodeVisionProvider {
    * Calls on background BEFORE editor opening
    * Returns ranges where placeholders should be when editor opens
    */
-  @JvmDefault
   @Deprecated("use getPlaceholderCollector")
   fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()
 
-  @JvmDefault
   fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? = null
 
   /**

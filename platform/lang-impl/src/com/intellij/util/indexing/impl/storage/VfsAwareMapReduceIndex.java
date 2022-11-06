@@ -159,7 +159,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   protected final InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {
     InputData<Key, Value> data;
     boolean containsSnapshotData = true;
-    boolean isPhysical = content instanceof FileContentImpl && ((FileContentImpl)content).isPhysicalContent();
+    boolean isPhysical = content instanceof FileContentImpl && !((FileContentImpl)content).isTransientContent();
     if (mySnapshotInputMappings != null && isPhysical) {
       try {
         data = mySnapshotInputMappings.readData(content);
@@ -209,6 +209,32 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
       }
     }
     return null;
+  }
+
+  /**
+   * @return value < 0 means that no sub indexer id corresponds to the specified file
+   */
+  protected int getStoredFileSubIndexerId(int fileId) {
+    if (mySubIndexerRetriever == null) throw new IllegalStateException("not a composite indexer");
+    try {
+      return mySubIndexerRetriever.getStoredFileIndexerId(fileId);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return -4;
+    }
+  }
+
+  public <SubIndexerVersion> @Nullable SubIndexerVersion getStoredSubIndexerVersion(int fileId) {
+    int indexerId = getStoredFileSubIndexerId(fileId);
+    if (indexerId < 0) return null;
+    try {
+      return (SubIndexerVersion)mySubIndexerRetriever.getVersionByIndexerId(indexerId);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @Override

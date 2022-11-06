@@ -15,9 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.parser
 
-/**
- * @author peter
- */
 class CommentsParsingTest extends GroovyParsingTestCase {
   @Override
   String getBasePath() {

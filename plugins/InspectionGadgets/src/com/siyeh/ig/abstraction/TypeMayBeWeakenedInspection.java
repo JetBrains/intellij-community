@@ -180,7 +180,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myCandidates.size() == 1) {
         addClass(myCandidates.get(0), descriptor.getPsiElement());
         return;
@@ -322,7 +322,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiTypeElement typeElement;

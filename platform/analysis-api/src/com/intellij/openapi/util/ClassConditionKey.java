@@ -4,9 +4,6 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public final class ClassConditionKey<T> {
   private final Class<T> myConditionClass;
 

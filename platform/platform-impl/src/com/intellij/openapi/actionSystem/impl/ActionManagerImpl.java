@@ -5,7 +5,6 @@ import com.intellij.AbstractBundle;
 import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
@@ -18,6 +17,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -39,10 +39,7 @@ import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
@@ -76,6 +73,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -132,11 +130,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   protected ActionManagerImpl() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isUnitTestMode()) {
-      LoadingState.COMPONENTS_LOADED.checkOccurred();
-      if (!app.isHeadlessEnvironment() && !app.isCommandLine()) {
-        LOG.assertTrue(!app.isDispatchThread(), "assert !app.isDispatchThread()");
-      }
+    if (!app.isUnitTestMode() && !app.isHeadlessEnvironment() && !app.isCommandLine()) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
 
     registerActions(PluginManagerCore.getPluginSet().getEnabledModules());
@@ -154,12 +149,17 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         extension.unregisterActions(ActionManagerImpl.this);
       }
     }, this);
-    ApplicationManager.getApplication().getExtensionArea().getExtensionPoint("com.intellij.editorActionHandler")
+    app.getExtensionArea().getExtensionPoint("com.intellij.editorActionHandler")
       .addChangeListener(() -> {
         synchronized (myLock) {
           actionToId.keySet().forEach(ActionManagerImpl::updateHandlers);
         }
       }, this);
+
+    // Preload FUS classes (IDEA-301206)
+    if (!app.isDispatchThread()) {
+      ActionsEventLogGroup.GROUP.getId();
+    }
   }
 
   @ApiStatus.Internal
@@ -227,7 +227,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
     CustomActionsSchema customActionsSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (customActionsSchema != null && StringUtil.isNotEmpty(customActionsSchema.getIconPath(stub.getId()))) {
-      customActionsSchema.initActionIcon(anAction, stub.getId(), ActionManager.getInstance());
+      RecursionManager.doPreventingRecursion(stub.getId(), false, () -> {
+        customActionsSchema.initActionIcon(anAction, stub.getId(), ActionManager.getInstance());
+        return null;
+      });
     }
   }
 
@@ -386,6 +389,15 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
   }
 
+  private static @NotNull ActionToolbarImpl createActionToolbarImpl(@NotNull String place,
+                                                                    @NotNull ActionGroup group,
+                                                                    boolean horizontal,
+                                                                    boolean decorateButtons) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
+    return toolbar;
+  }
+
   @Override
   public void dispose() {
     if (myTimer != null) {
@@ -443,8 +455,16 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @Override
   public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
-    ActionToolbar toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
-    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
+    return createActionToolbarImpl(place, group, horizontal, decorateButtons);
+  }
+
+  @Override
+  public @NotNull ActionToolbar createActionToolbar(@NotNull String place,
+                                                    @NotNull ActionGroup group,
+                                                    boolean horizontal,
+                                                    @NotNull Function<String, Component> separatorCreator) {
+    ActionToolbarImpl toolbar = createActionToolbarImpl(place, group, horizontal, false);
+    toolbar.setSeparatorCreator(separatorCreator);
     return toolbar;
   }
 
@@ -486,27 +506,13 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
 
       switch (descriptor.name) {
-        case ACTION_ELEMENT_NAME:
-          processActionElement(element, module, bundle, keymapManager, module.getClassLoader());
-          break;
-        case GROUP_ELEMENT_NAME:
-          processGroupElement(element, module, bundle, keymapManager, module.getClassLoader());
-          break;
-        case SEPARATOR_ELEMENT_NAME:
-          processSeparatorNode(null, element, module, bundle);
-          break;
-        case REFERENCE_ELEMENT_NAME:
-          processReferenceNode(element, module, bundle);
-          break;
-        case "unregister":
-          processUnregisterNode(element, module);
-          break;
-        case "prohibit":
-          processProhibitNode(element, module);
-          break;
-        default:
-          LOG.error(new PluginException("Unexpected name of element" + descriptor.name, module.getPluginId()));
-          break;
+        case ACTION_ELEMENT_NAME -> processActionElement(element, module, bundle, keymapManager, module.getClassLoader());
+        case GROUP_ELEMENT_NAME -> processGroupElement(element, module, bundle, keymapManager, module.getClassLoader());
+        case SEPARATOR_ELEMENT_NAME -> processSeparatorNode(null, element, module, bundle);
+        case REFERENCE_ELEMENT_NAME -> processReferenceNode(element, module, bundle);
+        case "unregister" -> processUnregisterNode(element, module);
+        case "prohibit" -> processProhibitNode(element, module);
+        default -> LOG.error(new PluginException("Unexpected name of element" + descriptor.name, module.getPluginId()));
       }
     }
     StartUpMeasurer.addPluginCost(module.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
@@ -661,27 +667,16 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     // process all links and key bindings if any
     for (XmlElement e : element.children) {
       switch (e.name) {
-        case ADD_TO_GROUP_ELEMENT_NAME:
-          processAddToGroupNode(stub, e, module, isSecondary(e));
-          break;
-        case "keyboard-shortcut":
-          processKeyboardShortcutNode(e, id, module, keymapManager);
-          break;
-        case "mouse-shortcut":
-          processMouseShortcutNode(e, id, module, keymapManager);
-          break;
-        case "abbreviation":
-          processAbbreviationNode(e, id);
-          break;
-        case OVERRIDE_TEXT_ELEMENT_NAME:
-          processOverrideTextNode(stub, stub.getId(), e, module, bundle);
-          break;
-        case SYNONYM_ELEMENT_NAME:
-          processSynonymNode(stub, e, module, bundle);
-          break;
-        default:
+        case ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(stub, e, module, isSecondary(e));
+        case "keyboard-shortcut" -> processKeyboardShortcutNode(e, id, module, keymapManager);
+        case "mouse-shortcut" -> processMouseShortcutNode(e, id, module, keymapManager);
+        case "abbreviation" -> processAbbreviationNode(e, id);
+        case OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(stub, stub.getId(), e, module, bundle);
+        case SYNONYM_ELEMENT_NAME -> processSynonymNode(stub, e, module, bundle);
+        default -> {
           reportActionError(module, "unexpected name of element \"" + e.name + "\"");
           return null;
+        }
       }
     }
 
@@ -847,38 +842,31 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       // process all group's children. There are other groups, actions, references and links
       for (XmlElement child : element.children) {
         switch (child.name) {
-          case ACTION_ELEMENT_NAME: {
+          case ACTION_ELEMENT_NAME -> {
             AnAction action = processActionElement(child, module, bundle, keymapManager, classLoader);
             if (action != null) {
               addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
             }
-            break;
           }
-          case SEPARATOR_ELEMENT_NAME:
-            processSeparatorNode((DefaultActionGroup)group, child, module, bundle);
-            break;
-          case GROUP_ELEMENT_NAME: {
+          case SEPARATOR_ELEMENT_NAME -> processSeparatorNode((DefaultActionGroup)group, child, module, bundle);
+          case GROUP_ELEMENT_NAME -> {
             AnAction action = processGroupElement(child, module, bundle, keymapManager, classLoader);
             if (action != null) {
               addToGroupInner(group, action, Constraints.LAST, module, false);
             }
-            break;
           }
-          case ADD_TO_GROUP_ELEMENT_NAME:
-            processAddToGroupNode(group, child, module, isSecondary(child));
-            break;
-          case REFERENCE_ELEMENT_NAME:
+          case ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(group, child, module, isSecondary(child));
+          case REFERENCE_ELEMENT_NAME -> {
             AnAction action = processReferenceElement(child, module);
             if (action != null) {
               addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
             }
-            break;
-          case OVERRIDE_TEXT_ELEMENT_NAME:
-            processOverrideTextNode(group, id, child, module, bundle);
-            break;
-          default:
+          }
+          case OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(group, id, child, module, bundle);
+          default -> {
             reportActionError(module, "unexpected name of element \"" + child.name + "\n");
             return null;
+          }
         }
       }
       return group;
@@ -1197,13 +1185,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       RawPluginDescriptor.ActionDescriptor descriptor = descriptors.get(i);
       XmlElement element = descriptor.element;
       switch (descriptor.name) {
-        case ACTION_ELEMENT_NAME:
-          unloadActionElement(element);
-          break;
-        case GROUP_ELEMENT_NAME:
-          unloadGroupElement(element);
-          break;
-        case REFERENCE_ELEMENT_NAME:
+        case ACTION_ELEMENT_NAME -> unloadActionElement(element);
+        case GROUP_ELEMENT_NAME -> unloadGroupElement(element);
+        case REFERENCE_ELEMENT_NAME -> {
           AnAction action = processReferenceElement(element, module);
           if (action == null) {
             return;
@@ -1224,7 +1208,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
             parentGroup.remove(action);
             idToGroupId.remove(actionId, groupId);
           }
-          break;
+        }
       }
     }
   }

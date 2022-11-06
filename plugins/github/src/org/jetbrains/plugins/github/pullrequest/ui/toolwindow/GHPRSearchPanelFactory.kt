@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 
 internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val avatarIconsProvider: GHAvatarIconsProvider) :
@@ -33,21 +34,21 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
               GHPRListSearchValue.State.values().asList(),
               ::getShortText),
     DropDownComponentFactory(vm.authorFilterState)
-      .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point ->
-        showAsyncChooserPopup(point, { vm.getAuthors() }) {
-          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl), it.name)
+      .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point, popupState ->
+        showAsyncChooserPopup(point, popupState, { vm.getAuthors() }) {
+          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, GHUIUtil.AVATAR_SIZE), it.name)
         }?.login
       },
     DropDownComponentFactory(vm.labelFilterState)
-      .create(viewScope, GithubBundle.message("pull.request.list.filter.label")) { point ->
-        showAsyncChooserPopup(point, { vm.getLabels() }) {
+      .create(viewScope, GithubBundle.message("pull.request.list.filter.label")) { point, popupState ->
+        showAsyncChooserPopup(point, popupState, { vm.getLabels() }) {
           PopupItemPresentation.Simple(it.name)
         }?.name
       },
     DropDownComponentFactory(vm.assigneeFilterState)
-      .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point ->
-        showAsyncChooserPopup(point, { vm.getAssignees() }) {
-          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl), it.name)
+      .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point, popupState ->
+        showAsyncChooserPopup(point, popupState, { vm.getAssignees() }) {
+          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, GHUIUtil.AVATAR_SIZE), it.name)
         }?.login
       },
     DropDownComponentFactory(vm.reviewFilterState)

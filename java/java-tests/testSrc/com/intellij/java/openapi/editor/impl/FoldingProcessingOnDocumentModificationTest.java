@@ -48,11 +48,12 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     // Inspired by IDEA-61275
 
     String text =
-      "/**\n" +
-      " * This is a test comment\n" +
-      " */\n" +
-      "public <caret>class Test {\n" +
-      "}";
+      """
+        /**
+         * This is a test comment
+         */
+        public <caret>class Test {
+        }""";
     init(text, JavaFileType.INSTANCE);
 
     CaretModel caretModel = getEditor().getCaretModel();
@@ -72,12 +73,13 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testCollapseAllHappensBeforeFirstCodeFoldingPass() {
-    init("class Foo {\n" +
-         "    void m() {\n" +
-         "        System.out.println();\n" +
-         "        System.out.println();\n" +
-         "    }\n" +
-         "}", JavaFileType.INSTANCE);
+    init("""
+           class Foo {
+               void m() {
+                   System.out.println();
+                   System.out.println();
+               }
+           }""", JavaFileType.INSTANCE);
     
     buildInitialFoldRegions();
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
@@ -86,11 +88,12 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testSurvivingBrokenPsi() {
-    openJavaEditor("class Foo {\n" +
-                   "    void m() {\n" +
-                   "\n" +
-                   "    }\n" +
-                   "}");
+    openJavaEditor("""
+                     class Foo {
+                         void m() {
+
+                         }
+                     }""");
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
@@ -105,11 +108,12 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testInvalidRegionIsRemovedOnExpanding() {
-    openJavaEditor("class Foo {\n" +
-                   "    void m() {\n" +
-                   "\n" +
-                   "    }\n" +
-                   "}");
+    openJavaEditor("""
+                     class Foo {
+                         void m() {
+
+                         }
+                     }""");
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
@@ -122,11 +126,12 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testEditingNearRegionExpandsIt() {
-    openJavaEditor("class Foo {\n" +
-                   "    void m() <caret>{\n" +
-                   "\n" +
-                   "    }\n" +
-                   "}");
+    openJavaEditor("""
+                     class Foo {
+                         void m() <caret>{
+
+                         }
+                     }""");
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     executeAction(IdeActions.ACTION_EDITOR_DELETE);
     checkFoldingState("[]");
@@ -229,7 +234,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
         return new FoldingDescriptor[] {new FoldingDescriptor(node, new TextRange(pos, pos + 5), null,
                                                               Collections.singleton(ModificationTracker.EVER_CHANGED))};
       }
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
   }
 }

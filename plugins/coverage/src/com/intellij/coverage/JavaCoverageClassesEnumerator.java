@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -89,9 +90,9 @@ public abstract class JavaCoverageClassesEnumerator {
     for (final Module module : modules) {
       if (!scope.isSearchInModuleContent(module)) continue;
       ProgressIndicatorProvider.checkCanceled();
-      final Set<VirtualFile> productionRootsSet = new HashSet<>();
+      final Set<VirtualFile> seenRoots = new HashSet<>();
       for (boolean isTestSource : myShouldVisitTestSource) {
-        visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, productionRootsSet);
+        visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, seenRoots);
       }
     }
   }
@@ -101,18 +102,12 @@ public abstract class JavaCoverageClassesEnumerator {
                              final GlobalSearchScope scope,
                              final String rootPackageVMName,
                              final boolean isTestSource,
-                             final Set<VirtualFile> productionRootsSet) {
+                             final Set<VirtualFile> seenRoots) {
     final VirtualFile[] roots = getRoots(myCoverageManager, module, isTestSource);
-    if (roots == null) return;
 
     for (VirtualFile output : roots) {
-      if (!isTestSource) {
-        productionRootsSet.add(output);
-      }
-      else if (productionRootsSet.contains(output)) {
-        continue;
-      }
-      final File outputRoot = PackageAnnotator.findRelativeFile(rootPackageVMName, output);
+      if (!seenRoots.add(output)) continue;
+      final File outputRoot = PackageAnnotator.findRelativeFile(rootPackageVMName, VfsUtilCore.virtualToIoFile(output));
       if (outputRoot.exists()) {
         visitRoot(outputRoot, rootPackageVMName, scope);
       }
@@ -183,17 +178,25 @@ public abstract class JavaCoverageClassesEnumerator {
     return false;
   }
 
-  public static VirtualFile[] getRoots(final CoverageDataManager manager, final Module module, final boolean isTestSource) {
-    return manager.doInReadActionIfProjectOpen(() -> {
+  /**
+   * Collect output roots for the specified module.
+   * @param includeTests if true, returns both production and test output roots; if false, returns only production roots
+   */
+  public static VirtualFile @NotNull [] getRoots(final CoverageDataManager manager, final Module module, final boolean includeTests) {
+    final VirtualFile[] files = manager.doInReadActionIfProjectOpen(() -> {
       OrderEnumerator enumerator = OrderEnumerator.orderEntries(module)
         .withoutSdk()
         .withoutLibraries()
         .withoutDepModules();
-      if (isTestSource) {
+      if (!includeTests) {
         enumerator = enumerator.productionOnly();
       }
       return enumerator.classes().getRoots();
     });
+    if (files == null) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+    return files;
   }
 
   public static class RootsCounter extends JavaCoverageClassesEnumerator {

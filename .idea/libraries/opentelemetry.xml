@@ -1,26 +1,28 @@
 <component name="libraryTable">
   <library name="opentelemetry" type="repository">
-    <properties maven-id="io.opentelemetry:opentelemetry-sdk:1.17.0" />
+    <properties maven-id="io.opentelemetry:opentelemetry-sdk:1.19.0" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.17.0/opentelemetry-sdk-1.17.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.17.0/opentelemetry-api-1.17.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.17.0/opentelemetry-context-1.17.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.17.0/opentelemetry-sdk-common-1.17.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.17.0-alpha/opentelemetry-semconv-1.17.0-alpha.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.17.0/opentelemetry-sdk-trace-1.17.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.17.0/opentelemetry-sdk-metrics-1.17.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.17.0-alpha/opentelemetry-sdk-logs-1.17.0-alpha.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.19.0/opentelemetry-sdk-1.19.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.19.0/opentelemetry-api-1.19.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.19.0/opentelemetry-context-1.19.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.19.0/opentelemetry-sdk-common-1.19.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.19.0-alpha/opentelemetry-semconv-1.19.0-alpha.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.19.0/opentelemetry-sdk-trace-1.19.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.19.0/opentelemetry-sdk-metrics-1.19.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.19.0-alpha/opentelemetry-sdk-logs-1.19.0-alpha.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-logs/1.19.0-alpha/opentelemetry-api-logs-1.19.0-alpha.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.17.0/opentelemetry-sdk-1.17.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.17.0/opentelemetry-api-1.17.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.17.0/opentelemetry-context-1.17.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.17.0/opentelemetry-sdk-common-1.17.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.17.0-alpha/opentelemetry-semconv-1.17.0-alpha-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.17.0/opentelemetry-sdk-trace-1.17.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.17.0/opentelemetry-sdk-metrics-1.17.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.17.0-alpha/opentelemetry-sdk-logs-1.17.0-alpha-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.19.0/opentelemetry-sdk-1.19.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.19.0/opentelemetry-api-1.19.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.19.0/opentelemetry-context-1.19.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.19.0/opentelemetry-sdk-common-1.19.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.19.0-alpha/opentelemetry-semconv-1.19.0-alpha-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.19.0/opentelemetry-sdk-trace-1.19.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.19.0/opentelemetry-sdk-metrics-1.19.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.19.0-alpha/opentelemetry-sdk-logs-1.19.0-alpha-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-logs/1.19.0-alpha/opentelemetry-api-logs-1.19.0-alpha-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

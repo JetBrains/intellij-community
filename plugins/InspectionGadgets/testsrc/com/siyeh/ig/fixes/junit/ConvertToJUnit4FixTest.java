@@ -56,18 +56,15 @@ public class ConvertToJUnit4FixTest extends IGQuickFixesTestCase {
                        "  public static void assertTrue(boolean condition) {}" +
                        "  public static void assertFalse(String message, boolean condition) {}" +
                        "}");
-    myFixture.addClass("package junit.framework;" +
-                       "public interface Test {\n" +
-                       "  int countTestCases();\n" +
-                       "  void run(TestResult result);\n" +
-                       "}");
-    myFixture.addClass("package junit.framework;" +
-                       "public abstract class TestCase extends Assert, Test {" +
-                       "  @Override public int countTestCases() {\n" +
-                       "    return 1;\n" +
-                       "  }" +
-                       "  @Override public void run(TestResult result) {}" +
-                       "}");
+    myFixture.addClass("""
+                         package junit.framework;public interface Test {
+                           int countTestCases();
+                           void run(TestResult result);
+                         }""");
+    myFixture.addClass("""
+                         package junit.framework;public abstract class TestCase extends Assert, Test {  @Override public int countTestCases() {
+                             return 1;
+                           }  @Override public void run(TestResult result) {}}""");
     myFixture.addClass("package junit.framework;" +
                        "public class TestSuite implements Test {" +
                        "  public void addTest(Test test) {}" +

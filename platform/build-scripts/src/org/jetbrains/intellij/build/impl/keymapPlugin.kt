@@ -1,35 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.writeNewZip
-import com.intellij.diagnostic.telemetry.createTask
 import java.nio.ByteBuffer
 import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.Callable
-import java.util.concurrent.ForkJoinTask
 
-internal fun buildKeymapPlugins(buildNumber: String, targetDir: Path, keymapDir: Path): ForkJoinTask<List<Pair<Path, ByteArray>>> {
-  Files.createDirectories(targetDir)
-  return createTask(spanBuilder("build keymap plugins")) {
-    ForkJoinTask.invokeAll(arrayOf(
-      arrayOf("Mac OS X", "Mac OS X 10.5+"),
-      arrayOf("Default for GNOME"),
-      arrayOf("Default for KDE"),
-      arrayOf("Default for XWin")
-    ).map {
-      ForkJoinTask.adapt(Callable { buildKeymapPlugin(it, buildNumber, targetDir, keymapDir) })
-    }).map { it.rawResult }
-  }
-}
-
-private fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targetDir: Path, keymapDir: Path): Pair<Path, ByteArray> {
+internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targetDir: Path, keymapDir: Path): Pair<Path, ByteArray> {
   val longName = keymaps.first().replace("Mac OS X", "macOS").replace("Default for |[.0-9]", "").trim()
   val shortName = longName.replace(" ", "")
 

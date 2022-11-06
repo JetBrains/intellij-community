@@ -16,6 +16,7 @@ interface HasDependencyResolver {
 
 interface MultiplatformModelImportingContext : KotlinSourceSetContainer, HasDependencyResolver {
     val project: Project
+    val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
     val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper
 
     val targets: Collection<KotlinTarget>
@@ -79,6 +80,7 @@ internal enum class GradleImportProperties(val id: String, val defaultValue: Boo
 
 internal class MultiplatformModelImportingContextImpl(
     override val project: Project,
+    override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?,
     override val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper,
     modelBuilderContext: ModelBuilderContext
 ) : MultiplatformModelImportingContext {

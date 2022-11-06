@@ -72,9 +72,10 @@ class SingularGuavaMapHandler extends SingularMapHandler {
 
   @Override
   protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
-      + "this.{0}.putAll({0});\n" +
-      "return {3};";
+    final String codeBlockTemplate = """
+      if (this.{0} == null) this.{0} = {1}.{2};\s
+      this.{0}.putAll({0});
+      return {3};""";
 
     return MessageFormat.format(codeBlockTemplate, singularName, collectionQualifiedName,
       sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());

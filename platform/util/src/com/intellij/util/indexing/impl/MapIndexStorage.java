@@ -10,6 +10,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
+import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,26 +112,20 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     boolean isReadOnly,
     boolean compactOnClose,
     boolean keyIsUniqueForIndexedFile) throws IOException {
-    PersistentMapImpl<Key, UpdatableValueContainer<Value>> persistentMap;
-    PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
+
+    CreationTimeOptions creationOptions = CreationTimeOptions.threadLocalOptions()
+        .setCompactChunksWithValueDeserialization();
     if (keyIsUniqueForIndexedFile) {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+      creationOptions = creationOptions.setHasNoChunks();
     }
-    try {
-      persistentMap = new PersistentMapImpl<>(PersistentMapBuilder
-                                                .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
-                                                .withWal(myEnableWal && ENABLE_WAL && !isReadOnly)
-                                                .setWalExecutor(SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Wal Pool"))
-                                                .withReadonly(isReadOnly)
-                                                .withCompactOnClose(compactOnClose));
-    }
-    finally {
-      PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
-      if (myKeyIsUniqueForIndexedFile) {
-        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      }
-    }
-    return persistentMap;
+    return creationOptions.with( () -> {
+      return  new PersistentMapImpl<>(PersistentMapBuilder
+                                        .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
+                                        .withWal(myEnableWal && ENABLE_WAL && !isReadOnly)
+                                        .withWalExecutor(SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Wal Pool"))
+                                        .withReadonly(isReadOnly)
+                                        .withCompactOnClose(compactOnClose));
+    });
   }
 
   private @NotNull ValueContainerMap<Key, Value> createValueContainerMap() throws IOException {

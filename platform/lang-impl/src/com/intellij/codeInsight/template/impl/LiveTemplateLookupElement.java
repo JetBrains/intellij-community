@@ -23,9 +23,6 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 abstract public class LiveTemplateLookupElement extends LookupElement {
   private final @NlsSafe String myLookupString;
   public final boolean sudden;

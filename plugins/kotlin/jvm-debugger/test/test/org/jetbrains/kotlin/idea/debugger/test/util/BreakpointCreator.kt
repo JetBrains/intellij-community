@@ -25,7 +25,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
-import org.jetbrains.kotlin.idea.debugger.breakpoints.*
+import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType
+import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isKotlinSourceFile
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpoint
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpoint
@@ -33,7 +34,7 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpo
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import java.util.*
 import javax.swing.SwingUtilities
 
@@ -184,24 +185,22 @@ internal class BreakpointCreator(
         condition: String?
     ) {
         val kotlinLineBreakpointType = findBreakpointType(KotlinLineBreakpointType::class.java)
+        val updatedLambdaOrdinal = lambdaOrdinal?.let { if (it != -1) it - 1 else it }
+
         val javaBreakpoint = createBreakpointOfType(
             breakpointManager,
             kotlinLineBreakpointType,
             lineIndex,
-            file.virtualFile
+            file.virtualFile,
+            updatedLambdaOrdinal
         )
 
         if (javaBreakpoint is LineBreakpoint<*>) {
-            val properties = javaBreakpoint.xBreakpoint.properties as? JavaLineBreakpointProperties ?: return
             var suffix = ""
             if (lambdaOrdinal != null) {
-                if (lambdaOrdinal != -1) {
-                    properties.lambdaOrdinal = lambdaOrdinal - 1
-                } else {
-                    properties.lambdaOrdinal = lambdaOrdinal
-                }
                 suffix += " lambdaOrdinal = $lambdaOrdinal"
             }
+
             if (condition != null) {
                 javaBreakpoint.setCondition(TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition))
                 suffix += " condition = $condition"
@@ -216,15 +215,21 @@ internal class BreakpointCreator(
         breakpointManager: XBreakpointManager,
         breakpointType: XLineBreakpointType<XBreakpointProperties<*>>,
         lineIndex: Int,
-        virtualFile: VirtualFile
+        virtualFile: VirtualFile,
+        lambdaOrdinal: Int? = null,
     ): Breakpoint<out JavaBreakpointProperties<*>>? {
         if (!breakpointType.canPutAt(virtualFile, lineIndex, project)) return null
         val xBreakpoint = runWriteAction {
+            val properties = breakpointType.createBreakpointProperties(virtualFile, lineIndex)
+            if (properties is JavaLineBreakpointProperties) {
+                properties.lambdaOrdinal = lambdaOrdinal
+            }
+
             breakpointManager.addLineBreakpoint(
                 breakpointType,
                 virtualFile.url,
                 lineIndex,
-                breakpointType.createBreakpointProperties(virtualFile, lineIndex)
+                properties
             )
         }
         return BreakpointManager.getJavaBreakpoint(xBreakpoint)

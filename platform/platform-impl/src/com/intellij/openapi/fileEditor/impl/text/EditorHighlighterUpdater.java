@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
- */
 public class EditorHighlighterUpdater {
   @NotNull protected final Project myProject;
   @NotNull protected final EditorEx myEditor;

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.JavaDebuggerEvaluator
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
-import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.KotlinDebuggerEvaluator
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.idea.debugger.core.getContextElement
 import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
@@ -35,7 +33,7 @@ import org.jetbrains.kotlin.idea.j2k.convertToKotlin
 import org.jetbrains.kotlin.idea.j2k.j2kText
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.j2k.AfterConversionPass
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
@@ -48,7 +46,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", item.text, initImports(item.imports), contextElement)
 
-        supplyDebugInformation(item, codeFragment, context)
+        supplyDebugInformation(codeFragment, context)
 
         codeFragment.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
             val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
@@ -134,19 +132,11 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
         return if (this is KtNullableType) innerType ?: this else this
     }
 
-    private fun supplyDebugInformation(item: TextWithImports, codeFragment: KtCodeFragment, context: PsiElement?) {
+    private fun supplyDebugInformation(codeFragment: KtCodeFragment, context: PsiElement?) {
         val project = codeFragment.project
         val debugProcess = getDebugProcess(project, context) ?: return
 
         DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
-
-        val evaluationType = when (val evaluator = debugProcess.session.xDebugSession?.currentStackFrame?.evaluator) {
-            is KotlinDebuggerEvaluator -> evaluator.getType(item)
-            is JavaDebuggerEvaluator -> KotlinDebuggerEvaluator.EvaluationType.FROM_JAVA
-            else -> KotlinDebuggerEvaluator.EvaluationType.UNKNOWN
-        }
-
-        codeFragment.putUserData(EVALUATION_TYPE, evaluationType)
     }
 
     private fun getDebugProcess(project: Project, context: PsiElement?): DebugProcessImpl? {
@@ -294,8 +284,6 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         @get:TestOnly
         val DEBUG_CONTEXT_FOR_TESTS: Key<DebuggerContextImpl> = Key.create("DEBUG_CONTEXT_FOR_TESTS")
-
-        val EVALUATION_TYPE: Key<KotlinDebuggerEvaluator.EvaluationType> = Key.create("DEBUG_EVALUATION_TYPE")
 
         const val FAKE_JAVA_CONTEXT_FUNCTION_NAME = "_java_locals_debug_fun_"
     }

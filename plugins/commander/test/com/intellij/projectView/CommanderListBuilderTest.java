@@ -55,12 +55,23 @@ public class CommanderListBuilderTest extends BaseProjectViewTestCase {
     useStandardProviders();
 
     myCommander.enterElementInActivePanel(getContentDirectory());
-    checkListInActivePanel("[ .. ]\n" + "PsiDirectory: src\n");
+    checkListInActivePanel("""
+                             [ .. ]
+                             PsiDirectory: src
+                             """);
 
     myCommander.switchActivePanel();
     myCommander.enterElementInActivePanel(getPackageDirectory());
     checkListInActivePanel(
-      "[ .. ]\n" + "Class1\n" + "Class2.java\n" + "Class4.java\n" + "Form1\n" + "Form1.form\n" + "Form2.form\n");
+      """
+        [ .. ]
+        Class1
+        Class2.java
+        Class4.java
+        Form1
+        Form1.form
+        Form2.form
+        """);
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -73,7 +84,15 @@ public class CommanderListBuilderTest extends BaseProjectViewTestCase {
 
 
     checkListInActivePanel(
-      "[ .. ]\n" + "Class1_renamed\n" + "Class2.java\n" + "Class4.java\n" + "Form1\n" + "Form1.form\n" + "Form2.form\n");
+      """
+        [ .. ]
+        Class1_renamed
+        Class2.java
+        Class4.java
+        Form1
+        Form1.form
+        Form2.form
+        """);
   }
 
   private PsiClass findClassInDirectory(final String className) {
@@ -93,11 +112,20 @@ public class CommanderListBuilderTest extends BaseProjectViewTestCase {
     PsiField field = findClassInDirectory("Class1").getFields()[1];
     myCommander.selectElementInRightPanel(field, field.getContainingFile().getVirtualFile());
 
-    checkListInRightPanel("[ .. ]\n" + "InnerClass\n" + "getValue():int\n" + "myField1:boolean\n" + "myField2:boolean\n");
+    checkListInRightPanel("""
+                            [ .. ]
+                            InnerClass
+                            getValue():int
+                            myField1:boolean
+                            myField2:boolean
+                            """);
     checkSelectedElement(field, myCommander.getRightPanel());
 
     myCommander.selectElementInLeftPanel(getPackageDirectory(), getPackageDirectory().getVirtualFile());
-    checkListInLeftPanel("[ .. ]\n" + "PsiDirectory: package1\n");
+    checkListInLeftPanel("""
+                           [ .. ]
+                           PsiDirectory: package1
+                           """);
     checkSelectedElement(getPackageDirectory(), myCommander.getLeftPanel());
 
     myCommander.syncViews();
@@ -111,14 +139,25 @@ public class CommanderListBuilderTest extends BaseProjectViewTestCase {
     final PsiClass formClass = findClassInDirectory("Form1");
     myCommander.selectElementInRightPanel(formClass, formClass.getContainingFile().getVirtualFile());
 
-    checkListInRightPanel("[ .. ]\n" + "Form1\n" + "Form1.form\n");
+    checkListInRightPanel("""
+                            [ .. ]
+                            Form1
+                            Form1.form
+                            """);
 
     WriteCommandAction.runWriteCommandAction(null, () -> formClass.delete());
 
 
     PlatformTestUtil.waitForAlarm(600);
 
-    checkListInRightPanel("[ .. ]\n" + "Class1\n" + "Class2.java\n" + "Class4.java\n" + "Form1.form\n" + "Form2.form\n");
+    checkListInRightPanel("""
+                            [ .. ]
+                            Class1
+                            Class2.java
+                            Class4.java
+                            Form1.form
+                            Form2.form
+                            """);
   }
 
   private void checkListInLeftPanel(String expected) {

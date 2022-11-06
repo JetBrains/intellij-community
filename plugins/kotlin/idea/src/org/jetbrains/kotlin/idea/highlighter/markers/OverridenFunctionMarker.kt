@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.presentation.DeclarationByModuleRenderer
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachDeclaredMemberOverride
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier

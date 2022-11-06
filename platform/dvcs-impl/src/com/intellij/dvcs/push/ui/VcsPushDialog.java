@@ -60,11 +60,12 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   private static final int CENTER_PANEL_WIDTH = 800;
 
   protected final Project myProject;
-  private final PushLog myListPanel;
   protected final PushController myController;
   private final Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> myAdditionalPanels;
+  private final PushLog myListPanel;
+  private final JComponent myTopPanel;
 
-  private Action myMainAction;
+  private final ComplexPushAction myMainAction;
   @NotNull private final List<ActionWrapper> myPushActions;
 
   public VcsPushDialog(@NotNull Project project,
@@ -74,7 +75,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   public VcsPushDialog(@NotNull Project project,
-                       Collection<? extends Repository> allRepos, @NotNull List<? extends Repository> selectedRepositories,
+                       @NotNull Collection<? extends Repository> allRepos,
+                       @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo, @Nullable PushSource pushSource) {
     super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myProject = project;
@@ -83,7 +85,11 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
                          pushSource);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
+    myTopPanel = myController.createTopPanel();
+
     myPushActions = collectPushActions();
+    myMainAction = new ComplexPushAction(myPushActions.get(0), myPushActions.subList(1, myPushActions.size()));
+    myMainAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
 
     init();
     updateOkActions();
@@ -152,7 +158,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = JBUI.Panels.simplePanel(0, 2)
+    JPanel panel = JBUI.Panels.simplePanel()
+      .addToTop(myTopPanel)
       .addToCenter(myListPanel)
       .addToBottom(createOptionsPanel());
     myListPanel.setPreferredSize(new JBDimension(CENTER_PANEL_WIDTH, CENTER_PANEL_HEIGHT));
@@ -162,6 +169,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @NotNull
   protected JPanel createOptionsPanel() {
     JPanel optionsPanel = new OptionsPanel();
+    optionsPanel.setBorder(JBUI.Borders.emptyTop(2));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.DEFAULT) {
         optionsPanel.add(panel);
@@ -207,8 +215,6 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @Override
   protected Action @NotNull [] createActions() {
     final List<Action> actions = new ArrayList<>();
-    myMainAction = new ComplexPushAction(myPushActions.get(0), myPushActions.subList(1, myPushActions.size()));
-    myMainAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     actions.add(myMainAction);
     actions.add(getCancelAction());
     actions.add(getHelpAction());
@@ -218,6 +224,11 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @Override
   public boolean canPush() {
     return myController.isPushAllowed();
+  }
+
+  @Override
+  public boolean hasWarnings() {
+    return myController.hasCommitWarnings();
   }
 
   @Override
@@ -332,7 +343,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   public void updateOkActions() {
-    myMainAction.setEnabled(canPush());
+    myMainAction.update();
     for (ActionWrapper wrapper : myPushActions) {
       wrapper.update();
     }
@@ -381,6 +392,15 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       }
     }
 
+    public void update() {
+      VcsPushUi dialog = myDefaultAction.myDialog;
+      PushActionBase realAction = myDefaultAction.myRealAction;
+
+      setEnabled(dialog.canPush());
+      putValue(Action.NAME, realAction.getText(dialog, enabled));
+      putValue(Action.SHORT_DESCRIPTION, realAction.getDescription(dialog, enabled));
+    }
+
     @Override
     public Action @NotNull [] getOptions() {
       return myOptions.toArray(new ActionWrapper[0]);
@@ -394,7 +414,6 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     @NotNull private final PushActionBase myRealAction;
 
     ActionWrapper(@NotNull Project project, @NotNull VcsPushUi dialog, @NotNull PushActionBase realAction) {
-      super(realAction.getTemplatePresentation().getTextWithMnemonic());
       myProject = project;
       myDialog = dialog;
       myRealAction = realAction;
@@ -409,6 +428,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     public void update() {
       boolean enabled = myRealAction.isEnabled(myDialog);
       setEnabled(enabled);
+      putValue(Action.NAME, myRealAction.getText(myDialog, enabled));
       putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
 

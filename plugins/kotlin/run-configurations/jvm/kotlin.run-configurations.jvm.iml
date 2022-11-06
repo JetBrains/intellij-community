@@ -22,7 +22,6 @@
     <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />

@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analyzer.*
+import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleCapability
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 val OriginCapability = ModuleCapability<ModuleOrigin>("MODULE_ORIGIN")
 
@@ -33,6 +35,10 @@ interface IdeaModuleInfo : ModuleInfo {
         get() = super.capabilities + mapOf(OriginCapability to moduleOrigin)
 
     override fun dependencies(): List<IdeaModuleInfo>
+
+    fun sdk(): Sdk? = dependencies().firstIsInstanceOrNull<SdkInfo>()?.sdk
+
+    fun dependenciesWithoutSelf(): Sequence<IdeaModuleInfo> = dependencies().asSequence().filter { it != this }
 
     fun checkValidity() {}
 }

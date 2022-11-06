@@ -8,13 +8,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
-import org.jetbrains.kotlin.idea.base.psi.isMultiLine
-import org.jetbrains.kotlin.idea.intentions.*
-import org.jetbrains.kotlin.idea.util.textRangeIn
+import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.replaceFirstReceiver
+import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.intentions.callExpression
+import org.jetbrains.kotlin.idea.intentions.deleteFirstReceiver
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -23,6 +28,8 @@ import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isNullable
+
+private val KOTLIN_LET_FQ_NAME = FqName("kotlin.let")
 
 abstract class RedundantLetInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(
     KtCallExpression::class.java
@@ -34,7 +41,8 @@ abstract class RedundantLetInspection : AbstractApplicabilityBasedInspection<KtC
     final override val defaultFixText get() = KotlinBundle.message("remove.let.call")
 
     final override fun isApplicable(element: KtCallExpression): Boolean {
-        if (!element.isLetMethodCall()) return false
+        if (!element.isCalling(KOTLIN_LET_FQ_NAME)) return false
+
         val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return false
         val parameterName = lambdaExpression.getParameterName() ?: return false
 
@@ -191,9 +199,12 @@ private fun KtExpression.isApplicable(parameterName: String): Boolean = when (th
     else -> false
 }
 
-private fun KtCallExpression.isApplicable(parameterName: String): Boolean = valueArguments.all {
-    val argumentExpression = it.getArgumentExpression() ?: return@all false
-    argumentExpression.isApplicable(parameterName)
+private fun KtCallExpression.isApplicable(parameterName: String): Boolean {
+    if (valueArguments.isEmpty()) return false
+    return valueArguments.all {
+        val argumentExpression = it.getArgumentExpression() ?: return@all false
+        argumentExpression.isApplicable(parameterName)
+    }
 }
 
 private fun KtDotQualifiedExpression.isApplicable(parameterName: String): Boolean {
@@ -212,8 +223,6 @@ private fun KtDotQualifiedExpression.hasNullableReceiverExtensionCall(context: B
 }
 
 private fun KtDotQualifiedExpression.hasLambdaExpression() = selectorExpression?.anyDescendantOfType<KtLambdaExpression>() ?: false
-
-private fun KtCallExpression.isLetMethodCall() = calleeExpression?.text == "let" && isMethodCall("kotlin.let")
 
 private fun KtLambdaExpression.getParameterName(): String? {
     val parameters = valueParameters

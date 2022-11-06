@@ -75,9 +75,4 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
     final Presentation presentation = e.getPresentation();
     presentation.setText(ProjectBundle.messagePointer("module.toggle.excluded.action"));
   }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
 }

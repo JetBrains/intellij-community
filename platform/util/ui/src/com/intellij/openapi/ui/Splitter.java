@@ -507,18 +507,14 @@ public class Splitter extends JPanel implements Splittable {
     }
 
     if (total < mSize1 + mSize2) {
-      switch (myLackOfSpaceStrategy) {
-        case SIMPLE_RATIO:
+      size1 = switch (myLackOfSpaceStrategy) {
+        case SIMPLE_RATIO -> {
           double proportion = mSize1 / (mSize1 + mSize2);
-          size1 = proportion * total;
-          break;
-        case HONOR_THE_FIRST_MIN_SIZE:
-          size1 = mSize1;
-          break;
-        case HONOR_THE_SECOND_MIN_SIZE:
-          size1 = total - mSize2;
-          break;
-      }
+          yield proportion * total;
+        }
+        case HONOR_THE_FIRST_MIN_SIZE -> mSize1;
+        case HONOR_THE_SECOND_MIN_SIZE -> total - mSize2;
+      };
     }
     else {
       if (size1 < mSize1) {

@@ -3,10 +3,9 @@ package de.plushnikov.intellij.plugin.processor.clazz.log;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -32,18 +31,13 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
 
     @NotNull
     static LoggerInitializerParameter find(@NotNull String parameter) {
-      switch (parameter) {
-        case "TYPE":
-          return TYPE;
-        case "NAME":
-          return NAME;
-        case "TOPIC":
-          return TOPIC;
-        case "NULL":
-          return NULL;
-        default:
-          return UNKNOWN;
-      }
+      return switch (parameter) {
+        case "TYPE" -> TYPE;
+        case "NAME" -> NAME;
+        case "TOPIC" -> TOPIC;
+        case "NULL" -> NULL;
+        default -> UNKNOWN;
+      };
     }
   }
 
@@ -85,16 +79,16 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   abstract List<LoggerInitializerParameter> getLoggerInitializerParameters(@NotNull PsiClass psiClass, boolean topicPresent);
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     boolean result = true;
     if (psiClass.isInterface() || psiClass.isAnnotationType()) {
-      builder.addError(LombokBundle.message("inspection.message.s.legal.only.on.classes.enums"), getSupportedAnnotationClasses()[0]);
+      builder.addErrorMessage("inspection.message.s.legal.only.on.classes.enums", getSupportedAnnotationClasses()[0]);
       result = false;
     }
     if (result) {
       final String loggerName = getLoggerName(psiClass);
       if (hasFieldByName(psiClass, loggerName)) {
-        builder.addError(LombokBundle.message("inspection.message.not.generating.field.s.field.with.same.name.already.exists"), loggerName);
+        builder.addErrorMessage("inspection.message.not.generating.field.s.field.with.same.name.already.exists", loggerName);
         result = false;
       }
     }
@@ -147,23 +141,17 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
         parametersBuilder.append(", ");
       }
       switch (loggerInitializerParameter) {
-        case TYPE:
-          parametersBuilder.append(psiClass.getName()).append(".class");
-          break;
-        case NAME:
-          parametersBuilder.append(psiClass.getName()).append(".class.getName()");
-          break;
-        case TOPIC:
+        case TYPE -> parametersBuilder.append(psiClass.getName()).append(".class");
+        case NAME -> parametersBuilder.append(psiClass.getName()).append(".class.getName()");
+        case TOPIC -> {
           if (!topicPresent) {
             // sanity check; either implementation of CustomLogParser or predefined loggers is wrong
             throw new IllegalStateException("Topic can never be a parameter when topic was not set.");
           }
           parametersBuilder.append('"').append(StringUtil.escapeStringCharacters(topic)).append('"');
-          break;
-        case NULL:
-          parametersBuilder.append("null");
-          break;
-        default:
+        }
+        case NULL -> parametersBuilder.append("null");
+        default ->
           // sanity check; either implementation of CustomLogParser or predefined loggers is wrong
           throw new IllegalStateException("Unexpected logger initializer parameter " + loggerInitializerParameter);
       }
@@ -171,7 +159,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return parametersBuilder.toString();
   }
 
-  private boolean hasFieldByName(@NotNull PsiClass psiClass, @NotNull String fieldName) {
+  private static boolean hasFieldByName(@NotNull PsiClass psiClass, @NotNull String fieldName) {
     final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
     for (PsiField psiField : psiFields) {
       if (fieldName.equals(psiField.getName())) {

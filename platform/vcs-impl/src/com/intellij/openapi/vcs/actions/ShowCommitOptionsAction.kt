@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.vcs.actions.commit.getContextCommitWorkflowHandler
 import com.intellij.ui.ExperimentalUI
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.NonModalCommitWorkflowHandler

@@ -69,7 +69,7 @@ open class KotlinUMethod(
             .toList()
     }
 
-    protected val receiverTypeReference by lz {
+    private val receiverTypeReference by lz {
         when (sourcePsi) {
             is KtCallableDeclaration -> sourcePsi
             is KtPropertyAccessor -> sourcePsi.property

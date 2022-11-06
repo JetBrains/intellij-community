@@ -3,10 +3,7 @@ package com.intellij.diff.impl.ui
 
 import com.intellij.diff.DiffTool
 import com.intellij.diff.FrameDiffTool
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -14,9 +11,12 @@ import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import javax.swing.JComponent
 
+@Suppress("DialogTitleCapitalization")
 abstract class DiffToolChooser(private val targetComponent: JComponent? = null) : DumbAwareAction(), CustomComponentAction {
 
   private val actions = arrayListOf<MyDiffToolAction>()
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
@@ -61,6 +61,8 @@ abstract class DiffToolChooser(private val targetComponent: JComponent? = null) 
 
   private inner class MyDiffToolAction(private val diffTool: DiffTool, private var state: Boolean) :
     ToggleAction(diffTool.name), DumbAware {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun isSelected(e: AnActionEvent): Boolean = state
 

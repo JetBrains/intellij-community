@@ -4,7 +4,6 @@ package com.intellij.ide.ui.customization;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -77,7 +76,16 @@ public final class CustomizationUtil {
       }
     }
 
-    return new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
+    ActionGroup correctedGroup = new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
+    String groupId = ActionManager.getInstance().getId(group);
+    schema.getActions().stream()
+      .map(actionUrl -> actionUrl.getComponent() instanceof Group g ? g : null)
+      .filter(g -> g != null && Objects.equals(g.getId(), groupId))
+      .findFirst()
+      .ifPresent(g -> {
+        if (g.isForceShowAsPopup()) correctedGroup.setPopup(true);
+      });
+    return correctedGroup;
   }
 
 
@@ -145,12 +153,12 @@ public final class CustomizationUtil {
     final List<ActionUrl> actions = new ArrayList<>();
     TreeUtil.treeNodeTraverser((TreeNode)tree.getModel().getRoot()).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-      Object userObject = treeNode.getUserObject();
-      if (treeNode.isLeaf() && !(userObject instanceof Group)) {
+      Group group = getGroupForNode(treeNode);
+      if (treeNode.isLeaf() && group == null) {
         return true;
       }
       ActionUrl url = getActionUrl(new TreePath(treeNode.getPath()), 0);
-      String groupName = ((Group)userObject).getName();
+      String groupName = group.getName();
       url.getGroupPath().add(groupName);
       final TreePath treePath = getTreePath(defaultTree, url);
       if (treePath != null) {
@@ -204,9 +212,9 @@ public final class CustomizationUtil {
   public static TreePath getPathByUserObjects(JTree tree, TreePath treePath) {
     List<String> path = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length; i++) {
-      Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
-      if (o instanceof Group) {
-        path.add(((Group)o).getName());
+      Group group = getGroupForNode((DefaultMutableTreeNode)treePath.getPath()[i]);
+      if (group != null) {
+        path.add(group.getName());
       }
     }
     return getTreePath(0, path, tree.getModel().getRoot());
@@ -216,14 +224,15 @@ public final class CustomizationUtil {
                                        @MagicConstant(intValues = {ActionUrl.ADDED, ActionUrl.DELETED, ActionUrl.MOVE}) int actionType) {
     ActionUrl url = new ActionUrl();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
-      Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
-      if (o instanceof Group) {
-        url.getGroupPath().add(((Group)o).getName());
+      Group group = getGroupForNode((DefaultMutableTreeNode)treePath.getPath()[i]);
+      if (group != null) {
+        url.getGroupPath().add(group.getName());
       }
     }
 
     final DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
-    url.setComponent(component.getUserObject());
+    Object userObj = component.getUserObject();
+    url.setComponent(userObj instanceof Pair<?, ?> pair ? pair.first : userObj);
     final TreeNode parent = component.getParent();
     url.setAbsolutePosition(parent != null ? parent.getIndex(component) : 0);
     url.setActionType(actionType);
@@ -241,8 +250,6 @@ public final class CustomizationUtil {
 
     final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)root);
 
-    final Object userObject = treeNode.getUserObject();
-
     final String pathElement;
     if (path.size() > positionInPath) {
       pathElement = path.get(positionInPath);
@@ -253,9 +260,10 @@ public final class CustomizationUtil {
 
     if (pathElement == null) return null;
 
-    if (!(userObject instanceof Group)) return null;
+    final Group group = getGroupForNode(treeNode);
+    if (group == null) return null;
 
-    if (!pathElement.equals(((Group)userObject).getName())) return null;
+    if (!pathElement.equals(group.getName())) return null;
 
 
     TreePath currentPath = new TreePath(treeNode.getPath());
@@ -275,6 +283,15 @@ public final class CustomizationUtil {
     return currentPath;
   }
 
+  /**
+   * @return group if user object of provided node is {@link Group}, or "{@link Group}, {@link Icon}" pair
+   */
+  @Nullable
+  public static Group getGroupForNode(@NotNull DefaultMutableTreeNode node) {
+    Object userObj = node.getUserObject();
+    Object value = userObj instanceof Pair<?, ?> pair ? pair.first : userObj;
+    return value instanceof Group group ? group : null;
+  }
 
   private static ActionUrl[] getChildUserObjects(DefaultMutableTreeNode node, ActionUrl parent) {
     ArrayList<ActionUrl> result = new ArrayList<>();
@@ -312,6 +329,7 @@ public final class CustomizationUtil {
    *   <li>{@link Group}</li>
    *   <li>{@link String} (action ID)</li>
    *   <li>{@link Pair}&lt;String actionId, Icon customIcon&gt;</li>
+   *   <li>{@link Pair}&lt;Group group, Icon customIcon&gt;</li>
    *   <li>{@link Separator}</li>
    *   <li>{@link QuickList}</li>
    *   </ul>
@@ -348,12 +366,13 @@ public final class CustomizationUtil {
         description = actionId;
       }
     }
-    else if (obj instanceof Pair) {
-      String actionId = (String)((Pair<?, ?>)obj).first;
-      AnAction action = ActionManager.getInstance().getAction(actionId);
+    else if (obj instanceof Pair<?, ?> pair) {
+      Object actionIdOrGroup = pair.first;
+      String actionId = actionIdOrGroup instanceof Group group ? group.getId() : (String)actionIdOrGroup;
+      AnAction action = actionId == null ? null : ActionManager.getInstance().getAction(actionId);
       var t = action != null ? action.getTemplatePresentation().getText() : null;
-      text = StringUtil.isNotEmpty(t) ? t : actionId;
-      Icon actionIcon = (Icon)((Pair<?, ?>)obj).second;
+      text = StringUtil.isNotEmpty(t) ? t : ObjectUtils.notNull(actionId, IdeBundle.message("action.group.name.unnamed.group"));
+      Icon actionIcon = (Icon)pair.second;
       if (actionIcon == null && action != null) {
         actionIcon = action.getTemplatePresentation().getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON);
       }
@@ -471,7 +490,6 @@ public final class CustomizationUtil {
                                      setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
                                      init();
                                      setSize(600, 600);
-                                     setOKButtonText(ActionsBundle.message("apply.toolbar.customization"));
                                    }
 
                                    @Override

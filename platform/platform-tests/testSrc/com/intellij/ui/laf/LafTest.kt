@@ -4,6 +4,7 @@ package com.intellij.ui.laf
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.UsefulTestCase
@@ -53,7 +54,7 @@ class LafTest {
   @Before
   fun beforeMethod() = runBlocking {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      assumeTrue("macOS or Windows 10 are required", SystemInfo.isMacOSMojave || SystemInfo.isWin10OrNewer)
+      assumeTrue("macOS or Windows 10 are required", SystemInfoRt.isMac || SystemInfo.isWin10OrNewer)
     }
 
     changeLafIfNeeded(lafName)

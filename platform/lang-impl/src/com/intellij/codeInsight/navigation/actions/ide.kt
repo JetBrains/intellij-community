@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -10,9 +10,11 @@ import com.intellij.codeInsight.navigation.impl.NavigationRequestor
 import com.intellij.codeInsight.navigation.impl.gtdTargetNavigatable
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.navigation.NavigationRequest
+import com.intellij.navigation.impl.DirectoryNavigationRequest
 import com.intellij.navigation.impl.RawNavigationRequest
 import com.intellij.navigation.impl.SourceNavigationRequest
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
@@ -64,6 +66,9 @@ internal fun navigateRequest(project: Project, request: NavigationRequest) {
         openFileDescriptor.isUsePreviewTab = true
       }
       openFileDescriptor.navigate(true)
+    }
+    is DirectoryNavigationRequest -> {
+      PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, true)
     }
     is RawNavigationRequest -> {
       request.navigatable.navigate(true)
