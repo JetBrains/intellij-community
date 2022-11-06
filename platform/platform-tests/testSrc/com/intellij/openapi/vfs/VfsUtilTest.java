@@ -270,10 +270,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNull(vDir.findChild("xxx//extFiles"));
   }
 
-  @Test(timeout = 20_000)
+  @Test(timeout = 30_000)
   public void testRenameDuringFullRefresh() throws IOException { doRenameAndRefreshTest(true); }
 
-  @Test(timeout = 240_000)
+  @Test(timeout = 120_000)
   public void testRenameDuringPartialRefresh() throws IOException { doRenameAndRefreshTest(false); }
 
   private void doRenameAndRefreshTest(boolean full) throws IOException {
