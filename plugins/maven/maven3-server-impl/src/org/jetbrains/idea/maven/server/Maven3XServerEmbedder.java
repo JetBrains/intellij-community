@@ -24,6 +24,7 @@ import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.ResolutionListener;
+import org.apache.maven.building.FileSource;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
@@ -58,6 +59,11 @@ import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.*;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
+import org.apache.maven.toolchain.building.DefaultToolchainsBuildingRequest;
+import org.apache.maven.toolchain.building.ToolchainsBuilder;
+import org.apache.maven.toolchain.building.ToolchainsBuildingRequest;
+import org.apache.maven.toolchain.building.ToolchainsBuildingResult;
+import org.apache.maven.toolchain.model.PersistedToolchains;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
@@ -121,6 +127,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @NotNull private final DefaultPlexusContainer myContainer;
   @NotNull private final Settings myMavenSettings;
 
+  private final PersistedToolchains myToolchains;
   private final ArtifactRepository myLocalRepository;
   private final Maven3ServerConsoleLogger myConsoleWrapper;
 
@@ -272,6 +279,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     myMavenSettings = buildSettings(settingsBuilder, serverSettings, mySystemProperties,
                                     ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
+    myToolchains = buildToolchains(serverSettings);
+
     myLocalRepository = createLocalRepository();
 
     myRepositorySystem = getComponent(RepositorySystem.class);
@@ -283,6 +292,41 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myContainer.addComponent(importerSpy, MavenImporterSpy.class.getName());
     }
     myImporterSpy = importerSpy;
+  }
+
+  @NotNull
+  private PersistedToolchains buildToolchains(final MavenServerSettings serverSettings) {
+    final ToolchainsBuilder toolchainsBuilder = getComponent(ToolchainsBuilder.class);
+    final ToolchainsBuildingRequest toolchainsBuildingRequest = new DefaultToolchainsBuildingRequest();
+    final String localRepositoryPath = serverSettings.getLocalRepositoryPath();
+
+    if (localRepositoryPath != null) {
+      final File localRepositoryFile = new File(localRepositoryPath).getParentFile();
+      final File localToolchainsFile = new File(localRepositoryFile, "toolchains.xml");
+
+      if (localToolchainsFile.exists()) {
+        toolchainsBuildingRequest.setUserToolchainsSource(new FileSource(localToolchainsFile));
+      }
+    }
+
+    final String mavenHomePath = serverSettings.getMavenHomePath();
+
+    if (mavenHomePath != null) {
+      final File mavenHomeFile = new File(mavenHomePath);
+      final File globalToolchainsFile = new File(mavenHomeFile, "conf/toolchains.xml");
+
+      if (globalToolchainsFile.exists()) {
+        toolchainsBuildingRequest.setGlobalToolchainsSource(new FileSource(globalToolchainsFile));
+      }
+    }
+
+    try {
+      final ToolchainsBuildingResult build = toolchainsBuilder.build(toolchainsBuildingRequest);
+      return build.getEffectiveToolchains();
+    }
+    catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
@@ -1167,13 +1211,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
     try {
-      getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
+      final MavenExecutionRequestPopulator requestPopulator = getComponent(MavenExecutionRequestPopulator.class);
+      requestPopulator.populateFromSettings(result, myMavenSettings);
+      requestPopulator.populateFromToolchains(result, myToolchains);
 
       result.setGoals(goals == null ? Collections.emptyList() : goals);
-
       result.setPom(file);
 
-      getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
+      requestPopulator.populateDefaults(result);
 
       result.setSystemProperties(mySystemProperties);
       Properties userProperties = new Properties();
