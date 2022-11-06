@@ -190,6 +190,15 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             return myConsoleWrapper;
           }
         });
+
+        try {
+          final PluginDependenciesResolver delegateResolver = container.lookup(PluginDependenciesResolver.class);
+          final PluginDependenciesResolver resolver = new CustomPluginDependencyResolver(delegateResolver);
+          container.addComponent(resolver, PluginDependenciesResolver.class, "default");
+        }
+        catch (ComponentLookupException e) {
+          throw new RuntimeException(e);
+        }
       }
     };
 
@@ -853,10 +862,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    if (myServerSettings.isTychoProject()) {
-      request.setDegreeOfConcurrency(2);
-    }
-
     final Collection<MavenExecutionResult> executionResults = new ArrayList<MavenExecutionResult>();
 
     executeWithMavenSession(request, (Runnable)() -> {
@@ -904,7 +909,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
             if (TYCHO_BANNED_PACKAGING.contains(project.getPackaging())) {
               myConsoleWrapper.info("Excluded Tycho " + project + " because of packaging type " + project.getPackaging());
-            } else {
+            }
+            else {
               childProjects.add(project);
             }
           }
@@ -922,7 +928,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
               if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
                 addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
-              } else {
+              }
+              else {
                 final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
                 final boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
                 project.setArtifacts(resolveArtifacts(dependencyResolutionResult, addUnresolved));
@@ -930,7 +937,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
               }
             }
           }
-        } else {
+        }
+        else {
           fillSessionCache(mavenSession, repositorySession, buildingResults);
 
           for (ProjectBuildingResult buildingResult : buildingResults) {
@@ -972,7 +980,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             }
           }
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         executionResults.add(handleException(e));
       }
     });
@@ -1128,34 +1137,38 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   /**
-   * adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
+   * Call Maven's {@link AbstractMavenLifecycleParticipant}s.
    */
-  private void loadExtensions(MavenProject project, List<MavenProject> projects, List<Exception> exceptions) {
-    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-    Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants = getLifecycleParticipants(Collections.singletonList(project));
-    if (!lifecycleParticipants.isEmpty()) {
-      LegacySupport legacySupport = getComponent(LegacySupport.class);
-      MavenSession session = legacySupport.getSession();
-      session.setCurrentProject(project);
-      try {
-        // the method can be removed
-        session.setAllProjects(projects);
-      }
-      catch (NoSuchMethodError ignore) {
-      }
-      session.setProjects(projects);
+  private void loadExtensions(
+    final MavenProject rootProject,
+    final List<MavenProject> projects,
+    final List<Exception> exceptions
+  ) {
+    final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+    final Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants =
+      getLifecycleParticipants(Collections.singletonList(rootProject));
 
-      for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
-        Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
-        try {
-          listener.afterProjectsRead(session);
-        }
-        catch (Exception e) {
-          exceptions.add(e);
-        }
-        finally {
-          Thread.currentThread().setContextClassLoader(originalClassLoader);
-        }
+    if (lifecycleParticipants.isEmpty()) {
+      return;
+    }
+
+    final LegacySupport legacySupport = getComponent(LegacySupport.class);
+    final MavenSession session = legacySupport.getSession();
+    session.setCurrentProject(rootProject);
+    session.setAllProjects(projects);
+    session.setProjects(projects);
+
+    for (final AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
+      Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+
+      try {
+        listener.afterProjectsRead(session);
+      }
+      catch (final Exception e) {
+        exceptions.add(e);
+      }
+      finally {
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
       }
     }
   }
