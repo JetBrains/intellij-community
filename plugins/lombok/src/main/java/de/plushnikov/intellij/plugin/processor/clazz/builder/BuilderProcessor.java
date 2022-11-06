@@ -63,8 +63,16 @@ public class BuilderProcessor extends AbstractClassProcessor {
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
+    addJacksonizedAnnotation(psiClass, result);
     addFieldsAnnotation(result, psiClass, SINGULAR_CLASS, BUILDER_DEFAULT_CLASS);
     return result;
+  }
+
+  private static void addJacksonizedAnnotation(@NotNull PsiClass psiClass, Collection<PsiAnnotation> result) {
+    final PsiAnnotation jacksonizedAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokClassNames.JACKSONIZED);
+    if(null!=jacksonizedAnnotation) {
+      result.add(jacksonizedAnnotation);
+    }
   }
 
   @Override

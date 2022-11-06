@@ -97,7 +97,8 @@ public final class LombokProcessorManager {
       application.getService(DelegateMethodProcessor.class),
 
       application.getService(CleanupProcessor.class),
-      application.getService(SynchronizedProcessor.class)
+      application.getService(SynchronizedProcessor.class),
+      application.getService(JacksonizedProcessor.class)
     );
   }
 

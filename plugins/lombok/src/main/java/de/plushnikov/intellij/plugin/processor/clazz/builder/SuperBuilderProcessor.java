@@ -6,6 +6,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -31,8 +32,16 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
+    addJacksonizedAnnotation(psiClass, result);
     addFieldsAnnotation(result, psiClass, BuilderProcessor.SINGULAR_CLASS, BuilderProcessor.BUILDER_DEFAULT_CLASS);
     return result;
+  }
+
+  private static void addJacksonizedAnnotation(@NotNull PsiClass psiClass, Collection<PsiAnnotation> result) {
+    final PsiAnnotation jacksonizedAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokClassNames.JACKSONIZED);
+    if(null!=jacksonizedAnnotation) {
+      result.add(jacksonizedAnnotation);
+    }
   }
 
   @Override

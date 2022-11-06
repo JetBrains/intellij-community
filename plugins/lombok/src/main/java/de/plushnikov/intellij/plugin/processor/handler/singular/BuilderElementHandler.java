@@ -33,6 +33,10 @@ public interface BuilderElementHandler {
     return calcBuilderMethodName(info) + '(' + info.getInstanceVariableName() + '.' + info.getVariable().getName() + ')';
   }
 
+  default String renderToBuilderAppendCall(@NotNull BuilderInfo info) {
+    return "";
+  }
+
   Collection<PsiField> renderBuilderFields(@NotNull BuilderInfo info);
 
   default String calcBuilderMethodName(@NotNull BuilderInfo info) {

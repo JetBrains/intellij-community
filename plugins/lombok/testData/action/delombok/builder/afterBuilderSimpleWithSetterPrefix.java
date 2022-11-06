@@ -1,44 +1,44 @@
 public class BuilderSimpleWithSetterPrefix {
-  private int myInt;
-  private String myString;
-
-  BuilderSimpleWithSetterPrefix(int myInt, String myString) {
-    this.myInt = myInt;
-    this.myString = myString;
-  }
-
-  public static void main(String[] args) {
-    BuilderSimpleWithSetterPrefix builderSimple = BuilderSimpleWithSetterPrefix.builder().setMyInt(123).setMyString("string").build();
-    System.out.println(builderSimple);
-  }
-
-  public static BuilderSimpleWithSetterPrefixBuilder builder() {
-    return new BuilderSimpleWithSetterPrefixBuilder();
-  }
-
-  public static class BuilderSimpleWithSetterPrefixBuilder {
     private int myInt;
     private String myString;
 
-    BuilderSimpleWithSetterPrefixBuilder() {
+    BuilderSimpleWithSetterPrefix(int myInt, String myString) {
+        this.myInt = myInt;
+        this.myString = myString;
     }
 
-    public BuilderSimpleWithSetterPrefixBuilder setMyInt(int myInt) {
-      this.myInt = myInt;
-      return this;
+    public static void main(String[] args) {
+        BuilderSimpleWithSetterPrefix builderSimple = BuilderSimpleWithSetterPrefix.builder().setMyInt(123).setMyString("string").build();
+        System.out.println(builderSimple);
     }
 
-    public BuilderSimpleWithSetterPrefixBuilder setMyString(String myString) {
-      this.myString = myString;
-      return this;
+    public static BuilderSimpleWithSetterPrefixBuilder builder() {
+        return new BuilderSimpleWithSetterPrefixBuilder();
     }
 
-    public BuilderSimpleWithSetterPrefix build() {
-      return new BuilderSimpleWithSetterPrefix(this.myInt, this.myString);
-    }
+    public static class BuilderSimpleWithSetterPrefixBuilder {
+        private int myInt;
+        private String myString;
 
-    public String toString() {
-      return "BuilderSimpleWithSetterPrefix.BuilderSimpleWithSetterPrefixBuilder(myInt=" + this.myInt + ", myString=" + this.myString + ")";
+        BuilderSimpleWithSetterPrefixBuilder() {
+        }
+
+        public BuilderSimpleWithSetterPrefixBuilder setMyInt(int myInt) {
+            this.myInt = myInt;
+            return this;
+        }
+
+        public BuilderSimpleWithSetterPrefixBuilder setMyString(String myString) {
+            this.myString = myString;
+            return this;
+        }
+
+        public BuilderSimpleWithSetterPrefix build() {
+            return new BuilderSimpleWithSetterPrefix(this.myInt, this.myString);
+        }
+
+        public String toString() {
+            return "BuilderSimpleWithSetterPrefix.BuilderSimpleWithSetterPrefixBuilder(myInt=" + this.myInt + ", myString=" + this.myString + ")";
+        }
     }
-  }
 }

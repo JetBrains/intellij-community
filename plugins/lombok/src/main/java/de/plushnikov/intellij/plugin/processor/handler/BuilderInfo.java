@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
@@ -14,6 +15,7 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -316,7 +318,35 @@ public class BuilderInfo {
     return hasBuilderDefaultAnnotation ? "$default$" + fieldInBuilderName : null;
   }
 
-  public CharSequence renderToBuilderCall() {
+  public CharSequence renderToBuilderPrependStatement() {
+    if (hasObtainViaAnnotation() && StringUtil.isNotEmpty(viaMethodName)) {
+      final StringBuilder result = new StringBuilder();
+      result.append(PsiModifier.FINAL);
+      result.append(' ');
+      result.append(fieldInBuilderType.getCanonicalText(false));
+      result.append(' ');
+      result.append(fieldInBuilderName);
+      result.append(" = ");
+      result.append(viaStaticCall ? getPsiClass().getQualifiedName() : instanceVariableName);
+      result.append('.');
+      //TODO should generate '<T>' here for generic methods
+      result.append(viaMethodName);
+      result.append(viaStaticCall ? "(" + instanceVariableName + ")" : "()");
+      result.append(';');
+      return result;
+    }
+    return "";
+  }
+
+  public CharSequence renderToBuilderCallWithPrependLogic() {
+    return renderToBuilderCall(true);
+  }
+
+  public CharSequence renderToBuilderCallWithoutPrependLogic() {
+    return renderToBuilderCall(false);
+  }
+
+  private CharSequence renderToBuilderCall(boolean usePrependLogic) {
     if (hasObtainViaAnnotation()) {
       final StringBuilder result = new StringBuilder();
       result.append(fieldInBuilderName);
@@ -324,19 +354,30 @@ public class BuilderInfo {
       if (StringUtil.isNotEmpty(viaFieldName)) {
         result.append(instanceVariableName).append(".").append(viaFieldName);
       } else if (StringUtil.isNotEmpty(viaMethodName)) {
-
-        result.append(viaStaticCall ? getPsiClass().getName() : instanceVariableName);
-        result.append('.');
-        result.append(viaMethodName);
-        result.append(viaStaticCall ? "(" + instanceVariableName + ")" : "()");
+        if(usePrependLogic) {//call to 'viaMethodName' is rendered as prepend statement
+          result.append(fieldInBuilderName);
+        } else {
+          result.append(viaStaticCall ? getPsiClass().getQualifiedName() : instanceVariableName);
+          result.append('.');
+          result.append(viaMethodName);
+          result.append(viaStaticCall ? "(" + instanceVariableName + ")" : "()");
+        }
       } else {
         result.append(instanceVariableName).append(".").append(variableInClass.getName());
       }
       result.append(')');
       return result;
     } else {
-      return builderElementHandler.renderToBuilderCall(this);
+      if(!usePrependLogic || !hasSingularAnnotation()) {
+        return builderElementHandler.renderToBuilderCall(this);
+      } else {
+        return "";
+      }
     }
+  }
+
+  public CharSequence renderToBuilderAppendStatement() {
+    return builderElementHandler.renderToBuilderAppendCall(this);
   }
 
   private PsiClass getPsiClass() {

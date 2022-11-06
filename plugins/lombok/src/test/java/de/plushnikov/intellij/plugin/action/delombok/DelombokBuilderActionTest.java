@@ -50,4 +50,8 @@ public class DelombokBuilderActionTest extends LombokLightActionTestCase {
   public void testBuilderCopyableAnnotations() throws Exception {
     doTest();
   }
+
+  public void testBuilderJacksonized() throws Exception {
+    doTest();
+  }
 }

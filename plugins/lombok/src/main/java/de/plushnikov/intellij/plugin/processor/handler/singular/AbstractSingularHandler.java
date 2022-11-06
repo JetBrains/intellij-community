@@ -19,6 +19,8 @@ import java.util.*;
 
 public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
+  private static final String BUILDER_TEMP_VAR = "builder";
+
   final String collectionQualifiedName;
 
   AbstractSingularHandler(String qualifiedName) {
@@ -119,10 +121,16 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   @Override
   public String renderToBuilderCall(@NotNull BuilderInfo info) {
     final String instanceGetter = info.getInstanceVariableName() + '.' + info.getVariable().getName();
-    return info.getFieldName() + '(' + instanceGetter + " == null ? " + getEmptyCollectionCall() + " : " + instanceGetter + ')';
+    return info.getFieldName() + '(' + instanceGetter + " == null ? " + getEmptyCollectionCall(info) + " : " + instanceGetter + ')';
   }
 
-  protected abstract String getEmptyCollectionCall();
+  @Override
+  public String renderToBuilderAppendCall(@NotNull BuilderInfo info) {
+    final String instanceGetter = info.getInstanceVariableName() + '.' + info.getVariable().getName();
+    return "if(" + instanceGetter + " != null) "+BUILDER_TEMP_VAR +"."+info.getFieldName() +'('+ instanceGetter + ");";
+  }
+
+  protected abstract String getEmptyCollectionCall(@NotNull BuilderInfo info);
 
   protected abstract String getClearMethodBody(@NotNull BuilderInfo info);
 

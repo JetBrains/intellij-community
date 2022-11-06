@@ -60,6 +60,7 @@ class SingularCollectionHandler extends AbstractSingularHandler {
   @Override
   protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = """
+      if({0}==null)'{'throw new NullPointerException("{0} cannot be null");'}'
       if (this.{0} == null) this.{0} = new java.util.ArrayList<{2}>();\s
       this.{0}.addAll({0});
       return {1};""";
@@ -138,12 +139,14 @@ class SingularCollectionHandler extends AbstractSingularHandler {
   }
 
   @Override
-  protected String getEmptyCollectionCall() {
+  protected String getEmptyCollectionCall(@NotNull BuilderInfo info) {
+    final PsiType elementType = PsiTypeUtil.extractOneElementType(info.getVariable().getType(), info.getManager());
+    final String typeName = elementType.getCanonicalText(false);
     if (ContainerUtil.exists(SingularCollectionClassNames.JAVA_SETS, collectionQualifiedName::equals)) {
-      return "java.util.Collections.emptySet()";
+      return "java.util.Collections.<"+typeName+">emptySet()";
     }
     else {
-      return "java.util.Collections.emptyList()";
+      return "java.util.Collections.<"+typeName+">emptyList()";
     }
   }
 }

@@ -17,7 +17,7 @@ public abstract class LombokLightActionTestCase extends AbstractLombokLightCodeI
   protected void doTest() throws Exception {
     myFixture.configureByFile("/before" + getTestName(false) + ".java");
     performActionTest();
-    checkResultByFile( "/after" + getTestName(false) + ".java");
+    myFixture.checkResultByFile("/after" + getTestName(false) + ".java", true);
   }
 
   private void performActionTest() throws TimeoutException, ExecutionException {
