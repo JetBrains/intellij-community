@@ -37,6 +37,8 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
     this.workingDirectory = TargetValue.fixed(workingDirectory)
   }
 
+  fun getParameters(): List<TargetValue<String>> = parameters
+
   fun addParameter(parameter: TargetValue<String>) {
     parameters.add(parameter)
   }
