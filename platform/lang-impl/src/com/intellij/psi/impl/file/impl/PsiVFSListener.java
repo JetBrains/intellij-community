@@ -13,10 +13,8 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -598,13 +596,10 @@ public final class PsiVFSListener implements BulkFileListener {
   private PsiFile createFileCopyWithNewName(VirtualFile vFile, String name) {
     // TODO[ik] remove this. Event handling and generation must be in view providers mechanism since we
     // need to track changes in _all_ psi views (e.g. namespace changes in XML)
-    final FileTypeManager instance = FileTypeManager.getInstance();
-    if(instance.isFileIgnored(name)) return null;
-    final FileType fileTypeByFileName = instance.getFileTypeByFileName(name);
-    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    return PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(name, fileTypeByFileName,
-                                                                                 document != null ? document.getCharsSequence() : "", vFile.getModificationStamp(),
-                                                                                 true, false);
+    var typeManager = FileTypeManager.getInstance();
+    if (typeManager.isFileIgnored(name)) return null;
+    var fileType = typeManager.getFileTypeByFileName(name);
+    return PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(name, fileType, "", vFile.getModificationStamp(), true, false);
   }
 
   private static final class MyModuleRootListener implements ModuleRootListener {
