@@ -38,7 +38,7 @@
 
     <registryKey key="settingsSync.autoSync.on.focus" defaultValue="true"
                  description="Settings will be automatically synced when the application receives the focus"/>
-    <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="60"
+    <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="300"
                  description="Settings will be automatically synced with the server every N seconds.
                               Settings the value to 0 or less disables syncing by timer."/>
 
