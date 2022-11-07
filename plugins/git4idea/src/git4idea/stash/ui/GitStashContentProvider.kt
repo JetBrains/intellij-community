@@ -4,11 +4,12 @@ package git4idea.stash.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -26,6 +27,8 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.Content
 import git4idea.i18n.GitBundle
 import git4idea.stash.GitStashTracker
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -110,7 +113,7 @@ internal class GitStashDisplayNameSupplier : Supplier<String> {
   }
 }
 
-internal class GitStashStartupActivity : StartupActivity.DumbAware {
+internal class GitStashStartupActivity : ProjectPostStartupActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
@@ -118,20 +121,21 @@ internal class GitStashStartupActivity : StartupActivity.DumbAware {
     }
   }
 
-  override fun runActivity(project: Project) {
-    ApplicationManager.getApplication().invokeLater({
-        val gitStashTracker = project.service<GitStashTracker>()
-        stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
-          override fun afterValueChanged(value: RegistryValue) {
-            gitStashTracker.scheduleRefresh()
-            project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-          }
-        }, gitStashTracker)
-      }) { project.isDisposed }
+  override suspend fun execute(project: Project) {
+    val gitStashTracker = project.service<GitStashTracker>()
+    withContext(Dispatchers.EDT) {
+      stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          gitStashTracker.scheduleRefresh()
+          project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+        }
+      }, gitStashTracker)
+    }
   }
 }
 
-fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow")
-fun isStashToolWindowEnabled(project: Project): Boolean {
+internal fun stashToolWindowRegistryOption(): RegistryValue = Registry.get("git.enable.stash.toolwindow")
+
+internal fun isStashToolWindowEnabled(project: Project): Boolean {
   return ShelvedChangesViewManager.hideDefaultShelfTab(project)
 }
