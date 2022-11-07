@@ -133,7 +133,7 @@ internal class NavBarVmImpl(
     val nextItem = items.getOrNull(index + 1)?.item
     popupLoop(items.slice(0..index).map { it.item }, NavBarPopupVmImpl(
       items = children,
-      initialSelectedItemIndex = children.indexOf(nextItem),
+      initialSelectedItemIndex = children.indexOf(nextItem).coerceAtLeast(0),
     ))
   }
 
@@ -163,7 +163,7 @@ internal class NavBarVmImpl(
         _selectedIndex.value = lastIndex
         popupLoop(newItems, NavBarPopupVmImpl(
           items = expandResult.children,
-          initialSelectedItemIndex = -1,
+          initialSelectedItemIndex = 0,
         ))
       }
     }
