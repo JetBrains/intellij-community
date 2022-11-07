@@ -77,6 +77,7 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    * Currently only static inspection of the remote environment variables and launching and inspecting the output of the shell scripts is supported.
    */
   abstract class Introspectable {
+    abstract val targetPlatform: CompletableFuture<TargetPlatform>
     open fun promiseEnvironmentVariable(varName: String): CompletableFuture<String?> = CompletableFuture.completedFuture(null)
     open fun promiseExecuteScript(script: List<String>): CompletableFuture<ProcessOutput> =
       CompletableFuture.failedFuture(UnsupportedOperationException())

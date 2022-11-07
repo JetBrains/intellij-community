@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target.wizard
 
+import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessRunner
 import com.intellij.execution.process.KillableProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.LanguageRuntimeType
+import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.wsl.WSLCommandLineOptions
@@ -20,6 +22,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
 class WslTargetIntrospectable(val distribution: WSLDistribution, val console: ConsoleView) : LanguageRuntimeType.Introspectable() {
+  override val targetPlatform: CompletableFuture<TargetPlatform> = CompletableFuture.completedFuture(TargetPlatform(Platform.UNIX))
 
   override fun promiseEnvironmentVariable(varName: String): CompletableFuture<String?> {
     try {
