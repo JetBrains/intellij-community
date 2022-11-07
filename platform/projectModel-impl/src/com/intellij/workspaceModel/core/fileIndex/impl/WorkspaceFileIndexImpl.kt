@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
@@ -107,8 +108,8 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     indexData?.resetCustomContributors()
   }
 
-  override fun markDirty(entities: Collection<WorkspaceEntity>, filesToInvalidate: Collection<VirtualFile>) {
-    indexData?.markDirty(entities, filesToInvalidate)
+  override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) {
+    indexData?.markDirty(entityReferences, filesToInvalidate)
   }
 
   override fun updateDirtyEntities() {

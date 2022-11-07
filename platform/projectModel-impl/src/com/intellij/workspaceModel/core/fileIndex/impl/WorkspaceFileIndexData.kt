@@ -30,7 +30,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
   private val storeFileSetRegistrar = StoreFileSetsRegistrarImpl()
   private val removeFileSetRegistrar = RemoveFileSetsRegistrarImpl()
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
-  private val dirtyEntities = HashSet<WorkspaceEntity>()
+  private val dirtyEntities = HashSet<EntityReference<WorkspaceEntity>>()
   private val dirtyFiles = HashSet<VirtualFile>()
   @Volatile
   private var hasDirtyEntities = false
@@ -212,7 +212,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     resetFileCache()
   }
 
-  fun markDirty(entities: Collection<WorkspaceEntity>, files: Collection<VirtualFile>) {
+  fun markDirty(entities: Collection<EntityReference<WorkspaceEntity>>, files: Collection<VirtualFile>) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     dirtyEntities.addAll(entities)
     dirtyFiles.addAll(files)
@@ -233,7 +233,8 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       fileSets.remove(file)
     }
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
-    for (entity in dirtyEntities) {
+    for (reference in dirtyEntities) {
+      val entity = reference.resolve(storage) ?: continue
       unregisterFileSets(entity, entity.getEntityInterface(), storage)
       registerFileSets(entity, entity.getEntityInterface(), storage)
     }
