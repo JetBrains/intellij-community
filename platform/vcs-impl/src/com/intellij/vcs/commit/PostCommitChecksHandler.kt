@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.checkin.*
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitProblemPlace
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -192,6 +193,7 @@ class PostCommitChecksHandler(val project: Project) {
 
       for (problem in problems.filterIsInstance<CommitProblemWithDetails>()) {
         notification.addAction(NotificationAction.createSimple(problem.showDetailsAction) {
+          CommitSessionCollector.getInstance(project).logCommitProblemViewed(problem, CommitProblemPlace.NOTIFICATION)
           problem.showDetails(project)
         })
       }
@@ -221,6 +223,7 @@ class PostCommitChecksHandler(val project: Project) {
         if (problem is CommitProblemWithDetails) {
           panel.createActionLabel(problem.showDetailsAction.dropMnemonic()) {
             closeDialog.run()
+            CommitSessionCollector.getInstance(project).logCommitProblemViewed(problem, CommitProblemPlace.PUSH_DIALOG)
             problem.showDetails(project)
           }
         }

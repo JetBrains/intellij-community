@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.nullize
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
+import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitProblemPlace
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.lang.Runnable
@@ -264,7 +265,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private fun appendShowDetailsNotificationActions(notification: Notification, failures: List<CommitCheckFailure>) {
     for (failure in failures.filterIsInstance<CommitCheckFailure.WithDetails>()) {
-      notification.addAction(NotificationAction.create(failure.viewDetailsActionText) { _, _ -> failure.viewDetails() })
+      notification.addAction(NotificationAction.create(failure.viewDetailsActionText) { _, _ ->
+        failure.viewDetails(CommitProblemPlace.NOTIFICATION)
+      })
     }
 
     val hasGenericFailure = failures.any { it !is CommitCheckFailure.WithDetails }
@@ -425,7 +428,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   private fun reportCommitCheckFailure(problem: CommitProblem) {
     val checkFailure = when (problem) {
       is UnknownCommitProblem -> CommitCheckFailure.Unknown
-      is CommitProblemWithDetails -> CommitCheckFailure.WithDetails(problem.text, problem.showDetailsLink, problem.showDetailsAction) {
+      is CommitProblemWithDetails -> CommitCheckFailure.WithDetails(problem.text, problem.showDetailsLink,
+                                                                    problem.showDetailsAction) { place ->
+        CommitSessionCollector.getInstance(project).logCommitProblemViewed(problem, place)
         problem.showDetails(project)
       }
       else -> CommitCheckFailure.WithDescription(problem.text)
