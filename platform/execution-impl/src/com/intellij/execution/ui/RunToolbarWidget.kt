@@ -876,10 +876,6 @@ private class ExecutionReasonableHistoryManager : ProjectPostStartupActivity {
         if (reason == RunState.SCHEDULED) {
           RunConfigurationStartHistory.getInstance(env.project).register(conf, env.executor.id, reason)
         }
-        val runManager = RunManager.getInstance(env.project)
-        if (reason.isRunningState() && ExperimentalUI.isNewUI() && !runManager.isRunWidgetActive()) {
-          runManager.selectedConfiguration = conf
-        }
         ActivityTracker.getInstance().inc()
       } ?: thisLogger().warn(
         "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
