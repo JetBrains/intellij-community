@@ -6,10 +6,8 @@ import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.observable.operation.core.ObservableOperationTrace
-import com.intellij.openapi.observable.operation.core.isOperationInProgress
-import com.intellij.openapi.observable.operation.core.whenOperationFinished
-import com.intellij.openapi.observable.operation.core.whenOperationStarted
+import com.intellij.openapi.observable.operation.core.*
+import com.intellij.openapi.observable.properties.ObservableBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.bind
@@ -94,15 +92,18 @@ internal fun <T, C : CardLayoutPanel<T, *, *>> C.bind(property: ObservableProper
   property.afterChange { select(it, true) }
 }
 
-internal fun <C : JBLoadingPanel> C.bind(operation: ObservableOperationTrace): C = apply {
-  if (operation.isOperationInProgress()) {
+internal fun <C : JBLoadingPanel> C.bind(operation: ObservableOperationTrace): C =
+  bind(operation.getOperationInProgressProperty())
+
+internal fun <C : JBLoadingPanel> C.bind(property: ObservableBooleanProperty): C = apply {
+  if (property.get()) {
     startLoading()
   }
   else {
     stopLoading()
   }
-  operation.whenOperationStarted { startLoading() }
-  operation.whenOperationFinished { stopLoading() }
+  property.afterSet { startLoading() }
+  property.afterReset { stopLoading() }
 }
 
 internal fun <C : JBLoadingPanel> C.bindLoadingText(property: ObservableProperty<@Nls String>): C = apply {
