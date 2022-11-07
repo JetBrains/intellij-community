@@ -26,10 +26,10 @@ final class FusFreezeReporter implements IdePerformanceListener {
     final long elapsedMs = TimeUnit.NANOSECONDS.toMillis(currentTime - myPreviousLoggedUIResponse);
     if (elapsedMs >= IdeHeartbeatEventReporter.UI_RESPONSE_LOGGING_INTERVAL_MS) {
       myPreviousLoggedUIResponse = currentTime;
-      UILatencyLogger.LATENCY.log(latencyMs);
+      IdeHeartbeatEventReporter.UILatencyLogger.LATENCY.log(latencyMs);
     }
     if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
-      UILatencyLogger.LAGGING.log(latencyMs);
+      IdeHeartbeatEventReporter.UILatencyLogger.LAGGING.log(latencyMs);
     }
   }
 }
