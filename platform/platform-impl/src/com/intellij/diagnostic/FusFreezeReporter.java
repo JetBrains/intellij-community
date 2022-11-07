@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-class FusFreezeReporter implements IdePerformanceListener {
+final class FusFreezeReporter implements IdePerformanceListener {
   final boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
   private volatile long myPreviousLoggedUIResponse = 0;
   private static final int TOLERABLE_UI_LATENCY = 100;
