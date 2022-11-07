@@ -25,7 +25,13 @@
     <orderEntry type="library" scope="TEST" name="JUnit5Launcher" level="project" />
     <orderEntry type="module-library">
       <library name="kinference.core.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:inference-core-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-core-jvm:0.2.0">
+           <exclude>
+             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+           </exclude>
+         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.0/inference-core-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -37,7 +43,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.ndarray.api.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:ndarray-api-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:ndarray-api-jvm:0.2.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.0/ndarray-api-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -49,7 +61,14 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.primitives.annotations.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference.primitives:primitives-annotations-jvm:0.1.19" />
+        <properties include-transitive-deps="false" maven-id="io.kinference.primitives:primitives-annotations-jvm:0.1.19">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.19/primitives-annotations-jvm-0.1.19.jar!/" />
         </CLASSES>
@@ -61,7 +80,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.ndarray.core.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:ndarray-core-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:ndarray-core-jvm:0.2.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.0/ndarray-core-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -73,7 +98,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.api.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:inference-api-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-api-jvm:0.2.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.0/inference-api-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -85,7 +116,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.ir.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:inference-ir-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-ir-jvm:0.2.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.0/inference-ir-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -97,7 +134,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.serializer.protobuf.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:serializer-protobuf-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:serializer-protobuf-jvm:0.2.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.0/serializer-protobuf-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -109,7 +152,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.model.profiler.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:model-profiler-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:model-profiler-jvm:0.2.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/model-profiler-jvm/0.2.0/model-profiler-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -121,7 +170,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.common.utils.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:common-utils-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:common-utils-jvm:0.2.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/common-utils-jvm/0.2.0/common-utils-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -133,7 +188,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.serializer.tiled.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:serializer-tiled-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:serializer-tiled-jvm:0.2.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.0/serializer-tiled-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -145,7 +206,14 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.logger.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference:logger-jvm:0.2.0" />
+        <properties include-transitive-deps="false" maven-id="io.kinference:logger-jvm:0.2.0">
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/logger-jvm/0.2.0/logger-jvm-0.2.0.jar!/" />
         </CLASSES>
@@ -167,7 +235,11 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="java-string-similarity" type="repository">
-        <properties include-transitive-deps="false" maven-id="info.debatty:java-string-similarity:2.0.0" />
+        <properties include-transitive-deps="false" maven-id="info.debatty:java-string-similarity:2.0.0">
+          <exclude>
+            <dependency maven-id="net.jcip:jcip-annotations" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0.jar!/" />
         </CLASSES>
@@ -194,7 +266,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="squareup.wire.runtime.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.squareup.wire:wire-runtime-jvm:4.3.0" />
+        <properties include-transitive-deps="false" maven-id="com.squareup.wire:wire-runtime-jvm:4.3.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.3.0/wire-runtime-jvm-4.3.0.jar!/" />
         </CLASSES>
@@ -206,7 +284,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="squareup.okio.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.squareup.okio:okio-jvm:3.0.0" />
+        <properties include-transitive-deps="false" maven-id="com.squareup.okio:okio-jvm:3.0.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0.jar!/" />
         </CLASSES>
