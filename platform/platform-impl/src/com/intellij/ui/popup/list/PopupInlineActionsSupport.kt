@@ -12,7 +12,7 @@ import javax.swing.JList
 private val Empty = object : PopupInlineActionsSupport {
   override fun calcExtraButtonsCount(element: Any?): Int = 0
   override fun calcButtonIndex(element: Any?, point: Point): Int? = null
-  override fun runInlineAction(element: Any?, index: Int, event: InputEvent?) = false
+  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?) = InlineActionDescriptor({}, false)
   override fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent> = emptyList()
   override fun getActiveButtonIndex(list: JList<*>): Int? = null
   override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any?): String? = null
@@ -26,7 +26,7 @@ internal interface PopupInlineActionsSupport {
 
   fun calcButtonIndex(element: Any?, point: Point): Int?
 
-  fun runInlineAction(element: Any?, index: Int, event: InputEvent? = null) : Boolean
+  fun getInlineAction(element: Any?, index: Int, event: InputEvent? = null) : InlineActionDescriptor
 
   fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent>
 

@@ -37,21 +37,18 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     return calcButtonIndex(myListPopup.list, buttonsCount, point)
   }
 
-  override fun runInlineAction(element: Any?, index: Int, event: InputEvent?) : Boolean {
-    val pair = getExtraButtonsActions(element, event)[index]
-    pair.first.run()
-    return pair.second
-  }
+  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?) : InlineActionDescriptor =
+    getExtraButtonsActions(element, event)[index]
 
-  private fun getExtraButtonsActions(element: Any?, event: InputEvent?): List<Pair<Runnable, Boolean>> {
+  private fun getExtraButtonsActions(element: Any?, event: InputEvent?): List<InlineActionDescriptor> {
     if (!ExperimentalUI.isNewUI() || element !is ActionItem) return emptyList()
 
-    val res: MutableList<Pair<Runnable, Boolean>> = mutableListOf()
+    val res: MutableList<InlineActionDescriptor> = mutableListOf()
 
     res.addAll(myStep.getInlineActions(element).map {
-      item: InlineActionItem -> Pair(createInlineActionRunnable(item.action, event), true)
+      item: InlineActionItem -> InlineActionDescriptor(createInlineActionRunnable(item.action, event), true)
     })
-    if (hasMoreButton(element)) res.add(Pair(createNextStepRunnable(element), false))
+    if (hasMoreButton(element)) res.add(InlineActionDescriptor(createNextStepRunnable(element), false))
     return res
   }
 
