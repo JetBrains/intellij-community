@@ -51,9 +51,9 @@ class PatternHighlightingModel {
       PsiType patternType = JavaPsiPatternUtil.getPatternType(patternComponent);
       if (patternType == null ||
           !recordType.equals(patternType) && !JavaPsiPatternUtil.dominates(recordType, patternType)) {
-        HighlightInfo info =
+        HighlightInfo.Builder info =
           HighlightUtil.createIncompatibleTypeHighlightInfo(recordType, patternType, patternComponent.getTextRange(), 0);
-        holder.add(info);
+        holder.add(info.create());
       }
       if (patternComponent instanceof PsiDeconstructionPattern) {
         createDeconstructionErrors((PsiDeconstructionPattern)patternComponent, holder);

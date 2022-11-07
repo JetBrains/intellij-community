@@ -260,7 +260,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
                             info.type, fixedTextRange.getStartOffset(),
                             fixedTextRange.getEndOffset(),
                             info.getDescription(), info.getToolTip(), info.getSeverity(),
-                            info.isAfterEndOfLine(), null, false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup());
+                            info.isAfterEndOfLine(), null, false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
         patched.markFromInjection();
         outInfos.add(patched);
       }
@@ -323,12 +323,8 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup());
+                          false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
       patched.setHint(info.hasHint());
-      PsiReference unresolvedReference = info.unresolvedReference;
-      if (unresolvedReference != null) {
-        patched.setUnresolvedReference(unresolvedReference);
-      }
 
       info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
         List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);

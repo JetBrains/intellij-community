@@ -97,7 +97,7 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
 
   public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
                                         @NotNull PsiExpressionList arguments,
-                                        @Nullable HighlightInfo highlightInfo,
+                                        @NotNull HighlightInfo.Builder highlightInfo,
                                         TextRange fixRange) {
     for (JavaResolveResult candidate : candidates) {
       registerIntention(arguments, highlightInfo, fixRange, candidate);
@@ -105,15 +105,15 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
   }
 
   public static void registerIntentions(@NotNull PsiExpressionList arguments,
-                                        @Nullable HighlightInfo highlightInfo,
+                                        @NotNull HighlightInfo.Builder highlightInfo,
                                         TextRange fixRange) {
     if (!arguments.isEmpty()) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ForImplicitConstructorAction(arguments));
+      highlightInfo.registerFix(new ForImplicitConstructorAction(arguments), null, null, fixRange, null);
     }
   }
 
   private static void registerIntention(@NotNull PsiExpressionList arguments,
-                                        @Nullable HighlightInfo highlightInfo,
+                                        @NotNull HighlightInfo.Builder builder,
                                         TextRange fixRange,
                                         @NotNull JavaResolveResult candidate) {
     if (!candidate.isStaticsScopeCorrect()) return;
@@ -126,8 +126,8 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
       // Avoid creating recursive constructor call
       return;
     }
-    QuickFixAction
-      .registerQuickFixAction(highlightInfo, fixRange, new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor));
+    IntentionAction action = new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor);
+    builder.registerFix(action, null, null, fixRange, null);
   }
 
   @Override

@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.problems.pass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.problems.Problem;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
@@ -157,14 +156,12 @@ public final class ProjectProblemUtils {
     TextAttributes attributes = new TextAttributes(null, null, textColor, null, Font.PLAIN);
     String memberName = UsageViewUtil.getLongName(member);
 
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
       .range(identifier.getTextRange())
       .textAttributes(attributes)
       .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", memberName))
+      .registerFix(new ShowRelatedProblemsAction(), null, null, null, null)
       .createUnconditionally();
-
-    QuickFixAction.registerQuickFixAction(info, new ShowRelatedProblemsAction());
-    return info;
   }
 
   static boolean isProjectUpdated(@NotNull PsiJavaFile psiJavaFile, @NotNull Editor editor) {

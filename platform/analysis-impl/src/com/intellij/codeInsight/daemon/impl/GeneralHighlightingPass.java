@@ -343,11 +343,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       for (HighlightVisitor visitor : visitors) {
         try {
           visitor.visit(element);
-
-          // assume that the visitor is done messing with just created HighlightInfo after its visit() method completed,
-          // so we can start applying them incrementally at last.
-          // (but not sooner, thanks to awfully racey HighlightInfo.setXXX() and .registerFix() API)
-          holder.queueToUpdateIncrementally();
         }
         catch (ProcessCanceledException | IndexNotReadyException e) {
           throw e;
@@ -460,25 +455,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(file, filters) {
-      int queued; // all infos at [0..queued) indices are scheduled to EDT via queueInfoToUpdateIncrementally()
       @Override
       public @NotNull TextAttributesScheme getColorsScheme() {
         return actualScheme;
       }
-
       @Override
-      public void queueToUpdateIncrementally() {
-        for (int i = queued; i < size(); i++) {
-          HighlightInfo info = get(i);
+      public boolean add(@Nullable HighlightInfo info) {
+        boolean added = super.add(info);
+        if (info != null && added) {
           queueInfoToUpdateIncrementally(info);
         }
-        queued = size();
-      }
-
-      @Override
-      public void clear() {
-        super.clear();
-        queued = 0;
+        return added;
       }
     };
   }

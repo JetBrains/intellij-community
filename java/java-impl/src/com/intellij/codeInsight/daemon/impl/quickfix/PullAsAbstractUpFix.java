@@ -17,8 +17,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -28,21 +28,19 @@ import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandlerBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 
 public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(PullAsAbstractUpFix.class);
@@ -152,7 +150,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return false;
   }
 
-  public static void registerQuickFix(@NotNull PsiMethod methodWithOverrides, @NotNull QuickFixActionRegistrar registrar) {
+  public static void registerQuickFix(@NotNull PsiMethod methodWithOverrides, @NotNull List<? super IntentionAction> registrar) {
     PsiClass containingClass = methodWithOverrides.getContainingClass();
     if (containingClass == null) return;
 
@@ -179,18 +177,18 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
       }
     }
 
-    registrar.register(new PullAsAbstractUpFix(methodWithOverrides, name));
+    registrar.add(new PullAsAbstractUpFix(methodWithOverrides, name));
     if (canBePulledUp) {
       var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
-      registrar.register(new RunRefactoringAction(supportProvider.getPullUpHandler(), JavaBundle.message("pull.members.up.fix.name")));
+      registrar.add(new RunRefactoringAction(supportProvider.getPullUpHandler(), JavaBundle.message("pull.members.up.fix.name")));
     }
 
 
     if (! (containingClass instanceof PsiAnonymousClass)){
       var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
 
-      registrar.register(new RunRefactoringAction(supportProvider.getExtractInterfaceHandler(), JavaBundle.message("extract.interface.command.name")));
-      registrar.register(new RunRefactoringAction(supportProvider.getExtractSuperClassHandler(), JavaBundle.message("extract.superclass.command.name")));
+      registrar.add(new RunRefactoringAction(supportProvider.getExtractInterfaceHandler(), JavaBundle.message("extract.interface.command.name")));
+      registrar.add(new RunRefactoringAction(supportProvider.getExtractSuperClassHandler(), JavaBundle.message("extract.superclass.command.name")));
     }
   }
 }

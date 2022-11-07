@@ -31,9 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -96,6 +94,7 @@ public class HighlightInfo implements Segment {
    * Find the quickfix (among ones added by {@link #registerFix}) selected by returning non-null value from the {@code predicate}
    * and return that value, or null if the quickfix was not found.
    */
+  synchronized
   public <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
     Set<IntentionActionDescriptor> processed = new HashSet<>();
     // prefer range markers as having more actual offsets
@@ -135,7 +134,7 @@ public class HighlightInfo implements Segment {
   /**
    * Quick fix text range: the range within which the Alt-Enter should open the quick fix popup.
    * Might be bigger than (getStartOffset(), getEndOffset()) when it's deemed more usable,
-   * e.g. when "import class" fix wanted to be Alt-Entered from everywhere at the same line.
+   * e.g., when "import class" fix wanted to be Alt-Entered from everywhere at the same line.
    *
    */
   private long fixRange;
@@ -156,8 +155,12 @@ public class HighlightInfo implements Segment {
   /**
    * in case this HighlightInfo is created to highlight unresolved reference, store this reference here to be able to call {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} later
    */
-  PsiReference unresolvedReference;
+  final PsiReference unresolvedReference;
 
+  /**
+   * @deprecated Do not create manually, use {@link #newHighlightInfo(HighlightInfoType)} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
                           @Nullable TextAttributesKey forcedTextAttributesKey,
@@ -174,7 +177,8 @@ public class HighlightInfo implements Segment {
                           ProblemGroup problemGroup,
                           @Nullable String inspectionToolId,
                           GutterMark gutterIconRenderer,
-                          int group) {
+                          int group,
+                          @Nullable PsiReference unresolvedReference) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
     }
@@ -196,6 +200,7 @@ public class HighlightInfo implements Segment {
     this.gutterIconRenderer = gutterIconRenderer;
     this.inspectionToolId = inspectionToolId;
     this.group = group;
+    this.unresolvedReference = unresolvedReference;
   }
 
   /**
@@ -216,12 +221,12 @@ public class HighlightInfo implements Segment {
     setFlag(FROM_INJECTION_MASK, true);
   }
 
-  @SuppressWarnings("unchecked")
   void addFileLeverComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
     if (fileLevelComponentsStorage == null) {
       fileLevelComponentsStorage = new Pair<>(fileEditor, component);
     }
     else if (fileLevelComponentsStorage instanceof Pair) {
+      //noinspection unchecked
       Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
       Map<FileEditor, JComponent> map = new HashMap<>();
       map.put(pair.first, pair.second);
@@ -229,6 +234,7 @@ public class HighlightInfo implements Segment {
       fileLevelComponentsStorage = map;
     }
     else if (fileLevelComponentsStorage instanceof Map) {
+      //noinspection unchecked
       ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).put(fileEditor, component);
     }
     else {
@@ -236,29 +242,31 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  @SuppressWarnings("unchecked")
   void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
     if (fileLevelComponentsStorage instanceof Pair) {
+      //noinspection unchecked
       Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
       if (pair.first == fileEditor) {
         fileLevelComponentsStorage = null;
       }
     }
     else if (fileLevelComponentsStorage instanceof Map) {
+      //noinspection unchecked
       ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).remove(fileEditor);
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
     if (fileLevelComponentsStorage == null) {
       return null;
     }
     else if (fileLevelComponentsStorage instanceof Pair) {
+      //noinspection unchecked
       Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
       return pair.first == fileEditor ? pair.second : null;
     }
     else if (fileLevelComponentsStorage instanceof Map) {
+      //noinspection unchecked
       return ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).get(fileEditor);
     }
     else {
@@ -425,11 +433,6 @@ public class HighlightInfo implements Segment {
     return customScheme != null ? customScheme : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
-  @Nullable
-  private static @Tooltip String htmlEscapeToolTip(@Nullable @Tooltip String unescapedTooltip) {
-    return unescapedTooltip == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
-  }
-
   public boolean needUpdateOnTyping() {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
   }
@@ -488,8 +491,10 @@ public class HighlightInfo implements Segment {
     if (getDescription() != null) s += ", description='" + getDescription() + "'";
     s += "; severity=" + getSeverity();
     s += "; group=" + getGroup();
-    if (quickFixActionRanges != null) {
-      s += "; quickFixes: " + quickFixActionRanges;
+    synchronized (this) {
+      if (quickFixActionRanges != null) {
+        s += "; quickFixes: " + quickFixActionRanges;
+      }
     }
     if (gutterIconRenderer != null) {
       s += "; gutter: " + gutterIconRenderer;
@@ -499,13 +504,14 @@ public class HighlightInfo implements Segment {
 
   @NotNull
   public static Builder newHighlightInfo(@NotNull HighlightInfoType type) {
-    return new B(type);
+    return new HighlightInfoB(type);
   }
 
   void setGroup(int group) {
     this.group = group;
   }
 
+  @ApiStatus.NonExtendable
   public interface Builder {
     // only one 'range' call allowed
     @NotNull Builder range(@NotNull TextRange textRange);
@@ -553,239 +559,18 @@ public class HighlightInfo implements Segment {
 
     @NotNull Builder group(int group);
 
+    @NotNull
+    Builder registerFix(@NotNull IntentionAction action,
+                        @Nullable List<? extends IntentionAction> options,
+                        @Nullable @Nls String displayName,
+                        @Nullable TextRange fixRange,
+                        @Nullable HighlightDisplayKey key);
+
     @Nullable("null means filtered out")
     HighlightInfo create();
 
     @NotNull
     HighlightInfo createUnconditionally();
-  }
-
-  private static boolean isAcceptedByFilters(@NotNull HighlightInfo info, @Nullable PsiElement psiElement) {
-    PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
-    for (HighlightInfoFilter filter : HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions()) {
-      if (!filter.accept(info, file)) {
-        return false;
-      }
-    }
-    info.psiElement = psiElement;
-    return true;
-  }
-
-  private static final class B implements Builder {
-    private Boolean myNeedsUpdateOnTyping;
-    private TextAttributes forcedTextAttributes;
-    private TextAttributesKey forcedTextAttributesKey;
-
-    private final HighlightInfoType type;
-    private int startOffset = -1;
-    private int endOffset = -1;
-
-    private @DetailedDescription String escapedDescription;
-    private @Tooltip String escapedToolTip;
-    private HighlightSeverity severity;
-
-    private boolean isAfterEndOfLine;
-    private boolean isFileLevelAnnotation;
-    private int navigationShift;
-
-    private GutterIconRenderer gutterIconRenderer;
-    private ProblemGroup problemGroup;
-    private String inspectionToolId;
-    private PsiElement psiElement;
-    private int group;
-
-    private B(@NotNull HighlightInfoType type) {
-      this.type = type;
-    }
-
-    @NotNull
-    @Override
-    public Builder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer) {
-      assert this.gutterIconRenderer == null : "gutterIconRenderer already set";
-      this.gutterIconRenderer = gutterIconRenderer;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder problemGroup(@NotNull ProblemGroup problemGroup) {
-      assert this.problemGroup == null : "problemGroup already set";
-      this.problemGroup = problemGroup;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder inspectionToolId(@NotNull String inspectionToolId) {
-      assert this.inspectionToolId == null : "inspectionToolId already set";
-      this.inspectionToolId = inspectionToolId;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder description(@NotNull String description) {
-      assert escapedDescription == null : "description already set";
-      escapedDescription = description;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder descriptionAndTooltip(@NotNull String description) {
-      return description(description).unescapedToolTip(description);
-    }
-
-    @NotNull
-    @Override
-    public Builder textAttributes(@NotNull TextAttributes attributes) {
-      assert forcedTextAttributes == null : "textAttributes already set";
-      forcedTextAttributes = attributes;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder textAttributes(@NotNull TextAttributesKey attributesKey) {
-      assert forcedTextAttributesKey == null : "textAttributesKey already set";
-      forcedTextAttributesKey = attributesKey;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder unescapedToolTip(@NotNull String unescapedToolTip) {
-      assert escapedToolTip == null : "Tooltip was already set";
-      escapedToolTip = htmlEscapeToolTip(unescapedToolTip);
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder escapedToolTip(@NotNull String escapedToolTip) {
-      assert this.escapedToolTip == null : "Tooltip was already set";
-      this.escapedToolTip = escapedToolTip;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder range(int start, int end) {
-      assert startOffset == -1 && endOffset == -1 : "Offsets already set";
-
-      startOffset = start;
-      endOffset = end;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull TextRange textRange) {
-      assert startOffset == -1 && endOffset == -1 : "Offsets already set";
-      startOffset = textRange.getStartOffset();
-      endOffset = textRange.getEndOffset();
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull ASTNode node) {
-      return range(node.getPsi());
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull PsiElement element) {
-      assert psiElement == null : " psiElement already set";
-      psiElement = element;
-      return range(element.getTextRange());
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
-      TextRange absoluteRange = rangeInElement.shiftRight(element.getTextRange().getStartOffset());
-      return range(element, absoluteRange.getStartOffset(), absoluteRange.getEndOffset());
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull PsiElement element, int start, int end) {
-      assert psiElement == null : " psiElement already set";
-      psiElement = element;
-      return range(start, end);
-    }
-
-    @NotNull
-    @Override
-    public Builder endOfLine() {
-      isAfterEndOfLine = true;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder needsUpdateOnTyping(boolean update) {
-      assert myNeedsUpdateOnTyping == null : " needsUpdateOnTyping already set";
-      myNeedsUpdateOnTyping = update;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder severity(@NotNull HighlightSeverity severity) {
-      assert this.severity == null : " severity already set";
-      this.severity = severity;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder fileLevelAnnotation() {
-      isFileLevelAnnotation = true;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder navigationShift(int navigationShift) {
-      this.navigationShift = navigationShift;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder group(int group) {
-      this.group = group;
-      return this;
-    }
-
-    @Nullable
-    @Override
-    public HighlightInfo create() {
-      HighlightInfo info = createUnconditionally();
-      LOG.assertTrue(psiElement != null ||
-                     severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY ||
-                     severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY ||
-                     ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, severity) != -1,
-                     "Custom type requires not-null element to detect its text attributes");
-
-      if (!isAcceptedByFilters(info, psiElement)) return null;
-
-      return info;
-    }
-
-    @NotNull
-    @Override
-    public HighlightInfo createUnconditionally() {
-      if (severity == null) {
-        severity = type.getSeverity(psiElement);
-      }
-
-      return new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
-                               escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation, navigationShift,
-                               problemGroup, inspectionToolId, gutterIconRenderer, group);
-    }
   }
 
   public GutterMark getGutterIconRenderer() {
@@ -812,7 +597,7 @@ public class HighlightInfo implements Segment {
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
       annotation.needsUpdateOnTyping(),
-      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL);
+      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL, null);
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {
@@ -1099,6 +884,10 @@ public class HighlightInfo implements Segment {
     return highlighter.getDocument().getText(TextRange.create(highlighter));
   }
 
+  /**
+   * @deprecated Use {@link Builder#registerFix(IntentionAction, List, String, TextRange, HighlightDisplayKey)} instead
+   */
+  @Deprecated
   public synchronized // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
   void registerFix(@Nullable IntentionAction action,
                           @Nullable List<? extends IntentionAction> options,
@@ -1135,8 +924,25 @@ public class HighlightInfo implements Segment {
     RangeHighlighterEx myHighlighter = highlighter;
     if (myHighlighter != null && myHighlighter.isValid()) {
       // highlighter already has been created, we need to update quickFixActionMarkers
-      updateQuickFixFields(myHighlighter.getDocument(), new Long2ObjectOpenHashMap<>(), TextRangeScalarUtil.toScalarRange(myHighlighter));
+      long highlighterRange = TextRangeScalarUtil.toScalarRange(myHighlighter);
+      Long2ObjectMap<RangeMarker> cache = reuseRangeMarkerCacheIfCreated(highlighterRange);
+      updateQuickFixFields(myHighlighter.getDocument(), cache, highlighterRange);
     }
+  }
+
+  @NotNull
+  private Long2ObjectMap<RangeMarker> reuseRangeMarkerCacheIfCreated(long targetRange) {
+    Long2ObjectMap<RangeMarker> cache = new Long2ObjectOpenHashMap<>();
+    if (quickFixActionMarkers != null) {
+      for (Pair<IntentionActionDescriptor, RangeMarker> pair : quickFixActionMarkers) {
+        RangeMarker marker = pair.getSecond();
+        if (marker.isValid() && TextRangeScalarUtil.toScalarRange(marker) == targetRange) {
+          cache.put(targetRange, marker);
+          break;
+        }
+      }
+    }
+    return cache;
   }
 
   public synchronized //TODO rework to lock-free
@@ -1149,7 +955,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  public IntentionAction getSameFamilyFix(@NotNull IntentionActionWithFixAllOption action) {
+  public synchronized IntentionAction getSameFamilyFix(@NotNull IntentionActionWithFixAllOption action) {
     if (quickFixActionRanges == null) return null;
     for (Pair<IntentionActionDescriptor, TextRange> range : quickFixActionRanges) {
       IntentionAction other = IntentionActionDelegate.unwrap(range.first.myAction);
@@ -1214,11 +1020,6 @@ public class HighlightInfo implements Segment {
     else {
       fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
     }
-  }
-
-  @ApiStatus.Internal
-  public void setUnresolvedReference(@NotNull PsiReference reference) {
-    unresolvedReference = reference;
   }
 
   @ApiStatus.Internal

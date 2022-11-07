@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
@@ -31,6 +30,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
@@ -149,11 +149,11 @@ class PostHighlightingVisitor {
         for (PsiElement element : elements) {
           ProgressManager.checkCanceled();
           if (element instanceof PsiIdentifier identifier) {
-            HighlightInfo info = processIdentifier(identifier, progress, globalUsageHelper);
-            if (info != null) {
-              errorFound |= info.getSeverity() == HighlightSeverity.ERROR;
+            HighlightInfo.Builder builder = processIdentifier(identifier, progress, globalUsageHelper);
+            if (builder != null) {
+              HighlightInfo info = builder.create();
+              errorFound |= info != null && info.getSeverity() == HighlightSeverity.ERROR;
               result.add(info);
-              result.queueToUpdateIncrementally();
             }
           }
         }
@@ -167,11 +167,11 @@ class PostHighlightingVisitor {
         PsiImportStatementBase[] imports = importList.getAllImportStatements();
         for (PsiImportStatementBase statement : imports) {
           ProgressManager.checkCanceled();
-          HighlightInfo info = processImport(statement, unusedImportKey);
-          if (info != null) {
-            errorFound |= info.getSeverity() == HighlightSeverity.ERROR;
+          HighlightInfo.Builder builder = processImport(statement, unusedImportKey);
+          if (builder != null) {
+            HighlightInfo info = builder.create();
+            errorFound |= info != null && info.getSeverity() == HighlightSeverity.ERROR;
             result.add(info);
-            result.queueToUpdateIncrementally();
           }
         }
       }
@@ -211,8 +211,7 @@ class PostHighlightingVisitor {
     return custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
   }
 
-  @Nullable
-  private HighlightInfo processIdentifier(@NotNull PsiIdentifier identifier, @NotNull ProgressIndicator progress, @NotNull GlobalUsageHelper helper) {
+  private HighlightInfo.Builder processIdentifier(@NotNull PsiIdentifier identifier, @NotNull ProgressIndicator progress, @NotNull GlobalUsageHelper helper) {
     PsiElement parent = identifier.getParent();
     if (!(parent instanceof PsiVariable || parent instanceof PsiMember)) return null;
 
@@ -271,9 +270,8 @@ class PostHighlightingVisitor {
     return false;
   }
 
-  @Nullable
-  private HighlightInfo processLocalVariable(@NotNull PsiLocalVariable variable,
-                                             @NotNull PsiIdentifier identifier) {
+  private HighlightInfo.Builder processLocalVariable(@NotNull PsiLocalVariable variable,
+                                                     @NotNull PsiIdentifier identifier) {
     if (PsiUtil.isIgnoredName(variable.getName())) return null;
     if (UnusedSymbolUtil.isImplicitUsage(myProject, variable)) return null;
 
@@ -298,8 +296,8 @@ class PostHighlightingVisitor {
     }
 
     if (message != null) {
-      HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix, myDeadCodeKey);
+      HighlightInfo.Builder highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+      highlightInfo.registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
       return highlightInfo;
     }
 
@@ -307,7 +305,7 @@ class PostHighlightingVisitor {
   }
 
   @Nullable
-  private HighlightInfo processField(@NotNull Project project,
+  private HighlightInfo.Builder processField(@NotNull Project project,
                                      @NotNull PsiField field,
                                      @NotNull PsiIdentifier identifier,
                                      @NotNull ProgressIndicator progress,
@@ -320,12 +318,13 @@ class PostHighlightingVisitor {
       if (!myRefCountHolder.isReferenced(field) && !UnusedSymbolUtil.isImplicitUsage(myProject, field)) {
         String message = JavaErrorBundle.message("private.field.is.not.used", identifier.getText());
 
-        HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, identifier, message);
+        HighlightInfo.Builder builder = suggestionsToMakeFieldUsed(field, identifier, message);
         if (!field.hasInitializer() && !field.hasModifierProperty(PsiModifier.FINAL)) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field),
-                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field), myDeadCodeKey);
+          TextRange fixRange = HighlightMethodUtil.getFixRange(field);
+          IntentionAction action = quickFixFactory.createCreateConstructorParameterFromFieldFix(field);
+          builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), fixRange, myDeadCodeKey);
         }
-        return highlightInfo;
+        return builder;
       }
 
       boolean readReferenced = myRefCountHolder.isReferencedForRead(field);
@@ -340,15 +339,19 @@ class PostHighlightingVisitor {
       boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
       if (!writeReferenced && !UnusedSymbolUtil.isImplicitWrite(project, field)) {
         String message = JavaErrorBundle.message("private.field.is.not.assigned", identifier.getText());
-        HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+        HighlightInfo.Builder
+          info = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
 
-        QuickFixAction.registerQuickFixAction(info, quickFixFactory.createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
+        IntentionAction action1 = quickFixFactory.createCreateGetterOrSetterFix(false, true, field);
+        info.registerFix(action1, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-          QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field),
-                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field), myDeadCodeKey);
+          TextRange fixRange = HighlightMethodUtil.getFixRange(field);
+          IntentionAction action = quickFixFactory.createCreateConstructorParameterFromFieldFix(field);
+          info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), fixRange, myDeadCodeKey);
         }
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
-          QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToImplicitlyWrittenFieldsFix(project, annoName), myDeadCodeKey);
+          IntentionAction action = quickFixFactory.createAddToImplicitlyWrittenFieldsFix(project, annoName);
+          info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
           return true;
         });
         return info;
@@ -360,8 +363,10 @@ class PostHighlightingVisitor {
     else if (UnusedSymbolUtil.isFieldUnused(myProject, myFile, field, progress, helper)) {
       if (UnusedSymbolUtil.isImplicitWrite(myProject, field)) {
         String message = getNotUsedForReadingMessage(field, identifier);
-        HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
-        QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(field), myDeadCodeKey);
+        HighlightInfo.Builder
+          highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+        IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(field);
+        highlightInfo.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
         return highlightInfo;
       }
       return formatUnusedSymbolHighlightInfo(project, "field.is.not.used", field, myDeadCodeKey, myDeadCodeInfoType, identifier);
@@ -378,20 +383,24 @@ class PostHighlightingVisitor {
     return StringUtil.capitalize(message);
   }
 
-  private HighlightInfo suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull @NlsContexts.DetailedDescription String message) {
-    HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+  @NotNull
+  private HighlightInfo.Builder suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull @NlsContexts.DetailedDescription String message) {
+    HighlightInfo.Builder builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
-      QuickFixAction
-        .registerQuickFixAction(highlightInfo,
-                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(field.getProject(), annoName),
-                                myDeadCodeKey);
+      @Nullable IntentionAction action =
+        QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(field.getProject(), annoName);
+      builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
       return true;
     });
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(field), myDeadCodeKey);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(true, false, field), myDeadCodeKey);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(true, true, field), myDeadCodeKey);
-    return highlightInfo;
+    IntentionAction action3 = QuickFixFactory.getInstance().createRemoveUnusedVariableFix(field);
+    builder.registerFix(action3, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
+    IntentionAction action2 = QuickFixFactory.getInstance().createCreateGetterOrSetterFix(true, false, field);
+    builder.registerFix(action2, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
+    IntentionAction action1 = QuickFixFactory.getInstance().createCreateGetterOrSetterFix(false, true, field);
+    builder.registerFix(action1, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
+    IntentionAction action = QuickFixFactory.getInstance().createCreateGetterOrSetterFix(true, true, field);
+    builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
+    return builder;
   }
 
   private final Map<PsiMethod, Boolean> isOverriddenOrOverrides = ConcurrentFactoryMap.createMap(method-> {
@@ -404,10 +413,9 @@ class PostHighlightingVisitor {
     return isOverriddenOrOverrides.get(method);
   }
 
-  @Nullable
-  private HighlightInfo processParameter(@NotNull Project project,
-                                         @NotNull PsiParameter parameter,
-                                         @NotNull PsiIdentifier identifier) {
+  private HighlightInfo.Builder processParameter(@NotNull Project project,
+                                                 @NotNull PsiParameter parameter,
+                                                 @NotNull PsiIdentifier identifier) {
     if (PsiUtil.isIgnoredName(parameter.getName())) return null;
     PsiElement declarationScope = parameter.getDeclarationScope();
     QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
@@ -422,43 +430,52 @@ class PostHighlightingVisitor {
           !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
           !PsiClassImplUtil.isMainOrPremainMethod(method)) {
         if (UnusedSymbolUtil.isInjected(project, method)) return null;
-        HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, method);
+        HighlightInfo.Builder highlightInfo = checkUnusedParameter(parameter, identifier, method);
         if (highlightInfo != null) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createRenameToIgnoredFix(parameter, true), myDeadCodeKey);
-          QuickFixAction.registerQuickFixAction(highlightInfo, PriorityIntentionActionWrapper.highPriority(quickFixFactory.createSafeDeleteUnusedParameterInHierarchyFix(parameter, myUnusedSymbolInspection.checkParameterExcludingHierarchy() && isOverriddenOrOverrides(method))), myDeadCodeKey);
+          IntentionAction action1 = quickFixFactory.createRenameToIgnoredFix(parameter, true);
+          highlightInfo.registerFix(action1, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
+          IntentionAction action = PriorityIntentionActionWrapper.highPriority(quickFixFactory.createSafeDeleteUnusedParameterInHierarchyFix(parameter, myUnusedSymbolInspection.checkParameterExcludingHierarchy() && isOverriddenOrOverrides(method)));
+          highlightInfo.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
           return highlightInfo;
         }
       }
     }
     else if (declarationScope instanceof PsiForeachStatement) {
-      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
+      HighlightInfo.Builder highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createRenameToIgnoredFix(parameter, false), myDeadCodeKey);
+        IntentionAction action = quickFixFactory.createRenameToIgnoredFix(parameter, false);
+        highlightInfo.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
         return highlightInfo;
       }
     }
     else if (parameter instanceof PsiPatternVariable variable) {
-      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
+      HighlightInfo.Builder highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         if (declarationScope.getParent() instanceof PsiSwitchBlock) {
           if (variable.getParent() instanceof PsiDeconstructionPattern) {
-            QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createDeleteFix(parameter));
+            IntentionAction action = quickFixFactory.createDeleteFix(parameter);
+            highlightInfo.registerFix(action, null, null, null, null);
           }
           else {
-            QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createRenameToIgnoredFix(parameter, false));
+            IntentionAction action = quickFixFactory.createRenameToIgnoredFix(parameter, false);
+            highlightInfo.registerFix(action, null, null, null, null);
           }
         }
         else if (!(variable.getPattern() instanceof PsiTypeTestPattern pattern && pattern.getParent() instanceof PsiDeconstructionList)) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createDeleteFix(parameter));
+          IntentionAction action = quickFixFactory.createDeleteFix(parameter);
+          highlightInfo.registerFix(action, null, null, null, null);
         }
         return highlightInfo;
       }
     }
     else if (myUnusedSymbolInspection.checkParameterExcludingHierarchy() && declarationScope instanceof PsiLambdaExpression) {
-      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
+      HighlightInfo.Builder highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createRenameToIgnoredFix(parameter, true), myDeadCodeKey);
-        QuickFixAction.registerQuickFixAction(highlightInfo, PriorityIntentionActionWrapper.lowPriority(quickFixFactory.createSafeDeleteUnusedParameterInHierarchyFix(parameter, true)), myDeadCodeKey);
+        IntentionAction action1 = quickFixFactory.createRenameToIgnoredFix(parameter, true);
+        highlightInfo.registerFix(action1, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
+        IntentionAction action =
+          PriorityIntentionActionWrapper.lowPriority(quickFixFactory.createSafeDeleteUnusedParameterInHierarchyFix(parameter, true));
+        highlightInfo.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
         return highlightInfo;
       }
     }
@@ -466,13 +483,13 @@ class PostHighlightingVisitor {
     return null;
   }
 
-  private HighlightInfo checkUnusedParameter(@NotNull PsiParameter parameter,
-                                             @NotNull PsiIdentifier identifier,
-                                             @Nullable PsiMethod declarationMethod) {
+  private HighlightInfo.Builder checkUnusedParameter(@NotNull PsiParameter parameter,
+                                                     @NotNull PsiIdentifier identifier,
+                                                     @Nullable PsiMethod declarationMethod) {
     if (!myRefCountHolder.isReferenced(parameter) && !UnusedSymbolUtil.isImplicitUsage(myProject, parameter)) {
       String message = JavaErrorBundle.message(parameter instanceof PsiPatternVariable ? 
                                                "pattern.variable.is.not.used" : "parameter.is.not.used", identifier.getText());
-      HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+      HighlightInfo.Builder info = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
       if (declarationMethod != null) {
         IntentionAction assignFix = QuickFixFactory.getInstance().createAssignFieldFromParameterFix();
         IntentionAction createFieldFix = QuickFixFactory.getInstance().createCreateFieldFromParameterFix();
@@ -480,21 +497,22 @@ class PostHighlightingVisitor {
           assignFix = PriorityIntentionActionWrapper.lowPriority(assignFix);
           createFieldFix = PriorityIntentionActionWrapper.lowPriority(createFieldFix);
         }
-        QuickFixAction.registerQuickFixAction(info, assignFix);
-        QuickFixAction.registerQuickFixAction(info, createFieldFix);
+        info.registerFix(assignFix, null, null, null, null);
+        info.registerFix(createFieldFix, null, null, null, null);
       }
       return info;
     }
     return null;
   }
 
-  @Nullable
-  private HighlightInfo processMethod(@NotNull Project project,
-                                      @NotNull PsiMethod method,
-                                      @NotNull PsiIdentifier identifier,
-                                      @NotNull ProgressIndicator progress,
-                                      @NotNull GlobalUsageHelper helper) {
-    if (UnusedSymbolUtil.isMethodReferenced(myProject, myFile, method, progress, helper)) return null;
+  private HighlightInfo.Builder processMethod(@NotNull Project project,
+                                              @NotNull PsiMethod method,
+                                              @NotNull PsiIdentifier identifier,
+                                              @NotNull ProgressIndicator progress,
+                                              @NotNull GlobalUsageHelper helper) {
+    if (UnusedSymbolUtil.isMethodReferenced(myProject, myFile, method, progress, helper)) {
+      return null;
+    }
     String key;
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
       key = method.isConstructor() ? "private.constructor.is.not.used" : "private.method.is.not.used";
@@ -505,23 +523,25 @@ class PostHighlightingVisitor {
     int options = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES;
     String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY, options);
     String message = JavaErrorBundle.message(key, symbolName);
-    HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), myDeadCodeKey);
+    HighlightInfo.Builder builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(identifier, message, myDeadCodeInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+    IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(method);
+    builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName -> {
       IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix, myDeadCodeKey);
+      builder.registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(myDeadCodeKey), null, myDeadCodeKey);
       return true;
     });
-    return highlightInfo;
+    return builder;
   }
 
-  @Nullable
-  private HighlightInfo processClass(@NotNull Project project,
-                                     @NotNull PsiClass aClass,
-                                     @NotNull PsiIdentifier identifier,
-                                     @NotNull ProgressIndicator progress,
-                                     @NotNull GlobalUsageHelper helper) {
-    if (UnusedSymbolUtil.isClassUsed(project, myFile, aClass, progress, helper)) return null;
+  private HighlightInfo.Builder processClass(@NotNull Project project,
+                                                      @NotNull PsiClass aClass,
+                                                      @NotNull PsiIdentifier identifier,
+                                                      @NotNull ProgressIndicator progress,
+                                                      @NotNull GlobalUsageHelper helper) {
+    if (UnusedSymbolUtil.isClassUsed(project, myFile, aClass, progress, helper)) {
+      return null;
+    }
 
     String pattern;
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -548,7 +568,8 @@ class PostHighlightingVisitor {
   }
 
 
-  private static HighlightInfo formatUnusedSymbolHighlightInfo(@NotNull Project project,
+  @NotNull
+  private static HighlightInfo.Builder formatUnusedSymbolHighlightInfo(@NotNull Project project,
                                                                @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String pattern,
                                                                @NotNull PsiNameIdentifierOwner aClass,
                                                                HighlightDisplayKey highlightDisplayKey,
@@ -556,20 +577,18 @@ class PostHighlightingVisitor {
                                                                @NotNull PsiElement identifier) {
     String symbolName = aClass.getName();
     String message = JavaErrorBundle.message(pattern, symbolName);
-    HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, highlightInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(aClass), highlightDisplayKey);
+    HighlightInfo.Builder highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(identifier, message, highlightInfoType, UnusedDeclarationInspectionBase.SHORT_NAME);
+    IntentionAction action1 = QuickFixFactory.getInstance().createSafeDeleteFix(aClass);
+    highlightInfo.registerFix(action1, null, HighlightDisplayKey.getDisplayNameByKey(highlightDisplayKey), null, highlightDisplayKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, annoName -> {
-      QuickFixAction
-        .registerQuickFixAction(highlightInfo,
-                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName),
-                                highlightDisplayKey);
+      IntentionAction action = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName);
+      highlightInfo.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(highlightDisplayKey), null, highlightDisplayKey);
       return true;
     });
     return highlightInfo;
   }
 
-  @Nullable
-  private HighlightInfo processImport(@NotNull PsiImportStatementBase importStatement, @NotNull HighlightDisplayKey unusedImportKey) {
+  private HighlightInfo.Builder processImport(@NotNull PsiImportStatementBase importStatement, @NotNull HighlightDisplayKey unusedImportKey) {
     // jsp include directive hack
     if (importStatement.isForeignFileImport()) return null;
 
@@ -606,7 +625,8 @@ class PostHighlightingVisitor {
     return null;
   }
 
-  private HighlightInfo registerRedundantImport(@NotNull PsiImportStatementBase importStatement, @NotNull HighlightDisplayKey unusedImportKey) {
+  @NotNull
+  private HighlightInfo.Builder registerRedundantImport(@NotNull PsiImportStatementBase importStatement, @NotNull HighlightDisplayKey unusedImportKey) {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myFile);
     Set<String> imports = virtualFile != null ? virtualFile.getCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE) : null;
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
@@ -618,16 +638,17 @@ class PostHighlightingVisitor {
                                                   ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.toString(), myFile),
                                                                       JavaHighlightInfoTypes.UNUSED_IMPORT.getAttributesKey()));
 
-    HighlightInfo info = HighlightInfo.newHighlightInfo(configHighlightType)
+    HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(configHighlightType)
         .range(importStatement)
         .descriptionAndTooltip(description)
-        .group(GeneralHighlightingPass.POST_UPDATE_ALL)
-        .create();
+        .group(GeneralHighlightingPass.POST_UPDATE_ALL);
 
     boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
-    QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createOptimizeImportsFix(false, isInContent), unusedImportKey);
+    IntentionAction action1 = QuickFixFactory.getInstance().createOptimizeImportsFix(false, isInContent);
+    info.registerFix(action1, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
 
-    QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix(), unusedImportKey);
+    @Nullable IntentionAction action = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
+    info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
     if (!predefinedImport) myHasRedundantImports = true;
     return info;
   }

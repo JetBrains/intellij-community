@@ -23,6 +23,7 @@ import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -1295,9 +1296,11 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
-      final HighlightInfo parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null);
+      Ref<String> description = new Ref<>();
+      final HighlightInfo.Builder parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null,
+                                                                                                  description);
       if (parsingError != null) {
-        throwEvaluateException(parsingError.getDescription());
+        throwEvaluateException(description.get());
         return;
       }
 

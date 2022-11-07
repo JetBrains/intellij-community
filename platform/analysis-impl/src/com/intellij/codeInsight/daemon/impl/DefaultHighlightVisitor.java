@@ -84,7 +84,6 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
             Annotation annotation = get(i);
             holder.add(HighlightInfo.fromAnnotation(annotation, myBatchMode));
           }
-          holder.queueToUpdateIncrementally();
           clear();
         }
       }
@@ -147,20 +146,26 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private static HighlightInfo createErrorElementInfo(@NotNull PsiErrorElement element) {
-    HighlightInfo info = createInfoWithoutFixes(element);
+    HighlightInfo.Builder builder = createInfoWithoutFixes(element);
+    List<ErrorQuickFixProvider> providers = ErrorQuickFixProvider.EP_NAME.getExtensionList();
+    for (ErrorQuickFixProvider provider : providers) {
+      provider.registerErrorQuickFix(element, builder);
+    }
+    HighlightInfo info = builder.create();
     if (info != null) {
-      for (ErrorQuickFixProvider provider : ErrorQuickFixProvider.EP_NAME.getExtensionList()) {
+      for (ErrorQuickFixProvider provider : providers) {
         provider.registerErrorQuickFix(element, info);
       }
     }
     return info;
   }
 
-  private static HighlightInfo createInfoWithoutFixes(@NotNull PsiErrorElement element) {
+  @NotNull
+  private static HighlightInfo.Builder createInfoWithoutFixes(@NotNull PsiErrorElement element) {
     TextRange range = element.getTextRange();
     String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(errorDescription).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(errorDescription);
     }
     int offset = range.getStartOffset();
     PsiFile containingFile = element.getContainingFile();
@@ -171,7 +176,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1);
       builder.descriptionAndTooltip(errorDescription);
-      return builder.create();
+      return builder;
     }
     int start;
     int end;
@@ -186,7 +191,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end);
     builder.descriptionAndTooltip(errorDescription);
     builder.endOfLine();
-    return builder.create();
+    return builder;
   }
 
   @NotNull

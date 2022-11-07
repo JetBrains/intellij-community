@@ -32,7 +32,7 @@ public interface UnresolvedReferenceQuickFixUpdater {
    * This call triggers background calculation of quick fixes supplied by {@link UnresolvedReferenceQuickFixProvider}
    * You can only call it from the highlighting (e.g. your {@link com.intellij.lang.annotation.Annotator} or {@link com.intellij.codeInspection.LocalInspectionTool})
    */
-  void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull HighlightInfo info);
+  void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull HighlightInfo.Builder info);
 
   /**
    * Wait until the background calculation of unresolved reference quickfixes for {@code info} is completed.

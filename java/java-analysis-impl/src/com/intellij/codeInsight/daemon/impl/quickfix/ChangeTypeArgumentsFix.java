@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +20,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
 public class ChangeTypeArgumentsFix implements IntentionActionWithFixAllOption, HighPriorityAction {
@@ -135,7 +135,7 @@ public class ChangeTypeArgumentsFix implements IntentionActionWithFixAllOption, 
 
   public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
                                         @NotNull PsiExpressionList list,
-                                        @Nullable HighlightInfo highlightInfo,
+                                        @NotNull HighlightInfo.Builder highlightInfo,
                                         PsiClass psiClass, TextRange fixRange) {
     if (candidates.length == 0) return;
     PsiExpression[] expressions = list.getExpressions();
@@ -145,7 +145,7 @@ public class ChangeTypeArgumentsFix implements IntentionActionWithFixAllOption, 
   }
 
   private static void registerIntention(PsiExpression @NotNull [] expressions,
-                                        @Nullable HighlightInfo highlightInfo,
+                                        @NotNull HighlightInfo.Builder builder,
                                         PsiClass psiClass,
                                         @NotNull JavaResolveResult candidate,
                                         @NotNull PsiElement context,
@@ -154,7 +154,7 @@ public class ChangeTypeArgumentsFix implements IntentionActionWithFixAllOption, 
     PsiMethod method = (PsiMethod)candidate.getElement();
     if (method != null && BaseIntentionAction.canModify(method)) {
       final ChangeTypeArgumentsFix fix = new ChangeTypeArgumentsFix(method, psiClass, expressions, context);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, fix);
+      builder.registerFix(fix, null, null, fixRange, null);
     }
   }
 

@@ -68,7 +68,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiLiteralExpression)) {
         return;
@@ -182,8 +182,8 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       if (type == null) {
         return;
       }
-      final HighlightInfo
-        parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null);
+      HighlightInfo.Builder
+        parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null, null);
       if (parsingError != null) {
         return;
       }

@@ -21,7 +21,7 @@ final class HighlightInfoComposite extends HighlightInfo {
   private HighlightInfoComposite(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightInfo anchorInfo) {
     super(null, null, anchorInfo.type, anchorInfo.startOffset, anchorInfo.endOffset,
           createCompositeDescription(infos), createCompositeTooltip(infos), anchorInfo.type.getSeverity(null), false, null, false, 0,
-          anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup());
+          anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup(), null);
     highlighter = anchorInfo.getHighlighter();
     List<Pair<IntentionActionDescriptor, RangeMarker>> markers = ContainerUtil.emptyList();
     List<Pair<IntentionActionDescriptor, TextRange>> ranges = ContainerUtil.emptyList();
@@ -72,14 +72,14 @@ final class HighlightInfoComposite extends HighlightInfo {
     for (HighlightInfo info : infos) {
       String toolTip = info.getToolTip();
       if (toolTip != null) {
-        if (result.length() != 0) {
+        if (!result.isEmpty()) {
           result.append(LINE_BREAK);
         }
         toolTip = XmlStringUtil.stripHtml(toolTip);
         result.append(toolTip);
       }
     }
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     return XmlStringUtil.wrapInHtml(result);

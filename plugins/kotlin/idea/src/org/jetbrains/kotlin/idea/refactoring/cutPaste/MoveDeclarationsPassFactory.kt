@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -58,11 +57,11 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
             }
 
             val info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
-                .range(cookie.bounds.range!!)
-                .createUnconditionally()
-            QuickFixAction.registerQuickFixAction(info, MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount))
+              .range(cookie.bounds.range!!)
+              .registerFix(MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount), null, null, null, null)
+              .createUnconditionally()
 
-            return info
+          return info
         }
     }
 }

@@ -4,11 +4,9 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
-import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
+import com.intellij.codeInsight.daemon.impl.analysis.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MakeVarEffectivelyFinalFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
@@ -59,10 +57,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
@@ -417,12 +412,18 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Nullable
   @Override
-  public IntentionAction createRenameFix(@NotNull PsiElement element, @Nullable Object highlightInfo) {
-    if (highlightInfo == null) return null;
+  public IntentionAction createRenameFix(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
-    ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(file, (HighlightInfo)highlightInfo);
-    if (descriptor == null) return null;
+    ProblemDescriptor descriptor = new ProblemDescriptorBase(element,
+                                         element,
+                                         "",
+                                         null,
+                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                         false,
+                                         null,
+                                         true,
+                                         false);
     return new LocalQuickFixAsIntentionAdapter(new RenameFix(), descriptor);
   }
 
@@ -654,7 +655,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public void registerPullAsAbstractUpFixes(@NotNull PsiMethod method, @NotNull QuickFixActionRegistrar registrar) {
+  public void registerPullAsAbstractUpFixes(@NotNull PsiMethod method, @NotNull List<? super IntentionAction> registrar) {
     PullAsAbstractUpFix.registerQuickFix(method, registrar);
   }
 
@@ -796,8 +797,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiReference reference) {
-    return OrderEntryFix.registerFixes(registrar, reference);
+  public List<LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
+    return OrderEntryFix.registerFixes(reference, registrar);
   }
 
   private static void invokeOnTheFlyImportOptimizer(@NotNull PsiFile file) {
@@ -1106,12 +1107,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new DeleteSwitchLabelFix(labelElement, false);
   }
 
-  @Nullable
   @Override
-  public IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo) {
-    if (highlightInfo == null) return null;
-    ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(file, (HighlightInfo)highlightInfo);
-    if (descriptor == null) return null;
+  public @NotNull IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement duplicateElement) {
+    ProblemDescriptor descriptor =
+      new ProblemDescriptorBase(duplicateElement, duplicateElement, "", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null,
+                                false, false);
     return new LocalQuickFixAsIntentionAdapter(new UnnecessaryDefaultInspection.DeleteDefaultFix(), descriptor);
   }
 

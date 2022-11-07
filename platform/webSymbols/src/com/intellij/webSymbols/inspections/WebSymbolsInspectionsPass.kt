@@ -30,11 +30,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
-import com.intellij.webSymbols.WebSymbolsBundle
-import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.utils.applyIfNotNull
 import org.jetbrains.annotations.PropertyKey
 
@@ -106,21 +106,19 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
                                type: ProblemHighlightType,
                                displayKey: HighlightDisplayKey?,
                                severity: HighlightSeverity,
-                               fixesToRegister: List<IntentionAction>): HighlightInfo? =
-
-    HighlightInfo
+                               fixesToRegister: List<IntentionAction>): HighlightInfo? {
+    val builder = HighlightInfo
       .newHighlightInfo(ProblemDescriptorUtil.getHighlightInfoType(type, severity, SeverityRegistrar.getSeverityRegistrar(myProject)))
       .applyIfNotNull(inspectionToolId) { inspectionToolId(it) }
       .applyIfNotNull(textAttributesKey) { textAttributes(it) }
       .range(range)
       .severity(severity)
       .descriptionAndTooltip(message)
-      .create()
-      ?.also { info ->
-        for (fix in fixesToRegister) {
-          info.registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(displayKey), range, displayKey)
-        }
-      }
+    for (fix in fixesToRegister) {
+      builder.registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(displayKey), range, displayKey)
+    }
+    return builder.create()
+  }
 
   private fun WebSymbolReferenceProblem.getInspectionInfo(problemKind: ProblemKind): List<InspectionToolInfo> =
     symbolKinds

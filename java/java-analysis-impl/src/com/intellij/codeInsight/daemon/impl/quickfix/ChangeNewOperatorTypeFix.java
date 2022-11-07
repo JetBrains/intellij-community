@@ -144,7 +144,7 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
     return true;
   }
 
-  public static void register(final HighlightInfo highlightInfo, PsiExpression expression, final PsiType lType) {
+  public static void register(@NotNull HighlightInfo.Builder highlightInfo, PsiExpression expression, final PsiType lType) {
     expression = PsiUtil.deparenthesizeExpression(expression);
     if (!(expression instanceof PsiNewExpression)) return;
     final PsiType rType = expression.getType();
@@ -167,7 +167,9 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
       }
     }
     PsiNewExpression newExpression = (PsiNewExpression)expression;
-    QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeNewOperatorTypeFix(newType, newExpression));
+    if (highlightInfo != null) {
+      highlightInfo.registerFix(new ChangeNewOperatorTypeFix(newType, newExpression), null, null, null, null);
+    }
   }
 
   /* Guesswork

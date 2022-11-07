@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.DaemonTooltipsUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -130,15 +129,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   };
 
-  private @Nullable HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
-                                                              @NotNull HighlightInfoType highlightInfoType,
-                                                              @NotNull @NlsContexts.DetailedDescription String message,
-                                                              @Nullable @NlsContexts.Tooltip String toolTip,
-                                                              @NotNull PsiElement psiElement,
-                                                              @NotNull List<IntentionAction> quickFixes,
-                                                              @NotNull HighlightDisplayKey key,
-                                                              @Nullable EditorColorsScheme editorColorsScheme,
-                                                              @NotNull SeverityRegistrar severityRegistrar) {
+  private HighlightInfo.Builder highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
+                                                            @NotNull HighlightInfoType highlightInfoType,
+                                                            @NotNull @NlsContexts.DetailedDescription String message,
+                                                            @Nullable @NlsContexts.Tooltip String toolTip,
+                                                            @NotNull PsiElement psiElement,
+                                                            @NotNull List<IntentionAction> quickFixes,
+                                                            @NotNull HighlightDisplayKey key,
+                                                            @Nullable EditorColorsScheme editorColorsScheme,
+                                                            @NotNull SeverityRegistrar severityRegistrar) {
     TextRange textRange = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
     if (textRange == null) return null;
     boolean isFileLevel = psiElement instanceof PsiFile && textRange.equals(psiElement.getTextRange());
@@ -170,7 +169,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (isFileLevel) b.fileLevelAnnotation();
     if (problemDescriptor.getProblemGroup() != null) b.problemGroup(problemDescriptor.getProblemGroup());
 
-    return b.create();
+    return b;
   }
 
   private final Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(); // accessed in EDT only
@@ -313,9 +312,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                      showToolDescription(toolWrapper)));
     }
     List<IntentionAction> fixes = getQuickFixes(key, descriptor, emptyActionRegistered);
-    HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, fixes, key, getColorsScheme(), severityRegistrar);
-    if (info == null) return;
-    registerQuickFixes(info, fixes, shortName);
+    HighlightInfo.Builder builder = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, fixes, key, getColorsScheme(), severityRegistrar);
+    if (builder == null) return;
+    registerQuickFixes(builder, fixes, shortName);
 
     PsiFile context = getTopLevelFileInBaseLanguage(element, file.getProject());
     PsiFile myContext = getTopLevelFileInBaseLanguage(file, file.getProject());
@@ -329,6 +328,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       PluginException.logPluginError(LOG, errorMessage, null, toolWrapper.getTool().getClass());
     }
     boolean isInInjected = myInspectInjectedPsi && file.getViewProvider() instanceof InjectedFileViewProvider;
+    HighlightInfo info = builder.create();
+    if (info == null) return;
     if (isInInjected) {
       injectToHost(outInfos, file, documentRange, element, fixes, info, shortName);
     }
@@ -370,10 +371,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (toolTip != null) {
         builder.escapedToolTip(toolTip);
       }
-      HighlightInfo patched = builder.createUnconditionally();
-      if (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset) {
+      if (start != end || info.startOffset == info.endOffset) {
+        registerQuickFixes(builder, fixes, shortName);
+        HighlightInfo patched = builder.createUnconditionally();
         patched.markFromInjection();
-        registerQuickFixes(patched, fixes, shortName);
         outInfos.add(patched);
       }
     }
@@ -393,12 +394,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return staticDescription == null || !staticDescription.isEmpty();
   }
 
-  private static void registerQuickFixes(@NotNull HighlightInfo highlightInfo,
+  private static void registerQuickFixes(@NotNull HighlightInfo.Builder builder,
                                          @NotNull List<? extends IntentionAction> quickFixes,
                                          @NotNull String shortName) {
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     for (IntentionAction quickFix : quickFixes) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, quickFix, key);
+      builder.registerFix(quickFix, null, HighlightDisplayKey.getDisplayNameByKey(key), null, key);
     }
   }
 
