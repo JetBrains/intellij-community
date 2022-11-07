@@ -215,7 +215,7 @@ abstract class GradleKotlinJSFrameworkSupportProvider(
         buildScriptData.addOther(
             """
                 kotlin {
-                    js {
+                    js(IR) {
                         $jsSubTargetName {
                         """.trimIndent() +
                     (

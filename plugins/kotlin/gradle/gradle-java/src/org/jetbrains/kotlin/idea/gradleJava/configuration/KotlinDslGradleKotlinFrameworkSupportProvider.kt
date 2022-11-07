@@ -181,7 +181,7 @@ abstract class AbstractKotlinDslGradleKotlinJSFrameworkSupportProvider(
         buildScriptData.addOther(
             """
                 kotlin {
-                    js {
+                    js(IR) {
                         $jsSubTargetName {
                         """.trimIndent() +
                     (
