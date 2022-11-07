@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider.hintsEnabled;
+import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider.hintsEnabled;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -58,7 +58,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
 
   @Override
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    if (!hintsEnabled()) return;
+    if (!hintsEnabled(myProject)) return;
 
     PsiJavaFile oldJavaFile = getJavaFile(myProject, event.getOldFile());
     if (oldJavaFile != null) {
@@ -107,17 +107,17 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
 
   @Override
   public void settingsChanged() {
-    if (!hintsEnabled()) onHintsDisabled();
+    if (!hintsEnabled(myProject)) onHintsDisabled();
   }
 
   @Override
   public void languageStatusChanged() {
-    if (!hintsEnabled()) onHintsDisabled();
+    if (!hintsEnabled(myProject)) onHintsDisabled();
   }
 
   @Override
   public void globalEnabledStatusChanged(boolean newEnabled) {
-    if (!hintsEnabled()) onHintsDisabled();
+    if (!hintsEnabled(myProject)) onHintsDisabled();
   }
 
   private void onHintsDisabled() {
@@ -195,7 +195,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
     for (Editor editor : editors) {
       EditorImpl editorImpl = tryCast(editor, EditorImpl.class);
-      if (editorImpl == null || !editorImpl.getContentComponent().isShowing()) continue;
+      if (editorImpl == null || (!editorImpl.getContentComponent().isShowing() && !ApplicationManager.getApplication().isUnitTestMode())) continue;
       VirtualFile editorFile = editorImpl.getVirtualFile();
       if (editorFile == null) {
         DocumentEx document = editorImpl.getDocument();

@@ -42,6 +42,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
@@ -79,8 +80,8 @@ open class CodeVisionHost(val project: Project) {
      * Returns true iff we are in test in [com.intellij.java.codeInsight.codeVision.CodeVisionTestCase].
      */
     @JvmStatic
-    fun isCodeLensTest(editor: Editor): Boolean {
-      return editor.project?.getUserData(isCodeVisionTestKey) == true
+    fun isCodeLensTest(): Boolean {
+      return TestModeFlags.`is`(isCodeVisionTestKey)
     }
   }
 

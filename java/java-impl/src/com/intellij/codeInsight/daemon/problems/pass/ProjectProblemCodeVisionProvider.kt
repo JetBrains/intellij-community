@@ -40,11 +40,18 @@ import java.util.function.Consumer
 class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
   companion object {
     private val PREVIEW_PROBLEMS_KEY = Key.create<Set<Problem>>("preview.problems.key")
+    private const val ID = "java.RelatedProblems"
+
+    @JvmStatic
+    fun hintsEnabled(ignored: Project): Boolean {
+      val settings = CodeVisionSettings.instance()
+      return settings.codeVisionEnabled && settings.isProviderEnabled(ID)
+    }
   }
 
   override fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
     // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance
-    if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest(editor)) return emptyList()
+    if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest()) return emptyList()
     val project = editor.project ?: return emptyList()
     val previewProblems = PREVIEW_PROBLEMS_KEY.get(editor)
     if (previewProblems != null) {
@@ -139,7 +146,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default
   override val id: String
-    get() = "java.RelatedProblems"
+    get() = ID
   override val groupId: String
     get() = PlatformCodeVisionIds.PROBLEMS.key
 
