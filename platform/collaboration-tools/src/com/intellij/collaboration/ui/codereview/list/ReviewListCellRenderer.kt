@@ -188,6 +188,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
       text = counter?.count.toString()
       toolTipText = counter?.tooltip
       isVisible = counter != null
+      border = JBUI.Borders.emptyRight(1)
     }
 
     return this
