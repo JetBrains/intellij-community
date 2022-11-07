@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="Mermaid Hidden">
   <template id="mermaid_subgraph" name="mermaid_subgraph"
             value="subgraph $ID$ &#10;    $END$$SELECTION$&#10;end"
@@ -262,6 +261,18 @@
             description="c4 boundary"
             toReformat="false" toShortenFQNames="false">
     <variable name="ARGS" expression="" defaultValue="" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_note" name="mermaid_note"
+            value="note $ARG$ $ID$ &#10;    $END$$SELECTION$&#10;end note"
+            description="c4 boundary"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ARG" expression="" defaultValue="" alwaysStopAt="true"/>
+    <variable name="ID" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
       <option name="MERMAID" value="true"/>
       <option name="OTHER" value="false"/>

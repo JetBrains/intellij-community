@@ -1,10 +1,10 @@
 package com.intellij.mermaid.lang.highlighting
 
-import com.intellij.mermaid.lang.MermaidLanguage
-import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.codeInsight.highlighting.PairedBraceMatcherAdapter
 import com.intellij.lang.BracePair
 import com.intellij.lang.PairedBraceMatcher
+import com.intellij.mermaid.lang.MermaidLanguage
+import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 
@@ -24,6 +24,7 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
         BracePair(MermaidTokens.Sequence.RECT, MermaidTokens.END, true),
         BracePair(MermaidTokens.Sequence.CRITICAL, MermaidTokens.END, true),
         BracePair(MermaidTokens.Sequence.BREAK, MermaidTokens.END, true),
+        BracePair(MermaidTokens.NOTE, MermaidTokens.END, true),
 
         BracePair(MermaidTokens.Flowchart.STADIUM_START, MermaidTokens.Flowchart.STADIUM_END, false),
         BracePair(MermaidTokens.Flowchart.SUBROUTINE_START, MermaidTokens.Flowchart.SUBROUTINE_END, false),

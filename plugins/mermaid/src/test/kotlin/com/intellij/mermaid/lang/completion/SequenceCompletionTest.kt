@@ -1,0 +1,24 @@
+package com.intellij.mermaid.lang.completion
+
+import com.intellij.mermaid.lang.MermaidBaseTestCase
+
+class SequenceCompletionTest : MermaidBaseTestCase("completion/diagrams/sequence") {
+  private val keywords = arrayOf("loop", "alt", "opt", "par", "rect", "critical", "break", "participant", "actor", "autonumber")
+
+  fun `test at top level`() = doTest(*keywords)
+
+  fun `test inside alt block`() = doTest(*keywords, "else", "end")
+
+  fun `test inside par block`() = doTest(*keywords, "and", "end")
+
+  fun `test inside critical block`() = doTest(*keywords, "option", "end")
+
+  fun `test inside loop block`() = doTest(*keywords, "end")
+
+  fun `test after autonumber`() = doTest("off")
+
+  private fun doTest(vararg variants: String) {
+    val testName = getTestName(true)
+    myFixture.testCompletionVariants("${testName}.mermaid", *variants)
+  }
+}

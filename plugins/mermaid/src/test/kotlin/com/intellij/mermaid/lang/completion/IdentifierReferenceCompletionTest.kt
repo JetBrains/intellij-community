@@ -2,7 +2,7 @@ package com.intellij.mermaid.lang.completion
 
 import com.intellij.mermaid.lang.MermaidBaseTestCase
 
-class IdentifierReferenceCompletionTest : MermaidBaseTestCase("completion") {
+class IdentifierReferenceCompletionTest : MermaidBaseTestCase("completion/identifier") {
 
   fun `test completion for reference without declaration`() = doTest()
 

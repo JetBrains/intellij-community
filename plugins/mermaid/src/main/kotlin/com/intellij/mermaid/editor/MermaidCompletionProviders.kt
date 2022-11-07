@@ -4,8 +4,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.mermaid.lang.psi.impl.MermaidSubgraphStatementImpl
-import com.intellij.psi.PsiFile
+import com.intellij.mermaid.lang.psi.MermaidSubgraphStatement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 
@@ -35,13 +34,11 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
     context: ProcessingContext,
     result: CompletionResultSet
   ) {
-    parameters.position.parentOfType<PsiFile>()?.let {
-      result.addAllElements(diagrams.map { d ->
-        LookupElementBuilder
-          .create(d)
-          .withCaseSensitivity(false)
-      })
-    }
+    result.addAllElements(diagrams.map { d ->
+      LookupElementBuilder
+        .create(d)
+        .withCaseSensitivity(false)
+    })
   }
 }
 
@@ -84,17 +81,13 @@ class FlowchartCompletionProvider : MermaidLiveTemplateCompletionProvider() {
     val project = parameters.originalFile.project
     result.addElement(createKeywordLookupElement(project, "subgraph"))
 
-    var psiElement = parameters.position
-    while (psiElement.parent != null) {
-      psiElement = psiElement.parent
-      if (psiElement is MermaidSubgraphStatementImpl) {
-        result.addElement(
-          LookupElementBuilder
-            .create("direction")
-            .withCaseSensitivity(false)
-        )
-        break
-      }
+    val psiElement = parameters.position
+    psiElement.parentOfType<MermaidSubgraphStatement>()?.let {
+      result.addElement(
+        LookupElementBuilder
+          .create("direction")
+          .withCaseSensitivity(false)
+      )
     }
   }
 }
@@ -124,24 +117,35 @@ class ClassDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(lis
 class ClassDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("interface", "abstract", "service", "enumeration"))
 
-class StateDiagramSimpleCompletionProvider :
-  MermaidSimpleCompletionProvider(listOf("state", "direction", "as", "note", "end"))
+class StateDiagramLiveTemplateCompletionProvider(private val keyword: String) :
+  MermaidLiveTemplateCompletionProvider() {
+  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+    val project = parameters.originalFile.project
+    result.addElement(createKeywordLookupElement(project, keyword))
+  }
+}
 
 class StateDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("choice", "fork", "join"))
 
-class GanttSimpleCompletionProvider :
+class GanttTopLevelCompletionProvider :
   MermaidSimpleCompletionProvider(
     listOf(
       "dateFormat",
       "excludes",
       "includes",
+      "axisFormat"
+    )
+  )
+
+class GanttSimpleCompletionProvider :
+  MermaidSimpleCompletionProvider(
+    listOf(
       "done",
       "active",
       "crit",
       "after",
-      "milestone",
-      "axisFormat"
+      "milestone"
     )
   )
 
@@ -177,13 +181,7 @@ class RequirementRelationshipCompletionProvider :
 class GitGraphSimpleCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("commit", "branch", "checkout", "merge", "cherry-pick"))
 
-class GitGraphCommitCompletionProvider : MermaidLiveTemplateCompletionProvider() {
-  private val keywords = listOf(
-    "id",
-    "type",
-    "tag",
-    "msg"
-  )
+class GitGraphCommitCompletionProvider(private val keywords: List<String>) : MermaidLiveTemplateCompletionProvider() {
 
   override fun addCompletions(
     parameters: CompletionParameters,
