@@ -293,10 +293,10 @@ public final class JBCefApp {
    */
   public static boolean isSupported() {
     boolean testModeEnabled = RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled");
-    if (ourSupported != null && !testModeEnabled) {
-      return ourSupported.get();
-    }
     synchronized (ourSupportedLock) {
+      if (ourSupported != null && !testModeEnabled) {
+        return ourSupported.get();
+      }
       if (testModeEnabled) {
         ourSupported = null;
       }
