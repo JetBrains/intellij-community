@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons.Ide.Shadow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,7 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
   private final Icon myBottomLeftIcon;
   private final Icon myBottomRightIcon;
 
-  private final JBInsets INSETS;
+  private final Insets INSETS;
 
   public NotificationBalloonShadowBorderProvider(@NotNull Color fillColor, @NotNull Color borderColor) {
     this(fillColor, borderColor,
@@ -61,7 +60,8 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     myBottomLeftIcon = bottomLeftIcon;
     myBottomRightIcon = bottomRightIcon;
 
-    INSETS = new JBInsets(topIcon.getIconHeight(), leftIcon.getIconWidth(), bottomIcon.getIconHeight(), rightIcon.getIconWidth());
+    //noinspection UseDPIAwareInsets
+    INSETS = new Insets(topIcon.getIconHeight(), leftIcon.getIconWidth(), bottomIcon.getIconHeight(), rightIcon.getIconWidth());
   }
 
   @NotNull
