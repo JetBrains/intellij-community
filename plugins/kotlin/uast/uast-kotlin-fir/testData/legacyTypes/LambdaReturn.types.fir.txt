@@ -37,7 +37,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                             USimpleNameReferenceExpression (identifier = c) [c] : PsiType:int
                 UDeclarationsExpression [var lam3: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}]
                     ULocalVariable (name = lam3) [var lam3: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}]
-                        ULabeledExpression (label = lbd) [lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}]
+                        ULabeledExpression (label = lbd) [lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
                             ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
                                 UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
