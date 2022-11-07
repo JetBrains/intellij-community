@@ -66,7 +66,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ExpandEditorMenuCommand.PREFIX, ExpandEditorMenuCommand::new),
       Map.entry(OpenRandomFileCommand.PREFIX, OpenRandomFileCommand::new),
       Map.entry(PressEnterKeyCommand.PREFIX, PressEnterKeyCommand::new),
-      Map.entry(WaitForDumbCommand.PREFIX, WaitForDumbCommand::new)
+      Map.entry(WaitForDumbCommand.PREFIX, WaitForDumbCommand::new),
+      Map.entry(GoToAnyPsiElement.PREFIX, GoToAnyPsiElement::new)
     );
   }
 }
