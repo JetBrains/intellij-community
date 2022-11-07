@@ -2,6 +2,7 @@
 package com.intellij.completion.ml.common
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -20,7 +21,9 @@ class CurrentProjectInfo(project: Project) : Disposable {
   private var _filesCount: Int = 0
 
   init {
-    alarm.addRequest({ updateStats(project) }, 10)
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      alarm.addRequest({ updateStats(project) }, 10)
+    }
   }
 
   val isIdeaProject = project.basePath?.let {
