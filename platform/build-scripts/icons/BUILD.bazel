@@ -33,6 +33,7 @@ jvm_library(
     "//platform/util/zip",
     "@lib//:platform-images-build-pngencoder",
     "@lib//:hash4j",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
     ":platform_util_xmlDom_provided",
   ],
   runtime_deps = ["@lib//:commons-imaging"]
@@ -68,6 +69,7 @@ jvm_library(
     "//platform/util/zip",
     "@lib//:platform-images-build-pngencoder",
     "@lib//:hash4j",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
   ]
 )
 ### auto-generated section `build intellij.platform.images.build` end
