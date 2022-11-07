@@ -72,6 +72,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     LOG.info("Initializing settings sync")
     val settingsSyncMain = SettingsSyncMain.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
+    SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
     syncSettings()
   }
 
