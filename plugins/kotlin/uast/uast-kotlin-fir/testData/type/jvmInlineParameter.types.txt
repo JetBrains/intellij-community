@@ -1,6 +1,6 @@
 UFile (package = ) [public final class JvmInlineParameterKt {...]
     UClass (name = JvmInlineParameterKt) [public final class JvmInlineParameterKt {...}]
-        UMethod (name = box) [public static final fun box(@org.jetbrains.annotations.NotNull i: int) : void {...}]
+        UMethod (name = box) [public static fun box(@org.jetbrains.annotations.NotNull i: int) : void {...}]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:void
