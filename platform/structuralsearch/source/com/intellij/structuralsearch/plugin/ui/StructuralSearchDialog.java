@@ -1293,6 +1293,11 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private class MyEditorTextField extends EditorTextField {
