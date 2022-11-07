@@ -3,7 +3,7 @@ package org.jetbrains.plugins.javaFX;
 
 import com.intellij.spellchecker.BundledDictionaryProvider;
 
-final class JavaeeBundledDictionaryProvider implements BundledDictionaryProvider {
+final class JavafxBundledDictionaryProvider implements BundledDictionaryProvider {
   @Override
   public String[] getBundledDictionaries() {
     return new String[]{"/dictionaries/javafx.dic"};
