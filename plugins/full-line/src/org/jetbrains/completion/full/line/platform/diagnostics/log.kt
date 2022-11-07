@@ -1,16 +1,16 @@
 package org.jetbrains.completion.full.line.platform.diagnostics
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import java.util.*
 
-
 private val LOG = logger<DiagnosticsService>()
-
 
 interface FullLineLogger {
   fun error(throwable: Throwable)
@@ -24,8 +24,24 @@ interface FullLineLogger {
 }
 
 @Service
-class DiagnosticsService {
+class DiagnosticsService : Disposable {
   private val dispatcher = EventDispatcher.create(DiagnosticsListener::class.java)
+
+  init {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      dispatcher.addListener(object : DiagnosticsListener {
+        val console = InMemoryLogConsole()
+
+        init {
+          Disposer.register(this@DiagnosticsService, console)
+        }
+
+        override fun messageReceived(message: DiagnosticsListener.Message) {
+          console.addMessage(message)
+        }
+      })
+    }
+  }
 
   fun subscribe(listener: DiagnosticsListener, parentDisposable: Disposable) {
     dispatcher.addListener(listener, parentDisposable)
@@ -56,6 +72,9 @@ class DiagnosticsService {
 
       override val isDebugEnabled: Boolean = log.isDebugEnabled || dispatcher.hasListeners()
     }
+  }
+
+  override fun dispose() {
   }
 
   companion object {

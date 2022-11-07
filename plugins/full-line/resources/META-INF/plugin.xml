@@ -193,6 +193,9 @@
     <registryKey key="full.line.enable.diagnostics" defaultValue="false"
                  description="Enable diagnostics tool window" restartRequired="true"/>
 
+    <registryKey key="full.line.diagnostics.file" defaultValue=""
+                 description="Path to diagnostic log"/>
+
     <registryKey key="full.line.multi.token.everywhere" defaultValue="false"
                  description="Provide multi-token suggestions in all locations"/>
 

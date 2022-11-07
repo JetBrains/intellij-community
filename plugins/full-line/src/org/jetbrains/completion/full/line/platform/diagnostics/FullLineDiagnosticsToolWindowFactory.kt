@@ -15,11 +15,16 @@ internal const val FULL_LINE_TOOL_WINDOW_ID = "Full Line Diagnostics"
 
 class FullLineDiagnosticsToolWindowFactory : ToolWindowFactory, DumbAware {
   @NlsSafe val title = "Log"
+  private lateinit var windowContent: FullLineToolWindowContent
+
+  override fun init(toolWindow: ToolWindow) {
+    super.init(toolWindow)
+    windowContent = FullLineToolWindowContent(toolWindow.project)
+    Disposer.register(toolWindow.disposable, windowContent)
+  }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    val windowContent = FullLineToolWindowContent(project)
-    val content = ContentFactory.SERVICE.getInstance()
-      .createContent(windowContent.component, title, true)
+    val content = ContentFactory.getInstance().createContent(windowContent.component, title, true)
     toolWindow.contentManager.apply {
       addContent(content)
       setSelectedContent(content)
