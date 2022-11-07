@@ -1,11 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevSort
+import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.revwalk.filter.RevFilter
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Collectors
 import java.util.stream.Stream
+import kotlin.concurrent.thread
 import kotlin.math.max
 
 internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
@@ -18,6 +26,13 @@ internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?
   catch (e: IOException) {
     throw IllegalStateException(noGitFound, e)
   }
+}
+
+private val jgit = ConcurrentHashMap<String, Git>()
+private fun jgit(repo: Path): Git = jgit.computeIfAbsent("$repo") {
+  val git = Git.open(repo.toFile())
+  Runtime.getRuntime().addShutdownHook(thread(start = false, block = git::close))
+  git
 }
 
 internal fun gitPull(repo: Path) {
@@ -37,8 +52,7 @@ internal fun gitPull(repo: Path) {
  * @return map of file paths (relative to [dirToList]) to [GitObject]
  */
 internal fun listGitObjects(repo: Path, dirToList: Path?, fileFilter: (Path) -> Boolean = { true }): Map<String, GitObject> {
-  return listGitTree(repo, dirToList, fileFilter)
-    .collect(Collectors.toMap({ it.first }, { it.second }))
+  return listGitTree(repo, dirToList, fileFilter).collect(Collectors.toMap({ it.first }, { it.second }))
 }
 
 private fun listGitTree(repo: Path, dirToList: Path?, fileFilter: (Path) -> Boolean): Stream<Pair<String, GitObject>> {
@@ -244,21 +258,83 @@ internal fun latestChangeTime(path: String, repo: Path): Long {
 }
 
 /**
+ * List commits that are both descendants of [endExclusive] and ancestors of [startInclusive]
+ */
+private fun Git.revListAncestryPath(startInclusive: String, endExclusive: String) =
+  RevWalk(repository).use { walk ->
+    val startCommit = repository.resolve(startInclusive)
+    walk.markStart(walk.parseCommit(startCommit))
+    walk.markUninteresting(walk.parseCommit(repository.resolve(endExclusive)))
+    walk.sort(RevSort.TOPO, true)
+    walk.sort(RevSort.COMMIT_TIME_DESC, true)
+    walk.revFilter = AncestryPathFilter(this, startCommit)
+    walk.map { it.name }
+  }
+
+/**
+ * Follow only the first parent commit upon seeing a merge commit
+ */
+private fun Git.revListFirstParent(startInclusive: String, endExclusive: String) =
+  RevWalk(repository).use { walk ->
+    walk.markStart(repository.resolve(startInclusive).let(walk::parseCommit))
+    walk.markUninteresting(repository.resolve(endExclusive).let(walk::parseCommit))
+    walk.sort(RevSort.TOPO, true)
+    walk.sort(RevSort.COMMIT_TIME_DESC, true)
+    walk.revFilter = FirstParentFilter()
+    walk.map { it.name }
+  }
+
+private class FirstParentFilter : RevFilter() {
+  private val unrelated = mutableSetOf<RevCommit>()
+  override fun include(walk: RevWalk, commit: RevCommit): Boolean {
+    if (commit.parentCount > 1) {
+      unrelated += commit.parents.drop(1)
+    }
+    return if (unrelated.contains(commit)) {
+      unrelated -= commit
+      false
+    }
+    else true
+  }
+
+  override fun clone() = FirstParentFilter()
+}
+
+private class AncestryPathFilter(val git: Git, val startCommit: ObjectId) : RevFilter() {
+  private val unrelated = mutableSetOf<RevCommit>()
+  override fun include(walker: RevWalk, commit: RevCommit): Boolean {
+    if (commit.parentCount > 1) {
+      unrelated += commit.parents.filter {
+        RevWalk(git.repository).use { walk ->
+          walk.markStart(walk.parseCommit(startCommit))
+          walk.markUninteresting(walk.parseCommit(it))
+          walk.iterator().hasNext()
+        }
+      }
+    }
+    return if (unrelated.contains(commit)) {
+      unrelated -= commit
+      false
+    }
+    else true
+  }
+
+  override fun clone() = AncestryPathFilter(git, startCommit)
+}
+
+/**
  * see [https://stackoverflow.com/questions/8475448/find-merge-commit-which-include-a-specific-commit]
  */
 private fun findMergeCommit(repo: Path, commit: String, searchUntil: String = "HEAD"): CommitInfo? {
-  // list commits that are both descendants of commit hash and ancestors of HEAD
-  val ancestryPathList = execute(repo, GIT, "rev-list", "$commit..$searchUntil", "--ancestry-path")
-    .lineSequence().filter { it.isNotBlank() }
-  // follow only the first parent commit upon seeing a merge commit
-  val firstParentList = execute(repo, GIT, "rev-list", "$commit..$searchUntil", "--first-parent")
-    .lineSequence().filter { it.isNotBlank() }.toSet()
+  val git = jgit(repo)
+  val ancestryPathList = git.revListAncestryPath(startInclusive = searchUntil, endExclusive = commit)
+  val firstParentList = git.revListFirstParent(startInclusive = searchUntil, endExclusive = commit).toSet()
   // last common commit may be the latest merge
   return ancestryPathList
     .lastOrNull(firstParentList::contains)
     ?.let { commitInfo(repo, it) }
     ?.takeIf {
-      // should be merge
+      // should be a merge
       it.parents.size > 1 &&
       // but not some branch merge right after [commit]
       it.parents.first() != commit
