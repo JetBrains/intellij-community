@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -162,9 +163,13 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             .toTypedArray()
     }
 
+    override fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
+        val kModifierOwner = target.toKtElement<KtModifierListOwner>() ?: return emptyList()
+        return createChangeModifierActions(kModifierOwner, KtTokens.OVERRIDE_KEYWORD, shouldBePresent)
+    }
+
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
-        val kModifierOwner =
-            target.toKtElement<KtModifierListOwner>() ?: return emptyList()
+        val kModifierOwner = target.toKtElement<KtModifierListOwner>() ?: return emptyList()
 
         val modifier = request.modifier
         val shouldPresent = request.shouldBePresent()
@@ -187,11 +192,18 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             else -> javaPsiModifiersMapping[modifier] to shouldPresent
         }
         if (kToken == null) return emptyList()
+        return createChangeModifierActions(kModifierOwner, kToken, shouldPresentMapped)
+    }
 
-        val action = if (shouldPresentMapped) {
-            AddModifierFixFE10.createIfApplicable(kModifierOwner, kToken)
+    private fun createChangeModifierActions(
+        modifierListOwners: KtModifierListOwner,
+        token: KtModifierKeywordToken,
+        shouldBePresent: Boolean
+    ): List<IntentionAction> {
+        val action = if (shouldBePresent) {
+            AddModifierFixFE10.createIfApplicable(modifierListOwners, token)
         } else {
-            RemoveModifierFixBase(kModifierOwner, kToken, false)
+            RemoveModifierFixBase(modifierListOwners, token, false)
         }
         return listOfNotNull(action)
     }

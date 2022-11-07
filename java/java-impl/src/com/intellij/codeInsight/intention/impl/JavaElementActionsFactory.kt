@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl
 
+import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.codeInsight.intention.FileModifier
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.asSafely
 import org.jetbrains.uast.UDeclaration
 import java.util.*
 
@@ -22,8 +24,35 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
     return listOf(ChangeModifierFix(declaration, request))
   }
-  
-  internal class ChangeModifierFix(declaration: PsiModifierListOwner, @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) : 
+
+  private class RemoveAnnotationFix(private val fqn: String, element: PsiModifierListOwner) : IntentionAction {
+    val elementPointer = SmartPointerManager.createPointer(element)
+
+    override fun startInWriteAction(): Boolean = true
+
+    override fun getText(): String = QuickFixBundle.message("remove.override.fix.text")
+
+    override fun getFamilyName(): String = QuickFixBundle.message("remove.override.fix.family")
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+      return elementPointer.element?.isValid == true
+    }
+
+    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+      elementPointer.element?.getAnnotation(fqn)?.delete()
+    }
+  }
+
+  override fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
+    val psiElement = target.asSafely<PsiModifierListOwner>() ?: return emptyList()
+    if (psiElement.language != JavaLanguage.INSTANCE) return emptyList()
+    return if (shouldBePresent) {
+      createAddAnnotationActions(target, annotationRequest(CommonClassNames.JAVA_LANG_OVERRIDE))
+    } else {
+      listOf(RemoveAnnotationFix(CommonClassNames.JAVA_LANG_OVERRIDE, psiElement))
+    }
+  }
+
+  internal class ChangeModifierFix(declaration: PsiModifierListOwner, @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) :
     ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true) {
     override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
 
