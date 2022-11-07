@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -438,7 +439,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     TreeUtil.sort(myModel, BROWSER_NODE_COMPARATOR);
     collapseDirectories(myModel, myRoot);
 
-    if (myProject != null) {
+    if (myProject != null && !ApplicationManager.getApplication().isDispatchThread()) {
       // Incrementally fill background colors
       // read lock is required for background colors calculation as it requires project file index
       ReadAction.nonBlocking(() -> {
