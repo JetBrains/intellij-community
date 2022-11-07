@@ -26,12 +26,12 @@
     <orderEntry type="module-library">
       <library name="kinference.core.jvm" type="repository">
         <properties include-transitive-deps="false" maven-id="io.kinference:inference-core-jvm:0.2.0">
-           <exclude>
-             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-           </exclude>
-         </properties>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.0/inference-core-jvm-0.2.0.jar!/" />
         </CLASSES>
