@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.dsl.checkPositive
-import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -65,7 +64,7 @@ data class Constraints(
    *
    * 1. All cells in the same grid row with [baselineAlign] true, [height] equals 1 and with the same [verticalAlign]
    * (except [VerticalAlign.FILL], which doesn't support baseline) are aligned by baseline together
-   * 2. Sub grids (see [GridImpl.registerSubGrid]) with only one row and that contain cells only with [VerticalAlign.FILL] and another
+   * 2. Sub grids (see [com.intellij.ui.dsl.gridLayout.impl.GridImpl.registerSubGrid]) with only one row and that contain cells only with [VerticalAlign.FILL] and another
    * specific [VerticalAlign] (at least one cell without fill align) have own baseline and can be aligned by baseline in parent grid
    */
   val baselineAlign: Boolean = false,
