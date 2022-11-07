@@ -331,9 +331,6 @@ private fun addActivateAndWindowsCliListeners() {
 
   EXTERNAL_LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
-    if (args.isEmpty()) {
-      return@BiFunction 0
-    }
     runBlocking(Dispatchers.Default) {
       val result = handleExternalCommand(args.asList(), currentDirectory)
       try {
