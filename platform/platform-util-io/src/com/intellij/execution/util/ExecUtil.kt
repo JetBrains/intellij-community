@@ -17,11 +17,51 @@ import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
+import com.sun.jna.Structure
+import com.sun.jna.platform.win32.Advapi32
+import com.sun.jna.platform.win32.Kernel32
+import com.sun.jna.platform.win32.WinDef
+import com.sun.jna.platform.win32.WinNT
+import com.sun.jna.ptr.IntByReference
 import org.jetbrains.annotations.Nls
 import java.io.*
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
+
+@Suppress("ClassName", "PropertyName")
+private object WindowsElevationStatus {
+  fun isElevated(): Boolean {
+    val tokenHandle = WinNT.HANDLEByReference()
+
+    val currentProcess = Kernel32.INSTANCE.GetCurrentProcess()
+    if (!Advapi32.INSTANCE.OpenProcessToken(currentProcess, WinNT.TOKEN_ADJUST_PRIVILEGES or WinNT.TOKEN_QUERY, tokenHandle)) {
+      val lastError = Kernel32.INSTANCE.GetLastError()
+      throw RuntimeException("OpenProcessToken: ")
+    }
+
+    try {
+      val cbNeeded = IntByReference(0)
+      val token = TOKEN_ELEVATION()
+      val infoClass = WinNT.TOKEN_INFORMATION_CLASS.TokenElevation
+      if (!Advapi32.INSTANCE.GetTokenInformation(tokenHandle.value, infoClass, token, token.size(), cbNeeded)) {
+        val lastError = Kernel32.INSTANCE.GetLastError()
+        throw RuntimeException("GetTokenInformation: ")
+      }
+
+      return token.TokenIsElevated.toInt() != 0
+    }
+    finally {
+      Kernel32.INSTANCE.CloseHandle(tokenHandle.value)
+    }
+  }
+
+  @Structure.FieldOrder("TokenIsElevated")
+  class TOKEN_ELEVATION : Structure() {
+    @JvmField var TokenIsElevated = WinDef.DWORD(0)
+  }
+}
+
 
 object ExecUtil {
   private val hasGkSudo = PathExecLazyValue.create("gksudo")
@@ -147,7 +187,8 @@ object ExecUtil {
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
   fun sudoCommand(commandLine: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine {
-    if (SystemInfoRt.isUnix && "root" == System.getenv("USER")) { //NON-NLS
+    if ((SystemInfoRt.isUnix && "root" == System.getenv("USER")) //NON-NLS
+        || (SystemInfoRt.isWindows && WindowsElevationStatus.isElevated())) {
       return commandLine
     }
 
