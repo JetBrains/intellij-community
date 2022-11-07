@@ -364,17 +364,25 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
 
     suspend fun runCommitCheck(project: Project, commitCheck: CommitCheck, commitInfo: CommitInfo): CommitProblem? {
-      if (DumbService.isDumb(project) && !DumbService.isDumbAware(commitCheck)) {
-        LOG.debug("Skipped commit check in dumb mode $commitCheck")
-        return null
+      try {
+        if (DumbService.isDumb(project) && !DumbService.isDumbAware(commitCheck)) {
+          LOG.debug("Skipped commit check in dumb mode $commitCheck")
+          return null
+        }
+
+        LOG.debug("Running commit check $commitCheck")
+        val ctx = coroutineContext
+        ctx.ensureActive()
+        ctx.progressSink?.update(text = "", details = "")
+
+        return commitCheck.runCheck(commitInfo)
       }
-
-      LOG.debug("Running commit check $commitCheck")
-      val ctx = coroutineContext
-      ctx.ensureActive()
-      ctx.progressSink?.update(text = "", details = "")
-
-      return commitCheck.runCheck(commitInfo)
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        return CommitProblem.createError(e)
+      }
     }
   }
 }
