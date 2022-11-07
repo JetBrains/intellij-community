@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import kotlin.math.min

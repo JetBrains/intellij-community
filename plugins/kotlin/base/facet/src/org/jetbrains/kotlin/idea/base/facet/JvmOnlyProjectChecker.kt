@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.facet
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -11,7 +12,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedValueCache
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 @Service(Service.Level.PROJECT)

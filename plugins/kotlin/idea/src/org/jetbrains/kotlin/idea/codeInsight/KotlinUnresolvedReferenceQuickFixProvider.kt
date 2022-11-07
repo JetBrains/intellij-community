@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 

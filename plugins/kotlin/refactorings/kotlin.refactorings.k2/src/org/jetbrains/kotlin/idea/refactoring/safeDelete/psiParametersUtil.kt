@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.ide.IdeBundle
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ThrowableComputable
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.kotlin.idea.inheritorsSearch.findHierarchyWithSiblings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex

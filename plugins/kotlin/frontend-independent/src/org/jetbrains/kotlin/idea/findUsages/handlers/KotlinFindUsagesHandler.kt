@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.findUsages.handlers
 
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.findUsages.KotlinReferencePreservingUsageInfo
 import org.jetbrains.kotlin.idea.findUsages.KotlinReferenceUsageInfo
-import com.intellij.openapi.application.runReadAction
 import java.util.*
 
 abstract class KotlinFindUsagesHandler<T : PsiElement>(

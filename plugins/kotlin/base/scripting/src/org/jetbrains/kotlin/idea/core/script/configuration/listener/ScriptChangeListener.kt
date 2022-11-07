@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration.listener
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -9,7 +10,6 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 
 /**

@@ -4,6 +4,7 @@
 
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
@@ -13,7 +14,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 
 val SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS = setOf("classpath", "compile", "api", "implementation", "compileOnly", "runtimeOnly")

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.search
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.findTypeAliasByShortName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.getDefaultImports
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType

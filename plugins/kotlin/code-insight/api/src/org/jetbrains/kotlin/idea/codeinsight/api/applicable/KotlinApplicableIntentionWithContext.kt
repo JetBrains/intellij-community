@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -9,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass

@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.codegen.OriginCollectingClassBuilderFactory
 import org.jetbrains.kotlin.codegen.getClassFiles
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.org.objectweb.asm.tree.ClassNode

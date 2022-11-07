@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
 import org.jetbrains.kotlin.idea.core.script.scriptingWarnLog
-import com.intellij.openapi.application.runReadAction
 import java.nio.file.Path
 
 class ScriptSdksBuilder(

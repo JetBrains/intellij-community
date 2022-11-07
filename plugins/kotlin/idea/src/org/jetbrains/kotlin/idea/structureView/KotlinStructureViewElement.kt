@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.structureView
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.Queryable
 import com.intellij.psi.NavigatablePsiElement
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
 import kotlin.properties.ReadWriteProperty

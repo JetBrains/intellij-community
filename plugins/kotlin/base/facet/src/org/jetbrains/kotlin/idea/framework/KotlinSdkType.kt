@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -12,7 +13,6 @@ import org.jdom.Element
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.facet.KotlinBaseFacetBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import com.intellij.openapi.application.runWriteAction
 import javax.swing.JComponent
 
 class KotlinSdkType : SdkType("KotlinSDK") {

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
@@ -30,7 +31,6 @@ import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
-import com.intellij.openapi.application.runWriteAction
 
 internal class OverrideKeywordHandler(
     private val basicContext: FirBasicCompletionContext

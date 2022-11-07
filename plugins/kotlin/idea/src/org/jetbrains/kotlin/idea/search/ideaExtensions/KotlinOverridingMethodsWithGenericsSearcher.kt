@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
@@ -10,7 +11,6 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
 class KotlinOverridingMethodsWithGenericsSearcher : QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters> {

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability.*
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtElement
 

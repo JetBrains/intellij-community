@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.core.filter
 import com.intellij.debugger.engine.ExtraSteppingFilter
 import com.intellij.debugger.engine.SuspendContext
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.Location
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
@@ -13,7 +14,6 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.*
-import com.intellij.openapi.application.runReadAction
 
 class KotlinExtraSteppingFilter : ExtraSteppingFilter {
     override fun isApplicable(context: SuspendContext?): Boolean {

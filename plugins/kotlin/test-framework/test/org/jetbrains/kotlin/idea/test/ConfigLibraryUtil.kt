@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -19,7 +20,6 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import com.intellij.openapi.application.runWriteAction
 import java.io.File
 import kotlin.test.assertNotNull
 
