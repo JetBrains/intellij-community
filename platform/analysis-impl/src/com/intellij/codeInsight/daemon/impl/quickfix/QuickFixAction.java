@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @author Alexey Kudravtsev
+ * utility class helping to register quick fixes with {@link HighlightInfo}
  */
 public final class QuickFixAction {
   private QuickFixAction() { }
