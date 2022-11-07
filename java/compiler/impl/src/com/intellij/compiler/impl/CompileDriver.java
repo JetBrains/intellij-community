@@ -13,9 +13,7 @@ import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,10 +56,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -519,22 +514,6 @@ public final class CompileDriver {
           duration
         );
 
-        if (ApplicationManagerEx.isInIntegrationTest()) {
-          String logPath = PathManager.getLogPath();
-          Path perfMetrics = Paths.get(logPath).resolve("performance-metrics").resolve("buildMetrics.json");
-          try {
-            FileUtil.writeToFile(perfMetrics.toFile(), "{\n\t\"build_errors\" : " +
-                                                       compileContext.getMessageCount(CompilerMessageCategory.ERROR) + "," +
-                                                       "\n\t\"build_warnings\" : " +
-                                                       compileContext.getMessageCount(CompilerMessageCategory.WARNING) + "," +
-                                                       "\n\t\"build_compilation_duration\" : " +
-                                                       duration +
-                                                       "\n}");
-          }
-          catch (IOException ex) {
-            LOG.info("Could not create json file with the build performance metrics.");
-          }
-        }
       }
     };
 

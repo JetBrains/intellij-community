@@ -22,7 +22,6 @@ import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
-import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -80,7 +79,7 @@ public final class DoLocalInspection extends AbstractCommand implements Disposab
 
           StringBuilder finishMessage = new StringBuilder("Local inspections have been finished with: ");
 
-          span.setAttribute("Errors", errorsOnHighlighting.size());
+          spanRef.get().setAttribute("Errors", errorsOnHighlighting.size());
           if (errorsOnHighlighting.size() > 0) {
             finishMessage.append("\n").append(new String("Errors: " + errorsOnHighlighting.size()));
           }
@@ -88,7 +87,7 @@ public final class DoLocalInspection extends AbstractCommand implements Disposab
             finishMessage.append("\n").append(new String(error.getText() + ": " + error.getDescription()));
           }
 
-          span.setAttribute("Warnings", warningsOnHighlighting.size());
+          spanRef.get().setAttribute("Warnings", warningsOnHighlighting.size());
           if (warningsOnHighlighting.size() > 0) {
             finishMessage.append("\n").append(new String("Warnings: " + warningsOnHighlighting.size()));
           }
@@ -96,7 +95,7 @@ public final class DoLocalInspection extends AbstractCommand implements Disposab
             finishMessage.append("\n").append(new String(warning.getText() + ": " + warning.getDescription()));
           }
 
-          span.setAttribute("Weak Warnings", warningsOnHighlighting.size());
+          spanRef.get().setAttribute("Weak Warnings", warningsOnHighlighting.size());
           if (weakWarningsOnHighlighting.size() > 0) {
             finishMessage.append("\n").append(new String("Weak Warnings: " + weakWarningsOnHighlighting.size()));
           }
