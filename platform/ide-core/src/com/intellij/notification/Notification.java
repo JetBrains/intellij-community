@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -269,12 +268,9 @@ public class Notification {
     return Objects.requireNonNull(e.getData(KEY));
   }
 
-  public static void fire(final @NotNull Notification notification, @NotNull AnAction action) {
-    fire(notification, action, dataId -> KEY.is(dataId) ? notification : null);
-  }
-
   public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
-    DataContext dataContext = ObjectUtils.notNull(context, DataContext.EMPTY_CONTEXT);
+    DataContext dataContext = context != null ? context :
+                              CustomizedDataContext.create(DataContext.EMPTY_CONTEXT, dataId -> KEY.is(dataId) ? notification : null);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, dataContext);
     IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
   }
