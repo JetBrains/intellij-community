@@ -13,6 +13,8 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.util.io.exists
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.add.target.conda.loadLocalPythonCondaPath
+import com.jetbrains.python.sdk.add.target.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.*
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -61,6 +63,11 @@ internal class PyCondaTest {
     Logger.getInstance(PyCondaSdkTest::class.java).info("Legacy: $useLegacy")
   }
 
+  @Test
+  fun testLocalPathSaveLoad() {
+    saveLocalPythonCondaPath(condaRule.condaPath)
+    Assert.assertEquals("Incorrectly loaded path", condaRule.condaPath, loadLocalPythonCondaPath())
+  }
   @Test
   fun testBasePython(): Unit = runTest {
     val baseConda = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
