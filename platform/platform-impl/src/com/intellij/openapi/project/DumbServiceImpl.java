@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
@@ -22,22 +21,15 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.PingProgress;
-import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -84,11 +76,30 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private volatile @Nullable Thread myWaitIntolerantThread;
 
+  private class DumbTaskListener implements DumbServiceGuiTaskQueue.DumbTaskListener {
+    /*
+     * beforeFirstTask and afterLastTask always follow one after another. Receiving several beforeFirstTask or afterLastTask in row is
+     * always a failure of DumbServiceGuiTaskQueue
+     */
+    @Override
+    public void beforeFirstTask() {
+      boolean changed = myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS);
+      LOG.assertTrue(changed, "Failed to change: SCHEDULED_TASKS > RUNNING_DUMB_TASKS. Current state is: " + myState.get());
+    }
+
+    @Override
+    public void afterLastTask() {
+      boolean changed = myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH);
+      LOG.assertTrue(changed, "Failed to change: RUNNING_DUMB_TASKS > WAITING_FOR_FINISH. Current state is: " + myState.get());
+      myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);
+    }
+  }
+
   public DumbServiceImpl(@NotNull Project project) {
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
-    myGuiDumbTaskRunner = new DumbServiceGuiTaskQueue(myProject, myTaskQueue);
+    myGuiDumbTaskRunner = new DumbServiceGuiTaskQueue(myProject, myTaskQueue, new DumbTaskListener());
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
@@ -330,17 +341,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       catch (Throwable e) {
         LOG.error(e);
       }
-    }
-  }
-
-  private void queueUpdateFinished() {
-    if (myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH)) {
-      // There is no task to suspend with the current suspender. If the execution reverts to the dumb mode, a new suspender will be
-      // created.
-      // The current suspender, however, might have already got suspended between the point of the last check cancelled call and
-      // this point. If it has happened it will be cleaned up when the suspender is closed on the background process thread.
-      myHeavyActivities.resetCurrentSuspender();
-      myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(this::updateFinished);
     }
   }
 
@@ -586,22 +586,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       });
     }
     catch (Throwable e) {
-      queueUpdateFinished();
+      myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH);
       LOG.error("Failed to start background index update task", e);
     }
   }
 
   private void runBackgroundProcess(final @NotNull ProgressIndicator visibleIndicator) {
-    if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
-
-    // Only one thread can execute this method at the same time at this point.
-
-    try {
-      myGuiDumbTaskRunner.runBackgroundProcess(visibleIndicator, myHeavyActivities);
-    } finally {
-      //this used to be called in EDT from getNextTask(), but moved it here to simplify
-      queueUpdateFinished();
-    }
+    myGuiDumbTaskRunner.runBackgroundProcess(visibleIndicator, myHeavyActivities);
   }
 
   @Override

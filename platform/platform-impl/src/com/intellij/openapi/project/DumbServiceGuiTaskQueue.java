@@ -19,21 +19,32 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 final class DumbServiceGuiTaskQueue {
+  interface DumbTaskListener {
+    void beforeFirstTask();
+
+    /**
+     * beforeFirstTask and afterLastTask always follow one after another. Receiving several beforeFirstTask or afterLastTask in row is
+     * always a failure of DumbServiceGuiTaskQueue
+     */
+    void afterLastTask();
+  }
+
   private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
 
   private final Project myProject;
   private final DumbServiceMergingTaskQueue myTaskQueue;
-
-  /**
-   * Per-task progress indicators. Modified from EDT only.
-   * The task is removed from this map after it's finished or when the project is disposed.
-   */
+  private final AtomicBoolean isRunning = new AtomicBoolean(false);
+  private final DumbTaskListener myListener;
 
   DumbServiceGuiTaskQueue(@NotNull Project project,
-                          @NotNull DumbServiceMergingTaskQueue queue) {
+                          @NotNull DumbServiceMergingTaskQueue queue,
+                          @NotNull DumbTaskListener listener) {
     myProject = project;
     myTaskQueue = queue;
+    myListener = listener;
   }
 
   void processTasksWithProgress(@NotNull StructuredIdeActivity activity,
@@ -63,6 +74,20 @@ final class DumbServiceGuiTaskQueue {
   }
 
   public void runBackgroundProcess(ProgressIndicator visibleIndicator, DumbServiceHeavyActivities heavyActivities) {
+    boolean started = isRunning.compareAndSet(false, true);
+    if (!started) return;
+
+    try {
+      myListener.beforeFirstTask();
+      internalRunBackgroundProcess(visibleIndicator, heavyActivities);
+    }
+    finally {
+      myListener.afterLastTask();
+      isRunning.set(false);
+    }
+  }
+
+  private void internalRunBackgroundProcess(ProgressIndicator visibleIndicator, DumbServiceHeavyActivities heavyActivities) {
     try {
       ((ProgressManagerImpl)ProgressManager.getInstance()).markProgressSafe((UserDataHolder)visibleIndicator);
     }
