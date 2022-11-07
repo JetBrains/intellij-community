@@ -632,8 +632,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
 
       private val textPanel = JBUI.Panels.simplePanel()
-        .addToLeft(JBUI.Panels.simplePanel(mainTextComponent).addToLeft(mainIconComponent).andTransparent())
-        .addToCenter(JBUI.Panels.simplePanel(incomingOutgoingLabel).addToRight(secondaryLabel).andTransparent())
+        .addToLeft(JBUI.Panels.simplePanel(mainTextComponent)
+                     .addToLeft(mainIconComponent)
+                     .addToRight(incomingOutgoingLabel)
+                     .andTransparent())
+        .addToCenter(secondaryLabel)
         .andTransparent()
 
       private val mainPanel = JBUI.Panels.simplePanel()
