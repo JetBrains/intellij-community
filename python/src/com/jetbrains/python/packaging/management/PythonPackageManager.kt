@@ -24,7 +24,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-      return service<PackageManagerHolder>().forSdk(project, sdk)
+      return project.service<PackageManagerHolder>().forSdk(project, sdk)
     }
 
     @Topic.AppLevel
