@@ -7,12 +7,14 @@ import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import java.util.regex.Pattern
 
 abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
   override fun setUp() {
     Registry.get("editor.codeVision.new").setValue(true, testRootDisposable)
+    TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
     super.setUp()
   }
 
