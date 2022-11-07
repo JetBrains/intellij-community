@@ -130,6 +130,7 @@ public final class UpdateHighlightersUtil {
                                                    @NotNull Collection<? extends HighlightInfo> highlights,
                                                    @Nullable EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                    int group) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Document document = editor.getDocument();
     MarkupModelEx markup = (MarkupModelEx)editor.getMarkupModel();
     setHighlightersToEditor(project, document, startOffset, endOffset, highlights, colorsScheme, group, markup);
@@ -142,6 +143,7 @@ public final class UpdateHighlightersUtil {
                                              @NotNull Collection<? extends HighlightInfo> highlights,
                                              @Nullable EditorColorsScheme colorsScheme, // if null global scheme will be used
                                              int group) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     setHighlightersToEditor(project, document, startOffset, endOffset, highlights, colorsScheme, group, markup);
   }
@@ -155,7 +157,6 @@ public final class UpdateHighlightersUtil {
                                               int group,
                                               @NotNull MarkupModelEx markup) {
     TextRange range = new TextRange(startOffset, endOffset);
-    ApplicationManager.getApplication().assertIsDispatchThread();
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
@@ -193,8 +194,8 @@ public final class UpdateHighlightersUtil {
                                           int endOffset,
                                           @NotNull ProperTextRange priorityRange,
                                           int group) {
-    List<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
     ApplicationManager.getApplication().assertIsDispatchThread();
+    List<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
 
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     if (startOffset == 0 && endOffset == document.getTextLength()) {
@@ -576,6 +577,7 @@ public final class UpdateHighlightersUtil {
    * This method currently works in O(total highlighter count in file) time.
    */
   public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
     if (model == null) return;
 

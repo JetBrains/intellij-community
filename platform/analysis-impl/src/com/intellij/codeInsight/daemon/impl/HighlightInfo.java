@@ -906,6 +906,8 @@ public class HighlightInfo implements Segment {
       this.fixRange = TextRangeScalarUtil.toScalarRange(fixMarker);
     }
     else {
+      RangeMarker fixMarker = this.fixMarker;
+      RangeHighlighterEx highlighter = this.highlighter;
       Document document = fixMarker != null ? fixMarker.getDocument() :
                           highlighter != null ? highlighter.getDocument() :
                           quickFixActionMarkers != null && !quickFixActionMarkers.isEmpty() && quickFixActionMarkers.get(0).getSecond() != null ? quickFixActionMarkers.get(0).getSecond().getDocument() :
