@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -24,6 +23,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.isExecutable
+import kotlin.io.path.pathString
 
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
@@ -42,6 +42,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaE
                            PythonSdkType.getInstance())
   sdk.sdkAdditionalData = additionalData
   sdk.homePath = sdk.getPythonBinaryPath(project).getOrThrow()
+  saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   return sdk
 }
 
@@ -57,7 +58,12 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(newCondaEnvInfo: NewCon
   val error = ProcessHandlerReader(process).runProcessAndGetError(uiContext, sink)
 
   return error?.let { Result.failure(Exception(it)) }
-         ?: Result.success(createCondaSdkFromExistingEnv(PyCondaEnvIdentity.NamedEnv(newCondaEnvInfo.envName), existingSdks, project))
+         ?: Result.success(
+           createCondaSdkFromExistingEnv(PyCondaEnvIdentity.NamedEnv(newCondaEnvInfo.envName), existingSdks, project)).apply {
+           onSuccess {
+             saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
+           }
+         }
 }
 
 /**
@@ -65,7 +71,7 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(newCondaEnvInfo: NewCon
  */
 suspend fun suggestCondaPath(configuration: TargetEnvironmentConfiguration?): FullPathOnTarget? {
   val request = configuration?.createEnvironmentRequest(null) ?: LocalTargetEnvironmentRequest()
-  val possiblePaths: Array<FullPathOnTarget> = when (request.targetPlatform.platform) {
+  var possiblePaths: Array<FullPathOnTarget> = when (request.targetPlatform.platform) {
     Platform.UNIX -> arrayOf("~/anaconda3/bin/conda",
                              "~/miniconda3/bin/conda",
                              "/usr/local/bin/conda",
@@ -79,6 +85,12 @@ suspend fun suggestCondaPath(configuration: TargetEnvironmentConfiguration?): Fu
                                 "%USERPROFILE%\\Anaconda3\\condabin\\conda.bat",
                                 "%USERPROFILE%\\Miniconda3\\condabin\\conda.bat"
     )
+  }
+  // If conda is local then store path
+  if (configuration == null) {
+    loadLocalPythonCondaPath()?.let {
+      possiblePaths = arrayOf(it.pathString) + possiblePaths
+    }
   }
   return possiblePaths.firstNotNullOfOrNull { request.getExpandedPathIfExecutable(it) }
 }

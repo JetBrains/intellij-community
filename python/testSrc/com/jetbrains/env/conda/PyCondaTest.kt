@@ -9,6 +9,8 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.add.target.conda.loadLocalPythonCondaPath
+import com.jetbrains.python.sdk.add.target.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.*
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -32,6 +34,13 @@ internal class PyCondaTest {
   @Rule
   @JvmField
   internal val chain = RuleChain.outerRule(ProjectRule()).around(condaRule).around(yamlRule)
+
+
+  @Test
+  fun testLocalPathSaveLoad() {
+    saveLocalPythonCondaPath(condaRule.condaPath)
+    Assert.assertEquals("Incorrectly loaded path", condaRule.condaPath, loadLocalPythonCondaPath())
+  }
 
   @Test
   fun testCondaCreateByYaml() = runTest {
