@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.observable.operation.core
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.operation.OperationExecutionId
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import com.intellij.openapi.observable.operation.core.ObservableOperationStatus.*
-import com.intellij.openapi.observable.properties.AbstractObservableProperty
+import com.intellij.openapi.observable.properties.ObservableBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.annotations.ApiStatus
@@ -31,13 +32,22 @@ fun ObservableOperationTrace.isOperationCompleted(): Boolean =
  * Returns observable property that changed before and after operation.
  * And result of [ObservableProperty.get] is equal to [ObservableOperationTrace.isOperationInProgress].
  */
-fun ObservableOperationTrace.getOperationInProgressProperty(): ObservableProperty<Boolean> {
-  return object : AbstractObservableProperty<Boolean>() {
+fun ObservableOperationTrace.getOperationInProgressProperty(): ObservableBooleanProperty {
+  return object : ObservableBooleanProperty {
+
     override fun get() = isOperationInProgress()
 
-    init {
-      whenOperationStarted { fireChangeEvent(false) }
-      whenOperationFinished { fireChangeEvent(true) }
+    override fun afterChange(parentDisposable: Disposable?, listener: (Boolean) -> Unit) {
+      whenOperationStarted(parentDisposable) { listener(true) }
+      whenOperationFinished(parentDisposable) { listener(false) }
+    }
+
+    override fun afterSet(parentDisposable: Disposable?, listener: () -> Unit) {
+      whenOperationStarted(parentDisposable) { listener() }
+    }
+
+    override fun afterReset(parentDisposable: Disposable?, listener: () -> Unit) {
+      whenOperationFinished(parentDisposable) { listener() }
     }
   }
 }
