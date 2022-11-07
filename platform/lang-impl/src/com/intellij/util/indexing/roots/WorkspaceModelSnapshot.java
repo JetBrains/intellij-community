@@ -148,12 +148,13 @@ class WorkspaceModelSnapshot {
   }
 
   @Nullable
-  WorkspaceModelSnapshot createWithRefreshedEntitiesIfNeeded(@NotNull List<? extends WorkspaceEntity> entities,
+  WorkspaceModelSnapshot createWithRefreshedEntitiesIfNeeded(@NotNull List<EntityReference<WorkspaceEntity>> references,
                                                              @NotNull Project project) {
-    if (entities.isEmpty()) return null;
+    if (references.isEmpty()) return null;
 
     Generators generators = GENERATORS;
     EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    List<WorkspaceEntity> entities = ContainerUtil.mapNotNull(references, (ref) -> ref.resolve(storage));
     ActualEntitiesSnapshot result = actualEntities.createWithRefreshedEntitiesIfNeeded(entities, generators, project, storage);
     if (result == null) return null;
     return new WorkspaceModelSnapshot(result, libraries, sdks);
