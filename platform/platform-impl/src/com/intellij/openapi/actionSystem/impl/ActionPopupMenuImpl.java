@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.diagnostic.IdeHeartbeatEventReporter;
+import com.intellij.diagnostic.UILatencyLogger;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
@@ -157,13 +157,14 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       PsiFile psiFile = (PsiFile)Utils.getRawDataIfCached(myContext, CommonDataKeys.PSI_FILE.getName());
       Language language = psiFile == null ? null : psiFile.getLanguage();
       boolean coldStart = SEEN_ACTION_GROUPS.add(Objects.hash(myGroup, language));
-      IdeHeartbeatEventReporter.UILatencyLogger.POPUP_LATENCY.log(EventFields.DurationMs.with(time),
-                                                                  EventFields.ActionPlace.with(myPlace),
-                                                                  IdeHeartbeatEventReporter.UILatencyLogger.COLD_START.with(coldStart),
-                                                                  EventFields.Language.with(language));
+      UILatencyLogger.POPUP_LATENCY.log(EventFields.DurationMs.with(time),
+                                        EventFields.ActionPlace.with(myPlace),
+                                        UILatencyLogger.COLD_START.with(coldStart),
+                                        EventFields.Language.with(language));
       if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
         //noinspection HardCodedStringLiteral
-        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms", NotificationType.INFORMATION).notify(null);
+        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms",
+                         NotificationType.INFORMATION).notify(null);
       }
     }
 
