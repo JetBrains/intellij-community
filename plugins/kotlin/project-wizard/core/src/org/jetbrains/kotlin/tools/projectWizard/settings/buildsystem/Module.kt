@@ -25,6 +25,7 @@ enum class ModuleKind(val isSinglePlatform: Boolean) : DisplayableSettingItem {
     singlePlatformAndroid(isSinglePlatform = true),
     singlePlatformJsBrowser(isSinglePlatform = true),
     singlePlatformJsNode(isSinglePlatform = true),
+    ios(isSinglePlatform = true),
     ;
 
     override val text: String
@@ -76,6 +77,7 @@ class Module(
     override val greyText: String
         get() = when {
             kind == ModuleKind.target -> configurator.text + " " + KotlinNewProjectWizardBundle.message("module.kind.target")
+            kind == ModuleKind.ios -> KotlinNewProjectWizardBundle.message("module.kind.ios.module")
             configurator == MppModuleConfigurator -> KotlinNewProjectWizardBundle.message("module.kind.mpp.module")
             configurator == AndroidSinglePlatformModuleConfigurator -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
             configurator == IOSSinglePlatformModuleConfigurator -> KotlinNewProjectWizardBundle.message("module.kind.ios.module")
