@@ -80,6 +80,7 @@ public class DependencyConfigurable implements Configurable, Configurable.NoScro
     wholePanel.add(createRulesPanel(myDenyTable), constraint.nextLine());
     wholePanel.add(createRulesPanel(myAllowTable), constraint.nextLine().insets(UIUtil.LARGE_VGAP, 0, UIUtil.DEFAULT_VGAP, 0));
     wholePanel.add(mySkipImports, constraint.nextLine().weighty(0));
+    wholePanel.setMinimumSize(new Dimension(400, 400));
 
     return wholePanel;
   }
