@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.uast.UElement
@@ -21,5 +22,9 @@ class KotlinULabeledExpression(
 
     override val expression by lz {
         baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this)
+    }
+
+    override fun getExpressionType(): PsiType? {
+        return expression.getExpressionType()
     }
 }
