@@ -30,7 +30,9 @@ internal class PyIdeCommonOptionsPanel(data: PyCommonOptionsFormData, showModule
 
   @JvmField
   val interpreterOptionsTextField = RawCommandLineEditor()
-  lateinit var workingDirectoryTextField: TextFieldWithBrowseButton
+
+  @JvmField
+  val workingDirectoryTextField = TextFieldWithBrowseButton()
 
   @JvmField
   val pathMappingsComponent = PathMappingsComponent()
@@ -68,7 +70,7 @@ internal class PyIdeCommonOptionsPanel(data: PyCommonOptionsFormData, showModule
         }
 
         row(PyBundle.message("runcfg.labels.working_directory")) {
-          workingDirectoryTextField = textFieldWithBrowseButton()
+          cell(workingDirectoryTextField)
             .align(AlignX.FILL)
             .component
         }
