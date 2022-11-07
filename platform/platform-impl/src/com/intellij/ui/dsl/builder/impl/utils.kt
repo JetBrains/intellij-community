@@ -42,6 +42,7 @@ internal enum class DslComponentPropertyInternal {
 /**
  * [JPanel] descendants that should use default vertical gaps around similar to other standard components like labels, text fields etc
  */
+// todo Use DslComponentProperty.TOP_BOTTOM_GAP instead
 private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
   RawCommandLineEditor::class,
   SearchTextField::class,
@@ -130,6 +131,7 @@ internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spac
 internal fun getDefaultVerticalGap(component: JComponent, spacing: SpacingConfiguration): Int {
   val noDefaultVerticalGap = component is JPanel
                              && component.getClientProperty(ToolbarDecorator.DECORATOR_KEY) == null
+                             && component.getClientProperty(DslComponentProperty.TOP_BOTTOM_GAP) != true
                              && !DEFAULT_VERTICAL_GAP_COMPONENTS.any { clazz -> clazz.isInstance(component) }
 
   return if (noDefaultVerticalGap) 0 else spacing.verticalComponentGap

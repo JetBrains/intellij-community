@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,8 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     pathTextField.setEditable(false);
     setComponent(pathTextField);
     setText(ExecutionBundle.message("label.path.mappings"));
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, pathTextField.getChildComponent());
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
     getComponent().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {

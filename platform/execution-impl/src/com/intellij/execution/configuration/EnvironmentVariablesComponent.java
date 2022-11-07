@@ -35,6 +35,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     setComponent(myEnvVars);
     setText(ExecutionBundle.message("environment.variables.component.title"));
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEnvVars.getChildComponent());
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
   }
 
   @NotNull
