@@ -22,11 +22,11 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.TreeActions
@@ -44,13 +44,19 @@ class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
     val UNVERSIONED_TOTAL = EventFields.RoundedInt("unversioned_total")
     val UNVERSIONED_INCLUDED = EventFields.RoundedInt("unversioned_included")
     val COMMIT_CHECK_CLASS = EventFields.Class("commit_check_class")
+    val EXECUTION_ORDER = EventFields.Enum("execution_order", CommitCheck.ExecutionOrder::class.java)
     val COMMIT_OPTION = EventFields.Enum("commit_option", CommitOption::class.java)
     val IS_FROM_SETTINGS = EventFields.Boolean("is_from_settings")
+    val IS_SUCCESS = EventFields.Boolean("is_success")
 
     val SESSION = GROUP.registerIdeActivity("session",
                                             startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,
                                                                                  UNVERSIONED_TOTAL, UNVERSIONED_INCLUDED),
                                             finishEventAdditionalFields = arrayOf())
+
+    val COMMIT_CHECK_SESSION = GROUP.registerIdeActivity("commit_check_session",
+                                                         startEventAdditionalFields = arrayOf(COMMIT_CHECK_CLASS, EXECUTION_ORDER),
+                                                         finishEventAdditionalFields = arrayOf(IS_SUCCESS))
 
     val EXCLUDE_FILE = GROUP.registerEvent("exclude.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
     val INCLUDE_FILE = GROUP.registerEvent("include.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
@@ -91,7 +97,6 @@ class CommitSessionCollector(val project: Project) {
       finishActivity()
     }
     else if (activity == null) {
-      val changesViewManager = ChangesViewManager.getInstance(project) as ChangesViewManager
       val commitUi = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler?.ui ?: return
       activity = CommitSessionCounterUsagesCollector.SESSION.started(project) {
         listOf(
