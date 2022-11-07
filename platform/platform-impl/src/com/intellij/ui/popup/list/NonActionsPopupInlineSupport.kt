@@ -16,9 +16,13 @@ class NonActionsPopupInlineSupport(private val myListPopup: ListPopupImpl) : Pop
     return calcButtonIndex(myListPopup.list, 1, point)
   }
 
-  override fun runInlineAction(element: Any?, index: Int, event: InputEvent?): Boolean {
-    if (index == 0 && hasMoreButton(element)) myListPopup.showNextStepPopup(myListPopup.listStep.onChosen(element, false), element)
-    return false
+  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?): InlineActionDescriptor {
+    if (index == 0 && hasMoreButton(element)) return InlineActionDescriptor(
+      { myListPopup.showNextStepPopup(myListPopup.listStep.onChosen(element, false), element)},
+      false
+    )
+
+    return InlineActionDescriptor({}, false)
   }
 
   override fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent> =
