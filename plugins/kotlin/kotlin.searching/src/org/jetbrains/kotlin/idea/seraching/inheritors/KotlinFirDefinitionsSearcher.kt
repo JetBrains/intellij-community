@@ -12,7 +12,6 @@ import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.actualsForExpected
@@ -85,7 +84,7 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
                 return processLightClassLocalImplementations(klass, searchScope, consumer)
             }
 
-            return ContainerUtil.process(klass.findAllInheritors(klass.useScope), consumer)
+            return klass.findAllInheritors(klass.useScope).all { consumer.process(it) }
         }
 
         private fun processLightClassLocalImplementations(
@@ -99,7 +98,7 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
             }
 
             val globalScope = GlobalSearchScope.filesScope(ktClass.project, virtualFiles)
-            return ContainerUtil.process(ktClass.findAllInheritors(globalScope)) { candidate ->
+            return ktClass.findAllInheritors(globalScope).all { candidate ->
                 val candidateOrigin = candidate.unwrapped ?: candidate
                 val inScope = runReadAction { candidateOrigin in searchScope }
                 if (inScope) {
