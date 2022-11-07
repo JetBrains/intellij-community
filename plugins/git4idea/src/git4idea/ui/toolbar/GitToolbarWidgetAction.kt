@@ -126,8 +126,9 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
       val res = mutableListOf<Icon>()
       if (changes.incoming) res.add(INCOMING_CHANGES_ICON)
       if (changes.outgoing) res.add(OUTGOING_CHANGES_ICON)
+      res.add(AllIcons.General.ChevronDown)
       res
-    } ?: emptyList()
+    } ?: listOf(AllIcons.General.ChevronDown)
   }
 
   override fun doExpand(e: InputEvent?) {
