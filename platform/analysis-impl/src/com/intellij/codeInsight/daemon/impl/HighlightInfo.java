@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection;
 import com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.*;
@@ -603,15 +604,14 @@ public class HighlightInfo implements Segment {
     if (fixes != null) {
       for (Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = quickFixInfo.textRange;
-        HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
+        HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key
+                                                         : HighlightDisplayKey.find(AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME);
         info.registerFix(quickFixInfo.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(k), range, k);
       }
     }
 
     return info;
   }
-
-  private static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
 
   @NotNull
   private static HighlightInfoType convertType(@NotNull Annotation annotation) {
@@ -703,6 +703,11 @@ public class HighlightInfo implements Segment {
     }
 
     @Nullable IntentionActionDescriptor copyWithEmptyAction() {
+      if (myKey == null || myKey.getID().equals(AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME)) {
+        // No need to show "Inspection 'Annotator' options" quick fix, it wouldn't be actionable.
+        return null;
+      }
+
       String displayName = HighlightDisplayKey.getDisplayNameByKey(myKey);
       if (displayName == null) return null;
       return new IntentionActionDescriptor(new EmptyIntentionAction(displayName), myOptions, myDisplayName, myIcon,
