@@ -95,36 +95,37 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
     return TodoCommitProblem(worker, isPostCommit)
   }
 
-  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    object : BooleanCommitOption(project, "", false, settings::CHECK_NEW_TODO) {
-      override fun getComponent(): JComponent {
-        val filter = TodoConfiguration.getInstance().getTodoFilter(todoSettings.todoFilterName)
-        setFilterText(filter?.name)
+  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent = TodoCommitOption().withCheckinHandler(this)
 
-        val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
-          val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings, true) { setFilter(it) }
-          JBPopupMenu.showBelow(sourceLink, ActionPlaces.TODO_VIEW_TOOLBAR, group)
-        }
-        val configureFilterLink = LinkLabel(message("settings.filter.configure.link"), null, showFiltersPopup)
+  private inner class TodoCommitOption : BooleanCommitOption(project, "", false, settings::CHECK_NEW_TODO) {
+    override fun getComponent(): JComponent {
+      val filter = TodoConfiguration.getInstance().getTodoFilter(todoSettings.todoFilterName)
+      setFilterText(filter?.name)
 
-        return simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
+      val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
+        val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings, true) { setFilter(it) }
+        JBPopupMenu.showBelow(sourceLink, ActionPlaces.TODO_VIEW_TOOLBAR, group)
       }
+      val configureFilterLink = LinkLabel(message("settings.filter.configure.link"), null, showFiltersPopup)
 
-      private fun setFilter(filter: TodoFilter?) {
-        todoSettings.todoFilterName = filter?.name
-        setFilterText(filter?.name)
+      return simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
+    }
+
+    private fun setFilter(filter: TodoFilter?) {
+      todoSettings.todoFilterName = filter?.name
+      setFilterText(filter?.name)
+    }
+
+    private fun setFilterText(filterName: String?) {
+      if (filterName != null) {
+        val text = message("checkin.filter.filter.name", filterName)
+        checkBox.text = message("before.checkin.new.todo.check", text)
       }
-
-      private fun setFilterText(filterName: String?) {
-        if (filterName != null) {
-          val text = message("checkin.filter.filter.name", filterName)
-          checkBox.text = message("before.checkin.new.todo.check", text)
-        }
-        else {
-          checkBox.text = message("before.checkin.new.todo.check.no.filter")
-        }
+      else {
+        checkBox.text = message("before.checkin.new.todo.check.no.filter")
       }
     }
+  }
 
   companion object {
     internal fun showDialog(project: Project,
