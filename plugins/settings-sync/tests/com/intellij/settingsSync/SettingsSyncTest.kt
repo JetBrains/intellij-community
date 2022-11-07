@@ -18,6 +18,7 @@ import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.exists
+import com.intellij.util.io.readText
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
@@ -43,17 +44,17 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     application.replaceService(IComponentStore::class.java, componentStore, disposable)
   }
 
-  private fun initSettingsSync() {
+  private fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
     val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
-    bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
+    bridge.initialize(initMode)
   }
 
   @Test
   fun `settings are pushed`() {
-    initSettingsSync()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     GeneralSettings.getInstance().initModifyAndSave {
       isSaveOnFrameDeactivation = false
@@ -70,7 +71,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
 
   @Test
   fun `scheme changes are logged`() {
-    initSettingsSync()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     val keymap = createAndSaveKeymap()
 
@@ -93,7 +94,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
 
   @Test
   fun `quickly modified settings are pushed together`() {
-    initSettingsSync()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     bridge.suspendEventProcessing()
     GeneralSettings.getInstance().initModifyAndSave {
@@ -124,7 +125,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
       isSaveOnFrameDeactivation = false
     }
 
-    initSettingsSync()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     UISettings.getInstance().initModifyAndSave {
       recentFilesLimit = 1000
@@ -161,7 +162,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
     SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID,  false)
 
-    initSettingsSync()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     assertTrue("Settings from enabled category was not copied", (settingsSyncStorage / "options" / "editor.xml").exists())
     assertFalse("Settings from disabled category was copied", (settingsSyncStorage / "options" / "ide.general.xml").exists())
@@ -180,7 +181,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   @Test
   fun `settings from server are applied`() {
     val generalSettings = GeneralSettings.getInstance().init()
-    initSettingsSync()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
@@ -193,11 +194,55 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
   }
 
-  @Test fun `exportable non-roamable settings should not be synced`() {
+  @Test
+  fun `enabling category should copy existing settings from that category`() {
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.CODE, isEnabled = false)
+    GeneralSettings.getInstance().initModifyAndSave {
+      isSaveOnFrameDeactivation = false
+    }
+    EditorSettingsExternalizable.getInstance().initModifyAndSave {
+      SHOW_INTENTION_BULB = false
+    }
+    val editorXmlContent = (configDir / "options" / "editor.xml").readText()
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+    assertFalse("editor.xml should not be synced if the Code category is disabled",
+                (settingsSyncStorage / "options" / "editor.xml").exists())
+    assertServerSnapshot {
+      fileState {
+        GeneralSettings().withState {
+          isSaveOnFrameDeactivation = false
+        }
+      }
+    }
+
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.CODE, isEnabled = true)
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
+    bridge.waitForAllExecuted()
+
+    assertTrue("editor.xml should be synced after enabling the Code category",
+               (settingsSyncStorage / "options" / "editor.xml").exists())
+    assertFileWithContent(editorXmlContent, (settingsSyncStorage / "options" / "editor.xml"))
+    assertServerSnapshot {
+      fileState {
+        GeneralSettings().withState {
+          isSaveOnFrameDeactivation = false
+        }
+      }
+      fileState {
+        EditorSettingsExternalizable.getInstance().withState {
+          SHOW_INTENTION_BULB = false
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `exportable non-roamable settings should not be synced`() {
     testVariousComponentsShouldBeSyncedOrNot(ExportableNonRoamable(), expectedToBeSynced = false)
   }
 
-  @Test fun `roamable settings should be synced`() {
+  @Test
+  fun `roamable settings should be synced`() {
     testVariousComponentsShouldBeSyncedOrNot(Roamable(), expectedToBeSynced = true)
   }
 
@@ -208,7 +253,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     }
     application.registerComponentImplementation(component.javaClass, component.javaClass, false)
 
-    initSettingsSync()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     val state = component::class.annotations.find { it is State } as State
     val file = state.storages.first().value
@@ -256,7 +301,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   //@Test
   fun `local and remote changes in different files are both applied`() {
     val generalSettings = GeneralSettings.getInstance().init()
-    initSettingsSync()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     // prepare local commit but don't allow it to be pushed
     performInOfflineMode {

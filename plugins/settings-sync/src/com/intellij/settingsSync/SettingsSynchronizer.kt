@@ -109,8 +109,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   }
 
   private fun syncSettings() {
-    val syncControls = SettingsSyncMain.getInstance().controls
-    syncSettings(syncControls.remoteCommunicator, syncControls.updateChecker)
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
   }
 
   @RequiresEdt
