@@ -1,6 +1,7 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.util.ExceptionsUtil
+import com.intellij.openapi.application.ApplicationManager
 import kotlin.system.exitProcess
 
 class HeadlessEvaluationAbortHandler : EvaluationAbortHandler {
@@ -13,6 +14,6 @@ class HeadlessEvaluationAbortHandler : EvaluationAbortHandler {
 
   override fun onCancel(stage: String) {
     println("$stage was cancelled by user.")
-    exitProcess(0)
+    ApplicationManager.getApplication().exit(true, false, false)
   }
 }
