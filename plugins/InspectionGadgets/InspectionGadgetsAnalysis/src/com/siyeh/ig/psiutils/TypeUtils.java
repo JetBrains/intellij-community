@@ -249,8 +249,9 @@ public final class TypeUtils {
     return type;
   }
 
+  @Nullable
   @Contract("null -> null")
-  public static String resolvedClassName(PsiType type) {
+  public static String resolvedClassName(@Nullable PsiType type) {
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return aClass == null ? null : aClass.getQualifiedName();
   }
