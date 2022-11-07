@@ -148,6 +148,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
                    settings::CODE_SMELLS_PROFILE,
                    "before.checkin.standard.options.check.smells",
                    "before.checkin.options.check.smells.profile")
+      .withCheckinHandler(this)
 
   /**
    * Puts a closure in PsiFile user data that extracts PsiElement elements that are being committed.

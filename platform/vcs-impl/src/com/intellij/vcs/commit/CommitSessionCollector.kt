@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.TreeActions
@@ -36,12 +37,15 @@ import javax.swing.JTree
 
 class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("commit.interactions", 3)
+    val GROUP = EventLogGroup("commit.interactions", 4)
 
     val FILES_TOTAL = EventFields.RoundedInt("files_total")
     val FILES_INCLUDED = EventFields.RoundedInt("files_included")
     val UNVERSIONED_TOTAL = EventFields.RoundedInt("unversioned_total")
     val UNVERSIONED_INCLUDED = EventFields.RoundedInt("unversioned_included")
+    val COMMIT_CHECK_CLASS = EventFields.Class("commit_check_class")
+    val COMMIT_OPTION = EventFields.Enum("commit_option", CommitOption::class.java)
+    val IS_FROM_SETTINGS = EventFields.Boolean("is_from_settings")
 
     val SESSION = GROUP.registerIdeActivity("session",
                                             startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,
@@ -56,7 +60,11 @@ class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
     val JUMP_TO_SOURCE = GROUP.registerEvent("jump.to.source", EventFields.InputEventByAnAction)
     val COMMIT = GROUP.registerEvent("commit", FILES_INCLUDED, UNVERSIONED_INCLUDED)
     val COMMIT_AND_PUSH = GROUP.registerEvent("commit.and.push", FILES_INCLUDED, UNVERSIONED_INCLUDED)
+    val TOGGLE_COMMIT_CHECK = GROUP.registerEvent("toggle.commit.check", COMMIT_CHECK_CLASS, IS_FROM_SETTINGS, EventFields.Enabled)
+    val TOGGLE_COMMIT_OPTION = GROUP.registerEvent("toggle.commit.option", COMMIT_OPTION, EventFields.Enabled)
   }
+
+  enum class CommitOption { SIGN_OFF, RUN_HOOKS, AMEND }
 
   override fun getGroup(): EventLogGroup = GROUP
 }
@@ -159,6 +167,13 @@ class CommitSessionCollector(val project: Project) {
     CommitSessionCounterUsagesCollector.JUMP_TO_SOURCE.log(project, event)
   }
 
+  fun logCommitCheckToggled(checkinHandler: CheckinHandler, isSettings: Boolean, value: Boolean) {
+    CommitSessionCounterUsagesCollector.TOGGLE_COMMIT_CHECK.log(checkinHandler.javaClass, isSettings, value)
+  }
+
+  fun logCommitOptionToggled(option: CommitSessionCounterUsagesCollector.CommitOption, value: Boolean) {
+    CommitSessionCounterUsagesCollector.TOGGLE_COMMIT_OPTION.log(option, value)
+  }
 
   internal class MyToolWindowManagerListener(val project: Project) : ToolWindowManagerListener {
     override fun stateChanged(toolWindowManager: ToolWindowManager) {
