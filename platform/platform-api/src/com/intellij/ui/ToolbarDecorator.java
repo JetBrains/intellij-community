@@ -251,11 +251,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    */
   @NotNull
   public ToolbarDecorator addExtraAction(@NotNull AnAction action) {
-    if (action instanceof ActionGroup actionGroup) {
-      addExtraActions(new AnActionButton.GroupPopupWrapper(actionGroup));
-    } else {
-      myExtraActions.add(action);
-    }
+    myExtraActions.add(action);
     return this;
   }
 
@@ -455,7 +451,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     UIUtil.putClientProperty(contextComponent, JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY, true);
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
                                             myToolbarPosition,
-                                            myExtraActions.toArray(new AnAction[0]),
+                                            myExtraActions.toArray(AnAction.EMPTY_ARRAY),
                                             myButtonComparator,
                                             myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                                             myAddIcon, buttons);

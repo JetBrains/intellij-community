@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ClientProperty;
+import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -312,7 +313,11 @@ public final class ActionUtil {
         e.getPresentation().getText(), group, dataContext,
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
         false, null, -1, null, place);
-      if (popupShow != null) {
+      var toolbarPopupLocation = CommonActionsPanel.getPreferredPopupPoint(action, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+      if (toolbarPopupLocation != null) {
+        popup.show(toolbarPopupLocation);
+      }
+      else if (popupShow != null) {
         popupShow.accept(popup);
       }
       else {

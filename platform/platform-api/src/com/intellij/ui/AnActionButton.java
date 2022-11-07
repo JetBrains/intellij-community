@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -150,37 +149,23 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   @NotNull
   public final RelativePoint getPreferredPopupPoint() {
-    Container c = myContextComponent;
-    ActionToolbar toolbar = null;
-    while ((c = c.getParent()) != null) {
-      if (c instanceof JComponent
-          && (toolbar = (ActionToolbar)((JComponent)c).getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY)) != null) {
-        break;
-      }
-    }
-
-    if (toolbar instanceof JComponent) {
-      RelativePoint preferredPoint = computePreferredPopupPoint((JComponent)toolbar, this);
-      if (preferredPoint != null) return preferredPoint;
+    RelativePoint result = CommonActionsPanel.getPreferredPopupPoint(this, myContextComponent);
+    if (result != null) {
+      return result;
     }
     LOG.error("Can't find toolbar button");
     return RelativePoint.getCenterOf(myContextComponent);
   }
 
+  /**
+   * Tries to calculate the 'under the toolbar button' position for a given action.
+   *
+   * @deprecated use {@link CommonActionsPanel#getPreferredPopupPoint(AnAction)} instead
+   * @return the recommended popup position or null in case no toolbar button corresponds to the given action
+   */
+  @Deprecated(forRemoval = true)
   public static @Nullable RelativePoint computePreferredPopupPoint(@NotNull JComponent toolbar, @NotNull AnAction action) {
-    for (Component comp : toolbar.getComponents()) {
-      if (comp instanceof ActionButtonComponent) {
-        if (comp instanceof AnActionHolder) {
-          AnAction componentAction = ((AnActionHolder)comp).getAction();
-          if (componentAction == action ||
-              (componentAction instanceof ActionWithDelegate<?> && ((ActionWithDelegate<?>)componentAction).getDelegate() == action)) {
-            return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
-          }
-        }
-      }
-    }
-
-    return null;
+    return CommonActionsPanel.computePreferredPopupPoint(toolbar, action);
   }
 
   public void addActionButtonListener(ActionButtonListener l, Disposable parentDisposable) {

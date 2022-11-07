@@ -6,11 +6,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -278,6 +280,49 @@ public final class CommonActionsPanel extends JPanel {
   @NotNull
   public ActionToolbarPosition getPosition() {
     return myPosition;
+  }
+
+  /**
+   * Tries to calculate the 'under the toolbar button' position for a given action.
+   *
+   * @return the recommended popup position or null in case no toolbar button corresponds to the given action
+   */
+  public @Nullable RelativePoint getPreferredPopupPoint(@NotNull AnAction action) {
+    return computePreferredPopupPoint(getToolbar().getComponent(), action);
+  }
+
+  @ApiStatus.Internal
+  public static RelativePoint getPreferredPopupPoint(@NotNull AnAction action, @Nullable Component contextComponent) {
+    var c = contextComponent;
+    ActionToolbar toolbar = null;
+    while (c != null && (c = c.getParent()) != null) {
+      if (c instanceof JComponent
+          && (toolbar = (ActionToolbar)((JComponent)c).getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY)) != null) {
+        break;
+      }
+    }
+
+    if (toolbar instanceof JComponent) {
+      RelativePoint preferredPoint = computePreferredPopupPoint((JComponent)toolbar, action);
+      if (preferredPoint != null) return preferredPoint;
+    }
+
+    return null;
+  }
+
+  static @Nullable RelativePoint computePreferredPopupPoint(@NotNull JComponent toolbar, @NotNull AnAction action) {
+    for (Component comp : toolbar.getComponents()) {
+      if (comp instanceof ActionButtonComponent) {
+        if (comp instanceof AnActionHolder) {
+          AnAction componentAction = ((AnActionHolder)comp).getAction();
+          if (componentAction == action ||
+              (componentAction instanceof ActionWithDelegate<?> && ((ActionWithDelegate<?>)componentAction).getDelegate() == action)) {
+            return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
+          }
+        }
+      }
+    }
+    return null;
   }
 
   static abstract class MyActionButton extends AnActionButton implements DumbAware {
