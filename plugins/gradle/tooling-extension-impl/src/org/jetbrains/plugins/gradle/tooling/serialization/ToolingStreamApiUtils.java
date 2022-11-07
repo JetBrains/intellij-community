@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Suppl
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class ToolingStreamApiUtils {
   public static final String OBJECT_ID_FIELD = "objectID";
@@ -30,6 +31,20 @@ public class ToolingStreamApiUtils {
     assertFieldName(reader, fieldName);
     if (type == null) return null;
     return reader.stringValue();
+  }
+
+  @Nullable
+  public static String readString(@NotNull IonReader reader, @Nullable String fieldName, @NotNull ConcurrentMap<String, String> stringCache) {
+    String str = readString(reader, fieldName);
+    if (str == null) {
+      return null;
+    }
+    String old = stringCache.putIfAbsent(str, str);
+    if (old == null) {
+      return str;
+    } else {
+      return old;
+    }
   }
 
   public static int readInt(@NotNull IonReader reader, @NotNull String fieldName) {
