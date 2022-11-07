@@ -4,5 +4,6 @@ import org.jetbrains.completion.full.line.language.formatters.CodeFormatterBase
 import org.jetbrains.completion.full.line.language.formatters.PlainTextFormatter
 
 class TSCodeFormatter : CodeFormatterBase(
+  LeadingSpaceFormatter(),
   PlainTextFormatter(),
 )
