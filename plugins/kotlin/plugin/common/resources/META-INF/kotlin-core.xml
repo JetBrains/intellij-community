@@ -131,6 +131,8 @@
             implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
     <stacktrace.fold substring="at kotlinx.coroutines."/>
 
+    <javaMainMethodProvider implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinMainMethodProvider"/>
+
     <codeInsight.linkHandler
             prefix="#kotlinClass/"
             handlerClass="org.jetbrains.kotlin.idea.highlighter.markers.KotlinClassTooltipLinkHandler"/>
