@@ -52,6 +52,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit3.super.teardown.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnit3SuperTearDownInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="INFORMATION" shortName="Junit4Converter"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit4.converter.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit4ConverterInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
