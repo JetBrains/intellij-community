@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -57,6 +58,7 @@ import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.createRenameSet
 import com.intellij.ui.LightweightHint
 import com.intellij.util.Query
 import com.intellij.util.asSafely
+import javax.swing.JComponent
 
 /**
  * @return `false` if the template cannot be started,
@@ -385,29 +387,36 @@ private fun registerTemplateValidation(templateState: TemplateState,
     val validationResult = nameValidator(newName)
     if (validationResult is RenameValidationResultData) {
       ApplicationManager.getApplication().invokeLater {
-        val label = if (validationResult.level == RenameValidationResultProblemLevel.WARNING) {
-          val confirmMessage = if (showWarningConfirmation)
-            HtmlBuilder().append(HtmlChunk.p().addText(
-              RefactoringBundle.message(
-                "inplace.refactoring.press.again.to.complete",
-                NlsMessages.formatOrList(
-                  ActionUtil.getShortcutSet("NextTemplateVariable").shortcuts.map { KeymapUtil.getShortcutText(it) }))
-            )).toString()
-          else ""
-          HintUtil.createWarningLabel(validationResult.message(newName) + confirmMessage)
-        }
-        else
-          HintUtil.createErrorLabel(validationResult.message(newName))
-        val hint = LightweightHint(label)
-        val flags = HintManager.HIDE_BY_ESCAPE or HintManager.HIDE_BY_CARET_MOVE or HintManager.HIDE_BY_TEXT_CHANGE
-        HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.ABOVE, flags, 0, false)
+        showEditorHint(
+          editor,
+          if (validationResult.level == RenameValidationResultProblemLevel.WARNING)
+            HintUtil.createWarningLabel(validationResult.message(newName) + createWarningConfirmationMessage(showWarningConfirmation))
+          else
+            HintUtil.createErrorLabel(validationResult.message(newName))
+        )
       }
     }
   }
 
   val preventAction = PreventInvalidTemplateFinishAction(
-    nameValidator, templateState, { showWarningConfirmation },
-    { showWarningConfirmation = it; validateAndShowHint() }
+    {
+      when (val result = nameValidator(templateState.getNewName())) {
+        is OK -> null
+        is RenameValidationResultData -> when (result.level) {
+          RenameValidationResultProblemLevel.WARNING -> {
+            if (!showWarningConfirmation) true
+            else null
+          }
+          RenameValidationResultProblemLevel.ERROR -> {
+            false
+          }
+        }
+      }
+    },
+    {
+      showWarningConfirmation = it
+      validateAndShowHint()
+    }
   )
   preventAction.registerCustomShortcutSet(ActionUtil.getShortcutSet("NextTemplateVariable"),
                                           editor.component, templateState)
@@ -428,36 +437,36 @@ private fun registerTemplateValidation(templateState: TemplateState,
   validateAndShowHint()
 }
 
+private fun showEditorHint(editor: Editor, label: JComponent) {
+  val hint = LightweightHint(label)
+  val flags = HintManager.HIDE_BY_ESCAPE or HintManager.HIDE_BY_CARET_MOVE or HintManager.HIDE_BY_TEXT_CHANGE
+  HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.ABOVE, flags, 0, false)
+}
+
+private fun createWarningConfirmationMessage(showWarningConfirmation: Boolean): @NlsSafe String {
+  return if (showWarningConfirmation)
+    HtmlBuilder().append(HtmlChunk.p().addText(
+      RefactoringBundle.message(
+        "inplace.refactoring.press.again.to.complete",
+        NlsMessages.formatOrList(
+          ActionUtil.getShortcutSet("NextTemplateVariable").shortcuts.map { KeymapUtil.getShortcutText(it) }
+        ))
+    )).toString()
+  else ""
+}
+
 private class PreventInvalidTemplateFinishAction(
-  private val nameValidator: (String) -> RenameValidationResult,
-  private val templateState: TemplateState,
-  private val hasWarningConfirmed: () -> Boolean,
-  private val validateAndShowHint: (Boolean) -> Unit) : AnAction() {
+  private val update: () -> Boolean?,
+  private val action: (Boolean) -> Unit,
+) : AnAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val result = nameValidator(templateState.getNewName())
-    e.presentation.isEnabled = true
-    when (result) {
-      is OK -> e.presentation.isEnabled = false
-      is RenameValidationResultData -> when (result.level) {
-        RenameValidationResultProblemLevel.WARNING -> {
-          if (!hasWarningConfirmed()) {
-            validateAndShowHint(true)
-          }
-          else {
-            e.presentation.isEnabled = false
-          }
-        }
-        RenameValidationResultProblemLevel.ERROR -> {
-          validateAndShowHint(false)
-        }
-      }
-    }
+    e.presentation.isEnabled = this.update() != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-
+    action(this.update() ?: false)
   }
 }
