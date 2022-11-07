@@ -272,7 +272,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     if (!generator.isFrameworkInstalled(sdk)) {
       final String frameworkName = generator.getFrameworkTitle();
       String message = PyBundle.message("python.package.installation.notification.message", frameworkName);
-      if (PyPackageUtil.packageManagementEnabled(sdk)) {
+      if (PyPackageUtil.packageManagementEnabled(sdk, false)) {
         installFramework = true;
         final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
         if (!PyPackageUtil.hasManagement(packages)) {
