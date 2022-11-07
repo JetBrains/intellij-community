@@ -6,18 +6,14 @@ import com.intellij.ide.actions.cache.AsyncRecoveryResult
 import com.intellij.ide.actions.cache.ProjectRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.ide.actions.cache.RecoveryScope
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.platform.PlatformProjectOpenProcessor
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
@@ -29,19 +25,24 @@ class WorkspaceModelRecoveryAction : RecoveryAction {
   override val actionKey: String
     get() = "reload-workspace-model"
 
-  @OptIn(DelicateCoroutinesApi::class)
   override fun perform(recoveryScope: RecoveryScope): CompletableFuture<AsyncRecoveryResult> {
     val project = recoveryScope.project
-    val file = Paths.get(project.basePath!!)
+    val file = Path.of(project.basePath!!)
     WorkspaceModelCacheImpl.invalidateCaches()
-    ApplicationManager.getApplication().invokeAndWait {
+    val app = ApplicationManager.getApplication()
+    app.invokeAndWait {
       ProjectManager.getInstance().closeAndDispose(project)
     }
     val result = CompletableFuture<AsyncRecoveryResult>()
-    GlobalScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    @Suppress("DEPRECATION")
+    app.coroutineScope.launch {
       val r = ProjectUtil.openOrImportAsync(
         file = file,
-        options = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null)
+        options = OpenProjectTask {
+          runConfigurators = true
+          isNewProject = !ProjectUtilCore.isValidProjectPath(file)
+          useDefaultProjectAsTemplate = true
+        }
       )
       AsyncRecoveryResult(ProjectRecoveryScope(r!!), emptyList())
     }
