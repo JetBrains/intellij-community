@@ -48,6 +48,8 @@ class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
     val COMMIT_OPTION = EventFields.Enum("commit_option", CommitOption::class.java)
     val IS_FROM_SETTINGS = EventFields.Boolean("is_from_settings")
     val IS_SUCCESS = EventFields.Boolean("is_success")
+    val WARNINGS_COUNT = EventFields.RoundedInt("warnings_count")
+    val ERRORS_COUNT = EventFields.RoundedInt("errors_count")
 
     val SESSION = GROUP.registerIdeActivity("session",
                                             startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,
@@ -68,6 +70,7 @@ class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
     val COMMIT_AND_PUSH = GROUP.registerEvent("commit.and.push", FILES_INCLUDED, UNVERSIONED_INCLUDED)
     val TOGGLE_COMMIT_CHECK = GROUP.registerEvent("toggle.commit.check", COMMIT_CHECK_CLASS, IS_FROM_SETTINGS, EventFields.Enabled)
     val TOGGLE_COMMIT_OPTION = GROUP.registerEvent("toggle.commit.option", COMMIT_OPTION, EventFields.Enabled)
+    val CODE_ANALYSIS_WARNING = GROUP.registerEvent("code.analysis.warning", WARNINGS_COUNT, ERRORS_COUNT)
   }
 
   enum class CommitOption { SIGN_OFF, RUN_HOOKS, AMEND }
@@ -178,6 +181,10 @@ class CommitSessionCollector(val project: Project) {
 
   fun logCommitOptionToggled(option: CommitSessionCounterUsagesCollector.CommitOption, value: Boolean) {
     CommitSessionCounterUsagesCollector.TOGGLE_COMMIT_OPTION.log(option, value)
+  }
+
+  fun logCodeAnalysisWarnings(warnings: Int, errors: Int) {
+    CommitSessionCounterUsagesCollector.CODE_ANALYSIS_WARNING.log(warnings, errors)
   }
 
   internal class MyToolWindowManagerListener(val project: Project) : ToolWindowManagerListener {

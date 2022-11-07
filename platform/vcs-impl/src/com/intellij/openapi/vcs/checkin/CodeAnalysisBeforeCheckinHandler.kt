@@ -57,6 +57,7 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
+import com.intellij.vcs.commit.CommitSessionCollector
 import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
@@ -72,12 +73,10 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
     CodeAnalysisBeforeCheckinHandler(panel.project)
 }
 
-class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>) : CommitProblemWithDetails {
+class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>,
+                                private val errors: Int, private val warnings: Int) : CommitProblemWithDetails {
   override val text: String
     get() {
-      val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }
-      val warnings = codeSmells.size - errors
-
       val errorsText = if (errors > 0) HighlightSeverity.ERROR.getCountMessage(errors) else null
       val warningsText = if (warnings > 0) HighlightSeverity.WARNING.getCountMessage(warnings) else null
 
@@ -138,7 +137,13 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
         codeSmells = findCodeSmells(changesByFile, isPostCommit)
       }
     }
-    return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
+    if (codeSmells.isEmpty()) return null
+
+    val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }
+    val warnings = codeSmells.size - errors
+    CommitSessionCollector.getInstance(project).logCodeAnalysisWarnings(warnings, errors)
+
+    return CodeAnalysisCommitProblem(codeSmells, errors, warnings)
   }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
