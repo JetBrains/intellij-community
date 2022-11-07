@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util
 
 import com.intellij.execution.CommandLineUtil
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
+import com.intellij.util.io.SuperUserStatus
 import org.jetbrains.annotations.Nls
 import java.io.*
 import java.nio.charset.Charset
@@ -147,7 +148,8 @@ object ExecUtil {
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
   fun sudoCommand(commandLine: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine {
-    if (SystemInfoRt.isUnix && "root" == System.getenv("USER")) { //NON-NLS
+    if ((SystemInfoRt.isUnix && "root" == System.getenv("USER")) //NON-NLS
+        || (SystemInfoRt.isWindows && SuperUserStatus.isSuperUser)) {
       return commandLine
     }
 
