@@ -137,6 +137,12 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     return new QueuedTask<>(task, indicator);
   }
 
+  public boolean isEmpty() {
+    synchronized (myLock) {
+      return myTasksQueue.isEmpty();
+    }
+  }
+
   private static void disposeSafe(@NotNull Collection<? extends Disposable> tasks) {
     for (Disposable task : tasks) {
       disposeSafe(task);

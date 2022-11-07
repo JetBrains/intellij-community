@@ -113,6 +113,8 @@ final class DumbServiceGuiTaskQueue {
   }
 
   private void internalRunBackgroundProcess(ProgressIndicator visibleIndicator) {
+    // Only one thread can execute this method at the same time at this point.
+
     try {
       ((ProgressManagerImpl)ProgressManager.getInstance()).markProgressSafe((UserDataHolder)visibleIndicator);
     }
@@ -120,8 +122,6 @@ final class DumbServiceGuiTaskQueue {
       // PCE is not expected
       LOG.error(throwable);
     }
-
-    // Only one thread can execute this method at the same time at this point. // TODO
 
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
       myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);

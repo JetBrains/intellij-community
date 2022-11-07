@@ -82,15 +82,27 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
      */
     @Override
     public void beforeFirstTask() {
-      boolean changed = myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS);
-      LOG.assertTrue(changed, "Failed to change: SCHEDULED_TASKS > RUNNING_DUMB_TASKS. Current state is: " + myState.get());
+      assertState(State.SCHEDULED_TASKS);
+      myState.set(State.RUNNING_DUMB_TASKS);
     }
 
     @Override
     public void afterLastTask() {
+      assertState(State.RUNNING_DUMB_TASKS);
       boolean changed = myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH);
-      LOG.assertTrue(changed, "Failed to change: RUNNING_DUMB_TASKS > WAITING_FOR_FINISH. Current state is: " + myState.get());
-      myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);
+      LOG.assertTrue(changed, "Failed to change state: RUNNING_DUMB_TASKS>WAITING_FOR_FINISH. Current state: " + myState.get());
+
+      if (myTaskQueue.isEmpty()) {
+        myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);
+      }
+      else {
+        boolean needToScheduleNow = myState.compareAndSet(State.WAITING_FOR_FINISH, State.SCHEDULED_TASKS);
+        if (needToScheduleNow) {
+          // it is myGuiDumbTaskRunner's responsibility to ignore redundant startBackgroundProcess calls.
+          // queueTaskOnEdt does not use CAS to change state WAITING_FOR_FINISH > SCHEDULED_TASKS, so we can call startBackgroundProcess several times.
+          myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
+        }
+      }
     }
   }
 
