@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 
 class AfterConversionPass(val project: Project, private val postProcessor: PostProcessor) {

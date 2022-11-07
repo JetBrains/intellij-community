@@ -5,6 +5,7 @@ import com.intellij.codeInsight.documentation.AbstractExternalFilter
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.ide.BrowserUtil
 import com.intellij.lang.java.JavaDocumentationProvider
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.KotlinDocumentationProvider
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jsoup.Jsoup

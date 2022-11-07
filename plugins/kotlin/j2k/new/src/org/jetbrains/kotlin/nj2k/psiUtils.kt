@@ -6,13 +6,13 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.codeInsight.generation.GenerateEqualsHelper.getEqualsSignature
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.isNullLiteral
 import org.jetbrains.kotlin.name.Name

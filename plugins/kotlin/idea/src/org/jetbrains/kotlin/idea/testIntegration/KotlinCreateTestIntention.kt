@@ -8,6 +8,7 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -34,7 +35,6 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.idea.util.application.executeCommand
-import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.publicByDefault
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset

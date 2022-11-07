@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.search.declarationsSearch
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch
@@ -25,7 +26,6 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forE
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
 import org.jetbrains.kotlin.idea.base.util.useScope
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import java.util.*

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.plugins.groovy.GroovyFileType

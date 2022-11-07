@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.execution.filters.*
 import com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -12,7 +13,6 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
 import org.jetbrains.kotlin.idea.debugger.base.util.isInlineFrameLineNumber
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.lang.Math.max
 import java.util.regex.Pattern

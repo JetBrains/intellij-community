@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.findUsages.handlers
 import com.intellij.find.findUsages.AbstractFindUsagesDialog
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
@@ -12,7 +13,6 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinTypeParameterFindUsagesDialog
 import org.jetbrains.kotlin.idea.base.util.useScope
-import com.intellij.openapi.application.runReadAction
 import org.jetbrains.kotlin.psi.KtTypeParameter
 
 class KotlinTypeParameterFindUsagesHandler(
