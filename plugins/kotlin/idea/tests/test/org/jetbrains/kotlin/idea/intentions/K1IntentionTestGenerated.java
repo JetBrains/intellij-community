@@ -1408,6 +1408,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/genericSuperTypeMethodCall.kt");
         }
 
+        @TestMetadata("genericSuperTypeMethodCall2.kt")
+        public void testGenericSuperTypeMethodCall2() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/genericSuperTypeMethodCall2.kt");
+        }
+
         @TestMetadata("kotlinFunctionCall.kt")
         public void testKotlinFunctionCall() throws Exception {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/kotlinFunctionCall.kt");
