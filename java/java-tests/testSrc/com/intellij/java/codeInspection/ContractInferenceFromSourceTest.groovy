@@ -742,14 +742,32 @@ static String test(String a, String b) {
     def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
         return Boolean.FALSE.equals(condition);
     }""")
-    assert c == ['false -> true', '_ -> false']
+    assert c == ['false -> true', 'true -> false', 'null -> false']
   }
 
+  void "test boxed boolean equals1"() {
+    def c = inferContracts("""public static boolean isFalse(boolean condition) {
+        return Boolean.TRUE.equals(condition);
+    }""")
+    assert c == ['true -> true', 'false -> false']
+  }
+  
   void "test boxed boolean equals2"() {
     def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
         return Boolean.TRUE.equals(condition);
     }""")
-    assert c == ['true -> true', '_ -> false']
+    assert c == ['true -> true', 'false -> false', 'null -> false']
+  }
+  
+  void "test boxed boolean equals3"() {
+    def c = inferContracts("""  
+    final boolean test(Foo x) {
+      return Boolean.TRUE.equals(x.getBoolean());
+    }
+
+    private native Boolean getBoolean();
+""")
+    assert c == []
   }
 
   private String inferContract(String method) {
