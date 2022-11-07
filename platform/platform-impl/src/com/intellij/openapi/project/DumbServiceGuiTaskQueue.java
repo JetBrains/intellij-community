@@ -34,6 +34,35 @@ final class DumbServiceGuiTaskQueue {
     void afterLastTask();
   }
 
+  private static class SafeDumbTaskListenerWrapper implements DumbTaskListener {
+    private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
+    private final DumbTaskListener delegate;
+
+    private SafeDumbTaskListenerWrapper(DumbTaskListener delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void beforeFirstTask() {
+      invokeSafely(delegate::beforeFirstTask);
+    }
+
+    @Override
+    public void afterLastTask() {
+      invokeSafely(delegate::afterLastTask);
+    }
+
+    private static void invokeSafely(Runnable runnable) {
+      try {
+        runnable.run();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+
   private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
 
   private final Project myProject;
@@ -48,7 +77,7 @@ final class DumbServiceGuiTaskQueue {
                           @NotNull DumbTaskListener listener) {
     myProject = project;
     myTaskQueue = queue;
-    myListener = listener;
+    myListener = new SafeDumbTaskListenerWrapper(listener);
     myHeavyActivities = heavyActivities;
   }
 

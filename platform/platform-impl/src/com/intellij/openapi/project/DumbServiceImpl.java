@@ -82,6 +82,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
      */
     @Override
     public void beforeFirstTask() {
+      // FIXME: this is not correct: if a queue has already been emptied by modal dumb progress, we'll be in state SMART, not SCHEDULED_TASKS
       assertState(State.SCHEDULED_TASKS);
       myState.set(State.RUNNING_DUMB_TASKS);
     }
