@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -19,8 +20,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 
-@Service
-class PackageManagerHolder {
+@Service(Service.Level.PROJECT)
+class PackageManagerHolder : Disposable {
   private val cache = mutableMapOf<UUID, PythonPackageManager>()
 
   /**
@@ -38,6 +39,10 @@ class PackageManagerHolder {
 
     cache[cacheKey] = manager
     return manager
+  }
+
+  override fun dispose() {
+    cache.clear()
   }
 }
 
