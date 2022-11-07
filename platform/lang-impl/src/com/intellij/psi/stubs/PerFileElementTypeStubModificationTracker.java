@@ -128,6 +128,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       FileInfo info = myProbablyExpensiveUpdates.poll();
       if (wereModificationsInCurrentBatch(info.type) ||
           (info.project != null && info.project.isDisposed())) continue;
+      FileBasedIndexImpl.markFileIndexed(info.file, null);
       try {
         var diffBuilder = (StubCumulativeInputDiffBuilder)myStubUpdatingIndexStorage.getValue().getForwardIndexAccessor()
           .getDiffBuilder(
@@ -137,18 +138,12 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
         // file might be deleted from actual fs, but still be "valid" in vfs (e.g. that happen sometimes in tests)
         final FileContent fileContent;
         try {
-           fileContent = FileContentImpl.createByFile(info.file, info.project);
+          fileContent = FileContentImpl.createByFile(info.file, info.project);
         } catch (FileNotFoundException ignored) {
           registerModificationFor(info.type);
           continue;
         }
-        Stub stub;
-        try {
-          FileBasedIndexImpl.markFileIndexed(info.file, fileContent);
-          stub = StubTreeBuilder.buildStubTree(fileContent);
-        } finally {
-          FileBasedIndexImpl.unmarkBeingIndexed();
-        }
+        final Stub stub = StubTreeBuilder.buildStubTree(fileContent);
         Map<Integer, SerializedStubTree> serializedStub = stub == null ? Collections.emptyMap() : stubIndexer.map(fileContent);
         if (diffBuilder.differentiate(serializedStub, (__, ___, ____) -> { }, (__, ___, ____) -> { }, (__, ___) -> { }, true)) {
           registerModificationFor(info.type);
@@ -156,6 +151,9 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       }
       catch (IOException | StorageException e) {
         LOG.error(e);
+      }
+      finally {
+        FileBasedIndexImpl.unmarkBeingIndexed();
       }
     }
   }
@@ -197,11 +195,16 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   /**
    * There is no need to process binary files (e.g. .class), so we should just skip them.
-   * Their processing might trigger content read which is expensive
+   * Their processing might trigger content read which is expensive.
+   * Also, we should not process files which weren't indexed by StubIndex yet.
    */
   private static boolean shouldSkipFile(IndexedFile indexedFile) {
-    FileType fileType = indexedFile.getFileType(); // this code snippet is taken from StubTreeBuilder#getStubBuilderType
-    final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-    return builder != null;
+    { // this code snippet is taken from StubTreeBuilder#getStubBuilderType
+      FileType fileType = indexedFile.getFileType();
+      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+      if (builder != null) return true;
+    }
+    if (!StubUpdatingIndex.canHaveStub(indexedFile.getFile())) return true;
+    return false;
   }
 }

@@ -279,7 +279,9 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         }
         @Override
         public void endBatch() {
-          processor.endBatch();
+          ConcurrencyUtil.withLock(myFileBasedIndex.myWriteLock, () -> {
+            processor.endBatch();
+          });
         }
       });
     }
