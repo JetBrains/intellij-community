@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add.target
 
 import com.intellij.CommonBundle
-import com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.module.Module
@@ -99,10 +98,7 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
           listOf(venvPanel, condaPanel, systemWidePanel, pipEnvPanel, poetryPanel) to venvPanel
         }
       }
-      targetEnvironmentConfiguration.isMutableTarget -> mutableListOf<PyAddSdkView>(venvPanel, systemWidePanel).apply {
-        // Conda not supported for SSH (which is mutable incomplete environment)
-        if (targetEnvironmentConfiguration !is IncompleteTargetEnvironmentConfiguration) add(condaPanel)
-      } to venvPanel
+      targetEnvironmentConfiguration.isMutableTarget -> listOf(venvPanel, systemWidePanel, condaPanel) to venvPanel
       else -> listOf(venvPanel, systemWidePanel, condaPanel) to systemWidePanel
     }
   }
