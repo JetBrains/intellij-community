@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable, ConfigurableMarkerProvider {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
@@ -260,6 +261,18 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
            : configurable != null
              ? configurable.getClass()
              : getClass();
+  }
+
+  private @Nls @Nullable String markerText = null;
+
+  @Override
+  public @Nls @Nullable String getMarkerText() {
+    return markerText;
+  }
+
+  @Override
+  public void setMarkerText(@Nls @Nullable String text) {
+    markerText = text;
   }
 
   private static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
