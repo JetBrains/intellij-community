@@ -22,7 +22,7 @@ interface ObservableProperty<T> : ReadOnlyProperty<Any?, T> {
    * @param parentDisposable is used to early unsubscribe from property change events.
    */
   fun afterChange(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
-    logger<ObservableProperty<*>>().error("Please, implement this method directly.")
+    logger<ObservableProperty<*>>().error("Please, implement this method directly for ${this.javaClass}.")
     when (parentDisposable) {
       null -> afterChange(listener)
       else -> afterChange(listener, parentDisposable)
