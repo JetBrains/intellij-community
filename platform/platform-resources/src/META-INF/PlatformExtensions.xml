@@ -123,7 +123,7 @@
     <applicationService serviceInterface="com.intellij.diagnostic.EditMemorySettingsService"
                         serviceImplementation="com.intellij.diagnostic.EditMemorySettingsServiceImpl" preload="true"/>
 
-    <postStartupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter"/>
+    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.IdeHeartbeatEventReporter"/>
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>

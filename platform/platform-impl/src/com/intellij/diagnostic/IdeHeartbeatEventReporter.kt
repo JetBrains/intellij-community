@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.registry.Registry
@@ -13,6 +15,7 @@ import com.sun.management.OperatingSystemMXBean
 import kotlinx.coroutines.delay
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
@@ -21,7 +24,19 @@ internal class IdeHeartbeatEventReporter : ProjectPostStartupActivity {
     const val UI_RESPONSE_LOGGING_INTERVAL_MS = 100000
   }
 
+  private val isStarted = AtomicBoolean()
+
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override suspend fun execute(project: Project) {
+    if (!isStarted.compareAndSet(false, true)) {
+      return
+    }
+
     //  don't execute during start-up
     delay(Registry.intValue("ide.heartbeat.delay").toLong())
 
