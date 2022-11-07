@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
@@ -299,10 +300,17 @@ internal class WorkspaceProjectImporter(
       .forEach { moduleEntity ->
         val urlMap = moduleEntity.contentRoots.groupBy { it.url }
         urlMap.forEach internal@ { (url, entities) ->
-          // We process only cases when there is one existing and one exported content root. If this is not true, just skip this iteration
-          if (entities.size != 2) return@internal
-          val to = entities.singleOrNull { isMavenEntity(it.entitySource) } ?: return@internal
-          val from = entities.singleOrNull { !isMavenEntity(it.entitySource) } ?: return@internal
+          if (entities.size == 1) return@internal
+          val to = entities.firstOrNull { isMavenEntity(it.entitySource) }
+          val from = entities.firstOrNull { !isMavenEntity(it.entitySource) }
+
+          // Process unexpected case. We expect exactly two roots, one imported and one not.
+          //   Leave a single root if the expectation was not met
+          if (entities.size != 2 || from == null || to == null) {
+            entities.drop(1).forEach { currentStorage.removeEntity(it) }
+            LOG.error("Unexpected state. We've got ${entities.size} similar content roots pointing to $url")
+            return@internal
+          }
 
           // Move source root if it doesn't exist already
           from.sourceRoots.forEach {
@@ -551,6 +559,8 @@ internal class WorkspaceProjectImporter(
                                    durationOfWorkspaceUpdateCallNano = durationOfWorkspaceUpdate,
                                    attempts = attempts)
     }
+
+    private val LOG = Logger.getInstance(WorkspaceProjectImporter::class.java)
   }
 }
 
