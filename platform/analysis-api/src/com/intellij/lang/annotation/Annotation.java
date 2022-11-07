@@ -86,7 +86,8 @@ public final class Annotation implements Segment {
 
   /**
    * Creates an instance of the annotation.
-   * Do not create Annotation manually, please use {@link AnnotationHolder#newAnnotation(HighlightSeverity, String)} builder methods instead.
+   * Do not create Annotation manually, please use {@link AnnotationHolder#newAnnotation(HighlightSeverity, String)} builder methods instead,
+   * in order to show the annotation faster.
    * @param startOffset the start offset of the text range covered by the annotation.
    * @param endOffset   the end offset of the text range covered by the annotation.
    * @param severity    the severity of the problem indicated by the annotation (highlight, warning or error).
@@ -120,10 +121,25 @@ public final class Annotation implements Segment {
     registerFix(fix, null);
   }
 
+  /**
+   * Registers a quick fix {@code fix} for this annotation, which is triggerable in the with specified text {@code range}
+   *
+   * @param fix the quick fix implementation.
+   * @param range the text range within which the quick fix can be triggered
+   */
   public void registerFix(@NotNull IntentionAction fix, TextRange range) {
     registerFix(fix,range, null);
   }
 
+  /**
+   * Registers a quick fix {@code fix} for this annotation, which is triggerable in the with specified text {@code range}
+   * with specific key and descriptor
+   *
+   * @param fix the quick fix implementation.
+   * @param range the text range within which the quick fix can be triggered
+   * @param key HighlightDisplayKey of the inspection which provided this fix
+   * @param problemDescriptor ProblemDescriptor of the problem created by the inspection with this fix
+   */
   public void registerFix(@NotNull LocalQuickFix fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key,
                           @NotNull ProblemDescriptor problemDescriptor) {
     range = notNullize(range);
@@ -139,6 +155,7 @@ public final class Annotation implements Segment {
    *
    * @param fix   the quick fix implementation.
    * @param range the text range (relative to the document) where the quick fix is available.
+   * @param key HighlightDisplayKey of the inspection which provided this fix
    */
   public void registerFix(@NotNull IntentionAction fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
     range = notNullize(range);
@@ -157,6 +174,10 @@ public final class Annotation implements Segment {
   /**
    * Registers a quickfix which would be available during batch mode only,
    * in particular during com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection run
+   *
+   * @param fix   the quick fix implementation.
+   * @param range the text range (relative to the document) where the quick fix is available.
+   * @param key HighlightDisplayKey of the inspection which provided this fix
    */
   public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
     range = notNullize(range);
@@ -401,7 +422,7 @@ public final class Annotation implements Segment {
   }
 
   /**
-   * Gets the unique object, which is the same for all of the problems of this group
+   * Gets the unique object, which is the same for all the problems of this group
    *
    * @return the problem group
    */
@@ -411,7 +432,7 @@ public final class Annotation implements Segment {
   }
 
   /**
-   * Sets the unique object, which is the same for all of the problems of this group
+   * Sets the unique object, which is the same for all the problems of this group
    *
    * @param problemGroup the problem group
    */
