@@ -220,12 +220,12 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
 
   private static byte @Nullable [] loadFromLocalHistory(long date, VirtualFile virtualFile) {
     final LocalHistory localHistory = LocalHistory.getInstance();
-    return ReadAction.compute(() -> localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
+    return localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
       @Override
       public boolean isSuitable(long revisionTimestamp) {
         return revisionTimestamp < date;
       }
-    }));
+    });
   }
 
   private byte @Nullable [] loadFromVersionControl(long date, VirtualFile f) {
