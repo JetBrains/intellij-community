@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.tabs.*;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,7 +200,7 @@ public class JBTabsPaneImpl implements TabbedPane {
   }
 
   @Override
-  public String getTitleAt(int i) {
+  public @Nls String getTitleAt(int i) {
     return getTabAt(i).getText();
   }
 

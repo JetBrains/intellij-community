@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -294,7 +295,7 @@ public class TabbedPaneWrapper  {
     }
   }
 
-  public final String getTitleAt(final int i) {
+  public final @Nls String getTitleAt(final int i) {
     return myTabbedPane.getTitleAt(i);
   }
 
