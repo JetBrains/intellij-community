@@ -919,6 +919,14 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         if (caseValue instanceof PsiExpression) {
           generateExpressionInstructions((PsiExpression)caseValue);
         }
+        else if (caseValue instanceof PsiPatternGuard) {
+          PsiPatternGuard patternGuard = (PsiPatternGuard)caseValue;
+          processPattern(patternGuard.getPattern());
+          generateExpressionInstructions(patternGuard.getGuardingExpression());
+        }
+        else if (caseValue instanceof PsiPattern) {
+          processPattern((PsiPattern)caseValue);
+        }
       }
     }
   }
