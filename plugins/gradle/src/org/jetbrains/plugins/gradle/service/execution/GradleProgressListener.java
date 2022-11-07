@@ -35,7 +35,6 @@ import java.util.*;
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
 import static org.jetbrains.plugins.gradle.service.execution.GradleProgressIndicatorEventHelper.*;
-import static org.jetbrains.plugins.gradle.service.execution.GradleProgressListener.ProgressPhase.CONFIGURATION;
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX;
 
 /**
@@ -52,7 +51,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private static final String STARTING_GRADLE_DAEMON_EVENT = "Starting Gradle Daemon";
   private final GradleVersion myGradleVersion;
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
-  private GradleProgressState myGradleProgressState = new GradleProgressState(0, ProgressPhase.INITIALIZATION);
+  private GradleProgressState myGradleProgressState = GradleProgressState.newInitializationState();
 
   public GradleProgressListener(
     @NotNull ExternalSystemTaskNotificationListener listener,
@@ -204,90 +203,6 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         String duration = formatDuration(eventTime - startTime);
         myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in " + duration + "\n", true);
       }
-    }
-  }
-
-  enum ProgressPhase {
-    INITIALIZATION(0),
-    CONFIGURATION(1),
-    EXECUTION(2);
-
-    private final int order;
-
-    ProgressPhase(int order) {
-      this.order = order;
-    }
-
-    public boolean isAfter(ProgressPhase other) {
-      return order > other.order;
-    }
-  }
-
-  static class GradleProgressState {
-
-    private final ProgressPhase currentPhase;
-    private final Set<String> runningWorkItems;
-    private long totalWorkItems;
-    private long currentProgress;
-    private boolean isConfigurationDone;
-
-    private boolean shouldUpdateProgressIndicator;
-
-    GradleProgressState(long totalWorkItems, ProgressPhase currentPhase) {
-      this.totalWorkItems = totalWorkItems;
-      this.currentProgress = 0;
-      this.currentPhase = currentPhase;
-      this.runningWorkItems = new LinkedHashSet<>();
-      this.isConfigurationDone = currentPhase.isAfter(CONFIGURATION);
-    }
-
-    long getTotalWorkItems() {
-      return totalWorkItems;
-    }
-
-    void incrementTotalWorkItems(long additionalItems) {
-      this.totalWorkItems += additionalItems;
-    }
-
-    long getCurrentProgress() {
-      return currentProgress;
-    }
-
-    void incrementCurrentProgress() {
-      currentProgress++;
-    }
-
-    ProgressPhase getCurrentPhase() {
-      return currentPhase;
-    }
-
-    void removeRunningWorkItem(String workItem) {
-      runningWorkItems.remove(workItem);
-    }
-
-    void addRunningWorkItem(String workItem) {
-      runningWorkItems.add(workItem);
-    }
-
-    @Nullable
-    String getFirstRunningWorkItem() {
-      return runningWorkItems.isEmpty() ? null : runningWorkItems.iterator().next();
-    }
-
-    void markConfigurationDone() {
-      this.isConfigurationDone = true;
-    }
-
-    boolean isConfigurationDone() {
-      return isConfigurationDone;
-    }
-
-    void setShouldUpdateProgressIndicator(boolean value) {
-      this.shouldUpdateProgressIndicator = value;
-    }
-
-    boolean getShouldUpdateProgressIndicator() {
-      return shouldUpdateProgressIndicator;
     }
   }
 }
