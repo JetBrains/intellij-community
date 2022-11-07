@@ -132,13 +132,14 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private val syncThemeProperty = propertyGraph.graphProperty { lafManager.autodetect }
 
   override fun createPanel(): DialogPanel {
-    val updateLaf: (LafManager.LafReference) -> Unit = {
+    lafProperty.afterChange(disposable!!) {
       ApplicationManager.getApplication().invokeLater {
         QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true)
       }
     }
-    lafProperty.afterChange(updateLaf, disposable!!)
-    syncThemeProperty.afterChange({ lafManager.autodetect = it }, disposable!!)
+    syncThemeProperty.afterChange(disposable!!) {
+      lafManager.autodetect = it
+    }
 
     return panel {
       row(message("combobox.look.and.feel")) {
