@@ -129,14 +129,11 @@ public class ShelvedChangesViewManager implements Disposable {
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, () -> onShelveChangelistsChange());
+    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, () -> scheduleTreeUpdate());
   }
 
-  private void onShelveChangelistsChange() {
+  private void scheduleTreeUpdate() {
     myUpdateQueue.queue(new MyContentUpdater());
-    ApplicationManager.getApplication().invokeLater(() -> {
-      myProject.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
-    });
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
@@ -155,8 +152,10 @@ public class ShelvedChangesViewManager implements Disposable {
   final static class ContentPredicate implements Predicate<Project> {
     @Override
     public boolean test(Project project) {
-      return !ShelveChangesManager.getInstance(project).getAllLists().isEmpty() &&
-             !hideDefaultShelfTab(project);
+      if (hideDefaultShelfTab(project)) return false;
+      // do not init manager on EDT - wait for ShelveChangesManager.PostStartupActivity
+      ShelveChangesManager shelveManager = project.getServiceIfCreated(ShelveChangesManager.class);
+      return shelveManager != null && !shelveManager.getAllLists().isEmpty();
     }
   }
 
@@ -1145,6 +1144,21 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void runActivity(@NotNull Project project) {
       throw new UnsupportedOperationException();
+    }
+  }
+
+  public static class MyShelfManagerListener implements ShelveChangesManagerListener {
+    private final Project myProject;
+
+    public MyShelfManagerListener(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void shelvedListsChanged() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        BackgroundTaskUtil.syncPublisher(myProject, ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
+      });
     }
   }
 }

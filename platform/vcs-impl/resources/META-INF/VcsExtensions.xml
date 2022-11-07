@@ -384,6 +384,8 @@
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
     <listener class="com.intellij.vcs.commit.CommitSessionCollector$MyToolWindowManagerListener"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$MyShelfManagerListener"
+              topic="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener"/>
   </projectListeners>
 </idea-plugin>
 

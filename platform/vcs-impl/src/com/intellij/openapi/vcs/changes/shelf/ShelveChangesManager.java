@@ -221,13 +221,14 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
               }, null, customPath != null ? Paths.get(customPath) : null);
   }
 
-  public void projectOpened() {
+  private void projectOpened() {
     try {
       mySchemeManager.loadSchemes();
       //workaround for ignoring not valid patches, because readScheme doesn't support nullable value as it should be
       filterNonValidShelvedChangeLists();
       markDeletedSystemUnshelved();
       cleanDeletedOlderOneWeek();
+      notifyStateChanged();
     }
     catch (Exception e) {
       LOG.error("Couldn't read shelf information", e);
