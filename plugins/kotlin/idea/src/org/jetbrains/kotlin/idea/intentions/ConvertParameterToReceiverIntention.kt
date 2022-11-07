@@ -26,15 +26,21 @@ class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         val identifier = element.nameIdentifier ?: return false
         if (!identifier.textRange.containsOffset(caretOffset)) return false
+
         if (element.isVarArg) return false
-        val function = element.getStrictParentOfType<KtNamedFunction>() ?: return false
+
+        val function = element.ownerFunction as? KtNamedFunction ?: return false
         if (function.receiverTypeReference != null) return false
-        if (function.valueParameterList != element.parent) return false
-        if (!function.hasModifier(OVERRIDE_KEYWORD)) return true
-        val functionDescriptor = function.resolveToDescriptorIfAny() ?: return true
-        val baseDescriptor = functionDescriptor.original.overriddenDescriptors.firstOrNull() ?: return true
-        if (baseDescriptor is JavaCallableMemberDescriptor) return false
+        if (function.overridesJavaMethod()) return false
+
         return true
+    }
+
+    private fun KtNamedFunction.overridesJavaMethod(): Boolean {
+        if (!hasModifier(OVERRIDE_KEYWORD)) return false
+        val functionDescriptor = resolveToDescriptorIfAny() ?: return false
+        val baseDescriptor = functionDescriptor.original.overriddenDescriptors.firstOrNull() ?: return false
+        return baseDescriptor is JavaCallableMemberDescriptor
     }
 
     private fun configureChangeSignature(parameterIndex: Int): KotlinChangeSignatureConfiguration =
