@@ -459,7 +459,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private inline fun processToolWindowContentManagers(processor: (ToolWindow, ContentManager) -> Unit) {
     val toolWindowManager = getToolWindowManager()
     for (executor in Executor.EXECUTOR_EXTENSION_NAME.extensionList) {
-      val toolWindow = toolWindowManager.getToolWindow(executor.id) ?: continue
+      val toolWindow = toolWindowManager.getToolWindow(executor.toolWindowId) ?: continue
       processor(toolWindow, toolWindow.contentManagerIfCreated ?: continue)
     }
 
