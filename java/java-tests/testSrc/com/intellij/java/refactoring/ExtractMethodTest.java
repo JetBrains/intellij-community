@@ -969,6 +969,26 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
+  public void testRecordPatternIntroduced() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced2() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced3() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced4() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced5() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
+  }
+
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, "p");
