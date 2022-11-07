@@ -69,6 +69,7 @@ import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
+import kotlin.math.min
 
 class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, parent: JBPopup? = null)
   : WizardPopup(project, parent, step),
@@ -304,6 +305,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
     isRootVisible = false
     showsRootHandles = true
+    visibleRowCount = min(calculateTopLevelVisibleRows(), 20)
 
     cellRenderer = renderer
 
@@ -314,6 +316,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     isLargeModel = true
     expandsSelectedPaths = true
   }
+
+  /**
+   * Local branches would be expanded by [GitBranchesTreePopupStep.getPreferredSelection].
+   */
+  private fun JTree.calculateTopLevelVisibleRows() = model.getChildCount(model.root) + model.getChildCount(GitBranchType.LOCAL)
 
   private fun overrideTreeActions(tree: JTree) = with(tree) {
     overrideBuiltInAction("toggle") {
