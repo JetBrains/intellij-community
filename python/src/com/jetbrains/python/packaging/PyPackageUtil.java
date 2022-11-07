@@ -48,6 +48,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -328,8 +329,17 @@ public final class PyPackageUtil {
     });
   }
 
-  public static boolean packageManagementEnabled(@Nullable Sdk sdk) {
+  /**
+   * @param newUi set only for new toolwindow
+   */
+  public static boolean packageManagementEnabled(@Nullable Sdk sdk, boolean newUi) {
     if (sdk == null) {
+      return false;
+    }
+    // Temporary fix because old UI doesn't support non-local conda
+    if (!newUi && PySdkExtKt.getOrCreateAdditionalData(sdk).getFlavor() instanceof CondaEnvSdkFlavor
+        && PySdkExtKt.getTargetEnvConfiguration(sdk) != null) {
+      LOG.warn("Remote Conda package manager is disabled");
       return false;
     }
     Boolean supported = PythonInterpreterTargetEnvironmentFactory.isPackageManagementSupported(sdk);
