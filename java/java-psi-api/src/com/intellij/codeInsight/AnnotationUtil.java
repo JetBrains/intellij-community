@@ -302,7 +302,7 @@ public class AnnotationUtil {
   private @interface Flags { }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations, @Flags int flags) {
-    return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, flags, null));
+    return ContainerUtil.exists(annotations, annotation -> isAnnotated(listOwner, annotation, flags, null));
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFqn, @Flags int flags) {
