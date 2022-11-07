@@ -19,9 +19,9 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.PropertyBinding
+import com.intellij.ui.layout.asRange
+import com.intellij.ui.layout.toBinding
 import com.intellij.util.PlatformUtils
 
 // @formatter:off
@@ -40,6 +40,7 @@ private val myTrailingWhitespacesCheckBox             get() = CheckboxDescriptor
 private val myShowVerticalIndentGuidesCheckBox        get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.indent.guides"), PropertyBinding(model::isIndentGuidesShown, model::setIndentGuidesShown))
 private val myFocusModeCheckBox                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.highlight.only.current.declaration"), PropertyBinding(model::isFocusMode, model::setFocusMode))
 private val myCbShowIntentionBulbCheckBox             get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.intention.bulb"), PropertyBinding(model::isShowIntentionBulb, model::setShowIntentionBulb))
+private val myShowIntentionPreviewCheckBox            get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.intention.preview"), PropertyBinding(model::isShowIntentionPreview, model::setShowIntentionPreview))
 private val myCodeLensCheckBox                        get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance()::showEditorToolTip)
 private val myRenderedDocCheckBox                     get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.rendered.doc.comments"), PropertyBinding(model::isDocCommentRenderingEnabled, model::setDocCommentRenderingEnabled))
 private val myUseEditorFontInInlays                   get() = CheckboxDescriptor(ApplicationBundle.message("use.editor.font.for.inlays"), PropertyBinding(model::isUseEditorFontInInlays, model::setUseEditorFontInInlays))
@@ -101,6 +102,9 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       }
       row {
         checkBox(myCbShowIntentionBulbCheckBox)
+      }
+      row {
+        checkBox(myShowIntentionPreviewCheckBox)
       }
       row {
         checkBox(myRenderedDocCheckBox)
