@@ -211,17 +211,6 @@ public final class CommonActionsPanel extends JPanel {
     super.addNotify(); // call after all to construct actions tooltips properly
   }
 
-  @Override
-  public void removeNotify() {
-    final JRootPane pane = getRootPane();
-    for (AnAction button : myActions) {
-      if (button instanceof AddButton && UIUtil.isDialogRootPane(pane)) {
-        button.unregisterCustomShortcutSet(pane);
-      }
-    }
-    super.removeNotify();
-  }
-
   private static void registerDeleteHook(final MyActionButton removeButton) {
     new AnAction(IdeBundle.messagePointer("action.Anonymous.text.delete.hook")) {
       @Override
