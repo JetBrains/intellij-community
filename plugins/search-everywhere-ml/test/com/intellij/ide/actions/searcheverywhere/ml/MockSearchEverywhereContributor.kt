@@ -2,12 +2,12 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.util.Processor
 import javax.swing.JLabel
 import javax.swing.ListCellRenderer
+import com.intellij.util.Processor
 
-class MockSearchEverywhereContributor : SearchEverywhereContributor<Any> {
-  override fun getSearchProviderId(): String = javaClass.name
+class MockSearchEverywhereContributor(val name: String? = null) : SearchEverywhereContributor<Any> {
+  override fun getSearchProviderId(): String = name ?: javaClass.name
   override fun getGroupName() = "Mock"
   override fun getSortWeight() = 0
   override fun showInFindResults() = false

@@ -85,6 +85,8 @@
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider$RunConfigurationTypeValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereMlElementFeatureValidationRule"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLStatisticsCollector"/>
   </extensions>
