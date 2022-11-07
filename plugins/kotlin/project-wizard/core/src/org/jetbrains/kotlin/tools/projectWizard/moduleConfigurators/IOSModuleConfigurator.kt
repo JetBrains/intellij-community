@@ -83,7 +83,7 @@ abstract class IOSSinglePlatformModuleConfiguratorBase : SinglePlatformModuleCon
     @NonNls
     override val suggestedModuleName = "ios"
 
-    override val moduleKind: ModuleKind = ModuleKind.singlePlatformJvm
+    override val moduleKind: ModuleKind = ModuleKind.ios
     override val greyText = KotlinNewProjectWizardBundle.message("module.configurator.ios.requires.xcode")
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.ios")
 

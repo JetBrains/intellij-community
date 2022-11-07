@@ -103,6 +103,7 @@ val ModuleKind.icon: Icon
         ModuleKind.singlePlatformJvm -> KotlinIcons.Wizard.JVM
         ModuleKind.target -> AllIcons.Nodes.Module
         ModuleKind.singlePlatformAndroid -> KotlinIcons.Wizard.ANDROID
+        ModuleKind.ios -> KotlinIcons.Wizard.IOS
     }
 
 val ModuleConfigurator.icon: Icon
