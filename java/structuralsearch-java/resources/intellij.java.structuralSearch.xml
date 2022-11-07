@@ -1,4 +1,5 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.structuralsearch">
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder"
                         serviceImplementation="com.intellij.structuralsearch.java.ui.JavaStructuralSearchTemplateBuilder"
