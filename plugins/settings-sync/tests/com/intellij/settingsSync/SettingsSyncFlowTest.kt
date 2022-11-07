@@ -43,16 +43,14 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test fun `existing settings should be copied on initialization`() {
-    val fileName = "options/laf.xml"
-    val initialContent = "LaF Initial"
-    configDir.resolve(fileName).write(initialContent)
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
-      fileState(fileName, initialContent)
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
     }
   }
 
@@ -71,24 +69,20 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync()
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
+    assertServerSnapshot {
       fileState(fileName, contentBetweenSessions)
     }
   }
 
   @Test fun `delete server data`() {
-    val fileName = "options/laf.xml"
-    val initialContent = "LaF Initial"
-    configDir.resolve(fileName).write(initialContent)
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
-      fileState(fileName, initialContent)
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
     }
 
     deleteServerDataAndWait()
@@ -156,16 +150,14 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     })
 
     // prepare local settings
-    val lafXml = "options/laf.xml"
-    val lafContent = "LaF Initial"
-    configDir.resolve(lafXml).write(lafContent)
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
-      fileState(lafXml, lafContent)
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
     }
   }
 
@@ -332,9 +324,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     assertTrue("Settings Sync has been disabled", SettingsSyncSettings.getInstance().syncEnabled)
 
-    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
-    pushedSnapshot!!.assertSettingsSnapshot {
+    assertServerSnapshot {
       fileState("options/laf.xml", "LaF Initial")
     }
   }
@@ -350,15 +340,6 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
 
     assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
-  }
-
-  private fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
-    val builder = SettingsSnapshotBuilder()
-    builder.build()
-    for (file in builder.fileStates) {
-      file as FileState.Modified
-      configDir.resolve(file.file).write(file.content)
-    }
   }
 
   private fun suppressFailureOnLogError(expectedException: RuntimeException, activity: () -> Unit) {
@@ -382,11 +363,6 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       }
     }
     override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {}
-  }
-
-  private fun assertFileWithContent(expectedContent: String, file: Path) {
-    assertTrue("File $file does not exist", file.exists())
-    assertEquals("File $file has unexpected content", expectedContent, file.readText())
   }
 
   private fun assertAppliedToIde(fileSpec: String, expectedContent: String) {
