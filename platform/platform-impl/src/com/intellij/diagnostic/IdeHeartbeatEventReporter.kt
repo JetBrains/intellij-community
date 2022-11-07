@@ -25,7 +25,7 @@ internal class IdeHeartbeatEventReporter : ProjectPostStartupActivity {
     //  don't execute during start-up
     delay(Registry.intValue("ide.heartbeat.delay").toLong())
 
-    var lastCpuTime: Long = -1
+    var lastCpuTime: Long = 0
     var lastGcTime: Long = -1
     val gcBeans = ManagementFactory.getGarbageCollectorMXBeans()
     while (true) {
@@ -37,8 +37,14 @@ internal class IdeHeartbeatEventReporter : ProjectPostStartupActivity {
       val thisGcTime = if (lastGcTime == -1L) 0 else totalGcTime - lastGcTime
       lastGcTime = thisGcTime
       val totalCpuTime = mxBean.processCpuTime
-      val thisCpuTime = if (totalCpuTime < 0 || lastCpuTime < 0) -1 else totalCpuTime - lastCpuTime
-      lastCpuTime = thisCpuTime
+      val thisCpuTime: Long
+      if (totalCpuTime < 0) {
+        thisCpuTime = -1
+      }
+      else {
+        thisCpuTime = totalCpuTime - lastCpuTime
+        lastCpuTime = thisCpuTime
+      }
 
       // don't report total GC time in the first 5 minutes of IJ execution
       UILatencyLogger.HEARTBEAT.log(
