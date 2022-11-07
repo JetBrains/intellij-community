@@ -302,19 +302,25 @@ public final class MadTestingUtil {
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {
-    return !name.equals("gen") && // https://youtrack.jetbrains.com/issue/IDEA-175404
-           !name.equals("reports") && // no idea what this is
-           !name.equals("android") && // no 'android' repo on agents in some builds
-           !containsBinariesOnly(name) &&
-           !name.endsWith("system") && !name.endsWith("config"); // temporary stuff from tests or debug IDE
+    return !name.equals("gen") // https://youtrack.jetbrains.com/issue/IDEA-175404
+           && !name.equals("reports") // no idea what this is
+           && !name.equals("android") // no 'android' repo on agents in some builds
+           && canContainSources(name)
+           && !name.endsWith("system")
+           && !name.endsWith("config") // temporary stuff from tests or debug IDE
+           && !name.equals("build")    // the dir is too deep and has almost no sources, descending there is a waste of time
+           && !name.equals("testData") // the dir is too deep and has no compilable sources, descending there is a waste of time
+    ;
   }
 
-  private static boolean containsBinariesOnly(@NotNull String name) {
-    return name.equals("jdk") ||
-           name.equals("jre") ||
-           name.equals("lib") ||
-           name.equals("bin") ||
-           name.equals("out");
+  private static boolean canContainSources(@NotNull String name) {
+    return !name.equals("jdk")
+           && !name.equals("jre")
+           && !name.equals("lib")
+           && !name.equals("bin")
+           && !name.equals("out")
+           && !name.startsWith(".")  // .gradle/.git/.idea have too many irrelevant files but no sources
+      ;
   }
 
   @NotNull
@@ -542,16 +548,6 @@ public final class MadTestingUtil {
         }
         if (files.length == 0) {
           return EMPTY_DIRECTORY;
-        }
-        for (int i = 0; i < files.length; i++) {
-          File file = files[i];
-          boolean isDirectory = file.isDirectory();
-          files[i] = new File(file.getPath()) {
-            @Override
-            public boolean isDirectory() {
-              return isDirectory;
-            }
-          };
         }
         return files;
       }
