@@ -96,6 +96,6 @@
     <orderEntry type="module" module-name="kotlin.highlighting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.search.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.searching.k2" scope="RUNTIME" />
   </component>
 </module>

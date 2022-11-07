@@ -69,6 +69,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.tests.k2" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.search.test.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.searching.test.k2" scope="TEST" />
   </component>
 </module>

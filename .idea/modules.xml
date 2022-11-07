@@ -1265,8 +1265,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/run-configurations/testng/kotlin.run-configurations.testng.iml" filepath="$PROJECT_DIR$/plugins/kotlin/run-configurations/testng/kotlin.run-configurations.testng.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting-support/kotlin.scripting-support.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting-support/kotlin.scripting-support.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.search.k2/kotlin.search.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.search.k2/kotlin.search.k2.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.search.k2/kotlin.search.test/kotlin.search.test.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.search.k2/kotlin.search.test/kotlin.search.test.k2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.searching/kotlin.searching.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.searching/kotlin.searching.k2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.searching/kotlin.searching.test.k2/kotlin.searching.test.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.searching/kotlin.searching.test.k2/kotlin.searching.test.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/spellchecker/kotlin.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/kotlin/spellchecker/kotlin.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/test-framework/kotlin.test-framework.iml" filepath="$PROJECT_DIR$/plugins/kotlin/test-framework/kotlin.test-framework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/tests-common/kotlin.tests-common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/tests-common/kotlin.tests-common.iml" />

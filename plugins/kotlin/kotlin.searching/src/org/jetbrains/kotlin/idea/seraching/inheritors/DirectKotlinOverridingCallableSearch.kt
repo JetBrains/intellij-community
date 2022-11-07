@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.inheritorsSearch
+package org.jetbrains.kotlin.idea.seraching.inheritors
 
 import com.intellij.model.search.SearchService
 import com.intellij.model.search.Searcher
@@ -13,7 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingCallableSearch.SearchParameters
+import org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinOverridingCallableSearch.SearchParameters
 import org.jetbrains.kotlin.idea.search.ideaExtensions.JavaOverridingMethodsSearcherFromKotlinParameters
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass

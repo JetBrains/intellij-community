@@ -37,7 +37,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.highlighting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.tests.k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.search.test.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.searching.test.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
   </component>
 </module>

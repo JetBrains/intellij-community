@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.inheritorsSearch
+package org.jetbrains.kotlin.idea.seraching.inheritors
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction

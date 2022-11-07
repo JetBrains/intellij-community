@@ -187,7 +187,7 @@
     <orderEntry type="library" scope="RUNTIME" name="javaslang" level="project" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="javax-inject" level="project" />
-    <orderEntry type="module" module-name="kotlin.search.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.searching.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" exported="" />
   </component>

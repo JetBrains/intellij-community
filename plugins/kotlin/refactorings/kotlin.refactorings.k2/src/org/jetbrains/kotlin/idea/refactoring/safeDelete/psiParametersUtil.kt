@@ -11,7 +11,7 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
-import org.jetbrains.kotlin.idea.inheritorsSearch.findHierarchyWithSiblings
+import org.jetbrains.kotlin.idea.seraching.inheritors.findHierarchyWithSiblings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
