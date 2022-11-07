@@ -36,14 +36,10 @@ class AddLoopLabelFix(
         val element = element ?: return
         val labelName = existingLabelName ?: getUniqueLabelName(element)
 
-        val jumpWithLabel = KtPsiFactory(project).createExpression(jumpExpression.text + "@" + labelName)
-        jumpExpression.replace(jumpWithLabel)
+        jumpExpression.replace(KtPsiFactory(project).createExpression(jumpExpression.text + "@" + labelName))
 
-        // TODO(yole) use createExpressionByPattern() once it's available
         if (existingLabelName == null) {
-            val labeledLoopExpression = KtPsiFactory(project).createLabeledExpression(labelName)
-            labeledLoopExpression.baseExpression!!.replace(element)
-            element.replace(labeledLoopExpression)
+            element.replace(KtPsiFactory(project).createExpressionByPattern("$0@ $1", labelName, element, reformat = false))
         }
 
         // TODO(yole) We should initiate in-place rename for the label here, but in-place rename for labels is not yet implemented
