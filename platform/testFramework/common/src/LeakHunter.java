@@ -168,20 +168,19 @@ public final class LeakHunter {
         This error means that the object is expected to be collected by the garbage collector by this time, but it was not.
         Please make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html""";
 
-    if (knownHeapDumpPath == null) {
-      result += "\n  If this is a TeamCity build, you can find a memory snapshot `" +
-                TestApplicationKt.LEAKED_PROJECTS + ".hproof.zip` in the \"Artifacts\" tab of the build run."
-                + "\n  Otherwise, try looking for '" + DumpKt.HEAP_DUMP_IS_PUBLISHED + "' string in the system output in the log  below.";
-    }
-    else if (TeamCityLogger.isUnderTC) {
+    if (TeamCityLogger.isUnderTC) {
       result+="\n  You can find a memory snapshot `"
         +TestApplicationKt.LEAKED_PROJECTS
         +".hproof.zip` in the \"Artifacts\" tab of the build run.";
     }
+    else if (knownHeapDumpPath != null) {
+      result += "\n  Please see ``" + knownHeapDumpPath + "` for a memory dump";
+    }
     else {
       result += "\n  Try looking for '"+DumpKt.HEAP_DUMP_IS_PUBLISHED
-        +"' string in the system output log below.";
+        +"' line in the system output log below. It contains a path to a collected memory snapshot";
     }
+
     return result;
   }
 }
