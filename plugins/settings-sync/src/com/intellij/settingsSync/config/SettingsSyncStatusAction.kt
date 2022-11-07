@@ -4,8 +4,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.SettingsSyncStatusTracker
@@ -15,7 +13,7 @@ import com.intellij.ui.BadgeIconSupplier
 import icons.SettingsSyncIcons
 import javax.swing.Icon
 
-class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync")), SettingsSyncStatusTracker.Listener {
+class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(message("title.settings.sync")), SettingsSyncStatusTracker.Listener {
 
   private enum class SyncStatus {ON, OFF, FAILED}
 
@@ -33,10 +31,6 @@ class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync"))
 
   init {
     SettingsSyncStatusTracker.getInstance().addListener(this)
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    ShowSettingsUtil.getInstance().showSettingsDialog(e.project, SettingsSyncConfigurable::class.java)
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
