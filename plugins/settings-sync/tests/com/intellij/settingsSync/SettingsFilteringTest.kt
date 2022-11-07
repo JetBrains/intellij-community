@@ -30,6 +30,17 @@ class SettingsFilteringTest : LightPlatformTestCase() {
     }
   }
 
+  fun `test passing the whole scheme storage directory`() {
+    assertTrue(isSyncEnabled("keymaps", RoamingType.DEFAULT))
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
+    try {
+      assertFalse(isSyncEnabled("keymaps", RoamingType.DEFAULT))
+    }
+    finally {
+      SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, true)
+    }
+  }
+
   fun `test font sync enabled via subcategory` () {
     assertTrue(isSyncEnabled("editor-font.xml", RoamingType.DEFAULT))
     SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID, false)
