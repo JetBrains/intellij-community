@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
@@ -47,6 +48,7 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
 
   init {
     presentation.addPropertyChangeListener { updateWidget() }
+    rightIcons = listOf(AllIcons.General.ChevronDown)
   }
 
   override fun updateWidget() {
