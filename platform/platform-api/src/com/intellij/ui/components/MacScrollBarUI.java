@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   protected ScrollBarAnimationBehavior createBaseAnimationBehavior() {
     return new MacScrollBarAnimationBehavior(
-      new Computable<JScrollBar>() {
+      new Computable<>() {
         @Override
         public JScrollBar compute() {
           return myScrollBar;
@@ -119,7 +118,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
      *
      * @param bar the scroll bar with custom UI
      */
-    private void pauseThumbAnimation(JScrollBar bar) {
+    private static void pauseThumbAnimation(JScrollBar bar) {
       Object object = bar == null ? null : bar.getUI();
       if (object instanceof MacScrollBarUI) {
         MacScrollBarUI ui = (MacScrollBarUI)object;
@@ -179,7 +178,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
   }
 
   private static <T> T callMac(NotNullProducer<? extends T> producer) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       NSAutoreleasePool pool = new NSAutoreleasePool();
       try {
         return producer.produce();
@@ -281,7 +280,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     Native() {
       Logger.getInstance(MacScrollBarUI.class).debug("initialize ", this);
       callMac(() -> initialize());
-      UIUtil.invokeLaterIfNeeded(this);
+      EdtInvocationManager.invokeLaterIfNeeded(this);
     }
 
     abstract ID initialize();
@@ -293,7 +292,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {
       Logger.getInstance(MacScrollBarUI.class).debug("update ", this);
-      UIUtil.invokeLaterIfNeeded(this);
+      EdtInvocationManager.invokeLaterIfNeeded(this);
     }
 
     @Override

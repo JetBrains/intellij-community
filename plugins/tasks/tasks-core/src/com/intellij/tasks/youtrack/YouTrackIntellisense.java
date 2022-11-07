@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.google.gson.Gson;
@@ -36,7 +36,7 @@ import static com.intellij.openapi.editor.HighlighterColors.TEXT;
  *
  * @author Mikhail Golubev
  */
-public class YouTrackIntellisense {
+public final class YouTrackIntellisense {
 
   /**
    * Key used to bind YouTrackIntellisense instance to specific PsiFile

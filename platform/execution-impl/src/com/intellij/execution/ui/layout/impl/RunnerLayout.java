@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class RunnerLayout  {
+public final class RunnerLayout  {
   public static final Key<Integer> DEFAULT_INDEX = Key.create("RunnerLayoutDefaultIndex");
   public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");
 

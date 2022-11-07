@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -34,9 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseIntentionAction {
+public final class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseIntentionAction {
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiComment typeComment = findCommentUnderCaret(editor, file);
@@ -64,16 +64,13 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
     }
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation");
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.convert.type.comment.to.variable.annotation");
   }
 
@@ -86,8 +83,7 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
     return false;
   }
 
-  @Nullable
-  private static PsiComment findCommentUnderCaret(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static @Nullable PsiComment findCommentUnderCaret(@NotNull Editor editor, @NotNull PsiFile file) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     return PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
   }
@@ -97,8 +93,7 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
     return annotation != null && !mapTargetsToAnnotations(comment).isEmpty();
   }
 
-  @NotNull
-  private static Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PsiComment typeComment) {
+  private static @NotNull Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PsiComment typeComment) {
     final PsiElement parent = typeComment.getParent();
     if (parent instanceof PyAssignmentStatement) {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)parent;
@@ -126,8 +121,7 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
     return Collections.emptyMap();
   }
 
-  @NotNull
-  private static Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PyExpression targetExpr, @NotNull PsiComment typeComment) {
+  private static @NotNull Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PyExpression targetExpr, @NotNull PsiComment typeComment) {
     final PyTargetExpression firstTarget = PsiTreeUtil.findChildOfType(targetExpr, PyTargetExpression.class, false);
     if (firstTarget == null || firstTarget.getTypeComment() != typeComment) {
       return Collections.emptyMap();

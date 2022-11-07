@@ -21,7 +21,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
