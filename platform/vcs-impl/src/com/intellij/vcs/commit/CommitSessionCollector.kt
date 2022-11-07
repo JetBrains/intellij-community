@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
+import com.intellij.openapi.vcs.checkin.CommitProblem
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.TreeActions
@@ -44,8 +45,10 @@ class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
     val UNVERSIONED_TOTAL = EventFields.RoundedInt("unversioned_total")
     val UNVERSIONED_INCLUDED = EventFields.RoundedInt("unversioned_included")
     val COMMIT_CHECK_CLASS = EventFields.Class("commit_check_class")
+    val COMMIT_PROBLEM_CLASS = EventFields.Class("commit_problem_class")
     val EXECUTION_ORDER = EventFields.Enum("execution_order", CommitCheck.ExecutionOrder::class.java)
     val COMMIT_OPTION = EventFields.Enum("commit_option", CommitOption::class.java)
+    val COMMIT_PROBLEM_PLACE = EventFields.Enum("commit_problem_place", CommitProblemPlace::class.java)
     val IS_FROM_SETTINGS = EventFields.Boolean("is_from_settings")
     val IS_SUCCESS = EventFields.Boolean("is_success")
     val WARNINGS_COUNT = EventFields.RoundedInt("warnings_count")
@@ -70,10 +73,12 @@ class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
     val COMMIT_AND_PUSH = GROUP.registerEvent("commit.and.push", FILES_INCLUDED, UNVERSIONED_INCLUDED)
     val TOGGLE_COMMIT_CHECK = GROUP.registerEvent("toggle.commit.check", COMMIT_CHECK_CLASS, IS_FROM_SETTINGS, EventFields.Enabled)
     val TOGGLE_COMMIT_OPTION = GROUP.registerEvent("toggle.commit.option", COMMIT_OPTION, EventFields.Enabled)
+    val VIEW_COMMIT_PROBLEM = GROUP.registerEvent("view.commit.problem", COMMIT_PROBLEM_CLASS, COMMIT_PROBLEM_PLACE)
     val CODE_ANALYSIS_WARNING = GROUP.registerEvent("code.analysis.warning", WARNINGS_COUNT, ERRORS_COUNT)
   }
 
   enum class CommitOption { SIGN_OFF, RUN_HOOKS, AMEND }
+  enum class CommitProblemPlace { NOTIFICATION, COMMIT_TOOLWINDOW, PUSH_DIALOG }
 
   override fun getGroup(): EventLogGroup = GROUP
 }
@@ -185,6 +190,10 @@ class CommitSessionCollector(val project: Project) {
 
   fun logCodeAnalysisWarnings(warnings: Int, errors: Int) {
     CommitSessionCounterUsagesCollector.CODE_ANALYSIS_WARNING.log(warnings, errors)
+  }
+
+  fun logCommitProblemViewed(commitProblem: CommitProblem, place: CommitSessionCounterUsagesCollector.CommitProblemPlace) {
+    CommitSessionCounterUsagesCollector.VIEW_COMMIT_PROBLEM.log(commitProblem.javaClass, place)
   }
 
   internal class MyToolWindowManagerListener(val project: Project) : ToolWindowManagerListener {
