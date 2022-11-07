@@ -20,14 +20,14 @@ import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.roots.ui.configuration.findAndSetupSdk
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -43,14 +43,14 @@ private val SETUP_JAVA_PROJECT_IS_DISABLED = SystemProperties.getBooleanProperty
 private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
 
-internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
+internal class SetupJavaProjectFromSourcesActivity : ProjectPostStartupActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
     }
   }
 
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     if (SETUP_JAVA_PROJECT_IS_DISABLED) {
       return
     }
@@ -63,17 +63,16 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
     // todo get current project structure, and later setup from sources only if it wasn't manually changed by the user
 
     val title = JavaUiBundle.message("task.searching.for.project.sources")
-    ProgressManager.getInstance().run(object: Task.Backgroundable(project, title, true) {
-      override fun run(indicator: ProgressIndicator) {
-        val importers = searchImporters(projectDir)
-        if (!importers.isEmpty) {
-          showNotificationToImport(project, projectDir, importers)
-        }
-        else {
-          setupFromSources(project, projectDir, indicator)
-        }
+
+    withBackgroundProgressIndicator(project, title) {
+      val importers = searchImporters(projectDir)
+      if (!importers.isEmpty) {
+        showNotificationToImport(project, projectDir, importers)
       }
-    })
+      else {
+        setupFromSources(project = project, projectDir = projectDir, indicator = ProgressManager.getGlobalProgressIndicator())
+      }
+    }
   }
 
   private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<ProjectOpenProcessor, VirtualFile> {

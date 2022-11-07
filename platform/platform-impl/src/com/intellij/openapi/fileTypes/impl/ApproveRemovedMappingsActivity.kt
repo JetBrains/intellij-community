@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.fileTypes.impl;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileTypes.impl
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 
-final class ApproveRemovedMappingsActivity implements StartupActivity {
-  @Override
-  public void runActivity(@NotNull Project project) {
-    RemovedMappingTracker removedMappings = ((FileTypeManagerImpl)FileTypeManager.getInstance()).getRemovedMappingTracker();
-    removedMappings.approveUnapprovedMappings();
+private class ApproveRemovedMappingsActivity : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
+    val fileTypeManager = FileTypeManager.getInstance() as FileTypeManagerImpl
+    DumbService.getInstance(project).unsafeRunWhenSmart {
+      val removedMappings = fileTypeManager.removedMappingTracker
+      removedMappings.approveUnapprovedMappings()
+    }
   }
 }

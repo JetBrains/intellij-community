@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.cds
 
 import com.intellij.ide.PowerSaveMode
@@ -6,11 +6,10 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.PowerStatus
 import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
@@ -21,55 +20,54 @@ import kotlin.math.max
 
 private val LOG = logger<CDSStartupActivity>()
 
-internal class CDSStartupActivity : StartupActivity.DumbAware {
+internal class CDSStartupActivity : ProjectPostStartupActivity {
   private val isExecuted = AtomicBoolean(false)
 
   //for tests
   val setupResult = AtomicReference<String>(null)
 
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     if (!isExecuted.compareAndSet(false, true) || !Registry.`is`("appcds.useStartupActivity")) {
       return
     }
 
-    NonUrgentExecutor.getInstance().execute {
-      if (!CDSManager.isValidEnv && !Registry.`is`("appcds.assumeValidEnv")) {
-        return@execute
-      }
+    if (!CDSManager.isValidEnv && !Registry.`is`("appcds.assumeValidEnv")) {
+      return
+    }
 
-      val cdsEnabled = Registry.`is`("appcds.enabled")
-      val cdsArchive = CDSManager.currentCDSArchive
-      if (cdsArchive != null && cdsArchive.isFile) {
-        Logger.getInstance(CDSManager::class.java).warn("Running with enabled CDS $cdsArchive, ${StringUtil.formatFileSize(cdsArchive.length())}")
-        CDSFUSCollector.logCDSStatus(cdsEnabled, true)
-      }
-      else {
-        CDSFUSCollector.logCDSStatus(cdsEnabled, false)
-      }
+    val cdsEnabled = Registry.`is`("appcds.enabled")
+    val cdsArchive = CDSManager.currentCDSArchive
+    if (cdsArchive != null && cdsArchive.isFile) {
+      Logger.getInstance(CDSManager::class.java).warn(
+        "Running with enabled CDS $cdsArchive, ${StringUtil.formatFileSize(cdsArchive.length())}")
+      CDSFUSCollector.logCDSStatus(cdsEnabled, true)
+    }
+    else {
+      CDSFUSCollector.logCDSStatus(cdsEnabled, false)
+    }
 
-      // let's execute CDS archive building on the second start of the IDE only,
-      // the first run - we set the property, the second run we run it!
-      val cdsOnSecondStartKey = "appcds.runOnSecondStart"
-      if (Registry.`is`(cdsOnSecondStartKey)) {
-        val propertiesComponent = PropertiesComponent.getInstance()
-        val hash = CDSPaths.current.cdsClassesHash
-        if (propertiesComponent.getValue(cdsOnSecondStartKey) != hash) {
-          propertiesComponent.setValue(cdsOnSecondStartKey, hash)
-          return@execute
-        }
+    // let's execute CDS archive building on the second start of the IDE only,
+    // the first run - we set the property, the second run we run it!
+    val cdsOnSecondStartKey = "appcds.runOnSecondStart"
+    if (Registry.`is`(cdsOnSecondStartKey)) {
+      val propertiesComponent = PropertiesComponent.getInstance()
+      val hash = CDSPaths.current.cdsClassesHash
+      if (propertiesComponent.getValue(cdsOnSecondStartKey) != hash) {
+        propertiesComponent.setValue(cdsOnSecondStartKey, hash)
+        return
       }
+    }
 
-      AppExecutorUtil.getAppExecutorService().submit {
-        CDSManager.cleanupStaleCDSFiles(cdsEnabled)
-        if (!cdsEnabled) {
-          CDSManager.removeCDS()
-          setupResult.set("removed")
-        }
+    AppExecutorUtil.getAppExecutorService().submit {
+      CDSManager.cleanupStaleCDSFiles(cdsEnabled)
+      if (!cdsEnabled) {
+        CDSManager.removeCDS()
+        setupResult.set("removed")
       }
+    }
 
-      if (cdsEnabled) {
-        BuildCDSWhenPossibleAction(setupResult).start()
-      }
+    if (cdsEnabled) {
+      BuildCDSWhenPossibleAction(setupResult).start()
     }
   }
 
@@ -84,7 +82,7 @@ internal class CDSStartupActivity : StartupActivity.DumbAware {
     private val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
     private val cpuCount = osBean.availableProcessors
     private val processCpuLoad by AverageCPULoad { osBean.processCpuLoad }
-    private val systemCpuLoad by AverageCPULoad { osBean.systemCpuLoad }
+    private val systemCpuLoad by AverageCPULoad { osBean.cpuLoad }
     private val waitIdle get() = Registry.`is`("appcds.install.idleTestEnabled")
 
     fun start() {
@@ -117,7 +115,7 @@ internal class CDSStartupActivity : StartupActivity.DumbAware {
       // careful! Our CDS archive generation process would take 1 CPU
       // the supported minimum is 2 CPU!
       if (processCPULoad * cpuCount > 2.5) return WaitOutcome.TOO_HIGH_CPU_LOAD
-      // OS CPU load, our CDS generation will consume 1 CPU anyways
+      // OS CPU load, our CDS generation will consume 1 CPU anyway
       if (systemCPULoad * cpuCount > 3.7) return WaitOutcome.TOO_HIGH_CPU_LOAD
 
       // ensure free space under CDS folder (aka System folder)

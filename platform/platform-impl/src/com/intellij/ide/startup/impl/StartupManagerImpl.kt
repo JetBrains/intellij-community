@@ -79,6 +79,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           val pluginId = pluginDescriptor.pluginId
           @Suppress("SSBasedInspection")
           if (extension is DumbAware) {
+            @Suppress("DEPRECATION")
             project.coroutineScope.launch {
               if (extension is ProjectPostStartupActivity) {
                 extension.execute(project)
@@ -171,6 +172,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
     else {
       // doesn't block project opening
+      @Suppress("DEPRECATION")
       project.coroutineScope.launch {
         runPostStartupActivities(async = true)
       }
@@ -390,6 +392,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   }
 
   private fun scheduleBackgroundPostStartupActivities() {
+    @Suppress("DEPRECATION")
     project.coroutineScope.launch {
       delay(Registry.intValue("ide.background.post.startup.activity.delay", 5_000).toLong())
       // read action - dynamic plugin loading executed as a write action

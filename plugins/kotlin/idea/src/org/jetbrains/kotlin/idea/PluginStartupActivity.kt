@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.application.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.excludedFromUpdateCheckPlugins
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupR
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.Callable
 
-internal class PluginStartupActivity : StartupActivity.Background {
-    override fun runActivity(project: Project) {
+internal class PluginStartupActivity : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
         checkPluginCompatibility()
         setupReportingFromRelease()

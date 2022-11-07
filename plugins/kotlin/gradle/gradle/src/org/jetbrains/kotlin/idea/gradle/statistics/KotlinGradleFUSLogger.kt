@@ -5,27 +5,23 @@ package org.jetbrains.kotlin.idea.gradle.statistics
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.openapi.startup.ProjectPostStartupActivity
+import kotlinx.coroutines.delay
 import org.jetbrains.kotlin.statistics.BuildSessionLogger
 import org.jetbrains.kotlin.statistics.BuildSessionLogger.Companion.STATISTICS_FOLDER_NAME
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import java.io.File
-import java.util.*
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.minutes
 
-class KotlinGradleFUSLogger : StartupActivity.DumbAware, Runnable {
-
-    override fun runActivity(project: Project) {
-        AppExecutorUtil.getAppScheduledExecutorService()
-            .scheduleWithFixedDelay(this, EXECUTION_DELAY_MIN, EXECUTION_DELAY_MIN, TimeUnit.MINUTES)
-    }
-
-    override fun run() {
-        reportStatistics()
+class KotlinGradleFUSLogger : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
+        while (true) {
+            delay(EXECUTION_DELAY_MIN.minutes)
+            reportStatistics()
+        }
     }
 
     companion object {
