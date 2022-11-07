@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
@@ -99,12 +98,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
-    myGuiDumbTaskRunner = new DumbServiceGuiTaskQueue(myProject, myTaskQueue, new DumbTaskListener());
+    myHeavyActivities = new DumbServiceHeavyActivities();
+    myGuiDumbTaskRunner = new DumbServiceGuiTaskQueue(myProject, myTaskQueue, myHeavyActivities, new DumbTaskListener());
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
-    myHeavyActivities = new DumbServiceHeavyActivities();
     new DumbServiceVfsBatchListener(myProject, myHeavyActivities);
     myBalloon = new DumbServiceBalloon(project, this);
     myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
@@ -303,6 +302,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     Throwable trace = new Throwable();
     ModalityState modality = ModalityState.defaultModalityState();
+    // we need EDT because enterDumbMode runs write action to make sure that we do not enter dumb mode during read actions
     Runnable runnable = () -> queueTaskOnEdt(task, modality, trace);
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run(); // will log errors if not already in a write-safe context
@@ -319,7 +319,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         state == State.WAITING_FOR_FINISH ||
         state == State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS) {
       enterDumbMode(modality, trace);
-      myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(this::startBackgroundProcess);
+      // we need one more invoke later because we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
+      // drain the queue synchronously under modal progress
+      myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
     }
   }
 
@@ -576,23 +578,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
-  private void startBackgroundProcess() {
-    try {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing"), false) {
-        @Override
-        public void run(final @NotNull ProgressIndicator visibleIndicator) {
-          runBackgroundProcess(visibleIndicator);
-        }
-      });
-    }
-    catch (Throwable e) {
-      myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH);
-      LOG.error("Failed to start background index update task", e);
-    }
-  }
-
   private void runBackgroundProcess(final @NotNull ProgressIndicator visibleIndicator) {
-    myGuiDumbTaskRunner.runBackgroundProcess(visibleIndicator, myHeavyActivities);
+    myGuiDumbTaskRunner.runBackgroundProcess(visibleIndicator);
   }
 
   @Override

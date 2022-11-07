@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTa
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,15 +38,18 @@ final class DumbServiceGuiTaskQueue {
 
   private final Project myProject;
   private final DumbServiceMergingTaskQueue myTaskQueue;
+  private final DumbServiceHeavyActivities myHeavyActivities;
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private final DumbTaskListener myListener;
 
   DumbServiceGuiTaskQueue(@NotNull Project project,
                           @NotNull DumbServiceMergingTaskQueue queue,
+                          @NotNull DumbServiceHeavyActivities heavyActivities,
                           @NotNull DumbTaskListener listener) {
     myProject = project;
     myTaskQueue = queue;
     myListener = listener;
+    myHeavyActivities = heavyActivities;
   }
 
   void processTasksWithProgress(@NotNull StructuredIdeActivity activity,
@@ -73,13 +78,33 @@ final class DumbServiceGuiTaskQueue {
     }
   }
 
-  public void runBackgroundProcess(ProgressIndicator visibleIndicator, DumbServiceHeavyActivities heavyActivities) {
+  void startBackgroundProcess() {
+    try {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing"), false) {
+        @Override
+        public void run(final @NotNull ProgressIndicator visibleIndicator) {
+          runBackgroundProcess(visibleIndicator);
+        }
+      });
+    }
+    catch (Throwable e) {
+      LOG.error("Failed to start background index update task", e);
+      if (isRunning.compareAndSet(false, true)) {
+        // simulate empty queue
+        myListener.beforeFirstTask();
+        myListener.afterLastTask();
+        isRunning.set(false);
+      }
+    }
+  }
+
+  public void runBackgroundProcess(ProgressIndicator visibleIndicator) {
     boolean started = isRunning.compareAndSet(false, true);
     if (!started) return;
 
     try {
       myListener.beforeFirstTask();
-      internalRunBackgroundProcess(visibleIndicator, heavyActivities);
+      internalRunBackgroundProcess(visibleIndicator);
     }
     finally {
       myListener.afterLastTask();
@@ -87,7 +112,7 @@ final class DumbServiceGuiTaskQueue {
     }
   }
 
-  private void internalRunBackgroundProcess(ProgressIndicator visibleIndicator, DumbServiceHeavyActivities heavyActivities) {
+  private void internalRunBackgroundProcess(ProgressIndicator visibleIndicator) {
     try {
       ((ProgressManagerImpl)ProgressManager.getInstance()).markProgressSafe((UserDataHolder)visibleIndicator);
     }
@@ -99,7 +124,7 @@ final class DumbServiceGuiTaskQueue {
     // Only one thread can execute this method at the same time at this point. // TODO
 
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
-      heavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
+      myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
       DumbModeProgressTitle.getInstance(myProject).attachDumbModeProgress(visibleIndicator);
 
       StructuredIdeActivity activity = IndexingStatisticsCollector.INDEXING_ACTIVITY.started(myProject);
@@ -126,7 +151,7 @@ final class DumbServiceGuiTaskQueue {
       // got suspended after the last dumb task finished (or even after the last check cancelled call). This case is handled by
       // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
       // previously installed.
-      heavyActivities.resetCurrentSuspender();
+      myHeavyActivities.resetCurrentSuspender();
     }
   }
 
