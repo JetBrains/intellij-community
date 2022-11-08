@@ -39,6 +39,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
 import com.intellij.util.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.filterSmart
@@ -46,6 +48,7 @@ import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.ui.JBUI
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -1146,8 +1149,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     if (withLiveIndicator) {
       val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors(Condition { it === settings })
       when {
-        runningDescriptors.size == 1 -> icon = ExecutionUtil.getLiveIndicator(icon)
-        runningDescriptors.size > 1 -> icon = IconUtil.addText(icon, runningDescriptors.size.toString())
+        runningDescriptors.size == 1 -> icon =
+          if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else ExecutionUtil.getLiveIndicator(icon)
+        runningDescriptors.size > 1 -> icon =
+          if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else IconUtil.addText(icon, runningDescriptors.size.toString())
       }
     }
     return icon
@@ -1379,6 +1384,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
     otherRunManager.workspaceSchemeManager.reload()
   }
+
+  private fun newUiRunningIcon(icon: Icon) = IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.SUCCESS)
 }
 
 const val PROJECT_RUN_MANAGER_COMPONENT_NAME = "ProjectRunConfigurationManager"
