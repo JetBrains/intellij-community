@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
@@ -49,15 +47,9 @@ public final class ChangelistConflictNotificationPanel extends EditorNotificatio
                       () -> ChangelistConflictResolution.MOVE.resolveConflict(project, changeList.getChanges(), file))
       .setToolTipText(VcsBundle.message("changes.move.changes.to.active.change.list.name", manager.getDefaultChangeList().getName()));
 
-    createActionLabel(VcsBundle.message("link.label.switch.changelist"), () -> {
-      Change change = manager.getChange(file);
-      if (change == null) {
-        Messages.showInfoMessage(VcsBundle.message("dialog.message.no.changes.for.this.file"), VcsBundle.message("dialog.title.message"));
-      }
-      else {
-        ChangelistConflictResolution.SWITCH.resolveConflict(project, Collections.singletonList(change), null);
-      }
-    }).setToolTipText(VcsBundle.message("changes.set.active.changelist.to.change.list.name", changeList.getName()));
+    createActionLabel(VcsBundle.message("link.label.switch.changelist"),
+                      () -> ChangeListManager.getInstance(project).setDefaultChangeList(changeList))
+      .setToolTipText(VcsBundle.message("changes.set.active.changelist.to.change.list.name", changeList.getName()));
 
     createActionLabel(VcsBundle.message("link.label.ignore"),
                       () -> ChangelistConflictTracker.getInstance(project).ignoreConflict(file, true))
