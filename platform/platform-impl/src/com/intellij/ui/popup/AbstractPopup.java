@@ -36,7 +36,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.scale.JBUIScale;
@@ -188,6 +187,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private Disposable myProjectDisposable;
 
   private volatile State myState = State.NEW;
+  private long myOpeningTime;
 
   void setNormalWindowLevel(boolean normalWindowLevel) {
     myNormalWindowLevel = normalWindowLevel;
@@ -858,7 +858,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public boolean canClose() {
-    return myCallBack == null || myCallBack.compute().booleanValue();
+    return (myCallBack == null || myCallBack.compute().booleanValue()) && !preventImmediateClosingAfterOpening();
+  }
+
+  private boolean preventImmediateClosingAfterOpening() {
+    // this is a workaround for X.Org bug https://gitlab.freedesktop.org/xorg/xserver/-/issues/1347
+    // it affects only non-override-redirect windows, hence the check for myNormalWindowLevel
+    return UIUtil.isXServerOnWindows() &&
+           myNormalWindowLevel &&
+           IdeEventQueue.getInstance().getTrueCurrentEvent().getID() == WindowEvent.WINDOW_DEACTIVATED &&
+           System.currentTimeMillis() < myOpeningTime + 1000;
   }
 
   @Override
@@ -1209,6 +1218,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
     debugState("popup shown", State.SHOWING);
     myState = State.SHOWN;
+    myOpeningTime = System.currentTimeMillis();
 
     afterShowSync();
   }

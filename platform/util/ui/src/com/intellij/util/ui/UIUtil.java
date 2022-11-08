@@ -3495,4 +3495,9 @@ public final class UIUtil {
     if (s.length() < 2) s = "0" + s;
     return s;
   }
+
+  public static boolean isXServerOnWindows() {
+    // This is heuristics to detect using Cygwin/X or other build of X.Org server on Windows in a WSL 2 environment
+    return SystemInfo.isXWindow && !SystemInfo.isWayland && System.getenv("WSLENV") != null;
+  }
 }
