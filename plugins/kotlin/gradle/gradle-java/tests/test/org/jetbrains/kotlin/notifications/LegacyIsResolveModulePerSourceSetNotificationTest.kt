@@ -19,13 +19,13 @@ class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase(
 
     private val notifications: MutableList<Notification> = Collections.synchronizedList(mutableListOf())
 
-    private val dataContext: DataContext
-        get() = DataContext { id ->
-            when {
-                CommonDataKeys.PROJECT.`is`(id) -> project
-                else -> null
-            }
+    private fun getDataContext(notification: Notification): DataContext = DataContext { id ->
+        when {
+            CommonDataKeys.PROJECT.`is`(id) -> project
+            Notification.KEY.`is`(id) -> notification
+            else -> null
         }
+    }
 
     override fun setUp() {
         super.setUp()
@@ -115,7 +115,7 @@ class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase(
             isResolveModulePerSourceSetSetting.isResolveModulePerSourceSet
         )
 
-        Notification.fire(notification, firstAction, dataContext)
+        Notification.fire(notification, firstAction, getDataContext(notification))
 
         assertTrue(
             "Expected 'isResolveModulePerSourceSet' being set to true by action",
@@ -139,7 +139,7 @@ class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase(
             notificationSuppressState.isSuppressed
         )
 
-        Notification.fire(notification, firstAction, dataContext)
+        Notification.fire(notification, firstAction, getDataContext(notification))
 
         assertTrue(
             "Expected notification being suppressed after action",
