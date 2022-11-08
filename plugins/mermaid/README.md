@@ -10,6 +10,7 @@ Following features are available:
 * Intention actions and quick fixes
 * Code formatting
 * Identifiers navigation and renaming
+* Can be used both as a companion plugin for Markdown or as a standalone plugin
 
 <!-- Plugin description end -->
 
