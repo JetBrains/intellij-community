@@ -185,7 +185,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
         companion object {
         }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", true)
   }
 
   fun `test quickfix nested suite converter`() {
@@ -243,7 +243,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
         companion object {
         }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", true)
   }
 
   fun `test quickfix assertion converter`() {
@@ -266,7 +266,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
               Assert.assertEquals(2, 1 + 1)
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", true)
   }
 
   fun `test quickfix setup and teardown converter`() {
@@ -314,6 +314,6 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
               println("tearDown")
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", true)
   }
 }

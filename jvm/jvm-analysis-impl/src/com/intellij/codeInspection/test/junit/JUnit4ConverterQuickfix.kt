@@ -3,6 +3,7 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.isInheritorOf
@@ -34,6 +35,12 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
   override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit4.converter.quickfix.name")
 
   override fun startInWriteAction(): Boolean = false
+
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+    val junit3Class = previewDescriptor.psiElement.getUastParentOfType<UClass>() ?: return IntentionPreviewInfo.EMPTY
+    performConversion(junit3Class)
+    return IntentionPreviewInfo.DIFF
+  }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return

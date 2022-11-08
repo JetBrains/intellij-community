@@ -164,7 +164,7 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
       @Suite.SuiteClasses({Foo.class, Bar.class})
       class JUnit3Test {
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", true)
   }
 
   fun `test quickfix nested suite converter`() {
@@ -211,7 +211,7 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
       @Suite.SuiteClasses({Foo.class})
       class JUnit3Test {
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", true)
   }
 
   fun `test quickfix assertion converter`() {
@@ -234,7 +234,7 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
               Assert.assertEquals(2, 1 + 1);
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", true)
   }
 
   fun `test quickfix setup and teardown converter`() {
@@ -284,6 +284,6 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
               System.out.println("tearDown");
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case")
+      """.trimIndent(), "Convert to JUnit 4 test case", true)
   }
 }
