@@ -6,7 +6,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.inspections.internal.UsePluginIdEqualsInspection;
 
-public abstract class UsePluginIdEqualsFixTestBase extends UseEqualsFixTestBase {
+abstract class UsePluginIdEqualsFixTestBase extends UseEqualsFixTestBase {
 
   @Override
   protected void setUp() throws Exception {
