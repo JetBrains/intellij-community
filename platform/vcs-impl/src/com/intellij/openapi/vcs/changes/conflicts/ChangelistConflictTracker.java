@@ -245,14 +245,6 @@ public final class ChangelistConflictTracker {
     EditorNotifications.getInstance(myProject).updateNotifications(file);
   }
 
-  public Project getProject() {
-    return myProject;
-  }
-
-  public ChangeListManager getChangeListManager() {
-    return myChangeListManager;
-  }
-
   public Options getOptions() {
     return myOptions;
   }
