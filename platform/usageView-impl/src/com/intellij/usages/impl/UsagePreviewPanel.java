@@ -215,12 +215,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       if (psiElement == null || !psiElement.isValid()) continue;
 
       ProperTextRange infoRange = info.getRangeInElement();
-      TextRange rangeToHighlight = null;
+      TextRange rangeToHighlight = calculateHighlightingRangeForUsage(psiElement, infoRange);
       if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
         rangeToHighlight = getNameElementTextRange(psiElement);
-      }
-      if (rangeToHighlight == null) {
-        rangeToHighlight = calculateHighlightingRangeForUsage(psiElement, infoRange);
       }
       // highlight injected element in host document text range
       rangeToHighlight = InjectedLanguageManager.getInstance(psiElement.getProject()).injectedToHost(psiElement, rangeToHighlight);
@@ -257,14 +254,13 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
    * @param psiElement an element to highlight
    * @return range to highlight for named element
    */
-  private static @Nullable TextRange getNameElementTextRange(@NotNull PsiElement psiElement) {
-    TextRange textRange = null;
+  private static @NotNull TextRange getNameElementTextRange(@NotNull PsiElement psiElement) {
     PsiFile psiFile = psiElement.getContainingFile();
     PsiElement nameElement = psiFile.findElementAt(psiElement.getTextOffset());
     if (nameElement != null) {
-      textRange = nameElement.getTextRange();
+      return nameElement.getTextRange();
     }
-    return textRange;
+    return psiElement.getTextRange();
   }
 
   /**
