@@ -22,13 +22,13 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
       
         public abstract class AbstractJUnit3Test extends TestCase {
             @Override
-            public void setUp() {
+            public void setUp() throws Exception {
                 System.out.println("setup 2");
                 super.setUp();
             }
   
             @Override
-            void tearDown() {
+            public void tearDown() throws Exception {
                 try {
                     System.out.println("tearDown 2");
                 } finally {
@@ -42,7 +42,7 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
       
         class JUnit3<caret>Test extends AbstractJUnit3Test {
             @Override
-            public void setUp() {
+            public void setUp() throws Exception {
                 System.out.println("setup 1");
                 super.setUp();
             }
@@ -52,7 +52,7 @@ class JavaJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
             }
   
             @Override
-            void tearDown() {
+            public void tearDown() throws Exception {
                 try {
                     System.out.println("tearDown 1");
                 } finally {
