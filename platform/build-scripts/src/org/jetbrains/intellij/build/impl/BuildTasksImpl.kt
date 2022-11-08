@@ -1183,7 +1183,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         filterFileIfAlreadyInZip(relativePath, winX64DistDir.resolve(relativePath), zipFileUniqueGuard)
       }, entryCustomizer = entryCustomizer)
 
-      for (distFile in distFiles) {
+      for (distFile in distFiles.sortedWith(compareBy<DistFile> { it.relativePath }.thenBy { it.os }.thenBy { it.arch })) {
         // linux and windows: we don't add win and linux specific dist dirs for ARM, so, copy distFiles explicitly
         // macOS: we don't copy dist files for macOS distribution to avoid extra copy operation
         if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, distFile.file) == null) {
