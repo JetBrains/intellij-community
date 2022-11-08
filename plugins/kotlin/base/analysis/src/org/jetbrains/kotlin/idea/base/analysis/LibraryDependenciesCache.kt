@@ -15,7 +15,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -39,7 +38,21 @@ import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.configuration.isMavenized
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-typealias LibraryDependencyCandidatesAndSdkInfos = Pair<Set<LibraryDependencyCandidate>, Set<SdkInfo>>
+private class LibraryDependencyCandidatesAndSdkInfos(
+    val libraryDependencyCandidates: MutableSet<LibraryDependencyCandidate> = linkedSetOf(),
+    val sdkInfos: MutableSet<SdkInfo> = linkedSetOf()
+) {
+    operator fun plusAssign(other: LibraryDependencyCandidatesAndSdkInfos) {
+        libraryDependencyCandidates += other.libraryDependencyCandidates
+        sdkInfos += other.sdkInfos
+    }
+
+    override fun toString(): String {
+        return "[${Integer.toHexString(System.identityHashCode(this))}] libraryDependencyCandidates: ${
+            libraryDependencyCandidates.map { it.libraries.map(LibraryInfo::name) }
+        } sdkInfos: $sdkInfos"
+    }
+}
 
 class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDependenciesCache, Disposable {
     companion object {
@@ -60,75 +73,35 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     override fun dispose() = Unit
 
     private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibraryDependencies {
-        val (dependencyCandidates, sdks) = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
+        val libraryDependencyCandidatesAndSdkInfos = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
 
         // Maven is Gradle Metadata unaware, and therefore needs stricter filter. See KTIJ-15758
         val libraryDependenciesFilter = if (project.isMavenized)
             StrictEqualityForPlatformSpecificCandidatesFilter
         else
             DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
-        val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).flatMap { it.libraries }
-        return LibraryDependencies(libraryInfo, libraries, sdks.toList())
+        val libraries = libraryDependenciesFilter(
+            libraryInfo.platform,
+            libraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates
+        ).flatMap { it.libraries }
+        return LibraryDependencies(libraryInfo, libraries, libraryDependencyCandidatesAndSdkInfos.sdkInfos.toList())
     }
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
     private fun computeLibrariesAndSdksUsedWithNoFilter(libraryInfo: LibraryInfo): LibraryDependencyCandidatesAndSdkInfos {
-        val libraries = LinkedHashSet<LibraryDependencyCandidate>()
-        val sdks = LinkedHashSet<SdkInfo>()
+        val libraryDependencyCandidatesAndSdkInfos = LibraryDependencyCandidatesAndSdkInfos()
 
         val modulesLibraryIsUsedIn =
             getLibraryUsageIndex().getModulesLibraryIsUsedIn(libraryInfo)
 
         for (module in modulesLibraryIsUsedIn) {
             checkCanceled()
-            val (moduleLibraries, moduleSdks) = moduleDependenciesCache[module]
-
-            libraries.addAll(moduleLibraries)
-            sdks.addAll(moduleSdks)
+            libraryDependencyCandidatesAndSdkInfos += moduleDependenciesCache[module]
         }
 
-        val filteredLibraries = filterForBuiltins(libraryInfo, libraries)
+        val filteredLibraries = filterForBuiltins(libraryInfo, libraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates)
 
-        return filteredLibraries to sdks
-    }
-
-    private fun computeLibrariesAndSdksUsedIn(module: Module): LibraryDependencyCandidatesAndSdkInfos {
-        val libraries = LinkedHashSet<LibraryDependencyCandidate>()
-        val sdks = LinkedHashSet<SdkInfo>()
-
-        val processedModules = HashSet<Module>()
-        val condition = Condition<OrderEntry> { orderEntry ->
-            checkCanceled()
-            orderEntry.safeAs<ModuleOrderEntry>()?.let {
-                it.module?.run { this !in processedModules } ?: false
-            } ?: true
-        }
-
-        val infoCache = LibraryInfoCache.getInstance(project)
-        ModuleRootManager.getInstance(module).orderEntries()
-            // TODO: it results into O(n^2)
-            .recursively()
-            .satisfying(condition).process(object : RootPolicy<Unit>() {
-            override fun visitModuleSourceOrderEntry(moduleSourceOrderEntry: ModuleSourceOrderEntry, value: Unit) {
-                processedModules.add(moduleSourceOrderEntry.ownerModule)
-            }
-
-            override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
-                checkCanceled()
-                val libraryEx = libraryOrderEntry.library.safeAs<LibraryEx>()?.takeUnless { it.isDisposed } ?: return
-                val candidate = LibraryDependencyCandidate.fromLibraryOrNull(infoCache[libraryEx]) ?: return
-                libraries += candidate
-            }
-
-            override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
-                checkCanceled()
-                jdkOrderEntry.jdk?.let { jdk ->
-                    sdks += SdkInfo(project, jdk)
-                }
-            }
-        }, Unit)
-
-        return libraries to sdks
+        return LibraryDependencyCandidatesAndSdkInfos(filteredLibraries, libraryDependencyCandidatesAndSdkInfos.sdkInfos)
     }
 
     /*
@@ -146,8 +119,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     */
     private fun filterForBuiltins(
         libraryInfo: LibraryInfo,
-        dependencyLibraries: Set<LibraryDependencyCandidate>
-    ): Set<LibraryDependencyCandidate> {
+        dependencyLibraries: MutableSet<LibraryDependencyCandidate>
+    ): MutableSet<LibraryDependencyCandidate> {
         return if (!IdeBuiltInsLoadingState.isFromClassLoader && libraryInfo.isCoreKotlinLibrary(project)) {
             dependencyLibraries.filterTo(mutableSetOf()) { dep ->
                 dep.libraries.any { it.isCoreKotlinLibrary(project) }
@@ -228,19 +201,205 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
         }
 
+        override fun get(key: Module): LibraryDependencyCandidatesAndSdkInfos {
+            return internalGet(key, hashMapOf(), linkedSetOf(), hashMapOf())
+        }
+
+        private fun internalGet(
+            key: Module,
+            tmpResults: MutableMap<Module, LibraryDependencyCandidatesAndSdkInfos>,
+            trace: LinkedHashSet<Module>,
+            loops: MutableMap<Module, Set<Module>>
+        ): LibraryDependencyCandidatesAndSdkInfos {
+            checkKeyAndDisposeIllegalEntry(key)
+
+            useCache { cache ->
+                checkEntitiesIfRequired(cache)
+
+                cache[key]
+            }?.let { return it }
+
+            checkCanceled()
+
+            val newValue = computeLibrariesAndSdksUsedIn(key, tmpResults, trace, loops)
+
+            if (isValidityChecksEnabled) {
+                checkValueValidity(newValue)
+            }
+
+            val existedValue = if (trace.isNotEmpty()) {
+                dumpLoopsIfPossible(key, newValue, tmpResults, trace, loops)
+            } else {
+                // it is possible to dump results when all dependencies are resolved hence trace is empty
+                useCache { cache ->
+                    val existedValue = cache.putIfAbsent(key, newValue)
+                    for (entry in tmpResults.entries) {
+                        cache.putIfAbsent(entry.key, entry.value)
+                    }
+
+                    existedValue
+                }
+            }
+
+            return existedValue ?: newValue
+        }
+
+        /**
+         * It is possible to dump loops from the subtree from the last module from the loop
+         *
+         * @param trace is not empty trace
+         * @return existed value if applicable
+         */
+        private fun dumpLoopsIfPossible(
+            key: Module,
+            newValue: LibraryDependencyCandidatesAndSdkInfos,
+            tmpResults: MutableMap<Module, LibraryDependencyCandidatesAndSdkInfos>,
+            trace: LinkedHashSet<Module>,
+            loops: MutableMap<Module, Set<Module>>,
+        ): LibraryDependencyCandidatesAndSdkInfos? {
+            val currentLoop = loops[key] ?: return null
+            if (trace.last() in loops) return null
+
+            return useCache { cache ->
+                val existedValue = cache.putIfAbsent(key, newValue)
+                tmpResults.remove(key)
+                for (loopModule in currentLoop) {
+                    tmpResults.remove(loopModule)?.let {
+                        cache.putIfAbsent(loopModule, it)
+                    }
+
+                    loops.remove(loopModule)
+                }
+
+                existedValue
+            }
+        }
+
+        private fun computeLibrariesAndSdksUsedIn(
+            module: Module,
+            tmpResults: MutableMap<Module, LibraryDependencyCandidatesAndSdkInfos>,
+            trace: LinkedHashSet<Module>,
+            loops: MutableMap<Module, Set<Module>>
+        ): LibraryDependencyCandidatesAndSdkInfos {
+            checkCanceled()
+            check(trace.add(module)) { "recursion detected" }
+
+            val libraryDependencyCandidatesAndSdkInfos = LibraryDependencyCandidatesAndSdkInfos()
+            tmpResults[module] = libraryDependencyCandidatesAndSdkInfos
+
+            val modulesToVisit = HashSet<Module>()
+
+            val infoCache = LibraryInfoCache.getInstance(project)
+            ModuleRootManager.getInstance(module).orderEntries()
+                .process(object : RootPolicy<Unit>() {
+                    override fun visitModuleSourceOrderEntry(moduleSourceOrderEntry: ModuleSourceOrderEntry, value: Unit) {
+                        modulesToVisit.addAll(moduleSourceOrderEntry.rootModel.getModuleDependencies(true).toList())
+                    }
+
+                    override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
+                        checkCanceled()
+                        val libraryEx = libraryOrderEntry.library.safeAs<LibraryEx>()?.takeUnless { it.isDisposed } ?: return
+                        val candidate = LibraryDependencyCandidate.fromLibraryOrNull(infoCache[libraryEx]) ?: return
+                        libraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates += candidate
+                    }
+
+                    override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
+                        checkCanceled()
+                        jdkOrderEntry.jdk?.let { jdk ->
+                            libraryDependencyCandidatesAndSdkInfos.sdkInfos += SdkInfo(project, jdk)
+                        }
+                    }
+                }, Unit)
+
+            // handle circular dependency case
+            for (moduleToVisit in modulesToVisit) {
+                checkCanceled()
+                if (moduleToVisit == module) continue
+
+                if (moduleToVisit !in trace) continue
+
+                // circular dependency found
+                val reversedTrace = trace.toList().asReversed()
+
+                val sharedLibraryDependencyCandidatesAndSdkInfos: LibraryDependencyCandidatesAndSdkInfos = run {
+                    var shared: LibraryDependencyCandidatesAndSdkInfos? = null
+                    val loop = hashSetOf<Module>()
+                    val duplicates = hashSetOf<LibraryDependencyCandidatesAndSdkInfos>()
+                    for (traceModule in reversedTrace) {
+                        loop += traceModule
+                        loops[traceModule]?.let { loop += it }
+                        loops[traceModule] = loop
+                        val traceModuleLibraryDependencyCandidatesAndSdkInfos = tmpResults.getValue(traceModule)
+                        if (shared == null && !duplicates.add(traceModuleLibraryDependencyCandidatesAndSdkInfos)) {
+                            shared = traceModuleLibraryDependencyCandidatesAndSdkInfos
+                        }
+                        if (traceModule === moduleToVisit) {
+                            break
+                        }
+                    }
+
+                    shared ?: duplicates.first()
+                }
+
+                sharedLibraryDependencyCandidatesAndSdkInfos += libraryDependencyCandidatesAndSdkInfos
+
+                for (traceModule in reversedTrace) {
+                    val traceModuleLibraryDependencyCandidatesAndSdkInfos: LibraryDependencyCandidatesAndSdkInfos =
+                        tmpResults.getValue(traceModule)
+                    if (traceModuleLibraryDependencyCandidatesAndSdkInfos === sharedLibraryDependencyCandidatesAndSdkInfos) {
+                        if (traceModule === moduleToVisit) {
+                            break
+                        }
+                        continue
+                    }
+                    sharedLibraryDependencyCandidatesAndSdkInfos += traceModuleLibraryDependencyCandidatesAndSdkInfos
+                    tmpResults[traceModule] = sharedLibraryDependencyCandidatesAndSdkInfos
+
+                    loops[traceModule]?.let { loop ->
+                        for (loopModule in loop) {
+                            if (loopModule == traceModule) continue
+                            val value = tmpResults.getValue(loopModule)
+                            if (value === sharedLibraryDependencyCandidatesAndSdkInfos) continue
+                            sharedLibraryDependencyCandidatesAndSdkInfos += value
+                            tmpResults[loopModule] = sharedLibraryDependencyCandidatesAndSdkInfos
+                        }
+                    }
+                    if (traceModule === moduleToVisit) {
+                        break
+                    }
+                }
+            }
+
+            // merge
+            for (moduleToVisit in modulesToVisit) {
+                checkCanceled()
+                if (moduleToVisit == module || moduleToVisit in trace) continue
+
+                val moduleToVisitLibraryDependencyCandidatesAndSdkInfos =
+                    tmpResults[moduleToVisit] ?: internalGet(moduleToVisit, tmpResults, trace, loops = loops)
+
+                val moduleLibraryDependencyCandidatesAndSdkInfos = tmpResults.getValue(module)
+                moduleLibraryDependencyCandidatesAndSdkInfos += moduleToVisitLibraryDependencyCandidatesAndSdkInfos
+            }
+
+            trace.remove(module)
+
+            return tmpResults.getValue(module)
+        }
+
         override fun calculate(key: Module): LibraryDependencyCandidatesAndSdkInfos =
-            computeLibrariesAndSdksUsedIn(key)
+            throw UnsupportedOperationException("calculate(Module) should not be invoked due to custom impl of get()")
 
         override fun checkKeyValidity(key: Module) {
             key.checkValidity()
         }
 
         override fun checkValueValidity(value: LibraryDependencyCandidatesAndSdkInfos) {
-            value.first.forEach { it.libraries.forEach { libraryInfo -> libraryInfo.checkValidity() } }
+            value.libraryDependencyCandidates.forEach { it.libraries.forEach { libraryInfo -> libraryInfo.checkValidity() } }
         }
 
         override fun jdkRemoved(jdk: Sdk) {
-            invalidateEntries({ _, candidates -> candidates.second.any { it.sdk == jdk } })
+            invalidateEntries({ _, candidates -> candidates.sdkInfos.any { it.sdk == jdk } })
         }
 
         override fun jdkNameChanged(jdk: Sdk, previousName: String) {
@@ -254,7 +413,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val sdks = project.allSdks()
 
             invalidateEntries(
-                { _, (_, sdkInfos) -> sdkInfos.any { it.sdk !in sdks } },
+                { _, candidates -> candidates.sdkInfos.any { it.sdk !in sdks } },
                 // unable to check entities properly: an event could be not the last
                 validityCondition = null
             )
@@ -277,7 +436,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val infos = libraryInfos.toHashSet()
             invalidateEntries(
                 { _, v ->
-                    v.first.any { candidate -> candidate.libraries.any { it in infos } }
+                    v.libraryDependencyCandidates.any { candidate -> candidate.libraries.any { it in infos } }
                 },
                 // unable to check entities properly: an event could be not the last
                 validityCondition = null
