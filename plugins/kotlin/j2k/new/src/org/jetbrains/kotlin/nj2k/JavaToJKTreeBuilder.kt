@@ -798,10 +798,7 @@ class JavaToJKTreeBuilder constructor(
                 initializingClass?.createClassBody() ?: JKClassBody(),
                 JKTypeElement(
                     containingClass?.let { klass ->
-                        JKClassType(
-                            symbolProvider.provideDirectSymbol(klass) as JKClassSymbol,
-                            emptyList()
-                        )
+                        JKClassType(symbolProvider.provideDirectSymbol(klass) as JKClassSymbol)
                     } ?: JKNoType
                 ),
                 annotationList(this),

@@ -6,6 +6,7 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.j2k.ast.Nullability
+import org.jetbrains.kotlin.j2k.ast.Nullability.*
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -26,7 +27,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         private fun typeByFqName(
             fqName: FqNameUnsafe,
             typeArguments: List<JKType> = emptyList(),
-            nullability: Nullability = Nullability.NotNull
+            nullability: Nullability = NotNull
         ) = JKClassType(
             symbolProvider.provideClassSymbol(fqName),
             typeArguments,
@@ -43,11 +44,11 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         val double = typeByFqName(StandardNames.FqNames._double)
 
         val string = typeByFqName(StandardNames.FqNames.string)
-        val possiblyNullString = typeByFqName(StandardNames.FqNames.string, nullability = Nullability.Default)
+        val possiblyNullString = typeByFqName(StandardNames.FqNames.string, nullability = Default)
 
         val unit = typeByFqName(StandardNames.FqNames.unit)
         val nothing = typeByFqName(StandardNames.FqNames.nothing)
-        val nullableAny = typeByFqName(StandardNames.FqNames.any, nullability = Nullability.Nullable)
+        val nullableAny = typeByFqName(StandardNames.FqNames.any, nullability = Nullable)
     }
 
     fun fromPrimitiveType(primitiveType: JKJavaPrimitiveType) = when (primitiveType.jvmPrimitiveType) {
@@ -142,7 +143,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                     if (typeArgument.isStarProjection) JKStarProjectionTypeImpl
                     else fromKotlinType(typeArgument.type)
                 },
-                if (type.isNullable()) Nullability.Nullable else Nullability.NotNull
+                if (type.isNullable()) Nullable else NotNull
             )
         }
     }

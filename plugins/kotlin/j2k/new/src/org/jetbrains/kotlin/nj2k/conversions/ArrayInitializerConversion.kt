@@ -72,14 +72,12 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApp
         }
         var resultType = JKClassType(
             symbolProvider.provideClassSymbol(type.arrayFqName()),
-            if (type is JKJavaPrimitiveType) emptyList() else listOf(type),
-            Nullability.Default
+            if (type is JKJavaPrimitiveType) emptyList() else listOf(type)
         )
         for (i in 0 until dimensions.size - 2) {
             resultType = JKClassType(
                 symbolProvider.provideClassSymbol(StandardNames.FqNames.array.toSafe()),
-                listOf(resultType),
-                Nullability.Default
+                listOf(resultType)
             )
         }
         return JKCallExpressionImpl(

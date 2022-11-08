@@ -33,7 +33,7 @@ fun JKType.asTypeElement(annotationList: JKAnnotationList = JKAnnotationList()) 
     JKTypeElement(this, annotationList)
 
 fun JKClassSymbol.asType(nullability: Nullability = Default): JKClassType =
-    JKClassType(this, emptyList(), nullability)
+    JKClassType(this, nullability = nullability)
 
 val PsiType.isKotlinFunctionalType: Boolean
     get() {
