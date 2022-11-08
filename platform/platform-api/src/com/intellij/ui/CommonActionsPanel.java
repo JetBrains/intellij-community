@@ -195,16 +195,23 @@ public final class CommonActionsPanel extends JPanel {
       SwingUtilities.updateComponentTreeUI(this.getParent());
     }
     for (AnAction button : myActions) {
-      ShortcutSet shortcut = button.getShortcutSet();
-      if (button instanceof MyActionButton && myCustomShortcuts != null) {
-        ShortcutSet customShortCut = myCustomShortcuts.get(((MyActionButton)button).myButton);
-        if (customShortCut != null) {
-          shortcut = customShortCut;
-        }
+      ShortcutSet shortcut;
+      if (button instanceof AnActionButton anActionButton) {
+        shortcut = anActionButton.getShortcut();
+      } else {
+        shortcut = button.getShortcutSet();
       }
-      button.registerCustomShortcutSet(shortcut, myToolbar.getTargetComponent());
-      if (button instanceof RemoveButton) {
-        registerDeleteHook((MyActionButton)button);
+      if (shortcut != null) {
+        if (button instanceof MyActionButton && myCustomShortcuts != null) {
+          ShortcutSet customShortCut = myCustomShortcuts.get(((MyActionButton)button).myButton);
+          if (customShortCut != null) {
+            shortcut = customShortCut;
+          }
+        }
+        button.registerCustomShortcutSet(shortcut, myToolbar.getTargetComponent());
+        if (button instanceof RemoveButton) {
+          registerDeleteHook((MyActionButton)button);
+        }
       }
     }
 
