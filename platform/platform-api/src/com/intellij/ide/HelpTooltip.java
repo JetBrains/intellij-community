@@ -124,8 +124,6 @@ public class HelpTooltip {
 
   private BooleanSupplier masterPopupOpenCondition;
 
-  protected ComponentPopupBuilder myPopupBuilder;
-  private Dimension myPopupSize;
   private JBPopup myPopup;
   private final Alarm popupAlarm = new Alarm();
   private boolean isOverPopup;
@@ -359,7 +357,6 @@ public class HelpTooltip {
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
     createMouseListeners();
-    initPopupBuilder();
 
     component.putClientProperty(TOOLTIP_PROPERTY, this);
     installMouseListeners(component);
@@ -395,23 +392,12 @@ public class HelpTooltip {
     };
   }
 
-  private void initPopupBuilder() {
-    JComponent tipPanel = createTipPanel();
-    tipPanel.addMouseListener(createIsOverTipMouseListener());
-
-    myPopupSize = tipPanel.getPreferredSize();
-    myPopupBuilder = JBPopupFactory.getInstance().
-        createComponentPopupBuilder(tipPanel, null).
-        setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
-        setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor()).setShowShadow(true).
-        addUserData(PopupCornerType.RoundedTooltip);
-  }
-
-  protected void initPopupBuilder(@NotNull HelpTooltip instance) {
-    instance.initPopupBuilder();
-    myPopupSize = instance.myPopupSize;
-    myPopupBuilder = instance.myPopupBuilder;
-    initialShowScheduled = false;
+  private ComponentPopupBuilder initPopupBuilder(JComponent tipPanel) {
+    return JBPopupFactory.getInstance().
+      createComponentPopupBuilder(tipPanel, null).
+      setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
+      setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor()).setShowShadow(true).
+      addUserData(PopupCornerType.RoundedTooltip);
   }
 
   @NotNull
@@ -600,8 +586,11 @@ public class HelpTooltip {
           myPopup.cancel(); // cancel previous popup before showing a new one
         }
         myToolTipText = text;
-        myPopup = myPopupBuilder.createPopup();
-        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize, e.getPoint())));
+        JComponent tipPanel = createTipPanel();
+        tipPanel.addMouseListener(createIsOverTipMouseListener());
+        ComponentPopupBuilder popupBuilder = initPopupBuilder(tipPanel);
+        myPopup = popupBuilder.createPopup();
+        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, tipPanel.getPreferredSize(), e.getPoint())));
         if (!neverHide) {
           int dismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
           scheduleHide(true, dismissDelay);
