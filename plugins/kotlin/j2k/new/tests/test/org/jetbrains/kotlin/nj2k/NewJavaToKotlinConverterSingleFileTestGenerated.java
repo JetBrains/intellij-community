@@ -1991,6 +1991,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/enum/internalEnum.java");
         }
 
+        @TestMetadata("oneLinePerEntry.java")
+        public void testOneLinePerEntry() throws Exception {
+            runTest("testData/newJ2k/enum/oneLinePerEntry.java");
+        }
+
         @TestMetadata("overrideToString.java")
         public void testOverrideToString() throws Exception {
             runTest("testData/newJ2k/enum/overrideToString.java");

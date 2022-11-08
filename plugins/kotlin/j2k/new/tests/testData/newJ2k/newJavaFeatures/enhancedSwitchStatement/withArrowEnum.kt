@@ -1,5 +1,7 @@
 internal enum class ColorEnum {
-    GREEN, RED, YELLOW
+    GREEN,
+    RED,
+    YELLOW
 }
 
 internal class MyClass {

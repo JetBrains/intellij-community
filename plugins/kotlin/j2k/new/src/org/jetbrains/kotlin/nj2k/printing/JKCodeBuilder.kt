@@ -605,7 +605,11 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderEnumConstants(enumConstants: List<JKEnumConstant>) {
-            printer.renderList(enumConstants) {
+            val separator = {
+                printer.print(",")
+                printer.println()
+            }
+            printer.renderList(enumConstants, separator) {
                 it.accept(this)
             }
         }
