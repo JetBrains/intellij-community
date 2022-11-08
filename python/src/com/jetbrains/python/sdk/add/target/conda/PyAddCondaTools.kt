@@ -41,6 +41,8 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaE
   val sdk = ProjectJdkImpl(SdkConfigurationUtil.createUniqueSdkName(condaIdentity.userReadableName, existingSdks),
                            PythonSdkType.getInstance())
   sdk.sdkAdditionalData = additionalData
+  // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
+  // Because homePath is not set yet, CondaPathFix does not work
   sdk.homePath = sdk.getPythonBinaryPath(project).getOrThrow()
   return sdk
 }

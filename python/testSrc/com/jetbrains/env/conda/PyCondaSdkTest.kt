@@ -1,26 +1,35 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.conda
 
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
+import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.conda.*
+import com.jetbrains.python.sdk.flavors.conda.CondaPathFix.Companion.shouldBeFixed
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.getPythonBinaryPath
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import org.hamcrest.MatcherAssert
+import org.hamcrest.Matchers
 import org.jdom.Element
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 
 /**
  * Ensures conda SDK could be created
@@ -37,6 +46,30 @@ internal class PyCondaSdkTest {
   @JvmField
   internal val chain = RuleChain.outerRule(projectRule).around(condaRule).around(yamlRule)
 
+
+  /**
+   * When we create fresh local SDK on Windows, it must be patched with env vars, see [CondaPathFix]
+   */
+  @Test
+  fun testLocalActivationFix(): Unit = runTest {
+    Assume.assumeTrue("Windows only", SystemInfoRt.isWindows)
+    val env = PyCondaEnv.getEnvs(
+      condaRule.condaCommand).getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true }
+    val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(env.envIdentity, emptyList(), projectRule.project)
+    val request = LocalTargetEnvironmentRequest()
+    val builder = TargetedCommandLineBuilder(request)
+    Assert.assertTrue("No conda path fix suggested for Windows?", builder.shouldBeFixed)
+    condaSdk.configureBuilderToRunPythonOnTarget(builder)
+    builder.apply {
+      addParameter("-c")
+      addParameter("import os; print(' '.join(list(os.environ.keys())))")
+    }
+    val envVars = builder.build().environmentVariables.map { it.key.uppercase(Locale.getDefault()) to it.value }.toMap()
+    MatcherAssert.assertThat("Conda not activated?", envVars.keys, Matchers.hasItem("PATH"))
+    MatcherAssert.assertThat("Conda not activated?", envVars.keys, Matchers.hasItem("CONDA_PREFIX"))
+    val paths = envVars["PATH"]!!.split(File.pathSeparator).map { Path.of(it) }
+    MatcherAssert.assertThat("No conda python in PATH", paths, Matchers.hasItem(Path.of(condaSdk.homePath!!).parent))
+  }
 
   @Test
   fun testConvertToConda() = runTest {
