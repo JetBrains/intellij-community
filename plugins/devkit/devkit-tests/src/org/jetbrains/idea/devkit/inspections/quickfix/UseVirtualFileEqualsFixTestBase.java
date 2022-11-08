@@ -6,7 +6,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection;
 
-public abstract class UseVirtualFileEqualsFixTestBase extends UseEqualsFixTestBase {
+abstract class UseVirtualFileEqualsFixTestBase extends UseEqualsFixTestBase {
 
   @Override
   protected void setUp() throws Exception {
