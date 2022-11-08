@@ -7,12 +7,11 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.onChangeListAvailabilityChanged
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBList
@@ -33,6 +32,10 @@ class ChangelistConflictConfigurable(val project: Project)
     val changeListsEnabledPredicate = when {
       project.isDefault -> ComponentPredicate.TRUE
       else -> ChangeListsEnabledPredicate(project, disposable!!)
+    }
+    val canTrackChangelistConflicts = when {
+      project.isDefault -> ComponentPredicate.TRUE
+      else -> CanTrackChangelistConflictsPredicate(project, disposable!!)
     }
 
     val conflictTracker = when {
@@ -67,7 +70,7 @@ class ChangelistConflictConfigurable(val project: Project)
             checkBox(message("settings.show.conflict.resolve.dialog.checkbox"))
               .bindSelected(conflictOptions::SHOW_DIALOG)
               .onApply { conflictTracker.optionsChanged() }
-          }
+          }.enabledIf(canTrackChangelistConflicts)
         }
 
         row(message("settings.label.when.empty.changelist.becomes.inactive")) {
@@ -124,7 +127,7 @@ class ChangelistConflictConfigurable(val project: Project)
               }.align(AlignX.RIGHT)
               .enabledIf(ListNotEmptyPredicate(ignoredFilesModel))
           }
-        }.enabledIf(changeListsEnabledPredicate)
+        }.enabledIf(canTrackChangelistConflicts)
           .resizableRow()
       }
     }
@@ -134,9 +137,30 @@ class ChangelistConflictConfigurable(val project: Project)
     override fun invoke(): Boolean = ChangeListManager.getInstance(project).areChangeListsEnabled()
 
     override fun addListener(listener: (Boolean) -> Unit) {
-      onChangeListAvailabilityChanged(project, disposable, true) {
-        listener(invoke())
-      }
+      val busConnection = project.messageBus.connect(disposable)
+      onChangeListAvailabilityChanged(busConnection) { listener(invoke()) }
+      listener(invoke())
+    }
+  }
+
+  class CanTrackChangelistConflictsPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
+    override fun invoke(): Boolean {
+      if (!ChangeListManager.getInstance(project).areChangeListsEnabled()) return false
+
+      val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+      if (activeVcss.isEmpty()) return true // show options without VCSes
+
+      val onlyPartialChangelists = LineStatusTrackerManager.getInstance(project).arePartialChangelistsEnabled() &&
+                                   activeVcss.all { vcs -> vcs.arePartialChangelistsSupported() }
+      return !onlyPartialChangelists
+    }
+
+    override fun addListener(listener: (Boolean) -> Unit) {
+      val busConnection = project.messageBus.connect(disposable)
+      onChangeListAvailabilityChanged(busConnection) { listener(invoke()) }
+      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, LineStatusTrackerSettingListener { listener(invoke()) })
+      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener { listener(invoke()) })
+      listener(invoke())
     }
   }
 
