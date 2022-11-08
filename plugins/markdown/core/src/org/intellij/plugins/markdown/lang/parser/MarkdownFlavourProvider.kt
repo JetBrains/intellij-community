@@ -24,7 +24,8 @@ interface MarkdownFlavourProvider {
   companion object {
     private const val extensionPointName = "org.intellij.markdown.flavourProvider"
 
-    internal val extensionPoint = ExtensionPointName<MarkdownFlavourProvider>(extensionPointName)
+    @ApiStatus.Internal
+    val extensionPoint = ExtensionPointName<MarkdownFlavourProvider>(extensionPointName)
 
     @JvmStatic
     fun findFlavour(viewProvider: FileViewProvider): MarkdownFlavourDescriptor {
