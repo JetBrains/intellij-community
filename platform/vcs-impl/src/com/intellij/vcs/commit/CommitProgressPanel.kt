@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
@@ -70,7 +70,6 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
 
 open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
   private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
-    .also { Disposer.register(this) { it.cancel() } }
 
   private val taskInfo = CommitChecksTaskInfo()
   private val progressFlow = MutableStateFlow<CommitChecksProgressIndicator?>(null)
@@ -127,7 +126,9 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
     tooltip.installOn(failuresPanel.iconLabel, this)
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    scope.cancel()
+  }
 
   override suspend fun <T> runWithProgress(isOnlyRunCommitChecks: Boolean, action: suspend CoroutineScope.() -> T): T {
     check(progress == null) { "Commit checks indicator already created" }
