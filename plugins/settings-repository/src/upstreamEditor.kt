@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ModalTaskOwner
@@ -11,7 +12,11 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.DialogManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.nullize
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
 import java.awt.Component
 import java.awt.event.ActionEvent
@@ -20,7 +25,7 @@ import javax.swing.Action
 import javax.swing.JTextField
 
 @NlsContexts.DialogMessage
-fun validateUrl(url: String?, project: Project?): String? {
+internal fun validateUrl(url: String?, project: Project?): String? {
   return if (url == null) IcsBundle.message("dialog.error.message.url.empty") else icsManager.repositoryService.checkUrl(url, project)
 }
 
@@ -36,24 +41,25 @@ internal fun createMergeActions(project: Project?, urlTextField: TextFieldWithBr
 private class SyncAction(private val syncType: SyncType,
                          private val urlTextField: JTextField,
                          private val project: Project?,
-                         private val dialogManager: DialogManager) : AbstractAction(
-  icsMessage(syncType.messageKey)) {
-
+                         private val dialogManager: DialogManager) : AbstractAction(icsMessage(syncType.messageKey)) {
   override fun actionPerformed(event: ActionEvent) {
     dialogManager.performAction {
       val owner = project?.let(ModalTaskOwner::project)
                   ?: (event.source as? Component)?.let(ModalTaskOwner::component)
                   ?: ModalTaskOwner.guess()
-      runBlockingModal(owner, "") { // TODO title
-        val url = urlTextField.text.nullize(true)
-        validateUrl(url, project)
-        ?: doSync(icsManager, project, syncType, url!!)
-      }?.let { listOf(ValidationInfo(it, urlTextField)) }
+
+      val url = urlTextField.text.nullize(true)
+      val error = validateUrl(url, project)
+                  ?: doSync(icsManager = icsManager, project = project, syncType = syncType, url = url!!, owner = owner)
+
+      error?.let { listOf(ValidationInfo(error, urlTextField)) }
     }
   }
 }
 
-suspend fun doSync(icsManager: IcsManager, project: Project?, syncType: SyncType, url: String): String? {
+@RequiresEdt
+@VisibleForTesting
+fun doSync(icsManager: IcsManager, project: Project?, syncType: SyncType, url: String, owner: ModalTaskOwner): String? {
   IcsActionsLogger.logSettingsSync(project, syncType)
   val isRepositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
   var upstreamSet = false
@@ -69,12 +75,15 @@ suspend fun doSync(icsManager: IcsManager, project: Project?, syncType: SyncType
       icsManager.setApplicationLevelStreamProvider()
     }
 
-    if (isRepositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
-      ApplicationManager.getApplication().saveSettings()
-      icsManager.sync(syncType, project) { copyLocalConfig() }
-    }
-    else {
-      icsManager.sync(syncType, project, null)
+    @Suppress("DialogTitleCapitalization")
+    runBlockingModal(owner, icsMessage("task.sync.title")) {
+      if (isRepositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
+        com.intellij.configurationStore.saveSettings(componentManager = ApplicationManager.getApplication(), forceSavingAllSettings = false)
+        icsManager.sync(syncType = syncType, project = project) { copyLocalConfig() }
+      }
+      else {
+        icsManager.sync(syncType = syncType, project = project, localRepositoryInitializer = null)
+      }
     }
   }
   catch (e: Throwable) {
