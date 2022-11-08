@@ -65,7 +65,7 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
       }
       methodPtr.element?.toUElementOfType<UMethod>()?.accept(AssertionsConverter())
     }
-    junit3Class.javaPsi.extendsList?.referenceElements?.forEach { it.delete() }
+    junit3Class.javaPsi.extendsList?.referenceElements?.firstOrNull { it.qualifiedName == JUNIT_FRAMEWORK_TEST_CASE }?.delete()
   }
 
   private fun findConflicts(junit3Class: UClass): MultiMap<PsiElement, String> {
