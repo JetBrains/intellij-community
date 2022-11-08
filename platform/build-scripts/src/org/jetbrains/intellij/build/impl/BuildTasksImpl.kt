@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.io.Decompressor
-import com.intellij.util.io.ZipUtil
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -47,7 +46,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.FileOutputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -59,7 +57,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
 import java.util.stream.Collectors
-import java.util.zip.ZipOutputStream
 import kotlin.io.path.setLastModifiedTime
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
@@ -622,9 +619,9 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
     spanBuilder("build platform and plugin JARs").useWithScope2<Unit> {
       val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
 
-      if (context.productProperties.buildDocAuthoringAssets)
+      if (context.productProperties.buildDocAuthoringAssets) {
         buildInspectopediaArtifacts(distributionJARsBuilder, context)
-
+      }
       if (context.shouldBuildDistributions()) {
         val entries = distributionJARsBuilder.buildJARs(context)
         if (context.productProperties.buildSourcesArchive) {
@@ -1223,9 +1220,7 @@ private suspend fun buildInspectopediaArtifacts(builder: DistributionJARsBuilder
                         ideClasspath = ideClasspath,
                         arguments = listOf("inspectopedia-generator", inspectionsPath.toAbsolutePath().toString()))
 
-  val targetFile = context.paths.artifactDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}.zip").toFile()
+  val targetFile = context.paths.artifactDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}.zip")
 
-  ZipOutputStream(FileOutputStream(targetFile)).use { zip ->
-    ZipUtil.addDirToZipRecursively(zip, targetFile, inspectionsPath.toFile(), "", null, null)
-  }
+  zipWithCompression(targetFile = targetFile, dirs = mapOf(inspectionsPath to ""))
 }
