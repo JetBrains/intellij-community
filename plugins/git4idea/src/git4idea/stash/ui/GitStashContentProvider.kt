@@ -123,14 +123,13 @@ internal class GitStashStartupActivity : ProjectPostStartupActivity {
 
   override suspend fun execute(project: Project) {
     val gitStashTracker = project.service<GitStashTracker>()
-    withContext(Dispatchers.EDT) {
-      stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
-        override fun afterValueChanged(value: RegistryValue) {
-          gitStashTracker.scheduleRefresh()
-          project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-        }
-      }, gitStashTracker)
-    }
+
+    stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        gitStashTracker.scheduleRefresh()
+        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+      }
+    }, gitStashTracker)
   }
 }
 
