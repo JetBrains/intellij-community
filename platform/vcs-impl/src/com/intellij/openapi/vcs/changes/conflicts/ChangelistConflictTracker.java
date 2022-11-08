@@ -117,18 +117,21 @@ public final class ChangelistConflictTracker {
   private void clearChanges(Collection<? extends Change> changes) {
     for (Change change : changes) {
       ContentRevision revision = change.getAfterRevision();
-      if (revision != null) {
-        FilePath filePath = revision.getFile();
-        String path = filePath.getPath();
-        final Conflict wasRemoved = myConflicts.remove(path);
-        final VirtualFile file = filePath.getVirtualFile();
+      if (revision == null) continue;
+
+      FilePath filePath = revision.getFile();
+      String path = filePath.getPath();
+
+      Conflict conflict = myConflicts.remove(path);
+      boolean conflictRemoved = conflict != null && !conflict.ignored;
+
+      if (conflictRemoved || myOptions.HIGHLIGHT_NON_ACTIVE_CHANGELIST) {
+        VirtualFile file = filePath.getVirtualFile();
         if (file != null) {
-          if (wasRemoved != null) {
+          FileStatusManager.getInstance(myProject).fileStatusChanged(file);
+          if (conflictRemoved) {
             EditorNotifications.getInstance(myProject).updateNotifications(file);
           }
-
-          // we need to update status
-          FileStatusManager.getInstance(myProject).fileStatusChanged(file);
         }
       }
     }
@@ -171,18 +174,8 @@ public final class ChangelistConflictTracker {
   }
 
   public void optionsChanged() {
-    Map<String, Conflict> copyMap;
-    synchronized (myConflicts) {
-      copyMap = new HashMap<>(myConflicts);
-    }
-
-    for (Map.Entry<String, Conflict> entry : copyMap.entrySet()) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(entry.getKey());
-      if (file != null) {
-        FileStatusManager.getInstance(myProject).fileStatusChanged(file);
-        EditorNotifications.getInstance(myProject).updateNotifications(file);
-      }
-    }
+    FileStatusManager.getInstance(myProject).fileStatusesChanged();
+    EditorNotifications.getInstance(myProject).updateAllNotifications();
   }
 
   public void clearAllIgnored() {
@@ -205,19 +198,20 @@ public final class ChangelistConflictTracker {
     if (!myOptions.isTrackingEnabled() || !myChangeListManager.areChangeListsEnabled()) {
       return false;
     }
+
     String path = file.getPath();
     Conflict conflict = myConflicts.get(path);
-    if (conflict != null && !conflict.ignored) {
-      if (!shouldDetectConflictsFor(file) ||
-          isFromActiveChangelist(file)) {
-        myConflicts.remove(path);
-        return false;
-      }
-      return true;
-    }
-    else {
+    if (conflict == null || conflict.ignored) {
       return false;
     }
+
+    if (!shouldDetectConflictsFor(file) ||
+        isFromActiveChangelist(file)) {
+      myConflicts.remove(path);
+      return false;
+    }
+
+    return true;
   }
 
   public void ignoreConflict(@NotNull VirtualFile file, boolean ignore) {
@@ -228,8 +222,9 @@ public final class ChangelistConflictTracker {
       myConflicts.put(path, conflict);
     }
     conflict.ignored = ignore;
-    EditorNotifications.getInstance(myProject).updateNotifications(file);
+
     FileStatusManager.getInstance(myProject).fileStatusChanged(file);
+    EditorNotifications.getInstance(myProject).updateNotifications(file);
   }
 
   public Project getProject() {
