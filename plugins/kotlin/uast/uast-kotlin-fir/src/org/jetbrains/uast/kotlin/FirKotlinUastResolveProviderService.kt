@@ -498,7 +498,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
+    override fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType? {
+        if (ktFunction is KtConstructor<*>) return null
         analyzeForUast(ktFunction) {
             return toPsiType(ktFunction.getFunctionalType(), source, ktFunction, ktFunction.typeOwnerKind)
         }

@@ -51,7 +51,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                             USimpleNameReferenceExpression (identifier = d) [d] : PsiType:int
                 UDeclarationsExpression [var lam4: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
                     ULocalVariable (name = lam4) [var lam4: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
-                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] : PsiType:Function1<? super Integer, ? extends String>
                             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}] : PsiType:Void
@@ -71,7 +71,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         ULiteralExpression (value = "2") ["2"] : PsiType:String
                 UDeclarationsExpression [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
                     ULocalVariable (name = lam5) [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
-                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] : PsiType:Function1<? super Integer, ? extends String>
                             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}]

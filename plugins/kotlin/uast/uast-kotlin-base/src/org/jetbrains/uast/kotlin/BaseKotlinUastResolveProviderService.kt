@@ -96,7 +96,7 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType?
 
-    fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType?
+    fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType?
 
     fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType?
 
