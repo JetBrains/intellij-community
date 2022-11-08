@@ -41,6 +41,8 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   fun items(items: Collection<T>): SegmentedButton<T>
 
+  var selectedItem: T?
+
   fun bind(property: ObservableMutableProperty<T>): SegmentedButton<T>
 
   fun whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit): SegmentedButton<T>

@@ -35,6 +35,28 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
   private val comboBox = ComboBox<T>()
   private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer)
 
+  override var selectedItem: T?
+    get() {
+      val result = property?.get()
+      if (result != null) {
+        return result
+      }
+
+      @Suppress("UNCHECKED_CAST")
+      return when (component) {
+        comboBox -> comboBox.selectedItem as? T
+        segmentedButtonComponent -> segmentedButtonComponent.selectedItem
+        else -> null
+      }
+    }
+
+    set(value) {
+      when (component) {
+        comboBox -> comboBox.selectedItem = value
+        segmentedButtonComponent -> segmentedButtonComponent.selectedItem = value
+      }
+    }
+
   init {
     comboBox.renderer = listCellRenderer { value, _, _ -> text = renderer(value) }
     segmentedButtonComponent.isOpaque = false
@@ -132,35 +154,20 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
   }
 
   private fun fillComboBox() {
-    val selectedItem = getSelectedItem()
+    val oldSelectedItem = selectedItem
     val model = DefaultComboBoxModel<T>()
     model.addAll(items)
     comboBox.model = model
-    if (selectedItem != null && items.contains(selectedItem)) {
-      comboBox.selectedItem = selectedItem
+    if (oldSelectedItem != null && items.contains(oldSelectedItem)) {
+      comboBox.selectedItem = oldSelectedItem
     }
   }
 
   private fun fillSegmentedButtonComponent() {
-    val selectedItem = getSelectedItem()
+    val oldSelectedItem = selectedItem
     segmentedButtonComponent.items = items
-    if (selectedItem != null && items.contains(selectedItem)) {
-      segmentedButtonComponent.selectedItem = selectedItem
-    }
-  }
-
-  private fun getSelectedItem(): T? {
-    val result = property?.get()
-    if (result != null) {
-      return result
-    }
-
-    val c = component
-    @Suppress("UNCHECKED_CAST")
-    return when (c) {
-      comboBox -> comboBox.selectedItem as? T
-      segmentedButtonComponent -> segmentedButtonComponent.selectedItem
-      else -> null
+    if (oldSelectedItem != null && items.contains(oldSelectedItem)) {
+      segmentedButtonComponent.selectedItem = oldSelectedItem
     }
   }
 }
