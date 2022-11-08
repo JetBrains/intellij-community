@@ -1384,10 +1384,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     val balloon = createBalloon(options, entry)
     val button = stripe.getButtonFor(options.toolWindowId)?.getComponent()
-    LOG.assertTrue(button != null, "Button was not found, popup won't be shown. $options")
-    if (button == null) {
-      return
-    }
 
     val show = Runnable {
       val tracker: PositionTracker<Balloon>
@@ -1396,7 +1392,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
            entry.toolWindow.type == ToolWindowType.FLOATING)) {
         tracker = createPositionTracker(entry.toolWindow.component, ToolWindowAnchor.BOTTOM)
       }
-      else if (!button.isShowing) {
+      else if (button == null || !button.isShowing) {
         tracker = createPositionTracker(toolWindowPane, anchor)
       }
       else {
@@ -1418,7 +1414,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
     }
 
-    if (button.isValid) {
+    if (button != null && button.isValid) {
       show.run()
     }
     else {
