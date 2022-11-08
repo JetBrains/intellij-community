@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
+import org.jetbrains.kotlin.resolve.constants.TypedCompileTimeConstant
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -141,12 +142,14 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processConstant(expr: KtExpression?): Boolean {
         expr ?: return false
         val context = expr.analyze(BodyResolveMode.PARTIAL)
-        val constant = ConstantExpressionEvaluator.getConstant(expr, context) ?: return false
-        val kotlinType = expr.getKotlinType() ?: return false
-        val value = constant.getValue(kotlinType) ?: return false
+        val constant = ConstantExpressionEvaluator.getConstant(expr, context) as? TypedCompileTimeConstant<*> ?: return false
+        val declaredType = expr.getKotlinType() ?: return false
+        val value = constant.getValue(declaredType) ?: return false
         if (value !is Int && value !is Long && value !is Float && value !is Double && value !is String) return false
-        val dfConstantType = DfTypes.constant(value, kotlinType.toDfType())
+        val actualType = constant.type 
+        val dfConstantType = DfTypes.constant(value, actualType.toDfType())
         addInstruction(PushValueInstruction(dfConstantType, KotlinExpressionAnchor(expr)))
+        addImplicitConversion(expr, actualType, declaredType)
         return true
     }
 
