@@ -11,6 +11,8 @@ class GitgraphAnnotatorTest : MermaidBaseTestCase("intention/declarations") {
 
   fun `test commit`() = doTest()
 
+  fun `test branch`() = doTest()
+
   private fun doTest() {
     val testName = getTestName(true)
     myFixture.configureByFile("${testName}.mermaid")

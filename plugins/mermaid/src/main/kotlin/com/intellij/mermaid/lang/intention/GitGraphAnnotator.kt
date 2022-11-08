@@ -172,6 +172,7 @@ class GitGraphAnnotator : Annotator {
 
     val matchingIds = siblings
       .filterIsInstance<MermaidBranchStatement>()
+      .filter { it != element }
       .map { it.identifier }
       .filter { identifier.textMatches(it) }
 
