@@ -20,9 +20,9 @@ import org.jetbrains.concurrency.toPromise
 import kotlin.math.max
 import kotlin.math.min
 
-class GoToAnyPsiElement(text: String, line: Int) : AbstractCommand(text, line) {
+class GoToNextPsiElement(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
-    const val PREFIX: @NonNls String = CMD_PREFIX + "goToAnyPsiElement"
+    const val PREFIX: @NonNls String = CMD_PREFIX + "goToNextPsiElement"
     const val SUPPRESS_ERROR_IF_NOT_FOUND: @NonNls String = "SUPPRESS_ERROR_IF_NOT_FOUND"
     val REGEX = " ".toRegex()
   }
@@ -45,14 +45,17 @@ class GoToAnyPsiElement(text: String, line: Int) : AbstractCommand(text, line) {
       psiFile?.accept(object : PsiRecursiveElementWalkingVisitor(true) {
         override fun visitElement(element: PsiElement) {
           if (params.contains(element.elementType?.debugName)) {
-            val spaceIndex = max(1, element.text.indexOf(" "))
-            val offset = min(element.endOffset, element.startOffset + spaceIndex)
-            if (editor.caretModel.offset == offset) {
-              actionCallback.setDone()
-            } else {
-              editor.caretModel.moveToOffset(offset)
+            if (editor.caretModel.currentCaret.offset < element.startOffset) {
+              val spaceIndex = max(1, element.text.indexOf(" "))
+              val offset = min(element.endOffset, element.startOffset + spaceIndex)
+              if (editor.caretModel.offset == offset) {
+                actionCallback.setDone()
+              }
+              else {
+                editor.caretModel.moveToOffset(offset)
+              }
+              stopWalking()
             }
-            stopWalking()
           }
           super.visitElement(element)
         }
