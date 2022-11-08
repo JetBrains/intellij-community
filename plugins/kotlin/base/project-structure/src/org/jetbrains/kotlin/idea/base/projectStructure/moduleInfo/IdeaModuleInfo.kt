@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 val OriginCapability = ModuleCapability<ModuleOrigin>("MODULE_ORIGIN")
@@ -49,3 +50,17 @@ interface LanguageSettingsOwner {
 }
 
 fun Project.ideaModules(): Array<out Module> = runReadAction { ModuleManager.getInstance(this).modules }
+
+fun Collection<IdeaModuleInfo>.checkValidity(lazyMessage: () -> String) {
+    val disposed = filter {
+        when (it) {
+            is ModuleSourceInfo -> it.module.isDisposed
+            is LibraryInfo -> it.library.isDisposed
+            else -> false
+        }
+    }
+    if (disposed.isNotEmpty()) {
+        throw KotlinExceptionWithAttachments(lazyMessage())
+            .withAttachment("disposedInfos.txt", disposed.joinToString("\n") { it.name.asString() })
+    }
+}

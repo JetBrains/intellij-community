@@ -90,6 +90,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         modulesAndSdk = cachedValuesManager.createCachedValue {
             val ideaModuleInfos = moduleCache.fetchValues().flatten() + sdkCache.fetchValues()
+            ideaModuleInfos.checkValidity { "modulesAndSdk" }
             CachedValueProvider.Result.create(ideaModuleInfos, modificationTracker)
         }
 
@@ -104,6 +105,8 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
                     collectedLibraries += libraryCache[library]
                 }
             }
+
+            collectedLibraries.checkValidity { "libraries" }
 
             CachedValueProvider.Result.create(collectedLibraries, libraryCache.removedLibraryInfoTracker(), modificationTracker)
         }
@@ -332,11 +335,14 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
                 val libraryInfos = libraries.value
                 val sdkInfos = sdkCache.fetchValues()
                 val ideaModuleInfos = platformModules + libraryInfos + sdkInfos
+                ideaModuleInfos.checkValidity { "forPlatform $platform" }
                 ideaModuleInfos
             }
         }
 
-    override fun allModules(): List<IdeaModuleInfo> = modulesAndSdk.value + libraries.value
+    override fun allModules(): List<IdeaModuleInfo> = (modulesAndSdk.value + libraries.value).also {
+        it.checkValidity { "allModules" }
+    }
 
     override fun getModuleInfosForModule(module: Module): Collection<ModuleSourceInfo> = moduleCache[module]
 
