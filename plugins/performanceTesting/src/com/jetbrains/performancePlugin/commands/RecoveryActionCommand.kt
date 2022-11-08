@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.util.indexing.RefreshIndexableFilesAction
 import com.intellij.util.indexing.ReindexAction
 import com.intellij.util.indexing.RescanIndexesAction
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelRecoveryAction
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
@@ -30,6 +31,7 @@ class RecoveryActionCommand(text: String, line: Int) : AbstractCommand(text, lin
       "REFRESH" -> RefreshIndexableFilesAction()
       "RESCAN" -> RescanIndexesAction()
       "REINDEX" -> ReindexAction()
+      "REOPEN" -> WorkspaceModelRecoveryAction()
       else -> error("The argument ${args[1]} to the command is incorrect. Allowed actions: $ALLOWED_ACTIONS")
     }
     recoveryAction.perform(ProjectRecoveryScope(project)).handle { res, err ->

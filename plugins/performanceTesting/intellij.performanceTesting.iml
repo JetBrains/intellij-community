@@ -47,5 +47,6 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>
