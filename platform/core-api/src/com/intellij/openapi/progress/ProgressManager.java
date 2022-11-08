@@ -191,6 +191,9 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * Runs a specified {@code task} in either background/foreground thread and shows a progress dialog.
    *
    * @param task task to run (either {@link Task.Modal} or {@link Task.Backgroundable}).
+   *
+   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
    */
   public abstract void run(@NotNull Task task);
 
