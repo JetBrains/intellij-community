@@ -79,7 +79,7 @@ public class MavenProjectsProcessor {
   public void waitForCompletion() {
     if (isStopped) return;
 
-    if (MavenUtil.isMavenUnitTestModeEnabled()) {
+    if (MavenUtil.isNoBackgroundMode()) {
       while (true) {
         MavenProjectsProcessorTask task;
         synchronized (myQueue) {
