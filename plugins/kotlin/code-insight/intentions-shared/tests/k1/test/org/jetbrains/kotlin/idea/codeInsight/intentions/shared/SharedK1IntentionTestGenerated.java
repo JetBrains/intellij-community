@@ -1005,4 +1005,74 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParenthesesWithComment.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/underscoresInNumericLiteral")
+    public abstract static class UnderscoresInNumericLiteral extends AbstractSharedK1IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/underscoresInNumericLiteral/addUnderscores")
+        public static class AddUnderscores extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("binaries.kt")
+            public void testBinaries() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/addUnderscores/binaries.kt");
+            }
+
+            @TestMetadata("double.kt")
+            public void testDouble() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/addUnderscores/double.kt");
+            }
+
+            @TestMetadata("float.kt")
+            public void testFloat() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/addUnderscores/float.kt");
+            }
+
+            @TestMetadata("hexadecimals.kt")
+            public void testHexadecimals() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/addUnderscores/hexadecimals.kt");
+            }
+
+            @TestMetadata("int.kt")
+            public void testInt() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/addUnderscores/int.kt");
+            }
+
+            @TestMetadata("int2.kt")
+            public void testInt2() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/addUnderscores/int2.kt");
+            }
+
+            @TestMetadata("long.kt")
+            public void testLong() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/addUnderscores/long.kt");
+            }
+
+            @TestMetadata("uInt.kt")
+            public void testUInt() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/addUnderscores/uInt.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/underscoresInNumericLiteral/removeUnderscores")
+        public static class RemoveUnderscores extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("int.kt")
+            public void testInt() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/removeUnderscores/int.kt");
+            }
+
+            @TestMetadata("noUnderscores.kt")
+            public void testNoUnderscores() throws Exception {
+                runTest("../testData/intentions/underscoresInNumericLiteral/removeUnderscores/noUnderscores.kt");
+            }
+        }
+    }
 }
