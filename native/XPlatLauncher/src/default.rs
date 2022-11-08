@@ -575,8 +575,7 @@ fn get_ide_home(current_exe: &Path) -> Result<PathBuf> {
 
 #[cfg(target_os = "windows")]
 pub fn get_config_home() -> PathBuf {
-    // TODO: see LoadVMOptions
-    PathBuf::from("C:\\tmp")
+    get_user_home().join(".config")
 }
 
 #[cfg(target_os = "macos")]
@@ -633,6 +632,22 @@ fn get_user_home() -> PathBuf {
         Err(e) => {
             // TODO: this seems wrong
             warn!("Failed to get $HOME env var value: {e}, using / as home dir");
+
+            PathBuf::from("/")
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn get_user_home() -> PathBuf {
+    match dirs::home_dir() {
+        Some(path) => {
+            debug!("User home directory resolved as '{path:?}'");
+
+            path
+        }
+        None => {
+            warn!("Failed to get User Home dir. Using '/' as home dir");
 
             PathBuf::from("/")
         }

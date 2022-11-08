@@ -31,6 +31,7 @@ jni-sys = "0.3.0"
 path-absolutize = "3.0.13"
 utils = { version = "0.1.0", path = "utils" }
 anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
+dirs = "4.0.0"
 
 [build-dependencies]
 cargo-deny = "0.12.2" # checks licenses / vulns
