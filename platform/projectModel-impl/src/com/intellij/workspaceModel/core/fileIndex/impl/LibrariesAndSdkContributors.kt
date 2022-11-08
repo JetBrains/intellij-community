@@ -24,7 +24,8 @@ import java.util.IdentityHashMap
 
 internal class LibrariesAndSdkContributors(private val project: Project,
                                            private val rootFileSupplier: RootFileSupplier,
-                                           private val fileSets: MultiMap<VirtualFile, StoredFileSet>
+                                           private val fileSets: MultiMap<VirtualFile, StoredFileSet>,
+                                           private val fileSetsByPackagePrefix: MultiMap<String, WorkspaceFileSetImpl>
 ) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
   private val sdkRoots = MultiMap.create<Sdk, VirtualFile>()
   private val libraryRoots = MultiMap<Library, VirtualFile>(IdentityHashMap())
@@ -76,15 +77,17 @@ internal class LibrariesAndSdkContributors(private val project: Project,
                              data: WorkspaceFileSetData) {
       rootFileSupplier.getLibraryRoots(library, rootType).forEach { root ->
         if (RootFileSupplier.ensureValid(root, library, null)) {
-          fileSets.putValue(root, WorkspaceFileSetImpl(root, kind, reference, data))
+          val fileSet = WorkspaceFileSetImpl(root, kind, reference, data)
+          fileSets.putValue(root, fileSet)
+          fileSetsByPackagePrefix.putValue("", fileSet)
           libraryRoots.putValue(library, root)
         }
       }
     }
 
     val reference = GlobalLibraryReference(library)
-    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, reference, DummyWorkspaceFileSetData)
-    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null))
+    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, reference, LibraryRootFileSetData(null, ""))
+    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null, ""))
     (library as? LibraryEx)?.let { rootFileSupplier.getExcludedRoots(it) }?.forEach {
       if (RootFileSupplier.ensureValid(it, library, null)) {
         fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, reference))
@@ -98,28 +101,34 @@ internal class LibrariesAndSdkContributors(private val project: Project,
       sdk.rootProvider.getUrls(rootType).forEach { url ->
         val root = rootFileSupplier.findFileByUrl(url)
         if (root != null && RootFileSupplier.ensureValid(root, sdk, null)) {
-          fileSets.putValue(root, WorkspaceFileSetImpl(root, kind, reference, data))
+          val fileSet = WorkspaceFileSetImpl(root, kind, reference, data)
+          fileSets.putValue(root, fileSet)
+          fileSetsByPackagePrefix.putValue("", fileSet)
           sdkRoots.putValue(sdk, root)
         }
       }
     }
 
     val reference = SdkReference(sdk)
-    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, reference, DummyWorkspaceFileSetData)
-    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null))
+    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, reference, LibraryRootFileSetData(null, ""))
+    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null, ""))
   }
 
   private fun unregisterSdkRoots(sdk: Sdk) {
     val roots = sdkRoots.remove(sdk)
+    val filter = { fileSet: StoredFileSet -> (fileSet.entityReference as? SdkReference)?.sdk == sdk }
     roots?.forEach { root ->
-      fileSets.removeValueIf(root) { (it.entityReference as? SdkReference)?.sdk == sdk }
+      fileSets.removeValueIf(root, filter)
+      fileSetsByPackagePrefix.removeValueIf("", filter)
     }
   }
 
   private fun unregisterLibraryRoots(library: Library) {
     val roots = libraryRoots.remove(library)
+    val filter = { fileSet: StoredFileSet -> (fileSet.entityReference as? GlobalLibraryReference)?.library === library }
     roots?.forEach { root ->
-      fileSets.removeValueIf(root) { (it.entityReference as? GlobalLibraryReference)?.library === library }
+      fileSets.removeValueIf(root, filter)
+      fileSetsByPackagePrefix.removeValueIf("", filter)
     }
   }
 

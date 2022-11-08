@@ -18,11 +18,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -196,6 +196,51 @@ class PackageIndexTest {
     assertPackage("pack", sourcePackDir, libSrcPackDir, libClassesPackDir)
     assertPackage("", false, sourceRootDir, libClassesRootDir)
     assertPackage("pack", false, sourcePackDir, libClassesPackDir)
+  }
+
+  @Test
+  fun `module root under library root`() {
+    val moduleSourceRoot1 = projectModel.baseProjectDir.newVirtualDirectory("src/module")
+    val libraryClassesRoot = projectModel.baseProjectDir.newVirtualDirectory("classes")
+    val moduleSourceRoot2 = projectModel.baseProjectDir.newVirtualDirectory("classes/module")
+    PsiTestUtil.addSourceRoot(module, moduleSourceRoot1)
+    PsiTestUtil.addSourceRoot(module, moduleSourceRoot2)
+    projectModel.addModuleLevelLibrary(module, "lib") {
+      it.addRoot(libraryClassesRoot, OrderRootType.CLASSES)
+      it.addRoot(sourceRootDir, OrderRootType.SOURCES)
+    }
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      assertPackage("", sourceRootDir, libraryClassesRoot, moduleSourceRoot1, moduleSourceRoot2)
+    }
+    else {
+      assertPackage("", sourceRootDir, libraryClassesRoot, moduleSourceRoot2)
+    }
+    assertPackage("pack", sourcePackDir)
+  }
+
+  @Test
+  fun `library root under module root`() {
+    val librarySourceRoot = projectModel.baseProjectDir.newVirtualDirectory("src/lib/source")
+    val libraryClassesRoot = projectModel.baseProjectDir.newVirtualDirectory("src/lib/classes")
+    PsiTestUtil.addSourceRoot(module, sourceRootDir)
+    projectModel.addModuleLevelLibrary(module, "lib") {
+      it.addRoot(libraryClassesRoot, OrderRootType.CLASSES)
+      it.addRoot(librarySourceRoot, OrderRootType.SOURCES)
+    }
+    assertPackage("", sourceRootDir, librarySourceRoot, libraryClassesRoot)
+    assertPackage("pack", sourcePackDir)
+  }
+
+  @Test
+  fun `same source root in multiple libraries`() {
+    projectModel.addModuleLevelLibrary(module, "lib1") {
+      it.addRoot(sourceRootDir, OrderRootType.SOURCES)
+    }
+    projectModel.addModuleLevelLibrary(module, "lib2") {
+      it.addRoot(sourceRootDir, OrderRootType.SOURCES)
+    }
+    assertPackage("", sourceRootDir)
+    assertPackage("pack", sourcePackDir)
   }
 
   @Test

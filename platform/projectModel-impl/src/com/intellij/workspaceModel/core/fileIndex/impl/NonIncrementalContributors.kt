@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.roots.JavaSyntheticLibrary
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -32,7 +34,7 @@ internal class NonIncrementalContributors(private val project: Project,
   private var upToDate = false
   private val lock = Any()
 
-  fun updateIfNeeded(fileSets: MultiMap<VirtualFile, StoredFileSet>) {
+  fun updateIfNeeded(fileSets: MultiMap<VirtualFile, StoredFileSet>, fileSetsByPackagePrefix: MultiMap<String, WorkspaceFileSetImpl>) {
     if (!upToDate) {
       ApplicationManager.getApplication().assertReadAccessAllowed()
       val newExcludedRoots = computeCustomExcludedRoots()
@@ -40,15 +42,17 @@ internal class NonIncrementalContributors(private val project: Project,
 
       /*
       This function requires 'read access' only, so multiple thread may execute it in parallel, and we need to synchronize write access to
-      the shared fileSets map. Modifications here are performed under exclusive lock while holding the global 'Read Action', and other 
-      modifications are performed under the global 'Write Action' lock. The map is always read under 'Read Action', and this function is
+      the shared fileSets* maps. Modifications here are performed under exclusive lock while holding the global 'Read Action', and other 
+      modifications are performed under the global 'Write Action' lock. The maps are always read under 'Read Action', and this function is
       called under the same 'Read Action' before accessing the map, and `upToDate` flag will not be reset before that read action finishes,
       so read/write conflicts shouldn't happen. 
       */
       synchronized(lock) {
         if (!upToDate) {
           allRoots.forEach { file ->
-            fileSets.removeValueIf(file) { it.entityReference === NonIncrementalMarker }
+            val filter = { fileSet: StoredFileSet -> fileSet.entityReference === NonIncrementalMarker }
+            fileSets.removeValueIf(file, filter)
+            fileSetsByPackagePrefix.removeValueIf("", filter)
           }
           val newRoots = HashSet<VirtualFile>()
           Object2IntMaps.fastForEach(newExcludedRoots) { 
@@ -57,6 +61,12 @@ internal class NonIncrementalContributors(private val project: Project,
           }
           newFileSets.entrySet().forEach { (root, sets) ->
             fileSets.putValues(root, sets)
+            for (set in sets) {
+              val fileSet = set as? WorkspaceFileSetImpl
+              if (fileSet != null && fileSet.data is JvmPackageRootData) {
+                fileSetsByPackagePrefix.putValue("", fileSet)
+              }
+            }
             newRoots.add(root)
           }
           allRoots = newRoots
@@ -109,16 +119,16 @@ internal class NonIncrementalContributors(private val project: Project,
     val result = MultiMap.create<VirtualFile, StoredFileSet>()
     AdditionalLibraryRootsProvider.EP_NAME.extensionList.forEach { provider ->
       provider.getAdditionalProjectLibraries(project).forEach { library ->
-        fun registerRoots(files: MutableCollection<VirtualFile>, kind: WorkspaceFileKind) {
+        fun registerRoots(files: MutableCollection<VirtualFile>, kind: WorkspaceFileKind, fileSetData: WorkspaceFileSetData) {
           files.forEach { root ->
             rootFileSupplier.correctRoot(root, library, provider)?.let {
-              result.putValue(it, WorkspaceFileSetImpl(it, kind, NonIncrementalMarker, DummyWorkspaceFileSetData))
+              result.putValue(it, WorkspaceFileSetImpl(it, kind, NonIncrementalMarker, fileSetData))
             }
           }
         }
         //todo use comparisonId for incremental updates?
-        registerRoots(library.sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE)
-        registerRoots(library.binaryRoots, WorkspaceFileKind.EXTERNAL)
+        registerRoots(library.sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE, if (library is JavaSyntheticLibrary) LibrarySourceRootFileSetData(null, "") else DummyWorkspaceFileSetData)
+        registerRoots(library.binaryRoots, WorkspaceFileKind.EXTERNAL, if (library is JavaSyntheticLibrary) LibraryRootFileSetData(null, "") else DummyWorkspaceFileSetData)
         library.excludedRoots.forEach {
           result.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, NonIncrementalMarker))
         }

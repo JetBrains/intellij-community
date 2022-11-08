@@ -240,7 +240,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
     assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
 
-    checkInfo(myTestSrc1, myModule, false, true, "testSrc", myTestSrc1Folder, JavaSourceRootType.TEST_SOURCE, myModule, myModule);
+    String packageName = WorkspaceFileIndexEx.IS_ENABLED ? "" : "testSrc";
+    checkInfo(myTestSrc1, myModule, false, true, packageName, myTestSrc1Folder, JavaSourceRootType.TEST_SOURCE, myModule, myModule);
     entriesResult = myFileIndex.getOrderEntriesForFile(myTestSrc1);
     entries = toArray(entriesResult);
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
@@ -273,7 +274,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   public void testModuleWithSameSourceRoot() {
     SourceFolder sourceFolder = PsiTestUtil.addSourceRoot(myModule2, mySrcDir1);
     checkInfo(mySrcDir1, myModule2, false, false, "", sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-    checkInfo(myTestSrc1, myModule2, false, false, "testSrc", sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
+    String packageName = WorkspaceFileIndexEx.IS_ENABLED ? "" : "testSrc";
+    checkInfo(myTestSrc1, myModule2, false, false, packageName, sourceFolder, JavaSourceRootType.SOURCE, myModule2, myModule3);
   }
   
   public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {
@@ -311,7 +313,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(myModule1Dir, myModule, true, false, "", null, null, myModule);
     checkInfo(mySrcDir1, myModule, true, false, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule);
 
-    checkInfo(myModule2Dir, myModule2, true, false, "module2", null, null, myModule);
+    String packageName = WorkspaceFileIndexEx.IS_ENABLED ? null : "module2";
+    checkInfo(myModule2Dir, myModule2, true, false, packageName, null, null, myModule);
     checkInfo(mySrcDir2, myModule2, true, false, "", mySrcDir2Folder, JavaSourceRootType.SOURCE, myModule2, myModule3);
     checkInfo(myExcludeDir, null, true, false, "module2.src2.excluded", null, null, myModule3);
 
@@ -327,14 +330,15 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     if (WorkspaceFileIndexEx.IS_ENABLED) {
       assertExcluded(myExcludedLibSrcDir, myModule);
       assertExcluded(myExcludedLibClsDir, myModule);
+      checkPackage("lib.src.exc", true);
+      checkPackage("lib.cls.exc", true);
     }
     else {
       checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, null, myModule3, myModule);
       checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, null, myModule3);
+      checkPackage("lib.src.exc", true, myExcludedLibSrcDir);
+      checkPackage("lib.cls.exc", true, myExcludedLibClsDir);
     }
-
-    checkPackage("lib.src.exc", true, myExcludedLibSrcDir);
-    checkPackage("lib.cls.exc", true, myExcludedLibClsDir);
 
     checkPackage("lib.src", true);
     checkPackage("lib.cls", true);
