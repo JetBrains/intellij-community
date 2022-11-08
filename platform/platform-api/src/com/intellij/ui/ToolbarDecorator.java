@@ -12,6 +12,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
@@ -499,6 +500,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
     panel.putClientProperty(DslComponentProperty.LABEL_FOR, contextComponent);
     panel.putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
+    panel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);
 
     panel.setBorder(myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL));
     Border scrollPaneBorder = null;

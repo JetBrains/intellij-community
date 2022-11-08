@@ -49,6 +49,7 @@ enum class DslComponentProperty {
    *
    * Value: [JComponent]
    */
+  // todo replace usage by INTERACTIVE_COMPONENT and deprecate
   LABEL_FOR,
 
   /**

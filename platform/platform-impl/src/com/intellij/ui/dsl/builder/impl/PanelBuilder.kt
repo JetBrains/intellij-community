@@ -191,10 +191,9 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     when (cell) {
       is CellImpl<*> -> {
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component, spacingConfiguration)
-        // todo interactiveComponent is not correct here, and remove DslComponentProperty.LABEL_FOR
         builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                      resizableColumn = cell.resizableColumn,
-                     gaps = gaps, visualPaddings = prepareVisualPaddings(cell.viewComponent.interactiveComponent),
+                     gaps = gaps, visualPaddings = prepareVisualPaddings(cell.viewComponent),
                      widthGroup = cell.widthGroup)
       }
       is PanelImpl -> {

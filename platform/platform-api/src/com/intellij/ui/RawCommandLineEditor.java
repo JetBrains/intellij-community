@@ -30,6 +30,8 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.util.List;
 
+import static com.intellij.ui.dsl.gridLayout.GapsKt.toGaps;
+
 public class RawCommandLineEditor extends JPanel implements TextAccessor, FragmentWrapper {
   private final ExpandableTextField myEditor;
   private String myDialogCaption = "";
@@ -45,6 +47,7 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor, Fragme
     setDescriptor(null);
     putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEditor);
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toGaps(myEditor.getInsets()));
   }
 
   public void setDescriptor(FileChooserDescriptor descriptor) {

@@ -28,6 +28,8 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.ui.dsl.gridLayout.GapsKt.toGaps;
+
 public class SearchTextField extends JPanel {
 
   public static final DataKey<SearchTextField> KEY = DataKey.create("search.text.field");
@@ -163,6 +165,7 @@ public class SearchTextField extends JPanel {
       onFieldCleared();
     });
     putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toGaps(myTextField.getInsets()));
     DumbAwareAction.create(event -> {
       showPopup();
     }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);

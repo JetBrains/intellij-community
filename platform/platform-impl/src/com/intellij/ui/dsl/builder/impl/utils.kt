@@ -2,12 +2,8 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
-import com.intellij.ui.RawCommandLineEditor
-import com.intellij.ui.SearchTextField
-import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.DslComponentProperty
@@ -69,25 +65,10 @@ val JComponent.interactiveComponent: JComponent
   }
 
 internal fun prepareVisualPaddings(component: JComponent): Gaps {
-  var customVisualPaddings = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
+  var customVisualPaddings = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as Gaps?
 
-  if (customVisualPaddings == null) {
-    // todo Move into components implementation
-    // Patch visual paddings for known components
-    customVisualPaddings = when (component) {
-      is RawCommandLineEditor -> component.editorField.insets.toGaps()
-      is SearchTextField -> component.textEditor.insets.toGaps()
-      is JScrollPane -> Gaps.EMPTY
-      is ComponentWithBrowseButton<*> -> component.childComponent.insets.toGaps()
-      else -> {
-        if (component.getClientProperty(ToolbarDecorator.DECORATOR_KEY) != null) {
-          Gaps.EMPTY
-        }
-        else {
-          null
-        }
-      }
-    }
+  if (customVisualPaddings == null && component is JScrollPane) {
+    customVisualPaddings = Gaps.EMPTY
   }
 
   if (customVisualPaddings == null) {
