@@ -89,7 +89,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     private var forceStartUpdate = false
 
     private fun loadScriptDefinitions() {
-        if (project.isDefault) {
+        if (project.isDefault || project.isDisposed) {
             return onEarlyEnd()
         }
 
