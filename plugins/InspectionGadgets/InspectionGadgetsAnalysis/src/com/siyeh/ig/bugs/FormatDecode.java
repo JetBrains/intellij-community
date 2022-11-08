@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ import java.util.stream.IntStream;
 
 public final class FormatDecode {
 
-  private static final Pattern fsPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d*)?([tT])?([a-zA-Z%])");
+  private static final Pattern fsPattern = Pattern.compile(
+    "%(?<posSpec>\\d+\\$)?(?<flags>[-#+ 0,(<]*)(?<width>\\d+)?(?<precision>\\.\\d+)?(?<dateSpec>[tT])?(?<conversion>[a-zA-Z%])");
 
   private FormatDecode() { }
 
@@ -118,12 +119,12 @@ public final class FormatDecode {
       }
       i = matcher.end();
       final String specifier = matcher.group();
-      final String posSpec = matcher.group(1);
-      final String flags = matcher.group(2);
-      final String width = matcher.group(3);
-      final String precision = matcher.group(4);
-      final String dateSpec = matcher.group(5);
-      @NonNls final String conversion = matcher.group(6);
+      final String posSpec = matcher.group("posSpec");
+      final String flags = matcher.group("flags");
+      final String width = matcher.group("width");
+      final String precision = matcher.group("precision");
+      final String dateSpec = matcher.group("dateSpec");
+      @NonNls final String conversion = matcher.group("conversion");
 
       int flagBits = 0;
       for (int j = 0; j < flags.length(); j++) {
