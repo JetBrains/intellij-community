@@ -14,7 +14,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings.Companion.getInstance
 import com.intellij.util.ui.EdtInvocationManager
 import org.jetbrains.annotations.ApiStatus
 
@@ -26,7 +25,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
 
   private val pendingFactories = ArrayList<StatusBarWidgetFactory>()
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget?>()
-  private val widgetIdsMap: MutableMap<String, StatusBarWidgetFactory> = HashMap()
+  private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
   init {
     StatusBarWidgetFactory.EP_NAME.point.addExtensionPointListener(object : ExtensionPointListener<StatusBarWidgetFactory> {
@@ -69,7 +68,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
   }
 
   fun updateWidget(factory: StatusBarWidgetFactory) {
-    if (factory.isAvailable(project) && (!factory.isConfigurable || getInstance().isEnabled(factory))) {
+    if (factory.isAvailable(project) && (!factory.isConfigurable || StatusBarWidgetSettings.getInstance().isEnabled(factory))) {
       enableWidget(factory)
     }
     else {
@@ -99,7 +98,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     }
   }
 
-  fun findWidgetFactory(widgetId: String): StatusBarWidgetFactory? = widgetIdsMap.get(widgetId)
+  fun findWidgetFactory(widgetId: String): StatusBarWidgetFactory? = widgetIdMap.get(widgetId)
 
   fun getWidgetFactories(): Set<StatusBarWidgetFactory> = synchronized(widgetFactories) { return widgetFactories.keys }
 
@@ -119,7 +118,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
 
       val widget = factory.createWidget(project)
       widgetFactories.put(factory, widget)
-      widgetIdsMap.put(widget.ID(), factory)
+      widgetIdMap.put(widget.ID(), factory)
       val anchor = getAnchor(factory, availableFactories)
       ApplicationManager.getApplication().invokeLater({
                                                         val statusBar = WindowManager.getInstance().getStatusBar(project)
@@ -160,7 +159,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     synchronized(widgetFactories) {
       val createdWidget = widgetFactories.put(factory, null)
       if (createdWidget != null) {
-        widgetIdsMap.remove(createdWidget.ID())
+        widgetIdMap.remove(createdWidget.ID())
         factory.disposeWidget(createdWidget)
         EdtInvocationManager.invokeLaterIfNeeded {
           if (!project.isDisposed) {

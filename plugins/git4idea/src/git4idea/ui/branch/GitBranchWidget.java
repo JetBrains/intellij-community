@@ -63,7 +63,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  protected @Nullable Icon getIcon(@NotNull GitRepository repository) {
+  protected @NotNull Icon getIcon(@NotNull GitRepository repository) {
     return BranchIconUtil.Companion.getBranchIcon(repository);
   }
 
@@ -78,7 +78,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull GitRepository repository) {
+  protected @NotNull JBPopup getWidgetPopup(@NotNull Project project, @NotNull GitRepository repository) {
     GitBranchesUsageCollector.branchWidgetClicked();
     if (GitBranchesTreePopup.isEnabled()) {
       return GitBranchesTreePopup.create(project);
@@ -102,10 +102,10 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     return super.getToolTip(repository);
   }
 
-  public static class Listener implements VcsRepositoryMappingListener {
+  static final class Listener implements VcsRepositoryMappingListener {
     private final Project myProject;
 
-    public Listener(@NotNull Project project) {
+    Listener(@NotNull Project project) {
       myProject = project;
     }
 
@@ -115,7 +115,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     }
   }
 
-  public static class Factory implements StatusBarWidgetFactory {
+  static final class Factory implements StatusBarWidgetFactory {
     @Override
     public @NotNull String getId() {
       return ID;
@@ -153,10 +153,10 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     }
   }
 
-  public static class MyExperimentalToolbarStateListener implements ExperimentalToolbarStateListener {
+  static final class MyExperimentalToolbarStateListener implements ExperimentalToolbarStateListener {
     private final Project myProject;
 
-    public MyExperimentalToolbarStateListener(Project project) {
+    MyExperimentalToolbarStateListener(Project project) {
       myProject = project;
     }
 

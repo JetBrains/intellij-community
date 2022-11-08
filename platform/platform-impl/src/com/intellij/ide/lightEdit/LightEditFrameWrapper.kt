@@ -1,179 +1,141 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.lightEdit;
+package com.intellij.ide.lightEdit
 
-import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper;
-import com.intellij.ide.lightEdit.statusBar.*;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectFrameAllocatorKt;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.*;
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import com.intellij.toolWindow.ToolWindowPane;
-import com.intellij.ui.PopupHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.IdeMessagePanel
+import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper
+import com.intellij.ide.lightEdit.statusBar.*
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.createNewProjectFrame
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.LightEditFrame
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.toolWindow.ToolWindowPane
+import com.intellij.ui.PopupHandler
+import java.awt.Component
+import java.awt.Dimension
+import java.util.function.BooleanSupplier
+import javax.swing.JFrame
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.BooleanSupplier;
+internal class LightEditFrameWrapper(
+  private val project: Project,
+  frame: IdeFrameImpl,
+  private val closeHandler: BooleanSupplier
+) : ProjectFrameHelper(frame = frame, selfie = null), Disposable, LightEditFrame {
+  private var editPanel: LightEditPanel? = null
+  private var frameTitleUpdateEnabled = true
 
-final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, LightEditFrame {
-  private final Project myProject;
-  private final BooleanSupplier myCloseHandler;
-
-  private LightEditPanel myEditPanel;
-
-  private boolean myFrameTitleUpdateEnabled = true;
-
-  LightEditFrameWrapper(@NotNull Project project, @NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
-    super(frame, null);
-    myProject = project;
-    myCloseHandler = closeHandler;
+  companion object {
+    fun allocate(project: Project, frameInfo: FrameInfo?, closeHandler: BooleanSupplier): LightEditFrameWrapper {
+      return (WindowManager.getInstance() as WindowManagerImpl).allocateLightEditFrame(project) {
+        LightEditFrameWrapper(project = project, frame = createNewProjectFrame(frameInfo), closeHandler = closeHandler)
+      } as LightEditFrameWrapper
+    }
   }
 
-  @Override
-  public @NotNull Project getProject() {
-    return myProject;
+  override fun getProject(): Project = project
+
+  val lightEditPanel: LightEditPanel
+    get() = editPanel!!
+
+  override fun createIdeRootPane(): IdeRootPane {
+    return LightEditRootPane(frame = requireNotNullFrame(), frameHelper = this, parentDisposable = this)
   }
 
-  @NotNull
-  LightEditPanel getLightEditPanel() {
-    return myEditPanel;
+  override fun installDefaultProjectStatusBarWidgets(project: Project) {
+    val editorManager = LightEditService.getInstance().editorManager
+    val statusBar = statusBar!!
+    statusBar.addWidgetToLeft(LightEditModeNotificationWidget(), this)
+    statusBar.addWidget(LightEditPositionWidget(project, editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
+    statusBar.addWidget(LightEditAutosaveWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this)
+    statusBar.addWidget(LightEditEncodingWidgetWrapper(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL), this)
+    statusBar.addWidget(LightEditLineSeparatorWidgetWrapper(project), StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
+                        this)
+    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
+    val statusBarWidgetManager = project.service<StatusBarWidgetsManager>()
+    ApplicationManager.getApplication().invokeLater { statusBarWidgetManager.installPendingWidgets() }
+    Disposer.register(statusBar) { statusBarWidgetManager.disableAllWidgets() }
   }
 
-  @Override
-  protected @NotNull IdeRootPane createIdeRootPane() {
-    return new LightEditRootPane(requireNotNullFrame(), this, this);
-  }
+  override val titleInfoProviders: List<TitleInfoProvider>
+    get() = emptyList()
 
-  @Override
-  protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
-    LightEditorManager editorManager = LightEditService.getInstance().getEditorManager();
-    IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-    statusBar.addWidgetToLeft(new LightEditModeNotificationWidget(), this);
-    statusBar.addWidget(new LightEditPositionWidget(project, editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this);
-    statusBar.addWidget(new LightEditAutosaveWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this);
-    statusBar.addWidget(new LightEditEncodingWidgetWrapper(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL), this);
-    statusBar.addWidget(new LightEditLineSeparatorWidgetWrapper(project), StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
-                        this);
-
-    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
-    StatusBarWidgetsManager statusBarWidgetsManager = project.getService(StatusBarWidgetsManager.class);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      statusBarWidgetsManager.installPendingWidgets();
-    });
-    Disposer.register(statusBar, () -> statusBarWidgetsManager.disableAllWidgets());
-  }
-
-  @Override
-  protected @NotNull List<TitleInfoProvider> getTitleInfoProviders() {
-    return Collections.emptyList();
-  }
-
-  @Override
-  protected @NotNull CloseProjectWindowHelper createCloseProjectWindowHelper() {
-    return new CloseProjectWindowHelper() {
-      @Override
-      public void windowClosing(@Nullable Project project) {
-        if (myCloseHandler.getAsBoolean()) {
-          super.windowClosing(project);
+  override fun createCloseProjectWindowHelper(): CloseProjectWindowHelper {
+    return object : CloseProjectWindowHelper() {
+      override fun windowClosing(project: Project?) {
+        if (closeHandler.asBoolean) {
+          super.windowClosing(project)
         }
       }
-    };
+    }
   }
 
-  @Override
-  public void dispose() {
-    Disposer.dispose(myEditPanel);
+  override fun dispose() {
+    Disposer.dispose(editPanel!!)
   }
 
-  public void closeAndDispose(@NotNull LightEditServiceImpl lightEditServiceImpl) {
-    IdeFrameImpl frame = requireNotNullFrame();
-    FrameInfo frameInfo = ProjectFrameBounds.getInstance(myProject).getActualFrameInfoInDeviceSpace(
-      this, frame, (WindowManagerImpl)WindowManager.getInstance()
-    );
-    lightEditServiceImpl.setFrameInfo(frameInfo);
+  fun closeAndDispose(lightEditServiceImpl: LightEditServiceImpl) {
+    val frame = requireNotNullFrame()
+    val frameInfo = getInstance(project).getActualFrameInfoInDeviceSpace(
+      frameHelper = this,
+      frame = frame,
+      windowManager = (WindowManager.getInstance() as WindowManagerImpl)
+    )
 
-    frame.setVisible(false);
-    Disposer.dispose(this);
+    lightEditServiceImpl.setFrameInfo(frameInfo)
+    frame.isVisible = false
+    Disposer.dispose(this)
   }
 
-  private class LightEditRootPane extends IdeRootPane {
-    LightEditRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
-      super(frame, frameHelper, parentDisposable);
+  private inner class LightEditRootPane(frame: JFrame,
+                                        frameHelper: IdeFrame,
+                                        parentDisposable: Disposable) : IdeRootPane(frame, frameHelper, parentDisposable) {
+    override fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
+      val panel = LightEditPanel(LightEditUtil.requireProject())
+      editPanel = panel
+      return panel
     }
 
-    @Override
-    protected @NotNull Component createCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-      myEditPanel = new LightEditPanel(LightEditUtil.requireProject());
-      return myEditPanel;
+    override fun getToolWindowPane(): ToolWindowPane {
+      throw IllegalStateException("Tool windows are unavailable in LightEdit")
     }
 
-    @Override
-    public @NotNull ToolWindowPane getToolWindowPane() {
-      throw new IllegalStateException("Tool windows are unavailable in LightEdit");
-    }
+    override val mainMenuActionGroup: ActionGroup
+      get() = LightEditMainMenuHelper().mainMenuActionGroup
 
-    @Override
-    public @Nullable ActionGroup getMainMenuActionGroup() {
-      return new LightEditMainMenuHelper().getMainMenuActionGroup();
-    }
-
-    @Override
-    protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-      return new IdeStatusBarImpl(frame, false) {
-        @Override
-        public void updateUI() {
-          setUI(new LightEditStatusBarUI());
+    override fun createStatusBar(frame: IdeFrame): IdeStatusBarImpl {
+      return object : IdeStatusBarImpl(frame, false) {
+        override fun updateUI() {
+          setUI(LightEditStatusBarUI())
         }
 
-        @Override
-        public Dimension getPreferredSize() {
-          return LightEditStatusBarUI.withHeight(super.getPreferredSize());
-        }
-      };
+        override fun getPreferredSize(): Dimension = LightEditStatusBarUI.withHeight(super.getPreferredSize())
+      }
     }
 
-    @Override
-    public void updateNorthComponents() {
-    }
-
-    @Override
-    public void installNorthComponents$intellij_platform_ide_impl(@NotNull Project project) {
-    }
-
-    @Override
-    public void deinstallNorthComponents$intellij_platform_ide_impl(@NotNull Project project) {
-    }
+    override fun updateNorthComponents() {}
+    override fun installNorthComponents(project: Project) {}
+    override fun deinstallNorthComponents(project: Project) {}
   }
 
-  static @NotNull LightEditFrameWrapper allocate(@NotNull Project project,
-                                                 @Nullable FrameInfo frameInfo,
-                                                 @NotNull BooleanSupplier closeHandler) {
-    return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateLightEditFrame(project, () -> {
-      return new LightEditFrameWrapper(project, ProjectFrameAllocatorKt.createNewProjectFrame(frameInfo), closeHandler);
-    });
+  fun setFrameTitleUpdateEnabled(frameTitleUpdateEnabled: Boolean) {
+    this.frameTitleUpdateEnabled = frameTitleUpdateEnabled
   }
 
-  void setFrameTitleUpdateEnabled(boolean frameTitleUpdateEnabled) {
-    myFrameTitleUpdateEnabled = frameTitleUpdateEnabled;
-  }
-
-  @Override
-  public void setFrameTitle(@NotNull String text) {
-    if (myFrameTitleUpdateEnabled) {
-      super.setFrameTitle(text);
+  override fun setFrameTitle(text: String) {
+    if (frameTitleUpdateEnabled) {
+      super.setFrameTitle(text)
     }
   }
 }
