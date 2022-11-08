@@ -163,7 +163,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         postImportTask.run();
       }
 
-      commit(modelsProvider, project, true, "Imported data");
+      commit(modelsProvider, project, true, "Imported data", activityId);
       if (indicator != null) {
         indicator.setIndeterminate(true);
       }
@@ -362,7 +362,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         }
       }
 
-      commit(modelsProvider, project, synchronous, "Removed data");
+      commit(modelsProvider, project, synchronous, "Removed data", null);
     }
     catch (Throwable t) {
       dispose(modelsProvider, project, synchronous);
@@ -418,13 +418,20 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,
                              @NotNull Project project,
                              boolean synchronous,
-                             @NotNull final String commitDesc) {
+                             @NotNull final String commitDesc,
+                             @Nullable Long activityId) {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
+        if (activityId != null) {
+          ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
+        }
         final long startTime = System.currentTimeMillis();
         modelsProvider.commit();
         final long timeInMs = System.currentTimeMillis() - startTime;
+        if (activityId != null) {
+          ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.WORKSPACE_MODEL_APPLY, timeInMs);
+        }
         LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
       }
     });

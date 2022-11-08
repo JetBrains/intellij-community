@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-enum class Phase { GRADLE_CALL, PROJECT_RESOLVERS, DATA_SERVICES }
+enum class Phase { GRADLE_CALL, PROJECT_RESOLVERS, DATA_SERVICES, WORKSPACE_MODEL_APPLY }
 
 /**
  * Collect gradle import stats.
@@ -34,7 +34,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("build.gradle.import", 5)
+    val GROUP = EventLogGroup("build.gradle.import", 6)
 
     private val activityIdField = EventFields.Long("ide_activity_id")
     private val importPhaseField = EventFields.Enum<Phase>("phase")
@@ -72,6 +72,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
     fun logPhaseStarted(project: Project?, activityId: Long, phase: Phase) = phaseStartedEvent.log(project, activityId, phase)
 
     @JvmStatic
+    @JvmOverloads
     fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long, errorCount: Int = 0) =
       phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs),
         EventPair(Int("error_count"), errorCount))
