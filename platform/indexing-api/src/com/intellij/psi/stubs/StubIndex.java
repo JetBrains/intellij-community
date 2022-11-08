@@ -4,9 +4,11 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
@@ -143,4 +145,8 @@ public abstract class StubIndex {
 
 
   public abstract void forceRebuild(@NotNull Throwable e);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  abstract public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
 }
