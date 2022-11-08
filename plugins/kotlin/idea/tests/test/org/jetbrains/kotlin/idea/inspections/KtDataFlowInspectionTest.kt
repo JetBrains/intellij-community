@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 @TestMetadata("testData/inspections/dfa")
 class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testAlwaysZero() = doTest()
+    fun testAnyType() = doTest()
     fun testArrays() = doTest()
     fun testBoolean() = doTest()
     fun testBooleanConst() = doTest()
