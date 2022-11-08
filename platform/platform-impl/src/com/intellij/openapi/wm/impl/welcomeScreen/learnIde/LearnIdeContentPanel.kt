@@ -57,7 +57,7 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     initInteractiveCoursesPanel(interactiveCoursesExtensions)
     initHelpAndResourcePanel()
 
-    if (interactiveCoursesExtensions.isEmpty()) {
+    if (interactiveCoursesExtensions.mapNotNull { it.getInteractiveCourseData() }.isEmpty()) {
       contentPanel.add(helpAndResourcesPanel, BorderLayout.CENTER)
     }
     else {
