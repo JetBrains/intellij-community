@@ -21,7 +21,7 @@ import java.util.Collection;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.STATUS_BAR_PLACE;
 
-public class StatusBarWidgetsActionGroup extends DefaultActionGroup {
+public final class StatusBarWidgetsActionGroup extends DefaultActionGroup {
   public static final String GROUP_ID = "ViewStatusBarWidgetsGroup";
 
   @Override

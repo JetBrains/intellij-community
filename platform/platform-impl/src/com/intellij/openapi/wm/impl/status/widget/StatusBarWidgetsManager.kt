@@ -1,253 +1,222 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.status.widget;
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.wm.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.wm.impl.status.widget
 
-import java.util.*;
+import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings.Companion.getInstance
+import com.intellij.util.ui.EdtInvocationManager
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-public final class StatusBarWidgetsManager extends SimpleModificationTracker implements Disposable {
-  private static final @NotNull Logger LOG = Logger.getInstance(StatusBarWidgetsManager.class);
-
-  private final List<StatusBarWidgetFactory> myPendingFactories = new ArrayList<>();
-  private final Map<StatusBarWidgetFactory, StatusBarWidget> myWidgetFactories = new LinkedHashMap<>();
-  private final Map<String, StatusBarWidgetFactory> myWidgetIdsMap = new HashMap<>();
-
-  private final Project myProject;
-
-  public StatusBarWidgetsManager(@NotNull Project project) {
-    myProject = project;
-
-    StatusBarWidgetFactory.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull StatusBarWidgetFactory factory, @NotNull PluginDescriptor pluginDescriptor) {
-        addWidgetFactory(factory);
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull StatusBarWidgetFactory factory, @NotNull PluginDescriptor pluginDescriptor) {
-        removeWidgetFactory(factory);
-      }
-    }, true, this);
-
-    //noinspection deprecation
-    StatusBarWidgetProvider.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull StatusBarWidgetProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
-        addWidgetFactory(new StatusBarWidgetProviderToFactoryAdapter(myProject, provider));
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull StatusBarWidgetProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
-        removeWidgetFactory(new StatusBarWidgetProviderToFactoryAdapter(myProject, provider));
-      }
-    }, true, this);
+class StatusBarWidgetsManager(private val project: Project) : SimpleModificationTracker(), Disposable {
+  companion object {
+    private val LOG = logger<StatusBarWidgetsManager>()
   }
 
-  public void updateAllWidgets() {
-    synchronized (myWidgetFactories) {
-      for (StatusBarWidgetFactory factory : myWidgetFactories.keySet()) {
-        updateWidget(factory);
+  private val pendingFactories = ArrayList<StatusBarWidgetFactory>()
+  private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget?>()
+  private val widgetIdsMap: MutableMap<String, StatusBarWidgetFactory> = HashMap()
+
+  init {
+    StatusBarWidgetFactory.EP_NAME.point.addExtensionPointListener(object : ExtensionPointListener<StatusBarWidgetFactory> {
+      override fun extensionAdded(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
+        addWidgetFactory(extension)
+      }
+
+      override fun extensionRemoved(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
+        removeWidgetFactory(extension)
+      }
+    }, true, this)
+  }
+
+  fun updateAllWidgets() {
+    synchronized(widgetFactories) {
+      for (factory in widgetFactories.keys) {
+        updateWidget(factory)
       }
     }
   }
 
   @ApiStatus.Internal
-  public void disableAllWidgets() {
-    synchronized (myWidgetFactories) {
-      for (StatusBarWidgetFactory factory : myWidgetFactories.keySet()) {
-        disableWidget(factory);
+  fun disableAllWidgets() {
+    synchronized(widgetFactories) {
+      for (factory in widgetFactories.keys) {
+        disableWidget(factory)
       }
     }
   }
 
-  public void updateWidget(@NotNull Class<? extends StatusBarWidgetFactory> factoryExtension) {
-    StatusBarWidgetFactory factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension);
-    synchronized (myWidgetFactories) {
-      if (factory == null || !myWidgetFactories.containsKey(factory)) {
-        LOG.info("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
-        return;
+  fun updateWidget(factoryExtension: Class<out StatusBarWidgetFactory?>) {
+    val factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension)
+    synchronized(widgetFactories) {
+      if (factory == null || !widgetFactories.containsKey(factory)) {
+        LOG.info("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factoryExtension.name}")
+        return
       }
-      updateWidget(factory);
+      updateWidget(factory)
     }
   }
 
-  public void updateWidget(@NotNull StatusBarWidgetFactory factory) {
-    if (factory.isAvailable(myProject) && (!factory.isConfigurable() || StatusBarWidgetSettings.getInstance().isEnabled(factory))) {
-      enableWidget(factory);
+  fun updateWidget(factory: StatusBarWidgetFactory) {
+    if (factory.isAvailable(project) && (!factory.isConfigurable || getInstance().isEnabled(factory))) {
+      enableWidget(factory)
     }
     else {
-      disableWidget(factory);
+      disableWidget(factory)
     }
   }
 
-  public boolean wasWidgetCreated(@Nullable StatusBarWidgetFactory factory) {
-    synchronized (myWidgetFactories) {
-      return myWidgetFactories.get(factory) != null;
+  fun wasWidgetCreated(factory: StatusBarWidgetFactory?): Boolean {
+    synchronized(widgetFactories) { return widgetFactories.get(factory) != null }
+  }
+
+  fun wasWidgetCreated(factoryId: String): Boolean {
+    synchronized(widgetFactories) {
+      return widgetFactories.keys.any { factory ->
+        factory.id.equals(factoryId, ignoreCase = true)
+      }
     }
   }
 
-  public boolean wasWidgetCreated(@NotNull String factoryId) {
-    synchronized (myWidgetFactories) {
-      return ContainerUtil.exists(myWidgetFactories.keySet(), factory -> factory.getId().equalsIgnoreCase(factoryId));
+  override fun dispose() {
+    synchronized(widgetFactories) {
+      for (factory in widgetFactories.keys) {
+        disableWidget(factory)
+      }
+      widgetFactories.clear()
+      pendingFactories.clear()
     }
   }
 
-  @Override
-  public void dispose() {
-    synchronized (myWidgetFactories) {
-      myWidgetFactories.forEach((factory, createdWidget) -> disableWidget(factory));
-      myWidgetFactories.clear();
-      myPendingFactories.clear();
-    }
-  }
+  fun findWidgetFactory(widgetId: String): StatusBarWidgetFactory? = widgetIdsMap.get(widgetId)
 
-  @Nullable
-  public StatusBarWidgetFactory findWidgetFactory(@NotNull String widgetId) {
-    return myWidgetIdsMap.get(widgetId);
-  }
+  fun getWidgetFactories(): Set<StatusBarWidgetFactory> = synchronized(widgetFactories) { return widgetFactories.keys }
 
-  @NotNull
-  public Set<StatusBarWidgetFactory> getWidgetFactories() {
-    synchronized (myWidgetFactories) {
-      return myWidgetFactories.keySet();
-    }
-  }
-
-  private void enableWidget(@NotNull StatusBarWidgetFactory factory) {
-    List<StatusBarWidgetFactory> availableFactories = StatusBarWidgetFactory.EP_NAME.getExtensionList();
-    synchronized (myWidgetFactories) {
-      if (!myWidgetFactories.containsKey(factory)) {
-        LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factory.getId());
-        return;
+  private fun enableWidget(factory: StatusBarWidgetFactory) {
+    val availableFactories = StatusBarWidgetFactory.EP_NAME.extensionList
+    synchronized(widgetFactories) {
+      if (!widgetFactories.containsKey(factory)) {
+        LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factory.id}")
+        return
       }
 
-      StatusBarWidget createdWidget = myWidgetFactories.get(factory);
+      val createdWidget = widgetFactories.get(factory)
       if (createdWidget != null) {
         // widget is already enabled
-        return;
+        return
       }
 
-      StatusBarWidget widget = factory.createWidget(myProject);
-      myWidgetFactories.put(factory, widget);
-      myWidgetIdsMap.put(widget.ID(), factory);
-      String anchor = getAnchor(factory, availableFactories);
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-        if (statusBar == null) {
-          LOG.error("Cannot add a widget for project without root status bar: " + factory.getId());
-        }
-        else {
-          statusBar.addWidget(widget, anchor, this);
-        }
-      }, myProject.getDisposed());
+      val widget = factory.createWidget(project)
+      widgetFactories.put(factory, widget)
+      widgetIdsMap.put(widget.ID(), factory)
+      val anchor = getAnchor(factory, availableFactories)
+      ApplicationManager.getApplication().invokeLater({
+                                                        val statusBar = WindowManager.getInstance().getStatusBar(project)
+                                                        if (statusBar == null) {
+                                                          LOG.error("Cannot add a widget for project without root status bar: ${factory.id}")
+                                                        }
+                                                        else {
+                                                          statusBar.addWidget(widget, anchor, this)
+                                                        }
+                                                      }, project.disposed)
     }
   }
 
-  @NotNull
-  private String getAnchor(@NotNull StatusBarWidgetFactory factory, @NotNull List<? extends StatusBarWidgetFactory> availableFactories) {
-    if (factory instanceof StatusBarWidgetProviderToFactoryAdapter) {
-      return ((StatusBarWidgetProviderToFactoryAdapter)factory).getAnchor();
+  private fun getAnchor(factory: StatusBarWidgetFactory, availableFactories: List<StatusBarWidgetFactory>): String {
+    if (factory is StatusBarWidgetProviderToFactoryAdapter) {
+      return factory.anchor
     }
-    int indexOf = availableFactories.indexOf(factory);
-    for (int i = indexOf + 1; i < availableFactories.size(); i++) {
-      StatusBarWidgetFactory nextFactory = availableFactories.get(i);
-      StatusBarWidget widget = myWidgetFactories.get(nextFactory);
+
+    val indexOf = availableFactories.indexOf(factory)
+    for (i in indexOf + 1 until availableFactories.size) {
+      val nextFactory = availableFactories[i]
+      val widget = widgetFactories.get(nextFactory)
       if (widget != null) {
-        return StatusBar.Anchors.before(widget.ID());
+        return StatusBar.Anchors.before(widget.ID())
       }
     }
-    for (int i = indexOf - 1; i >= 0; i--) {
-      StatusBarWidgetFactory prevFactory = availableFactories.get(i);
-      StatusBarWidget widget = myWidgetFactories.get(prevFactory);
+    for (i in indexOf - 1 downTo 0) {
+      val prevFactory = availableFactories[i]
+      val widget = widgetFactories.get(prevFactory)
       if (widget != null) {
-        return StatusBar.Anchors.after(widget.ID());
+        return StatusBar.Anchors.after(widget.ID())
       }
     }
-    return StatusBar.Anchors.DEFAULT_ANCHOR;
+    return StatusBar.Anchors.DEFAULT_ANCHOR
   }
 
-  private void disableWidget(@NotNull StatusBarWidgetFactory factory) {
-    synchronized (myWidgetFactories) {
-      StatusBarWidget createdWidget = myWidgetFactories.put(factory, null);
+  private fun disableWidget(factory: StatusBarWidgetFactory) {
+    synchronized(widgetFactories) {
+      val createdWidget = widgetFactories.put(factory, null)
       if (createdWidget != null) {
-        myWidgetIdsMap.remove(createdWidget.ID());
-        factory.disposeWidget(createdWidget);
-        UIUtil.invokeLaterIfNeeded(() -> {
-          if (!myProject.isDisposed()) {
-            StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-            if (statusBar != null) {
-              statusBar.removeWidget(createdWidget.ID());
-            }
+        widgetIdsMap.remove(createdWidget.ID())
+        factory.disposeWidget(createdWidget)
+        EdtInvocationManager.invokeLaterIfNeeded {
+          if (!project.isDisposed) {
+            WindowManager.getInstance().getStatusBar(project)?.removeWidget(createdWidget.ID())
           }
-        });
-      }
-    }
-  }
-
-  public boolean canBeEnabledOnStatusBar(@NotNull StatusBarWidgetFactory factory, @NotNull StatusBar statusBar) {
-    return factory.isAvailable(myProject) && factory.isConfigurable() && factory.canBeEnabledOn(statusBar);
-  }
-
-  public void installPendingWidgets() {
-    LOG.assertTrue(WindowManager.getInstance().getStatusBar(myProject) != null);
-
-    synchronized (myWidgetFactories) {
-      List<StatusBarWidgetFactory> pendingFactories = List.copyOf(myPendingFactories);
-      myPendingFactories.clear();
-      for (StatusBarWidgetFactory factory : pendingFactories) {
-        addWidgetFactory(factory);
-      }
-    }
-
-    updateAllWidgets();
-  }
-
-  private void addWidgetFactory(@NotNull StatusBarWidgetFactory factory) {
-    synchronized (myWidgetFactories) {
-      if (LightEdit.owns(myProject) && !(factory instanceof LightEditCompatible)) {
-        return;
-      }
-      if (myWidgetFactories.containsKey(factory)) {
-        LOG.error("Factory has been added already: " + factory.getId());
-        return;
-      }
-      if (WindowManager.getInstance().getStatusBar(myProject) == null) {
-        myPendingFactories.add(factory);
-        return;
-      }
-      myWidgetFactories.put(factory, null);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myProject.isDisposed()) {
-          updateWidget(factory);
         }
-      });
-      incModificationCount();
+      }
     }
   }
 
-  private void removeWidgetFactory(@NotNull StatusBarWidgetFactory factory) {
-    synchronized (myWidgetFactories) {
-      disableWidget(factory);
-      myWidgetFactories.remove(factory);
-      myPendingFactories.remove(factory);
-      incModificationCount();
+  fun canBeEnabledOnStatusBar(factory: StatusBarWidgetFactory, statusBar: StatusBar): Boolean {
+    return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
+  }
+
+  fun installPendingWidgets() {
+    LOG.assertTrue(WindowManager.getInstance().getStatusBar(project) != null)
+    synchronized(widgetFactories) {
+      val pendingFactories = java.util.List.copyOf(pendingFactories)
+      this.pendingFactories.clear()
+      for (factory in pendingFactories) {
+        addWidgetFactory(factory)
+      }
+    }
+    updateAllWidgets()
+  }
+
+  private fun addWidgetFactory(factory: StatusBarWidgetFactory) {
+    if (LightEdit.owns(project) && factory !is LightEditCompatible) {
+      return
+    }
+
+    synchronized(widgetFactories) {
+      if (widgetFactories.containsKey(factory)) {
+        LOG.error("Factory has been added already: ${factory.id}")
+        return
+      }
+
+      if (WindowManager.getInstance().getStatusBar(project) == null) {
+        pendingFactories.add(factory)
+        return
+      }
+
+      widgetFactories.put(factory, null)
+      ApplicationManager.getApplication().invokeLater({
+                                                        updateWidget(factory)
+                                                        incModificationCount()
+                                                      }, project.disposed)
+    }
+  }
+
+  private fun removeWidgetFactory(factory: StatusBarWidgetFactory) {
+    synchronized(widgetFactories) {
+      disableWidget(factory)
+      widgetFactories.remove(factory)
+      pendingFactories.remove(factory)
+      incModificationCount()
     }
   }
 }
