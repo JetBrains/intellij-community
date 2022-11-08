@@ -185,8 +185,10 @@ public final class ChangelistConflictTracker {
     }
   }
 
-  public Map<String, Conflict> getConflicts() {
-    return myConflicts;
+  public void clearAllIgnored() {
+    for (Conflict conflict : myConflicts.values()) {
+      conflict.ignored = false;
+    }
   }
 
   public Collection<String> getIgnoredConflicts() {

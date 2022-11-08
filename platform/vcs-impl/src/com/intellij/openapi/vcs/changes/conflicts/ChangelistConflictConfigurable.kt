@@ -118,9 +118,7 @@ class ChangelistConflictConfigurable(val project: Project)
               .onReset { shouldClear = false }
               .onApply {
                 if (shouldClear) {
-                  for (conflict in conflictTracker.conflicts.values) {
-                    conflict.ignored = false
-                  }
+                  conflictTracker.clearAllIgnored()
                   shouldClear = false
                 }
               }.align(AlignX.RIGHT)
