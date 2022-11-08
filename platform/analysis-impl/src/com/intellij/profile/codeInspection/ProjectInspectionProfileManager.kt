@@ -33,9 +33,10 @@ private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionPr
 </component>""").digest()
 
 const val PROFILE_DIR: String = "inspectionProfiles"
+const val PROFILES_SETTINGS: String = "profiles_settings.xml"
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "$PROFILE_DIR/profiles_settings.xml", exclusive = true))])
-open class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element>, Disposable {
+open class ProjectInspectionProfileManager(override val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element>, ProjectBasedInspectionProfileManager, Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectInspectionProfileManager {
@@ -57,7 +58,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
       return profile
     }
 
-    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, PROFILES_SETTINGS)
 
     override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: ByteArray): Boolean {
       return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest.contentEquals(defaultSchemeDigest)
