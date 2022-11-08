@@ -42,6 +42,7 @@ class MarkdownParserManager: Disposable {
 
   companion object {
     @JvmField
+    @Deprecated("Use MarkdownFile.getFlavour() instead")
     val FLAVOUR_DESCRIPTION = Key.create<MarkdownFlavourDescriptor>("Markdown.Flavour")
 
     @JvmField

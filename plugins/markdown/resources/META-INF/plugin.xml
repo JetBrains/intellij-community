@@ -54,6 +54,9 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
                     interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.flavourProvider"
+                    interface="org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
