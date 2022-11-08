@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.conflicts;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -33,14 +32,12 @@ public final class ChangelistConflictTracker {
 
   private final Options myOptions = new Options();
   private final Project myProject;
-
   private final ChangeListManager myChangeListManager;
-  private final ChangeListAdapter myChangeListListener;
 
-  private final DocumentListener myDocumentListener;
+  private final ZipperUpdater myZipperUpdater;
 
-  private final Set<VirtualFile> myCheckSet;
-  private final Object myCheckSetLock;
+  private final Set<VirtualFile> myCheckSet = new HashSet<>();
+  private final Object myCheckSetLock = new Object();
   private final AtomicBoolean myShouldIgnoreModifications = new AtomicBoolean(false);
 
   @NotNull
@@ -50,58 +47,9 @@ public final class ChangelistConflictTracker {
 
   public ChangelistConflictTracker(@NotNull Project project, @NotNull ChangeListManager changeListManager) {
     myProject = project;
-
     myChangeListManager = changeListManager;
-    myCheckSetLock = new Object();
-    myCheckSet = new HashSet<>();
 
-    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, project);
-    myDocumentListener = new BulkAwareDocumentListener.Simple() {
-      @Override
-      public void afterDocumentChange(@NotNull Document document) {
-        if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get() || !myChangeListManager.areChangeListsEnabled()) {
-          return;
-        }
-        VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        if (file != null && file.isInLocalFileSystem() && ProjectUtil.guessProjectForFile(file) == myProject) {
-          synchronized (myCheckSetLock) {
-            myCheckSet.add(file);
-          }
-          zipperUpdater.queue(() -> checkFiles());
-        }
-      }
-    };
-
-    myChangeListListener = new ChangeListAdapter() {
-      @Override
-      public void changeListChanged(ChangeList list) {
-        if (((LocalChangeList)list).isDefault()) {
-          clearChanges(list.getChanges());
-        }
-      }
-
-      @Override
-      public void changesMoved(Collection<? extends Change> changes, ChangeList fromList, ChangeList toList) {
-        if (((LocalChangeList)toList).isDefault() || ((LocalChangeList)fromList).isDefault()) {
-          clearChanges(changes);
-        }
-      }
-
-      @Override
-      public void changesRemoved(Collection<? extends Change> changes, ChangeList fromList) {
-        clearChanges(changes);
-      }
-
-      @Override
-      public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
-        clearChanges(newDefaultList.getChanges());
-      }
-
-      @Override
-      public void changeListAvailabilityChanged() {
-        optionsChanged();
-      }
-    };
+    myZipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, project);
   }
 
   public void setIgnoreModifications(boolean value) {
@@ -187,8 +135,8 @@ public final class ChangelistConflictTracker {
   }
 
   public void startTracking() {
-    myProject.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, myChangeListListener);
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
+    myProject.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, new MyChangeListListener());
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), myProject);
   }
 
   public void saveState(Element to) {
@@ -292,6 +240,53 @@ public final class ChangelistConflictTracker {
 
   public Options getOptions() {
     return myOptions;
+  }
+
+  private class MyDocumentListener implements BulkAwareDocumentListener.Simple {
+    @Override
+    public void afterDocumentChange(@NotNull Document document) {
+      if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get() || !myChangeListManager.areChangeListsEnabled()) {
+        return;
+      }
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (file != null && file.isInLocalFileSystem() && ProjectUtil.guessProjectForFile(file) == myProject) {
+        synchronized (myCheckSetLock) {
+          myCheckSet.add(file);
+        }
+        myZipperUpdater.queue(() -> checkFiles());
+      }
+    }
+  }
+
+  private class MyChangeListListener implements ChangeListListener {
+    @Override
+    public void changeListChanged(ChangeList list) {
+      if (((LocalChangeList)list).isDefault()) {
+        clearChanges(list.getChanges());
+      }
+    }
+
+    @Override
+    public void changesMoved(Collection<? extends Change> changes, ChangeList fromList, ChangeList toList) {
+      if (((LocalChangeList)toList).isDefault() || ((LocalChangeList)fromList).isDefault()) {
+        clearChanges(changes);
+      }
+    }
+
+    @Override
+    public void changesRemoved(Collection<? extends Change> changes, ChangeList fromList) {
+      clearChanges(changes);
+    }
+
+    @Override
+    public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
+      clearChanges(newDefaultList.getChanges());
+    }
+
+    @Override
+    public void changeListAvailabilityChanged() {
+      optionsChanged();
+    }
   }
 
   public static final class Options {
