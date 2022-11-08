@@ -61,19 +61,21 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   }
 
   /**
-   * Runs all quickfixes in [hints] on [before] at the cursor position marked with <caret> and compares it with [after].
+   * Run the [hint] quickfix on [before] at the cursor position marked with <caret> and compares it with [after].
    */
   protected fun JavaCodeInsightTestFixture.testQuickFix(
     lang: ULanguage,
     before: String,
     after: String,
-    vararg hints: String = arrayOf(InspectionsBundle.message(
+    hint: String = InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
-    )),
-    fileName: String = generateFileName()
+    ),
+    testPreview: Boolean = false,
+    fileName: String = generateFileName(),
   ) {
     configureByText("$fileName${lang.ext}", before)
-    hints.forEach { runQuickFix(it) }
+    if (testPreview) testPreview(lang, before, after, hint, fileName)
+    runQuickFix(hint)
     checkResult(after)
   }
 
