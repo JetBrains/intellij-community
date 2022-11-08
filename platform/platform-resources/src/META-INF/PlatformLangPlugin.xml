@@ -136,6 +136,9 @@
   <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/collaboration-tools.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <xi:include href="/META-INF/ml.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
