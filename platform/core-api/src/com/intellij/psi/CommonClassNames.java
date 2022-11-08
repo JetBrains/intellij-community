@@ -115,6 +115,7 @@ public interface CommonClassNames {
   String JAVA_TIME_LOCAL_TIME = "java.time.LocalTime";
   String JAVA_TIME_LOCAL_DATE_TIME = "java.time.LocalDateTime";
   String JAVA_TIME_OFFSET_DATE_TIME = "java.time.OffsetDateTime";
+  String JAVA_TIME_OFFSET_TIME = "java.time.OffsetTime";
   String JAVA_TIME_ZONED_DATE_TIME = "java.time.ZonedDateTime";
 
   String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
