@@ -313,7 +313,7 @@
                     overrides="true"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector"/>
-    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyPostStartUpActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyStartUpActivity"/>
 
     <searchScopesProvider implementation="com.intellij.vcs.changes.ChangeListsSearchScopeProvider"/>
 

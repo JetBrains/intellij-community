@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
@@ -140,15 +139,19 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  internal class MyPostStartUpActivity : ProjectPostStartupActivity {
+  internal class MyStartUpActivity : VcsStartupActivity {
     init {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         throw ExtensionNotApplicableException.create()
       }
     }
 
-    override suspend fun execute(project: Project) {
+    override fun runActivity(project: Project) {
       project.service<ModuleVcsDetector>().startDetection()
+    }
+
+    override fun getOrder(): Int {
+      return VcsInitObject.MAPPINGS.order + 10;
     }
   }
 }
