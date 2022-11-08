@@ -77,7 +77,7 @@ public final class ChangelistConflictTracker {
     if (VcsUtil.getVcsFor(myProject, file) == null || !shouldDetectConflictsFor(file)) return;
 
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
-    if (changeList == null || Comparing.equal(changeList, defaultList) || ChangesUtil.isInternalOperation(file)) {
+    if (changeList == null || Comparing.equal(changeList, defaultList)) {
       return;
     }
 
@@ -247,7 +247,7 @@ public final class ChangelistConflictTracker {
       }
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      if (file == null || !file.isInLocalFileSystem()) {
+      if (file == null || !file.isInLocalFileSystem() || ChangesUtil.isInternalOperation(file)) {
         return;
       }
 
