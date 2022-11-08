@@ -114,9 +114,10 @@ public abstract class TemplateContextType {
     if (myBaseContextType != null) {
       try {
         return myBaseContextType.getValue();
-      } catch (LiveTemplateContextNotFoundException e) {
+      }
+      catch (LiveTemplateContextNotFoundException e) {
         Logger.getInstance(TemplateContextType.class)
-          .error("Error in liveTemplateContext with ID '" + myContextId +"', base liveTemplateContext is not registered plugin.xml", e);
+          .error("Error in liveTemplateContext with ID '" + myContextId + "', base liveTemplateContext is not registered plugin.xml", e);
         // looks like broken plugin, fallback to any context parent
         return LiveTemplateContextService.getInstance().getTemplateContextType(EverywhereContextType.class);
       }
