@@ -18,9 +18,8 @@ import javax.swing.Icon
 private val EDU_TOOLS_PLUGIN_ID = PluginId.getId("com.jetbrains.edu")
 internal class EduToolsInteractiveCourse : InteractiveCourseFactory {
   override fun getInteractiveCourseData(): InteractiveCourseData? {
-    return if (PlatformUtils.isDataSpell() ||
-               PlatformUtils.isIntelliJ() ||
-               PlatformUtils.isPyCharm() ||
+    return if (PlatformUtils.isIntelliJ() ||
+               PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
                PlatformUtils.isGoIde()) {
       EduToolsInteractiveCourseData()
     }
