@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
 import org.jetbrains.annotations.Nls;
@@ -623,4 +624,38 @@ public abstract class QuickFixFactory {
    * @return a fix that refactors code to make variable effectively final when possible. Null, if it cannot create such a fix.
    */
   public abstract @Nullable IntentionAction createMakeVariableEffectivelyFinalFix(@NotNull PsiVariable variable);
+
+  /**
+   * @param elements elements to delete
+   * @param text     the text to show in the intention popup
+   * @return a fix that deletes the elements
+   */
+  @NotNull
+  public abstract IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text);
+
+  /**
+   * @param deconstructionList deconstruction list to add the patterns to its end
+   * @param missingPatterns    patterns to add to the end of the deconstruction list
+   * @return a fix that add the missing patterns to the end of the deconstruction list
+   */
+  @NotNull
+  public abstract IntentionAction createAddMissingNestedPatternsFix(@NotNull PsiDeconstructionList deconstructionList,
+                                                                    @NotNull Collection<Pattern> missingPatterns);
+
+  public record Pattern(@NotNull String type, @NotNull String name) {
+    public static Pattern create(@NotNull PsiRecordComponent recordComponent, @NotNull PsiElement context) {
+      JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(context.getProject());
+      String name = manager.suggestUniqueVariableName(recordComponent.getName(), context, true);
+      PsiType type = recordComponent.getType();
+      if (type instanceof PsiClassType classType && classType.resolve() instanceof PsiTypeParameter) {
+        return new Pattern("var", name);
+      }
+      return new Pattern(type.getCanonicalText(), name);
+    }
+
+    @Override
+    public String toString() {
+      return type + " " + name;
+    }
+  }
 }

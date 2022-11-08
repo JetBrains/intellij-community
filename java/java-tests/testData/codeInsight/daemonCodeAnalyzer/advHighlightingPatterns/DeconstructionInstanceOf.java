@@ -10,7 +10,8 @@ final class B implements I {}
 public class Test {
   void test(Object o, Integer i){
     switch (o){
-      if (o instanceof Child<error descr="Expected 2 arguments but found 1">(A a)</error>){ }
+      if (o instanceof Child<error descr="Incorrect number of nested patterns: expected 2 but found 1">(A a)</error>){ }
+      if (o instanceof Child(A a1, A a2, <error descr="Incorrect number of nested patterns: expected 2 but found 3">A a3)</error>) { }
       if (o instanceof Child(A a, B b)){ }
       if (o instanceof Top(Child a, Child(<error descr="Incompatible types. Found: 'int', required: 'I'">int x</error>, I y))){ }
       if (o instanceof Top(Child <error descr="Variable 'a' is already defined in the scope">a</error>, Child(A <error descr="Variable 'a' is already defined in the scope">a</error>, I y))){ }

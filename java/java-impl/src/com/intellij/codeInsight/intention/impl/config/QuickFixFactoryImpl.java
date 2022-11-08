@@ -1190,4 +1190,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @Nullable IntentionAction createMakeVariableEffectivelyFinalFix(@NotNull PsiVariable variable) {
     return MakeVarEffectivelyFinalFix.createFix(variable);
   }
+
+  @Override
+  public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text) {
+    return new DeleteElementFix.DeleteMultiFix(elements, text);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddMissingNestedPatternsFix(@NotNull PsiDeconstructionList deconstructionList, @NotNull Collection<Pattern> missingPatterns) {
+    return new AddMissingDeconstructionComponentsFix(deconstructionList, missingPatterns);
+  }
 }

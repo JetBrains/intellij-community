@@ -131,7 +131,7 @@ class Bar extends Foo {
 
   @Override
   void test6(Object obj) {
-    if (obj instanceof Point<error descr="Expected 2 arguments but found 3">(double x, double y, double z)</error> point) {
+    if (obj instanceof Point(double x, double y, <error descr="Incorrect number of nested patterns: expected 2 but found 3">double z)</error> point) {
     }
   }
 
