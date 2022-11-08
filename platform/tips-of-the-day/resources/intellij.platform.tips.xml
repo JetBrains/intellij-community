@@ -38,7 +38,7 @@
       <add-to-group group-id="HelpMenu" relative-to-action="Help.KeymapReference" anchor="after"/>
     </group>
 
-    <group id="TipsAndFeatures" internal="true">
+    <group id="TipsAndFeatures" internal="true" popup="true">
       <action id="SelectAndShowTip" internal="true" class="com.intellij.ide.actions.SelectAndShowTipAction"/>
       <action id="DumpFeaturesAndTips" internal="true" class="com.intellij.featureStatistics.actions.DumpFeaturesAndTipsAction"/>
       <action id="DumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.DumpInvalidTipsAction"/>
