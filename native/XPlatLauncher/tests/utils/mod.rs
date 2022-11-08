@@ -20,7 +20,7 @@ pub struct TestEnvironment {
     pub test_root_dir: tempfile::TempDir
 }
 
-pub fn prepare_test_env(layout_kind: &LayoutSpecification) -> TestEnvironment {
+pub fn prepare_test_env(layout_kind: &LayoutSpec) -> TestEnvironment {
     let result = match prepare_test_env_impl(layout_kind) {
         Ok(x) => x,
         Err(e) => {
@@ -31,7 +31,7 @@ pub fn prepare_test_env(layout_kind: &LayoutSpecification) -> TestEnvironment {
     result
 }
 
-fn prepare_test_env_impl(layout_kind: &LayoutSpecification) -> Result<TestEnvironment> {
+fn prepare_test_env_impl(layout_kind: &LayoutSpec) -> Result<TestEnvironment> {
     INIT.call_once(|| {
         let shared = init_test_environment_once().expect("Failed to init shared test environment");
         unsafe {
@@ -49,11 +49,8 @@ fn prepare_test_env_impl(layout_kind: &LayoutSpecification) -> Result<TestEnviro
     let temp_dir = tempfile::tempdir().context(format!("Failed to create temp directory"))?;
     let temp_dir_path = temp_dir.path();
 
-    match layout_kind {
-        LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE
-        | LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE
-        | LayoutSpecification::MainBinOrderTestsSpecification
-        | LayoutSpecification::PluginsBinOrderTestsSpecification => {
+    match layout_kind.java_type {
+        JavaType::JBR => {
             create_dummy_config(&shared.jbrsdk_root);
             debug!("Custom user file with runtime is created. JBR is not included in layout")
         }
@@ -192,16 +189,20 @@ pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
     ));
 }
 
-pub enum LayoutSpecification {
-    LauncherLocationMainBinJavaIsEnvVar,
-    LauncherLocationMainBinJavaIsUserJRE,
-    LauncherLocationMainBinJavaIsJBR,
-    MainBinOrderTestsSpecification,
+pub struct LayoutSpec {
+    pub(crate) launcher_location: LauncherLocation,
+    pub(crate) java_type: JavaType,
+}
 
-    LauncherLocationPluginsBinJavaIsEnvVar,
-    LauncherLocationPluginsBinJavaIsUserJRE,
-    LauncherLocationPluginsBinJavaIsJBR,
-    PluginsBinOrderTestsSpecification,
+pub enum LauncherLocation {
+    MainBin,
+    PluginsBin,
+}
+
+pub enum JavaType {
+    EnvVar,
+    UserJRE,
+    JBR,
 }
 
 #[cfg(target_os = "linux")]
@@ -306,7 +307,7 @@ pub fn layout_launcher(
 
 #[cfg(target_os = "windows")]
 pub fn layout_launcher(
-    layout_kind: &LayoutSpecification,
+    layout_kind: &LayoutSpec,
     target_dir: &Path,
     project_root: &Path,
     jbr_absolute_path: &Path,
@@ -370,13 +371,12 @@ fn get_testing_binary_root(project_root: &Path) -> PathBuf {
 }
 
 fn layout_launcher_impl(
-    layout_kind: &LayoutSpecification,
+    layout_kind: &LayoutSpec,
     target_dir: &Path,
     create_files: Vec<&str>,
     copy_files: Vec<(&Path, &str)>,
     symlink_dirs: Vec<(&Path, &str)>
 ) -> Result<()> {
-
     for file in create_files {
         let target = &target_dir.join(file);
         fs::create_dir_all(target.parent_or_err()?)?;
@@ -390,12 +390,8 @@ fn layout_launcher_impl(
     }
 
     for (source, target_relative) in symlink_dirs {
-        match layout_kind {
-            LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar
-            | LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar
-            | LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE
-            | LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE
-            if target_relative.contains("jbr") => break,
+        match layout_kind.java_type {
+            JavaType::EnvVar | JavaType::UserJRE if target_relative.contains("jbr") => break,
             _ => {
                 let target = &target_dir.join(target_relative);
                 fs::create_dir_all(target.parent_or_err()?)?;
@@ -423,22 +419,16 @@ fn symlink(source: &Path, target: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LayoutSpecification) -> PathBuf {
+pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LayoutSpec) -> PathBuf {
     let root = match cfg!(target_os = "macos") {
         true => test_dir.join("Contents"),
         false => test_dir.to_path_buf()
     };
 
-    match layout_kind {
-        LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar
-        | LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE
-        | LayoutSpecification::LauncherLocationMainBinJavaIsJBR
-        | LayoutSpecification::MainBinOrderTestsSpecification => root.join("bin"),
+    match layout_kind.launcher_location {
+        LauncherLocation::MainBin => root.join("bin"),
 
-        LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar
-        | LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE
-        | LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR
-        | LayoutSpecification::PluginsBinOrderTestsSpecification => root.join("plugins/remote-dev-server/bin")
+        LauncherLocation::PluginsBin => root.join("plugins/remote-dev-server/bin")
     }
 }
 
@@ -559,7 +549,7 @@ pub fn run_launcher_with_default_args_and_env(test: &TestEnvironment, args: &[&s
     let output_args = ["dump-launch-parameters", "--output", &output_file.to_string_lossy()];
     let full_args = &mut output_args.to_vec();
     full_args.append(&mut args.to_vec());
-    let default_env_var : HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
+    let default_env_var: HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
     let full_env_vars = default_env_var.into_iter().chain(envs).collect();
 
     let result = match run_launcher_impl(test, full_args, full_env_vars, &output_file) {
@@ -632,29 +622,29 @@ fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParam
     Ok(dump)
 }
 
-pub fn run_launcher_and_get_dump(layout_kind: &LayoutSpecification) -> IntellijMainDumpedLaunchParameters {
+pub fn run_launcher_and_get_dump(layout_kind: &LayoutSpec) -> IntellijMainDumpedLaunchParameters {
     let test = prepare_test_env(layout_kind);
     let result = run_launcher_with_default_args_and_env(&test, &[], HashMap::from([(" ", "")]));
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
-pub fn run_launcher_and_get_dump_with_args(layout_kind: &LayoutSpecification, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
+pub fn run_launcher_and_get_dump_with_args(layout_kind: &LayoutSpec, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
     let test = prepare_test_env(layout_kind);
     let result = run_launcher_with_default_args_and_env(&test, args, HashMap::from([(" ", "")]));
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
-pub fn run_launcher_and_get_dump_with_java_env(launcher_location: &LayoutSpecification, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
+pub fn run_launcher_and_get_dump_with_java_env(layout_specification: &LayoutSpec, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
     let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
 
-    run_launcher_and_get_dump_with_env_vars(launcher_location, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
+    run_launcher_and_get_dump_with_env_vars(layout_specification, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
 }
 
-pub fn run_launcher_and_get_dump_with_env_vars(launcher_location: &LayoutSpecification, env_vars: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
-    let test = prepare_test_env(launcher_location);
+pub fn run_launcher_and_get_dump_with_env_vars(layout_specification: &LayoutSpec, env_vars: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
+    let test = prepare_test_env(layout_specification);
     let result = run_launcher_with_default_args_and_env(
         &test,
         &[],
