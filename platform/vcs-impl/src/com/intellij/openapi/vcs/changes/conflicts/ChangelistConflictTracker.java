@@ -8,8 +8,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ZipperUpdater;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -74,7 +76,7 @@ public final class ChangelistConflictTracker {
 
   @RequiresBackgroundThread
   private void checkOneFile(@NotNull VirtualFile file, @NotNull LocalChangeList defaultList) {
-    if (VcsUtil.getVcsFor(myProject, file) == null || !shouldDetectConflictsFor(file)) return;
+    if (!shouldDetectConflictsFor(file)) return;
 
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
     if (changeList == null || Comparing.equal(changeList, defaultList)) {
@@ -109,12 +111,28 @@ public final class ChangelistConflictTracker {
     return changeLists.isEmpty() || ContainerUtil.exists(changeLists, list -> list.isDefault());
   }
 
-  public boolean shouldDetectConflictsFor(@NotNull VirtualFile file) {
+  private boolean shouldDetectConflicts() {
+    if (!myOptions.SHOW_DIALOG && !myOptions.HIGHLIGHT_CONFLICTS) return false;
+    if (!myChangeListManager.areChangeListsEnabled()) return false;
+
+    AbstractVcs[] activeVcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    if (activeVcss.length == 0) return false;
+
+    boolean onlyPartialChangelists = LineStatusTrackerManager.getInstance(myProject).arePartialChangelistsEnabled() &&
+                                     ContainerUtil.all(activeVcss, vcs -> vcs.arePartialChangelistsSupported());
+    return !onlyPartialChangelists;
+  }
+
+  private boolean shouldDetectConflictsFor(@NotNull VirtualFile file) {
+    AbstractVcs vcs = VcsUtil.getVcsFor(myProject, file);
+    if (vcs == null) return false;
     return !LineStatusTrackerManager.getInstance(myProject).arePartialChangelistsEnabled(file);
   }
 
   @RequiresBackgroundThread
   private void clearChanges(Collection<? extends Change> changes) {
+    if (!shouldDetectConflicts() && !myOptions.HIGHLIGHT_NON_ACTIVE_CHANGELIST) return;
+
     for (Change change : changes) {
       ContentRevision revision = change.getAfterRevision();
       if (revision == null) continue;
@@ -195,7 +213,7 @@ public final class ChangelistConflictTracker {
   }
 
   public boolean hasConflict(@NotNull VirtualFile file) {
-    if (!myOptions.isTrackingEnabled() || !myChangeListManager.areChangeListsEnabled()) {
+    if (!shouldDetectConflicts()) {
       return false;
     }
 
@@ -242,7 +260,7 @@ public final class ChangelistConflictTracker {
   private class MyDocumentListener implements BulkAwareDocumentListener.Simple {
     @Override
     public void afterDocumentChange(@NotNull Document document) {
-      if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get() || !myChangeListManager.areChangeListsEnabled()) {
+      if (myShouldIgnoreModifications.get() || !shouldDetectConflicts()) {
         return;
       }
 
@@ -292,9 +310,5 @@ public final class ChangelistConflictTracker {
     public boolean HIGHLIGHT_CONFLICTS = true;
     public boolean HIGHLIGHT_NON_ACTIVE_CHANGELIST = false;
     public ChangelistConflictResolution LAST_RESOLUTION = ChangelistConflictResolution.IGNORE;
-
-    public boolean isTrackingEnabled() {
-      return SHOW_DIALOG || HIGHLIGHT_CONFLICTS;
-    }
   }
 }
