@@ -25,11 +25,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 final class DumbServiceGuiTaskQueue {
   interface DumbTaskListener {
-    void beforeFirstTask();
+    /**
+     * @return false if queue processing should be terminated (afterLastTask will not be invoked in this case). True to start queue processing.
+     */
+    boolean beforeFirstTask();
 
     /**
      * beforeFirstTask and afterLastTask always follow one after another. Receiving several beforeFirstTask or afterLastTask in row is
-     * always a failure of DumbServiceGuiTaskQueue
+     * always a failure of DumbServiceGuiTaskQueue (except the situation when beforeFirstTask returns false - in this case afterLastTask
+     * will NOT be invoked)
      */
     void afterLastTask();
   }
@@ -43,18 +47,20 @@ final class DumbServiceGuiTaskQueue {
     }
 
     @Override
-    public void beforeFirstTask() {
-      invokeSafely(delegate::beforeFirstTask);
+    public boolean beforeFirstTask() {
+      try {
+        return delegate.beforeFirstTask();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        return false;
+      }
     }
 
     @Override
     public void afterLastTask() {
-      invokeSafely(delegate::afterLastTask);
-    }
-
-    private static void invokeSafely(Runnable runnable) {
       try {
-        runnable.run();
+        delegate.afterLastTask();
       }
       catch (Exception e) {
         LOG.error(e);
@@ -120,8 +126,7 @@ final class DumbServiceGuiTaskQueue {
       LOG.error("Failed to start background index update task", e);
       if (isRunning.compareAndSet(false, true)) {
         // simulate empty queue
-        myListener.beforeFirstTask();
-        myListener.afterLastTask();
+        if (myListener.beforeFirstTask()) myListener.afterLastTask();
         isRunning.set(false);
       }
     }
@@ -132,11 +137,17 @@ final class DumbServiceGuiTaskQueue {
     if (!started) return;
 
     try {
-      myListener.beforeFirstTask();
-      internalRunBackgroundProcess(visibleIndicator);
+      boolean shouldProcessQueue = myListener.beforeFirstTask();
+      if (shouldProcessQueue) {
+        try {
+          internalRunBackgroundProcess(visibleIndicator);
+        }
+        finally {
+          myListener.afterLastTask();
+        }
+      }
     }
     finally {
-      myListener.afterLastTask();
       isRunning.set(false);
     }
   }

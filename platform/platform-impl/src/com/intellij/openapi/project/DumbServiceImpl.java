@@ -78,13 +78,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private class DumbTaskListener implements DumbServiceGuiTaskQueue.DumbTaskListener {
     /*
      * beforeFirstTask and afterLastTask always follow one after another. Receiving several beforeFirstTask or afterLastTask in row is
-     * always a failure of DumbServiceGuiTaskQueue
+     * always a failure of DumbServiceGuiTaskQueue.
+     * return true to start queue processing, false otherwise
      */
     @Override
-    public void beforeFirstTask() {
-      // FIXME: this is not correct: if a queue has already been emptied by modal dumb progress, we'll be in state SMART, not SCHEDULED_TASKS
-      assertState(State.SCHEDULED_TASKS);
-      myState.set(State.RUNNING_DUMB_TASKS);
+    public boolean beforeFirstTask() {
+      // if a queue has already been emptied by modal dumb progress, the state can be SMART, not SCHEDULED_TASKS
+      return myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS);
     }
 
     @Override
@@ -99,8 +99,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       else {
         boolean needToScheduleNow = myState.compareAndSet(State.WAITING_FOR_FINISH, State.SCHEDULED_TASKS);
         if (needToScheduleNow) {
-          // it is myGuiDumbTaskRunner's responsibility to ignore redundant startBackgroundProcess calls.
-          // queueTaskOnEdt does not use CAS to change state WAITING_FOR_FINISH > SCHEDULED_TASKS, so we can call startBackgroundProcess several times.
           myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
         }
       }
@@ -331,25 +329,29 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (state == State.SMART ||
         state == State.WAITING_FOR_FINISH ||
         state == State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS) {
-      enterDumbMode(modality, trace);
-      // we need one more invoke later because we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
-      // drain the queue synchronously under modal progress
-      myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
+      if (tryEnterDumbMode(modality, trace)) {
+        // we need one more invoke later because we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
+        // drain the queue synchronously under modal progress
+        myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
+      }
     }
   }
 
-  private void enterDumbMode(@NotNull ModalityState modality, @NotNull Throwable trace) {
+  private boolean tryEnterDumbMode(@NotNull ModalityState modality, @NotNull Throwable trace) {
     boolean wasSmart = !isDumb();
-    WriteAction.run(() -> {
+    boolean entered = WriteAction.compute(() -> {
       synchronized (myRunWhenSmartQueue) {
-        myState.set(State.SCHEDULED_TASKS);
+        State old = myState.getAndSet(State.SCHEDULED_TASKS);
+        if (old == State.SCHEDULED_TASKS) return false;
       }
       myDumbStart = trace;
       myDumbEnterTrace = new Throwable();
       myTrackedEdtActivityService.setDumbStartModality(modality);
       myModificationCount++;
+      return true;
     });
-    if (wasSmart) {
+
+    if (entered && wasSmart) {
       try {
         myPublisher.enteredDumbMode();
       }
@@ -357,6 +359,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         LOG.error(e);
       }
     }
+    return entered;
   }
 
   private boolean switchToSmartMode() {
