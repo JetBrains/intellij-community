@@ -21,6 +21,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.OpenSourceUtil.openSourcesFrom
 import com.intellij.util.Processor
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JComponent
@@ -68,11 +69,16 @@ class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
     if (newValue != null) centerPanel.addToBottom(newValue)
   }
 
-  private val centerPanel = simplePanel(createScrollPane(changesView))
+  private val centerPanel = simplePanel(createScrollPane(changesView)).andTransparent()
 
   init {
     addToCenter(centerPanel)
     addToolbar(isToolbarHorizontal)
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    background = UIUtil.getTreeBackground()
   }
 
   private fun addToolbar(isHorizontal: Boolean) {

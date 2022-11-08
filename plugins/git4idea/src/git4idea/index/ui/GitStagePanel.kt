@@ -34,12 +34,9 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI.Borders.empty
-import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.ProportionKey
-import com.intellij.util.ui.ThreeStateCheckBox
-import com.intellij.util.ui.TwoKeySplitter
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
@@ -137,7 +134,9 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       addToLeft(commitPanel.toolbar.component)
     }
     val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
-    val treePanel = simplePanel(createScrollPane(tree, sideBorder)).addToBottom(statusPanel)
+    val treePanel = GitStageTreePanel()
+      .addToCenter(createScrollPane(tree, sideBorder))
+      .addToBottom(statusPanel)
     progressStripe = ProgressStripe(treePanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
     val treePanelWithToolbar = JPanel(BorderLayout())
     treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
@@ -469,6 +468,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         hasPendingUpdates = false
         update()
       }
+    }
+  }
+
+  private class GitStageTreePanel : BorderLayoutPanel() {
+    override fun updateUI() {
+      super.updateUI()
+      background = UIUtil.getTreeBackground()
     }
   }
 
