@@ -35,12 +35,12 @@ class SettingsProviderComponent(private val project: Project) : SimpleModificati
     fun getInstance(project: Project): SettingsProviderComponent = project.service()
   }
 
-  private val cache = EditorConfigPermanentCache()
+  internal val resourceCache = EditorConfigPermanentCache()
 
   private val resourcePropertiesService = ResourcePropertiesService.builder()
     .configFileName(EditorConfigConstants.EDITORCONFIG)
     .rootDirectories(getRootDirs().map { VirtualFileResource(it) })
-    .cache(cache)
+    .cache(resourceCache)
     .loader(EditorConfigLoader.default_())
     // TODO custom handling of unset values?
     .keepUnset(true)
@@ -85,7 +85,7 @@ class SettingsProviderComponent(private val project: Project) : SimpleModificati
 
   fun getPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
     var properties: ResourceProperties? = null
-    val accessed = cache.doWhileRecordingAccess {
+    val accessed = resourceCache.doWhileRecordingAccess {
       properties = getProperties(file)
     }.map {
       require(it is VirtualFileResource)

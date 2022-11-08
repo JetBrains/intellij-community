@@ -25,9 +25,7 @@ class EditorConfigNavigationActionsFactory private constructor() {
     val actions = synchronized(myEditorConfigFilePaths) {
       val editorConfigFiles = Utils.pathsToFiles(myEditorConfigFilePaths)
       editorConfigFiles.map { file ->
-          DumbAwareAction.create(
-            getActionName(file, editorConfigFiles.size > 1)
-          ) { openEditorConfig(project, sourceFile, file) }
+          DumbAwareAction.create(getActionName(file, editorConfigFiles.size > 1)) { openEditorConfig(project, sourceFile, file) }
       }
     }
     return if (actions.size <= 1) actions else listOf(NavigationActionGroup(actions.toArray(AnAction.EMPTY_ARRAY)))

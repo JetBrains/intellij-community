@@ -2,7 +2,6 @@
 package org.editorconfig.plugincomponents
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.ProjectManager
@@ -11,7 +10,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.configmanagement.EditorSettingsManager
-import org.editorconfig.core.ec4jwrappers.EditorConfigPermanentCache
 
 internal class EditorConfigModificationListener : BulkFileListener {
   override fun after(events: List<VFileEvent>) {
@@ -26,8 +24,7 @@ internal class EditorConfigModificationListener : BulkFileListener {
       for (project in ProjectManager.getInstance().openProjects) {
         if (ProjectRootManager.getInstance(project).fileIndex.isInContent(file) ||
             !EditorConfigRegistry.shouldStopAtProjectRoot()) {
-          project.service<EditorConfigPermanentCache>().clear()
-          // TODO this is the part that might not be needed anymore
+          SettingsProviderComponent.getInstance(project).resourceCache.clear()
           ApplicationManager.getApplication().invokeLater {
             SettingsProviderComponent.getInstance(project).incModificationCount()
             for (editor in EditorFactory.getInstance().allEditors) {
