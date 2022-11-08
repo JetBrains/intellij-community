@@ -1,6 +1,7 @@
 {
   "expui": {
     "actions": {
+      "deploy.svg": "nodes/deploy.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
@@ -11,8 +12,8 @@
       "playLast.svg": "actions/play_last.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
-      "showImportStatements.svg": "actions/showImportStatements.svg"
-
+      "showImportStatements.svg": "actions/showImportStatements.svg",
+      "undeploy.svg": "nodes/undeploy.svg"
     },
     "bookmarks": {
       "addBookmarksList.svg": "actions/addList.svg",
