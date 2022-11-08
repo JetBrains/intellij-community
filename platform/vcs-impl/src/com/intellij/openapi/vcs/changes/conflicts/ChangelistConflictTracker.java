@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
@@ -17,6 +16,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.vcsUtil.VcsUtil;
@@ -37,7 +38,6 @@ public final class ChangelistConflictTracker {
   private final ZipperUpdater myZipperUpdater;
 
   private final Set<VirtualFile> myCheckSet = new HashSet<>();
-  private final Object myCheckSetLock = new Object();
   private final AtomicBoolean myShouldIgnoreModifications = new AtomicBoolean(false);
 
   @NotNull
@@ -56,26 +56,25 @@ public final class ChangelistConflictTracker {
     myShouldIgnoreModifications.set(value);
   }
 
+  @RequiresEdt
   private void checkFiles() {
     if (myProject.isDisposed() || !myProject.isOpen()) return;
+    if (myCheckSet.isEmpty()) return;
 
-    final List<VirtualFile> files;
-    synchronized (myCheckSetLock) {
-      files = ContainerUtil.filter(myCheckSet, file -> VcsUtil.getVcsFor(myProject, file) != null);
-      myCheckSet.clear();
-    }
-    if (files.isEmpty()) return;
+    List<VirtualFile> files = new ArrayList<>(myCheckSet);
+    myCheckSet.clear();
 
-    myChangeListManager.invokeAfterUpdate(true, () -> {
-      final LocalChangeList list = myChangeListManager.getDefaultChangeList();
+    myChangeListManager.invokeAfterUpdate(false, () -> {
+      LocalChangeList defaultList = myChangeListManager.getDefaultChangeList();
       for (VirtualFile file : files) {
-        checkOneFile(file, list);
+        checkOneFile(file, defaultList);
       }
     });
   }
 
+  @RequiresBackgroundThread
   private void checkOneFile(@NotNull VirtualFile file, @NotNull LocalChangeList defaultList) {
-    if (!shouldDetectConflictsFor(file)) return;
+    if (VcsUtil.getVcsFor(myProject, file) == null || !shouldDetectConflictsFor(file)) return;
 
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
     if (changeList == null || Comparing.equal(changeList, defaultList) || ChangesUtil.isInternalOperation(file)) {
@@ -114,6 +113,7 @@ public final class ChangelistConflictTracker {
     return !LineStatusTrackerManager.getInstance(myProject).arePartialChangelistsEnabled(file);
   }
 
+  @RequiresBackgroundThread
   private void clearChanges(Collection<? extends Change> changes) {
     for (Change change : changes) {
       ContentRevision revision = change.getAfterRevision();
@@ -245,13 +245,14 @@ public final class ChangelistConflictTracker {
       if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get() || !myChangeListManager.areChangeListsEnabled()) {
         return;
       }
+
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      if (file != null && file.isInLocalFileSystem() && ProjectUtil.guessProjectForFile(file) == myProject) {
-        synchronized (myCheckSetLock) {
-          myCheckSet.add(file);
-        }
-        myZipperUpdater.queue(() -> checkFiles());
+      if (file == null || !file.isInLocalFileSystem()) {
+        return;
       }
+
+      myCheckSet.add(file);
+      myZipperUpdater.queue(() -> checkFiles());
     }
   }
 
