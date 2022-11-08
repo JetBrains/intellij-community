@@ -63,19 +63,18 @@ public final class JpsFileTargetContextUtils {
     });
 
     // sort only if we have different source root types
-    if (hasEqualSourceRootTypes(targetContextWrappers)) {
-      return targetContexts;
+    if (!hasEqualSourceRootTypes(targetContextWrappers)) {
+      // if file is under sources root then src/resources directories at the top
+      // if file is under test sources root then test/resources directories at the top
+      if (projectFileIndex.isInTestSourceContent(file)) {
+        targetContextWrappers.sort(JpsFileTargetContextUtils::compareTargetsForTests);
+      }
+      else {
+        // it could be a file from web resource root, it is not in source content, thus we do not check isInSourceContent(file)
+        targetContextWrappers.sort(JpsFileTargetContextUtils::compareTargetsForProduction);
+      }
     }
 
-    // if file is under sources root then src/resources directories at the top
-    // if file is under test sources root then test/resources directories at the top
-    if (projectFileIndex.isInTestSourceContent(file)) {
-      targetContextWrappers.sort(JpsFileTargetContextUtils::compareTargetsForTests);
-    }
-    else {
-      // it could be a file from web resource root, it is not in source content, thus we do not check isInSourceContent(file)
-      targetContextWrappers.sort(JpsFileTargetContextUtils::compareTargetsForProduction);
-    }
     return ContainerUtil.map(targetContextWrappers, FileTargetContextWrapper::getTargetContext);
   }
 
