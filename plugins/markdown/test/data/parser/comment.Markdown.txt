@@ -1,4 +1,4 @@
-Markdown file
+MarkdownFile
   MarkdownLinkDefinition(Markdown:Markdown:LINK_DEFINITION)
     MarkdownLinkLabel(Markdown:Markdown:LINK_LABEL)
       PsiElement(Markdown:Markdown:LINK_LABEL)('[//]')

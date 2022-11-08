@@ -1,4 +1,4 @@
-Markdown file
+MarkdownFile
   MarkdownParagraph(Markdown:PARAGRAPH)
     PsiElement(Markdown:Markdown:TEXT)('This is paragraph')
   PsiWhiteSpace('\n')

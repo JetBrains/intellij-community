@@ -1,4 +1,4 @@
-Markdown file
+MarkdownFile
   PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER)
     PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER_DELIMITER)('---')
     PsiWhiteSpace('\n')

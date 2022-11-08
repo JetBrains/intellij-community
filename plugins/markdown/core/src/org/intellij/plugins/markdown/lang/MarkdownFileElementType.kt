@@ -5,6 +5,6 @@ import com.intellij.psi.tree.IStubFileElementType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
 open class MarkdownFileElementType: IStubFileElementType<PsiFileStub<MarkdownFile>>(
-  "Markdown file",
+  "MarkdownFile",
   MarkdownLanguage.INSTANCE
 )

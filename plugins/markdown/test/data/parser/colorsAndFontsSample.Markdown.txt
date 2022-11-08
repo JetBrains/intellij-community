@@ -1,4 +1,4 @@
-Markdown file
+MarkdownFile
   markdown: Markdown:SETEXT_1
     MarkdownHeaderContent(Markdown:SETEXT_CONTENT)
       PsiElement(Markdown:Markdown:TEXT)('Test Markdown document')

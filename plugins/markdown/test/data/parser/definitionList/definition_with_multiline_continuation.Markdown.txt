@@ -1,4 +1,4 @@
-Markdown file
+MarkdownFile
   ASTWrapperPsiElement(Markdown:Markdown:DEFINITION_LIST)
     ASTWrapperPsiElement(Markdown:Markdown:TERM)
       MarkdownParagraph(Markdown:PARAGRAPH)

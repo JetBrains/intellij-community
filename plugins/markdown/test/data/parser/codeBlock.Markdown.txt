@@ -1,4 +1,4 @@
-Markdown file
+MarkdownFile
   MarkdownParagraph(Markdown:PARAGRAPH)
     PsiElement(Markdown:Markdown:TEXT)('A code block')
     PsiElement(Markdown:Markdown::)(':')

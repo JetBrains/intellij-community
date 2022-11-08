@@ -1,4 +1,4 @@
-Markdown file
+MarkdownFile
   markdown: Markdown:ATX_1
     PsiElement(Markdown:Markdown:ATX_HEADER)('#')
     MarkdownHeaderContent(Markdown:ATX_CONTENT)
