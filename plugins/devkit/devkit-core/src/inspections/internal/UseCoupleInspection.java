@@ -3,15 +3,17 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
@@ -19,98 +21,129 @@ import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
  * @author Konstantin Bulenkov
  */
 public class UseCoupleInspection extends DevKitInspectionBase {
-  private static final String PAIR_FQN = "com.intellij.openapi.util.Pair";
+  private static final String PAIR_FQN = Pair.class.getName();
+  private static final String COUPLE_FQN = Couple.class.getName();
 
   @Override
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
       public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
-        final PsiType type = typeElement.getType();
+        String pairTypeName = getPairTypeParameterNameIfBothTheSame(typeElement);
+        if (pairTypeName != null) {
+          holder.registerProblem(typeElement,
+                                 DevKitBundle.message("inspections.use.couple.type", pairTypeName),
+                                 new UseCoupleTypeFix(pairTypeName));
+        }
+      }
+
+      @Nullable
+      private static String getPairTypeParameterNameIfBothTheSame(@NotNull PsiTypeElement typeElement) {
+        PsiType type = typeElement.getType();
         if (PsiTypesUtil.classNameEquals(type, PAIR_FQN)) {
-          final PsiClassType classType = (PsiClassType)type;
-          final PsiType[] parameters = classType.getParameters();
+          PsiClassType classType = (PsiClassType)type;
+          PsiType[] parameters = classType.getParameters();
           if (parameters.length == 2 && parameters[0].equals(parameters[1])) {
-            final String name = DevKitBundle.message("inspections.use.couple.type", parameters[0].getPresentableText());
-            holder.registerProblem(typeElement, name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new UseCoupleQuickFix(name));
+            return parameters[0].getPresentableText();
           }
         }
+        return null;
       }
 
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        if (isPairFactoryMethodWithTheSameArgumentTypes(expression, methodExpression)) {
+          PsiElement nameElement = methodExpression.getReferenceNameElement();
+          if (nameElement != null) {
+            holder.registerProblem(nameElement, DevKitBundle.message("inspections.use.couple.of"), new UseCoupleOfFactoryMethodFix());
+          }
+        }
+      }
+
+      private static boolean isPairFactoryMethodWithTheSameArgumentTypes(@NotNull PsiMethodCallExpression expression,
+                                                                         @NotNull PsiReferenceExpression methodExpression) {
         String methodName = methodExpression.getReferenceName();
         if ("create".equals(methodName) || "pair".equals(methodName)) {
-          final PsiMethod method = expression.resolveMethod();
+          PsiMethod method = expression.resolveMethod();
           if (method != null) {
-            final PsiClass psiClass = method.getContainingClass();
+            PsiClass psiClass = method.getContainingClass();
             if (psiClass != null && PAIR_FQN.equals(psiClass.getQualifiedName())) {
-              final PsiType[] types = expression.getArgumentList().getExpressionTypes();
-              if (types.length == 2 && types[0].equals(types[1])) {
-                final PsiElement nameElement = methodExpression.getReferenceNameElement();
-                if (nameElement != null) {
-                  final String name = DevKitBundle.message("inspections.use.couple.of");
-                  holder.registerProblem(nameElement, name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new UseCoupleQuickFix(name));
-                }
-              }
+              PsiType[] types = expression.getArgumentList().getExpressionTypes();
+              return types.length == 2 && types[0].equals(types[1]);
             }
           }
         }
+        return false;
       }
     };
   }
 
-  private static class UseCoupleQuickFix implements LocalQuickFix {
-    private static final String COUPLE_FQN = "com.intellij.openapi.util.Couple";
+  private static class UseCoupleOfFactoryMethodFix implements LocalQuickFix {
 
-    @IntentionName
-    private final String myText;
-
-    private UseCoupleQuickFix(@IntentionName String text) {
-      myText = text;
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiElement parent = element.getParent().getParent();
+      if (!(parent instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
+      String text = COUPLE_FQN + ".of" + methodCallExpression.getArgumentList().getText();
+      PsiExpression expression = factory.createExpressionFromText(text, element.getContext());
+      PsiElement newElement = parent.replace(expression);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
     }
 
     @Override
     public @IntentionName @NotNull String getName() {
-      return myText;
+      return DevKitBundle.message("inspections.use.couple.of");
     }
 
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
       return DevKitBundle.message("inspections.use.couple.family.name");
     }
+  }
+
+  private static class UseCoupleTypeFix implements LocalQuickFix {
+
+    private final String mySimpleTypeParameterName;
+
+    UseCoupleTypeFix(String simpleTypeParameterName) {
+      mySimpleTypeParameterName = simpleTypeParameterName;
+    }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      final PsiElement newElement;
+      PsiElement element = descriptor.getPsiElement();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       if (element instanceof PsiTypeElement) {
-        final PsiTypeElement typeElement = (PsiTypeElement)element;
-        final PsiClassType type1 = (PsiClassType)typeElement.getType();
-        final PsiType[] parameters = type1.getParameters();
+        PsiTypeElement typeElement = (PsiTypeElement)element;
+        PsiClassType type1 = (PsiClassType)typeElement.getType();
+        PsiType[] parameters = type1.getParameters();
         if (parameters.length != 2) {
           return;
         }
-        final PsiTypeElement newType =
+        PsiTypeElement newType =
           factory.createTypeElementFromText(COUPLE_FQN + "<" + parameters[0].getCanonicalText() + ">", element.getContext());
-        newElement = element.replace(newType);
+        PsiElement newElement = element.replace(newType);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
       }
-      else {
-        final PsiElement parent = element.getParent().getParent();
-        if (!(parent instanceof PsiMethodCallExpression)) {
-          return;
-        }
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
-        final String text = COUPLE_FQN + ".of" + methodCallExpression.getArgumentList().getText();
-        final PsiExpression expression = factory.createExpressionFromText(text, element.getContext());
-        newElement = parent.replace(expression);
-      }
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
+    }
+
+    @Override
+    public @IntentionName @NotNull String getName() {
+      return DevKitBundle.message("inspections.use.couple.type", mySimpleTypeParameterName);
+    }
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.use.couple.family.name");
     }
   }
 }
