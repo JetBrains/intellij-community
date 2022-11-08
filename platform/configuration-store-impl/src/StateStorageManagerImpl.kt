@@ -260,7 +260,13 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
                                             rootTagName: String?): StateStorage {
     val provider = if (roamingType == RoamingType.DISABLED) {
       // remove to ensure that repository doesn't store non-roamable files
-      compoundStreamProvider.delete(collapsedPath, roamingType)
+      try {
+        compoundStreamProvider.delete(collapsedPath, roamingType)
+      }
+      catch (e: IllegalStateException) {
+        LOG.debug(e)
+        // ignore - it means that delete operation is not supported
+      }
       null
     }
     else {
