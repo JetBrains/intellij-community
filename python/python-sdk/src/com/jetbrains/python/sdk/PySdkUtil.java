@@ -212,7 +212,12 @@ public final class PySdkUtil {
     if (cached != null) return cached;
 
     final String sdkHome = sdk.getHomePath();
-    if (sdkHome == null) return Collections.emptyMap();
+    if (sdkHome == null || sdkHome.trim().isEmpty()) {
+      // homePath is empty (not null) by default.
+      // If we cache values when path is empty, we would stuck with empty env and never reread it once path set
+      LOG.warn("homePath is null or empty, skipping env loading");
+      return Collections.emptyMap();
+    }
 
     var additionalData = ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
     if (additionalData == null) {
