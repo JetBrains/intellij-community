@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
@@ -89,12 +88,12 @@ public class StatusBarWidgetsActionGroup extends DefaultActionGroup {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class).isEnabled(myWidgetFactory);
+      return StatusBarWidgetSettings.getInstance().isEnabled(myWidgetFactory);
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class).setEnabled(myWidgetFactory, state);
+      StatusBarWidgetSettings.getInstance().setEnabled(myWidgetFactory, state);
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         project.getService(StatusBarWidgetsManager.class).updateWidget(myWidgetFactory);
       }
@@ -107,7 +106,7 @@ public class StatusBarWidgetsActionGroup extends DefaultActionGroup {
       StatusBarWidgetFactory factory = getFactory(e);
       if (factory == null) return;
 
-      ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class).setEnabled(factory, false);
+      StatusBarWidgetSettings.getInstance().setEnabled(factory, false);
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         project.getService(StatusBarWidgetsManager.class).updateWidget(factory);
       }

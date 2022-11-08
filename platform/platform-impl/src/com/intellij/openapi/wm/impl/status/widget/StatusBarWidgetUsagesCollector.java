@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -11,7 +11,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,7 @@ public class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
   @Override
   public @NotNull Set<MetricEvent> getMetrics() {
     Set<MetricEvent> result = new HashSet<>();
-    StatusBarWidgetSettings settings = ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class);
+    StatusBarWidgetSettings settings = StatusBarWidgetSettings.getInstance();
     StatusBarWidgetFactory.EP_NAME.processWithPluginDescriptor((factory, plugin) -> {
       PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoByDescriptor(plugin);
       boolean enabled = settings.isEnabled(factory);

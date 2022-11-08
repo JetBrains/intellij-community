@@ -88,8 +88,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public void updateWidget(@NotNull StatusBarWidgetFactory factory) {
-    if (factory.isAvailable(myProject) &&
-        (!factory.isConfigurable() || ApplicationManager.getApplication().getService(StatusBarWidgetSettings.class).isEnabled(factory))) {
+    if (factory.isAvailable(myProject) && (!factory.isConfigurable() || StatusBarWidgetSettings.getInstance().isEnabled(factory))) {
       enableWidget(factory);
     }
     else {
