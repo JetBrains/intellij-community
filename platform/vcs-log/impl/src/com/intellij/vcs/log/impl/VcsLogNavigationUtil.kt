@@ -5,9 +5,10 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -51,7 +52,7 @@ object VcsLogNavigationUtil {
     runBackgroundableTask(progressTitle, project, true) { indicator ->
       runBlockingCancellable(indicator) {
         resultFuture.computeResult {
-          withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+          withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
             jumpToRevision(project, root, hash, filePath)
           }
         }

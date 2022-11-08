@@ -5,6 +5,7 @@ import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.model.ModelPatch
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
@@ -285,7 +286,7 @@ private suspend fun previewInDialog(project: Project, fileUpdates: FileUpdates):
     override fun getBranchChanges(): Map<VirtualFile, CharSequence> = preview
     override fun applyBranchChanges() = error("not implemented")
   }
-  return withContext(uiDispatcher) {
+  return withContext(Dispatchers.EDT) {
     VcsFacade.getInstance().createPatchPreviewComponent(project, patch)?.let { previewComponent ->
       DialogBuilder(project)
         .title(RefactoringBundle.message("rename.preview.tab.title"))

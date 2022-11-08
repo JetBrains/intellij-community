@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
 import com.intellij.navigation.TargetPresentation
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
@@ -82,7 +81,7 @@ internal class PsiElementBackgroundPresentationComputer(list: JList<*>) {
 
 private fun CoroutineScope.repaintQueue(list: JList<*>): SendChannel<Unit> {
   val repaintQueue = Channel<Unit>(Channel.CONFLATED)
-  launch(AppUIExecutor.onUiThread().later().coroutineDispatchingContext()) {
+  launch(Dispatchers.EDT) {
     // A tick happens when an element has finished computing.
     // Several elements are also merged into a single tick because the Channel is CONFLATED.
     for (tick in repaintQueue) {

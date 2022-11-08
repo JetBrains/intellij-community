@@ -1,14 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeeded
 import com.intellij.ui.layout.migLayout.patched.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Assume
@@ -49,7 +51,7 @@ class UiDslRenderingTest : UiDslTest() {
 
   override fun doTest(panelCreator: () -> JPanel) {
     runBlocking {
-      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
         val panel = panelCreator()
         // otherwise rectangles are not set
         (panel.layout as MigLayout).isDebugEnabled = true

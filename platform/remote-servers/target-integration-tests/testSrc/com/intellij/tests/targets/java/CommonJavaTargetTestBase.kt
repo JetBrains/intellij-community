@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests.targets.java
 
 import com.intellij.debugger.DebuggerManager
@@ -27,10 +27,7 @@ import com.intellij.execution.testframework.export.TestResultsXmlFormatter
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.java.execution.AbstractTestFrameworkIntegrationTest
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -141,7 +138,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
                                             expectedTestsResultExported: String) {
     runWithConnectInUnitTestMode {
       runBlocking {
-        val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        val executionEnvironment: ExecutionEnvironment = withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
           ExecutionEnvironmentBuilder(project, getExecutor()).runProfile(runConfiguration).build()
         }
 
@@ -163,7 +160,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
           runContentDescriptor = CompletableDeferred<RunContentDescriptor>()
             .also { deferred ->
               executionEnvironment.setCallback { deferred.complete(it) }
-              withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+              withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
                 executionEnvironment.runner.execute(executionEnvironment)
               }
             }
