@@ -27,6 +27,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertToBlockBody", pattern = pattern)
             model("${idea}intentions/addWhenRemainingBranches", pattern = pattern)
             model("${idea}intentions/convertToConcatenatedString", pattern = pattern)
+            model("${idea}intentions/convertToStringTemplate", pattern = pattern)
             model("${idea}intentions/removeExplicitType", pattern = pattern)
             model("${idea}intentions/convertForEachToForLoop", pattern = pattern)
             model("${idea}intentions/joinArgumentList", pattern = pattern)
