@@ -234,18 +234,6 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        private fun renderEnumConstants(enumConstants: List<JKEnumConstant>) {
-            printer.renderList(enumConstants) {
-                it.accept(this)
-            }
-        }
-
-        private fun renderNonEnumClassDeclarations(declarations: List<JKDeclaration>) {
-            printer.renderList(declarations, { printer.println() }) {
-                it.accept(this)
-            }
-        }
-
         override fun visitFieldRaw(field: JKField) {
             field.annotationList.accept(this)
             if (field.annotationList.annotations.isNotEmpty()) {
@@ -590,28 +578,42 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitClassBodyRaw(classBody: JKClassBody) {
-            val declarationsToPrint = classBody.declarations.filterNot { it is JKKtPrimaryConstructor }
+            val declarations = classBody.declarations.filterNot { it is JKKtPrimaryConstructor }
             renderTokenElement(classBody.leftBrace)
-            if (declarationsToPrint.isNotEmpty()) {
-                printer.indented {
-                    printer.println()
-                    val enumConstants = declarationsToPrint.filterIsInstance<JKEnumConstant>()
-                    val otherDeclarations = declarationsToPrint.filterNot { it is JKEnumConstant }
-                    renderEnumConstants(enumConstants)
-                    if ((classBody.parent as? JKClass)?.classKind == ENUM
-                        && otherDeclarations.isNotEmpty()
-                    ) {
-                        printer.print(";")
-                        printer.println()
-                    }
-                    if (enumConstants.isNotEmpty() && otherDeclarations.isNotEmpty()) {
-                        printer.println()
-                    }
-                    renderNonEnumClassDeclarations(otherDeclarations)
-                }
-                printer.println()
+            if (declarations.isNotEmpty()) {
+                renderDeclarations(declarations, (classBody.parent as? JKClass)?.classKind == ENUM)
             }
             renderTokenElement(classBody.rightBrace)
+        }
+
+        private fun renderDeclarations(declarations: List<JKDeclaration>, isEnum: Boolean) {
+            printer.indented {
+                printer.println()
+                val enumConstants = declarations.filterIsInstance<JKEnumConstant>()
+                val otherDeclarations = declarations.filterNot { it is JKEnumConstant }
+                renderEnumConstants(enumConstants)
+                if (isEnum && otherDeclarations.isNotEmpty()) {
+                    printer.print(";")
+                    printer.println()
+                }
+                if (enumConstants.isNotEmpty() && otherDeclarations.isNotEmpty()) {
+                    printer.println()
+                }
+                renderNonEnumClassDeclarations(otherDeclarations)
+            }
+            printer.println()
+        }
+
+        private fun renderEnumConstants(enumConstants: List<JKEnumConstant>) {
+            printer.renderList(enumConstants) {
+                it.accept(this)
+            }
+        }
+
+        private fun renderNonEnumClassDeclarations(declarations: List<JKDeclaration>) {
+            printer.renderList(declarations, { printer.println() }) {
+                it.accept(this)
+            }
         }
 
         override fun visitTypeElementRaw(typeElement: JKTypeElement) {

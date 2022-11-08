@@ -1946,6 +1946,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/enum/emptyEnum.java");
         }
 
+        @TestMetadata("emptyEnumWithMethod.java")
+        public void testEmptyEnumWithMethod() throws Exception {
+            runTest("testData/newJ2k/enum/emptyEnumWithMethod.java");
+        }
+
         @TestMetadata("enumConstantIsNotNull.java")
         public void testEnumConstantIsNotNull() throws Exception {
             runTest("testData/newJ2k/enum/enumConstantIsNotNull.java");
