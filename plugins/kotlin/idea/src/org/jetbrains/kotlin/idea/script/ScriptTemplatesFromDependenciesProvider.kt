@@ -10,11 +10,9 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
-import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -33,11 +31,14 @@ import kotlin.concurrent.withLock
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
-class ScriptTemplatesFromDependenciesProvider(private val project: Project) : ScriptDefinitionSourceAsContributor {
-    private val logger = Logger.getInstance(ScriptTemplatesFromDependenciesProvider::class.java)
+private val logger = Logger.getInstance(ScriptTemplatesFromDependenciesProvider::class.java)
 
+class ScriptTemplatesFromDependenciesProvider(private val project: Project) : ScriptDefinitionSourceAsContributor {
+
+    @Deprecated("migrating to new configuration refinement: drop usages")
     override val id = "ScriptTemplatesFromDependenciesProvider"
 
+    @Deprecated("migrating to new configuration refinement: drop usages")
     override fun isReady(): Boolean = _definitions != null
 
     override val definitions: Sequence<ScriptDefinition>
