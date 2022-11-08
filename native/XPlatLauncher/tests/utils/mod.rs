@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output};
 use std::sync::Once;
 use std::time::SystemTime;
-use log::debug;
+use log::{debug, warn};
 use utils::{get_path_from_env_var, PathExt};
 
 static INIT: Once = Once::new();
@@ -482,14 +482,40 @@ pub fn get_jbr_home(jbr_dir: &PathBuf) -> PathBuf {
 
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 fn get_config_home() -> PathBuf {
-    let home = env::var("HOME").unwrap();
+    let home = match env::var("HOME") {
+        Ok(s) => {
+            debug!("User home directory resolved as '{s}'");
+            let path = PathBuf::from(s);
+            if !path.is_absolute() {
+                warn!("User home directory is not absolute, this may be a misconfiguration");
+            }
+
+            path
+        }
+        Err(e) => {
+            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
+
+            PathBuf::from("/")
+        }
+    };
 
     Path::new(&home).join(".config")
 }
 
 #[cfg(target_os = "windows")]
 pub fn get_config_home() -> PathBuf {
-    PathBuf::from("C:\\tmp")
+    match dirs::home_dir() {
+        Some(path) => {
+            debug!("User home directory resolved as '{path:?}'");
+
+            path
+        }
+        None => {
+            warn!("Failed to get User Home dir. Using '/' as home dir");
+
+            PathBuf::from("/")
+        }
+    }.join(".config")
 }
 
 pub fn create_dummy_config(java_root: &PathBuf) {

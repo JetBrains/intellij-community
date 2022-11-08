@@ -145,7 +145,6 @@ mod tests {
     #[rstest]
     #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE)]
     #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE)]
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
     fn jre_is_user_jre_test(#[case] launcher_location: &LayoutSpecification) {
         let dump = run_launcher_and_get_dump(launcher_location);
 
