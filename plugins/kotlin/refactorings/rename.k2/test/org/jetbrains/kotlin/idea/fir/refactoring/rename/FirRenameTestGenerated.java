@@ -708,6 +708,16 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassConstructor/renameKotlinConstructor.test");
     }
 
+    @TestMetadata("renameKotlinClassNamedAsFile/javaClassWrapper.test")
+    public void testRenameKotlinClassNamedAsFile_JavaClassWrapper() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassNamedAsFile/javaClassWrapper.test");
+    }
+
+    @TestMetadata("renameKotlinClassNamedAsFile/kotlinClass.test")
+    public void testRenameKotlinClassNamedAsFile_KotlinClass() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassNamedAsFile/kotlinClass.test");
+    }
+
     @TestMetadata("renameKotlinClassSecondaryConstructor/renameKotlinSecondaryConstructor.test")
     public void testRenameKotlinClassSecondaryConstructor_RenameKotlinSecondaryConstructor() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinClassSecondaryConstructor/renameKotlinSecondaryConstructor.test");

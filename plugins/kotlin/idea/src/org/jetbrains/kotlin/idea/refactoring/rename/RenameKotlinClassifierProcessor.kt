@@ -45,8 +45,9 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
         super.prepareRenaming(element, newName, allRenames)
 
         val classOrObject = getClassOrObject(element) as? KtClassOrObject ?: return
+        val topLevelClassifiers = classOrObject.withExpectedActuals().filter { it.parent is KtFile }
 
-        classOrObject.withExpectedActuals().forEach {
+        topLevelClassifiers.forEach {
             val file = it.containingKtFile
             val virtualFile = file.virtualFile
             if (virtualFile != null) {
@@ -60,7 +61,7 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
         }
     }
 
-    protected fun processFoundReferences(
+    private fun processFoundReferences(
         element: PsiElement,
         references: Collection<PsiReference>
     ): Collection<PsiReference> {
