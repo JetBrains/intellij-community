@@ -36,6 +36,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("${idea}/inspections/redundantUnitReturnType", pattern = pattern)
             model("${idea}/inspections/redundantIf", pattern = pattern)
+            model("${idea}/intentions/convertToStringTemplate", pattern = pattern)
         }
 
         testClass<AbstractK2QuickFixTest> {
