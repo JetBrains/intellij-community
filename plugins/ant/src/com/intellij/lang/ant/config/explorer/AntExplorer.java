@@ -503,6 +503,15 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)this::getSlowData;
+    }
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return HelpID.ANT;
+    }
+    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+      return myProject != null? myTreeExpander : null;
+    }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       if (buildFile == null) {
@@ -524,23 +533,19 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         final AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
         final AntBuildTargetBase buildTarget = targetNodeDescriptor.getTarget();
         final Navigatable descriptor = buildTarget.getOpenFileDescriptor();
-        if (descriptor != null) {
-          if (descriptor.canNavigate()) {
-            return descriptor;
-          }
+        if (descriptor != null && descriptor.canNavigate()) {
+          return descriptor;
         }
       }
       if (file.isValid()) {
         return new OpenFileDescriptor(myProject, file);
       }
     }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return HelpID.ANT;
-    }
-    else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myProject != null? myTreeExpander : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    return super.getData(dataId);
+  }
+
+  private Object getSlowData(@NotNull @NonNls String dataId) {
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final List<VirtualFile> virtualFiles = collectAntFiles(buildFile -> {
         final VirtualFile virtualFile = buildFile.getVirtualFile();
         if (virtualFile != null && virtualFile.isValid()) {
@@ -548,13 +553,15 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         }
         return null;
       });
-      return virtualFiles == null ? null : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
+      return virtualFiles == null? null : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
     }
-    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile);
-      return elements == null ? null : elements.toArray(PsiElement.EMPTY_ARRAY);
+      return elements == null? null : elements.toArray(PsiElement.EMPTY_ARRAY);
     }
-    return super.getData(dataId);
+    
+    return null;
   }
 
   private <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function) {
