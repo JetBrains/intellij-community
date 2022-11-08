@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation
@@ -284,8 +284,16 @@ object InlayHintsUtils {
 
   @JvmStatic
   fun isFirstInLine(element: PsiElement): Boolean {
-    val prevLeaf = PsiTreeUtil.prevLeaf(element, true)
-    return prevLeaf == null ||
-           prevLeaf is PsiWhiteSpace && (prevLeaf.textContains('\n') || prevLeaf.textRange.startOffset == 0)
+    var prevLeaf = PsiTreeUtil.prevLeaf(element, true)
+    if (prevLeaf == null) {
+      return true
+    }
+    while (prevLeaf is PsiWhiteSpace) {
+      if (prevLeaf.textContains('\n') || prevLeaf.textRange.startOffset == 0) {
+        return true
+      }
+      prevLeaf = PsiTreeUtil.prevLeaf(prevLeaf, true)
+    }
+    return false
   }
 }
