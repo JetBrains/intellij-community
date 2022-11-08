@@ -99,7 +99,7 @@ internal class TipsOrderUtil {
     private const val SORTING_ALGORITHM_VERSION = "1"
 
     // Minimum time between showing the same tip at the first place
-    private const val MIN_SUCCESSIVE_SHOW_INTERVAL_DAYS = 5
+    private const val MIN_SUCCESSIVE_SHOW_INTERVAL_DAYS = 14
 
     @JvmStatic
     fun getInstance(): TipsOrderUtil = service()
