@@ -11,12 +11,8 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.ide.impl.virtualFile
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
-import org.jetbrains.kotlin.idea.core.script.ucache.relativeName
-import org.jetbrains.kotlin.idea.core.script.ucache.scriptsAsEntities
+import org.jetbrains.kotlin.idea.core.script.ucache.*
 import java.nio.file.Path
 import javax.swing.Icon
 
@@ -51,14 +47,14 @@ private data class KotlinScriptDependenciesLibrary(val name: String, val classes
 }
 
 private fun KotlinScriptEntity.listDependencies(): ScriptDependencies {
-    fun List<LibraryRoot>.files() = asSequence()
+    fun List<KotlinScriptLibraryRoot>.files() = asSequence()
         .mapNotNull { it.url.virtualFile }
         .filter { it.isValid }
         .toList()
 
     val (compiledRoots, sourceRoots) = dependencies.asSequence()
         .flatMap { it.roots }
-        .partition { it.type == LibraryRootTypeId.COMPILED }
+        .partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
 
     return ScriptDependencies(Pair(compiledRoots.files(), sourceRoots.files()))
 }

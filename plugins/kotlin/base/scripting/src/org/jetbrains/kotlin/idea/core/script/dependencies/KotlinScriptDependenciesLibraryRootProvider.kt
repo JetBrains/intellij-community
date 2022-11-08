@@ -11,13 +11,13 @@ import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.Libr
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
 import org.jetbrains.kotlin.idea.core.script.ucache.scriptsAsEntities
 import javax.swing.Icon
 
@@ -36,8 +36,8 @@ class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvide
             emptySequence()
         } else {
             entities.flatMap { scriptEntity ->
-                scriptEntity.dependencies.map<@Child LibraryEntity, LibraryRoots<KotlinScriptEntity>> { libEntity ->
-                    val (classes, sources) = libEntity.roots.partition { it.type == LibraryRootTypeId.COMPILED }
+                scriptEntity.dependencies.map<@Child KotlinScriptLibraryEntity, LibraryRoots<KotlinScriptEntity>> { libEntity ->
+                    val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
                     val classFiles = classes.mapNotNull { it.url.virtualFile }
                     val sourceFiles = sources.mapNotNull { it.url.virtualFile }
                     LibraryRoots(scriptEntity, sourceFiles, classFiles, emptyList(), null)

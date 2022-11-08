@@ -30,7 +30,7 @@ import kotlin.io.path.relativeTo
  * For technical details, see [this article](https://jetbrains.team/p/wm/documents/Development/a/Workspace-model-custom-entities-creation).
  */
 
-fun KotlinScriptEntity.listDependencies(rootTypeId: LibraryRootTypeId? = null): List<VirtualFile> = dependencies.asSequence()
+fun KotlinScriptEntity.listDependencies(rootTypeId: KotlinScriptLibraryRootTypeId? = null): List<VirtualFile> = dependencies.asSequence()
     .flatMap { it.roots }
     .applyIf(rootTypeId != null) { filter { it.type == rootTypeId } }
     .mapNotNull { it.url.virtualFile }
@@ -88,7 +88,7 @@ private fun BuilderSnapshot.replaceModelWithSelf(project: Project): CompletableF
     CompletableFutureUtil.getEDTExecutor(ModalityState.NON_MODAL)
 )
 
-private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: VirtualFile, project: Project): List<LibraryEntity> {
+private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: VirtualFile, project: Project): List<KotlinScriptLibraryEntity> {
     val configurationManager = ScriptConfigurationManager.getInstance(project)
 
     val dependenciesClassFiles = configurationManager.getScriptDependenciesClassFiles(scriptFile).toMutableSet()
@@ -98,7 +98,7 @@ private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: Virtu
 
     val fileUrlManager = VirtualFileUrlManager.getInstance(project)
     val entitySource = KotlinScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
-    val scriptDependencies = mutableListOf<LibraryEntity>() // list builders are not supported by WorkspaceModel yet
+    val scriptDependencies = mutableListOf<KotlinScriptLibraryEntity>() // list builders are not supported by WorkspaceModel yet
 
     if (dependenciesClassFiles.isNotEmpty() || dependenciesSourceFiles.isNotEmpty()) {
         scriptDependencies.add(
@@ -132,7 +132,7 @@ private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: Virtu
 
     scriptDependencies.forEach { dependency ->
         // Library entity modification is currently not detected by indexing mechanism, we use remove/add as a workaround
-        entities(LibraryEntity::class.java)
+        entities(KotlinScriptLibraryEntity::class.java)
             .find { it.name == dependency.name }
             ?.let { removeEntity(it) }
         addEntity(dependency)
@@ -164,20 +164,20 @@ private fun Project.createLibrary(
     classFiles: Collection<VirtualFile>,
     sources: Collection<VirtualFile> = emptyList(),
     entitySource: KotlinScriptEntitySource
-): LibraryEntity {
+): KotlinScriptLibraryEntity {
 
     val fileUrlManager = VirtualFileUrlManager.getInstance(this)
 
-    val libraryRoots = mutableListOf<LibraryRoot>()
+    val libraryRoots = mutableListOf<KotlinScriptLibraryRoot>()
     classFiles.forEach {
         val fileUrl = it.toVirtualFileUrl(fileUrlManager)
-        libraryRoots.add(LibraryRoot(fileUrl, LibraryRootTypeId.COMPILED))
+        libraryRoots.add(KotlinScriptLibraryRoot(fileUrl, KotlinScriptLibraryRootTypeId.COMPILED))
     }
 
     sources.forEach {
         val fileUrl = it.toVirtualFileUrl(fileUrlManager)
-        libraryRoots.add(LibraryRoot(fileUrl, LibraryRootTypeId.SOURCES))
+        libraryRoots.add(KotlinScriptLibraryRoot(fileUrl, KotlinScriptLibraryRootTypeId.SOURCES))
     }
 
-    return LibraryEntity(name, LibraryTableId.ProjectLibraryTableId, libraryRoots, entitySource)
+    return KotlinScriptLibraryEntity(name, libraryRoots, entitySource)
 }

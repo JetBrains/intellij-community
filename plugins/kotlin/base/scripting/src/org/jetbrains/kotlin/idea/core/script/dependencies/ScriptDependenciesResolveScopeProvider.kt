@@ -9,8 +9,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
@@ -45,7 +43,7 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
 
         if (scriptsAsEntities) {
             val scripts = file.findUsedInScripts(project) ?: return null
-            val dependencies = scripts.flatMap { it.listDependencies(LibraryRootTypeId.COMPILED) }.distinct()
+            val dependencies = scripts.flatMap { it.listDependencies(KotlinScriptLibraryRootTypeId.COMPILED) }.distinct()
 
             var searchScope = GlobalSearchScope.union(
                 arrayOf(
@@ -72,7 +70,7 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
     }
 }
 
-private fun VirtualFile.findUsedInScripts(project: Project): List<KotlinScriptEntity>? {
+private fun VirtualFile?.findUsedInScripts(project: Project): List<KotlinScriptEntity>? {
     val index = WorkspaceModel.getInstance(project).entityStorage.current.getVirtualFileUrlIndex()
     val fileUrlManager = VirtualFileUrlManager.getInstance(project)
 
@@ -86,8 +84,8 @@ private fun VirtualFile.findUsedInScripts(project: Project): List<KotlinScriptEn
         }
 
         return entities
-            .mapNotNull { it.first.safeAs<LibraryEntity>() }
-            .mapNotNull { it.kotlinScript }
+            .mapNotNull { it.first.safeAs<KotlinScriptLibraryEntity>() }
+            .map { it.kotlinScript }
             .toList()
     }
     return null

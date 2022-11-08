@@ -87,6 +87,8 @@
     <!--suppress PluginXmlValidity -->
     <customEntityProjectModelInfoProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptProjectModelInfoProvider"/>
 
+    <indexableIteratorBuilderHandler implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryIndexableIteratorHandler"/>
+
     <!--suppress PluginXmlValidity -->
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
 

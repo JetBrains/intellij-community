@@ -2,10 +2,9 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.IndexableEntityProvider
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 /**
@@ -43,7 +42,13 @@ class KotlinScriptDependencyIndexableEntityProvider : IndexableEntityProvider.Ex
         project: Project
     ): Collection<IndexableEntityProvider.IndexableIteratorBuilder> = emptyList()
 
+    private fun createIteratorBuildersForDependency(dependency: KotlinScriptLibraryEntity): Collection<IndexableEntityProvider.IndexableIteratorBuilder> =
+        forLibraryEntity(dependency.symbolicId)
 
-    private fun createIteratorBuildersForDependency(dependency: LibraryEntity): Collection<IndexableEntityProvider.IndexableIteratorBuilder> =
-        IndexableIteratorBuilders.forLibraryEntity(dependency.symbolicId, true)
+    private fun forLibraryEntity(libraryId: KotlinScriptLibraryId): Collection<IndexableEntityProvider.IndexableIteratorBuilder> =
+        listOf(KotlinScriptLibraryIdIteratorBuilder(libraryId))
+
 }
+
+internal data class KotlinScriptLibraryIdIteratorBuilder(val libraryId: KotlinScriptLibraryId) :
+    IndexableEntityProvider.IndexableIteratorBuilder

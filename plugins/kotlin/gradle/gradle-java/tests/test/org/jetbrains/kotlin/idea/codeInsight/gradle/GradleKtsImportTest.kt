@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.replaceService
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigur
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.areSimilar
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
 import org.jetbrains.kotlin.idea.core.script.ucache.listDependencies
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -77,8 +77,8 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
             val scriptEntity = entityStorage.entities(KotlinScriptEntity::class.java).find { it.path.contains(fileName) }
                 ?: error("Workspace model is unaware of script $fileName")
 
-            val entityClassFiles = scriptEntity.listDependencies(LibraryRootTypeId.COMPILED)
-            val entitySourceFiles = scriptEntity.listDependencies(LibraryRootTypeId.SOURCES)
+            val entityClassFiles = scriptEntity.listDependencies(KotlinScriptLibraryRootTypeId.COMPILED)
+            val entitySourceFiles = scriptEntity.listDependencies(KotlinScriptLibraryRootTypeId.SOURCES)
 
             assertEquals("Class dependencies for $fileName are not equivalent", entityClassFiles, managerClassFiles + sdkClasses)
             assertEquals("Source dependencies for $fileName are not equivalent", entitySourceFiles, managerSourceFiles + sdkSources)

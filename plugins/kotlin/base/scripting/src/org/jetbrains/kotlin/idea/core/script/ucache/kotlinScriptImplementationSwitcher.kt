@@ -9,8 +9,6 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope
 import com.intellij.util.applyIf
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -37,7 +35,7 @@ fun getScriptDependenciesClassFilesScope(project: Project, ktFile: KtFile): Glob
             // is called under platform read-lock.
             ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(ktFile.virtualFile)
         } else {
-            NonClasspathDirectoriesScope.compose(scriptEntity.listDependencies(LibraryRootTypeId.COMPILED))
+            NonClasspathDirectoriesScope.compose(scriptEntity.listDependencies(KotlinScriptLibraryRootTypeId.COMPILED))
         }
     } else {
         ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(ktFile.virtualFile)
@@ -46,7 +44,7 @@ fun getScriptDependenciesClassFilesScope(project: Project, ktFile: KtFile): Glob
 
 fun getAllScriptsDependenciesClassFilesScope(project: Project): GlobalSearchScope {
     return if (scriptsAsEntities) {
-        listAllScriptDependenciesScope(project, LibraryRootTypeId.COMPILED)
+        listAllScriptDependenciesScope(project, KotlinScriptLibraryRootTypeId.COMPILED)
     } else {
         ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope()
     }
@@ -54,7 +52,7 @@ fun getAllScriptsDependenciesClassFilesScope(project: Project): GlobalSearchScop
 
 fun getAllScriptDependenciesSourcesScope(project: Project): GlobalSearchScope {
     return if (scriptsAsEntities) {
-        listAllScriptDependenciesScope(project, LibraryRootTypeId.SOURCES)
+        listAllScriptDependenciesScope(project, KotlinScriptLibraryRootTypeId.SOURCES)
     } else {
         ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSourcesScope()
     }
@@ -63,7 +61,7 @@ fun getAllScriptDependenciesSourcesScope(project: Project): GlobalSearchScope {
 fun getAllScriptsDependenciesClassFiles(project: Project): Collection<VirtualFile> {
     return if (scriptsAsEntities) {
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
-        entityStorage.listDependenciesOfAllScriptEntities(LibraryRootTypeId.COMPILED)
+        entityStorage.listDependenciesOfAllScriptEntities(KotlinScriptLibraryRootTypeId.COMPILED)
     } else {
         ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFiles()
     }
@@ -72,7 +70,7 @@ fun getAllScriptsDependenciesClassFiles(project: Project): Collection<VirtualFil
 fun getAllScriptDependenciesSources(project: Project): Collection<VirtualFile> {
     return if (scriptsAsEntities) {
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
-        entityStorage.listDependenciesOfAllScriptEntities(LibraryRootTypeId.SOURCES)
+        entityStorage.listDependenciesOfAllScriptEntities(KotlinScriptLibraryRootTypeId.SOURCES)
     } else {
         ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSources()
     }
@@ -81,40 +79,40 @@ fun getAllScriptDependenciesSources(project: Project): Collection<VirtualFile> {
 fun computeClassRoots(project: Project): List<VirtualFile> {
     return if (scriptsAsEntities) {
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
-        entityStorage.listDependenciesOfAllScriptEntities(LibraryRootTypeId.COMPILED).toList()
+        entityStorage.listDependenciesOfAllScriptEntities(KotlinScriptLibraryRootTypeId.COMPILED).toList()
     } else {
         val manager = ScriptConfigurationManager.getInstance(project)
         (manager.getAllScriptsDependenciesClassFiles() + manager.getAllScriptsSdkDependenciesClassFiles()).filter { it.isValid }
     }
 }
 
-private fun listAllScriptDependenciesScope(project: Project, rootTypeId: LibraryRootTypeId): GlobalSearchScope {
+private fun listAllScriptDependenciesScope(project: Project, rootTypeId: KotlinScriptLibraryRootTypeId): GlobalSearchScope {
     val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
     val files = entityStorage.listDependenciesOfAllScriptEntities(rootTypeId).toList()
     return NonClasspathDirectoriesScope.compose(files)
 }
 
-private fun EntityStorage.listDependenciesOfAllScriptEntities(rootTypeId: LibraryRootTypeId): Collection<VirtualFile> =
+private fun EntityStorage.listDependenciesOfAllScriptEntities(rootTypeId: KotlinScriptLibraryRootTypeId): Collection<VirtualFile> =
     entities(KotlinScriptEntity::class.java)
         .flatMap { it.listDependencies(rootTypeId) }
         .toSet()
 
 @Suppress("unused") // exists for debug purposes
 internal fun scriptEntitiesDebugInfo(project: Project, listRoots: Boolean = false): String {
-    fun List<LibraryRoot>.print(indent: CharSequence = "          ") = asSequence()
+    fun List<KotlinScriptLibraryRoot>.print(indent: CharSequence = "          ") = asSequence()
         .mapIndexed { i, root -> "$indent${i + 1}: ${root.url.presentableUrl}" }
         .joinToString("\n", indent)
 
     return buildString {
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
 
-        val allClasses = HashSet<LibraryRoot>()
-        val allSources = HashSet<LibraryRoot>()
+        val allClasses = HashSet<KotlinScriptLibraryRoot>()
+        val allSources = HashSet<KotlinScriptLibraryRoot>()
 
         entityStorage.entities(KotlinScriptEntity::class.java).forEachIndexed { scriptIndex, scriptEntity ->
             append("#${scriptIndex + 1}: [${scriptEntity.path}]\n")
             scriptEntity.dependencies.forEachIndexed { libIndex, lib ->
-                val (classes, sources) = lib.roots.partition { it.type == LibraryRootTypeId.COMPILED }
+                val (classes, sources) = lib.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
                 allClasses.addAll(classes)
                 allSources.addAll(sources)
                 append("      Lib #${libIndex + 1}: \"${lib.name}\", classes: ${classes.size}, sources: ${sources.size} \n")
