@@ -184,7 +184,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     }
   }
 
-  private fun hasRunningSingletons(executor: Executor?): Boolean {
+  fun hasRunningSingletons(executor: Executor?): Boolean {
     val project = project
     if (project.isDisposed) {
       return false
