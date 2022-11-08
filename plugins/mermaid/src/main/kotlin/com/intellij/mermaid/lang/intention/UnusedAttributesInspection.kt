@@ -18,11 +18,11 @@ class UnusedAttributesInspection : LocalInspectionTool(), CleanupLocalInspection
     return object : MermaidVisitor() {
       override fun visitJourneyDataStatement(mermaidJourneyDataStatement: MermaidJourneyDataStatement) {
         val taskDataList = mermaidJourneyDataStatement.journeyTaskDataList
-        if (taskDataList.size >= 2) {
-          val secondTaskData = taskDataList[1]
+        if (taskDataList.size >= 1) {
+          val secondTaskData = mermaidJourneyDataStatement.journeyNamedData ?: return
 
           val startElement = secondTaskData
-            .siblings(withSelf = false)
+            .siblings(forward = true, withSelf = false)
             .filter { it.elementType == MermaidTokens.COLON }
             .firstOrNull() ?: return
 
