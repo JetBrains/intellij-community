@@ -173,10 +173,10 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   fun addShortcut(actionId: String, shortcut: Shortcut, fromSettings: Boolean) {
+    val boundShortcuts = keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts[it] }
     actionIdToShortcuts.compute(actionId) { id, list ->
       var result: List<Shortcut>? = list
       if (result == null) {
-        val boundShortcuts = keymapManager.getActionBinding(id)?.let { actionIdToShortcuts[it] }
         result = boundShortcuts ?: parent?.getShortcutList(id)?.map { convertShortcut(it) } ?: emptyList()
       }
       if (!result.contains(shortcut)) {
