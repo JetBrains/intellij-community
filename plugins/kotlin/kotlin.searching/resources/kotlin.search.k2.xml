@@ -3,15 +3,15 @@
     <extensionPoint qualifiedName="com.intellij.directKotlinClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <searcher forClass="org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinClassInheritorsSearch$SearchParameters"
-              implementationClass="org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinClassInheritorsSearcher"/>
-    <searcher forClass="org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinClassInheritorsSearch$SearchParameters"
-              implementationClass="org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinClassDelegatedSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassDelegatedSearcher"/>
     
-    <searcher forClass="org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinOverridingCallableSearch$SearchParameters"
-              implementationClass="org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinOverridingMethodSearcher"/>
-    <searcher forClass="org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinOverridingCallableSearch$SearchParameters"
-              implementationClass="org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinOverridingMethodDelegatedSearcher"/>
-    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.seraching.inheritors.KotlinFirDefinitionsSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingMethodSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingMethodDelegatedSearcher"/>
+    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.searching.inheritors.KotlinFirDefinitionsSearcher"/>
   </extensions>
 </idea-plugin>

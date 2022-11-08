@@ -5,8 +5,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Query
-import org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinClassInheritorsSearch
-import org.jetbrains.kotlin.idea.seraching.inheritors.DirectKotlinOverridingCallableSearch
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 

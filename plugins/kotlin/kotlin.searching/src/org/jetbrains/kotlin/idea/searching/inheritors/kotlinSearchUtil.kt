@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.seraching.inheritors
+package org.jetbrains.kotlin.idea.searching.inheritors
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -60,10 +60,10 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
     return sequence {
         while (!queue.isEmpty()) {
             val currentMethod = queue.poll()
-            if (visited.isNotEmpty()) {
+            if (!visited.add(currentMethod)) continue
+            if (this@findAllOverridings != currentMethod) {
                 yield(currentMethod)
             }
-            visited += currentMethod
             when (currentMethod) {
                 is KtCallableDeclaration -> {
                     DirectKotlinOverridingCallableSearch.search(currentMethod, searchScope).forEach {
@@ -73,10 +73,7 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
                         analyze(currentMethod) {
                             val ktCallableSymbol = currentMethod.getSymbol() as? KtCallableSymbol ?: return@analyze
                             ktCallableSymbol.getDirectlyOverriddenSymbols()
-                                .mapNotNull {
-                                    it.psi
-                                }
-                                .filter { it !in visited }
+                                .mapNotNull { it.psi }
                                 .forEach { queue.offer(it) }
                         }
                     }
@@ -85,12 +82,10 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
                 is PsiMethod -> {
                     OverridingMethodsSearch.search(currentMethod, searchScope,true)
                         .mappingNotNull { it.unwrapped }
-                        .filter { it !in visited }
                         .forEach { queue.offer(it) }
                     if (withFullHierarchy) {
                         currentMethod.findSuperMethods(true)
                             .mapNotNull { it.unwrapped }
-                            .filter { it !in visited }
                             .forEach { queue.offer(it) }
                     }
                 }
@@ -124,10 +119,10 @@ fun KtClass.findAllInheritors(searchScope: SearchScope = useScope): Sequence<Psi
     return sequence {
         while (!queue.isEmpty()) {
             val currentClass = queue.poll()
-            if (visited.isNotEmpty()) {
+            if (!visited.add(currentClass)) continue
+            if (currentClass != this@findAllInheritors) {
                 yield(currentClass)
             }
-            visited += currentClass
             when (currentClass) {
                 is KtClass -> {
                     DirectKotlinClassInheritorsSearch.search(currentClass, searchScope).forEach {
@@ -138,7 +133,6 @@ fun KtClass.findAllInheritors(searchScope: SearchScope = useScope): Sequence<Psi
                 is PsiClass -> {
                     ClassInheritorsSearch.search(currentClass, searchScope, /* checkDeep = */ false)
                         .mappingNotNull { it.unwrapped }
-                        .filter { it !in visited }
                         .forEach {
                             queue.offer(it)
                         }

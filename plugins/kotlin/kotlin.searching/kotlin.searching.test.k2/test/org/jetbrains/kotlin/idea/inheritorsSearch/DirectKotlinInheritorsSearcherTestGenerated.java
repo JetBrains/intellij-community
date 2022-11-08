@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("kotlin.search.k2/kotlin.search.test")
+@TestRoot("kotlin.searching/kotlin.searching.test.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class DirectKotlinInheritorsSearcherTestGenerated extends AbstractDirectKotlinInheritorsSearcherTest {
