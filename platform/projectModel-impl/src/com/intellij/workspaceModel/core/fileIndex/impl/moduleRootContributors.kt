@@ -8,8 +8,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity> {
   override val entityClass: Class<ContentRootEntity>
@@ -32,14 +31,21 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
     val module = entity.contentRoot.module.findModule(storage)
     if (module != null) {
       val contentRoot = entity.contentRoot.url.virtualFile
-      val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT 
-      registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootType))
+      val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT
+      val packagePrefix = entity.asJavaSourceRoot()?.packagePrefix 
+                          ?: entity.asJavaResourceRoot()?.relativeOutputPath?.replace('/', '.') 
+                          ?: ""
+      registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootType, packagePrefix))
       registrar.registerExclusionPatterns(entity.url, entity.contentRoot.excludedPatterns, entity)
     }
   }
 
   override val dependenciesOnOtherEntities: List<DependencyDescription<SourceRootEntity>>
-    get() = listOf(DependencyDescription.OnParent(ContentRootEntity::class.java) { it.sourceRoots.asSequence() })
+    get() = listOf(
+      DependencyDescription.OnParent(ContentRootEntity::class.java) { it.sourceRoots.asSequence() },
+      DependencyDescription.OnChild(JavaSourceRootPropertiesEntity::class.java) { it.sourceRoot },
+      DependencyDescription.OnChild(JavaResourceRootPropertiesEntity::class.java) { it.sourceRoot }
+    )
 }
 
 /**
@@ -59,6 +65,15 @@ internal interface ModuleContentOrSourceRootData: WorkspaceFileSetData {
  */
 internal interface ModuleOrLibrarySourceRootData: WorkspaceFileSetData
 
+internal interface JvmPackageRootData: WorkspaceFileSetData {
+  val packagePrefix: String
+}
+
 internal data class ModuleContentRootData(override val module: Module, override val customContentRoot: VirtualFile?): ModuleContentOrSourceRootData
 
-internal data class ModuleSourceRootData(override val module: Module, override val customContentRoot: VirtualFile?, val rootType: String): ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData
+internal data class ModuleSourceRootData(
+  override val module: Module,
+  override val customContentRoot: VirtualFile?,
+  val rootType: String,
+  override val packagePrefix: String
+) : ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData, JvmPackageRootData

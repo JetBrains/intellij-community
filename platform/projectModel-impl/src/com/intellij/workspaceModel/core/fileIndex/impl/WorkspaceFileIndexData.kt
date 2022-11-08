@@ -5,9 +5,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.util.CollectionQuery
+import com.intellij.util.Query
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.*
@@ -22,10 +27,14 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                       private val rootFileSupplier: RootFileSupplier) {
   private val contributors = contributorList.groupBy { it.entityClass }
   private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
-  /** this map is accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
+  
+  /** these maps are accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
   private val fileSets = MultiMap.create<VirtualFile, StoredFileSet>()
+  private val fileSetsByPackagePrefix = MultiMap.create<String, WorkspaceFileSetImpl>()
+  
+  private val packageDirectoryCache: PackageDirectoryCacheImpl
   private val nonIncrementalContributors = NonIncrementalContributors(project, rootFileSupplier)
-  private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, rootFileSupplier, fileSets)
+  private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, rootFileSupplier, fileSets, fileSetsByPackagePrefix)
   private val fileIdWithoutFileSets = ConcurrentBitSet.create()
   private val storeFileSetRegistrar = StoreFileSetsRegistrarImpl()
   private val removeFileSetRegistrar = RemoveFileSetsRegistrarImpl()
@@ -36,6 +45,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
   private var hasDirtyEntities = false
 
   init {
+    packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     contributors.keys.forEach { entityClass ->
       storage.entities(entityClass).forEach {
@@ -55,7 +65,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       updateDirtyEntities()
     }
     ApplicationManager.getApplication().assertReadAccessAllowed()
-    nonIncrementalContributors.updateIfNeeded(fileSets)
+    nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix)
 
     val originalKindMask = 
       (if (includeContentSets) WorkspaceFileKindMask.CONTENT else 0) or 
@@ -246,6 +256,54 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
 
   fun resetFileCache() {
     fileIdWithoutFileSets.clear()
+    packageDirectoryCache.clear()
+  }
+  
+  private fun isPackageDirectory(dir: VirtualFile, packageName: String): Boolean = getPackageName(dir) == packageName
+
+  private fun fillPackageDirectories(packageName: String, result: MutableList<in VirtualFile>) {
+    val addedRoots = HashSet<VirtualFile>()
+    for (fileSet in fileSetsByPackagePrefix[packageName]) {
+      val root = fileSet.root
+      if (root.isDirectory && root.isValid && addedRoots.add(root)) {
+        result.add(root)
+      }
+    }
+  }
+
+  fun getPackageName(dir: VirtualFile): String? {
+    if (!dir.isDirectory) return null
+
+    val fileSet = when (val info = getFileInfo(dir, true, true, true, true)) {
+                    is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootData }
+                    is MultipleWorkspaceFileSets -> info.fileSets.find { it.data is JvmPackageRootData }
+                    else -> null
+                  } ?: return null
+
+    val packagePrefix = (fileSet.data as JvmPackageRootData).packagePrefix
+    val packageName = VfsUtilCore.getRelativePath(dir, fileSet.root, '.') 
+                      ?: error("${dir.presentableUrl} is not under ${fileSet.root.presentableUrl}")
+    return when {
+      packagePrefix.isEmpty() -> packageName
+      packageName.isEmpty() -> packagePrefix
+      else -> "$packagePrefix.$packageName"
+    }
+  }
+
+  fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> {
+    val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
+    if (includeLibrarySources) return query
+    return query.filtering {
+      getFileInfo(it, true, true, true, false) !is WorkspaceFileInternalInfo.NonWorkspace
+    }
+  }
+
+  fun onLowMemory() {
+    packageDirectoryCache.onLowMemory()
+  }
+
+  fun clearPackageDirectoryCache() {
+    packageDirectoryCache.clear()
   }
 
   private inner class StoreFileSetsRegistrarImpl : WorkspaceFileSetRegistrar {
@@ -263,7 +321,11 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                  kind: WorkspaceFileKind,
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
-      fileSets.putValue(root, WorkspaceFileSetImpl(root, kind, entity.createReference(), customData ?: DummyWorkspaceFileSetData))
+      val fileSet = WorkspaceFileSetImpl(root, kind, entity.createReference(), customData ?: DummyWorkspaceFileSetData)
+      fileSets.putValue(root, fileSet)
+      if (customData is JvmPackageRootData) {
+        fileSetsByPackagePrefix.putValue(customData.packagePrefix, fileSet)
+      }
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
@@ -312,6 +374,11 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
       fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isResolvesTo(it.entityReference, entity) }
+      if (customData is JvmPackageRootData) {
+        fileSetsByPackagePrefix.removeValueIf(customData.packagePrefix) { 
+          it is WorkspaceFileSetImpl && isResolvesTo(it.entityReference, entity) 
+        }
+      }
     }
 
     private fun isResolvesTo(reference: EntityReference<*>, entity: WorkspaceEntity) = reference == entity.createReference<WorkspaceEntity>() 

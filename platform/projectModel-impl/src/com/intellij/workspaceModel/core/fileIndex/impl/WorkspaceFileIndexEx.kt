@@ -3,6 +3,8 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.Query
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -36,6 +38,24 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * Forces the index to update entities marked by [markDirty]. Must be called during execution of the same Write Action as [markDirty].
    */
   fun updateDirtyEntities()
+
+  /**
+   * Returns package name for [directory] if it's located under source root or classes root of Java library, or `null` otherwise.
+   * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getPackageNameByDirectory] instead.
+   */
+  fun getPackageName(directory: VirtualFile): String?
+
+  /**
+   * Returns a query producing directories which correspond to [packageName]. 
+   * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getDirsByPackageName] instead.
+   */
+  fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile>
+
+  /**
+   * Returns a query producing directories from [scope] which correspond to [packageName].
+   * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getDirsByPackageName] instead.
+   */
+  fun getDirectoriesByPackageName(packageName: String, scope: GlobalSearchScope): Query<VirtualFile>
 
   companion object {
     @JvmField

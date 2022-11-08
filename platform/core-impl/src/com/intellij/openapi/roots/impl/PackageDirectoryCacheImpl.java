@@ -32,7 +32,7 @@ public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
     myPackageDirectoryFilter = packageDirectoryFilter;
   }
 
-  void clear() {
+  public void clear() {
     myNonExistentPackages.clear();
     myDirectoriesByPackageNameCache.clear();
   }

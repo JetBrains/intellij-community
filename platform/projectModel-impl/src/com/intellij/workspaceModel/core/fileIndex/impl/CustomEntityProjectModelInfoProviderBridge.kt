@@ -24,10 +24,10 @@ internal class CustomEntityProjectModelInfoProviderBridge<E : WorkspaceEntity>(p
     }
     provider.getLibraryRoots(sequenceOf(entity), storage).forEach { libraryRoots ->
       libraryRoots.classes.forEach { 
-        registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL, entity, null)
+        registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL, entity, LibraryRootFileSetData(null, ""))
       }
       libraryRoots.sources.forEach { 
-        registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL_SOURCE, entity, LibrarySourceRootFileSetData(null))
+        registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL_SOURCE, entity, LibrarySourceRootFileSetData(null, ""))
       }
       libraryRoots.excluded.forEach { 
         registrar.registerExcludedRoot(it, WorkspaceFileKind.EXTERNAL, entity)
