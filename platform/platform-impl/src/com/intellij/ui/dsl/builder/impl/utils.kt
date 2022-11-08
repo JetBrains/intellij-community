@@ -3,12 +3,10 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.ComponentWithBrowseButton
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.TitledSeparator
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.Cell
@@ -40,19 +38,6 @@ internal enum class DslComponentPropertyInternal {
 }
 
 /**
- * [JPanel] descendants that should use default vertical gaps around similar to other standard components like labels, text fields etc
- */
-// todo Use DslComponentProperty.TOP_BOTTOM_GAP instead
-private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
-  RawCommandLineEditor::class,
-  SearchTextField::class,
-  SegmentedButtonComponent::class,
-  SegmentedButtonToolbar::class,
-  TextFieldWithBrowseButton::class,
-  TitledSeparator::class
-)
-
-/**
  * Throws exception instead of logging warning. Useful while forms building to avoid layout mistakes
  */
 private const val FAIL_ON_WARN = false
@@ -73,17 +58,14 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   SegmentedButtonToolbar::class
 )
 
-internal val JComponent.origin: JComponent
+/**
+ * See [DslComponentProperty.INTERACTIVE_COMPONENT]
+ */
+val JComponent.interactiveComponent: JComponent
+  @ApiStatus.Internal
   get() {
-    // todo Move into components implementation
-    return when (this) {
-      is TextFieldWithBrowseButton -> textField
-      is ComponentWithBrowseButton<*> -> childComponent
-      else -> {
-        val interactiveComponent = getClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT) as JComponent?
-        interactiveComponent ?: this
-      }
-    }
+    val interactiveComponent = getClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT) as JComponent?
+    return interactiveComponent ?: this
   }
 
 internal fun prepareVisualPaddings(component: JComponent): Gaps {
@@ -117,22 +99,16 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
 
 internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): Gaps {
   val top = getDefaultVerticalGap(component, spacing)
-  var bottom = top
-  if (component.getClientProperty(DslComponentProperty.NO_BOTTOM_GAP) == true) {
-    bottom = 0
-  }
+  val bottom = if (component.getClientProperty(DslComponentProperty.NO_BOTTOM_GAP) == true) 0 else top
   return Gaps(top = top, left = left, bottom = bottom, right = right)
 }
 
 /**
- * Returns default top and bottom gap for [component]. All non [JPanel] components or
- * [DEFAULT_VERTICAL_GAP_COMPONENTS] have default vertical gap, zero otherwise
+ * Returns default top and bottom gap for [component]
  */
-internal fun getDefaultVerticalGap(component: JComponent, spacing: SpacingConfiguration): Int {
+private fun getDefaultVerticalGap(component: JComponent, spacing: SpacingConfiguration): Int {
   val noDefaultVerticalGap = component is JPanel
-                             && component.getClientProperty(ToolbarDecorator.DECORATOR_KEY) == null
                              && component.getClientProperty(DslComponentProperty.TOP_BOTTOM_GAP) != true
-                             && !DEFAULT_VERTICAL_GAP_COMPONENTS.any { clazz -> clazz.isInstance(component) }
 
   return if (noDefaultVerticalGap) 0 else spacing.verticalComponentGap
 }
@@ -155,7 +131,7 @@ internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
     return
   }
 
-  val component = getLabelComponentFor(cell.component.origin)
+  val component = getLabelComponentFor(cell.component.interactiveComponent)
   if (component == null) {
     if (mnemonicExists) {
       warn("Unsupported labeled component ${cell.component.javaClass.name}, label '${label.text}'")

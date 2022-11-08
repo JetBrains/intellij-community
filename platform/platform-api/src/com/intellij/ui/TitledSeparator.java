@@ -5,6 +5,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -59,6 +60,7 @@ public class TitledSeparator extends JPanel {
     setLabelFor(labelFor);
     setOpaque(false);
     updateLabelFont();
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
   }
 
   @Override

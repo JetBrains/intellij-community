@@ -184,7 +184,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor): CellImpl<T> {
-    val origin = component.origin
+    val origin = component.interactiveComponent
     dialogPanelConfig.validationRequestors.getOrPut(origin) { SmartList() }
       .add(validationRequestor)
     return this
@@ -213,12 +213,12 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationOnInput(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
-    val origin = component.origin
+    val origin = component.interactiveComponent
     return validationOnInput(DialogValidation { ValidationInfoBuilder(origin).validation(component) })
   }
 
   override fun validationOnInput(vararg validations: DialogValidation): CellImpl<T> {
-    val origin = component.origin
+    val origin = component.interactiveComponent
     dialogPanelConfig.validationsOnInput.getOrPut(origin) { SmartList() }
       .addAll(validations.map { it.forComponentIfNeeded(origin) })
 
@@ -233,12 +233,12 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationOnApply(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
-    val origin = component.origin
+    val origin = component.interactiveComponent
     return validationOnApply(DialogValidation { ValidationInfoBuilder(origin).validation(component) })
   }
 
   override fun validationOnApply(vararg validations: DialogValidation): CellImpl<T> {
-    val origin = component.origin
+    val origin = component.interactiveComponent
     dialogPanelConfig.validationsOnApply.getOrPut(origin) { SmartList() }
       .addAll(validations.map { it.forComponentIfNeeded(origin) })
     return this
@@ -256,7 +256,7 @@ internal class CellImpl<T : JComponent>(
 
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()
-    val origin = component.origin
+    val origin = component.interactiveComponent
     val validationRequestors = dialogPanelConfig.validationRequestors.getOrPut(origin) { SmartList() }
     if (validationRequestors.isNotEmpty()) return
 

@@ -43,6 +43,7 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor, Fragme
     myEditor = new ExpandableTextField(lineParser, lineJoiner);
     add(myEditor, BorderLayout.CENTER);
     setDescriptor(null);
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEditor);
   }
 

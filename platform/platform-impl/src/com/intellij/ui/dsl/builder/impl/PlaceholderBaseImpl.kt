@@ -87,11 +87,12 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
     checkNotNull(placeholderCellData)
     val installedComponent = checkNotNull(componentField)
 
+    // todo interactiveComponent is not correct here, and remove DslComponentProperty.LABEL_FOR
     placeholderCellData?.let {
       val gaps = customGaps ?: getComponentGaps(it.constraints.gaps.left, it.constraints.gaps.right, installedComponent, it.spacing)
       it.constraints = it.constraints.copy(
         gaps = gaps,
-        visualPaddings = prepareVisualPaddings(installedComponent.origin)
+        visualPaddings = prepareVisualPaddings(installedComponent.interactiveComponent)
       )
       it.panel.add(installedComponent, it.constraints)
       if (installedComponent is DialogPanel) {

@@ -502,6 +502,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     panel.putClientProperty(DECORATOR_KEY, Boolean.TRUE);
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
     panel.putClientProperty(DslComponentProperty.LABEL_FOR, contextComponent);
+    panel.putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
 
     panel.setBorder(myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL));
     Border scrollPaneBorder = null;

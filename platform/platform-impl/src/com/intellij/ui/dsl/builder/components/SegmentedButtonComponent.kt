@@ -71,6 +71,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     isFocusable = true
     border = SegmentedButtonBorder()
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
+    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true)
 
     this.items = items
     addFocusListener(object : FocusListener {
