@@ -43,7 +43,8 @@ public class UseCoupleInspection extends DevKitInspectionBase {
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if ("create".equals(methodExpression.getReferenceName())) {
+        String methodName = methodExpression.getReferenceName();
+        if ("create".equals(methodName) || "pair".equals(methodName)) {
           final PsiMethod method = expression.resolveMethod();
           if (method != null) {
             final PsiClass psiClass = method.getContainingClass();
