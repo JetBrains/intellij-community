@@ -162,12 +162,14 @@ public final class ChangelistConflictTracker {
 
   public void saveState(Element to) {
     synchronized (myConflicts) {
-      for (Map.Entry<String, Conflict> entry : myConflicts.entrySet()) {
-        Element fileElement = new Element("file");
-        fileElement.setAttribute("path", entry.getKey());
-        fileElement.setAttribute("ignored", Boolean.toString(entry.getValue().ignored));
-        to.addContent(fileElement);
-      }
+      myConflicts.forEach((path, conflict) -> {
+        if (conflict.ignored) {
+          Element fileElement = new Element("file");
+          fileElement.setAttribute("path", path);
+          fileElement.setAttribute("ignored", Boolean.toString(conflict.ignored));
+          to.addContent(fileElement);
+        }
+      });
     }
     XmlSerializer.serializeInto(myOptions, to);
   }
