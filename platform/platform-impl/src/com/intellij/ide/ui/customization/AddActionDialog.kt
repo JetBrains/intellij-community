@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -39,8 +40,8 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
 
   private val selectedIcon: ActionIconInfo?
     get() = browseComboBox.selectedItem as? ActionIconInfo
-  private val selectedTreePath: TreePath?
-    get() = actionsTree.selectionPath
+  private val selectedTreePaths: Array<TreePath>
+    get() = actionsTree.selectionPaths ?: emptyArray()
 
   init {
     title = IdeBundle.message("action.choose.actions.to.add")
@@ -63,6 +64,13 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
         cell(browseComboBox)
           .align(AlignX.FILL)
           .customize(Gaps.EMPTY)
+          .enabledIf(object : ComponentPredicate() {
+            override fun invoke(): Boolean = selectedTreePaths.size < 2
+
+            override fun addListener(listener: (Boolean) -> Unit) {
+              actionsTree.addTreeSelectionListener { listener(selectedTreePaths.size < 2) }
+            }
+          })
       }
       row("") {
         label(IdeBundle.message("browse.custom.icon.hint"))
@@ -87,27 +95,30 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
       }
     }
 
-    val iconInfo = selectedIcon
-    val selectedNode = selectedTreePath?.lastPathComponent as? DefaultMutableTreeNode
-    if (iconInfo != null && selectedNode != null) {
-      CustomizableActionsPanel.setCustomIcon(customActionsSchema, selectedNode, iconInfo, contentPane)
-      if (selectedNode.userObject is Pair<*, *>) {
-        val actionId = CustomizableActionsPanel.getActionId(selectedNode)
-        if (actionId != null) {
-          val action = ActionManager.getInstance().getAction(actionId)
-          action.templatePresentation.icon = iconInfo.icon
-          action.isDefaultIcon = iconInfo.icon == null
+    val selectedPaths = selectedTreePaths
+    if (selectedPaths.size == 1) {
+      val iconInfo = selectedIcon
+      val selectedNode = selectedPaths[0].lastPathComponent as? DefaultMutableTreeNode
+      if (iconInfo != null && selectedNode != null) {
+        CustomizableActionsPanel.setCustomIcon(customActionsSchema, selectedNode, iconInfo, contentPane)
+        if (selectedNode.userObject is Pair<*, *>) {
+          val actionId = CustomizableActionsPanel.getActionId(selectedNode)
+          if (actionId != null) {
+            val action = ActionManager.getInstance().getAction(actionId)
+            action.templatePresentation.icon = iconInfo.icon
+            action.isDefaultIcon = iconInfo.icon == null
+          }
         }
       }
     }
     super.doOKAction()
   }
 
-  fun getAddedActionIdOrGroup(): Any? {
-    val iconInfo = selectedIcon
-    val selectedNode = selectedTreePath?.lastPathComponent as? DefaultMutableTreeNode
-    val userObj = selectedNode?.userObject?.takeIf { iconInfo != null }
-    return if (userObj is Pair<*, *>) userObj.first else userObj
+  fun getAddedActions(): List<Any?> {
+    return selectedTreePaths.mapNotNull { path ->
+      val node = path.lastPathComponent as? DefaultMutableTreeNode
+      node?.userObject?.let { if (it is Pair<*, *>) it.first else it }
+    }
   }
 
   override fun getDimensionServiceKey() = "#com.intellij.ide.ui.customization.CustomizableActionsPanel.FindAvailableActionsDialog"
