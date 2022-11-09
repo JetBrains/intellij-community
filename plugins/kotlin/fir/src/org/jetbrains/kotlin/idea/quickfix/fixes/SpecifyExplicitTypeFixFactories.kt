@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
@@ -37,7 +37,7 @@ object SpecifyExplicitTypeFixFactories {
     private class SpecifyExplicitTypeQuickFix(
         target: KtCallableDeclaration,
         private val typeInfo: TypeInfo,
-    ) : KotlinApplicableQuickFix<KtCallableDeclaration>(target) {
+    ) : AbstractKotlinApplicableQuickFix<KtCallableDeclaration>(target) {
         override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
 
         override fun getActionName(element: KtCallableDeclaration): String = when (element) {

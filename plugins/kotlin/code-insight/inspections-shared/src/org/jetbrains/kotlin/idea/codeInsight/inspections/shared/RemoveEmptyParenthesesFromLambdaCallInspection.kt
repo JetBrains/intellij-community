@@ -4,12 +4,13 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.canRemoveByPsi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeArgumentList
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
-class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicableInspection<KtValueArgumentList>(KtValueArgumentList::class) {
+class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinApplicableInspection<KtValueArgumentList>(KtValueArgumentList::class) {
     override fun getFamilyName(): String = KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.display.name")
     override fun getActionName(element: KtValueArgumentList): String =
         KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.action.name")

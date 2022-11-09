@@ -8,7 +8,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentNames
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 
 internal class AddNamesToCallArgumentsIntention :
-    KotlinApplicableIntentionWithContext<KtCallElement, AddNamesToCallArgumentsIntention.Context>(KtCallElement::class) {
+    AbstractKotlinApplicableIntentionWithContext<KtCallElement, AddNamesToCallArgumentsIntention.Context>(KtCallElement::class) {
 
     class Context(val argumentNames: Map<SmartPsiElementPointer<KtValueArgument>, Name>)
 

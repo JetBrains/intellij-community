@@ -7,14 +7,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class RedundantUnitReturnTypeInspection :
-    KotlinApplicableInspectionWithContext<KtNamedFunction, TypeInfo>(KtNamedFunction::class),
+    AbstractKotlinApplicableInspectionWithContext<KtNamedFunction, TypeInfo>(KtNamedFunction::class),
     CleanupLocalInspectionTool {
 
     override fun getFamilyName(): String = KotlinBundle.message("inspection.redundant.unit.return.type.display.name")

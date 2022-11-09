@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class ConvertToBlockBodyIntention :
-    KotlinApplicableIntentionWithContext<KtDeclarationWithBody, ConvertToBlockBodyIntention.Context>(KtDeclarationWithBody::class) {
+    AbstractKotlinApplicableIntentionWithContext<KtDeclarationWithBody, ConvertToBlockBodyIntention.Context>(KtDeclarationWithBody::class) {
 
     class Context(
         val returnTypeIsUnit: Boolean,

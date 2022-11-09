@@ -8,7 +8,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -20,7 +22,7 @@ private val COLLECTION_COUNT_CALLABLE_ID = CallableId(StandardNames.COLLECTIONS_
 private val COLLECTION_CLASS_IDS = setOf(StandardClassIds.Collection, StandardClassIds.Array, StandardClassIds.Map) +
         StandardClassIds.elementTypeByPrimitiveArrayType.keys + StandardClassIds.unsignedArrayTypeByElementType.keys
 
-internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspection<KtCallExpression>(KtCallExpression::class) {
+internal class ReplaceCollectionCountWithSizeInspection : AbstractKotlinApplicableInspection<KtCallExpression>(KtCallExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("inspection.replace.collection.count.with.size.display.name")
     override fun getActionName(element: KtCallExpression): String =
         KotlinBundle.message("replace.collection.count.with.size.quick.fix.text")

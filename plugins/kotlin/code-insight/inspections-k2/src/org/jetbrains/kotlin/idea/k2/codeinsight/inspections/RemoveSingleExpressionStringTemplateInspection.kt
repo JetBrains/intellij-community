@@ -5,14 +5,16 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 internal class RemoveSingleExpressionStringTemplateInspection :
-    KotlinApplicableInspectionWithContext<KtStringTemplateExpression, RemoveSingleExpressionStringTemplateInspection.Context>(
+    AbstractKotlinApplicableInspectionWithContext<KtStringTemplateExpression, RemoveSingleExpressionStringTemplateInspection.Context>(
         KtStringTemplateExpression::class
     ) {
 

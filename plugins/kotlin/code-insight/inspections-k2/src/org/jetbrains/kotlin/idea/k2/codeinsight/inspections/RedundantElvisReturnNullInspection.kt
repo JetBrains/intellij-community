@@ -8,7 +8,7 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
-internal class RedundantElvisReturnNullInspection : KotlinApplicableInspection<KtBinaryExpression>(KtBinaryExpression::class) {
+internal class RedundantElvisReturnNullInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>(KtBinaryExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("inspection.redundant.elvis.return.null.descriptor")
     override fun getActionName(element: KtBinaryExpression): String = KotlinBundle.message("remove.redundant.elvis.return.null.text")
 

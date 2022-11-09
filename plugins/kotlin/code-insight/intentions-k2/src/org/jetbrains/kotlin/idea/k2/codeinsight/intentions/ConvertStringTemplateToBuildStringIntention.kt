@@ -7,11 +7,13 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.isAnnotationArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertStringTemplateToBuildStringCall
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
-internal class ConvertStringTemplateToBuildStringIntention : KotlinApplicableIntention<KtStringTemplateExpression>(
+internal class ConvertStringTemplateToBuildStringIntention : AbstractKotlinApplicableIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class
 ), LowPriorityAction {
     override fun getFamilyName(): String = KotlinBundle.message("convert.string.template.to.build.string")

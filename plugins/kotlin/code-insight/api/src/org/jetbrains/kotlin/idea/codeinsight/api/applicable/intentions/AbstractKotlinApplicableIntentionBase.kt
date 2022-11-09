@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeinsight.api.applicable
+package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.KtElement
@@ -10,12 +11,13 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import kotlin.reflect.KClass
 
 /**
- * [KotlinApplicableIntentionBase] is a base implementation for [KotlinApplicableIntention] and [KotlinApplicableIntentionWithContext].
+ * [AbstractKotlinApplicableIntentionBase] is a base implementation for [AbstractKotlinApplicableIntention] and
+ * [AbstractKotlinApplicableIntentionWithContext].
  *
- * Note: A [familyNameGetter] for [SelfTargetingIntention] does not have to be set because inheritors of [KotlinApplicableIntentionBase]
- * must override [getFamilyName].
+ * Note: A [familyNameGetter] for [SelfTargetingIntention] does not have to be set because inheritors of
+ * [AbstractKotlinApplicableIntentionBase] must override [getFamilyName].
  */
-sealed class KotlinApplicableIntentionBase<ELEMENT : KtElement>(
+sealed class AbstractKotlinApplicableIntentionBase<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
 ) : SelfTargetingIntention<ELEMENT>(elementType.java, { "" }), KotlinApplicableToolBase<ELEMENT> {
     abstract override fun getFamilyName(): @IntentionFamilyName String

@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeinsight.api.applicable
+package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyzeAllowEdt
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
@@ -11,9 +13,9 @@ import kotlin.reflect.KClass
  * Applies a fix to the PSI with [apply] given some [CONTEXT] from [prepareContext] if the intention is applicable via [isApplicableByPsi] and
  * [prepareContext].
  */
-abstract class KotlinApplicableIntentionWithContext<ELEMENT : KtElement, CONTEXT>(
+abstract class AbstractKotlinApplicableIntentionWithContext<ELEMENT : KtElement, CONTEXT>(
     elementType: KClass<ELEMENT>,
-) : KotlinApplicableIntentionBase<ELEMENT>(elementType), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+) : AbstractKotlinApplicableIntentionBase<ELEMENT>(elementType), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
     final override fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean {
         if (!super.isApplicableTo(element, caretOffset)) return false
         val context = prepareContextWithAnalyzeAllowEdt(element, needsReadAction = false) ?: return false

@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
@@ -47,7 +47,7 @@ object AddWhenRemainingBranchFixFactories {
     private class AddRemainingWhenBranchesQuickFix(
         target: KtWhenExpression,
         private val context: AddRemainingWhenBranchesUtils.Context,
-    ) : KotlinApplicableQuickFix<KtWhenExpression>(target) {
+    ) : AbstractKotlinApplicableQuickFix<KtWhenExpression>(target) {
         override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(context.enumToStarImport != null)
         override fun apply(element: KtWhenExpression, project: Project, editor: Editor?, file: KtFile) =
             addRemainingWhenBranches(element, context)

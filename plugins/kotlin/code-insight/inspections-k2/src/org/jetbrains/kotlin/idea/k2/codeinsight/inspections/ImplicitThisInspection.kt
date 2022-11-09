@@ -8,15 +8,17 @@ import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
-internal class ImplicitThisInspection : KotlinApplicableInspectionWithContext<KtExpression, ImplicitThisInspection.ImplicitReceiverInfo>(
-    KtExpression::class
-) {
+internal class ImplicitThisInspection :
+    AbstractKotlinApplicableInspectionWithContext<KtExpression, ImplicitThisInspection.ImplicitReceiverInfo>(KtExpression::class) {
+
     data class ImplicitReceiverInfo(
         val receiverLabel: Name?,
         val isUnambiguousLabel: Boolean

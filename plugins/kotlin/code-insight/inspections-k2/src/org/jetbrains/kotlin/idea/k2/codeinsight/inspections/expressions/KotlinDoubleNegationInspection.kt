@@ -6,12 +6,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 
-internal class KotlinDoubleNegationInspection : KotlinApplicableInspection<KtPrefixExpression>(KtPrefixExpression::class) {
+internal class KotlinDoubleNegationInspection : AbstractKotlinApplicableInspection<KtPrefixExpression>(KtPrefixExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("inspection.kotlin.double.negation.display.name")
     override fun getActionName(element: KtPrefixExpression): String =
         KotlinBundle.message("inspection.kotlin.double.negation.action.name")

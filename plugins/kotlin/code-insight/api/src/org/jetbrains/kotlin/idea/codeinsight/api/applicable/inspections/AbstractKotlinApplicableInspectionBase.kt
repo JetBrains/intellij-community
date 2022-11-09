@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeinsight.api.applicable
+package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsight.api.inspections.KotlinSingleElementInspection
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
@@ -12,7 +13,8 @@ import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
 /**
- * [KotlinApplicableInspectionBase] is a base implementation for [KotlinApplicableInspection] and [KotlinApplicableInspectionWithContext].
+ * [KotlinApplicableInspectionBase] is a base implementation for [AbstractKotlinApplicableInspection] and
+ * [AbstractKotlinApplicableInspectionWithContext].
  */
 sealed class KotlinApplicableInspectionBase<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,

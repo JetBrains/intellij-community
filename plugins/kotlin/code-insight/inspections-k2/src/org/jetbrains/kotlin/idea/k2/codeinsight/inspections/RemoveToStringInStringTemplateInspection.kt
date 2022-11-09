@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.*
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 private val TO_STRING_CALLABLE_ID = CallableId(StandardClassIds.Any, OperatorNameConventions.TO_STRING)
 
 internal class RemoveToStringInStringTemplateInspection :
-    KotlinApplicableInspection<KtDotQualifiedExpression>(KtDotQualifiedExpression::class),
+    AbstractKotlinApplicableInspection<KtDotQualifiedExpression>(KtDotQualifiedExpression::class),
     CleanupLocalInspectionTool {
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.to.string.fix.text")
