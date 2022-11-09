@@ -5,16 +5,18 @@ import com.intellij.diff.DiffTool
 import com.intellij.diff.FrameDiffTool
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.SegmentedButton
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
 @Suppress("DialogTitleCapitalization")
-abstract class DiffToolChooser(private val targetComponent: JComponent? = null) : DumbAwareAction(), CustomComponentAction {
+abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(), CustomComponentAction {
 
-  private val actions = arrayListOf<MyDiffToolAction>()
+  private var panel: DialogPanel? = null
+  private var segmentedButton: SegmentedButton<FrameDiffTool>? = null
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -43,37 +45,24 @@ abstract class DiffToolChooser(private val targetComponent: JComponent? = null) 
     //do nothing
   }
 
-  abstract fun onSelected(e: AnActionEvent, diffTool: DiffTool)
+  abstract fun onSelected(project: Project, diffTool: DiffTool)
 
   abstract fun getTools(): List<FrameDiffTool>
   abstract fun getActiveTool(): DiffTool
   abstract fun getForcedDiffTool(): DiffTool?
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    actions.clear()
-
-    for (tool in getTools()) {
-      actions.add(MyDiffToolAction(tool, tool == getActiveTool()))
+    panel = panel {
+      row {
+        segmentedButton = segmentedButton(getTools(), FrameDiffTool::getName).apply {
+          (getActiveTool() as? FrameDiffTool)?.let {
+            selectedItem = it
+          }
+          whenItemSelected { if (project != null) onSelected(project, it) }
+        }
+      }
     }
-    return SegmentedButtonToolbar(DefaultActionGroup(actions), IntelliJSpacingConfiguration())
-      .also { it.targetComponent = targetComponent }
-  }
 
-  private inner class MyDiffToolAction(private val diffTool: DiffTool, private var state: Boolean) :
-    ToggleAction(diffTool.name), DumbAware {
-
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-
-    override fun isSelected(e: AnActionEvent): Boolean = state
-
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      if (getActiveTool() === diffTool) return
-
-      actions.forEach { action -> action.state = !state }
-
-      this.state = state
-
-      onSelected(e, diffTool)
-    }
+    return panel!!
   }
 }
