@@ -21,7 +21,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -119,9 +119,7 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
 
   public static <T extends PsiElement> Location<T> fromPsiElement(T element, Module module) {
     if (element == null) return null;
-    if (!element.isValid()) {
-      throw new PsiInvalidElementAccessException(element);
-    }
+    PsiUtilCore.ensureValid(element);
     return module != null ? new PsiLocation<>(element.getProject(), module, element) : new PsiLocation<>(element.getProject(), element);
   }
 }
