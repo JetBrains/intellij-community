@@ -125,7 +125,8 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
   @Override
   public boolean isAnnotationValid(@NotNull FilePath path, @NotNull VcsRevisionNumber revisionNumber) {
-    return GitContentRevision.getRepositoryIfSubmodule(myProject, path) == null;
+    return revisionNumber instanceof GitRevisionNumber &&
+           GitContentRevision.getRepositoryIfSubmodule(myProject, path) == null;
   }
 
   @NotNull
