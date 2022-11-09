@@ -24,11 +24,23 @@ internal class GitLabMergeRequestsPanelFactory {
     val listMergeRequests = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider)
 
     val listLoaderPanel = createListLoaderPanel(scope, listVm, listMergeRequests)
+    val progressStripe = ProgressStripe(
+      listLoaderPanel,
+      scope.nestedDisposable(),
+      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+    ).apply {
+      scope.launch {
+        listVm.loadingState.collect {
+          if (it) startLoadingImmediately() else stopLoading()
+        }
+      }
+    }
+
     val searchPanel = createSearchPanel(scope, listVm)
 
-    GitLabMergeRequestsListController(scope, listVm, listMergeRequests.emptyText)
+    GitLabMergeRequestsListController(scope, listVm, listMergeRequests.emptyText, listLoaderPanel, progressStripe)
 
-    return JBUI.Panels.simplePanel(listLoaderPanel)
+    return JBUI.Panels.simplePanel(progressStripe)
       .addToTop(searchPanel)
       .andTransparent()
   }
@@ -54,8 +66,7 @@ internal class GitLabMergeRequestsPanelFactory {
   }
 
   private fun createListLoaderPanel(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel, list: JComponent): JComponent {
-
-    val scrollPane = ScrollPaneFactory.createScrollPane(list, true).apply {
+    return ScrollPaneFactory.createScrollPane(list, true).apply {
       isOpaque = false
       viewport.isOpaque = false
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -88,15 +99,6 @@ internal class GitLabMergeRequestsPanelFactory {
         }
       }
     }
-    val progressStripe = ProgressStripe(scrollPane, scope.nestedDisposable(),
-                                        ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
-      scope.launch {
-        listVm.loadingState.collect {
-          if (it) startLoadingImmediately() else stopLoading()
-        }
-      }
-    }
-    return progressStripe
   }
 
   private fun createSearchPanel(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
