@@ -27,6 +27,18 @@ class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
       }            
     """.trimIndent(), skipImports = true)
 
+  fun `test illegal imported dependency skip static imports`() = dependencyViolationTest(javaFooFile, "ImportClientJava.java", """
+      package pkg.client;
+      
+      import static pkg.api.JavaFoo.foo;
+
+      class Client {
+        public static void main(String[] args) {
+          <error descr="Dependency rule 'Deny usages of scope 'JavaFoo' in scope 'ImportClientJava'.' is violated">foo</error>();
+        } 
+      }            
+    """.trimIndent(), skipImports = true)
+
   fun `test illegal fully qualified dependency Java API`() = dependencyViolationTest(javaFooFile, "FqClientJava.java", """
       package pkg.client;
       

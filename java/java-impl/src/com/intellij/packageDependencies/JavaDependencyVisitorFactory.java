@@ -44,7 +44,10 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
     @Override
     public void visitElement(@NotNull PsiElement element) {
       super.visitElement(element);
+      processElement(element);
+    }
 
+    private void processElement(@NotNull PsiElement element) {
       for (PsiReference ref : element.getReferences()) {
         PsiElement resolved = ref.resolve();
         if (resolved != null) {
@@ -59,11 +62,20 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
     @Override
     public void visitDocComment(@NotNull PsiDocComment comment) { }
 
+    private void visitImport(@NotNull PsiElement element) {
+      if (!myOptions.skipImports()) {
+        visitElement(element);
+      }
+    }
+
     @Override
     public void visitImportStatement(@NotNull PsiImportStatement statement) {
-      if (!myOptions.skipImports()) {
-        visitElement(statement);
-      }
+      visitImport(statement);
+    }
+
+    @Override
+    public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
+      visitImport(statement);
     }
 
     @Override
