@@ -53,15 +53,14 @@ object FilesScanExecutor {
     for (i in 0 until THREAD_COUNT) {
       results.add(ourExecutor.submit { ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress)) })
     }
-    resetThreadContext().use {
-      // put the current thread to work too so the total thread count is `getNumberOfScanningThreads`
-      // and avoid thread starvation due to a recursive `runOnAllThreads` invocation
-      runnable.run()
-      for (result in results) {
-        // complete the future to avoid waiting for it forever if `ourExecutor` is fully booked
-        (result as FutureTask<*>).run()
-        ProgressIndicatorUtils.awaitWithCheckCanceled(result)
-      }
+
+    // put the current thread to work too so the total thread count is `getNumberOfScanningThreads`
+    // and avoid thread starvation due to a recursive `runOnAllThreads` invocation
+    runnable.run()
+    for (result in results) {
+      // complete the future to avoid waiting for it forever if `ourExecutor` is fully booked
+      (result as FutureTask<*>).run()
+      ProgressIndicatorUtils.awaitWithCheckCanceled(result)
     }
   }
 
