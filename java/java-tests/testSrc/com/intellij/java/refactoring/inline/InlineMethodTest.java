@@ -564,6 +564,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testTernaryBranchCollapsible() { doTest(); }
 
   public void testNewWithSideEffect() { doTest(); }
+  
+  public void testSplitIfAndCollapseBack() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {
