@@ -133,8 +133,8 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
       }
       return super.generatePreview(project, editor, file);
     }
-    PsiModifierListOwner copy = ObjectUtils.tryCast(element.copy(), PsiModifierListOwner.class);
-    if (copy == null) return IntentionPreviewInfo.EMPTY;
+    PsiFile fileCopy = (PsiFile)elementFile.copy();
+    PsiModifierListOwner copy = PsiTreeUtil.findSameElementInCopy(element, fileCopy);
     String copyText = copy.getText();
     PsiModifierList modifierList = copy.getModifierList();
     if (modifierList == null) return IntentionPreviewInfo.EMPTY;
