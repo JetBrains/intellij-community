@@ -111,6 +111,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
                                 @NotNull final Project project,
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs) {
+    if (project.isDisposed() || editor.isDisposed()) return;
     UpToDateLineNumberProvider upToDateLineNumberProvider = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumberProvider);
   }
