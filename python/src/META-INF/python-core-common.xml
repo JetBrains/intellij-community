@@ -793,6 +793,7 @@
     <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode">
       <add-to-group group-id="DebuggingActionsGroup" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3" relative-to-action="StepInto" anchor="after"/>
 
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift F7" replace-all="true"/>
       <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift F7" replace-all="true"/>
