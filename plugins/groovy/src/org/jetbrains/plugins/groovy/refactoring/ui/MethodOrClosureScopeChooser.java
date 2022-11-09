@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.openapi.application.ModalityState;
@@ -69,7 +69,7 @@ public final class MethodOrClosureScopeChooser {
                                final PairFunction<? super GrParameterListOwner, ? super PsiElement, Object> callback) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JCheckBox superMethod = new JCheckBox(GroovyBundle.message("change.base.method.label"), true);
-    superMethod.setMnemonic('U');
+    superMethod.setMnemonic(KeyEvent.VK_U);
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList list = new JBList(scopes.toArray());
     list.setVisibleRowCount(5);

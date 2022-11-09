@@ -39,7 +39,7 @@ class GrCodeStyleGroovydocPanel(settings : CodeStyleSettings) : CodeStyleAbstrac
 
   private val myPanel = panel {
     row {
-      checkBox("Enable GroovyDoc formatting").bindSelected(this@GrCodeStyleGroovydocPanel::myGroovyDocFormattingEnabled)
+      checkBox(GroovyBundle.message("code.style.groovydoc.enable")).bindSelected(this@GrCodeStyleGroovydocPanel::myGroovyDocFormattingEnabled)
     }
   }
 

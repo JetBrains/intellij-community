@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -36,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 
 public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntroducer<GroovyIntroduceVariableSettings> {
   private JCheckBox myCanBeFinalCb;
@@ -70,7 +71,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
   protected JComponent getComponent() {
     myCanBeFinalCb = new NonFocusableCheckBox(GroovyRefactoringBundle.message("declare.final.checkbox"));
     myCanBeFinalCb.setSelected(false);
-    myCanBeFinalCb.setMnemonic('f');
+    myCanBeFinalCb.setMnemonic(KeyEvent.VK_F);
     final GrFinalListener finalListener = new GrFinalListener(myEditor);
     myCanBeFinalCb.addActionListener(new ActionListener() {
       @Override

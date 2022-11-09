@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.application.WriteAction;
@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -74,7 +75,7 @@ public final class GrInplaceParameterIntroducer extends GrAbstractInplaceIntrodu
     previewPanel.setBorder(new EmptyBorder(2, 2, 6, 2));
 
     myDelegateCB = new JBCheckBox(GroovyBundle.message("checkbox.delegate.via.overloading.method"));
-    myDelegateCB.setMnemonic('l');
+    myDelegateCB.setMnemonic(KeyEvent.VK_L);
     myDelegateCB.setFocusable(false);
 
     JPanel panel = new JPanel(new BorderLayout());
