@@ -13,11 +13,13 @@ import com.intellij.util.text.DateFormatUtil
 @Service
 internal class TipsOrderUtil {
   /**
-   * Reorders tips to show the most useful ones in the beginning
+   * Reorders tips to show the most useful ones in the beginning.
+   * If provided project is null, tip applicability will not be taken into account.
+   * All tips will be counted as applicable.
    *
    * @return object that contains sorted tips and describes approach of how the tips are sorted
    */
-  fun sort(tips: List<TipAndTrickBean>, project: Project): TipsSortingResult {
+  fun sort(tips: List<TipAndTrickBean>, project: Project?): TipsSortingResult {
     val registry = ProductivityFeaturesRegistry.getInstance();
     if (registry == null) {
       thisLogger().warn("ProductivityFeaturesRegistry is not created")
@@ -31,7 +33,10 @@ internal class TipsOrderUtil {
       val features = allFeatures.filter { it.tipId == tip.id }
       val lastTimeShown = tipsUsageManager.getLastTimeShown(tip.id)
       if (features.isNotEmpty()) {
-        val isApplicable = features.any { feature ->
+        val isApplicable = if (project == null) {
+          true
+        }
+        else features.any { feature ->
           val filters = registry.getMatchingFilters(feature.id)
           if (filters.isNotEmpty()) {
             filters.any { filter -> filter.isApplicable(feature.id, project) }

@@ -32,7 +32,7 @@ public final class TipDialog extends DialogWrapper {
   private final boolean myShowingOnStartup;
   private final boolean myShowActions;
 
-  TipDialog(@NotNull final Project project, @NotNull final TipsSortingResult sortingResult) {
+  TipDialog(@Nullable final Project project, @NotNull final TipsSortingResult sortingResult) {
     super(project, true);
     setModal(false);
     setTitle(IdeBundle.message("title.tip.of.the.day"));
