@@ -27,6 +27,7 @@ import com.intellij.util.childScope
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -1173,17 +1174,16 @@ abstract class ComponentManagerImpl(
   fun startDispose() {
     stopServicePreloading()
 
-    Disposer.disposeChildren(this) { true }
-
     val messageBus = messageBus
-    // There is a chance that someone will try to connect to the message bus and will get NPE because of disposed connection disposable,
-    // because the container state is not yet set to DISPOSE_IN_PROGRESS.
-    // So, 1) dispose connection children 2) set state DISPOSE_IN_PROGRESS 3) dispose connection
-    messageBus?.disposeConnectionChildren()
-
-    containerState.set(ContainerState.DISPOSE_IN_PROGRESS)
-
-    messageBus?.disposeConnection()
+    runSuppressing(
+      { Disposer.disposeChildren(this) { true } },
+      // There is a chance that someone will try to connect to the message bus and will get NPE because of disposed connection disposable,
+      // because the container state is not yet set to DISPOSE_IN_PROGRESS.
+      // So, 1) dispose connection children 2) set state DISPOSE_IN_PROGRESS 3) dispose connection
+      { messageBus?.disposeConnectionChildren() },
+      { containerState.set(ContainerState.DISPOSE_IN_PROGRESS) },
+      { messageBus?.disposeConnection() }
+    )
   }
 
   override fun dispose() {
