@@ -219,7 +219,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       if (!processor.process(new ScopeDescriptor(searchScope))) return false;
     }
     for (ScopeDescriptorProvider provider : ScopeDescriptorProvider.EP_NAME.getExtensionList()) {
-      for (ScopeDescriptor descriptor : provider.getScopeDescriptors(project)) {
+      for (ScopeDescriptor descriptor : provider.getScopeDescriptors(project, dataContext)) {
         if (!processor.process(descriptor)) return false;
       }
     }

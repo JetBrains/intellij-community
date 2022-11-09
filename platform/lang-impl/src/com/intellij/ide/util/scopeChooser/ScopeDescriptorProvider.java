@@ -16,13 +16,17 @@
 
 package com.intellij.ide.util.scopeChooser;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public interface ScopeDescriptorProvider {
+
   ScopeDescriptor[] EMPTY = new ScopeDescriptor[0];
+
   ExtensionPointName<ScopeDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.scopeDescriptorProvider");
 
-  ScopeDescriptor @NotNull [] getScopeDescriptors(Project project);
+  ScopeDescriptor @NotNull [] getScopeDescriptors(@NotNull Project project,
+                                                  @NotNull DataContext dataContext);
 }
