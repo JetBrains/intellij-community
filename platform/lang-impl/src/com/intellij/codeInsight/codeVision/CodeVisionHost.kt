@@ -10,6 +10,7 @@ import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -23,6 +24,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -165,7 +167,11 @@ open class CodeVisionHost(val project: Project) {
 
             override fun providerAvailabilityChanged(id: String, isEnabled: Boolean) {
               PsiManager.getInstance(project).dropPsiCaches()
+              for (editor in EditorFactory.getInstance().allEditors) {
+                CodeVisionPassFactory.clearModificationStamp(editor)
+              }
               DaemonCodeAnalyzer.getInstance(project).restart()
+              invalidateProviderSignal.fire(LensInvalidateSignal(null))
             }
           })
       }
