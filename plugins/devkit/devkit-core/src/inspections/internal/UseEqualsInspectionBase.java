@@ -21,7 +21,7 @@ import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-public abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
+abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
 
   @SuppressWarnings("unchecked")
   public static final Class<? extends UElement>[] HINTS = new Class[]{UBinaryExpression.class};
