@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -31,12 +32,25 @@ import com.intellij.xml.XmlExtension.AttributeValuePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
+import static com.intellij.xml.util.HtmlUtil.hasHtml;
+
 public class XmlEqTypedHandler extends TypedHandlerDelegate {
   private boolean needToInsertQuotes = false;
+  private final Map<Caret, Integer> quoteInsertedAt = new WeakHashMap<>();
 
   @NotNull
   @Override
   public Result beforeCharTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
+    if (c == '"' || (c == '\'' && hasHtml(file))) {
+      var currentCaret = editor.getCaretModel().getCurrentCaret();
+      var caretPos = quoteInsertedAt.remove(currentCaret);
+      if (caretPos != null && caretPos == currentCaret.getOffset()) {
+        return Result.STOP;
+      }
+    }
     if (c == '=' && WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
       if (XmlGtTypedHandler.fileContainsXmlLanguage(file)) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -80,6 +94,8 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
         AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       }
       needToInsertQuotes = false;
+      Caret caret = editor.getCaretModel().getCurrentCaret();
+      quoteInsertedAt.put(caret, caret.getOffset());
     }
 
     return super.charTyped(c, project, editor, file);
