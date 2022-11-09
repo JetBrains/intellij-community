@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.*
@@ -312,6 +313,10 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
                     || hasKotlinCommonRuntimeInScope(scope)
         })
     }
+}
+
+fun isStdlibModule(module: Module): Boolean {
+    return KotlinPackageIndexUtils.packageExists(FqName("kotlin"), module.moduleProductionSourceScope)
 }
 
 fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
