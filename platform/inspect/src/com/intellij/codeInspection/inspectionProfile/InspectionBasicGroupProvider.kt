@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.GlobalInspectionTool
+import com.intellij.codeInspection.GlobalSimpleInspectionTool
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 
@@ -13,14 +14,16 @@ private object AllGroup : YamlInspectionGroup {
 private object GlobalGroup : YamlInspectionGroup {
   override val groupId: String = "GLOBAL"
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
-    return tool.tool is GlobalInspectionTool
+    val inspection = tool.tool
+    return inspection is GlobalInspectionTool && inspection !is GlobalSimpleInspectionTool
   }
 }
 
 private object LocalGroup : YamlInspectionGroup {
   override val groupId: String = "LOCAL"
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
-    return tool.tool is LocalInspectionTool
+    val inspection = tool.tool
+    return inspection is LocalInspectionTool || inspection is GlobalSimpleInspectionTool
   }
 }
 
