@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.OriginCapability
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class CompletionSessionConfiguration(
     val useBetterPrefixMatcherForNonImportedClasses: Boolean,
@@ -90,7 +92,7 @@ abstract class CompletionSession(
         if (reference != null) {
             if (reference.expression is KtLabelReferenceExpression) {
                 this.nameExpression = null
-                this.expression = reference.expression.parent.parent as? KtExpressionWithLabel
+                this.expression = reference.expression.parents.match(KtContainerNode::class, last = KtExpressionWithLabel::class)
             } else {
                 this.nameExpression = reference.expression
                 this.expression = nameExpression

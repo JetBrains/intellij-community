@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -54,6 +55,7 @@ import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCallExpression {
     val ktExpression = this.getArgumentExpression()
@@ -475,27 +477,15 @@ private val KtClass.isEffectivelyFinal: Boolean
             isData() ||
             !(isSealed() || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || isInterface())
 
-fun KtDeclaration.isOverridable(): Boolean {
-    val parent = parent
-    if (!(parent is KtClassBody || parent is KtParameterList)) return false
-
-    val klass = if (parent.parent is KtPrimaryConstructor)
-        parent.parent.parent as? KtClass
-    else
-        parent.parent as? KtClass
-
-    if (klass == null || (!klass.isInheritable() && !klass.isEnum())) return false
-
-    if (this.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-        // 'private' is incompatible with 'open'
-        return false
-    }
-
-    return when (getModalityFromDescriptor()) {
-        KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD -> true
-        else -> false
-    }
-}
+/**
+ * copy-paste in K2: [org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportFirImpl.isOverridable]
+ */
+fun KtDeclaration.isOverridable(): Boolean =
+    !hasModifier(KtTokens.PRIVATE_KEYWORD) &&  // 'private' is incompatible with 'open'
+            (parents.match(KtParameterList::class, KtPrimaryConstructor::class, last = KtClass::class)
+                ?: parents.match(KtClassBody::class, last = KtClass::class))
+                ?.let { it.isInheritable() || it.isEnum() } == true &&
+            getModalityFromDescriptor() in setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD)
 
 fun KtDeclaration.getModalityFromDescriptor(descriptor: DeclarationDescriptor? = resolveToDescriptorIfAny()): KtModifierKeywordToken? {
     if (descriptor is MemberDescriptor) {

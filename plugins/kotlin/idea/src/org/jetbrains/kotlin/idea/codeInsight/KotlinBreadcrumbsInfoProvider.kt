@@ -13,6 +13,7 @@ import com.intellij.usageView.UsageViewShortNameLocation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.unwrapIfLabeled
 import org.jetbrains.kotlin.psi.*
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 import kotlin.reflect.KClass
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
     override fun isShownByDefault(): Boolean = !UISettings.getInstance().showMembersInNavigationBar
@@ -398,16 +400,8 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
         return handler(e)!!.elementTooltip(e as KtElement)
     }
 
-    override fun getParent(e: PsiElement): PsiElement? {
-        val node = e.node ?: return null
-        return when (node.elementType) {
-            KtNodeTypes.PROPERTY_ACCESSOR ->
-                e.parent.parent
-
-            else ->
-                e.parent
-        }
-    }
+    override fun getParent(element: PsiElement): PsiElement? =
+      (element.parentsWithSelf.match(KtPropertyAccessor::class, last = KtProperty::class) ?: element).parent
 
     private object Holder {
         val handlers: List<ElementHandler<*>> = listOf<ElementHandler<*>>(

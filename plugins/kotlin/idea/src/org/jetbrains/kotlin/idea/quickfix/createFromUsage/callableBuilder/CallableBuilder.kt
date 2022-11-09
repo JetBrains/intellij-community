@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10Kotlin
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -79,6 +80,7 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 import kotlin.math.max
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 /**
  * Represents a single choice for a type (e.g. parameter type or return type).
@@ -525,9 +527,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             callableInfo.isAbstract -> ""
                             containingElement is KtClass && containingElement.hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
                             containingElement is KtObjectDeclaration && containingElement.hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
-                            containingElement is KtObjectDeclaration && containingElement.isCompanion()
-                                    && containingElement.parent.parent is KtClass
-                                    && (containingElement.parent.parent as KtClass).hasModifier(KtTokens.EXTERNAL_KEYWORD) -> ""
+                            containingElement is KtObjectDeclaration && containingElement.isCompanion() &&
+                                    containingElement.parents.match(KtClassBody::class, last = KtClass::class)
+                                        ?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true -> ""
                             isExpectClassMember -> ""
                             else -> "{\n\n}"
 

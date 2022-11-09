@@ -59,8 +59,7 @@ fun <T, R : Comparable<R>> Sequence<T>.sortedConservativelyBy(selector: (T) -> R
         .sortedWith(compareBy({ (_, value) -> selector(value) }, IndexedValue<T>::index))
         .map(IndexedValue<T>::value)
 
-@ApiStatus.Internal
-fun <T> Sequence<T>.cycle(): Sequence<T> = sequence { while (true) yieldAll(this@cycle) }
+private fun <T> Sequence<T>.cycle(): Sequence<T> = sequence { while (true) yieldAll(this@cycle) }
 
 /**
  * Matches types of the first N elements of the [Sequence].

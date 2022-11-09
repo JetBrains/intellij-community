@@ -377,7 +377,7 @@ interface BaseKotlinConverter {
                 } ?:
                 // Of course, it is a hack to pick-up KotlinUParameter from another declaration
                 // instead of creating it directly with `givenParent`, but anyway better than have unexpected nulls here
-                element.parent.parent.safeAs<KtCallableDeclaration>()
+                element.parent.safeAs<KtParameterList>()?.parent?.safeAs<KtCallableDeclaration>()
                     ?.toUElementOfType<ULambdaExpression>()?.valueParameters
                     ?.find { it.name == element.name }
             },
@@ -719,7 +719,9 @@ interface BaseKotlinConverter {
                 }
 
                 is KtSuperTypeCallEntry -> {
-                    val objectLiteralExpression = element.parent.parent.parent.safeAs<KtObjectLiteralExpression>()
+                    val objectLiteralExpression = element.parent.safeAs<KtSuperTypeList>()
+                        ?.parent?.safeAs<KtObjectDeclaration>()
+                        ?.parent?.safeAs<KtObjectLiteralExpression>()
                     if (objectLiteralExpression != null)
                         el<UObjectLiteralExpression> { KotlinUObjectLiteralExpression(objectLiteralExpression, givenParent) }
                     else

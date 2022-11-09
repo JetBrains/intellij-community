@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isNullabilityMismatch
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class SurroundWithNullCheckFix(
     expression: KtExpression,
@@ -91,7 +93,7 @@ class SurroundWithNullCheckFix(
 
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val nullableExpression = diagnostic.psiElement as? KtReferenceExpression ?: return null
-            val forExpression = nullableExpression.parent.parent as? KtForExpression ?: return null
+            val forExpression = nullableExpression.parents.match(KtContainerNode::class, last = KtForExpression::class) ?: return null
             if (forExpression.parent !is KtBlockExpression) return null
 
             if (!nullableExpression.isStableSimpleExpression()) return null

@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -42,13 +43,15 @@ import org.jetbrains.kotlin.types.TypeConstructorSubstitution
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
     private const val DISPLAY_MAX_PARAMS = 5
 
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val delegator = diagnostic.psiElement as KtSuperTypeEntry
-        val classOrObjectDeclaration = delegator.parent.parent as? KtClassOrObject ?: return emptyList()
+        val classOrObjectDeclaration =
+          delegator.parents.match(KtSuperTypeList::class, last = KtClassOrObject::class) ?: return emptyList()
 
         val typeRef = delegator.typeReference ?: return emptyList()
         val type = typeRef.analyze()[BindingContext.TYPE, typeRef] ?: return emptyList()
