@@ -329,7 +329,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private void overrideFromProperties() {
-    String youTrackUrlOverride = System.getProperty("application.info.youtrack.url");
+    String key = "application.info.youtrack.url";
+    String youTrackUrlOverride = System.getProperty(key);
+    if (youTrackUrlOverride == null) {
+      youTrackUrlOverride = System.getenv("IDE_" + key.replace(".", "_").toUpperCase());
+    }
     if (youTrackUrlOverride != null) {
       myYoutrackUrl = youTrackUrlOverride;
     }
