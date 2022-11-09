@@ -62,6 +62,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
         if (!configurationChecker.isSyncing &&
             isNotConfiguredNotificationRequired(module.toModuleGroup()) &&
             !hasAnyKotlinRuntimeInScope(module) &&
+            !isStdlibModule(module) &&
             getLibraryRootsWithIncompatibleAbi(module).isEmpty()
         ) {
             return createKotlinNotConfiguredPanel(module, getAbleToRunConfigurators(module).toList())
