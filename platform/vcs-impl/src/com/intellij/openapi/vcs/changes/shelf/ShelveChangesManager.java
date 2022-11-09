@@ -64,8 +64,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -78,7 +76,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.*;
+import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
+import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
 import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -169,7 +168,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   private final Project myProject;
 
-  public static final Topic<ChangeListener> SHELF_TOPIC = new Topic<>("shelf updates", ChangeListener.class);
+  public static final Topic<ShelveChangesManagerListener> SHELF_TOPIC = new Topic<>("shelf updates", ShelveChangesManagerListener.class);
 
   public ShelveChangesManager(@NotNull Project project) {
     myPathMacroSubstitutor = PathMacroManager.getInstance(project);
@@ -716,7 +715,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   private void notifyStateChanged() {
     if (!myProject.isDisposed()) {
-      myProject.getMessageBus().syncPublisher(SHELF_TOPIC).stateChanged(new ChangeEvent(this));
+      myProject.getMessageBus().syncPublisher(SHELF_TOPIC).shelvedListsChanged();
     }
   }
 

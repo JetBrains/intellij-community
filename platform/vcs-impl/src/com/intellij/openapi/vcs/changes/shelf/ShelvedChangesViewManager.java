@@ -129,7 +129,7 @@ public class ShelvedChangesViewManager implements Disposable {
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, e -> onShelveChangelistsChange());
+    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, () -> onShelveChangelistsChange());
   }
 
   private void onShelveChangelistsChange() {
