@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractChopListIntention
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState

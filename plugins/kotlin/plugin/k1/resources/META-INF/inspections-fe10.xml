@@ -751,20 +751,6 @@
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.ChopParameterListIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.ChopArgumentListIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.NullableBooleanEqualityCheckToElvisIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>

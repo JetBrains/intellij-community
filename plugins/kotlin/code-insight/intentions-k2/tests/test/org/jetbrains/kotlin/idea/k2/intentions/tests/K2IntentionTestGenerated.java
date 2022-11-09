@@ -1101,6 +1101,126 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/chop")
+    public abstract static class Chop extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/chop/argumentList")
+        public static class ArgumentList extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("leftParOnSameLine.kt")
+            public void testLeftParOnSameLine() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/leftParOnSameLine.kt");
+            }
+
+            @TestMetadata("onNestedArgumentList.kt")
+            public void testOnNestedArgumentList() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/onNestedArgumentList.kt");
+            }
+
+            @TestMetadata("onNestedArgumentList2.kt")
+            public void testOnNestedArgumentList2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/onNestedArgumentList2.kt");
+            }
+
+            @TestMetadata("onNestedArgumentList3.kt")
+            public void testOnNestedArgumentList3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/onNestedArgumentList3.kt");
+            }
+
+            @TestMetadata("onNestedArgumentList4.kt")
+            public void testOnNestedArgumentList4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/onNestedArgumentList4.kt");
+            }
+
+            @TestMetadata("onRightParenthesis.kt")
+            public void testOnRightParenthesis() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/onRightParenthesis.kt");
+            }
+
+            @TestMetadata("parOnSameLine.kt")
+            public void testParOnSameLine() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/parOnSameLine.kt");
+            }
+
+            @TestMetadata("rightParOnSameLine.kt")
+            public void testRightParOnSameLine() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/rightParOnSameLine.kt");
+            }
+
+            @TestMetadata("threeArgs.kt")
+            public void testThreeArgs() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/threeArgs.kt");
+            }
+
+            @TestMetadata("threeArgsWithTrailingComma.kt")
+            public void testThreeArgsWithTrailingComma() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/argumentList/threeArgsWithTrailingComma.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/chop/parameterList")
+        public static class ParameterList extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("hasAllLineBreaks.kt")
+            public void testHasAllLineBreaks() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/hasAllLineBreaks.kt");
+            }
+
+            @TestMetadata("hasSomeLineBreaks1.kt")
+            public void testHasSomeLineBreaks1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/hasSomeLineBreaks1.kt");
+            }
+
+            @TestMetadata("hasSomeLineBreaks1WithTrailingComma.kt")
+            public void testHasSomeLineBreaks1WithTrailingComma() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/hasSomeLineBreaks1WithTrailingComma.kt");
+            }
+
+            @TestMetadata("hasSomeLineBreaks2.kt")
+            public void testHasSomeLineBreaks2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/hasSomeLineBreaks2.kt");
+            }
+
+            @TestMetadata("leftParOnSameLine.kt")
+            public void testLeftParOnSameLine() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/leftParOnSameLine.kt");
+            }
+
+            @TestMetadata("oneParameter.kt")
+            public void testOneParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/oneParameter.kt");
+            }
+
+            @TestMetadata("parOnSameLine.kt")
+            public void testParOnSameLine() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/parOnSameLine.kt");
+            }
+
+            @TestMetadata("rightParOnSameLine.kt")
+            public void testRightParOnSameLine() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/rightParOnSameLine.kt");
+            }
+
+            @TestMetadata("threeParameters.kt")
+            public void testThreeParameters() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/threeParameters.kt");
+            }
+
+            @TestMetadata("twoParameters.kt")
+            public void testTwoParameters() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/chop/parameterList/twoParameters.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertConcatenationToBuildString")
     public static class ConvertConcatenationToBuildString extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
