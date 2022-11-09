@@ -89,8 +89,12 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
       addParameter("--no-capture-output")
     }
 
-    if (targetedCommandLineBuilder.shouldBeFixed && sdk != null) {
-      CondaPathFix.BySdk(sdk).fix(targetedCommandLineBuilder)
+    if (targetedCommandLineBuilder.shouldBeFixed) {
+      if (sdk != null) {
+        CondaPathFix.BySdk(sdk).fix(targetedCommandLineBuilder)
+      } else {
+        CondaPathFix.ByCondaFullPath(Path.of(fullCondaPathOnTarget)).fix(targetedCommandLineBuilder)
+      }
     }
   }
 
@@ -108,6 +112,10 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
           addParameter("-n")
           addParameter(identity.envName)
         }
+      }
+
+      if (targetedCommandLineBuilder.shouldBeFixed) {
+        CondaPathFix.ByCondaFullPath(Path.of(fullCondaPathOnTarget)).fix(targetedCommandLineBuilder)
       }
     }
   }

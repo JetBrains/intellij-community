@@ -53,7 +53,8 @@ class CondaPackageCache : PythonPackageCache<String> {
 
       val helpersPath = helpers.apply(targetEnv)
 
-      baseConda.addCondaToTargetBuilder(sdk, commandLineBuilder)
+      // SDK associated with another conda env, not the base one, so we do not pass it not to activate wrong conda
+      baseConda.addCondaToTargetBuilder(null, commandLineBuilder)
 
       commandLineBuilder.addParameter("python")
       commandLineBuilder.addParameter("$helpersPath/conda_packaging_tool.py")
