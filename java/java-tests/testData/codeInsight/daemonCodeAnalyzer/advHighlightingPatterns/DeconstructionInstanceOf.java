@@ -22,7 +22,7 @@ public class Test {
 
   <T> void testRawDeconstruction(TypedRecord<T> r) {
     if (r instanceof TypedRecord<T>(I t)){ }
-    if (r instanceof TypedRecord<T>(T t)){ }
+    if (r instanceof TypedRecord<T>(<error descr="'java.lang.Object' cannot be safely cast to 'T'">T t</error>)){ }
     if (r instanceof <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(I t)){ }
     if (r instanceof <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(T t)){ }
   }
