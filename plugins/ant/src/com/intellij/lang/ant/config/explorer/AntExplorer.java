@@ -504,15 +504,18 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)this::getSlowData;
+      final TreePath[] paths = myTree.getSelectionPaths();
+      if (paths != null && paths.length > 0) {
+        return (DataProvider)id -> getSlowData(id, paths);
+      }
     }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HelpID.ANT;
     }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+    else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       return myProject != null? myTreeExpander : null;
     }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       if (buildFile == null) {
         return null;
@@ -544,7 +547,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     return super.getData(dataId);
   }
 
-  private Object getSlowData(@NotNull @NonNls String dataId) {
+  private static Object getSlowData(@NotNull @NonNls String dataId, final TreePath @NotNull [] paths) {
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final List<VirtualFile> virtualFiles = collectAntFiles(buildFile -> {
         final VirtualFile virtualFile = buildFile.getVirtualFile();
@@ -552,24 +555,23 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
           return virtualFile;
         }
         return null;
-      });
+      }, paths);
       return virtualFiles == null? null : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
     }
 
     if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile);
+      final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile, paths);
       return elements == null? null : elements.toArray(PsiElement.EMPTY_ARRAY);
     }
     
     return null;
   }
 
-  private <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function) {
-    final TreePath[] paths = myTree.getSelectionPaths();
-    if (paths == null) {
+  private static <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function, final TreePath @NotNull [] paths) {
+    if (paths.length == 0) {
       return null;
     }
-    Set<AntBuildFile> antFiles = new LinkedHashSet<>();
+    final Set<AntBuildFile> antFiles = new LinkedHashSet<>();
     for (final TreePath path : paths) {
       for (DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
            node != null;
