@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import kotlin.apply as applyKt
 
+@ApiStatus.NonExtendable
 abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScriptBuilder<BSB>>(
   gradleVersion: GradleVersion
 ) : AbstractGradleBuildScriptBuilder<BSB>(gradleVersion) {

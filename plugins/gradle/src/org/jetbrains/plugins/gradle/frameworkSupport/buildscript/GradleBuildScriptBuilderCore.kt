@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.util.function.Consumer
 
+@ApiStatus.NonExtendable
 interface GradleBuildScriptBuilderCore<out BSB : GradleBuildScriptBuilderCore<BSB>> : ScriptElementBuilder {
 
   val gradleVersion: GradleVersion
