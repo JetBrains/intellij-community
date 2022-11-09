@@ -2,7 +2,6 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -13,18 +12,23 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
-import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.indexing.IndexingBundle;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class MergingQueueGuiExecutor {
-  interface DumbTaskListener {
+/**
+ * Single-threaded executor for MergingTaskQueue.
+ */
+public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
+
+  private static final Logger LOG = Logger.getInstance(MergingQueueGuiExecutor.class);
+
+  public interface DumbTaskListener {
     /**
      * @return false if queue processing should be terminated (afterLastTask will not be invoked in this case). True to start queue processing.
      */
@@ -39,7 +43,6 @@ final class MergingQueueGuiExecutor {
   }
 
   private static class SafeDumbTaskListenerWrapper implements DumbTaskListener {
-    private static final Logger LOG = Logger.getInstance(MergingQueueGuiExecutor.class);
     private final DumbTaskListener delegate;
 
     private SafeDumbTaskListenerWrapper(DumbTaskListener delegate) {
@@ -68,43 +71,34 @@ final class MergingQueueGuiExecutor {
     }
   }
 
-
-  private static final Logger LOG = Logger.getInstance(MergingQueueGuiExecutor.class);
-
   private final Project myProject;
-  private final DumbServiceMergingTaskQueue myTaskQueue;
-  private final DumbServiceHeavyActivities myHeavyActivities;
+  private final MergingTaskQueue<T> myTaskQueue;
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private final DumbTaskListener myListener;
 
-  MergingQueueGuiExecutor(@NotNull Project project,
-                          @NotNull DumbServiceMergingTaskQueue queue,
-                          @NotNull DumbServiceHeavyActivities heavyActivities,
+  protected MergingQueueGuiExecutor(@NotNull Project project,
+                          @NotNull MergingTaskQueue<T> queue,
                           @NotNull DumbTaskListener listener) {
     myProject = project;
     myTaskQueue = queue;
     myListener = new SafeDumbTaskListenerWrapper(listener);
-    myHeavyActivities = heavyActivities;
   }
 
-  void processTasksWithProgress(@NotNull StructuredIdeActivity activity,
-                                @NotNull ProgressSuspender suspender,
-                                @NotNull ProgressIndicator visibleIndicator) {
+  protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
+                                          @NotNull ProgressIndicator visibleIndicator) {
     while (true) {
       if (myProject.isDisposed()) break;
 
-      try (QueuedDumbModeTask pair = myTaskQueue.extractNextTask()) {
-        if (pair == null) break;
+      try (MergingTaskQueue.@Nullable QueuedTask<T> task = myTaskQueue.extractNextTask()) {
+        if (task == null) break;
 
-        AbstractProgressIndicatorExBase taskIndicator = (AbstractProgressIndicatorExBase)pair.getIndicator();
+        AbstractProgressIndicatorExBase taskIndicator = (AbstractProgressIndicatorExBase)task.getIndicator();
         ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
         suspender.attachToProgress(taskIndicator);
         taskIndicator.addStateDelegate(relayToVisibleIndicator);
-        pair.registerStageStarted(activity);
 
         try {
-          HeavyProcessLatch.INSTANCE
-            .performOperation(HeavyProcessLatch.Type.Indexing, IdeBundle.message("progress.performing.indexing.tasks"), () -> runSingleTask(pair));
+          runSingleTask(task);
         }
         finally {
           taskIndicator.removeStateDelegate(relayToVisibleIndicator);
@@ -113,7 +107,10 @@ final class MergingQueueGuiExecutor {
     }
   }
 
-  void startBackgroundProcess() {
+  /**
+   * Start task queue processing in background in SINGLE thread. If background process is already running, this method does nothing.
+   */
+  public final void startBackgroundProcess() {
     try {
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing"), false) {
         @Override
@@ -132,7 +129,12 @@ final class MergingQueueGuiExecutor {
     }
   }
 
-  public void runBackgroundProcess(ProgressIndicator visibleIndicator) {
+
+  /**
+   * Start task queue processing in this thread under progress indicator. If background thread is already running, this method does nothing
+   * and returns immediately.
+   */
+  public final void runBackgroundProcess(ProgressIndicator visibleIndicator) {
     boolean started = isRunning.compareAndSet(false, true);
     if (!started) return;
 
@@ -140,7 +142,7 @@ final class MergingQueueGuiExecutor {
       boolean shouldProcessQueue = myListener.beforeFirstTask();
       if (shouldProcessQueue) {
         try {
-          internalRunBackgroundProcess(visibleIndicator);
+          runBackgroundProcessWithSuspender(visibleIndicator);
         }
         finally {
           myListener.afterLastTask();
@@ -152,7 +154,7 @@ final class MergingQueueGuiExecutor {
     }
   }
 
-  private void internalRunBackgroundProcess(ProgressIndicator visibleIndicator) {
+  private void runBackgroundProcessWithSuspender(ProgressIndicator visibleIndicator) {
     // Only one thread can execute this method at the same time at this point.
 
     try {
@@ -164,38 +166,18 @@ final class MergingQueueGuiExecutor {
     }
 
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
-      myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
-      DumbModeProgressTitle.getInstance(myProject).attachDumbModeProgress(visibleIndicator);
-
-      StructuredIdeActivity activity = IndexingStatisticsCollector.INDEXING_ACTIVITY.started(myProject);
-
       ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
         try {
-          DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
-          processTasksWithProgress(activity, suspender, visibleIndicator);
+          processTasksWithProgress(suspender, visibleIndicator);
         }
         catch (Throwable unexpected) {
           LOG.error(unexpected);
         }
-        finally {
-          DumbModeProgressTitle.getInstance(myProject).removeDumpModeProgress(visibleIndicator);
-
-          IndexingStatisticsCollector.logProcessFinished(activity, suspender.isClosed()
-                                                                   ? IndexingStatisticsCollector.IndexingFinishType.TERMINATED
-                                                                   : IndexingStatisticsCollector.IndexingFinishType.FINISHED);
-        }
       });
-    }
-    finally {
-      // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
-      // got suspended after the last dumb task finished (or even after the last check cancelled call). This case is handled by
-      // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
-      // previously installed.
-      myHeavyActivities.resetCurrentSuspender();
     }
   }
 
-  private static void runSingleTask(@NotNull final QueuedDumbModeTask task) {
+  protected void runSingleTask(@NotNull MergingTaskQueue.QueuedTask<T> task) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task.getInfoString());
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
@@ -209,5 +191,13 @@ final class MergingQueueGuiExecutor {
         LOG.error("Failed to execute task " + task + ". " + unexpected.getMessage(), unexpected);
       }
     }, task.getIndicator());
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  public MergingTaskQueue<T> getTaskQueue() {
+    return myTaskQueue;
   }
 }
