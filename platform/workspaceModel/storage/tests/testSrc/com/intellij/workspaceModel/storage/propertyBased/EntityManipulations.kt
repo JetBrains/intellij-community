@@ -382,7 +382,7 @@ private object AbstractEntities {
                                 someProperty: String,
                                 env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
           val children = selectChildren(env, storage).asSequence()
-          return storage.addLeftEntity(children, source) to ""
+          return storage.addLeftEntity(children, source) to "Children: ${children.toList()}"
         }
       }
     }
