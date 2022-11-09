@@ -663,14 +663,14 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Readwrite = load("ide/readwrite.svg", 2065798685, 2);
 
     public static final class RoundShadow {
-      /** 4x14 */ public static final @NotNull Icon Bottom = load("ide/roundShadow/bottom.svg", 1859259633, 0);
-      /** 18x22 */ public static final @NotNull Icon BottomLeft = load("ide/roundShadow/bottomLeft.svg", 482361254, 0);
-      /** 18x22 */ public static final @NotNull Icon BottomRight = load("ide/roundShadow/bottomRight.svg", 1195745503, 0);
-      /** 10x4 */ public static final @NotNull Icon Left = load("ide/roundShadow/left.svg", 32170589, 0);
-      /** 10x4 */ public static final @NotNull Icon Right = load("ide/roundShadow/right.svg", 1440446659, 0);
-      /** 4x6 */ public static final @NotNull Icon Top = load("ide/roundShadow/top.svg", 1621155598, 0);
-      /** 18x14 */ public static final @NotNull Icon TopLeft = load("ide/roundShadow/topLeft.svg", 1724890894, 0);
-      /** 18x14 */ public static final @NotNull Icon TopRight = load("ide/roundShadow/topRight.svg", 857636969, 0);
+      /** 4x14 */ public static final @NotNull Icon Bottom = load("ide/roundShadow/bottom.svg", 1953089577, 0);
+      /** 18x22 */ public static final @NotNull Icon BottomLeft = load("ide/roundShadow/bottomLeft.svg", 328191114, 0);
+      /** 18x22 */ public static final @NotNull Icon BottomRight = load("ide/roundShadow/bottomRight.svg", 1153215759, 0);
+      /** 10x4 */ public static final @NotNull Icon Left = load("ide/roundShadow/left.svg", 981969606, 0);
+      /** 10x4 */ public static final @NotNull Icon Right = load("ide/roundShadow/right.svg", -1830695246, 0);
+      /** 4x6 */ public static final @NotNull Icon Top = load("ide/roundShadow/top.svg", -1206065854, 0);
+      /** 18x14 */ public static final @NotNull Icon TopLeft = load("ide/roundShadow/topLeft.svg", -634536660, 0);
+      /** 18x14 */ public static final @NotNull Icon TopRight = load("ide/roundShadow/topRight.svg", 627898817, 0);
     }
 
     public static final class RunAnything {

@@ -30,8 +30,6 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
   private final Icon myBottomLeftIcon;
   private final Icon myBottomRightIcon;
 
-  private final Insets INSETS;
-
   public NotificationBalloonShadowBorderProvider(@NotNull Color fillColor, @NotNull Color borderColor) {
     this(fillColor, borderColor,
          Shadow.Top, Shadow.Left, Shadow.Bottom, Shadow.Right,
@@ -59,15 +57,13 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     myTopRightIcon = topRightIcon;
     myBottomLeftIcon = bottomLeftIcon;
     myBottomRightIcon = bottomRightIcon;
-
-    //noinspection UseDPIAwareInsets
-    INSETS = new Insets(topIcon.getIconHeight(), leftIcon.getIconWidth(), bottomIcon.getIconHeight(), rightIcon.getIconWidth());
   }
 
   @NotNull
   @Override
   public Insets getInsets() {
-    return INSETS;
+    //noinspection UseDPIAwareInsets
+    return new Insets(myTopIcon.getIconHeight(), myLeftIcon.getIconWidth(), myBottomIcon.getIconHeight(), myRightIcon.getIconWidth());
   }
 
   @Override
