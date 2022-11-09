@@ -3,6 +3,7 @@
 
 import os
 import sys
+import traceback
 from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED, IS_PYCHARM, IS_PY311
 
 
@@ -63,16 +64,22 @@ elif use_cython is None:
             return _trace_dispatch(py_db, frame, event, arg)
 
     except ImportError as e:
-        if hasattr(e, 'version_mismatch'):
-            delete_old_compiled_extensions()
-        from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func  # @UnusedImport
-        from _pydev_bundle.pydev_monkey import log_error_once
+        try:
+            if hasattr(e, 'version_mismatch'):
+                delete_old_compiled_extensions()
+            from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips, fix_top_level_trace_and_get_trace_func  # @UnusedImport
+            from _pydev_bundle.pydev_monkey import log_error_once
 
-        if not IS_PYCHARM:
-            log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
-                sys.executable, os.path.join(dirname, 'setup_cython.py')))
-        else:
-            show_tracing_warning = True
+            if not IS_PYCHARM:
+                log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
+                    sys.executable, os.path.join(dirname, 'setup_cython.py')))
+            else:
+                show_tracing_warning = True
+        except Exception as e:
+            from _pydev_bundle.pydev_monkey import log_debug
+            os.environ['PYDEVD_USE_CYTHON'] = 'NO'
+            log_debug("Problems with cython extensions. Debugger speedups using cython are turned off")
+            log_debug(traceback.format_exc())
 
 else:
     raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))
