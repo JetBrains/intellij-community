@@ -5,7 +5,6 @@ package com.intellij.ide.ui.laf
 
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.sortThemes
-import com.intellij.idea.processExtensions
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager

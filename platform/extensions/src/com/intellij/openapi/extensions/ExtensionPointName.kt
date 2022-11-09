@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DeprecatedCallableAddReplaceWith")
+@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceGetOrSet")
 
 package com.intellij.openapi.extensions
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeIfAbsent
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeSafeIfAny
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.findFirstSafe
@@ -13,6 +16,7 @@ import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByKey
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import java.util.concurrent.CancellationException
 import java.util.function.*
 import java.util.function.Function
 import java.util.stream.Stream
@@ -202,5 +206,74 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   @ApiStatus.Experimental
   fun <V : Any> computeIfAbsent(cacheId: Class<*>, valueMapper: Supplier<V>): V {
     return computeIfAbsent(getPointImpl(null), cacheId, valueMapper)
+  }
+
+  @ApiStatus.Internal
+  interface LazyExtension<T> {
+    val id: String?
+    val instance: T?
+
+    val implementationClassName: String
+
+    val pluginDescriptor: PluginDescriptor
+  }
+
+  @ApiStatus.Internal
+  fun filterableLazySequence(): Sequence<LazyExtension<T>> {
+    val point = getPointImpl(null)
+    val adapters = point.sortedAdapters
+    return LazyExtensionSequence(point = point, adapters = adapters)
+  }
+
+  private class LazyExtensionSequence<T : Any>(
+    private val point: ExtensionPointImpl<T>,
+    private val adapters: List<ExtensionComponentAdapter>,
+  ) : Sequence<LazyExtension<T>> {
+    override fun iterator(): Iterator<LazyExtension<T>> {
+      return object : Iterator<LazyExtension<T>> {
+        private var currentIndex = 0
+
+        override fun next(): LazyExtension<T> {
+          val adapter = adapters.get(currentIndex++)
+          return object : LazyExtension<T> {
+            override val id: String?
+              get() = adapter.orderId
+
+            override val instance: T?
+              get() = createOrError(adapter = adapter, point = point)
+            override val implementationClassName: String
+              get() = adapter.assignableToClassName
+
+            override val pluginDescriptor: PluginDescriptor
+              get() = adapter.pluginDescriptor
+          }
+        }
+
+        override fun hasNext(): Boolean = currentIndex < adapters.size
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  inline fun processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
+    val point = getPointImpl(null)
+    for (adapter in point.sortedAdapters) {
+      val extension = createOrError(adapter, point) ?: continue
+      consumer(extension, adapter.pluginDescriptor)
+    }
+  }
+}
+
+@PublishedApi
+internal fun <T : Any> createOrError(adapter: ExtensionComponentAdapter, point: ExtensionPointImpl<T>): T? {
+  try {
+    return adapter.createInstance(point.componentManager)
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    logger<ExtensionPointName<T>>().error(point.componentManager.createError(e, adapter.pluginDescriptor.pluginId))
+    return null
   }
 }

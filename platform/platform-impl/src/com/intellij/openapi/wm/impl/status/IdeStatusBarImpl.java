@@ -292,6 +292,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @RequiresEdt
+  @ApiStatus.Internal
+  public void addRightWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
+    addWidget(widget, IdeStatusBarImpl.Position.RIGHT, anchor);
+  }
+
+  @RequiresEdt
   private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position position, @NotNull String anchor) {
     JComponent c = wrap(widget);
     JPanel panel = getTargetPanel(position);
@@ -617,7 +623,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void removeWidget(@NotNull String id) {
-    UIUtil.invokeLaterIfNeeded(() -> {
+    EdtInvocationManager.invokeLaterIfNeeded(() -> {
       WidgetBean bean = myWidgetMap.remove(id);
       if (bean != null) {
         if (UIUtil.isAncestor(bean.component, myEffectComponent)) {
@@ -636,7 +642,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void updateWidget(@NotNull String id) {
-    UIUtil.invokeLaterIfNeeded(() -> {
+    EdtInvocationManager.invokeLaterIfNeeded(() -> {
       JComponent widgetComponent = getWidgetComponent(id);
       if (widgetComponent != null) {
         if (widgetComponent instanceof StatusBarWidgetWrapper) {

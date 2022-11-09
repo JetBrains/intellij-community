@@ -184,7 +184,7 @@ open class ProjectFrameHelper(
       installPainters()
     }
 
-    rootPane!!.createAndConfigureStatusBar(this, this)
+    rootPane!!.createAndConfigureStatusBar(frame = this, parentDisposable = this)
     val frame = frame!!
     MnemonicHelper.init(frame)
     frame.focusTraversalPolicy = IdeFocusTraversalPolicy()
@@ -350,7 +350,6 @@ open class ProjectFrameHelper(
     rootPane.statusBar?.let {
       project.messageBus.connect().subscribe(StatusBar.Info.TOPIC, it)
     }
-    installDefaultProjectStatusBarWidgets(project)
 
     if (selfie != null) {
       StartupManager.getInstance(project).runAfterOpened { selfie = null }
@@ -361,22 +360,25 @@ open class ProjectFrameHelper(
     }
   }
 
-  protected open fun installDefaultProjectStatusBarWidgets(project: Project) {
-    project.service<StatusBarWidgetsManager>().installPendingWidgets()
-    val statusBar = statusBar!!
-    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
-    val rootPane = rootPane!!
-    val navBar = rootPane.navBarStatusWidgetComponent
-    if (navBar != null) {
-      statusBar.setCentralWidget(object : StatusBarWidget {
-        override fun dispose() {
-        }
+  open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
+    project.service<StatusBarWidgetsManager>().init { rootPane!!.statusBar!! }
 
-        override fun ID(): String = IdeStatusBarImpl.NAVBAR_WIDGET_KEY
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val rootPane = rootPane ?: return@withContext
+      val statusBar = rootPane.statusBar!!
+      PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
+      val navBar = rootPane.navBarStatusWidgetComponent
+      if (navBar != null) {
+        statusBar.setCentralWidget(object : StatusBarWidget {
+          override fun dispose() {
+          }
 
-        override fun install(statusBar: StatusBar) {
-        }
-      }, navBar)
+          override fun ID(): String = IdeStatusBarImpl.NAVBAR_WIDGET_KEY
+
+          override fun install(statusBar: StatusBar) {
+          }
+        }, navBar)
+      }
     }
   }
 

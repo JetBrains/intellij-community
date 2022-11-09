@@ -8,7 +8,6 @@ import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ApplicationLevelProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ProjectLevelProvider
 import com.intellij.ide.ui.search.OptionDescription
-import com.intellij.idea.processExtensions
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException

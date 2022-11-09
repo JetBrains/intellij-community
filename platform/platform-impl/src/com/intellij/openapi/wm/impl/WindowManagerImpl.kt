@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.function.Supplier
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JWindow
@@ -250,7 +249,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   /**
    * This method is not used in a normal conditions. Only for light edit.
    */
-  fun allocateLightEditFrame(project: Project, projectFrameHelperFactory: Supplier<out ProjectFrameHelper>): ProjectFrameHelper {
+  suspend fun allocateLightEditFrame(project: Project, projectFrameHelperFactory: () -> ProjectFrameHelper): ProjectFrameHelper {
     getFrameHelper(project)?.let {
       return it
     }
@@ -258,11 +257,12 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     removeAndGetRootFrame()?.let { frame ->
       projectToFrame.put(project, frame)
       frame.setProject(project)
+      frame.installDefaultProjectStatusBarWidgets(project)
       frame.updateTitle()
       return frame
     }
 
-    val frame = projectFrameHelperFactory.get()
+    val frame = projectFrameHelperFactory()
     frame.init()
     var frameInfo: FrameInfo? = null
     val lastFocusedProjectFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project?.let(::getFrameHelper)
@@ -285,6 +285,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
     projectToFrame.put(project, frame)
     frame.setProject(project)
+    frame.installDefaultProjectStatusBarWidgets(project)
     frame.updateTitle()
     val uiFrame = frame.frameOrNull!!
     if (frameInfo != null) {

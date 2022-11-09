@@ -7,8 +7,9 @@ import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.util.Disposer
@@ -23,6 +24,9 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.PopupHandler
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.Component
 import java.awt.Dimension
 import java.util.function.BooleanSupplier
@@ -37,10 +41,16 @@ internal class LightEditFrameWrapper(
   private var frameTitleUpdateEnabled = true
 
   companion object {
+    @RequiresEdt
     fun allocate(project: Project, frameInfo: FrameInfo?, closeHandler: BooleanSupplier): LightEditFrameWrapper {
-      return (WindowManager.getInstance() as WindowManagerImpl).allocateLightEditFrame(project) {
-        LightEditFrameWrapper(project = project, frame = createNewProjectFrame(frameInfo), closeHandler = closeHandler)
-      } as LightEditFrameWrapper
+      val windowManager = WindowManager.getInstance() as WindowManagerImpl
+      return runBlockingModal(project, "") {
+        withContext(Dispatchers.EDT) {
+          windowManager.allocateLightEditFrame(project) {
+            LightEditFrameWrapper(project = project, frame = createNewProjectFrame(frameInfo), closeHandler = closeHandler)
+          } as LightEditFrameWrapper
+        }
+      }
     }
   }
 
@@ -53,7 +63,7 @@ internal class LightEditFrameWrapper(
     return LightEditRootPane(frame = requireNotNullFrame(), frameHelper = this, parentDisposable = this)
   }
 
-  override fun installDefaultProjectStatusBarWidgets(project: Project) {
+  override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
     val statusBar = statusBar!!
     statusBar.addWidgetToLeft(LightEditModeNotificationWidget(), this)
@@ -64,7 +74,7 @@ internal class LightEditFrameWrapper(
                         this)
     PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
     val statusBarWidgetManager = project.service<StatusBarWidgetsManager>()
-    ApplicationManager.getApplication().invokeLater { statusBarWidgetManager.installPendingWidgets() }
+    statusBarWidgetManager.init { statusBar }
     Disposer.register(statusBar) { statusBarWidgetManager.disableAllWidgets() }
   }
 

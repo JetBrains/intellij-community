@@ -16,6 +16,8 @@ class StatusBarWidgetSettings : SerializablePersistentStateComponent<StatusBarSt
     fun getInstance(): StatusBarWidgetSettings = service()
   }
 
+  fun isExplicitlyDisabled(id: String): Boolean = state.widgets.get(id) == false
+
   fun isEnabled(factory: StatusBarWidgetFactory): Boolean {
     return state.widgets.get(factory.id) ?: factory.isEnabledByDefault
   }

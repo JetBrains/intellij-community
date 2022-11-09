@@ -437,26 +437,6 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
   }
 }
 
-@Internal
-internal inline fun <T : Any> ExtensionPointName<T>.processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
-  val app = ApplicationManager.getApplication()
-  val extensionArea = app.extensionArea as ExtensionsAreaImpl
-  for (adapter in extensionArea.getExtensionPoint<T>(name).sortedAdapters) {
-    val extension: T = try {
-      adapter.createInstance(app) ?: continue
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      continue
-    }
-
-    consumer(extension, adapter.pluginDescriptor)
-  }
-}
-
 private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor?, isDebugEnabled: Boolean) {
   val measureActivity = if (descriptor == null) {
     null

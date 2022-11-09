@@ -177,6 +177,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         val editorComponent = fileEditorManager.init()
         frameHelper.rootPane!!.getToolWindowPane().setDocumentComponent(editorComponent)
         // not as a part of a project modal dialog
+        @Suppress("DEPRECATION")
         val reopeningEditorJob = project.coroutineScope.launchAndMeasure("editor reopening") {
           restoreOpenedFiles(fileEditorManager = fileEditorManager,
                              editorComponent = editorComponent,
@@ -185,13 +186,16 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         }
 
         async {
+          frameHelper.installDefaultProjectStatusBarWidgets(project)
           frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project))
         }
 
+        @Suppress("DEPRECATION")
         project.coroutineScope.launchAndMeasure("tool window pane creation") {
           val toolWindowManager = ToolWindowManager.getInstance(project = project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
           toolWindowManager.init(frameHelper = frameHelper, reopeningEditorsJob = reopeningEditorJob)
         }
+        @Suppress("DEPRECATION")
         project.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           val rootPane = frameHelper.rootPane!!
           runActivity("north components updating") {
