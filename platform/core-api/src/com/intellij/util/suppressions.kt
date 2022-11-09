@@ -8,7 +8,14 @@ package com.intellij.util
  * The first thrown exception (if any) is propagated.
  * Subsequent exceptions (again, if any) are added to the "suppressed" list of the first one.
  */
-fun runSuppressing(vararg blocks: () -> Unit) {
+fun runSuppressing(vararg blocks: () -> Unit) =
+  runSuppressing(blocks.asSequence())
+
+/** A Java-friendly overload of [runSuppressing]. */
+fun runSuppressing(vararg runnables: Runnable) =
+  runSuppressing(runnables.asSequence().map { r -> { r.run() } })
+
+private fun runSuppressing(blocks: Sequence<() -> Unit>) {
   var first: Throwable? = null
 
   for (block in blocks) {

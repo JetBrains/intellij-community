@@ -841,9 +841,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     BulkFileListener publisher = getPublisher();
     if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
       // optimisation: skip all groupings
-      fireBeforeEvents(publisher, outValidatedEvents);
-      applyEvent(event);
-      fireAfterEvents(publisher, outValidatedEvents);
+      Suppressions.runSuppressing(
+        () -> fireBeforeEvents(publisher, outValidatedEvents),
+        () -> applyEvent(event),
+        () -> fireAfterEvents(publisher, outValidatedEvents)
+      );
     }
     else {
       outApplyActions.add(() -> applyEvent(event));
@@ -1152,9 +1154,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
-                                          @NotNull List<? extends Runnable> applyActions,
-                                          @NotNull List<VFileEvent> applyEvents,
+  private static void applyMultipleEvents(BulkFileListener publisher,
+                                          List<Runnable> applyActions,
+                                          List<VFileEvent> applyEvents,
                                           boolean excludeAsyncListeners) {
     PingProgress.interactWithEdtProgress();
     // defensive copying to cope with ill-written listeners that save the passed list for later processing
@@ -1197,15 +1199,19 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private static void fireBeforeEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
-    publisher.before(toSend);
-    ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend);
+  private static void fireBeforeEvents(BulkFileListener publisher, List<? extends VFileEvent> toSend) {
+    Suppressions.runSuppressing(
+      () -> publisher.before(toSend),
+      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)
+    );
   }
 
-  private static void fireAfterEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
-    CachedFileType.clearCache();
-    ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend);
-    publisher.after(toSend);
+  private static void fireAfterEvents(BulkFileListener publisher, List<? extends VFileEvent> toSend) {
+    Suppressions.runSuppressing(
+      () -> CachedFileType.clearCache(),
+      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
+      () -> publisher.after(toSend)
+    );
   }
 
   // remove children from specified directories using VirtualDirectoryImpl.removeChildren() optimised for bulk removals
