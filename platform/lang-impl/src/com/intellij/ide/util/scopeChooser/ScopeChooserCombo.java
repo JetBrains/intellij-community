@@ -185,7 +185,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                                       @NotNull DataContext dataContext,
                                       @MagicConstant(flagsFromClass = ScopeChooserCombo.class) int options,
                                       @NotNull Processor<? super ScopeDescriptor> processor) {
-    List<SearchScope> scopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
+    List<? extends SearchScope> scopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
       project, dataContext,
       BitUtil.isSet(options, OPT_LIBRARIES),
       BitUtil.isSet(options, OPT_SEARCH_RESULTS),

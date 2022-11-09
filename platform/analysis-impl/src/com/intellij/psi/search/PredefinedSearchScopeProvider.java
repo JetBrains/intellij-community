@@ -16,26 +16,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public abstract class PredefinedSearchScopeProvider {
-  public static PredefinedSearchScopeProvider getInstance() {
+
+  public static @NotNull PredefinedSearchScopeProvider getInstance() {
     return ApplicationManager.getApplication().getService(PredefinedSearchScopeProvider.class);
   }
 
   /**
    * Don't use this method with option {@code usageView } enabled as it may cause UI freezes.
    * Prefer to use {@link PredefinedSearchScopeProvider#getPredefinedScopesAsync} instead wherever possible.
-   * @param suggestSearchInLibs  add <i>Project and Libraries</i> scope
-   * @param prevSearchFiles  add <i>Files in Previous Search Result</i> instead of <i>Previous Search Result</i> (only if {@code usageView == true})
-   * @param currentSelection  add <i>Selection</i> scope if text is selected in the editor
-   * @param usageView  add <i>Previous Search Result</i> and <i>Hierarchy 'X' (visible nodes only)</i> scopes if there are search results or hierarchies open
-   * @param showEmptyScopes  add <i>Current File</i> and <i>Open Files</i> scopes even if there are no files open
+   *
+   * @param suggestSearchInLibs add <i>Project and Libraries</i> scope
+   * @param prevSearchFiles     add <i>Files in Previous Search Result</i> instead of <i>Previous Search Result</i> (only if {@code usageView == true})
+   * @param currentSelection    add <i>Selection</i> scope if text is selected in the editor
+   * @param usageView           add <i>Previous Search Result</i> and <i>Hierarchy 'X' (visible nodes only)</i> scopes if there are search results or hierarchies open
+   * @param showEmptyScopes     add <i>Current File</i> and <i>Open Files</i> scopes even if there are no files open
    */
-  public abstract List<SearchScope> getPredefinedScopes(@NotNull final Project project,
-                                                        @Nullable final DataContext dataContext,
-                                                        boolean suggestSearchInLibs,
-                                                        boolean prevSearchFiles,
-                                                        boolean currentSelection,
-                                                        boolean usageView,
-                                                        boolean showEmptyScopes);
+  public abstract @NotNull List<? extends SearchScope> getPredefinedScopes(@NotNull final Project project,
+                                                                           @Nullable final DataContext dataContext,
+                                                                           boolean suggestSearchInLibs,
+                                                                           boolean prevSearchFiles,
+                                                                           boolean currentSelection,
+                                                                           boolean usageView,
+                                                                           boolean showEmptyScopes);
 
   /**
    * @param suggestSearchInLibs add <i>Project and Libraries</i> scope
@@ -44,14 +46,14 @@ public abstract class PredefinedSearchScopeProvider {
    * @param usageView           add <i>Previous Search Result</i> and <i>Hierarchy 'X' (visible nodes only)</i> scopes if there are search results or hierarchies open
    * @param showEmptyScopes     add <i>Current File</i> and <i>Open Files</i> scopes even if there are no files open
    */
-  public Promise<List<SearchScope>> getPredefinedScopesAsync(@NotNull final Project project,
-                                                                      @Nullable final DataContext dataContext,
-                                                                      boolean suggestSearchInLibs,
-                                                                      boolean prevSearchFiles,
-                                                                      boolean currentSelection,
-                                                                      boolean usageView,
-                                                                      boolean showEmptyScopes) {
-    List<SearchScope> scopes =
+  public @NotNull Promise<List<? extends SearchScope>> getPredefinedScopesAsync(@NotNull final Project project,
+                                                                                @Nullable final DataContext dataContext,
+                                                                                boolean suggestSearchInLibs,
+                                                                                boolean prevSearchFiles,
+                                                                                boolean currentSelection,
+                                                                                boolean usageView,
+                                                                                boolean showEmptyScopes) {
+    List<? extends SearchScope> scopes =
       getPredefinedScopes(project, dataContext, suggestSearchInLibs, prevSearchFiles, currentSelection, usageView, showEmptyScopes);
     return Promises.resolvedPromise(scopes);
   }

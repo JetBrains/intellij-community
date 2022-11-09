@@ -36,11 +36,10 @@ public class FindUsagesOptions implements Cloneable {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static SearchScope findScopeByName(@NotNull Project project,
-                                            @Nullable DataContext dataContext,
-                                            @Nullable String scopeName) {
-    List<SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
+  public static @NotNull SearchScope findScopeByName(@NotNull Project project,
+                                                     @Nullable DataContext dataContext,
+                                                     @Nullable String scopeName) {
+    List<? extends SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
       project, dataContext, true, false, false, false, false);
     for (SearchScope scope : predefined) {
       if (scope.getDisplayName().equals(scopeName)) {

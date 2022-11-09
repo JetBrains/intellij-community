@@ -70,13 +70,14 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return IdeBundle.message("scope.current.file");
   }
 
-  @NotNull
   @Override
-  public List<SearchScope> getPredefinedScopes(@NotNull Project project,
-                                               @Nullable DataContext dataContext,
-                                               boolean suggestSearchInLibs,
-                                               boolean prevSearchFiles,
-                                               boolean currentSelection, boolean usageView, boolean showEmptyScopes) {
+  public @NotNull List<? extends SearchScope> getPredefinedScopes(@NotNull Project project,
+                                                                  @Nullable DataContext dataContext,
+                                                                  boolean suggestSearchInLibs,
+                                                                  boolean prevSearchFiles,
+                                                                  boolean currentSelection,
+                                                                  boolean usageView,
+                                                                  boolean showEmptyScopes) {
     ScopeCollectionContext context =
       ScopeCollectionContext.collectContext(project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes);
     Collection<SearchScope> result = context.result;
@@ -85,16 +86,16 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
   }
 
   @Override
-  public Promise<List<SearchScope>> getPredefinedScopesAsync(@NotNull Project project,
-                                                             @Nullable DataContext dataContext,
-                                                             boolean suggestSearchInLibs,
-                                                             boolean prevSearchFiles,
-                                                             boolean currentSelection,
-                                                             boolean usageView,
-                                                             boolean showEmptyScopes) {
+  public @NotNull Promise<List<? extends SearchScope>> getPredefinedScopesAsync(@NotNull Project project,
+                                                                                @Nullable DataContext dataContext,
+                                                                                boolean suggestSearchInLibs,
+                                                                                boolean prevSearchFiles,
+                                                                                boolean currentSelection,
+                                                                                boolean usageView,
+                                                                                boolean showEmptyScopes) {
     ScopeCollectionContext context =
       ScopeCollectionContext.collectContext(project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes);
-    AsyncPromise<List<SearchScope>> promise = new AsyncPromise<>();
+    AsyncPromise<List<? extends SearchScope>> promise = new AsyncPromise<>();
     ReadAction.nonBlocking(() -> context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes))
       .expireWith(project)
       .finishOnUiThread(ModalityState.any(), backgroundResult -> {
@@ -129,12 +130,12 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
 
     // in EDT
-    static ScopeCollectionContext collectContext(@NotNull Project project,
-                                                 @Nullable DataContext dataContext,
-                                                 boolean suggestSearchInLibs,
-                                                 boolean prevSearchFiles,
-                                                 boolean usageView,
-                                                 boolean showEmptyScopes) {
+    static @NotNull ScopeCollectionContext collectContext(@NotNull Project project,
+                                                          @Nullable DataContext dataContext,
+                                                          boolean suggestSearchInLibs,
+                                                          boolean prevSearchFiles,
+                                                          boolean usageView,
+                                                          boolean showEmptyScopes) {
       Collection<SearchScope> result = new LinkedHashSet<>();
       result.add(GlobalSearchScope.everythingScope(project));
       result.add(GlobalSearchScope.projectScope(project));
