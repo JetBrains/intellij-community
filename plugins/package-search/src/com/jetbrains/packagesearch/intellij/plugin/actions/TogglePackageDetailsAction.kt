@@ -39,4 +39,6 @@ class TogglePackageDetailsAction(
         PackageSearchGeneralConfiguration.getInstance(project).packageDetailsVisible = state
         selectedCallback.invoke(state)
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
