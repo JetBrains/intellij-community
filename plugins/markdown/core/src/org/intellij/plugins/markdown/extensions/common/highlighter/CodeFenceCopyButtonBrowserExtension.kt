@@ -12,14 +12,14 @@ import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
 import java.awt.datatransfer.StringSelection
-import java.util.*
 import javax.swing.Icon
 
 internal class CodeFenceCopyButtonBrowserExtension(panel: MarkdownHtmlPanel, browserPipe: BrowserPipe): MarkdownBrowserPreviewExtension, ResourceProvider {
   init {
     browserPipe.subscribe("copy-button/copy") {
-      val content = Base64.getDecoder().decode(it).toString(Charsets.UTF_8)
+      val content = PreviewEncodingUtil.decodeContent(it)
       CopyPasteManager.getInstance().setContents(StringSelection(content))
       val project = panel.project ?: return@subscribe
       invokeLater {

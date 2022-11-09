@@ -5,12 +5,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
-import com.intellij.util.Base64
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
+import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
 
 internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFencePluginCacheCollector? = null): MarkdownCodeFenceCacheableProvider(collector) {
   override fun isApplicable(language: String): Boolean {
@@ -36,7 +36,7 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
   }
 
   private fun escapeContent(content: String): String {
-    return Base64.encode(content.toByteArray())
+    return PreviewEncodingUtil.encodeContent(content)
   }
 
   private fun createRawContentElement(hash: String, content: String): String {
