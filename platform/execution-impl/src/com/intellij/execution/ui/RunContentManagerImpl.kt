@@ -458,9 +458,13 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   private inline fun processToolWindowContentManagers(processor: (ToolWindow, ContentManager) -> Unit) {
     val toolWindowManager = getToolWindowManager()
+    val processedToolWindowIds = HashSet<String>()
     for (executor in Executor.EXECUTOR_EXTENSION_NAME.extensionList) {
-      val toolWindow = toolWindowManager.getToolWindow(executor.toolWindowId) ?: continue
-      processor(toolWindow, toolWindow.contentManagerIfCreated ?: continue)
+      val toolWindowId = executor.toolWindowId
+      if (processedToolWindowIds.add(toolWindowId)) {
+        val toolWindow = toolWindowManager.getToolWindow(toolWindowId) ?: continue
+        processor(toolWindow, toolWindow.contentManagerIfCreated ?: continue)
+      }
     }
 
     project.serviceIfCreated<RunDashboardManager>()?.let {
