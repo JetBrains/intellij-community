@@ -20,19 +20,21 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
 
-public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
-  private SearchScope myCachedScope;
-  private final Project myProject;
-  private final PsiClass myRootClass;
+final class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
 
-  public ClassHierarchyScopeDescriptor(final Project project,
-                                       @NotNull DataContext dataContext) {
+  private @Nullable SearchScope myCachedScope;
+  private final @NotNull Project myProject;
+  private final @Nullable PsiClass myRootClass;
+
+  ClassHierarchyScopeDescriptor(@NotNull Project project,
+                                @NotNull DataContext dataContext) {
     super(null);
     myProject = project;
 
@@ -49,13 +51,12 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
   }
 
   @Override
-  public String getDisplayName() {
+  public @NotNull @Nls String getDisplayName() {
     return IdeBundle.message("scope.class.hierarchy");
   }
 
   @Override
-  @Nullable
-  public SearchScope getScope() {
+  public @NotNull SearchScope getScope() {
     if (myCachedScope == null) {
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
         .createAllProjectScopeChooser(JavaBundle.message("prompt.choose.base.class.of.the.hierarchy"));
