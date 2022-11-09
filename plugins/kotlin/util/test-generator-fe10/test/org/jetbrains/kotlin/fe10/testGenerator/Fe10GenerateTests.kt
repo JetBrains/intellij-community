@@ -29,10 +29,10 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsP
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1InspectionTest
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1InspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1IntentionTest
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1LocalInspectionTest
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.idea.kdoc.AbstractSharedK1KDocHighlightingTest
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1LocalInspectionTest
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK1KDocHighlightingTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest

@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
-import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractK2SharedQuickFixTest
-import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2InspectionTest
-import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2LocalInspectionTest
-import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
-import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2InspectionTest
-import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2LocalInspectionTest
-import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2QuickFixTest
+import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractK2SharedQuickFixTest
+import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2InspectionTest
+import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2LocalInspectionTest
+import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
 
