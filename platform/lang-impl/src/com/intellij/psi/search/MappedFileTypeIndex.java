@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.SystemProperties;
@@ -240,7 +241,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           return myDataBuffer.getShort();
         }
         catch (ClosedChannelException cce) {
-          return 0;
+          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -259,8 +260,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           }
         }
         catch (ClosedChannelException cce) {
-          LOG.warn("set() after close()", cce);
-          return;
+          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -287,7 +287,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           }
         }
         catch (ClosedChannelException cce) {
-          LOG.warn("ensureCapacity() after close()", cce);
+          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -337,7 +337,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           myModificationsCounter++;
         }
         catch (ClosedChannelException cce) {
-          LOG.warn("clear() after close()", cce);
+          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
@@ -347,6 +347,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       public void flush() throws StorageException {
         try {
           myFileChannel.force(true);
+        }
+        catch (ClosedChannelException cce) {
+          throw new ProcessCanceledException(cce);
         }
         catch (IOException e) {
           throw closeWithException(new StorageException(e));
