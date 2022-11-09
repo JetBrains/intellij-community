@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class DumbServiceGuiTaskQueue {
+final class MergingQueueGuiExecutor {
   interface DumbTaskListener {
     /**
      * @return false if queue processing should be terminated (afterLastTask will not be invoked in this case). True to start queue processing.
@@ -39,7 +39,7 @@ final class DumbServiceGuiTaskQueue {
   }
 
   private static class SafeDumbTaskListenerWrapper implements DumbTaskListener {
-    private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
+    private static final Logger LOG = Logger.getInstance(MergingQueueGuiExecutor.class);
     private final DumbTaskListener delegate;
 
     private SafeDumbTaskListenerWrapper(DumbTaskListener delegate) {
@@ -69,7 +69,7 @@ final class DumbServiceGuiTaskQueue {
   }
 
 
-  private static final Logger LOG = Logger.getInstance(DumbServiceGuiTaskQueue.class);
+  private static final Logger LOG = Logger.getInstance(MergingQueueGuiExecutor.class);
 
   private final Project myProject;
   private final DumbServiceMergingTaskQueue myTaskQueue;
@@ -77,7 +77,7 @@ final class DumbServiceGuiTaskQueue {
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private final DumbTaskListener myListener;
 
-  DumbServiceGuiTaskQueue(@NotNull Project project,
+  MergingQueueGuiExecutor(@NotNull Project project,
                           @NotNull DumbServiceMergingTaskQueue queue,
                           @NotNull DumbServiceHeavyActivities heavyActivities,
                           @NotNull DumbTaskListener listener) {
