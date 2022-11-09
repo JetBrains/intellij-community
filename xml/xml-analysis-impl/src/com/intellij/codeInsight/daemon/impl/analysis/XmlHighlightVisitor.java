@@ -101,10 +101,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
         if (i != -1 ) {                              // TODO: fix
           XmlTag tag = PsiTreeUtil.getParentOfType(token, XmlTag.class);
-          if (tag != null && XmlExtension.getExtensionByElement(tag).shouldBeHighlightedAsTag(tag) && !skipValidation(tag)) {
+          if (tag != null
+              && XmlExtension.getExtensionByElement(tag).shouldBeHighlightedAsTag(tag)
+              && !skipValidation(tag)
+              && !(tag instanceof HtmlTag)
+          ) {
             TextRange textRange = token.getTextRange();
             int start = textRange.getStartOffset() + i;
-            HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+            HighlightInfoType type = HighlightInfoType.ERROR;
             String description = XmlAnalysisBundle.message(
               "xml.inspections.cdata.end.should.not.appear.in.content");
             HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(start, start + marker.length()).descriptionAndTooltip(description).create();
