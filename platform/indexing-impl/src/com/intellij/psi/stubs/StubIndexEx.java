@@ -550,7 +550,7 @@ public abstract class StubIndexEx extends StubIndex {
   @ApiStatus.Experimental
   public interface FileUpdateProcessor {
     void processUpdate(@NotNull VirtualFile file);
-    default void endUpdatesBatch() {};
+    default void endUpdatesBatch() {}
   }
   @ApiStatus.Internal
   @ApiStatus.Experimental
