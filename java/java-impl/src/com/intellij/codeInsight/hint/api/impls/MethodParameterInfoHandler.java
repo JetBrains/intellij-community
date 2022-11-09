@@ -486,22 +486,7 @@ public final class MethodParameterInfoHandler
     return new HighlightedInlays(currentHint, highlightedHints);
   }
 
-  private static class HighlightedInlays {
-    final Inlay<?> currentHint;
-    final List<Inlay<?>> highlightedHints;
-
-    HighlightedInlays(Inlay<?> current, List<Inlay<?>> highlighted) {
-      currentHint = current;
-      highlightedHints = highlighted;
-    }
-
-    @Override
-    public String toString() {
-      return "HighlightedInlays{" +
-             "currentHint=" + currentHint +
-             ", highlightedHints=" + highlightedHints +
-             '}';
-    }
+  private record HighlightedInlays(Inlay<?> currentHint, List<Inlay<?>> highlightedHints) {
   }
 
   private static void resetHints(@NotNull UserDataHolder context) {

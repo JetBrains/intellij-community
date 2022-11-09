@@ -35,11 +35,10 @@ import java.util.function.Consumer;
 import static com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider.OriginAction.RemoveOrigin;
 import static com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider.OriginAction.SetOrigin;
 
-class WorkspaceModelSnapshot {
+record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
+                              @NotNull LibrariesSnapshot librariesSnapshot,
+                              @NotNull SdkSnapshot sdkSnapshot) {
   private static volatile Generators GENERATORS;
-  private final ActualEntitiesSnapshot actualEntities;
-  private final LibrariesSnapshot libraries;
-  private final SdkSnapshot sdks;
 
   static WorkspaceModelSnapshot create(@NotNull Project project) {
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
@@ -99,14 +98,6 @@ class WorkspaceModelSnapshot {
     }
   }
 
-  private WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
-                                 @NotNull LibrariesSnapshot librariesSnapshot,
-                                 @NotNull SdkSnapshot sdkSnapshot) {
-    this.actualEntities = actualEntities;
-    libraries = librariesSnapshot;
-    sdks = sdkSnapshot;
-  }
-
   private record SdkId(String name, String type) {
     @NotNull
     static SdkId create(@NotNull ModuleDependencyItem.SdkDependency dependency) {
@@ -121,8 +112,8 @@ class WorkspaceModelSnapshot {
 
   @NotNull
   Collection<? extends IndexableSetIterableOrigin> getOrigins() {
-    List<IndexableSetIterableOrigin> result = new ArrayList<>(libraries.getOrigins());
-    result.addAll(sdks.getOrigins());
+    List<IndexableSetIterableOrigin> result = new ArrayList<>(librariesSnapshot.getOrigins());
+    result.addAll(sdkSnapshot.getOrigins());
     result.addAll(actualEntities.getOrigins());
     return result;
   }
@@ -132,14 +123,14 @@ class WorkspaceModelSnapshot {
                                                @NotNull Project project) {
     EntityStorage storage = storageChange.getStorageAfter();
     ActualEntitiesSnapshot changedEntities = actualEntities.createChangedIfNeeded(storageChange, storage, project);
-    LibrariesSnapshot changedLibraries = libraries.createChangedIfNeeded(storageChange, storage, project);
-    SdkSnapshot changedSdks = sdks.createChangedIfNeeded(storageChange);
+    LibrariesSnapshot changedLibraries = librariesSnapshot.createChangedIfNeeded(storageChange, storage, project);
+    SdkSnapshot changedSdks = sdkSnapshot.createChangedIfNeeded(storageChange);
     if (changedEntities == null && changedLibraries == null && changedSdks == null) {
       return null;
     }
     return new WorkspaceModelSnapshot(firstNotNull(changedEntities, actualEntities),
-                                      firstNotNull(changedLibraries, libraries),
-                                      firstNotNull(changedSdks, sdks));
+                                      firstNotNull(changedLibraries, librariesSnapshot),
+                                      firstNotNull(changedSdks, sdkSnapshot));
   }
 
   @NotNull
@@ -157,14 +148,14 @@ class WorkspaceModelSnapshot {
     List<WorkspaceEntity> entities = ContainerUtil.mapNotNull(references, (ref) -> ref.resolve(storage));
     ActualEntitiesSnapshot result = actualEntities.createWithRefreshedEntitiesIfNeeded(entities, generators, project, storage);
     if (result == null) return null;
-    return new WorkspaceModelSnapshot(result, libraries, sdks);
+    return new WorkspaceModelSnapshot(result, librariesSnapshot, sdkSnapshot);
   }
 
   @Nullable
   WorkspaceModelSnapshot referencedLibraryAdded(@NotNull Library library) {
-    ModifiableLibrariesSnapshot snapshot = ModifiableLibrariesSnapshot.create(libraries);
+    ModifiableLibrariesSnapshot snapshot = ModifiableLibrariesSnapshot.create(librariesSnapshot);
     snapshot.addLibrary(library);
-    return new WorkspaceModelSnapshot(actualEntities, snapshot.toImmutableSnapshot(), sdks);
+    return new WorkspaceModelSnapshot(actualEntities, snapshot.toImmutableSnapshot(), sdkSnapshot);
   }
 
   @Nullable
@@ -174,52 +165,43 @@ class WorkspaceModelSnapshot {
 
   @Nullable
   WorkspaceModelSnapshot referencedLibraryRemoved(@NotNull Library library) {
-    ModifiableLibrariesSnapshot snapshot = ModifiableLibrariesSnapshot.create(libraries);
+    ModifiableLibrariesSnapshot snapshot = ModifiableLibrariesSnapshot.create(librariesSnapshot);
     snapshot.removeLibrary(LibraryEntityUtils.findLibraryId(library));
-    return new WorkspaceModelSnapshot(actualEntities, snapshot.toImmutableSnapshot(), sdks);
+    return new WorkspaceModelSnapshot(actualEntities, snapshot.toImmutableSnapshot(), sdkSnapshot);
   }
 
   @Nullable
   WorkspaceModelSnapshot referencedSdkAdded(@NotNull Sdk sdk) {
-    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdks);
+    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdkSnapshot);
     snapshot.addSdkOrigin(sdk);
-    return new WorkspaceModelSnapshot(actualEntities, libraries, snapshot.toImmutableSnapshot());
+    return new WorkspaceModelSnapshot(actualEntities, librariesSnapshot, snapshot.toImmutableSnapshot());
   }
 
   @Nullable
   WorkspaceModelSnapshot referencedSdkChanged(@NotNull Sdk sdk) {
-    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdks);
+    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdkSnapshot);
     snapshot.updateSdk(sdk);
-    return new WorkspaceModelSnapshot(actualEntities, libraries, snapshot.toImmutableSnapshot());
+    return new WorkspaceModelSnapshot(actualEntities, librariesSnapshot, snapshot.toImmutableSnapshot());
   }
 
   @Nullable
   WorkspaceModelSnapshot referencedSdkRemoved(@NotNull Sdk sdk) {
-    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdks);
+    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdkSnapshot);
     snapshot.removeSdkOrigin(SdkId.create(sdk));
-    return new WorkspaceModelSnapshot(actualEntities, libraries, snapshot.toImmutableSnapshot());
+    return new WorkspaceModelSnapshot(actualEntities, librariesSnapshot, snapshot.toImmutableSnapshot());
   }
 
   @Nullable
   WorkspaceModelSnapshot projectJdkChanged(@Nullable Sdk newProjectSdk) {
     SdkId sdkId = newProjectSdk == null ? null : SdkId.create(newProjectSdk);
-    if (Objects.equals(sdkId, sdks.projectSdkId)) return null;
-    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdks);
+    if (Objects.equals(sdkId, sdkSnapshot.projectSdkId)) return null;
+    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdkSnapshot);
     snapshot.projectJdkChanged(sdkId, newProjectSdk);
-    return new WorkspaceModelSnapshot(actualEntities, libraries, snapshot.toImmutableSnapshot());
+    return new WorkspaceModelSnapshot(actualEntities, librariesSnapshot, snapshot.toImmutableSnapshot());
   }
 
-  private static class LibrariesSnapshot {//todo[lene] write test for library rename
-    private final ImmutableMap<LibraryId, Collection<EntityReference<ModuleEntity>>> dependencies;
-    private final ImmutableMap<LibraryId, IndexableSetIterableOrigin> origins;
-
-
-    private LibrariesSnapshot(ImmutableMap<LibraryId, Collection<EntityReference<ModuleEntity>>> dependencies,
-                              ImmutableMap<LibraryId, IndexableSetIterableOrigin> origins) {
-      this.dependencies = dependencies;
-      this.origins = origins;
-    }
-
+  private record LibrariesSnapshot(ImmutableMap<LibraryId, Collection<EntityReference<ModuleEntity>>> dependencies,
+                                   ImmutableMap<LibraryId, IndexableSetIterableOrigin> origins) {//todo[lene] write test for library rename
     @NotNull
     private Collection<? extends IndexableSetIterableOrigin> getOrigins() {
       return origins.values();
@@ -269,18 +251,10 @@ class WorkspaceModelSnapshot {
 
       return snapshot.toImmutableSnapshot();
     }
-  }
-
-  private static class ModifiableLibrariesSnapshot {
-    private final MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies;
-    private final Map<LibraryId, IndexableSetIterableOrigin> origins;
-
-    private ModifiableLibrariesSnapshot(MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies,
-                                        Map<LibraryId, IndexableSetIterableOrigin> origins) {
-      this.dependencies = dependencies;
-      this.origins = origins;
     }
 
+  private record ModifiableLibrariesSnapshot(MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies,
+                                             Map<LibraryId, IndexableSetIterableOrigin> origins) {
     @NotNull
     private static ModifiableLibrariesSnapshot create(@NotNull LibrariesSnapshot snapshot) {
       MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies = new MultiMap<>();
@@ -413,22 +387,10 @@ class WorkspaceModelSnapshot {
     }
   }
 
-  private static class SdkSnapshot {
-    private final ImmutableMap<SdkId, IndexableSetIterableOrigin> origins;
-    private final ImmutableMap<SdkId, Collection<EntityReference<ModuleEntity>>> dependencies;
-    @Nullable
-    private final SdkId projectSdkId;
-    private final Collection<EntityReference<ModuleEntity>> projectSdkDependencies;
-
-    private SdkSnapshot(@NotNull ImmutableMap<SdkId, IndexableSetIterableOrigin> origins,
-                        @NotNull ImmutableMap<SdkId, Collection<EntityReference<ModuleEntity>>> dependencies,
-                        @Nullable SdkId projectSdkId,
-                        @NotNull Collection<EntityReference<ModuleEntity>> projectSdkDependencies) {
-      this.origins = origins;
-      this.dependencies = dependencies;
-      this.projectSdkId = projectSdkId;
-      this.projectSdkDependencies = projectSdkDependencies;
-    }
+  private record SdkSnapshot(@NotNull ImmutableMap<SdkId, IndexableSetIterableOrigin> origins,
+                             @NotNull ImmutableMap<SdkId, Collection<EntityReference<ModuleEntity>>> dependencies,
+                             @Nullable SdkId projectSdkId,
+                             @NotNull Collection<EntityReference<ModuleEntity>> projectSdkDependencies) {
 
     private Collection<? extends IndexableSetIterableOrigin> getOrigins() {
       return origins.values();
@@ -602,15 +564,9 @@ class WorkspaceModelSnapshot {
     }
   }
 
-  private static class ActualEntitiesSnapshot {
-    private final ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entitiesToOrigins;
-    private final ImmutableMap<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> contentRootEntitiesToOrigins;
-
-    private ActualEntitiesSnapshot(@NotNull ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> origins,
-                                   @NotNull ImmutableMap<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> contentRootOrigins) {
-      entitiesToOrigins = origins;
-      contentRootEntitiesToOrigins = contentRootOrigins;
-    }
+  private record ActualEntitiesSnapshot(
+    @NotNull ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entitiesToOrigins,
+    @NotNull ImmutableMap<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> contentRootEntitiesToOrigins) {
 
     private Collection<? extends IndexableSetIterableOrigin> getOrigins() {
       ArrayList<IndexableSetIterableOrigin> origins = new ArrayList<>(entitiesToOrigins.values());

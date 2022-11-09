@@ -95,16 +95,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     return serializeCodeInsightPasses;
   }
 
-  private static final class PassConfig {
-    private final TextEditorHighlightingPassFactory passFactory;
-    private final int[] startingPredecessorIds;
-    private final int[] completionPredecessorIds;
-
-    private PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory, int @NotNull [] completionPredecessorIds, int @NotNull [] startingPredecessorIds) {
-      this.completionPredecessorIds = completionPredecessorIds;
-      this.startingPredecessorIds = startingPredecessorIds;
-      this.passFactory = passFactory;
-    }
+  private record PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,
+                            int @NotNull [] completionPredecessorIds,
+                            int @NotNull [] startingPredecessorIds) {
   }
 
   @Override

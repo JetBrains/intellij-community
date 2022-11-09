@@ -88,14 +88,7 @@ public class ImplementationViewComponent extends JPanel {
     return myElements != null && myElements.length > 0;
   }
 
-  private static class FileDescriptor {
-    @NotNull public final VirtualFile myFile;
-    public final ImplementationViewElement myElement;
-
-    FileDescriptor(@NotNull VirtualFile file, ImplementationViewElement element) {
-      myFile = file;
-      myElement = element;
-    }
+  private record FileDescriptor(@NotNull VirtualFile file, @NotNull ImplementationViewElement element) {
   }
 
   public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
@@ -264,8 +257,8 @@ public class ImplementationViewComponent extends JPanel {
                                            FileDescriptor value, int index, boolean selected, boolean hasFocus) {
         setBackground(UIUtil.getListBackground(selected, true));
         if (value != null) {
-          ImplementationViewElement element = value.myElement;
-          setIcon(getIconForFile(value.myFile, project));
+          ImplementationViewElement element = value.element;
+          setIcon(getIconForFile(value.file, project));
           append(element.getPresentableText());
           String presentation = element.getContainerPresentation();
           if (presentation != null) {
@@ -281,8 +274,8 @@ public class ImplementationViewComponent extends JPanel {
                             FileDescriptor value, int index, boolean selected, boolean hasFocus) {
         setForeground(UIUtil.getListForeground(selected, true));
         if (value != null) {
-          setText(value.myElement.getLocationText());
-          setIcon(value.myElement.getLocationIcon());
+          setText(value.element.getLocationText());
+          setIcon(value.element.getLocationIcon());
         }
       }
     };
@@ -295,7 +288,7 @@ public class ImplementationViewComponent extends JPanel {
     String[] result = new String[model.getSize()];
     for (int i = 0; i < model.getSize(); i++) {
       FileDescriptor o = model.getElementAt(i);
-      result[i] = o.myElement.getPresentableText();
+      result[i] = o.element.getPresentableText();
     }
     return result;
   }

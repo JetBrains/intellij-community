@@ -278,19 +278,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     return null;
   }
 
-  private static class TabEditorData {
-    private final @NotNull LightEditorInfo editorInfo;
-    private final @NotNull EditorComposite editorComposite;
-
-    private TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorComposite editorComposite) {
-      this.editorInfo = editorInfo;
-      this.editorComposite = editorComposite;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof TabEditorData && ((TabEditorData)obj).editorInfo.equals(editorInfo);
-    }
+  private record TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorComposite editorComposite) {
   }
 
   @Nullable

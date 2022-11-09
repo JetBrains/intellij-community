@@ -112,7 +112,7 @@ final class FileTypeDetectionService implements Disposable {
         VFileContentChangeEvent changeEvent = (VFileContentChangeEvent)event;
         VirtualFile file = changeEvent.getFile();
         if (changeEvent.getOldLength() == 0) {
-          // when something is written to the empty file, clear the file detection-from-content cache, because the file type can change from Unknown to e.g. Text
+          // when something is written to the empty file, clear the file detection-from-content cache, because the file type can change from Unknown to e.g., Text
           file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
         }
       }
@@ -604,19 +604,12 @@ final class FileTypeDetectionService implements Disposable {
     return preferDetectedByContent(fileType, fileTypeByName);
   }
 
-  private static class VirtualFileWithLength {
-    private final @NotNull VirtualFile myVirtualFile;
-    private final int myLength;
-
-    private VirtualFileWithLength(@NotNull VirtualFile virtualFile, int length) {
-      myVirtualFile = virtualFile;
-      myLength = length;
-    }
+  private record VirtualFileWithLength(@NotNull VirtualFile virtualFile, int length) {
   }
 
   private final DiskQueryRelay<VirtualFileWithLength, ByteArraySequence> myReadFirstBytesFromFileRelay = new DiskQueryRelay<>(pair -> {
     try {
-      return readFirstBytesFromFile(pair.myVirtualFile, pair.myLength);
+      return readFirstBytesFromFile(pair.virtualFile(), pair.length());
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -38,16 +38,7 @@ public final class RelaxedDirectInheritorChecker {
     myFileIndex = ProjectFileIndex.getInstance(myBaseClass.getProject());
   }
 
-  private static class ClassesAndAmbiguities {
-    @NotNull final PsiClass @NotNull[] classes;
-    @NotNull final PsiFile @NotNull[] containingFiles;
-    final boolean isAmbiguous;
-
-    private ClassesAndAmbiguities(@NotNull PsiClass @NotNull[] classes, @NotNull PsiFile @NotNull[] containingFiles, boolean isAmbiguous) {
-      this.classes = classes;
-      this.containingFiles = containingFiles;
-      this.isAmbiguous = isAmbiguous;
-    }
+  private record ClassesAndAmbiguities(@NotNull PsiClass @NotNull [] classes, @NotNull PsiFile @NotNull [] containingFiles, boolean isAmbiguous) {
   }
 
   @NotNull

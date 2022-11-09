@@ -514,16 +514,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   private static final ElementPattern<?> ALWAYS_FALSE = new FalsePattern();
 
-  private static class Node {
-    final Node target;
-    final String method;
-    final Object[] args;
-
-    Node(@Nullable Node target, @Nullable String method, Object @Nullable [] args) {
-      this.target = target;
-      this.method = method;
-      this.args = args;
-    }
+  private record Node(@Nullable Node target, @Nullable String method, Object @Nullable [] args) {
   }
 
   private static class FalsePattern extends InitialPatternCondition<Object> implements ElementPattern<Object> {

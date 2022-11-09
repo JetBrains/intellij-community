@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 final class RootChangesLogger {
@@ -51,33 +50,13 @@ final class RootChangesLogger {
       StringBuilder text = new StringBuilder();
       text.append(BATCH_CAPACITY).append(" more rootsChanged events for \"").append(project.getName()).append("\" project.");
       Arrays.stream(reports).collect(Collectors.groupingBy(report -> report)).forEach((report, equalHashes) -> {
-        text.append(" ").append(equalHashes.size()).append(" ").append(report.myFullReindex ? "full" : "partial").
-          append(" reindex with trace_hash = ").append(report.myHash).append(";");
+        text.append(" ").append(equalHashes.size()).append(" ").append(report.isFullReindex ? "full" : "partial").
+          append(" reindex with trace_hash = ").append(report.hash).append(";");
       });
       myLogger.info(text.substring(0, text.length() - 1));
     }
   }
 
-  private static class Report {
-    private final int myHash;
-    private final boolean myFullReindex;
-
-    Report(int hash, boolean isFullReindex) {
-      myHash = hash;
-      myFullReindex = isFullReindex;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Report report = (Report)o;
-      return myHash == report.myHash && myFullReindex == report.myFullReindex;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myHash, myFullReindex);
-    }
+  private record Report(int hash, boolean isFullReindex) {
   }
 }

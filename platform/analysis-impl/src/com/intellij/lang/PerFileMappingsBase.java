@@ -77,7 +77,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   private @NotNull Map<VirtualFile, T> doGetMappings() {
-    return Collections.unmodifiableMap(ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).getValue())));
+    return Collections.unmodifiableMap(ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).value())));
   }
 
   private void cleanup() {
@@ -86,7 +86,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       VirtualFile file = entry.getKey();
       MappingValue<T> mapping = entry.getValue();
       if (file == null) continue;
-      if (mapping == null || !file.isValid() || mapping.getUnknownValue() == null && isDefaultMapping(file, mapping.getValue())) {
+      if (mapping == null || !file.isValid() || mapping.unknownValue() == null && isDefaultMapping(file, mapping.value())) {
         it.remove();
       }
     }
@@ -176,7 +176,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
 
   private @Nullable T doGetImmediateMapping(@Nullable VirtualFile key) {
     MappingValue<T> mappingValue = myMappings.get(key);
-    return mappingValue != null ? mappingValue.getValue() : null;
+    return mappingValue != null ? mappingValue.value() : null;
   }
 
   @Override
@@ -264,8 +264,8 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       });
       for (VirtualFile file : files) {
         MappingValue<T> mappingValue = myMappings.get(file);
-        T value = mappingValue != null ? mappingValue.getValue() : null;
-        String valueStr = mappingValue != null && mappingValue.getUnknownValue() != null ? mappingValue.getUnknownValue() :
+        T value = mappingValue != null ? mappingValue.value() : null;
+        String valueStr = mappingValue != null && mappingValue.unknownValue() != null ? mappingValue.unknownValue() :
                           value == null ? null :
                           serialize(value);
         if (valueStr == null) continue;
@@ -283,7 +283,6 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     return null;
   }
 
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Deprecated
   // better to not override
@@ -482,29 +481,13 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  private static class MappingValue<T> {
-    private final @NotNull T myValue;
-    private final @Nullable String myUnknownValue;
-
-    private MappingValue(@NotNull T value, @Nullable String unknownValue) {
-      myValue = value;
-      myUnknownValue = unknownValue;
-    }
-
-    public static <T> @NotNull MappingValue<T> known(@NotNull T t) {
+  private record MappingValue<T>(@NotNull T value, @Nullable String unknownValue) {
+    static <T> @NotNull MappingValue<T> known(@NotNull T t) {
       return new MappingValue<T>(t, null);
     }
 
-    public static <T> @NotNull MappingValue<T> unknown(@NotNull T defaultValue, @NotNull String unknownValue) {
+    static <T> @NotNull MappingValue<T> unknown(@NotNull T defaultValue, @NotNull String unknownValue) {
       return new MappingValue<T>(defaultValue, unknownValue);
-    }
-
-    private @NotNull T getValue() {
-      return myValue;
-    }
-
-    private @Nullable String getUnknownValue() {
-      return myUnknownValue;
     }
   }
 }

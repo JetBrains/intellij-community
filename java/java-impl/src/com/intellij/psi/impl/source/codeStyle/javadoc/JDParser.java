@@ -869,19 +869,7 @@ public class JDParser {
     return false;
   }
 
-  private static class CommentInfo {
-    public final PsiDocComment docComment;
-    public final PsiElement commentOwner;
-    public final String commentHeader;
-    public final String comment;
-    public final String commentFooter;
-
-    CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment, String commentFooter) {
-      this.docComment = docComment;
-      this.commentOwner = commentOwner;
-      this.commentHeader = commentHeader;
-      this.comment = comment;
-      this.commentFooter = commentFooter;
-    }
+  private record CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment,
+                             String commentFooter) {
   }
 }

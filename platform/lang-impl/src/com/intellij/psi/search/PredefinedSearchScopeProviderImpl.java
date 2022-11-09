@@ -106,29 +106,12 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return promise;
   }
 
-  private static class ScopeCollectionContext {
-    private final PsiFile psiFile;
-    private final Editor selectedTextEditor;
-    private final Collection<SearchScope> scopesFromUsageView;
-    private final PsiFile currentFile;
-    private final SearchScope selectedFilesScope;
-    private final Collection<SearchScope> result;
-
-    private ScopeCollectionContext(PsiFile psiFile,
-                                   Editor selectedTextEditor,
-                                   Collection<SearchScope> scopesFromUsageView,
-                                   PsiFile currentFile,
-                                   SearchScope selectedFilesScope,
-                                   Collection<SearchScope> result) {
-      this.psiFile = psiFile;
-      this.selectedTextEditor = selectedTextEditor;
-      this.scopesFromUsageView = scopesFromUsageView;
-      this.currentFile = currentFile;
-      this.selectedFilesScope = selectedFilesScope;
-      this.result = result;
-    }
-
-
+  private record ScopeCollectionContext(PsiFile psiFile,
+                                        Editor selectedTextEditor,
+                                        Collection<? extends SearchScope> scopesFromUsageView,
+                                        PsiFile currentFile,
+                                        SearchScope selectedFilesScope,
+                                        Collection<SearchScope> result) {
     // in EDT
     static @NotNull ScopeCollectionContext collectContext(@NotNull Project project,
                                                           @Nullable DataContext dataContext,
@@ -169,9 +152,10 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                 showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText()) : null);
 
       Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
-                           ? FileEditorManager.getInstance(project).getSelectedTextEditor()
-                           : null;
-      PsiFile psiFile = selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
+                                  ? FileEditorManager.getInstance(project).getSelectedTextEditor()
+                                  : null;
+      PsiFile psiFile =
+        selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
       PsiFile currentFile = fillFromDataContext(dataContext, result, psiFile);
       SearchScope selectedFilesScope = getSelectedFilesScope(project, dataContext, currentFile);
 
@@ -186,7 +170,9 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                                               boolean usageView,
                                               boolean showEmptyScopes) {
       Collection<SearchScope> backgroundResult = new LinkedHashSet<>();
-      if (project.isDisposed() || (psiFile != null && !psiFile.isValid()) || (selectedTextEditor != null && selectedTextEditor.isDisposed())) {
+      if (project.isDisposed() ||
+          (psiFile != null && !psiFile.isValid()) ||
+          (selectedTextEditor != null && selectedTextEditor.isDisposed())) {
         return backgroundResult;
       }
       if (currentFile != null || showEmptyScopes) {

@@ -760,19 +760,16 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myList, true));
   }
 
-  // describes conflict between two hashbang patterns when user tried to create new/edit existing hashbang
-  private static class HashBangConflict {
-    private final FileTypeManagerImpl.FileTypeWithDescriptor fileType; // conflicting file type
-    private final boolean exact; // true: conflict with the file type with the exactly the same hashbang/false: similar hashbang (more selective or less selective)
-    private final boolean writeable; //file type can be changed
-    private final String existingHashBang; // the hashbang of the conflicting file type
-
-    private HashBangConflict(FileTypeManagerImpl.FileTypeWithDescriptor fileType, boolean exact, boolean writeable, String existingHashBang) {
-      this.fileType = fileType;
-      this.exact = exact;
-      this.writeable = writeable;
-      this.existingHashBang = existingHashBang;
-    }
+  /**
+   * describes conflict between two hashbang patterns when user tried to create new/edit existing hashbang
+   * @param fileType         conflicting file type
+   * @param exact            true: conflict with the file type with the exactly the same hashbang/false: similar hashbang (more selective or less selective)
+   * @param writeable        file type can be changed
+   * @param existingHashBang the hashbang of the conflicting file type
+   */
+  private record HashBangConflict(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor fileType,
+                                  boolean exact, boolean writeable,
+                                  @NotNull String existingHashBang) {
   }
 
   private boolean isStandardFileType(@NotNull FileType fileType) {

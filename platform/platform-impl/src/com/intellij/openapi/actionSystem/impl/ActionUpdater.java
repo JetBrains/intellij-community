@@ -775,15 +775,8 @@ final class ActionUpdater {
 
   private enum Op { update, getChildren }
 
-  private static class UpdateStrategy {
-    final NullableFunction<? super AnAction, Presentation> update;
-    final NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren;
-
-    UpdateStrategy(NullableFunction<? super AnAction, Presentation> update,
-                   NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren) {
-      this.update = update;
-      this.getChildren = getChildren;
-    }
+  private record UpdateStrategy(NullableFunction<? super AnAction, Presentation> update,
+                                NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren) {
   }
 
   static @NotNull ActionUpdater getActionUpdater(@NotNull UpdateSession session) {

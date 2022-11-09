@@ -112,14 +112,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private Selection mySelection = null;
   private AutoscrollLimit myAutoscrollLimit = AutoscrollLimit.UNLIMITED;
 
-  private static class Selection {
-    private final int myBarIndex;
-    private final @Nullable List<Object> myNodePopupObjects;
-
-    Selection(int barIndex, @Nullable List<Object> nodePopupObjects) {
-      myBarIndex = barIndex;
-      myNodePopupObjects = nodePopupObjects;
-    }
+  private record Selection(int barIndex, @Nullable List<Object> nodePopupObjects) {
   }
 
   public NavBarPanel(@NotNull Project project, boolean docked) {
@@ -267,9 +260,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public void enter() {
     if (isNodePopupActive()) {
       Selection indexes = mySelection;
-      List<Object> popupObjects = mySelection == null ? null : mySelection.myNodePopupObjects;
+      List<Object> popupObjects = mySelection == null ? null : mySelection.nodePopupObjects;
       if (popupObjects != null && !popupObjects.isEmpty()) {
-        navigateInsideBar(indexes.myBarIndex, popupObjects.get(0), false);
+        navigateInsideBar(indexes.barIndex, popupObjects.get(0), false);
         return;
       }
     }
@@ -804,8 +797,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     List<Object> popupObjects = null;
 
     if (mySelection != null) {
-      barObject = myModel.getRawElement(mySelection.myBarIndex);
-      popupObjects = mySelection.myNodePopupObjects;
+      barObject = myModel.getRawElement(mySelection.barIndex);
+      popupObjects = mySelection.nodePopupObjects;
     }
 
     if (barObject != null) {

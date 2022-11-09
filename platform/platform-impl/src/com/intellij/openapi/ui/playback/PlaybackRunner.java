@@ -318,20 +318,11 @@ public class PlaybackRunner {
   }
 
   /**
-   * This data class aggregates parameters of a command to be called.
-   * We do not create instances of commands beforehand because
-   * command classes may be provided by plugins and may prevent plugin from unloading [IDEA-259898].
-   */
-  private static class CommandDescriptor {
-    public final String fullLine;
-    public final int line;
-    public final File scriptDir;
-
-    private CommandDescriptor(String fullLine, int line, File scriptDir) {
-      this.fullLine = fullLine;
-      this.line = line;
-      this.scriptDir = scriptDir;
-    }
+     * This data class aggregates parameters of a command to be called.
+     * We do not create instances of commands beforehand because
+     * command classes may be provided by plugins and may prevent plugin from unloading [IDEA-259898].
+     */
+    private record CommandDescriptor(String fullLine, int line, File scriptDir) {
   }
 
   @Nullable

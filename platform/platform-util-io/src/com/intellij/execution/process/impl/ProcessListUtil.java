@@ -271,20 +271,7 @@ public final class ProcessListUtil {
     return result;
   }
 
-  private static class MacProcessInfo {
-    final int pid;
-    final int parentPid;
-    final String commandLine;
-    final String user;
-    final String state;
-
-    MacProcessInfo(int pid, String commandLine, String user, String state, int parentPid) {
-      this.pid = pid;
-      this.commandLine = commandLine;
-      this.user = user;
-      this.state = state;
-      this.parentPid = parentPid;
-    }
+  private record MacProcessInfo(int pid, String commandLine, String user, String state, int parentPid) {
   }
 
   private static @Nullable List<ProcessInfo> getProcessListUsingWinProcessListHelper() {

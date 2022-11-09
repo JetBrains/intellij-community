@@ -1053,22 +1053,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     }
   }
 
-  private static class ServiceViewContentHolder {
-    final ServiceView mainView;
-    final ContentManager contentManager;
-    final Collection<ServiceViewContributor<?>> rootContributors;
-    final String toolWindowId;
-
-    ServiceViewContentHolder(ServiceView mainView,
-                             ContentManager contentManager,
-                             Collection<ServiceViewContributor<?>> rootContributors,
-                             String toolWindowId) {
-      this.mainView = mainView;
-      this.contentManager = contentManager;
-      this.rootContributors = rootContributors;
-      this.toolWindowId = toolWindowId;
-    }
-
+  private record ServiceViewContentHolder(ServiceView mainView,
+                                          ContentManager contentManager,
+                                          Collection<ServiceViewContributor<?>> rootContributors,
+                                          String toolWindowId) {
     List<ServiceView> getServiceViews() {
       List<ServiceView> views = ContainerUtil.mapNotNull(contentManager.getContents(), ServiceViewManagerImpl::getServiceView);
       if (views.isEmpty()) return new SmartList<>(mainView);

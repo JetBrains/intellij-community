@@ -13,9 +13,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -30,7 +28,6 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -124,14 +121,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       .createPopup().showInBestPositionFor(editor);
   }
 
-  private static class MyItem {
-    final String name;
-    final int index;
-    MyItem(String name, int index) {
-      this.name = name;
-      this.index = index;
-    }
-
+  private record MyItem(String name, int index) {
     @Override
     public String toString() {
       return name;
