@@ -129,7 +129,7 @@ private fun getBinaryCache(context: BuildContext): Deferred<Map<Binary, Path>> {
 }
 
 private fun repairUtilityProjectHome(context: BuildContext): Path? {
-  val projectHome = context.paths.communityHomeDir.parent.resolve("build/support/repair-utility")
+  val projectHome = context.paths.communityHomeDir.parent.resolve("native/repair-utility")
   if (Files.exists(projectHome)) {
     return projectHome
   }
