@@ -5,6 +5,7 @@ import com.intellij.application.options.XmlSettings;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
@@ -44,6 +45,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.Processor;
@@ -204,6 +206,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSvg20() throws Exception {
+    InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), new XmlDefaultAttributeValueInspection());
     doTest(getFullRelativeTestName(".svg"), true, false);
   }
 
