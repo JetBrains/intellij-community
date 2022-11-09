@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
@@ -259,17 +258,12 @@ abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionB
         element
       );
       if (emptyBorderFactoryMethodCall == null) return;
-      generationPlugin.replace(uExpression, emptyBorderFactoryMethodCall, UCallExpression.class);
+      generationPlugin.replace(UastUtils.getQualifiedParentOrThis(uExpression), emptyBorderFactoryMethodCall, UCallExpression.class);
     }
 
     private @Nullable UExpression getReceiverIfNeeded(UastElementFactory pluginElementFactory,
-                                                             UCallExpression uCallExpression,
-                                                             PsiElement context) {
-      if (!uCallExpression.getLang().is(JavaLanguage.INSTANCE) &&
-          uCallExpression.getUastParent() instanceof UQualifiedReferenceExpression) {
-        // workaround for IDEA-304078
-        return null;
-      }
+                                                      UCallExpression uCallExpression,
+                                                      PsiElement context) {
       UExpression receiver = uCallExpression.getReceiver();
       return receiver != null ? receiver : pluginElementFactory.createQualifiedReference(getFactoryMethodContainingClassName(), context);
     }
