@@ -28,8 +28,8 @@ class MoveDeclarationsCopyPasteProcessor : CopyPastePostProcessor<MoveDeclaratio
     companion object {
         private val LOG = Logger.getInstance(MoveDeclarationsCopyPasteProcessor::class.java)
 
-        fun rangeToDeclarations(file: KtFile, startOffset: Int, endOffset: Int): List<KtNamedDeclaration> {
-            val elementsInRange = file.elementsInRange(TextRange(startOffset, endOffset))
+        fun rangeToDeclarations(file: KtFile, range: TextRange): List<KtNamedDeclaration> {
+            val elementsInRange = file.elementsInRange(range)
             val meaningfulElements = elementsInRange.filterNot { it is PsiWhiteSpace || it is PsiComment }
             if (meaningfulElements.isEmpty()) return emptyList()
             if (!meaningfulElements.all { it is KtNamedDeclaration }) return emptyList()
@@ -49,7 +49,7 @@ class MoveDeclarationsCopyPasteProcessor : CopyPastePostProcessor<MoveDeclaratio
         if (file !is KtFile) return emptyList()
         if (startOffsets.size != 1) return emptyList()
 
-        val declarations = rangeToDeclarations(file, startOffsets[0], endOffsets[0])
+        val declarations = rangeToDeclarations(file, TextRange(startOffsets[0], endOffsets[0]))
         if (declarations.isEmpty()) return emptyList()
 
         val parent = declarations.asSequence().map { it.parent }.distinct().singleOrNull() ?: return emptyList()

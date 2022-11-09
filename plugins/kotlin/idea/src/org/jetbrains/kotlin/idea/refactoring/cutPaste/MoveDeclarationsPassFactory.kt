@@ -41,7 +41,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
 
         override fun doApplyInformationToEditor() {
             val info = buildHighlightingInfo()
-            UpdateHighlightersUtil.setHighlightersToEditor(project, myDocument!!, 0, file.textLength, listOfNotNull(info), colorsScheme, id)
+            UpdateHighlightersUtil.setHighlightersToEditor(project, myDocument, 0, file.textLength, listOfNotNull(info), colorsScheme, id)
         }
 
         private fun buildHighlightingInfo(): HighlightInfo? {
@@ -56,12 +56,10 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
                 return null
             }
 
-            val info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
-              .range(cookie.bounds.range!!)
-              .registerFix(MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount), null, null, null, null)
-              .createUnconditionally()
-
-          return info
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
+                .range(cookie.bounds.range!!)
+                .registerFix(MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount), null, null, null, null)
+                .createUnconditionally()
         }
     }
 }
