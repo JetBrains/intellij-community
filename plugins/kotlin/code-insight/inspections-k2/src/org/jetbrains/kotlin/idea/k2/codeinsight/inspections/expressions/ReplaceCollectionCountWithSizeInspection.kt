@@ -23,9 +23,11 @@ private val COLLECTION_CLASS_IDS = setOf(StandardClassIds.Collection, StandardCl
         StandardClassIds.elementTypeByPrimitiveArrayType.keys + StandardClassIds.unsignedArrayTypeByElementType.keys
 
 internal class ReplaceCollectionCountWithSizeInspection : AbstractKotlinApplicableInspection<KtCallExpression>(KtCallExpression::class) {
-    override fun getFamilyName(): String = KotlinBundle.message("inspection.replace.collection.count.with.size.display.name")
+    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.replace.collection.count.with.size.display.name")
     override fun getActionName(element: KtCallExpression): String =
         KotlinBundle.message("replace.collection.count.with.size.quick.fix.text")
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.calleeExpression?.text == "count" && element.valueArguments.isEmpty()

@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
@@ -19,6 +21,17 @@ import kotlin.reflect.KClass
 sealed class KotlinApplicableInspectionBase<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
 ) : KotlinSingleElementInspection<ELEMENT>(elementType), KotlinApplicableToolBase<ELEMENT> {
+    /**
+     * @see com.intellij.codeInspection.QuickFix.getFamilyName
+     */
+    abstract fun getActionFamilyName(): @IntentionFamilyName String
+
+    /**
+     * By default, a problem is registered for every [TextRange] produced by [getApplicabilityRange]. [getProblemRanges] can be overridden
+     * to customize this behavior, e.g. to register a problem only for the first [TextRange].
+     */
+    open fun getProblemRanges(ranges: List<TextRange>): List<TextRange> = ranges
+
     internal class ProblemInfo(
         val description: @InspectionMessage String,
         val highlightType: ProblemHighlightType,
@@ -37,19 +50,14 @@ sealed class KotlinApplicableInspectionBase<ELEMENT : KtElement>(
         if (ranges.isEmpty()) return
 
         val problemInfo = buildProblemInfo(element) ?: return
-        ranges.forEach { range ->
-            with(holder) {
-                registerProblem(
-                    manager.createProblemDescriptor(
-                        element,
-                        range,
-                        problemInfo.description,
-                        problemInfo.highlightType,
-                        isOnTheFly,
-                        problemInfo.quickFix
-                    )
-                )
-            }
+        getProblemRanges(ranges).forEach { range ->
+            holder.registerProblem(
+                element,
+                problemInfo.description,
+                problemInfo.highlightType,
+                range,
+                problemInfo.quickFix,
+            )
         }
     }
 }

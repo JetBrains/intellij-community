@@ -35,6 +35,8 @@ internal class ImportMemberIntention :
     override fun getActionName(element: KtNameReferenceExpression, context: Context): String =
         KotlinBundle.message("add.import.for.0", context.fqName.asString())
 
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtNameReferenceExpression> = ApplicabilityRanges.SELF
+
     override fun isApplicableByPsi(element: KtNameReferenceExpression): Boolean =
         // Ignore simple name expressions or already imported names.
         element.getQualifiedElement() != element && !element.isInImportDirective()

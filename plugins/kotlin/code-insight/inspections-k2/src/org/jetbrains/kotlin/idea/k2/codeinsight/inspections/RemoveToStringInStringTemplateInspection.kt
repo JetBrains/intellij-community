@@ -22,8 +22,8 @@ internal class RemoveToStringInStringTemplateInspection :
     AbstractKotlinApplicableInspection<KtDotQualifiedExpression>(KtDotQualifiedExpression::class),
     CleanupLocalInspectionTool {
 
-    override fun getFamilyName(): String = KotlinBundle.message("remove.to.string.fix.text")
-    override fun getActionName(element: KtDotQualifiedExpression): String = getFamilyName()
+    override fun getActionFamilyName(): String = KotlinBundle.message("remove.to.string.fix.text")
+    override fun getActionName(element: KtDotQualifiedExpression): String = getActionFamilyName()
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDotQualifiedExpression> =
         applicabilityRanges { dotQualifiedExpression: KtDotQualifiedExpression ->

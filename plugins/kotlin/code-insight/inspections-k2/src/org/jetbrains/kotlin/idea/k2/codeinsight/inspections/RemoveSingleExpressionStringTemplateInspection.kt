@@ -20,8 +20,10 @@ internal class RemoveSingleExpressionStringTemplateInspection :
 
     class Context(val isString: Boolean)
 
-    override fun getFamilyName(): String = KotlinBundle.message("remove.single.expression.string.template")
-    override fun getActionName(element: KtStringTemplateExpression, context: Context): String = getFamilyName()
+    override fun getActionFamilyName(): String = KotlinBundle.message("remove.single.expression.string.template")
+    override fun getActionName(element: KtStringTemplateExpression, context: Context): String = getActionFamilyName()
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.singleExpressionOrNull() != null
 

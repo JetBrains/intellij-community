@@ -24,9 +24,11 @@ internal class ImplicitThisInspection :
         val isUnambiguousLabel: Boolean
     )
 
-    override fun getFamilyName(): String = KotlinBundle.message("inspection.implicit.this.display.name")
+    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.implicit.this.display.name")
     override fun getActionName(element: KtExpression, context: ImplicitReceiverInfo): String =
         KotlinBundle.message("inspection.implicit.this.action.name")
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtExpression): Boolean {
         return when (element) {
@@ -62,7 +64,8 @@ internal class ImplicitThisInspection :
     }
 }
 
-private fun KtAnalysisSession.getAssociatedClass(symbol: KtSymbol): KtClassOrObjectSymbol? {
+context(KtAnalysisSession)
+private fun getAssociatedClass(symbol: KtSymbol): KtClassOrObjectSymbol? {
     // both variables and functions are callable and only they can be referenced by "this"
     if (symbol !is KtCallableSymbol) return null
     return when (symbol) {
@@ -76,7 +79,8 @@ private fun KtAnalysisSession.getAssociatedClass(symbol: KtSymbol): KtClassOrObj
     }
 }
 
-private fun KtAnalysisSession.getImplicitReceiverInfoOfClass(
+context(KtAnalysisSession)
+private fun getImplicitReceiverInfoOfClass(
     implicitReceivers: List<KtImplicitReceiver>, associatedClass: KtClassOrObjectSymbol
 ): ImplicitThisInspection.ImplicitReceiverInfo? {
     // We can't use "this" with label if the label is already taken
@@ -100,7 +104,8 @@ private fun KtAnalysisSession.getImplicitReceiverInfoOfClass(
     return null
 }
 
-private fun KtAnalysisSession.getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KtClassOrObjectSymbol, Name?>? {
+context(KtAnalysisSession)
+private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KtClassOrObjectSymbol, Name?>? {
     val associatedClass = receiver.type.expandedClassSymbol ?: return null
     val associatedTag: Name? = when (val receiverSymbol = receiver.ownerSymbol) {
         is KtClassOrObjectSymbol -> receiverSymbol.name

@@ -14,9 +14,11 @@ import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 
 internal class KotlinDoubleNegationInspection : AbstractKotlinApplicableInspection<KtPrefixExpression>(KtPrefixExpression::class) {
-    override fun getFamilyName(): String = KotlinBundle.message("inspection.kotlin.double.negation.display.name")
+    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.kotlin.double.negation.display.name")
     override fun getActionName(element: KtPrefixExpression): String =
         KotlinBundle.message("inspection.kotlin.double.negation.action.name")
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtPrefixExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtPrefixExpression): Boolean =
         element.operationToken == KtTokens.EXCL

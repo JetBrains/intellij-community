@@ -24,6 +24,8 @@ internal class AddOpenModifierIntention :
     override fun getFamilyName(): String = KotlinBundle.message("make.open")
     override fun getActionName(element: KtCallableDeclaration): String = familyName
 
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.SELF
+
     override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean =
         (element is KtProperty || element is KtNamedFunction)
                 && !element.hasModifier(KtTokens.OPEN_KEYWORD)

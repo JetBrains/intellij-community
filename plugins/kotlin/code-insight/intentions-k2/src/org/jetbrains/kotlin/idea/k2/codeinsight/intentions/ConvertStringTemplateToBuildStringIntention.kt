@@ -19,6 +19,8 @@ internal class ConvertStringTemplateToBuildStringIntention : AbstractKotlinAppli
     override fun getFamilyName(): String = KotlinBundle.message("convert.string.template.to.build.string")
     override fun getActionName(element: KtStringTemplateExpression): String = familyName
 
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
+
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
         !element.text.startsWith("\"\"\"") && !element.isAnnotationArgument()
 

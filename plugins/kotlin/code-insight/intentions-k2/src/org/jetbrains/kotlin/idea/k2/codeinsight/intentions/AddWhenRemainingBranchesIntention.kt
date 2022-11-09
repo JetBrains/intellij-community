@@ -19,6 +19,8 @@ internal class AddWhenRemainingBranchesIntention
     override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(false)
     override fun getActionName(element: KtWhenExpression, context: AddRemainingWhenBranchesUtils.Context): String = familyName
 
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
+
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true
 
     context(KtAnalysisSession)

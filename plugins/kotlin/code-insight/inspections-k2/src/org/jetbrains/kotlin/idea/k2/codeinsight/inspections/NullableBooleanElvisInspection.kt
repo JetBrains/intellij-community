@@ -21,9 +21,11 @@ import org.jetbrains.kotlin.psi.*
  * See plugins/kotlin/code-insight/descriptions/resources-en/inspectionDescriptions/NullableBooleanElvis.html for details.
  */
 class NullableBooleanElvisInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>(KtBinaryExpression::class) {
-    override fun getFamilyName(): String = KotlinBundle.message("inspection.nullable.boolean.elvis.display.name")
+    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.nullable.boolean.elvis.display.name")
     override fun getActionName(element: KtBinaryExpression): String =
         KotlinBundle.message("inspection.nullable.boolean.elvis.action.name")
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean = element.isTargetOfNullableBooleanElvisInspection()
 

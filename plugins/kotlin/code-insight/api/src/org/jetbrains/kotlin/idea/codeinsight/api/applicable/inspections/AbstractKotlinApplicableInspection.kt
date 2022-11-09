@@ -28,7 +28,7 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement>(
      *
      * @see com.intellij.codeInspection.CommonProblemDescriptor.getDescriptionTemplate
      */
-    open fun getProblemDescription(element: ELEMENT): @InspectionMessage String = getFamilyName()
+    open fun getProblemDescription(element: ELEMENT): @InspectionMessage String = getActionFamilyName()
 
     /**
      * Returns the [ProblemHighlightType] for the inspection's registered problem.
@@ -45,7 +45,7 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement>(
                 apply(element, element.project, element.findExistingEditor())
             }
 
-            override fun getFamilyName(): String = this@KotlinApplicableInspection.getFamilyName()
+            override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
             override fun getName(): String = elementPointer.element?.let { getActionName(element) } ?: familyName
         }
 

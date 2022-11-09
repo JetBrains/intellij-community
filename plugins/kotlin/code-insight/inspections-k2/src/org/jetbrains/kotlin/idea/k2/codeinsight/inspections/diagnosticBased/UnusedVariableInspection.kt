@@ -19,7 +19,7 @@ internal class UnusedVariableInspection :
         KtNamedDeclaration::class,
     ) {
 
-    override fun getFamilyName(): String = KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
+    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
     override fun getActionName(element: KtNamedDeclaration): String =
         KotlinBundle.message("remove.variable.0", element.name.toString())
 

@@ -18,6 +18,8 @@ internal class ConvertConcatenationToBuildStringIntention : AbstractKotlinApplic
     override fun getFamilyName(): String = KotlinBundle.message("convert.concatenation.to.build.string")
     override fun getActionName(element: KtBinaryExpression): String = familyName
 
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
+
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
         element.operationToken == KtTokens.PLUS && !element.isAnnotationArgument()
 

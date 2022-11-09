@@ -20,6 +20,9 @@ import kotlin.reflect.KClass
 sealed class AbstractKotlinApplicableIntentionBase<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
 ) : SelfTargetingIntention<ELEMENT>(elementType.java, { "" }), KotlinApplicableToolBase<ELEMENT> {
+    /**
+     * @see com.intellij.codeInsight.intention.IntentionAction.getFamilyName
+     */
     abstract override fun getFamilyName(): @IntentionFamilyName String
 
     /**
