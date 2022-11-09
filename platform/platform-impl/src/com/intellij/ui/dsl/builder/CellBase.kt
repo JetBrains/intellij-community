@@ -54,8 +54,8 @@ interface CellBase<out T : CellBase<T>> {
 
   /**
    * Updates horizontal and/or vertical alignment of the component inside the cell. To stretch the content on whole cell
-   * use [AlignX.FILL]/[AlignY.FILL]/[Align.FILL]. For setting both horizontal and vertical alignment use overloaded plus operator
-   * like `align(AlignX.LEFT + AlignY.TOP)`. Default alignment is [AlignX.LEFT] + [AlignY.CENTER].
+   * use [AlignX.FILL]/[AlignY.FILL]/[Align.FILL]. For setting both horizontal and vertical alignment use [Align] constants or
+   * overloaded plus operator like `align(AlignX.LEFT + AlignY.TOP)`. Default alignment is [AlignX.LEFT] + [AlignY.CENTER].
    *
    * In case the cell should occupy all available width or height in parent mark the column as [resizableColumn]
    * or the row as [Row.resizableRow] (or both if needed).
