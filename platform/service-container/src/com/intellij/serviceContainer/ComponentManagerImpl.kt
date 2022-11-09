@@ -313,7 +313,7 @@ abstract class ComponentManagerImpl(
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
     }
 
-    // ensure that messageBus is created, regardless of lazy listeners map state
+    // ensuring that `messageBus` is created, regardless of the lazy listener map state
     if (isMessageBusSupported) {
       val messageBus = getOrCreateMessageBusUnderLock()
       map?.let {
@@ -1142,7 +1142,7 @@ abstract class ComponentManagerImpl(
     if (deferred.isCompleted) {
       val instance = deferred.getCompleted()
       val implClass = instance.javaClass
-      // well, we don't know the interface class, so, we cannot add any service to a hot cache
+      // well, we don't know the interface class, so we cannot add any service to a hot cache
       if (Modifier.isFinal(implClass.modifiers)) {
         serviceInstanceHotCache.putIfAbsent(implClass, instance)
       }
@@ -1166,8 +1166,8 @@ abstract class ComponentManagerImpl(
     }
 
     // disposed directly using Disposer.dispose()
-    // we don't care that state DISPOSE_IN_PROGRESS is already set,
-    // and exceptions because of that possible - use ProjectManager to close and dispose project.
+    // we don't care that state DISPOSE_IN_PROGRESS is already set, and exceptions because of that are possible -
+    // use `ProjectManager` to close and dispose the project
     startDispose()
   }
 
@@ -1202,7 +1202,7 @@ abstract class ComponentManagerImpl(
     serviceInstanceHotCache.clear()
 
     messageBus?.let {
-      // Must be after disposing of serviceParentDisposable, because message bus disposes child buses, so, we must dispose all services first.
+      // Must be after disposing `serviceParentDisposable`, because message bus disposes child buses, so we must dispose all services first.
       // For example, service ModuleManagerImpl disposes modules; each module, in turn, disposes module's message bus (child bus of application).
       Disposer.dispose(it)
       this.messageBus = null
@@ -1420,7 +1420,7 @@ abstract class ComponentManagerImpl(
 }
 
 /**
- * A linked hash set that's copied on write operations.
+ * A copy-on-write linked hash set.
  */
 private class LinkedHashSetWrapper<T : Any> {
   private val lock = Any()

@@ -88,12 +88,12 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  private static Project ourProject;
-  private static Module ourModule;
-  private static PsiManager ourPsiManager;
-  private static boolean ourAssertionsInTestDetected;
-  private static VirtualFile ourSourceRoot;
   private static LightProjectDescriptor ourProjectDescriptor;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static Project ourProject;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static Module ourModule;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static PsiManager ourPsiManager;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static VirtualFile ourSourceRoot;
+  private static boolean ourAssertionsInTestDetected;
   private static SdkLeakTracker myOldSdks;
 
   private ThreadTracker myThreadTracker;
@@ -105,29 +105,19 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private LibraryTableTracker myLibraryTableTracker;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
-  private Disposable mySdkParentDisposable = Disposer.newDisposable("sdk for project in light tests");
+  private final Disposable mySdkParentDisposable = Disposer.newDisposable("sdk for project in light tests");
 
-  /**
-   * @return Project to be used in tests for example for project components retrieval.
-   */
-  @SuppressWarnings("MethodMayBeStatic")
   protected Project getProject() {
     return ourProject;
   }
 
-  /**
-   * @return Module to be used in tests for example for module components retrieval.
-   */
-  @SuppressWarnings("MethodMayBeStatic")
   protected Module getModule() {
     return ourModule;
   }
 
-  /**
-   * Shortcut to PsiManager.getInstance(getProject())
-   */
-  @NotNull
-  protected PsiManager getPsiManager() {
+  /** A shortcut to {@code PsiManager.getInstance(getProject())} */
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  protected @NotNull PsiManager getPsiManager() {
     if (ourPsiManager == null) {
       ourPsiManager = PsiManager.getInstance(getProject());
     }
@@ -214,9 +204,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  /**
-   * @return The only source root
-   */
   public static VirtualFile getSourceRoot() {
     return ourSourceRoot;
   }
@@ -249,8 +236,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     });
   }
 
-  @NotNull
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK());
   }
 
@@ -526,30 +512,27 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return null;
   }
 
-  @NotNull
-  protected String getModuleTypeId() {
+  protected @NotNull String getModuleTypeId() {
     return EmptyModuleType.EMPTY_MODULE;
   }
 
   /**
-   * Creates dummy source file. One is not placed under source root so some PSI functions like resolve to external classes
-   * may not work. Though it works significantly faster and yet can be used if you need to create some PSI structures for
-   * test purposes
+   * Creates a dummy source file.
+   * The file is not placed under the source root, so some PSI functions (like resolve to external classes) may not work.
+   * But it works significantly faster and yet can be used if you need to create some PSI structures for test purposes.
    *
    * @param fileName - name of the file to create. Extension is used to choose what PSI should be created like java, jsp, aj, xml etc.
    * @param text     - file text.
    * @return dummy psi file.
    *
    */
-  @NotNull
-  protected PsiFile createFile(@NonNls @NotNull String fileName, @NonNls @NotNull String text) throws IncorrectOperationException {
+  protected @NotNull PsiFile createFile(@NonNls @NotNull String fileName, @NonNls @NotNull String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject())
       .createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
   }
 
-  @NotNull
-  protected PsiFile createLightFile(@NonNls @NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
+  protected @NotNull PsiFile createLightFile(@NonNls @NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject())
       .createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), false, false);
@@ -558,11 +541,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * Convenient conversion of testSomeTest -> someTest | SomeTest where testSomeTest is the name of current test.
    *
-   * @param lowercaseFirstLetter - whether first letter after test should be lowercased.
+   * @param lowercaseFirstLetter - whether the first letter after the "test" prefix should be lowercased.
    */
-  @NotNull
   @Override
-  protected String getTestName(boolean lowercaseFirstLetter) {
+  protected @NotNull String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
     name = StringUtil.trimStart(name, "test");
     if (!name.isEmpty() && lowercaseFirstLetter && !PlatformTestUtil.isAllUppercaseName(name)) {
@@ -571,18 +553,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return name;
   }
 
-  @NotNull
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
+  protected @NotNull CodeStyleSettings getCurrentCodeStyleSettings() {
     return CodeStyle.getSettings(getProject());
   }
 
-  @NotNull
-  protected CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
+  protected @NotNull CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
     return getCurrentCodeStyleSettings().getCommonSettings(language);
   }
 
-  @NotNull
-  protected <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
+  protected @NotNull <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
     return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
   }
 
@@ -598,7 +577,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
-  @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   public static synchronized void closeAndDeleteProject() {
     Project project = ourProject;
     if (project == null) {
@@ -646,23 +624,21 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {
-    @NotNull private final String myModuleTypeId;
-    @Nullable private final Sdk mySdk;
+    private final @NotNull String myModuleTypeId;
+    private final @Nullable Sdk mySdk;
 
     SimpleLightProjectDescriptor(@NotNull String moduleTypeId, @Nullable Sdk sdk) {
       myModuleTypeId = moduleTypeId;
       mySdk = sdk;
     }
 
-    @NotNull
     @Override
-    public String getModuleTypeId() {
+    public @NotNull String getModuleTypeId() {
       return myModuleTypeId;
     }
 
-    @Nullable
     @Override
-    public Sdk getSdk() {
+    public @Nullable Sdk getSdk() {
       return mySdk;
     }
 
@@ -682,14 +658,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       return myModuleTypeId.hashCode();
     }
 
-    private boolean areJdksEqual(final Sdk newSdk) {
+    private boolean areJdksEqual(Sdk newSdk) {
       if (mySdk == null || newSdk == null) return mySdk == newSdk;
       if (!mySdk.getName().equals(newSdk.getName())) return false;
 
       OrderRootType[] rootTypes = {OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
       for (OrderRootType rootType : rootTypes) {
-        final String[] myUrls = mySdk.getRootProvider().getUrls(rootType);
-        final String[] newUrls = newSdk.getRootProvider().getUrls(rootType);
+        String[] myUrls = mySdk.getRootProvider().getUrls(rootType);
+        String[] newUrls = newSdk.getRootProvider().getUrls(rootType);
         if (!ContainerUtil.newHashSet(myUrls).equals(ContainerUtil.newHashSet(newUrls))) return false;
       }
       return true;

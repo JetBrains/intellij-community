@@ -39,12 +39,12 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * Listener that reacts to user initiated changes and updates current problems state.
  * <p>
- * Events that are handled by this listener:
- * 1. selection change (user opened different file) -> store current timestamp for closed file and restores state for new file
- * 2. vfs changes -> remove states for deleted files, remove problems for updated files (in order to recalculate them later)
- * 3. hints settings change -> rollback file state, so that there are no reported problems yet (but they can be found using a rollbacked state)
- * 4. refactoring done for member -> rollback member file state
- * 5. psi tree changed -> rollback file state for all the editors with this file
+ * Events that are handled by this listener:<br>
+ * 1. selection change (user opened different file) -> store current timestamp for closed file and restores state for new file<br>
+ * 2. VFS changes -> remove states for deleted files, remove problems for updated files (in order to recalculate them later)<br>
+ * 3. hints settings change -> rollback file state, so that there are no reported problems yet (but they can be found using a rolled-back state)<br>
+ * 4. refactoring done for member -> rollback member file state<br>
+ * 5. PSI tree changed -> rollback file state for all the editors with this file<br>
  */
 final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter implements FileEditorManagerListener,
                                                                                         InlayHintsSettings.SettingsListener,
@@ -81,9 +81,8 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
   public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (VFileEvent e : events) {
-      VirtualFile changedFile = e.getFile();
-      if (changedFile == null) continue;
       if (e instanceof VFileDeleteEvent) {
+        VirtualFile changedFile = e.getFile();
         if (!fileIndex.isInContent(changedFile)) continue;
         PsiJavaFile removedJavaFile = getJavaFile(myProject, changedFile);
         if (removedJavaFile == null) continue;
@@ -91,7 +90,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
       }
       if (e instanceof VFileContentChangeEvent || e instanceof VFileDeleteEvent) {
         VirtualFile selectedFile = getSelectedFile();
-        if (selectedFile == null || changedFile.equals(selectedFile)) continue;
+        if (selectedFile == null || e.getFile().equals(selectedFile)) continue;
         PsiJavaFile selectedJavaFile = getJavaFile(myProject, selectedFile);
         if (selectedJavaFile == null) continue;
         FileStateUpdater.setPreviousState(selectedJavaFile);
@@ -219,7 +218,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
     return textEditor == null ? null : textEditor.getEditor();
   }
 
-  private static class MyStartupActivity implements StartupActivity {
+  static class MyStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
       if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TestModeFlags.is(ProjectProblemUtils.ourTestingProjectProblems)) {

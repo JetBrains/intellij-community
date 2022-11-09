@@ -3,6 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Manages editors for particular clients. Take a look a {@link ClientSession}
+ * Manages editors for particular clients. Take a look a {@link com.intellij.openapi.client.ClientSession}
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -24,7 +25,7 @@ public final class ClientEditorManager {
   }
 
   public static @NotNull List<ClientEditorManager> getAllInstances() {
-    return ApplicationManager.getApplication().getServices(ClientEditorManager.class, true);
+    return ApplicationManager.getApplication().getServices(ClientEditorManager.class, ClientKind.ALL);
   }
 
   /**
@@ -43,13 +44,11 @@ public final class ClientEditorManager {
   private final ClientId myClientId = ClientId.getCurrent();
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull
-  public Stream<Editor> editors() {
+  public @NotNull Stream<Editor> editors() {
     return myEditors.stream();
   }
 
-  @NotNull
-  public Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
+  public @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
     return editors()
       .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
   }
