@@ -505,9 +505,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       final TreePath[] paths = myTree.getSelectionPaths();
-      if (paths != null && paths.length > 0) {
-        return (DataProvider)id -> getSlowData(id, paths);
-      }
+      final TreePath leadPath = myTree.getLeadSelectionPath();
+      final AntBuildFile currentBuildFile = getCurrentBuildFile();
+      return (DataProvider)id -> getSlowData(id, paths, leadPath, currentBuildFile);
     }
     else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HelpID.ANT;
@@ -515,39 +515,10 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       return myProject != null? myTreeExpander : null;
     }
-    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final AntBuildFile buildFile = getCurrentBuildFile();
-      if (buildFile == null) {
-        return null;
-      }
-      final VirtualFile file = buildFile.getVirtualFile();
-      if (file == null) {
-        return null;
-      }
-      final TreePath treePath = myTree.getLeadSelectionPath();
-      if (treePath == null) {
-        return null;
-      }
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-      if (node == null) {
-        return null;
-      }
-      if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
-        final AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
-        final AntBuildTargetBase buildTarget = targetNodeDescriptor.getTarget();
-        final Navigatable descriptor = buildTarget.getOpenFileDescriptor();
-        if (descriptor != null && descriptor.canNavigate()) {
-          return descriptor;
-        }
-      }
-      if (file.isValid()) {
-        return new OpenFileDescriptor(myProject, file);
-      }
-    }
     return super.getData(dataId);
   }
 
-  private static Object getSlowData(@NotNull @NonNls String dataId, final TreePath @NotNull [] paths) {
+  private Object getSlowData(@NotNull @NonNls String dataId, final TreePath @Nullable [] paths, @Nullable TreePath leadPath, @Nullable AntBuildFile currentBuildFile) {
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final List<VirtualFile> virtualFiles = collectAntFiles(buildFile -> {
         final VirtualFile virtualFile = buildFile.getVirtualFile();
@@ -558,17 +529,35 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }, paths);
       return virtualFiles == null? null : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
     }
-
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile, paths);
       return elements == null? null : elements.toArray(PsiElement.EMPTY_ARRAY);
     }
-    
+    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      if (leadPath != null) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadPath.getLastPathComponent();
+        if (node != null) {
+          if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
+            final AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
+            final Navigatable navigatable = targetNodeDescriptor.getTarget().getOpenFileDescriptor();
+            if (navigatable != null && navigatable.canNavigate()) {
+              return navigatable;
+            }
+          }
+        }
+      }
+      if (currentBuildFile != null && !myProject.isDisposed()) {
+        final VirtualFile file = currentBuildFile.getVirtualFile();
+        if (file != null && file.isValid()) {
+          return new OpenFileDescriptor(myProject, file);
+        }
+      }
+    }
     return null;
   }
 
-  private static <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function, final TreePath @NotNull [] paths) {
-    if (paths.length == 0) {
+  private static <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function, final TreePath @Nullable [] paths) {
+    if (paths == null || paths.length == 0) {
       return null;
     }
     final Set<AntBuildFile> antFiles = new LinkedHashSet<>();
