@@ -23,7 +23,7 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
@@ -38,7 +38,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   var userWarningLoggingLevel = false
     @TestOnly set
 
-  private var projectModelUpdating = AtomicBoolean(false)
+  private val projectModelVersionUpdate = AtomicLong(-1)
 
   init {
     log.debug { "Loading workspace model" }
@@ -90,10 +90,10 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
   final override fun <R> updateProjectModel(description: String, updater: (MutableEntityStorage) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    if (!projectModelUpdating.compareAndSet(false, true)) {
-      // Temporally disabled due to IDEA-303876
-      //throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
+    if (projectModelVersionUpdate.get() == entityStorage.pointer.version) {
+      log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
     }
+    projectModelVersionUpdate.set(entityStorage.pointer.version)
 
     val result: R
     val updateTimeMillis: Long
@@ -127,7 +127,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged, projectModelUpdating)
+      entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
     }
     if (generalTime > 1000) {
       log.info(
@@ -151,13 +151,14 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
    */
   @Synchronized
   final override fun <R> updateProjectModelSilent(description: String, updater: (MutableEntityStorage) -> R): R {
-    if (!projectModelUpdating.compareAndSet(false, true)) {
-      // Temporally disabled due to IDEA-303876
-      //throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
-    }
     log.info("-------------------------------------------------------")
     log.info("Updating project model silently. Version before update ${entityStorage.pointer.version}.")
     log.info("Update description: $description")
+
+    if (projectModelVersionUpdate.get() == entityStorage.pointer.version) {
+      log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
+    }
+    projectModelVersionUpdate.set(entityStorage.pointer.version)
 
     val before = entityStorage.current
     val builder = MutableEntityStorage.from(entityStorage.current)
@@ -174,7 +175,6 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       newStorage.assertConsistency()
     }
     entityStorage.replaceSilently(newStorage)
-    projectModelUpdating.set(false)
     log.info("Update: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms")
     log.info("-------------------------------------------------------")
     return result
@@ -192,7 +192,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
     val builder = replacement.builder
     this.initializeBridges(replacement.changes, builder)
-    entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged, null)
+    entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
 
     return true
   }

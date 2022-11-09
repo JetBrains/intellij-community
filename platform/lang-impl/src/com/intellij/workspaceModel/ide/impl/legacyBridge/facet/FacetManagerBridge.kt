@@ -140,7 +140,18 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
           updateDiffOrStorage{ this.getOrPutDataByEntity(it) { facetContributor.createFacetFromEntity(it, moduleBridge) }}
         }
       } else {
-        moduleEntity.facets.filter { !facetTypeToSerializer.containsKey(it.facetType) }.forEach { getOrCreateFacet(it) }
+        moduleEntity.facets.filter { !facetTypeToSerializer.containsKey(it.facetType) }.forEach {
+          fun initFacet(entity: FacetEntity): Facet<*> {
+            val under = entity.underlyingFacet?.let { initFacet(it) }
+            var existingFacet = facetMapping().getDataByEntity(entity)
+            if (existingFacet == null) {
+              existingFacet = createFacet(entity, under)
+              updateDiffOrStorage { this.addMapping(entity, existingFacet) }
+            }
+            return existingFacet
+          }
+          initFacet(it)
+        }
       }
     }
   }
@@ -161,18 +172,13 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     return facetEntities.mapNotNull { facetMapping().getDataByEntity(it) }.toList().toTypedArray()
   }
 
-  internal fun getOrCreateFacet(entity: FacetEntity): Facet<*> {
-    return updateDiffOrStorage { this.getOrPutDataByEntity(entity) { createFacet(entity) } }
-  }
-
   internal fun getFacet(entity: FacetEntity): Facet<*>? = facetMapping().getDataByEntity(entity)
 
   internal fun getEntity(facet: Facet<*>): FacetEntity? = facetMapping().getEntities(facet).singleOrNull() as? FacetEntity
 
-  internal fun createFacet(entity: FacetEntity): Facet<*> {
+  internal fun createFacet(entity: FacetEntity, underlyingFacet: Facet<*>?): Facet<*> {
     val registry = FacetTypeRegistry.getInstance()
     val facetType = registry.findFacetType(entity.facetType)
-    val underlyingFacet = entity.underlyingFacet?.let { getOrCreateFacet(it) }
     if (facetType == null) {
       return FacetManagerBase.createInvalidFacet(moduleBridge, FacetState().apply {
         name = entity.name

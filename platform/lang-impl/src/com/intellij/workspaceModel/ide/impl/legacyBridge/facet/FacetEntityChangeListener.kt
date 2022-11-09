@@ -24,6 +24,7 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class FacetEntityChangeListener(private val project: Project): Disposable {
@@ -36,13 +37,23 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
 
       val facetType = facetBridgeContributor.rootEntityType
       changes[facetType]?.asSequence()?.filterIsInstance<EntityChange.Added<*>>()?.forEach perFacet@ { facetChange ->
-        val existingFacetBridge = builder.facetMapping().getDataByEntity(facetChange.newEntity)
-        if (existingFacetBridge != null) return@perFacet
+        fun createBridge(entity: WorkspaceEntity): Facet<*> {
+          val existingFacetBridge = builder.facetMapping().getDataByEntity(entity)
+          if (existingFacetBridge != null) return existingFacetBridge
 
-        val moduleEntity = facetBridgeContributor.getParentModuleEntity(facetChange.newEntity)
-        val module = builder.moduleMap.getDataByEntity(moduleEntity) ?: error("Module bridge should be available")
-        val newFacetBridge = facetBridgeContributor.createFacetFromEntity(facetChange.newEntity, module)
-        builder.mutableFacetMapping().addMapping(facetChange.newEntity, newFacetBridge)
+          val moduleEntity = facetBridgeContributor.getParentModuleEntity(entity)
+          val module = builder.moduleMap.getDataByEntity(moduleEntity) ?: error("Module bridge should be available")
+          val newFacetBridge = if (facetBridgeContributor.rootEntityType == FacetEntity::class.java) {
+            val underlyingFacet = (entity as FacetEntity).underlyingFacet?.let { createBridge(it) }
+            (facetBridgeContributor as FacetEntityContributor).createFacetFromEntity(entity, module, underlyingFacet)
+          } else {
+            facetBridgeContributor.createFacetFromEntity(entity, module)
+          }
+          builder.mutableFacetMapping().addMapping(entity, newFacetBridge)
+          return newFacetBridge
+        }
+
+        createBridge(facetChange.newEntity)
       }
     }
   }

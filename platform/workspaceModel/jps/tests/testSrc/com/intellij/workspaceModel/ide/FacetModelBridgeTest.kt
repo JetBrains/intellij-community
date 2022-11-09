@@ -15,17 +15,13 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.AssertionFailedError
@@ -34,6 +30,7 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 
 class FacetModelBridgeTest {
   companion object {
@@ -185,5 +182,24 @@ class FacetModelBridgeTest {
     modifiableModuleModel.renameModule(module, "newModuleName")
     existingFacet = assertOneElement(modifiableFacetModel.allFacets)
     assertEquals(facet.name, existingFacet.name)
+  }
+
+  @Test
+  fun `initialize internal facet`() {
+    val module = projectModel.createModule()
+    runWriteActionAndWait {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
+        val moduleEntity = builder.entities(ModuleEntity::class.java).first()
+        builder addEntity FacetEntity("myName", "MockFacetId", moduleEntity.symbolicId, moduleEntity.entitySource) {
+          this.module = moduleEntity
+          underlyingFacet = FacetEntity("anotherName", "MockFacetId", moduleEntity.symbolicId, moduleEntity.entitySource) {
+            this.module = moduleEntity
+          }
+        }
+      }
+    }
+    assertDoesNotThrow {
+      FacetManager.getInstance(module).findFacet(MockFacetType.ID, "anotherName")
+    }
   }
 }
