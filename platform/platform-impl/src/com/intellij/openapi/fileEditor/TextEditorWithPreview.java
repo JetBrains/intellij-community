@@ -413,7 +413,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return null;
   }
 
-  private @NotNull ActionToolbar createRightToolbar() {
+  protected @NotNull ActionToolbar createRightToolbar() {
     final ActionGroup viewActions = createViewActionGroup();
     final ActionGroup group = createRightToolbarActionGroup();
     final ActionGroup rightToolbarActions = group == null
@@ -700,7 +700,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      if (isShowActionsInTabs()) return;
+      if (!isShowFloatingToolbar()) return;
 
       try {
         var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
