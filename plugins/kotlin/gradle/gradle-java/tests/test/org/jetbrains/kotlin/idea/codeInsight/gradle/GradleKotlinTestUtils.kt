@@ -19,6 +19,7 @@ object GradleKotlinTestUtils {
         repositories.add("mavenLocal()")
         repositories.addUrl("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
         repositories.addUrl("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
 
