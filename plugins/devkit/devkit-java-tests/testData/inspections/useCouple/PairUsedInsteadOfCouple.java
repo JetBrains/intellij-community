@@ -1,14 +1,17 @@
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Couple;
 
+import static com.intellij.openapi.util.Pair.create;
+import static com.intellij.openapi.util.Pair.pair;
+
 class PairUsedInsteadOfCouple {
 
   private static final <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> STRING_PAIR_TYPE = null;
   private static final <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> INTEGER_PAIR_TYPE = null;
-  private static final <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> STRING_PAIR_CREATE = Pair.<warning descr="Replace with 'Couple.of()'">create</warning>("a", "b");
-  private static final <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> INTEGER_PAIR = Pair.<warning descr="Replace with 'Couple.of()'">create</warning>(1, 2);
-  private static final <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> STRING_PAIR = Pair.<warning descr="Replace with 'Couple.of()'">pair</warning>("a", "b");
-  private static final <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> INTEGER_PAIR_CREATE = Pair.<warning descr="Replace with 'Couple.of()'">pair</warning>(1, 2);
+  private static final <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> STRING_PAIR_CREATE = <warning descr="Replace with 'Couple.of()'">Pair.create("a", "b")</warning>;
+  private static final <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> INTEGER_PAIR = <warning descr="Replace with 'Couple.of()'">Pair.create(1, 2)</warning>;
+  private static final <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> STRING_PAIR = <warning descr="Replace with 'Couple.of()'">Pair.pair("a", "b")</warning>;
+  private static final <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> INTEGER_PAIR_CREATE = <warning descr="Replace with 'Couple.of()'">Pair.pair(1, 2)</warning>;
   private static final <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> PAIR_TYPE_AND_COUPLE_VALUE = Couple.of(1, 2);
 
   private static final Pair<String, Integer> STRING_TO_INTEGER_PAIR_CREATE = Pair.create("a", 2); // correct
@@ -20,21 +23,26 @@ class PairUsedInsteadOfCouple {
     // variables:
     <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> pair1 = null;
     <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> pair2 = null;
-    <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> pair3 = Pair.<warning descr="Replace with 'Couple.of()'">create</warning>("a", "b");
-    <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> pair4 = Pair.<warning descr="Replace with 'Couple.of()'">create</warning>(1, 2);
-    <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> pair5 = Pair.<warning descr="Replace with 'Couple.of()'">pair</warning>("a", "b");
-    <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> pair6 = Pair.<warning descr="Replace with 'Couple.of()'">pair</warning>(1, 2);
-    <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> pair7 = Couple.of(1, 2);
+    <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> pair3 = <warning descr="Replace with 'Couple.of()'">Pair.create("a", "b")</warning>;
+    <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> pair4 = <warning descr="Replace with 'Couple.of()'">Pair.create(1, 2)</warning>;
+    <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> pair5 = <warning descr="Replace with 'Couple.of()'">create(1, 2)</warning>;
+    <warning descr="Replace with 'Couple<String>'">Pair<String, String></warning> pair6 = <warning descr="Replace with 'Couple.of()'">Pair.pair("a", "b")</warning>;
+    <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> pair7 = <warning descr="Replace with 'Couple.of()'">Pair.pair(1, 2)</warning>;
+    <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> pair8 = <warning descr="Replace with 'Couple.of()'">pair(1, 2)</warning>;
+    <warning descr="Replace with 'Couple<Integer>'">Pair<Integer, Integer></warning> pair9 = Couple.of(1, 2);
 
-    Pair<String, Integer> pair8 = Pair.create("a", 2); // correct
-    Pair<String, Integer> pair9 = Pair.pair("a", 2); // correct
+    Pair<String, Integer> pair10 = Pair.create("a", 2); // correct
+    Pair<String, Integer> pair11 = Pair.pair("a", 2); // correct
     Couple<String> couple1 = Couple.of("a", "b"); // correct
     Couple<Integer> couple2 = Couple.of(1, 2); // correct
 
     // parameters:
-    takePair(Pair.<warning descr="Replace with 'Couple.of()'">create</warning>("a", "b"));
-    takePair(Pair.<warning descr="Replace with 'Couple.of()'">create</warning>(1, 2));
-    takePair(Couple.of(1, 2));
+    takePair(<warning descr="Replace with 'Couple.of()'">Pair.create("a", "b")</warning>);
+    takePair(<warning descr="Replace with 'Couple.of()'">Pair.create(1, 2)</warning>);
+    takePair(<warning descr="Replace with 'Couple.of()'">create(1, 2)</warning>);
+    takePair(<warning descr="Replace with 'Couple.of()'">Pair.pair("a", "b")</warning>);
+    takePair(<warning descr="Replace with 'Couple.of()'">Pair.pair(1, 2)</warning>);
+    takePair(<warning descr="Replace with 'Couple.of()'">pair(1, 2)</warning>);
 
     takePair(Pair.create("a", 2)); // correct
     takePair(Couple.of("a", "b")); // correct
