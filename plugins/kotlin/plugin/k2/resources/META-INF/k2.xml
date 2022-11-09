@@ -162,12 +162,7 @@
             order="first"/>
 
     <findUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory"/>
-    <usageTypeProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypeProviderFirImpl"/>
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport"
-                    serviceImplementation="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupportFirImpl"/>
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
-                    serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportFirImpl"/>
-    
+
     <targetElementEvaluator language="kotlin"
                             implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>

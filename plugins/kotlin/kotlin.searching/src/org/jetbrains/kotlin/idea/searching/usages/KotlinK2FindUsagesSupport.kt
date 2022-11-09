@@ -1,14 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.findUsages
+package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiFormatUtil
+import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.Processor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -20,11 +23,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
-import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
-import org.jetbrains.kotlin.idea.refactoring.formatPsiClass
+import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
+import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
-import org.jetbrains.kotlin.idea.util.withResolvedCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
@@ -32,7 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
+internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     override fun processCompanionObjectInternalReferences(
         companionObject: KtObjectDeclaration,
         referenceProcessor: Processor<PsiReference>
@@ -104,6 +106,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
                         constructorSymbol.getContainingSymbol() as? KtClassifierSymbol ?: return@withResolvedCall false
                     constructedClassSymbol == ktClassOrObject.getClassOrObjectSymbol()
                 }
+
                 else -> false
             }
         } ?: false
@@ -114,8 +117,11 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         return emptyList()
     }
 
-    override fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, @Nls actionString: String): List<PsiElement> {
-
+    override fun checkSuperMethods(
+        declaration: KtDeclaration,
+        ignore: Collection<PsiElement>?,
+        @Nls actionString: String
+    ): List<PsiElement> {
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
 
         data class AnalyzedModel(
@@ -125,11 +131,13 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
 
         fun getClassDescription(overriddenElement: PsiElement, containingSymbol: KtSymbolWithKind?): String =
             when (overriddenElement) {
-                is KtNamedFunction, is KtProperty, is KtParameter -> (containingSymbol as? KtNamedSymbol)?.name?.asString() ?: "Unknown"  //TODO render symbols
+                is KtNamedFunction, is KtProperty, is KtParameter -> (containingSymbol as? KtNamedSymbol)?.name?.asString()
+                    ?: "Unknown"  //TODO render symbols
                 is PsiMethod -> {
                     val psiClass = overriddenElement.containingClass ?: error("Invalid element: ${overriddenElement.text}")
                     formatPsiClass(psiClass, markAsJava = true, inCode = false)
                 }
+
                 else -> error("Unexpected element: ${overriddenElement.getElementTextWithContext()}")
             }.let { "    $it\n" }
 
@@ -179,4 +187,23 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
     override fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope {
         return delegate
     }
+}
+
+// temp duplicate of org.jetbrains.kotlin.idea.refactoring.formatPsiClass
+private fun formatPsiClass(
+    psiClass: PsiClass,
+    markAsJava: Boolean,
+    inCode: Boolean
+): String {
+    fun wrapOrSkip(s: String, inCode: Boolean) = if (inCode) "<code>$s</code>" else s
+    var description: String
+
+    val kind = if (psiClass.isInterface) "interface " else "class "
+    description = kind + PsiFormatUtil.formatClass(
+        psiClass,
+        PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME or PsiFormatUtilBase.SHOW_PARAMETERS or PsiFormatUtilBase.SHOW_TYPE
+    )
+    description = wrapOrSkip(description, inCode)
+
+    return if (markAsJava) "[Java] $description" else description
 }

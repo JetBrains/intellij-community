@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.core.util
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.util
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -9,6 +8,8 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
+
+const val CHECK_SUPER_METHODS_YES_NO_DIALOG = "CHECK_SUPER_METHODS_YES_NO_DIALOG"
 
 fun showYesNoCancelDialog(
     key: String,
@@ -25,6 +26,7 @@ fun showYesNoCancelDialog(
     }
 }
 
+// TODO remove static mutable state
 private val dialogResults = ConcurrentHashMap<String, Any>()
 
 @TestOnly

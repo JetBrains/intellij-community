@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.searching.inheritors">
+<idea-plugin package="org.jetbrains.kotlin.idea.searching">
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.directKotlinClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
   </extensionPoints>
@@ -13,5 +13,11 @@
     <searcher forClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch$SearchParameters"
               implementationClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingMethodDelegatedSearcher"/>
     <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.searching.inheritors.KotlinFirDefinitionsSearcher"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2FindUsagesSupport"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2SearchUsagesSupport"/>
+    <usageTypeProvider implementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2UsageTypeProvider"/>
   </extensions>
 </idea-plugin>
