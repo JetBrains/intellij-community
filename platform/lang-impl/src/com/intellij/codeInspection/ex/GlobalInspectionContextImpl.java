@@ -614,7 +614,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
-  protected void runGlobalTools(@NotNull AnalysisScope scope,
+  private void runGlobalTools(@NotNull AnalysisScope scope,
                               @NotNull InspectionManager inspectionManager,
                               @NotNull List<? extends Tools> globalTools,
                               boolean isOfflineInspections) {
