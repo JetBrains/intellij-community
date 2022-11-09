@@ -54,6 +54,7 @@ import java.io.IOException
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.FileTime
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
@@ -615,8 +616,6 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  private val remoteDevYouTrackFlag = "-Dapplication.info.youtrack.url=https://youtrack.jetbrains.com/newissue?project=GTW&amp;clearDraft=true&amp;description=\$DESCR"
-
   /**
    * Launches client and returns process's lifetime (which will be terminated on process exit)
    */
@@ -638,7 +637,7 @@ object CodeWithMeClientDownloader {
       }
     }
 
-    val parameters = if (CodeWithMeGuestLauncher.isUnattendedModeUri(URI(url))) listOf("thinClient", url, remoteDevYouTrackFlag) else listOf("thinClient", url)
+    val parameters =  listOf("thinClient", url)
     val processLifetimeDef = lifetime.createNested()
 
     val vmOptionsFile = if (SystemInfoRt.isMac) {
@@ -647,12 +646,13 @@ object CodeWithMeClientDownloader {
         PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + extractedJetBrainsClientData.version),
         "jetbrains_client.vmoptions"
       )
-    } else executable.resolveSibling("jetbrains_client64.vmoptions")
-    service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile)
+    } else if (SystemInfoRt.isWindows) executable.resolveSibling("jetbrains_client64.exe.vmoptions")
+    else executable.resolveSibling("jetbrains_client64.vmoptions")
+    service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile, URI(url))
 
     if (SystemInfo.isWindows) {
       val hProcess = WindowsFileUtil.windowsShellExecute(
-        executable = executable,
+        executable = executable.toString(),
         workingDirectory = extractedJetBrainsClientData.clientDir,
         parameters = parameters
       )
