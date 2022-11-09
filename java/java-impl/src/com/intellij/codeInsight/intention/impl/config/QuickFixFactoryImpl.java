@@ -5,8 +5,12 @@ import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
+import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
+import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MakeVarEffectivelyFinalFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
@@ -57,7 +61,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
@@ -1194,11 +1201,5 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text) {
     return new DeleteElementFix.DeleteMultiFix(elements, text);
-  }
-
-  @NotNull
-  @Override
-  public IntentionAction createAddMissingNestedPatternsFix(@NotNull PsiDeconstructionList deconstructionList, @NotNull Collection<Pattern> missingPatterns) {
-    return new AddMissingDeconstructionComponentsFix(deconstructionList, missingPatterns);
   }
 }

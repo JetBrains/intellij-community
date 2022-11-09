@@ -5,9 +5,10 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionComponentsFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionComponentsFix.Pattern;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.QuickFixFactory.Pattern;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -103,7 +104,7 @@ class PatternHighlightingModel {
         builder.range(deconstructionList);
         var missingRecordComponents = Arrays.copyOfRange(recordComponents, patternComponents.length, recordComponents.length);
         var missingPatterns = ContainerUtil.map(missingRecordComponents, component -> Pattern.create(component, deconstructionList));
-        fix = QUICK_FIX_FACTORY.createAddMissingNestedPatternsFix(deconstructionList, missingPatterns);
+        fix = new AddMissingDeconstructionComponentsFix(deconstructionList, missingPatterns);
         builder.registerFix(fix, null, null, null, null);
       }
       else {
@@ -113,9 +114,8 @@ class PatternHighlightingModel {
         TextRange textRange = TextRange.create(startOffset, endOffset);
         builder.range(deconstructionList, textRange);
         PsiPattern[] elementsToDelete = Arrays.copyOfRange(patternComponents, recordComponents.length, patternComponents.length);
-        String text = QuickFixBundle.message("remove.redundant.nested.patterns.fix.text",
-                                                 patternComponents.length -
-                                                 recordComponents.length == 1 ? 0 : 1);
+        int diff = patternComponents.length - recordComponents.length;
+        String text = QuickFixBundle.message("remove.redundant.nested.patterns.fix.text", diff);
         fix = QUICK_FIX_FACTORY.createDeleteFix(elementsToDelete, text);
         builder.registerFix(fix, null, text, null, null);
       }
