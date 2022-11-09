@@ -751,7 +751,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val targetEntityIds = childrenInTarget(targetParentEntityId, childClazz)
     val targetChildrenMap = makeEntityDataCollection(targetEntityIds, targetStorage)
     targetEntityData1 = targetChildrenMap.removeSome(replaceWithEntityData)
-    while (targetEntityData1 != null && replaceWithState[targetEntityData1.createEntityId()] != null) {
+    while (targetEntityData1 != null && targetState[targetEntityData1.createEntityId()] != null) {
       targetEntityData1 = targetChildrenMap.removeSome(replaceWithEntityData)
     }
     return targetEntityData1
