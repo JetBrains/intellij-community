@@ -116,6 +116,23 @@ object GradleProgressIndicatorEventHelper {
     }
   }
 
+  /**
+   * Gradle has three phases: Initialization (configure settings), Configuration (configure projects), Execution (run tasks).
+   * We can recognize phases from sent events:
+   * - Initialization is the phase that Gradle starts with, no event needed
+   * - Configuration starts when we receive `BuildPhaseStartEvent CONFIGURE_ROOT_BUILD` and ends when we receive `BuildPhaseFinishEvent CONFIGURE_ROOT_BUILD`
+   * - Execution starts when we receive `BuildPhaseStartEvent RUN_MAIN_TASKS` and ends when we receive `BuildPhaseFinishEvent RUN_MAIN_TASKS`
+   *
+   * Between `BuildPhaseStartEvent CONFIGURE_ROOT_BUILD` and `BuildPhaseFinishEvent CONFIGURE_ROOT_BUILD` events, Gradle can send also other events,
+   * like CONFIGURE_BUILD and RUN_WORK. But Configuration phase will always start with `BuildPhaseStartEvent CONFIGURE_ROOT_BUILD` and end with
+   * `BuildPhaseFinishEvent CONFIGURE_ROOT_BUILD`. And similar also for execution phase and RUN_MAIN_TASKS.
+   *
+   * Example for Configuration phase;
+   * Configuration start: BuildPhaseStartEvent CONFIGURE_ROOT_BUILD
+   * ... other events in configuration phase
+   * Configuration end: BuildPhaseFinishEvent CONFIGURE_ROOT_BUILD
+   *
+   */
   private fun updateBuildPhase(progressState: GradleProgressState, event: BuildPhaseProgressEvent): GradleProgressState {
     val buildPhase = event.descriptor.buildPhase
     return if (event is BuildPhaseStartEvent) {
