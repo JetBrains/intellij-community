@@ -135,8 +135,6 @@
         <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
         <quickFixContributor implementation="org.jetbrains.kotlin.idea.quickfix.JvmQuickFixRegistrar"/>
         <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.facet.KotlinLibraryValidatorCreator"/>
-
-        <kotlinTestFramework id="delegateTestFramework"  order="last" implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinDelegatingTestFramework"/>
     </extensions>
 
     <resource-bundle>messages.KotlinBundle</resource-bundle>

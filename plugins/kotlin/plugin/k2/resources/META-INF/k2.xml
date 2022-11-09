@@ -221,6 +221,7 @@
     <module name="kotlin.properties"/>
     <module name="kotlin.run-configurations.junit"/>
     <module name="kotlin.run-configurations.testng"/>
+    <module name="kotlin.run-configurations.jvm"/>
 
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.code-insight-common"/>
