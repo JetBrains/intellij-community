@@ -32,11 +32,23 @@ class GitBranchesTreeModelImpl(
   private val branchesSubtreeSeparator = GitBranchesTreePopup.createTreeSeparator()
 
   private val branchManager = project.service<GitBranchManager>()
+
   private val branchComparator = compareBy<GitBranch> {
-    !repositories.any { repo -> repo.currentBranch == it }
+    it.isNotCurrentBranch()
   } then compareBy {
-    !repositories.all { repo -> branchManager.isFavorite(GitBranchType.of(it), repo, it.name) }
-  } then compareBy { !(isPrefixGrouping && it.name.contains('/')) } then compareBy { it.name }
+    it.isNotFavorite()
+  } then compareBy {
+    !(isPrefixGrouping && it.name.contains('/'))
+  } then compareBy { it.name }
+
+  private val subTreeComparator = compareBy<Any> {
+    it is GitBranch && it.isNotCurrentBranch() && it.isNotFavorite()
+  } then compareBy {
+    it is GitBranchesTreeModel.BranchesPrefixGroup
+  }
+
+  private fun GitBranch.isNotCurrentBranch() = !repositories.any { repo -> repo.currentBranch == this }
+  private fun GitBranch.isNotFavorite() = !repositories.all { repo -> branchManager.isFavorite(GitBranchType.of(this), repo, name) }
 
   private lateinit var localBranchesTree: LazyBranchesSubtreeHolder
   private lateinit var remoteBranchesTree: LazyBranchesSubtreeHolder
@@ -81,7 +93,9 @@ class GitBranchesTreeModelImpl(
     return when (parent) {
       TreeRoot -> getTopLevelNodes()
       is GitBranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
-      is GitBranchesTreeModel.BranchesPrefixGroup -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent.type, parent.prefix) }
+      is GitBranchesTreeModel.BranchesPrefixGroup -> {
+        branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent.type, parent.prefix).sortedWith(subTreeComparator) }
+      }
       else -> emptyList()
     }
   }
