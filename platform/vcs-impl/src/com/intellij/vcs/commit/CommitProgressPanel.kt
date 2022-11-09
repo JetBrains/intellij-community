@@ -72,8 +72,8 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
   private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
 
   private val taskInfo = CommitChecksTaskInfo()
-  private val progressFlow = MutableStateFlow<CommitChecksProgressIndicator?>(null)
-  private var progress: CommitChecksProgressIndicator? by progressFlow::value
+  private val progressFlow = MutableStateFlow<InlineCommitChecksProgressIndicator?>(null)
+  private var progress: InlineCommitChecksProgressIndicator? by progressFlow::value
 
   private val panel = NonOpaquePanel(VerticalLayout(4))
   private val scrollPane = FixedSizeScrollPanel(panel, JBDimension(400, 150))
