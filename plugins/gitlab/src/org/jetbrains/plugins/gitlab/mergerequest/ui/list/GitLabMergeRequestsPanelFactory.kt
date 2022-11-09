@@ -5,19 +5,14 @@ import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ChangeEvent
@@ -31,7 +26,7 @@ internal class GitLabMergeRequestsPanelFactory {
     val listLoaderPanel = createListLoaderPanel(scope, listVm, listMergeRequests)
     val searchPanel = createSearchPanel(scope, listVm)
 
-    MergeRequestsListEmptyStateController(scope, listVm, listMergeRequests.emptyText)
+    GitLabMergeRequestsListController(scope, listVm, listMergeRequests.emptyText)
 
     return JBUI.Panels.simplePanel(listLoaderPanel)
       .addToTop(searchPanel)
@@ -106,42 +101,5 @@ internal class GitLabMergeRequestsPanelFactory {
 
   private fun createSearchPanel(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
     return GitLabFiltersPanelFactory(listVm.filterVm).create(scope)
-  }
-
-  private class MergeRequestsListEmptyStateController(
-    scope: CoroutineScope,
-    private val listVm: GitLabMergeRequestsListViewModel,
-    private val emptyText: StatusText
-  ) {
-    init {
-      scope.launch {
-        combine(listVm.loadingState, listVm.filterVm.searchState) { isLoading, searchState ->
-          isLoading to searchState
-        }.collect { (isLoading, searchState) ->
-          updateEmptyState(isLoading, searchState, listVm.repository)
-        }
-      }
-    }
-
-    private fun updateEmptyState(isLoading: Boolean, searchState: GitLabMergeRequestsFiltersValue, repository: String) {
-      emptyText.clear()
-
-      if (isLoading) {
-        emptyText.appendText(GitLabBundle.message("merge.request.list.empty.state.loading"))
-        return
-      }
-
-      if (searchState.filterCount == 0) {
-        emptyText
-          .appendText(GitLabBundle.message("merge.request.list.empty.state.matching.nothing", repository))
-      }
-      else {
-        emptyText
-          .appendText(GitLabBundle.message("merge.request.list.empty.state.matching.nothing.with.filters"))
-          .appendSecondaryText(GitLabBundle.message("merge.request.list.empty.state.clear.filters"), SimpleTextAttributes.LINK_ATTRIBUTES) {
-            listVm.filterVm.searchState.value = GitLabMergeRequestsFiltersValue.EMPTY
-          }
-      }
-    }
   }
 }
