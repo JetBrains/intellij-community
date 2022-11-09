@@ -468,7 +468,7 @@ public final class UpdateHighlightersUtil {
     else if (severityRegistrar.compare(severity, HighlightSeverity.WARNING) >= 0) {
       layer = HighlighterLayer.WARNING;
     }
-    else if (severityRegistrar.compare(severity, HighlightSeverity.WEAK_WARNING) >= 0) {
+    else if (severityRegistrar.compare(severity, HighlightSeverity.WEAK_WARNING) >= 0 || severity == HighlightSeverity.TEXT_ATTRIBUTES) {
       layer = HighlighterLayer.WEAK_WARNING;
     }
     else if (severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY || severity == HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY) {
