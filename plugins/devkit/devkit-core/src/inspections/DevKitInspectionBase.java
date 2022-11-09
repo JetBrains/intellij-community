@@ -15,10 +15,11 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import java.util.function.Predicate;
 
 /**
- * Consider using {@link DevKitUastInspectionBase} instead.
+ * @deprecated use {@link DevKitUastInspectionBase} instead.
  *
  * @author swr
  */
+@Deprecated(forRemoval = true)
 public abstract class DevKitInspectionBase extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
