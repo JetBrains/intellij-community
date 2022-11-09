@@ -38,21 +38,20 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
 
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      if (expression.getParent() instanceof PsiReferenceExpression expr && expr.isQualified()) return;
       visitReferenceElement(expression);
     }
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
-      super.visitElement(element);
       processElement(element);
+      super.visitElement(element);
     }
 
     private void processElement(@NotNull PsiElement element) {
       for (PsiReference ref : element.getReferences()) {
         PsiElement resolved = ref.resolve();
-        if (resolved != null) {
-          myProcessor.process(ref.getElement(), resolved);
-        }
+        if (resolved != null) myProcessor.process(ref.getElement(), resolved);
       }
     }
 
