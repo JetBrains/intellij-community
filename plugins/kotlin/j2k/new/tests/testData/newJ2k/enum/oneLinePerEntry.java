@@ -1,4 +1,4 @@
-public enum BigEnum {
+enum BigEnum {
     ENUM_ONE("SOME_NAME_TO_PUT_HERE"),
     ENUM_TWO("SOME_NAME_TO_PUT_HERE"),
     ENUM_THREE("SOME_NAME_TO_PUT_HERE"),
@@ -12,5 +12,58 @@ public enum BigEnum {
 
     BigEnum(String name) {
 
+    }
+}
+
+enum Formatting {
+    A,
+
+    B,
+
+
+    C,
+    D
+    ,
+    E
+
+    ,
+
+    F {void foo() {}}
+    ,
+
+    G {
+        void foo() {}
+    }
+    ,
+
+    H
+            {
+                void foo() {}
+            }
+}
+
+enum Formatting2 {
+
+    A("hello"
+    ),
+
+    B(
+            "hello"
+    )
+    ,
+
+    C(
+            "hello"),
+    D("hello"), E("hello"),
+
+    F(
+            "hello"
+    ) {
+        void foo() {}
+    }, G("hello") {void foo() {}}, H("hello") {
+        void foo() {}
+    };
+
+    Formatting2(String s) {
     }
 }
