@@ -109,7 +109,9 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
       return dialog.showAndGet()
     }
     val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> {default} } ?: ::confirmChangeSignature
-    val changeSignature = parametrizedDuplicatesNumber > 0 && confirmChange()
+    val isGoodSignatureChange = isGoodSignatureChange(extractOptions.elements, extractOptions.inputParameters,
+                                                      parametrizedExtraction.callElements, updatedParameters)
+    val changeSignature = parametrizedDuplicatesNumber > 0 && isGoodSignatureChange && confirmChange()
     duplicates = if (changeSignature) duplicatesWithUnifiedParameters else exactDuplicates
     val parameters = if (changeSignature) updatedParameters else extractOptions.inputParameters
     val extractedElements = if (changeSignature) parametrizedExtraction else ExtractedElements(calls, method)
@@ -138,6 +140,21 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
         replacePsiRange(duplicate.candidate, callElements)
       }
     }
+  }
+
+  private fun isGoodSignatureChange(callBefore: List<PsiElement>, initialParameters: List<InputParameter>,
+                                    callAfter: List<PsiElement>, updatedParameters: List<InputParameter>): Boolean {
+    val sizeAfter = callAfter.sumOf(::calculateCodeLeafs)
+    val sizeBefore = callBefore.sumOf(::calculateCodeLeafs)
+    val addedParameters = updatedParameters.size - initialParameters.size
+    return 1.75 * sizeAfter < sizeBefore && addedParameters <= 3 && updatedParameters.size <= 5
+  }
+
+  private fun calculateCodeLeafs(element: PsiElement): Int {
+    return SyntaxTraverser.psiTraverser(element)
+      .filter { psiElement -> psiElement.firstChild == null && psiElement.text.isNotBlank() }
+      .traverse()
+      .count()
   }
 
   private fun findMethodCallInside(element: PsiElement?): PsiMethodCallExpression? {
