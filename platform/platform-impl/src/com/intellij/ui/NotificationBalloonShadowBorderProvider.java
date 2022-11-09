@@ -83,8 +83,8 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     int bottomRightWidth = myBottomRightIcon.getIconWidth();
     int bottomRightHeight = myBottomRightIcon.getIconHeight();
 
-    int rightWidth = Shadow.Right.getIconWidth();
-    int bottomHeight = Shadow.Bottom.getIconHeight();
+    int rightWidth = myRightIcon.getIconWidth();
+    int bottomHeight = myBottomIcon.getIconHeight();
 
     drawLine(component, g, myTopIcon, width, topLeftWidth, topRightWidth, 0, true);
     drawLine(component, g, myBottomIcon, width, bottomLeftWidth, bottomRightWidth, height - bottomHeight, true);
