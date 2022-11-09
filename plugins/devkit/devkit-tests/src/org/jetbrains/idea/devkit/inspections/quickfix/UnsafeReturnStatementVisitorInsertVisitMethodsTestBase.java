@@ -10,7 +10,7 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection;
 
-public abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase extends JavaCodeInsightFixtureTestCase {
+abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase extends JavaCodeInsightFixtureTestCase {
 
   protected static final String INSERT_LAMBDA_AND_CLASS_VISIT_METHODS = "Insert visitLambdaExpression/visitClass methods";
   protected static final String INSERT_LAMBDA_VISIT_METHOD = "Insert visitLambdaExpression method";
