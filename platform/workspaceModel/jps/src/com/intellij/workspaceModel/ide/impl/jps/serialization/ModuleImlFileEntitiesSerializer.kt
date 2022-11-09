@@ -320,21 +320,23 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       dependencyItems.add(ModuleDependencyItem.ModuleSourceDependency)
     }
 
-    val inheritedCompilerOutput = rootManagerElement.getAttributeAndDetach(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
-    val languageLevel = rootManagerElement.getAttributeAndDetach(MODULE_LANGUAGE_LEVEL_ATTRIBUTE)
-    val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG) != null
-    val compilerOutput = rootManagerElement.getChildAndDetach(OUTPUT_TAG)?.getAttributeValue(URL_ATTRIBUTE)
-    val compilerOutputForTests = rootManagerElement.getChildAndDetach(TEST_OUTPUT_TAG)?.getAttributeValue(URL_ATTRIBUTE)
+    if (!loadingAdditionalRoots) {
+      val inheritedCompilerOutput = rootManagerElement.getAttributeAndDetach(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
+      val languageLevel = rootManagerElement.getAttributeAndDetach(MODULE_LANGUAGE_LEVEL_ATTRIBUTE)
+      val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG) != null
+      val compilerOutput = rootManagerElement.getChildAndDetach(OUTPUT_TAG)?.getAttributeValue(URL_ATTRIBUTE)
+      val compilerOutputForTests = rootManagerElement.getChildAndDetach(TEST_OUTPUT_TAG)?.getAttributeValue(URL_ATTRIBUTE)
 
-    builder.addJavaModuleSettingsEntity(
-      inheritedCompilerOutput = inheritedCompilerOutput?.toBoolean() ?: false,
-      excludeOutput = excludeOutput,
-      compilerOutput = compilerOutput?.let { virtualFileManager.fromUrl(it) },
-      compilerOutputForTests = compilerOutputForTests?.let { virtualFileManager.fromUrl(it) },
-      languageLevelId = languageLevel,
-      module = moduleEntity,
-      source = contentRotEntitySource
-    )
+      builder.addJavaModuleSettingsEntity(
+        inheritedCompilerOutput = inheritedCompilerOutput?.toBoolean() ?: false,
+        excludeOutput = excludeOutput,
+        compilerOutput = compilerOutput?.let { virtualFileManager.fromUrl(it) },
+        compilerOutputForTests = compilerOutputForTests?.let { virtualFileManager.fromUrl(it) },
+        languageLevelId = languageLevel,
+        module = moduleEntity,
+        source = contentRotEntitySource
+      )
+    }
     if (!JDOMUtil.isEmpty(rootManagerElement)) {
       val customImlData = moduleEntity.customImlData
       if (customImlData == null) {
