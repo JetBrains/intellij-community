@@ -61,14 +61,26 @@ class MinimapImage(parentDisposable: Disposable) {
 
     val minimapHeightEx = (buHeight * imgWidth.toDouble() / buWidth).toInt()
 
+    val downscaleSteps = (bufferUnscaled.width - imgWidth) / 100
+
     for (i in 0 until blocks) {
       editor.contentComponent.print(g)
 
-      g2d.drawImage(bufferUnscaled,
-                    0, i * minimapHeightEx, imgWidth, (i + 1) * minimapHeightEx,
-                    0, 0, bufferUnscaled.width, bufferUnscaled.height,
-                    null)
+      if (downscaleSteps == 0) {
+        // Direct one-pass copy without progressive downscale
+        g2d.drawImage(bufferUnscaled,
+                      0, i * minimapHeightEx, imgWidth, (i + 1) * minimapHeightEx,
+                      0, 0, bufferUnscaled.width, bufferUnscaled.height,
+                      null)
+      }
+      else {
+        progressiveDownscale(bufferUnscaled, imgWidth, minimapHeightEx, downscaleSteps)
 
+        g2d.drawImage(bufferUnscaled,
+                      0, i * minimapHeightEx, imgWidth, (i + 1) * minimapHeightEx,
+                      0, 0, imgWidth, minimapHeightEx,
+                      null)
+      }
       g.translate(0, -buHeight)
     }
 
@@ -82,6 +94,25 @@ class MinimapImage(parentDisposable: Disposable) {
     }
 
     g2d.dispose()
+  }
+
+  private fun progressiveDownscale(image: BufferedImage, finalWidth: Int, finalHeight: Int, steps: Int) {
+    val g2d = image.createGraphics()
+    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+
+    var imageWidth = image.width
+    var imageHeight = image.height
+
+    val deltaWidth = (imageWidth - finalWidth) / steps
+    val deltaHeight = (imageHeight - finalHeight) / steps
+
+    for (i in 0 until steps) {
+      g2d.drawImage(image, 0, 0, imageWidth - deltaWidth, imageHeight - deltaHeight, 0, 0, imageWidth, imageHeight, null)
+      imageWidth -= deltaWidth
+      imageHeight -= deltaHeight
+    }
   }
 
   fun update(editor: Editor, visibleHeight: Int, visibleWidth: Int, minimapHeight: Int, force: Boolean = false) {

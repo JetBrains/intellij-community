@@ -95,8 +95,8 @@
       </group>
     </group>
 
+    <action id="DisableMinimap" class="com.intellij.ide.minimap.actions.DisableMinimapAction"/>
     <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
-    <action id="MinimapFilter" class="com.intellij.ide.minimap.actions.MinimapFilterActionGroup"/>
     <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
     <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
   </actions>

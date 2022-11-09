@@ -20,72 +20,6 @@ import kotlin.math.min
 
 class MinimapPanel(private val parentDisposable: Disposable, private val editor: Editor, private val container: JPanel) : JPanel() {
 
-  companion object {
-    const val MINIMUM_WIDTH = 50
-    const val RESIZE_TOLERANCE = 7
-  }
-
-  inner class PanelMouseListener : MouseAdapter() {
-    override fun mousePressed(e: MouseEvent) {
-
-      if (e.button != MouseEvent.BUTTON1) {
-        return
-      }
-
-      if (!isDragging && isInResizeArea(e.x)) {
-        isResizing = true
-        resizeInitialX = e.xOnScreen
-        resizeInitialWidth = state.width
-      }
-      else {
-        isDragging = true
-        scrollTo(e.y)
-      }
-    }
-
-    override fun mouseReleased(e: MouseEvent) {
-      if (e.button == MouseEvent.BUTTON1) {
-        isDragging = false
-        isResizing = false
-      }
-    }
-
-    override fun mouseWheelMoved(mouseWheelEvent: MouseWheelEvent) {
-      editor.scrollingModel.scrollVertically(
-        editor.scrollingModel.verticalScrollOffset + (mouseWheelEvent.preciseWheelRotation * editor.lineHeight * 5).toInt())
-    }
-
-    override fun mouseDragged(e: MouseEvent) {
-      if (isResizing) {
-        var newWidth = resizeInitialWidth + if (state.rightAligned) resizeInitialX - e.xOnScreen else e.xOnScreen - resizeInitialX
-        newWidth = when {
-          newWidth < MINIMUM_WIDTH -> MINIMUM_WIDTH
-          newWidth > container.width / 2 -> container.width / 2
-          else -> newWidth
-        }
-        if (state.width != newWidth) {
-          state.width = newWidth
-          settings.settingsChangeCallback.notify(MinimapSettings.SettingsChangeType.Normal)
-        }
-      }
-      else if (isDragging) {
-        editor.scrollingModel.disableAnimation()
-        scrollTo(e.y)
-        editor.scrollingModel.enableAnimation()
-      }
-    }
-
-    override fun mouseMoved(e: MouseEvent) {
-      if (isInResizeArea(e.x)) {
-        cursor = if (state.rightAligned) Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR)
-        else Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)
-      }
-      else {
-        cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
-      }
-    }
-  }
-
   private val settings = MinimapSettings.getInstance()
   private var state = settings.state
 
@@ -211,8 +145,7 @@ class MinimapPanel(private val parentDisposable: Disposable, private val editor:
   private fun createPopupActionGroup() = DefaultActionGroup(
     ActionManager.getInstance().getAction("MoveMinimap"),
     ActionManager.getInstance().getAction("OpenMinimapSettings"),
-    // Filters are currently disabled.
-    // ActionManager.getInstance().getAction("MinimapFilter")
+    ActionManager.getInstance().getAction("DisableMinimap")
   )
 
   private fun updatePreferredSize() {
@@ -266,5 +199,71 @@ class MinimapPanel(private val parentDisposable: Disposable, private val editor:
     editor.scrollingModel.removeVisibleAreaListener(visibleAreaListener)
 
     minimapImageSoftReference.clear()
+  }
+
+  inner class PanelMouseListener : MouseAdapter() {
+    override fun mousePressed(e: MouseEvent) {
+
+      if (e.button != MouseEvent.BUTTON1) {
+        return
+      }
+
+      if (!isDragging && isInResizeArea(e.x)) {
+        isResizing = true
+        resizeInitialX = e.xOnScreen
+        resizeInitialWidth = state.width
+      }
+      else {
+        isDragging = true
+        scrollTo(e.y)
+      }
+    }
+
+    override fun mouseReleased(e: MouseEvent) {
+      if (e.button == MouseEvent.BUTTON1) {
+        isDragging = false
+        isResizing = false
+      }
+    }
+
+    override fun mouseWheelMoved(mouseWheelEvent: MouseWheelEvent) {
+      editor.scrollingModel.scrollVertically(
+        editor.scrollingModel.verticalScrollOffset + (mouseWheelEvent.preciseWheelRotation * editor.lineHeight * 5).toInt())
+    }
+
+    override fun mouseDragged(e: MouseEvent) {
+      if (isResizing) {
+        var newWidth = resizeInitialWidth + if (state.rightAligned) resizeInitialX - e.xOnScreen else e.xOnScreen - resizeInitialX
+        newWidth = when {
+          newWidth < MINIMUM_WIDTH -> MINIMUM_WIDTH
+          newWidth > container.width / 2 -> container.width / 2
+          else -> newWidth
+        }
+        if (state.width != newWidth) {
+          state.width = newWidth
+          settings.settingsChangeCallback.notify(MinimapSettings.SettingsChangeType.Normal)
+        }
+      }
+      else if (isDragging) {
+        editor.scrollingModel.disableAnimation()
+        scrollTo(e.y)
+        editor.scrollingModel.enableAnimation()
+      }
+    }
+
+    override fun mouseMoved(e: MouseEvent) {
+      if (isInResizeArea(e.x)) {
+        cursor = if (state.rightAligned) Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR)
+        else Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)
+      }
+      else {
+        cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
+      }
+    }
+  }
+
+  companion object {
+    const val MINIMUM_WIDTH = 50
+    const val RESIZE_TOLERANCE = 7
   }
 }

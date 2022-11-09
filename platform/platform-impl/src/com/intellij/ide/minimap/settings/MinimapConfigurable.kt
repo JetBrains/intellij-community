@@ -2,12 +2,16 @@
 package com.intellij.ide.minimap.settings
 
 import com.intellij.ide.minimap.utils.MiniMessagesBundle
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.panel
-import javax.swing.JRadioButton
+import java.awt.Component
+import javax.swing.*
+
 
 class MinimapConfigurable : Configurable {
 
@@ -18,15 +22,35 @@ class MinimapConfigurable : Configurable {
   private val enabled = JBCheckBox(MiniMessagesBundle.message("settings.enable")).apply {
     toolTipText = MiniMessagesBundle.message("settings.enable.hint")
   }
-  private val filterComboBox = ComboBox(FilterType.values()).apply {
-    toolTipText = MiniMessagesBundle.message("settings.filter.hint")
-  }
+
   private val alignmentLeft = JRadioButton(MiniMessagesBundle.message("settings.left"))
   private val alignmentRight = JRadioButton(MiniMessagesBundle.message("settings.right"))
-  private val enableForAll = JRadioButton(MiniMessagesBundle.message("settings.enable.all"))
-  private val enableForZeppelin = JRadioButton(MiniMessagesBundle.message("settings.enable.zeppelin"))
-  private val fileTypes = JBTextField(20)
-  private var lastState: MinimapSettingsState? = null
+
+  private var lastState = MinimapSettings.getInstance().state.copy()
+
+  private val fileTypeComboBox: ComboBox<FileType>
+
+  init {
+    val textFileTypes = (FileTypeManager.getInstance() as FileTypeManagerImpl).registeredFileTypes
+      .filter { !it.isBinary && it.defaultExtension.isNotBlank() }.distinctBy { it.defaultExtension }
+      .sortedBy { if (lastState.fileTypes.contains(it.defaultExtension)) 0 else 1 }.toTypedArray()
+
+    fileTypeComboBox = ComboBox(textFileTypes).apply {
+      isSwingPopup = false
+    }
+
+    fileTypeComboBox.addActionListener {
+      val fileType = fileTypeComboBox.item ?: return@addActionListener
+      if (lastState.fileTypes.contains(fileType.defaultExtension)) {
+        lastState.fileTypes -= fileType.defaultExtension
+      }
+      else {
+        lastState.fileTypes += fileType.defaultExtension
+      }
+    }
+
+    fileTypeComboBox.renderer = FileTypeListCellRenderer()
+  }
 
   override fun getDisplayName() = MiniMessagesBundle.message("settings.name")
 
@@ -34,38 +58,34 @@ class MinimapConfigurable : Configurable {
     row { cell(enabled) }
     indent {
       buttonsGroup {
-        row(MiniMessagesBundle.message("settings.enable.scope")) {
-          cell(enableForAll)
-          cell(enableForZeppelin)
-        }
-      }
-      buttonsGroup {
         row(MiniMessagesBundle.message("settings.alignment")) {
           cell(alignmentLeft)
           cell(alignmentRight)
         }
       }
+      row(MiniMessagesBundle.message("settings.file.types")) {
+        cell(fileTypeComboBox)
+      }
     }
   }
 
-  override fun isModified() = lastState != getState()
+  override fun isModified() = MinimapSettings.getInstance().state != getState()
 
   override fun apply() {
     if (!isModified) {
       return
     }
 
-    val state = getState()
-
-    val needToReconstructUi = state.rightAligned != lastState?.rightAligned ||
-                              state.enabled != lastState?.enabled ||
-                              state.filterType != lastState?.filterType ||
-                              state.fileTypes != lastState?.fileTypes
-
     val settings = MinimapSettings.getInstance()
-    settings.state = state
+    val currentState = getState()
 
-    settings.settingsChangeCallback.notify(if (needToReconstructUi)
+    val needToRebuildUI = currentState.rightAligned != settings.state.rightAligned ||
+                          currentState.enabled != settings.state.enabled ||
+                          currentState.fileTypes != settings.state.fileTypes
+
+    settings.state = currentState
+
+    settings.settingsChangeCallback.notify(if (needToRebuildUI)
                                              MinimapSettings.SettingsChangeType.WithUiRebuild
                                            else
                                              MinimapSettings.SettingsChangeType.Normal)
@@ -74,22 +94,50 @@ class MinimapConfigurable : Configurable {
   override fun reset() {
     val state = MinimapSettings.getInstance().state
 
-    filterComboBox.item = state.filterType
     enabled.isSelected = state.enabled
     alignmentRight.isSelected = state.rightAligned
     alignmentLeft.isSelected = !alignmentRight.isSelected
-    fileTypes.text = state.fileTypes.joinToString(";")
+    fileTypeComboBox.repaint()
 
-    enableForZeppelin.isSelected = state.fileTypes.isNotEmpty()
-    enableForAll.isSelected = !enableForZeppelin.isSelected
-
-    lastState = state
+    lastState = state.copy()
   }
 
   override fun disposeUIResources() = Unit
 
-  private fun getState() = MinimapSettingsState(filterType = filterComboBox.item,
-                                                enabled = enabled.isSelected,
+  private fun getState() = MinimapSettingsState(enabled = enabled.isSelected,
                                                 rightAligned = alignmentRight.isSelected,
-                                                fileTypes = if (enableForZeppelin.isSelected) listOf("zpln") else emptyList())
+                                                width = MinimapSettings.getInstance().state.width,
+                                                fileTypes = lastState.fileTypes)
+
+  inner class FileTypeListCellRenderer : DefaultListCellRenderer() {
+    private val container = JPanel(null).apply {
+      layout = BoxLayout(this, BoxLayout.X_AXIS)
+    }
+    private val checkBox = JBCheckBox()
+
+    init {
+      container.add(checkBox)
+      container.add(this)
+    }
+
+    override fun getListCellRendererComponent(list: JList<*>?,
+                                              value: Any?,
+                                              index: Int,
+                                              isSelected: Boolean,
+                                              cellHasFocus: Boolean): Component {
+      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+
+      if (index == -1) {
+        checkBox.isVisible = false
+        text = lastState.fileTypes.joinToString(",")
+        return container
+      }
+      checkBox.isVisible = true
+      val fileType = value as? FileType ?: return container
+      text = fileType.defaultExtension
+      icon = fileType.icon
+      checkBox.isSelected = MinimapSettings.getInstance().state.fileTypes.contains(fileType.defaultExtension)
+      return container
+    }
+  }
 }

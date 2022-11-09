@@ -2,15 +2,12 @@
 package com.intellij.ide.minimap.settings
 
 /**
- * @param filterType Filter type for downscale the image. Could affect both quality and performance.
  * @param enabled Enables Minimap for selected filetypes.
  * @param width Default width
  * @param rightAligned If false, Minimap will be on the left side
- * @param fileTypes List of file extensions for which we want to show Minimap. For example txt;kt;java;zpln. By default, enabled only for
- * Zeppelin Scientific notebooks.
+ * @param fileTypes List of file extensions for which we want to show Minimap. For example txt,kt,java,zpln.
  */
-data class MinimapSettingsState(var filterType: FilterType = FilterType.Nearest,
-                                var enabled: Boolean = true,
+data class MinimapSettingsState(var enabled: Boolean = true,
                                 var width: Int = 200,
                                 var rightAligned: Boolean = true,
-                                var fileTypes: List<String> = listOf("zpln"))
+                                var fileTypes: List<String> = listOf("java,kt,php,scala,md,py,cpp,c,cs,zpln"))
