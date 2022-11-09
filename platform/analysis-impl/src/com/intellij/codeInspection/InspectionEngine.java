@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.SmartHashSet;
@@ -278,9 +279,9 @@ public final class InspectionEngine {
         };
         LocalInspectionTool tool = toolWrapper.getTool();
 
-        long inspectionStartTime = System.currentTimeMillis();
+        long inspectionStartTime = System.nanoTime();
         boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
-        long inspectionDuration = System.currentTimeMillis() - inspectionStartTime;
+        long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
         boolean needToReportStatsToQodana = (inspectionWasRun && !isOnTheFly);
         if (needToReportStatsToQodana) {
