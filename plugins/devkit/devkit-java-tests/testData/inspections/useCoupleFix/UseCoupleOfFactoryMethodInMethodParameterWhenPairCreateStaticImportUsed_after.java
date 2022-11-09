@@ -1,7 +1,9 @@
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 
-class UseCoupleOfFactoryMethodInVariableWhenPairPairUsed {
+import static com.intellij.openapi.util.Pair.create;
+
+class UseCoupleOfFactoryMethodInVariableWhenPairCreateUsed {
   void any() {
     takePair(Couple.of("a", "b"));
   }
