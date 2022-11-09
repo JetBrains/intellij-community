@@ -90,7 +90,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         modulesAndSdk = cachedValuesManager.createCachedValue {
             val ideaModuleInfos = moduleCache.fetchValues().flatten() + sdkCache.fetchValues()
-            ideaModuleInfos.checkValidity { "modulesAndSdk" }
+            ideaModuleInfos.checkValidity { "modulesAndSdk calculation" }
             CachedValueProvider.Result.create(ideaModuleInfos, modificationTracker)
         }
 
@@ -106,7 +106,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
                 }
             }
 
-            collectedLibraries.checkValidity { "libraries" }
+            collectedLibraries.checkValidity { "libraries calculation" }
 
             CachedValueProvider.Result.create(collectedLibraries, libraryCache.removedLibraryInfoTracker(), modificationTracker)
         }
@@ -335,8 +335,10 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
                 val libraryInfos = libraries.value
                 val sdkInfos = sdkCache.fetchValues()
                 val ideaModuleInfos = platformModules + libraryInfos + sdkInfos
-                ideaModuleInfos.checkValidity { "forPlatform $platform" }
+                ideaModuleInfos.checkValidity { "resultByPlatform $platform calculation" }
                 ideaModuleInfos
+            }.also {
+                it.checkValidity { "forPlatform $platform" }
             }
         }
 

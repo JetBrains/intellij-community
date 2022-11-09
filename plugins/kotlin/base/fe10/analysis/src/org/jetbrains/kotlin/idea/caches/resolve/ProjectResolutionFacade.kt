@@ -126,7 +126,10 @@ internal class ProjectResolutionFacade(
 
         val allModuleInfos = (allModules ?: getModuleInfosFromIdeaModel(project, (settings as? PlatformAnalysisSettingsImpl)?.platform))
             .toMutableSet().also {
-                it.checkValidity { toString() }
+                it.checkValidity {
+                    ("allModules".takeIf { allModules != null }
+                        ?: "getModuleInfosFromIdeaModel(${(settings as? PlatformAnalysisSettingsImpl)?.platform})") + toString()
+                }
             }
 
         val syntheticFilesByModule = syntheticFiles.groupBy { it.moduleInfo }
