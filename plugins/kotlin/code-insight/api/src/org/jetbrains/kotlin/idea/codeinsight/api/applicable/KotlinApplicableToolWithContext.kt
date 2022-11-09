@@ -12,6 +12,10 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtElement
 
+/**
+ * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext]
+ * and [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext].
+ */
 interface KotlinApplicableToolWithContext<ELEMENT : KtElement, CONTEXT> : KotlinApplicableToolBase<ELEMENT> {
     /**
      * The text to be shown in the list of available fixes.

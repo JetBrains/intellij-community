@@ -21,7 +21,7 @@ import kotlin.reflect.KClass
  */
 abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
-) : KotlinApplicableInspectionBase<ELEMENT>(elementType), KotlinApplicableTool<ELEMENT> {
+) : AbstractKotlinApplicableInspectionBase<ELEMENT>(elementType), KotlinApplicableTool<ELEMENT> {
     /**
      * [getProblemDescription] must be lightweight: it should not perform expensive computations so that it doesn't cause performance
      * issues.
@@ -40,7 +40,7 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement>(
         if (!isApplicable) return null
 
         val elementPointer = element.createSmartPointer()
-        val quickFix = object : KotlinApplicableInspectionQuickFix<ELEMENT>() {
+        val quickFix = object : AbstractKotlinApplicableInspectionQuickFix<ELEMENT>() {
             override fun applyTo(element: ELEMENT) {
                 apply(element, element.project, element.findExistingEditor())
             }

@@ -15,10 +15,10 @@ import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
 /**
- * [KotlinApplicableInspectionBase] is a base implementation for [AbstractKotlinApplicableInspection] and
+ * [AbstractKotlinApplicableInspectionBase] is a base implementation for [AbstractKotlinApplicableInspection] and
  * [AbstractKotlinApplicableInspectionWithContext].
  */
-sealed class KotlinApplicableInspectionBase<ELEMENT : KtElement>(
+sealed class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
 ) : KotlinSingleElementInspection<ELEMENT>(elementType), KotlinApplicableToolBase<ELEMENT> {
     /**
@@ -62,7 +62,7 @@ sealed class KotlinApplicableInspectionBase<ELEMENT : KtElement>(
     }
 }
 
-internal abstract class KotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix {
+internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix {
     abstract fun applyTo(element: ELEMENT)
 
     abstract override fun getName(): String

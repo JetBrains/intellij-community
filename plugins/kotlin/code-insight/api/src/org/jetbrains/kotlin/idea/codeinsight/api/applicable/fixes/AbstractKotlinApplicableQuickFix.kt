@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
- * A [KotlinQuickFixAction] providing a similar API for quick fixes as [KotlinApplicableIntention] provides for intentions.
+ * A [KotlinQuickFixAction] providing a similar API for quick fixes as
+ * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention] provides for intentions.
  */
 abstract class AbstractKotlinApplicableQuickFix<ELEMENT : PsiElement>(target: ELEMENT) : KotlinQuickFixAction<ELEMENT>(target) {
     open fun getActionName(element: ELEMENT): @IntentionName String = familyName

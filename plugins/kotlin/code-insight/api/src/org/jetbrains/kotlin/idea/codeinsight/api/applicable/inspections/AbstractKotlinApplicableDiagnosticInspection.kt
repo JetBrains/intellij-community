@@ -11,11 +11,11 @@ import kotlin.reflect.KClass
  */
 abstract class AbstractKotlinApplicableDiagnosticInspection<ELEMENT : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>>(
     elementType: KClass<ELEMENT>,
-) : AbstractKotlinApplicableInspection<ELEMENT>(elementType), KotlinApplicableDiagnosticInspectionBase<ELEMENT, DIAGNOSTIC> {
+) : AbstractKotlinApplicableInspection<ELEMENT>(elementType), AbstractKotlinApplicableDiagnosticInspectionBase<ELEMENT, DIAGNOSTIC> {
     /**
      * Whether this inspection is applicable to [element] given a [diagnostic].
      *
-     * @see KotlinApplicableTool.isApplicableByAnalyze
+     * @see org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableTool.isApplicableByAnalyze
      */
     context(KtAnalysisSession)
     abstract fun isApplicableByDiagnostic(element: ELEMENT, diagnostic: DIAGNOSTIC): Boolean

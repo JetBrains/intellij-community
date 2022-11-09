@@ -11,11 +11,11 @@ import kotlin.reflect.KClass
  */
 abstract class AbstractKotlinApplicableDiagnosticInspectionWithContext<ELEMENT : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>, CONTEXT>(
     elementType: KClass<ELEMENT>,
-) : AbstractKotlinApplicableInspectionWithContext<ELEMENT, CONTEXT>(elementType), KotlinApplicableDiagnosticInspectionBase<ELEMENT, DIAGNOSTIC> {
+) : AbstractKotlinApplicableInspectionWithContext<ELEMENT, CONTEXT>(elementType), AbstractKotlinApplicableDiagnosticInspectionBase<ELEMENT, DIAGNOSTIC> {
     /**
      * Provides some context for [apply] given some [element] and [diagnostic].
      *
-     * @see KotlinApplicableToolWithContext.prepareContext
+     * @see org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext.prepareContext
      */
     context(KtAnalysisSession)
     abstract fun prepareContextByDiagnostic(element: ELEMENT, diagnostic: DIAGNOSTIC): CONTEXT?

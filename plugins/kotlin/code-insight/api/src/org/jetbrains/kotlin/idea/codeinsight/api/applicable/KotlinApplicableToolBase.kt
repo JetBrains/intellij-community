@@ -5,7 +5,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicability
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * A common base interface for [KotlinApplicableIntentionBase] and [KotlinApplicableInspectionBase].
+ * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionBase] and
+ * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionBase].
  */
 interface KotlinApplicableToolBase<ELEMENT : KtElement> {
     /**

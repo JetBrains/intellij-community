@@ -9,12 +9,12 @@ import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
 /**
- * [KotlinApplicableDiagnosticInspectionBase] is a base interface for [AbstractKotlinApplicableDiagnosticInspection] and
+ * [AbstractKotlinApplicableDiagnosticInspectionBase] is a base interface for [AbstractKotlinApplicableDiagnosticInspection] and
  * [AbstractKotlinApplicableDiagnosticInspectionWithContext].
  *
  * TODO: Consider supporting multiple diagnostics.
  */
-interface KotlinApplicableDiagnosticInspectionBase<
+interface AbstractKotlinApplicableDiagnosticInspectionBase<
     ELEMENT : KtElement,
     DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>
 > : KotlinApplicableToolBase<ELEMENT> {
@@ -30,7 +30,7 @@ context(KtAnalysisSession)
 internal fun <
     ELEMENT : KtElement,
     DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>
-> KotlinApplicableDiagnosticInspectionBase<ELEMENT, DIAGNOSTIC>.getDiagnostic(element: ELEMENT): DIAGNOSTIC? {
+> AbstractKotlinApplicableDiagnosticInspectionBase<ELEMENT, DIAGNOSTIC>.getDiagnostic(element: ELEMENT): DIAGNOSTIC? {
     val diagnostics = element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
     val suitableDiagnostics = diagnostics.filterIsInstance(getDiagnosticType().java)
     return suitableDiagnostics.firstOrNull()
