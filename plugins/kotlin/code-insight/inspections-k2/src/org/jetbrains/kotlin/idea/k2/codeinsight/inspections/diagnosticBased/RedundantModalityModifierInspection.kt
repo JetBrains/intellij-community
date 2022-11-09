@@ -24,10 +24,8 @@ class RedundantModalityModifierInspection :
     override fun prepareContextByDiagnostic(
         element: KtModifierListOwner,
         diagnostic: KtFirDiagnostic.RedundantModalityModifier
-    ): ModifierContext? {
-        return when(element) {
-            is KtDeclaration -> element.modalityModifierType()?.let { ModifierContext(it) }
-            else -> null
-        }
+    ): ModifierContext? = when(element) {
+        is KtDeclaration -> element.modalityModifierType()?.let { ModifierContext(it) }
+        else -> null
     }
 }

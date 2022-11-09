@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
@@ -42,8 +42,8 @@ internal class ReplaceGetOrSetInspection :
     context(KtAnalysisSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         // `resolveCall()` is needed to filter out `set` functions with varargs or default values. See the `setWithVararg.kt` test.
-        val call = (element.resolveCall() as? KtSuccessCallInfo)?.call as? KtSimpleFunctionCall ?: return null
-        val functionSymbol = call.partiallyAppliedSymbol.symbol
+        val call = element.resolveCall()?.successfulCallOrNull<KtSimpleFunctionCall>() ?: return null
+        val functionSymbol = call.symbol
         if (functionSymbol !is KtFunctionSymbol || !functionSymbol.isOperator) {
             return null
         }
