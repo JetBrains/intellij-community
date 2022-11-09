@@ -12,6 +12,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
     testGroup("code-insight/intentions-k2/tests", testDataPath = "../../..") {
         testClass<AbstractK2IntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("${idea}intentions/addMissingClassKeyword", pattern = pattern)
             model("${idea}intentions/addNameToArgument", pattern = pattern)
             model("${idea}intentions/addNamesToCallArguments", pattern = pattern)
             model("${idea}intentions/addNamesToFollowingArguments", pattern = pattern)
