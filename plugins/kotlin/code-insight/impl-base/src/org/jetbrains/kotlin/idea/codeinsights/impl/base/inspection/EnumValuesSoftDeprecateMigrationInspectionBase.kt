@@ -13,19 +13,17 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesMethod
+import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
 /**
@@ -42,7 +40,7 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
     }
 
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-        if (!holder.file.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)) {
+        if (!holder.file.isEnumValuesSoftDeprecateEnabled()) {
             PsiElementVisitor.EMPTY_VISITOR
         } else {
             callExpressionVisitor(fun(callExpression: KtCallExpression) {
@@ -65,16 +63,6 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
         }
 
     protected abstract fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
-
-    private fun KtAnalysisSession.isEnumValuesMethod(
-        symbol: KtFunctionLikeSymbol
-    ): Boolean {
-        // TODO: extract common logic when KTIJ-23315 merged
-        return KtClassKind.ENUM_CLASS == (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind &&
-                VALUES_METHOD_NAME == symbol.callableIdIfNonLocal?.callableName &&
-                // Don't touch user-declared methods with the name "values"
-                symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
-    }
 
     private fun KtAnalysisSession.createQuickFix(callExpression: KtCallExpression, symbol: KtFunctionLikeSymbol): LocalQuickFix? {
         val enumClassSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
@@ -131,7 +119,6 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
 
     private companion object {
         private val EXPERIMENTAL_ANNOTATION_CLASS_ID = ClassId.fromString("kotlin/ExperimentalStdlibApi")
-        private val VALUES_METHOD_NAME = Name.identifier("values")
 
         // We hardcode here most popular methods used with values() because it's easier than
         // programmatically search method overload suitable for use with List.
