@@ -47,6 +47,7 @@ public class Bag {
   public void add(@NotNull String key) {
     final String internedKey = ourInterner.intern(key);
     myBag.put(internedKey, myBag.getInt(internedKey) + 1);
+    myCardinality += 1;
   }
 
   public int get(@NotNull String word) {
