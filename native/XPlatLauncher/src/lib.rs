@@ -142,7 +142,7 @@ trait LaunchConfiguration {
     fn get_args(&self) -> &[String];
 
     fn get_intellij_vm_options(&self) -> Result<Vec<String>>;
-    fn get_properties_file(&self) -> Result<PathBuf>;
+    fn get_properties_file(&self) -> Result<Option<PathBuf>>;
     fn get_class_path(&self) -> Result<Vec<String>>;
 
     fn prepare_for_launch(&self) -> Result<PathBuf>;
@@ -210,13 +210,13 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
 
     debug!("Resolving IDE properties file");
     // 1. properties file
-    match configuration.get_properties_file() {
-        Ok(p) => {
+    match configuration.get_properties_file()? {
+        Some(p) => {
             let path_string = p.to_string_lossy();
             let vm_option = format!("-Didea.properties.file={path_string}");
             full_vm_options.push(vm_option);
         }
-        Err(_) => {
+        None => {
             debug!("IDE properties file is not set, skipping setting vm option")
         }
     };

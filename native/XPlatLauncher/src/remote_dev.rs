@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::{BufWriter, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
-use crate::get_config_home;
+use crate::default::{get_cache_home, get_config_home};
 use utils::{get_path_from_env_var, PathExt, read_file_to_end};
 use crate::{DefaultLaunchConfiguration, is_remote_dev, LaunchConfiguration};
 
@@ -35,9 +35,12 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         Ok(patched_xmx)
     }
 
-    fn get_properties_file(&self) -> Result<PathBuf> {
+    fn get_properties_file(&self) -> Result<Option<PathBuf>> {
         let remote_dev_properties = self.get_remote_dev_properties();
-        self.write_merged_properties_file(&remote_dev_properties[..])
+        let remote_dev_properties_file = self.write_merged_properties_file(&remote_dev_properties[..])
+            .context("Failed to write remote dev IDE properties file")?;
+
+        Ok(Some(remote_dev_properties_file))
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
@@ -62,6 +65,7 @@ impl DefaultLaunchConfiguration {
             "IDE config directory",
             "IJ_HOST_CONFIG_DIR",
             "IJ_HOST_CONFIG_BASE_DIR",
+            &get_config_home(),
             per_project_config_dir_name
         )
     }
@@ -71,6 +75,7 @@ impl DefaultLaunchConfiguration {
             "IDE system directory",
             "IJ_HOST_SYSTEM_DIR",
             "IJ_HOST_SYSTEM_BASE_DIR",
+            &get_cache_home(),
             per_project_config_dir_name
         )
     }
@@ -80,7 +85,9 @@ impl DefaultLaunchConfiguration {
         human_readable_name: &str,
         specific_dir_env_var_name: &str,
         base_dir_env_var_name: &str,
+        default_base_dir: &Path,
         per_project_config_dir_name: &str) -> Result<PathBuf> {
+        debug!("Per project config dir name: {per_project_config_dir_name:?}");
 
         let specific_dir = match get_path_from_env_var(specific_dir_env_var_name) {
             Ok(x) => {
@@ -93,7 +100,7 @@ impl DefaultLaunchConfiguration {
                         debug!("{human_readable_name}: {base_dir_env_var_name} is set to {x:?}, will use it as a base dir");
                         x
                     },
-                    Err(_) => get_config_home(),
+                    Err(_) => default_base_dir.to_path_buf(),
                 };
 
                 let product_code = &self.product_info.productCode;
@@ -230,9 +237,7 @@ impl RemoteDevLaunchConfiguration {
     }
 
     pub fn new(project_path: PathBuf, default: DefaultLaunchConfiguration) -> Result<Self> {
-        let per_project_config_dir_name = project_path.file_name()
-            .context("Failed to get project dir name, project path: {project_path:?}")
-            ?.to_string_lossy()
+        let per_project_config_dir_name = project_path.to_string_lossy()
             .replace("/", "_")
             .replace("\\", "_")
             .replace(":", "_");
@@ -279,7 +284,7 @@ impl RemoteDevLaunchConfiguration {
             ("eap.login.enabled", "false"),
 
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
-            ("jdk.lang.Process.launchMechanism", "vfork"),
+            // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
         remote_dev_properties
@@ -296,7 +301,13 @@ impl RemoteDevLaunchConfiguration {
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
         let path = self.system_dir.join(filename);
 
-        let file = File::open(&path)?;
+        match path.parent() {
+            None => {}
+            Some(x) => fs::create_dir_all(x)
+                .context("Failed to create to parent folder for IDE properties file at path {x:?}")?
+        }
+
+        let file = File::create(&path)?;
         let mut writer = BufWriter::new(file);
 
         // TODO: maybe check the user-set properties file?
