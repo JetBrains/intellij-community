@@ -13,16 +13,18 @@ import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import java.awt.datatransfer.StringSelection
+import java.util.*
 import javax.swing.Icon
 
 internal class CodeFenceCopyButtonBrowserExtension(panel: MarkdownHtmlPanel, browserPipe: BrowserPipe): MarkdownBrowserPreviewExtension, ResourceProvider {
   init {
     browserPipe.subscribe("copy-button/copy") {
-      CopyPasteManager.getInstance().setContents(StringSelection(it))
+      val content = Base64.getDecoder().decode(it).toString(Charsets.UTF_8)
+      CopyPasteManager.getInstance().setContents(StringSelection(content))
       val project = panel.project ?: return@subscribe
       invokeLater {
         val statusBar = WindowManager.getInstance().getStatusBar(project)
-        val text = StringUtil.shortenTextWithEllipsis(it, 32, 0)
+        val text = StringUtil.shortenTextWithEllipsis(content, 32, 0)
         statusBar?.info = LangBundle.message("status.bar.text.reference.has.been.copied", "'$text'")
       }
     }
