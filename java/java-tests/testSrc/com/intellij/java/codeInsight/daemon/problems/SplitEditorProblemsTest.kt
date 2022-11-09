@@ -45,34 +45,37 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   }
 
   fun testClassRenameInTwoDetachedWindows() {
-    val parentClass = myFixture.addClass("""
-      package bar;
-      
-      public class Parent1 {
+    try {
+      val parentClass = myFixture.addClass("""
+        package bar;
+        
+        public class Parent1 {
+        }
+      """.trimIndent())
+      val childClass = myFixture.addClass("""
+        package foo;
+        
+        import bar.Parent1;
+  
+        public final class Child extends Parent1 {
+        }
+      """.trimIndent())
+
+      val editorManager = manager!!
+      editorManager.openFileInNewWindow(childClass.containingFile.virtualFile).first[0]
+      val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditorImpl).editor
+      rehighlight(parentEditor)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        parentClass.nameIdentifier?.replace(factory.createIdentifier("Parent"))
       }
-    """.trimIndent())
-    val childClass = myFixture.addClass("""
-      package foo;
-      
-      import bar.Parent1;
-
-      public final class Child extends Parent1 {
-      }
-    """.trimIndent())
-
-    val editorManager = manager!!
-    editorManager.openFileInNewWindow(childClass.containingFile.virtualFile).first[0]
-    val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditorImpl).editor
-    rehighlight(parentEditor)
-
-    WriteCommandAction.runWriteCommandAction(project) {
-      val factory = JavaPsiFacade.getInstance(project).elementFactory
-      parentClass.nameIdentifier?.replace(factory.createIdentifier("Parent"))
+      rehighlight(parentEditor)
+      assertSize(2, getProblems(parentEditor))
     }
-    rehighlight(parentEditor)
-    assertSize(2, getProblems(parentEditor))
-
-    DockManager.getInstance(project).containers.forEach { it.closeAll() }
+    finally {
+      DockManager.getInstance(project).containers.forEach { it.closeAll() }
+    }
   }
 
   fun testRenameClassChangeUsageAndUndoAllInSplitEditor() {
