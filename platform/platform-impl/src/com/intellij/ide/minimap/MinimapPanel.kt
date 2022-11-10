@@ -156,7 +156,7 @@ class MinimapPanel(private val parentDisposable: Disposable, private val editor:
     var map = minimapImageSoftReference.get()
 
     if (map == null) {
-      map = MinimapImage(parentDisposable)
+      map = MinimapImage()
       map.onImageReady = { repaint() }
       minimapImageSoftReference = SoftReference(map)
     }

@@ -3,7 +3,6 @@ package com.intellij.ide.minimap
 
 import com.intellij.concurrency.JobScheduler
 import com.intellij.ide.minimap.settings.MinimapSettings
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.ui.ImageUtil
@@ -16,7 +15,7 @@ import kotlin.math.ceil
 /**
  * A rendered minimap of a document.
  */
-class MinimapImage(parentDisposable: Disposable) {
+class MinimapImage {
 
   companion object {
     private const val UPDATE_DELAY_MILLIS = 200L
@@ -151,9 +150,6 @@ class MinimapImage(parentDisposable: Disposable) {
       JobScheduler.getScheduler().schedule({
                                              try {
                                                innerUpdate(editor, visibleHeight, visibleWidth, minimapHeight)
-                                             }
-                                             catch (e: Exception) {
-                                               e.printStackTrace()
                                              }
                                              finally {
                                                scheduled.set(false)
