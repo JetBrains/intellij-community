@@ -1263,4 +1263,22 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/UnstableSmartCast_typeParams.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/variableNameAndType")
+    public static class VariableNameAndType extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("NoTypeInsertion.kt")
+        public void testNoTypeInsertion() throws Exception {
+            runTest("../testData/handlers/basic/variableNameAndType/NoTypeInsertion.kt");
+        }
+
+        @TestMetadata("TypeInsertionOnLateinit.kt")
+        public void testTypeInsertionOnLateinit() throws Exception {
+            runTest("../testData/handlers/basic/variableNameAndType/TypeInsertionOnLateinit.kt");
+        }
+    }
 }

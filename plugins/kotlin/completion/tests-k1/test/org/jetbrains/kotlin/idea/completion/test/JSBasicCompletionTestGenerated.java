@@ -1475,6 +1475,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/parameterNameAndType/NoFromFileAndFromClassesDuplication.kt");
             }
 
+            @TestMetadata("NoObjects.kt")
+            public void testNoObjects() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/NoObjects.kt");
+            }
+
             @TestMetadata("NotForAnnnotationTypeConstructor.kt")
             public void testNotForAnnnotationTypeConstructor() throws Exception {
                 runTest("../testData/basic/common/parameterNameAndType/NotForAnnnotationTypeConstructor.kt");
@@ -1535,6 +1540,21 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/parameterNameAndType/ParametersInFileInaccessibleType2.kt");
             }
 
+            @TestMetadata("ParametersInFileNoDuplication.kt")
+            public void testParametersInFileNoDuplication() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/ParametersInFileNoDuplication.kt");
+            }
+
+            @TestMetadata("ParametersInFileNoLocalTypes.kt")
+            public void testParametersInFileNoLocalTypes() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/ParametersInFileNoLocalTypes.kt");
+            }
+
+            @TestMetadata("ParametersInFileNoTypeAnnotations.kt")
+            public void testParametersInFileNoTypeAnnotations() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/ParametersInFileNoTypeAnnotations.kt");
+            }
+
             @TestMetadata("ParametersInFileTypeParameter1.kt")
             public void testParametersInFileTypeParameter1() throws Exception {
                 runTest("../testData/basic/common/parameterNameAndType/ParametersInFileTypeParameter1.kt");
@@ -1553,6 +1573,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("Simple.kt")
             public void testSimple() throws Exception {
                 runTest("../testData/basic/common/parameterNameAndType/Simple.kt");
+            }
+
+            @TestMetadata("TypeParameter1.kt")
+            public void testTypeParameter1() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/TypeParameter1.kt");
+            }
+
+            @TestMetadata("TypeParameter2.kt")
+            public void testTypeParameter2() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/TypeParameter2.kt");
             }
 
             @TestMetadata("URLConnection.kt")
