@@ -431,9 +431,15 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       // when forking external javac, compilers from SDK 1.7 and higher are supported
       final Pair<String, Integer> forkSdk;
       if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel)) {
-        forkSdk = getForkedJavacSdk(chunk, targetLanguageLevel);
+        Pair<JpsSdk<JpsDummyElement>, Integer> associatedSdk = getAssociatedSdk(chunk);
+        forkSdk = getForkedJavacSdk(associatedSdk, targetLanguageLevel);
         if (forkSdk == null) {
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.start.javac.process.for.0.unknown.jdk.home", chunk.getName())));
+          return false;
+        }
+        Integer associatedSdkVersion = associatedSdk != null ? associatedSdk.second : null;
+        if (!isTargetReleaseSupported(forkSdk.second, targetLanguageLevel) && associatedSdkVersion != null && associatedSdkVersion < ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.start.javac.process.for.0.unsupported.java.version", chunk.getName(), associatedSdkVersion, ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION)));
           return false;
         }
       }
@@ -1166,13 +1172,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  private static Pair<String, Integer> getForkedJavacSdk(ModuleChunk chunk, int targetLanguageLevel) {
-    final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
-    if (sdkVersionPair != null) {
-      final int sdkVersion = sdkVersionPair.second;
+  private static Pair<String, Integer> getForkedJavacSdk(@Nullable Pair<JpsSdk<JpsDummyElement>, Integer> associatedSdk, int targetLanguageLevel) {
+    if (associatedSdk != null) {
+      final int sdkVersion = associatedSdk.second;
       if (sdkVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION && isTargetReleaseSupported(sdkVersion, targetLanguageLevel)) {
         // current javac compiler does support required language level
-        return Pair.create(sdkVersionPair.first.getHomePath(), sdkVersion);
+        return Pair.create(associatedSdk.first.getHomePath(), sdkVersion);
       }
       LOG.warn("Target bytecode version " + targetLanguageLevel + " is not supported by SDK version " + sdkVersion);
     }
@@ -1195,8 +1200,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return Pair.create(fallbackJdkHome, fallbackVersion);
   }
 
-  @Nullable
-  private static Pair<JpsSdk<JpsDummyElement>, Integer> getAssociatedSdk(ModuleChunk chunk) {
+  private static @Nullable Pair<@NotNull JpsSdk<JpsDummyElement>, @NotNull Integer> getAssociatedSdk(ModuleChunk chunk) {
     // assuming all modules in the chunk have the same associated JDK;
     // this constraint should be validated on build start
     final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
