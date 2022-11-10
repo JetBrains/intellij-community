@@ -32,7 +32,7 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
                       listOf()
                     }
     CommitChangeListDialog.commitChanges(project,
-                                         changes,
+                                         null,
                                          changes,
                                          changeList,
                                          executors,

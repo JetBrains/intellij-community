@@ -146,11 +146,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
     if (executor == null) {
-      return commitChanges(project, new ArrayList<>(changes), included, initialSelection, getCommitExecutors(project, changes), true, null,
+      return commitChanges(project, null, included, initialSelection, getCommitExecutors(project, changes), true, null,
                            comment, null, true);
     }
     else {
-      return commitChanges(project, new ArrayList<>(changes), included, initialSelection, singletonList(executor), false, null,
+      return commitChanges(project, null, included, initialSelection, singletonList(executor), false, null,
                            comment, null, true);
     }
   }
@@ -180,7 +180,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler,
                                       boolean cancelIfNoChanges) {
-    return commitChanges(project, changes, changes, initialSelection, executors, showVcsCommit, null, comment, customResultHandler,
+    return commitChanges(project, null, changes, initialSelection, executors, showVcsCommit, null, comment, customResultHandler,
                          cancelIfNoChanges);
   }
 
