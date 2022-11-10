@@ -27,6 +27,13 @@ public final class MavenArtifactIndex {
     return myData;
   }
 
+  public boolean hasArtifact(@Nullable String groupId, @Nullable String artifactId) {
+    Map<String, List<MavenArtifact>> groupMap = myData.get(groupId);
+    if (groupMap == null) return false;
+
+    return groupMap.containsKey(artifactId);
+  }
+
   @NotNull
   public List<MavenArtifact> findArtifacts(@Nullable String groupId, @Nullable String artifactId) {
     Map<String, List<MavenArtifact>> groupMap = myData.get(groupId);
