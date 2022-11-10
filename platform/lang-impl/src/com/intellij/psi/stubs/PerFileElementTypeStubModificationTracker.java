@@ -35,9 +35,6 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
     return (StubUpdatingIndexStorage)index;
   });
-  private final ClearableLazyValue<DataIndexer<Integer, SerializedStubTree, FileContent>> myStubIndexer = ClearableLazyValue.createAtomic(() -> {
-    return myStubUpdatingIndexStorage.getValue().getExtension().getIndexer(); // new indexer instance ?????
-  });
 
   private record FileInfo(VirtualFile file, Project project, StubFileElementType type) { }
 
@@ -123,7 +120,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   }
 
   private void preciseCheck() {
-    DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer = myStubIndexer.getValue();
+    DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer = myStubUpdatingIndexStorage.getValue().getIndexer();
     while (!myProbablyExpensiveUpdates.isEmpty()) {
       FileInfo info = myProbablyExpensiveUpdates.poll();
       if (wereModificationsInCurrentBatch(info.type) ||
@@ -165,7 +162,6 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myProbablyExpensiveUpdates.clear();
     myModificationsInCurrentBatch.clear();
     myStubUpdatingIndexStorage.drop();
-    myStubIndexer.drop();
   }
 
   private static @Nullable StubFileElementType determineCurrentFileElementType(IndexedFile indexedFile) {

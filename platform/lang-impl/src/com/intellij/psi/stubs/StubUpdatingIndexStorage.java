@@ -11,6 +11,7 @@ import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -211,5 +212,10 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
         LOG.error(e);
       }
     }
+  }
+
+  @ApiStatus.Internal
+  DataIndexer<Integer, SerializedStubTree, FileContent> getIndexer() {
+    return myIndexer;
   }
 }
