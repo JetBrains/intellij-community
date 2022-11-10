@@ -18,8 +18,8 @@
             dynamic="true"/>
 
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kpm.extrasSerialization"
-            interface="org.jetbrains.kotlin.idea.gradle.configuration.kpm.ExtrasSerializationService"
+            qualifiedName="org.jetbrains.kotlin.idea.extrasSerialization"
+            interface="org.jetbrains.kotlin.idea.gradle.configuration.serialize.ExtrasSerializationService"
             dynamic="true"
     />
 

@@ -7,8 +7,8 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragment
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmProject
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragment
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmProject
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 interface ModuleDataInitializer {

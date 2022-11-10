@@ -121,8 +121,10 @@
     <moduleInitialize implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinBasicFragmentDataInitializer"/>
     <createRoots implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinFragmentContentRootsCreator"/>
     <createRoots implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinGradleModuleContentRootsCreator"/>
-    <extrasSerialization implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinExtrasSerializationService"/>
+  </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
+    <extrasSerialization implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.serialize.KotlinExtrasSerializationService"/>
   </extensions>
 
   <actions>

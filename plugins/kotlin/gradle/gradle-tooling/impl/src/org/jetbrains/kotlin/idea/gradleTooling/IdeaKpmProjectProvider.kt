@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.Model
 import org.gradle.tooling.model.gradle.GradleBuild
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmProjectContainer
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmProjectContainer
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 
 object IdeaKpmProjectProvider : ProjectImportModelProvider {
