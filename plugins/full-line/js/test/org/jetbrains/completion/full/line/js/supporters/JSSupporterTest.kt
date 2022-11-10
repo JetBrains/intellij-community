@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
-class JavaScriptSupporterTest : BasePlatformTestCase() {
+class JSSupporterTest : BasePlatformTestCase() {
 
   fun `test string template`() {
     val file = myFixture.configureByText(JavaScriptFileType.INSTANCE, FilesTest.readFile("supporter/string-formats.js", "js"))

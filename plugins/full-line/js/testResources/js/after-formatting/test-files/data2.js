@@ -7,9 +7,9 @@ preset: 'angular',
 pkg: {
 transform (pkg) {
 pkg.version = `v${version}`
-return pkg
+return pkg  
 }
 }
-}).pipe(fileStream).on('close', () => {
+}).pipe(fileStream).on('close', () => {   
 console.log(`Generated release note at ${file}`)
 })

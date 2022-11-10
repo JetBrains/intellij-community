@@ -6,12 +6,13 @@ import org.jetbrains.completion.full.line.FilesTest
 import org.jetbrains.completion.full.line.FilesTest.readFile
 import org.jetbrains.completion.full.line.language.formatters.CodeFormatterTest
 
-abstract class JavaScriptCodeFormatterTest : CodeFormatterTest(JSCodeFormatter()) {
+abstract class JSTSCodeFormatterTest : CodeFormatterTest(JSCodeFormatter()) {
+  open lateinit var lang: String
 
   protected fun testFile(originFilename: String, formattedFilename: String? = null) {
     if (formattedFilename == null) {
-      val origin = readFile("${FilesTest.FORMAT_BEFORE_FOLDER}/$originFilename", "js")
-      val formatted = readFile("${FilesTest.FORMAT_AFTER_FOLDER}/$originFilename", "js")
+      val origin = readFile("$lang/${FilesTest.FORMAT_BEFORE_FOLDER}/$originFilename", "js")
+      val formatted = readFile("$lang/${FilesTest.FORMAT_AFTER_FOLDER}/$originFilename", "js")
 
       testCodeFragment(origin, formatted)
     }

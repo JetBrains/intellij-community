@@ -56,7 +56,7 @@ throw new Error(`invalid target version: ${targetVersion}`)
 }
 const { yes } = await prompt({
 type: 'confirm',
-name: 'yes',
+name: 'yes',    
 message: `Releasing v${targetVersion}. Confirm?`
 })
 if (!yes) {
@@ -64,7 +64,7 @@ return
 }
 step('\nRunning tests...')
 if (!skipTests && !isDryRun) {
-await run('pnpm', ['test'])
+await run('pnpm', ['test']) 
 } else {
 console.log(`(skipped)`)
 }
