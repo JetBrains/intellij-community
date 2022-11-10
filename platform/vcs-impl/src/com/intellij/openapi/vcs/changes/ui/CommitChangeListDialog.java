@@ -145,16 +145,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable LocalChangeList initialChangeList,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
-    boolean showVcsCommit = executor == null;
-    Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
-    if (affectedVcses.isEmpty()) {
-      showNothingToCommitMessage(project);
-      return false;
+    if (executor != null) {
+      return commitWithExecutor(project, included, initialChangeList, executor, comment);
     }
-
-    List<CommitExecutor> executors = executor != null ? singletonList(executor)
-                                                      : getCommitExecutors(project, changes);
-    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, null);
+    else {
+      return commitVcsChanges(project, changes, included, initialChangeList, comment);
+    }
   }
 
   /**
@@ -222,6 +218,38 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, customResultHandler);
+  }
+
+  public static boolean commitWithExecutor(@NotNull Project project,
+                                           @NotNull Collection<?> included,
+                                           @Nullable LocalChangeList initialChangeList,
+                                           @NotNull CommitExecutor executor,
+                                           @Nullable String comment) {
+    boolean showVcsCommit = false;
+    Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
+    if (affectedVcses.isEmpty()) {
+      showNothingToCommitMessage(project);
+      return false;
+    }
+
+    List<CommitExecutor> executors = singletonList(executor);
+    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, null);
+  }
+
+  public static boolean commitVcsChanges(@NotNull Project project,
+                                         @NotNull Collection<? extends Change> changes,
+                                         @NotNull Collection<?> included,
+                                         @Nullable LocalChangeList initialChangeList,
+                                         @Nullable String comment) {
+    boolean showVcsCommit = true;
+    Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
+    if (affectedVcses.isEmpty()) {
+      showNothingToCommitMessage(project);
+      return false;
+    }
+
+    List<CommitExecutor> executors = getCommitExecutors(project, changes);
+    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, null);
   }
 
   private static boolean showCommitDialog(@NotNull Project project,
