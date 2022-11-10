@@ -136,7 +136,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable LocalChangeList initialChangeList,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
-    return commitChanges(project, included, included, initialChangeList, executor, comment);
+    return commitChanges(project, null, included, initialChangeList, executor, comment);
   }
 
   public static boolean commitChanges(@NotNull Project project,

@@ -97,17 +97,15 @@ object CheckinActionUtil {
                              pathsToCommit: List<FilePath>,
                              executor: CommitExecutor?,
                              forceUpdateCommitStateFromContext: Boolean) {
-    val changesToCommit: Collection<Change>
     val included: Collection<Any>
 
     if (selectedChanges.isEmpty() && selectedUnversioned.isEmpty()) {
       val manager = ChangeListManager.getInstance(project)
-      changesToCommit = pathsToCommit.flatMap { manager.getChangesIn(it) }.toSet()
+      val changesToCommit = pathsToCommit.flatMap { manager.getChangesIn(it) }.toSet()
       included = initialChangeList.changes.intersect(changesToCommit)
     }
     else {
-      changesToCommit = selectedChanges.toList()
-      included = ContainerUtil.concat(changesToCommit, selectedUnversioned)
+      included = ContainerUtil.concat(selectedChanges, selectedUnversioned)
     }
 
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
@@ -118,7 +116,7 @@ object CheckinActionUtil {
     }
     else {
       LOG.debug("invoking commit dialog after update")
-      CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, executor, null)
+      CommitChangeListDialog.commitChanges(project, null, included, initialChangeList, executor, null)
     }
   }
 
