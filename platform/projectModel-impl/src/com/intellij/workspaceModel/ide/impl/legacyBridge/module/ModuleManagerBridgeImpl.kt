@@ -143,7 +143,9 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       blockingContext {
         invokeLater {
           for (module in modules) {
-            module.initFacets()
+            if (!module.isDisposed) {
+              module.initFacets()
+            }
           }
         }
       }
