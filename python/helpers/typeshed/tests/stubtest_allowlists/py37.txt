@@ -11,10 +11,16 @@ asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures.Future._callbacks  # Usually initialized from c object
 asyncio.locks._ContextManagerMixin.__enter__  # Always raises; deliberately omitted from the stub
 asyncio.locks._ContextManagerMixin.__exit__  # Always raises; deliberately omitted from the stub
+asyncio.transports.WriteTransport.get_write_buffer_limits  # Documented. Exists in subclasses, but not in WriteTransport itself
+asyncio.WriteTransport.get_write_buffer_limits  # Documented. Exists in subclasses, but not in WriteTransport itself
 builtins.dict.get
 builtins.float.__set_format__  # Internal method for CPython test suite
 builtins.str.maketrans
 cmath.log
+collections.AsyncGenerator.asend  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
+collections.AsyncGenerator.__anext__  # async at runtime, deliberately not in the stub, see #7491
+collections.AsyncGenerator.aclose  # async at runtime, deliberately not in the stub, see #7491
+collections.AsyncIterator.__anext__  # async at runtime, deliberately not in the stub, see #7491
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame

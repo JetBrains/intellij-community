@@ -1,7 +1,7 @@
 import ast
 from argparse import Namespace
-from collections.abc import Container
-from typing import Any, Generator
+from collections.abc import Container, Generator
+from typing import Any
 
 rst_prefix: str
 rst_fail_load: int

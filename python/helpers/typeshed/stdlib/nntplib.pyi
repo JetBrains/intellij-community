@@ -3,8 +3,10 @@ import socket
 import ssl
 import sys
 from _typeshed import Self
-from typing import IO, Any, Iterable, NamedTuple, Union
-from typing_extensions import Literal
+from builtins import list as _list  # conflicts with a method named "list"
+from collections.abc import Iterable
+from typing import IO, Any, NamedTuple
+from typing_extensions import Literal, TypeAlias
 
 __all__ = [
     "NNTP",
@@ -18,7 +20,7 @@ __all__ = [
     "NNTP_SSL",
 ]
 
-_File = Union[IO[bytes], bytes, str, None]
+_File: TypeAlias = IO[bytes] | bytes | str | None
 
 class NNTPError(Exception):
     response: str
@@ -44,8 +46,6 @@ class ArticleInfo(NamedTuple):
     lines: list[bytes]
 
 def decode_header(header_str: str) -> str: ...
-
-_list = list  # conflicts with a method named "list"
 
 class NNTP:
     encoding: str
@@ -73,7 +73,7 @@ class NNTP:
         timeout: float = ...,
     ) -> None: ...
     def __enter__(self: Self) -> Self: ...
-    def __exit__(self, *args: Any) -> None: ...
+    def __exit__(self, *args: object) -> None: ...
     def getwelcome(self) -> str: ...
     def getcapabilities(self) -> dict[str, _list[str]]: ...
     def set_debuglevel(self, level: int) -> None: ...

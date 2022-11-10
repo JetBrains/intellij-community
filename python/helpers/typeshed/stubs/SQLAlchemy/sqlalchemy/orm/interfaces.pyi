@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from .. import util
 from ..sql import operators, roles
@@ -16,6 +16,8 @@ from .base import (
     InspectionAttrInfo as InspectionAttrInfo,
     _MappedAttribute as _MappedAttribute,
 )
+
+_T = TypeVar("_T")
 
 __all__ = (
     "EXT_CONTINUE",
@@ -57,7 +59,7 @@ class MapperProperty(HasCacheKey, _MappedAttribute, InspectionAttr, util.Memoize
         self, session, source_state, source_dict, dest_state, dest_dict, load, _recursive, _resolve_conflict_map
     ) -> None: ...
 
-class PropComparator(operators.ColumnOperators):
+class PropComparator(operators.ColumnOperators[_T], Generic[_T]):
     __visit_name__: str
     prop: Any
     property: Any

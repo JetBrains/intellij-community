@@ -1,6 +1,7 @@
 from _typeshed import Self
-from collections.abc import Iterator
-from typing import Any, Callable, Generic, Iterable, Pattern, TypeVar, Union, overload
+from collections.abc import Callable, Iterable, Iterator
+from typing import Any, Generic, Pattern, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from . import BeautifulSoup
 from .builder import TreeBuilder
@@ -19,19 +20,18 @@ class AttributeValueWithCharsetSubstitution(str): ...
 
 class CharsetMetaAttributeValue(AttributeValueWithCharsetSubstitution):
     def __new__(cls, original_value): ...
-    def encode(self, encoding: str) -> str: ...  # type: ignore  # incompatible with str
+    def encode(self, encoding: str) -> str: ...  # type: ignore[override]  # incompatible with str
 
 class ContentMetaAttributeValue(AttributeValueWithCharsetSubstitution):
     CHARSET_RE: Pattern[str]
     def __new__(cls, original_value): ...
-    def encode(self, encoding: str) -> str: ...  # type: ignore  # incompatible with str
+    def encode(self, encoding: str) -> str: ...  # type: ignore[override]  # incompatible with str
 
 _PageElementT = TypeVar("_PageElementT", bound=PageElement)
-# The wrapping Union[] can be removed once mypy fully supports | in type aliases.
-_SimpleStrainable = Union[str, bool, None, bytes, Pattern[str], Callable[[str], bool], Callable[[Tag], bool]]
-_Strainable = Union[_SimpleStrainable, Iterable[_SimpleStrainable]]
-_SimpleNormalizedStrainable = Union[str, bool, None, Pattern[str], Callable[[str], bool], Callable[[Tag], bool]]
-_NormalizedStrainable = Union[_SimpleNormalizedStrainable, Iterable[_SimpleNormalizedStrainable]]
+_SimpleStrainable: TypeAlias = str | bool | None | bytes | Pattern[str] | Callable[[str], bool] | Callable[[Tag], bool]
+_Strainable: TypeAlias = _SimpleStrainable | Iterable[_SimpleStrainable]
+_SimpleNormalizedStrainable: TypeAlias = str | bool | None | Pattern[str] | Callable[[str], bool] | Callable[[Tag], bool]
+_NormalizedStrainable: TypeAlias = _SimpleNormalizedStrainable | Iterable[_SimpleNormalizedStrainable]
 
 class PageElement:
     parent: Tag | None
@@ -262,7 +262,8 @@ class Tag(PageElement):
     def __copy__(self: Self) -> Self: ...
     @property
     def is_empty_element(self) -> bool: ...
-    isSelfClosing = is_empty_element
+    @property
+    def isSelfClosing(self) -> bool: ...
     @property
     def string(self) -> str | None: ...
     @string.setter

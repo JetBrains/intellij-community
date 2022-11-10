@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 def smart_truncate(
     string: str, max_length: int = ..., word_boundary: bool = ..., separator: str = ..., save_order: bool = ...

@@ -1,7 +1,8 @@
 import sys
 from _typeshed import Self
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import AbstractContextManager
-from typing import Any, Callable, Iterable, Iterator
+from typing import Any
 
 from ._common import (
     AIX as AIX,

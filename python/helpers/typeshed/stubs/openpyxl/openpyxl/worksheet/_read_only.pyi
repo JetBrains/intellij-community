@@ -5,8 +5,10 @@ def read_dimension(source): ...
 class ReadOnlyWorksheet:
     cell: Any
     iter_rows: Any
-    values: Any
-    rows: Any
+    @property
+    def values(self): ...
+    @property
+    def rows(self): ...
     __getitem__: Any
     __iter__: Any
     parent: Any

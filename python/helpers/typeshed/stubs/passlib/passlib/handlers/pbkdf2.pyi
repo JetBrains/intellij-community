@@ -1,81 +1,89 @@
-from typing import Any, ClassVar
+from _typeshed import Self
+from typing import ClassVar
 
 import passlib.utils.handlers as uh
 from passlib.utils.handlers import PrefixWrapper
 
-class Pbkdf2DigestHandler(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore
-    setting_kwds: Any
-    checksum_chars: Any
+class Pbkdf2DigestHandler(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore[misc]
+    checksum_chars: ClassVar[str]
     default_salt_size: ClassVar[int]
-    max_salt_size: int
-    default_rounds: Any
-    min_rounds: int
-    max_rounds: int
-    rounds_cost: str
+    max_salt_size: ClassVar[int]
+    default_rounds: ClassVar[int]
+    min_rounds: ClassVar[int]
+    max_rounds: ClassVar[int]
+    rounds_cost: ClassVar[str]
     @classmethod
-    def from_string(cls, hash): ...
-    def to_string(self): ...
+    def from_string(cls: type[Self], hash: str | bytes) -> Self: ...  # type: ignore[override]
 
-pbkdf2_sha1: Any
-pbkdf2_sha256: Any
-pbkdf2_sha512: Any
+# dynamically created by create_pbkdf2_hash()
+class pbkdf2_sha1(Pbkdf2DigestHandler):
+    name: ClassVar[str]
+    ident: ClassVar[str]
+    checksum_size: ClassVar[int]
+    encoded_checksum_size: ClassVar[int]
+
+# dynamically created by create_pbkdf2_hash()
+class pbkdf2_sha256(Pbkdf2DigestHandler):
+    name: ClassVar[str]
+    ident: ClassVar[str]
+    checksum_size: ClassVar[int]
+    encoded_checksum_size: ClassVar[int]
+
+# dynamically created by create_pbkdf2_hash()
+class pbkdf2_sha512(Pbkdf2DigestHandler):
+    name: ClassVar[str]
+    ident: ClassVar[str]
+    checksum_size: ClassVar[int]
+    encoded_checksum_size: ClassVar[int]
 
 ldap_pbkdf2_sha1: PrefixWrapper
 ldap_pbkdf2_sha256: PrefixWrapper
 ldap_pbkdf2_sha512: PrefixWrapper
 
-class cta_pbkdf2_sha1(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore
-    name: str
-    setting_kwds: Any
-    ident: Any
-    checksum_size: int
+class cta_pbkdf2_sha1(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore[misc]
+    name: ClassVar[str]
+    ident: ClassVar[str]
+    checksum_size: ClassVar[int]
     default_salt_size: ClassVar[int]
-    max_salt_size: int
-    default_rounds: Any
-    min_rounds: int
-    max_rounds: int
-    rounds_cost: str
+    max_salt_size: ClassVar[int]
+    default_rounds: ClassVar[int]
+    min_rounds: ClassVar[int]
+    max_rounds: ClassVar[int]
+    rounds_cost: ClassVar[str]
     @classmethod
     def from_string(cls, hash): ...
-    def to_string(self): ...
 
-class dlitz_pbkdf2_sha1(uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: ignore
-    name: str
-    setting_kwds: Any
-    ident: Any
+class dlitz_pbkdf2_sha1(uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: ignore[misc]
+    name: ClassVar[str]
+    ident: ClassVar[str]
     default_salt_size: ClassVar[int]
-    max_salt_size: int
-    salt_chars: Any
-    default_rounds: Any
-    min_rounds: int
-    max_rounds: int
-    rounds_cost: str
+    max_salt_size: ClassVar[int]
+    salt_chars: ClassVar[str]
+    default_rounds: ClassVar[int]
+    min_rounds: ClassVar[int]
+    max_rounds: ClassVar[int]
+    rounds_cost: ClassVar[str]
     @classmethod
     def from_string(cls, hash): ...
-    def to_string(self): ...
 
-class atlassian_pbkdf2_sha1(uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore
-    name: str
-    setting_kwds: Any
-    ident: Any
-    checksum_size: int
-    min_salt_size: int
-    max_salt_size: int
+class atlassian_pbkdf2_sha1(uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):
+    name: ClassVar[str]
+    ident: ClassVar[str]
+    checksum_size: ClassVar[int]
+    min_salt_size: ClassVar[int]
+    max_salt_size: ClassVar[int]
     @classmethod
     def from_string(cls, hash): ...
-    def to_string(self): ...
 
-class grub_pbkdf2_sha512(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore
-    name: str
-    setting_kwds: Any
-    ident: Any
-    checksum_size: int
+class grub_pbkdf2_sha512(uh.HasRounds, uh.HasRawSalt, uh.HasRawChecksum, uh.GenericHandler):  # type: ignore[misc]
+    name: ClassVar[str]
+    ident: ClassVar[str]
+    checksum_size: ClassVar[int]
     default_salt_size: ClassVar[int]
-    max_salt_size: int
-    default_rounds: Any
-    min_rounds: int
-    max_rounds: int
-    rounds_cost: str
+    max_salt_size: ClassVar[int]
+    default_rounds: ClassVar[int]
+    min_rounds: ClassVar[int]
+    max_rounds: ClassVar[int]
+    rounds_cost: ClassVar[str]
     @classmethod
     def from_string(cls, hash): ...
-    def to_string(self): ...

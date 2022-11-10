@@ -1,9 +1,10 @@
 import datetime
 from _typeshed import Self
-from typing import Any, Iterator, Text, Union
-from typing_extensions import Literal
+from collections.abc import Iterator
+from typing import Any
+from typing_extensions import Literal, TypeAlias
 
-_RetType = Union[type[float], type[datetime.datetime]]
+_RetType: TypeAlias = type[float | datetime.datetime]
 
 class CroniterError(ValueError): ...
 class CroniterBadCronError(CroniterError): ...
@@ -39,7 +40,7 @@ class croniter(Iterator[Any]):
     nth_weekday_of_month: dict[str, Any]
     def __init__(
         self,
-        expr_format: Text,
+        expr_format: str,
         start_time: float | datetime.datetime | None = ...,
         ret_type: _RetType | None = ...,
         day_or: bool = ...,
@@ -61,16 +62,16 @@ class croniter(Iterator[Any]):
     def iter(self, ret_type: _RetType | None = ...) -> Iterator[Any]: ...
     def is_leap(self, year: int) -> bool: ...
     @classmethod
-    def expand(cls, expr_format: Text, hash_id: str | bytes | None = ...) -> tuple[list[list[str]], dict[str, Any]]: ...
+    def expand(cls, expr_format: str, hash_id: str | bytes | None = ...) -> tuple[list[list[str]], dict[str, Any]]: ...
     @classmethod
-    def is_valid(cls, expression: Text, hash_id: str | bytes | None = ...) -> bool: ...
+    def is_valid(cls, expression: str, hash_id: str | bytes | None = ...) -> bool: ...
     @classmethod
-    def match(cls, cron_expression: Text, testdate: float | datetime.datetime | None, day_or: bool = ...) -> bool: ...
+    def match(cls, cron_expression: str, testdate: float | datetime.datetime | None, day_or: bool = ...) -> bool: ...
 
 def croniter_range(
     start: float | datetime.datetime,
     stop: float | datetime.datetime,
-    expr_format: Text,
+    expr_format: str,
     ret_type: _RetType | None = ...,
     day_or: bool = ...,
     exclude_ends: bool = ...,

@@ -2,7 +2,7 @@ import datetime
 from _typeshed import Self
 from collections.abc import Iterable, Iterator, Mapping
 from typing import Any, TypeVar, overload
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 from urllib.parse import ParseResult, SplitResult
 
 from vobject.base import VBase
@@ -13,7 +13,7 @@ from .lib.url import URL
 
 _CC = TypeVar("_CC", bound=CalendarObjectResource)
 
-_vCalAddress = Any  # actually icalendar.vCalAddress
+_vCalAddress: TypeAlias = Any  # actually icalendar.vCalAddress
 
 class DAVObject:
     id: str | None
@@ -68,9 +68,11 @@ class Principal(DAVObject):
 class Calendar(DAVObject):
     def get_supported_components(self) -> list[Any]: ...
     def save_with_invites(self, ical: str, attendees, **attendeeoptions) -> None: ...
-    def save_event(self, ical: str, no_overwrite: bool = ..., no_create: bool = ...) -> Event: ...
-    def save_todo(self, ical: str, no_overwrite: bool = ..., no_create: bool = ...) -> Todo: ...
-    def save_journal(self, ical: str, no_overwrite: bool = ..., no_create: bool = ...) -> Journal: ...
+    def save_event(self, ical: str | None = ..., no_overwrite: bool = ..., no_create: bool = ..., **ical_data: Any) -> Event: ...
+    def save_todo(self, ical: str | None = ..., no_overwrite: bool = ..., no_create: bool = ..., **ical_data: Any) -> Todo: ...
+    def save_journal(
+        self, ical: str | None = ..., no_overwrite: bool = ..., no_create: bool = ..., **ical_data: Any
+    ) -> Journal: ...
     add_event = save_event
     add_todo = save_todo
     add_journal = save_journal

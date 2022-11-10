@@ -3,7 +3,8 @@
     "typeshedPath": ".",
     "include": [
         "stdlib",
-        "stubs"
+        "stubs",
+        "test_cases"
     ],
     "exclude": [
         "**/@python2",
@@ -21,7 +22,6 @@
         "stubs/aws-xray-sdk",
         "stubs/babel",
         "stubs/backports.ssl_match_hostname",
-        "stubs/backports_abc",
         "stubs/bleach",
         "stubs/boto",
         "stubs/beautifulsoup4",
@@ -58,6 +58,7 @@
         "stubs/Pygments",
         "stubs/PyMySQL",
         "stubs/python-dateutil",
+        "stubs/python-jose",
         "stubs/pyvmomi",
         "stubs/PyYAML",
         "stubs/redis",
@@ -97,8 +98,6 @@
     "reportUntypedNamedTuple": "error",
     "reportPrivateUsage": "none",
     "reportConstantRedefinition": "error",
-    "reportIncompatibleMethodOverride": "error",
-    "reportIncompatibleVariableOverride": "error",
     "reportInvalidStringEscapeSequence": "error",
     "reportUnknownParameterType": "error",
     "reportUnknownArgumentType": "error",
@@ -113,6 +112,10 @@
     "reportPropertyTypeMismatch": "error",
     "reportSelfClsParameterName": "error",
     "reportUnsupportedDunderAll": "error",
+    // Incompatible overrides are out of typeshed's control as they are
+    // inherited from the implementation.
+    "reportIncompatibleMethodOverride": "none",
+    "reportIncompatibleVariableOverride": "none",
     // Overlapping overloads cannot be enabled at this time because
     // of the "fractions.Fraction.__pow__" method and "tasks.gather" function.
     // Mypy's overlapping overload logic misses these issues (see mypy

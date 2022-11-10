@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from io import BufferedIOBase, BufferedRandom, BytesIO
-from typing import Any, Callable
+from typing import Any
 
 COPY_BYTES: int
 STRBUF_LIMIT: int

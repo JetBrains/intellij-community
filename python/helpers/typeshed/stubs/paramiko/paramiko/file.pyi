@@ -1,4 +1,5 @@
-from typing import Any, AnyStr, Generic, Iterable
+from collections.abc import Iterable
+from typing import Any, AnyStr, Generic
 
 from paramiko.util import ClosingContextManager
 

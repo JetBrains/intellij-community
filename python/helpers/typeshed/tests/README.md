@@ -13,29 +13,31 @@ objects at runtime.
 objects at runtime.
 
 To run the tests, follow the [setup instructions](../CONTRIBUTING.md#preparing-the-environment)
-in the `CONTRIBUTING.md` document. In particular, we recommend running with Python 3.8 or 3.9.
+in the `CONTRIBUTING.md` document. In particular, we recommend running with Python 3.8+.
 
 ## mypy\_test.py
 
-This test requires Python 3.6 or higher; Python 3.6.1 or higher is recommended.
-Run using:
+This test requires Python 3.7+. Run using:
 ```
 (.venv3)$ python3 tests/mypy_test.py
 ```
 
-This test is shallow — it verifies that all stubs can be
-imported but doesn't check whether stubs match their implementation
-(in the Python standard library or a third-party package). It has an exclude list of
-modules that are not tested at all, which also lives in the tests directory.
+The test has four parts. Each part uses mypy with slightly different configuration options:
+- Running mypy on the stdlib stubs
+- Running mypy on the third-party stubs
+- Running mypy `--strict` on the scripts in the `tests` directory
+- Running mypy `--strict` on the regression tests in the `test_cases` directory.
 
-You can restrict mypy tests to a single version by passing `-p2` or `-p3.9`:
-```bash
-(.venv3)$ python3 tests/mypy_test.py -p3.9
-```
+When running mypy on the stubs, this test is shallow — it verifies that all stubs can be
+imported but doesn't check whether stubs match their implementation
+(in the Python standard library or a third-party package).
+
+Run `python tests/mypy_test.py --help` for information on the various configuration options
+for this test script.
 
 ## pytype\_test.py
 
-This test requires Python between 3.6 and 3.9.
+This test requires Python 3.7+.
 Note: this test cannot be run on Windows
 systems unless you are using Windows Subsystem for Linux.
 
@@ -48,9 +50,9 @@ This test works similarly to `mypy_test.py`, except it uses `pytype`.
 
 ## pyright\_test.py
 
-This test requires [Node.js](https://nodejs.org) to be installed. It is
-currently not part of the CI,
-but it uses the same pyright version and configuration as the CI.
+This test requires [Node.js](https://nodejs.org) to be installed. Although
+typeshed runs pyright in CI, it does not currently use this script. However,
+this script uses the same pyright version and configuration as the CI.
 ```
 (.venv3)$ python3 tests/pyright_test.py                                # Check all files
 (.venv3)$ python3 tests/pyright_test.py stdlib/sys.pyi                 # Check one file
@@ -58,8 +60,9 @@ but it uses the same pyright version and configuration as the CI.
 ```
 
 `pyrightconfig.stricter.json` is a stricter configuration that enables additional
-checks that would typically fail on incomplete stubs (such as `Unknown` checks),
-and is run on a subset of stubs (including the standard library).
+checks that would typically fail on incomplete stubs (such as `Unknown` checks).
+In typeshed's CI, pyright is run with these configuration settings on a subset of
+the stubs in typeshed (including the standard library).
 
 ## check\_consistent.py
 
@@ -102,7 +105,7 @@ stubtest can also help you find things missing from the stubs.
 
 ## stubtest\_third\_party.py
 
-This test requires Python 3.6 or higher.
+This test requires Python 3.7+.
 Run using
 ```
 (.venv3)$ python3 tests/stubtest_third_party.py

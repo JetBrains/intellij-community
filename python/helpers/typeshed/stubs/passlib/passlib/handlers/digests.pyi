@@ -1,11 +1,10 @@
-from typing import Any
+from typing import Any, ClassVar
 
 import passlib.utils.handlers as uh
 
 class HexDigestHash(uh.StaticHandler):
-    checksum_size: Any
-    checksum_chars: Any
-    supported: bool
+    checksum_chars: ClassVar[str]
+    supported: ClassVar[bool]
 
 def create_hex_hash(digest, module=..., django_name: Any | None = ..., required: bool = ...): ...
 
@@ -16,10 +15,8 @@ hex_sha256: Any
 hex_sha512: Any
 
 class htdigest(uh.MinimalHandler):
-    name: str
-    setting_kwds: Any
-    context_kwds: Any
-    default_encoding: str
+    name: ClassVar[str]
+    default_encoding: ClassVar[str]
     @classmethod
     def hash(cls, secret, user, realm, encoding: Any | None = ...): ...  # type: ignore[override]
     @classmethod
