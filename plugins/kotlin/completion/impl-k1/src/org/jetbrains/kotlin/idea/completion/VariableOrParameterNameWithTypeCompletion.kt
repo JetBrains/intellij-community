@@ -215,18 +215,14 @@ class VariableOrParameterNameWithTypeCompletion(
 
         override fun getDelegateInsertHandler(): InsertHandler<LookupElement> = InsertHandler { context, element ->
             if (context.completionChar == Lookup.REPLACE_SELECT_CHAR) {
-                val replacementOffset = context.offsetMap.tryGetOffset(REPLACEMENT_OFFSET)
-                if (replacementOffset != null) {
-                    val tailOffset = context.tailOffset
-                    context.document.deleteString(tailOffset, replacementOffset)
+                val tailOffset = context.tailOffset
 
-                    val chars = context.document.charsSequence
-                    var offset = chars.skipSpaces(tailOffset)
-                    if (chars.isCharAt(offset, ',')) {
-                        offset++
-                        offset = chars.skipSpaces(offset)
-                        context.editor.moveCaret(offset)
-                    }
+                val chars = context.document.charsSequence
+                var offset = chars.skipSpaces(tailOffset)
+                if (chars.isCharAt(offset, ',')) {
+                    offset++
+                    offset = chars.skipSpaces(offset)
+                    context.editor.moveCaret(offset)
                 }
             }
 
@@ -258,8 +254,6 @@ class VariableOrParameterNameWithTypeCompletion(
 
     companion object {
         private val PRIORITY_KEY = Key<Int>("ParameterNameAndTypeCompletion.PRIORITY_KEY")
-
-        val REPLACEMENT_OFFSET = OffsetKey.create("ParameterNameAndTypeCompletion.REPLACEMENT_OFFSET")
     }
 
     object Weigher : LookupElementWeigher("kotlin.parameterNameAndTypePriority") {

@@ -39,6 +39,21 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         return false
     }
 
+    override fun correctPositionForParameter(context: CompletionInitializationContext) {
+        val offset = context.startOffset
+        val psiFile = context.file
+        val tokenAt = psiFile.findElementAt(max(0, offset)) ?: return
+
+        // IDENTIFIER when 'f<caret>oo: Foo'
+        // COLON when 'foo<caret>: Foo'
+        if (tokenAt.node.elementType == KtTokens.IDENTIFIER || tokenAt.node.elementType == KtTokens.COLON) {
+            val parameter = tokenAt.parent as? KtParameter
+            if (parameter != null) {
+                context.replacementOffset = parameter.endOffset
+            }
+        }
+    }
+
     override fun provideDummyIdentifier(context: CompletionInitializationContext): String {
         val psiFile = context.file
         if (psiFile !is KtFile) {
