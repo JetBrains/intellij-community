@@ -108,15 +108,18 @@ object CheckinActionUtil {
       included = ContainerUtil.concat(selectedChanges, selectedUnversioned)
     }
 
+    LOG.debug("invoking commit after update")
+
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
-      LOG.debug("invoking commit workflow after update")
       workflowHandler.setCommitState(initialChangeList, included, forceUpdateCommitStateFromContext)
       workflowHandler.activate()
     }
+    else if (executor != null) {
+      CommitChangeListDialog.commitWithExecutor(project, included, initialChangeList, executor, null, null)
+    }
     else {
-      LOG.debug("invoking commit dialog after update")
-      CommitChangeListDialog.commitChanges(project, null, included, initialChangeList, executor, null)
+      CommitChangeListDialog.commitVcsChanges(project, included, initialChangeList, null, null)
     }
   }
 
