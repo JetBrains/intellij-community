@@ -68,6 +68,6 @@ fun checkConstraints(constraints: Any?): Constraints {
 /**
  * See [com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources], which is not available here
  */
-val runningFromSource: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+private val runningFromSource: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
   Files.isDirectory(Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
 }

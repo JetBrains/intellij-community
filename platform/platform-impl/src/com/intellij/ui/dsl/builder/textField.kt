@@ -29,12 +29,12 @@ import com.intellij.openapi.observable.util.whenTextChangedFromUi as whenTextCha
 const val COLUMNS_TINY = 6
 
 /**
- * Columns for text components with short width (used instead of deprecated [GrowPolicy.SHORT_TEXT])
+ * Columns for text components with short width
  */
 const val COLUMNS_SHORT = 18
 
 /**
- * Columns for text components with medium width (used instead of deprecated [GrowPolicy.MEDIUM_TEXT])
+ * Columns for text components with medium width
  */
 const val COLUMNS_MEDIUM = 25
 

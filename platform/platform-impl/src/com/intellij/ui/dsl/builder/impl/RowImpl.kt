@@ -55,7 +55,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   var resizableRow = false
     private set
 
-  var rowComment: JComponent? = null
+  var rowComment: DslLabel? = null
     private set
 
   var topGap: TopGap? = null
@@ -273,11 +273,19 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     dslLabel.action = action
     dslLabel.maxLineLength = maxLineLength
     dslLabel.text = text
-    return cell(dslLabel)
+    val result = cell(dslLabel)
+    if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) {
+      result.align(AlignX.FILL)
+    }
+    return result
   }
   
   override fun comment(comment: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JEditorPane> {
-    return cell(createComment(comment, maxLineLength, action))
+    val result: CellImpl<JEditorPane> = cell(createComment(comment, maxLineLength, action))
+    if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) {
+      result.align(AlignX.FILL)
+    }
+    return result
   }
 
   override fun link(text: String, action: (ActionEvent) -> Unit): CellImpl<ActionLink> {

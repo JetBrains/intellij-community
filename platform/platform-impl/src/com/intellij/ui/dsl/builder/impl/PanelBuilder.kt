@@ -97,7 +97,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
 
       row.rowComment?.let {
         val gaps = Gaps(left = row.getIndent(), bottom = spacingConfiguration.verticalComponentGap)
-        rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps)
+        val horizontalAlign = if (it.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) HorizontalAlign.FILL else HorizontalAlign.LEFT
+        rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps, horizontalAlign = horizontalAlign)
         rowsGridBuilder.row()
       }
 
@@ -269,7 +270,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
       else {
         val left = if (index == 0) firstCellIndent else 0
-        GeneratedComponentData(label, Gaps(top = spacingConfiguration.verticalComponentGap, left = left), index)
+        GeneratedComponentData(label, Gaps(top = spacingConfiguration.verticalComponentGap, left = left), HorizontalAlign.LEFT, index)
       }
     }
 
@@ -292,7 +293,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
       else {
         val left = getAdditionalHorizontalIndent(cell) + (if (index == 0) firstCellIndent else 0)
-        GeneratedComponentData(comment, Gaps(left = left, bottom = spacingConfiguration.verticalComponentGap), index)
+        val horizontalAlign = if (comment.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) HorizontalAlign.FILL else HorizontalAlign.LEFT
+        GeneratedComponentData(comment, Gaps(left = left, bottom = spacingConfiguration.verticalComponentGap), horizontalAlign, index)
       }
     }
 
@@ -328,7 +330,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
 
     for ((i, data) in columnsAndComponents.withIndex()) {
       val nextColumn = if (i + 1 < columnsAndComponents.size) columnsAndComponents[i + 1].column else maxColumnsCount
-      builder.cell(data.component, nextColumn - data.column, verticalAlign = verticalAlign, baselineAlign = false, gaps = data.gaps)
+      builder.cell(data.component, nextColumn - data.column, horizontalAlign = data.horizontalAlign, verticalAlign = verticalAlign,
+                   baselineAlign = false, gaps = data.gaps)
 
     }
     builder.row()
@@ -384,4 +387,4 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
   }
 }
 
-private data class GeneratedComponentData(val component: JComponent, val gaps: Gaps, val column: Int)
+private data class GeneratedComponentData(val component: JComponent, val gaps: Gaps, val horizontalAlign: HorizontalAlign, val column: Int)

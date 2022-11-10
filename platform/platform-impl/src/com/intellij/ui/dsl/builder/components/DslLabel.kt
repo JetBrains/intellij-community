@@ -7,8 +7,10 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.dsl.UiDslException
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -95,6 +97,18 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     return fontMetrics.ascent
   }
 
+  override fun getMinimumSize(): Dimension {
+    val result = super.getMinimumSize()
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) Dimension(getSupposedWidth(DEFAULT_COMMENT_WIDTH / 2), result.height)
+    else result
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val result = super.getPreferredSize()
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) Dimension(getSupposedWidth(DEFAULT_COMMENT_WIDTH), result.height)
+    else result
+  }
+
   override fun setText(@Nls t: String?) {
     userText = t
     updateEditorPaneText()
@@ -118,11 +132,10 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     processedText = appendExternalLinkIcons(processedText)
     var body = HtmlChunk.body()
     if (maxLineLength > 0 && maxLineLength != MAX_LINE_LENGTH_NO_WRAP && text.length > maxLineLength) {
-      val width = getFontMetrics(font).stringWidth(text.substring(0, maxLineLength))
-      body = body.attr("width", width)
+      body = body.attr("width", getSupposedWidth(maxLineLength))
     }
 
-    @NonNls val css = createCss(maxLineLength != MAX_LINE_LENGTH_NO_WRAP)
+    @NonNls val css = createCss()
     super.setText(HtmlBuilder()
                     .append(HtmlChunk.raw(css))
                     .append(HtmlChunk.raw(processedText).wrapWith(body))
@@ -163,7 +176,7 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     }
   }
 
-  private fun createCss(wordWrap: Boolean): String {
+  private fun createCss(): String {
     val styles = mutableListOf(
       "a, a:link {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED)};}",
       "a:visited {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.VISITED)};}",
@@ -171,10 +184,16 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
       "a:active {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED)};}"
     )
 
-    if (!wordWrap) {
-      styles.add("body, p {white-space:nowrap;}")
+    when (maxLineLength) {
+      MAX_LINE_LENGTH_NO_WRAP -> styles.add("body, p {white-space:nowrap;}")
+      // Unfortunately Java doesn't support wrapping of long words via word-wrap, didn't find any good solution
+      // MAX_LINE_LENGTH_WORD_WRAP -> styles.add("body, p {word-wrap:break-word;}")
     }
 
     return styles.joinToString(" ", "<head><style type='text/css'>", "</style></head>")
+  }
+
+  private fun getSupposedWidth(charCount: Int): Int {
+    return getFontMetrics(font).charWidth('0') * charCount
   }
 }

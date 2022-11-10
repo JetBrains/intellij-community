@@ -9,8 +9,10 @@ import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.Label
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -21,7 +23,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.ItemSelectable
 import javax.swing.JComponent
-import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.text.JTextComponent
 
@@ -35,7 +36,7 @@ internal class CellImpl<T : JComponent>(
   override var component: T = component
     private set
 
-  override var comment: JEditorPane? = null
+  override var comment: DslLabel? = null
     private set
 
   var label: JLabel? = null
@@ -67,6 +68,13 @@ internal class CellImpl<T : JComponent>(
 
   override fun align(align: Align): CellImpl<T> {
     super.align(align)
+
+    (component as? DslLabel)?.let {
+      if (it.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP && horizontalAlign != HorizontalAlign.FILL) {
+        UiDslException.error("Labels with MAX_LINE_LENGTH_WORD_WRAP don't support align, text = ${it.text}")
+      }
+    }
+
     return this
   }
 

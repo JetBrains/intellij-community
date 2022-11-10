@@ -42,24 +42,35 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
   }
 
   override fun createCenterPanel(): JComponent {
-    val result = JBTabbedPane()
-    result.minimumSize = Dimension(300, 200)
-    result.preferredSize = Dimension(800, 600)
-    result.addTab("Labels", JScrollPane(LabelsPanel().panel))
-    result.addTab("Text Fields", createTextFields())
-    result.addTab("Comments", JScrollPane(createCommentsPanel()))
-    result.addTab("Text MaxLine", createTextMaxLinePanel())
-    result.addTab("Groups", JScrollPane(GroupsPanel().panel))
-    result.addTab("Segmented Button", SegmentedButtonPanel().panel)
-    result.addTab("Visible/Enabled", createVisibleEnabled())
-    result.addTab("Cells With Sub-Panels", createCellsWithPanels())
-    result.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
-    result.addTab("Resizable Rows", createResizableRows())
-    result.addTab("Others", OthersPanel().panel)
-    result.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
-    result.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
+    val tabbedPane = JBTabbedPane()
+    tabbedPane.minimumSize = Dimension(300, 200)
+    tabbedPane.preferredSize = Dimension(800, 600)
+    tabbedPane.addTab("Labels", JScrollPane(LabelsPanel().panel))
+    tabbedPane.addTab("Text Fields", createTextFields())
+    tabbedPane.addTab("Comments", JScrollPane(createCommentsPanel()))
+    tabbedPane.addTab("Text MaxLine", createTextMaxLinePanel())
+    tabbedPane.addTab("Groups", JScrollPane(GroupsPanel().panel))
+    tabbedPane.addTab("Segmented Button", SegmentedButtonPanel().panel)
+    tabbedPane.addTab("Visible/Enabled", createVisibleEnabled())
+    tabbedPane.addTab("Cells With Sub-Panels", createCellsWithPanels())
+    tabbedPane.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
+    tabbedPane.addTab("Resizable Rows", createResizableRows())
+    tabbedPane.addTab("Others", OthersPanel().panel)
+    tabbedPane.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
+    tabbedPane.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
 
-    return result
+    return panel {
+      row {
+        button("Long texts") {
+          showLongTextsDialog()
+        }
+      }
+
+      row {
+        cell(tabbedPane)
+          .align(Align.FILL)
+      }.resizableRow()
+    }
   }
 
   fun createTextFields(): JPanel {
