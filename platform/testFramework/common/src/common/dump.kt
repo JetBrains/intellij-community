@@ -5,12 +5,14 @@ import com.intellij.util.MemoryDumpHelper
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.UUID
 
 internal const val HEAP_DUMP_IS_PUBLISHED = "Heap dump is published to "
 
 @TestOnly
 fun publishHeapDump(fileNamePrefix: String): String {
-  val fileName = "$fileNamePrefix.hprof.zip"
+  val uuid = UUID.randomUUID().toString().substring(1..4)
+  val fileName = "$fileNamePrefix-$uuid.hprof.zip"
   val dumpFile = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), fileName)
   try {
     Files.deleteIfExists(dumpFile)
