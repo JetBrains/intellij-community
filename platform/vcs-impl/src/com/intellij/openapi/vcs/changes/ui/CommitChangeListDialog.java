@@ -184,6 +184,22 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                          cancelIfNoChanges);
   }
 
+  @NotNull
+  private static Set<AbstractVcs> getVcsesForLocalChanges(@NotNull Project project, boolean showVcsCommit) {
+    Set<AbstractVcs> affectedVcses = new HashSet<>();
+    ChangeListManager manager = ChangeListManager.getInstance(project);
+
+    Collection<Change> localChanges = manager.getAllChanges();
+    affectedVcses.addAll(ChangesUtil.getAffectedVcses(localChanges, project));
+
+    if (showVcsCommit) {
+      List<FilePath> unversionedFiles = manager.getUnversionedFilesPaths();
+      affectedVcses.addAll(ChangesUtil.getAffectedVcsesForFilePaths(unversionedFiles, project));
+    }
+
+    return affectedVcses;
+  }
+
   public static boolean commitChanges(@NotNull Project project,
                                       @SuppressWarnings("unused") @Nullable List<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,
@@ -194,20 +210,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler,
                                       boolean cancelIfNoChanges) {
-    ChangeListManager manager = ChangeListManager.getInstance(project);
-    LocalChangeList defaultList = manager.getDefaultChangeList();
-    List<LocalChangeList> changeLists = manager.getChangeLists();
-
-    Set<AbstractVcs> affectedVcses = new HashSet<>();
+    Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
     if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
-    for (LocalChangeList list : changeLists) {
-      affectedVcses.addAll(ChangesUtil.getAffectedVcses(list.getChanges(), project));
-    }
-    if (showVcsCommit) {
-      List<FilePath> unversionedFiles = ChangeListManager.getInstance(project).getUnversionedFilesPaths();
-      affectedVcses.addAll(ChangesUtil.getAffectedVcsesForFilePaths(unversionedFiles, project));
-    }
-
 
     if (cancelIfNoChanges && affectedVcses.isEmpty()) {
       Messages.showInfoMessage(project, message("commit.dialog.no.changes.detected.text"),
