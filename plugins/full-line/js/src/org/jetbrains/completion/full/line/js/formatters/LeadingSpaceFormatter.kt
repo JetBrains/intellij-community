@@ -16,8 +16,10 @@ class LeadingSpaceFormatter : ElementFormatter {
   override fun format(element: PsiElement): String {
     element is PsiWhiteSpace
 
-    if (element.nextSibling is PsiComment) return ""
     val text = element.text
-    return if ("\n" in text) "\n" else text
+    // JSDocComment might be the first child of the next sibling
+    return if ("\n" in text) (if (containsCommentAtFirst(element.nextSibling)) "" else "\n") else text
   }
+
+  private fun containsCommentAtFirst(element: PsiElement?): Boolean = element != null && (element is PsiComment || containsCommentAtFirst(element.firstChild))
 }
