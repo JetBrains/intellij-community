@@ -145,14 +145,16 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable LocalChangeList initialChangeList,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
-    if (executor == null) {
-      return commitChanges(project, null, included, initialChangeList, getCommitExecutors(project, changes), true, null,
-                           comment, null, true);
+    boolean showVcsCommit = executor == null;
+    Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
+    if (affectedVcses.isEmpty()) {
+      showNothingToCommitMessage(project);
+      return false;
     }
-    else {
-      return commitChanges(project, null, included, initialChangeList, singletonList(executor), false, null,
-                           comment, null, true);
-    }
+
+    List<CommitExecutor> executors = executor != null ? singletonList(executor)
+                                                      : getCommitExecutors(project, changes);
+    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, null);
   }
 
   /**
@@ -215,11 +217,21 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
 
     if (cancelIfNoChanges && affectedVcses.isEmpty()) {
-      Messages.showInfoMessage(project, message("commit.dialog.no.changes.detected.text"),
-                               message("commit.dialog.no.changes.detected.title"));
+      showNothingToCommitMessage(project);
       return false;
     }
 
+    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, customResultHandler);
+  }
+
+  private static boolean showCommitDialog(@NotNull Project project,
+                                          @NotNull Set<AbstractVcs> affectedVcses,
+                                          @NotNull Collection<?> included,
+                                          @Nullable LocalChangeList initialChangeList,
+                                          @NotNull List<? extends CommitExecutor> executors,
+                                          boolean showVcsCommit,
+                                          @Nullable String comment,
+                                          @Nullable CommitResultHandler customResultHandler) {
     List<Change> changes = ContainerUtil.filterIsInstance(included, Change.class);
     for (BaseCheckinHandlerFactory factory : getCommitHandlerFactories(affectedVcses)) {
       BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
@@ -234,6 +246,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
 
     return new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
+  }
+
+  private static void showNothingToCommitMessage(@NotNull Project project) {
+    Messages.showInfoMessage(project, message("commit.dialog.no.changes.detected.text"),
+                             message("commit.dialog.no.changes.detected.title"));
   }
 
   protected CommitChangeListDialog(@NotNull CommitChangeListDialogWorkflow workflow) {
