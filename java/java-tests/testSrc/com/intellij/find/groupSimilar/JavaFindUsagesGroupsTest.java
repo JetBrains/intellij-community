@@ -73,5 +73,9 @@ public class JavaFindUsagesGroupsTest extends JavaPsiTestCase {
     }
   }
 
+  public void testCodeBlockFeatures() {
+    doTest(getMethod("A", "foo"));
+  }
+
   public void testArrayAccess() { doTest(getMethod("Market", "getGoods")); }
 }
