@@ -7,10 +7,6 @@ import com.intellij.navigation.TargetPresentation
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 
-/*
- * DEPRECATION -> @JvmDefault
- **/
-@Suppress("DEPRECATION")
 interface WebSymbolDocumentationTarget : DocumentationTarget {
 
   val symbol: WebSymbol

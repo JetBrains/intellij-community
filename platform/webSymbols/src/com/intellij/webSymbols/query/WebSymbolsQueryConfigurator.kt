@@ -9,10 +9,6 @@ import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 
-/*
- * DEPRECATION -> @JvmDefault
- **/
-@Suppress("DEPRECATION")
 interface WebSymbolsQueryConfigurator {
 
   fun getScope(project: Project, element: PsiElement?, context: WebSymbolsContext, allowResolve: Boolean): List<WebSymbolsScope> =

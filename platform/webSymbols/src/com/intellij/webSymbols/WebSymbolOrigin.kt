@@ -6,7 +6,6 @@ import javax.swing.Icon
 
 /*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
- * DEPRECATION -> @JvmDefault
  **/
 interface WebSymbolOrigin {
   val framework: FrameworkId?

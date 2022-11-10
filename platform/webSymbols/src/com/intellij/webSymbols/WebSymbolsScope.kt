@@ -10,10 +10,6 @@ import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import java.util.*
 
-/*
- * DEPRECATION -> @JvmDefault
- **/
-@Suppress("DEPRECATION")
 interface WebSymbolsScope : ModificationTracker {
 
   fun createPointer(): Pointer<out WebSymbolsScope>
