@@ -39,13 +39,15 @@ import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -239,7 +241,7 @@ public final class ExecutionHelper {
         }
       }
 
-      final Set<RunContentDescriptor> result = new SmartHashSet<>();
+      final List<RunContentDescriptor> result = new SmartList<>();
       for (RunContentDescriptor runContentDescriptor : contentManager.getAllDescriptors()) {
         if (descriptorMatcher.fun(runContentDescriptor)) {
           result.add(runContentDescriptor);
