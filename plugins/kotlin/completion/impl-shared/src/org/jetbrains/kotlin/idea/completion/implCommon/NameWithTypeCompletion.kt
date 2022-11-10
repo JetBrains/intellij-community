@@ -2,13 +2,46 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.completion.CompletionInitializationContext
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.patterns.PatternCondition
+import com.intellij.patterns.StandardPatterns
+import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.handlers.skipSpaces
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
+import org.jetbrains.kotlin.psi.*
 
+object NameWithTypeCompletion {
+    fun shouldCompleteParameter(parameter: KtParameter): Boolean {
+        val list = parameter.parent as? KtParameterList ?: return false
+        return when (val owner = list.parent) {
+            is KtCatchClause, is KtPropertyAccessor, is KtFunctionLiteral -> false
+            is KtNamedFunction -> owner.nameIdentifier != null
+            is KtPrimaryConstructor -> !owner.getContainingClassOrObject().isAnnotation()
+            else -> true
+        }
+    }
+
+    /**
+     * This pattern is used to check if completion needs to be restarted (which is true when an upper case letter is typed
+     * and new completion suggestions may appear)
+     */
+    val prefixEndsWithUppercaseLetterPattern =
+        StandardPatterns.string().with(object : PatternCondition<String>("Prefix ends with uppercase letter") {
+            override fun accepts(prefix: String, context: ProcessingContext?) = prefix.isNotEmpty() && prefix.last().isUpperCase()
+        })
+}
+
+/**
+ * @param typeIdString a string which contains a qualified type or a qualified class name, depending on how the element was obtained;
+ * it is used to compare lookup elements.
+ */
 class NameWithTypeLookupElementDecorator(
     private val parameterName: String,
     private val typeIdString: String,
@@ -70,4 +103,3 @@ class NameWithTypeLookupElementDecorator(
 
     override fun hashCode() = parameterName.hashCode()
 }
-

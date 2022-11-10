@@ -58,4 +58,7 @@ internal class FirCompletionContributorFactory(private val basicContext: FirBasi
 
     fun namedArgumentContributor(priority: Int = 0) =
         FirNamedArgumentCompletionContributor(basicContext, priority)
+
+    fun variableOrParameterNameWithTypeContributor(priority: Int) =
+        FirVariableOrParameterNameWithTypeCompletionContributor(basicContext, priority)
 }

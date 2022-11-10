@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
@@ -26,6 +27,7 @@ class KotlinFirLookupElementFactory {
     private val typeParameterLookupElementFactory = TypeParameterLookupElementFactory()
     private val packagePartLookupElementFactory = PackagePartLookupElementFactory()
     private val namedArgumentLookupElementFactory = NamedArgumentLookupElementFactory()
+    private val typeLookupElementFactory = TypeLookupElementFactory()
 
     fun KtAnalysisSession.createLookupElement(
         symbol: KtNamedSymbol,
@@ -66,6 +68,12 @@ class KotlinFirLookupElementFactory {
 
     fun createNamedArgumentWithValueLookupElement(name: Name, value: String): LookupElement =
         namedArgumentLookupElementFactory.createNamedArgumentWithValueLookup(name, value)
+
+    fun KtAnalysisSession.createTypeLookupElement(type: KtType): LookupElement? =
+        with(typeLookupElementFactory) { createLookup(type) }
+
+    fun KtAnalysisSession.createTypeLookupElement(classSymbol: KtClassifierSymbol): LookupElement? =
+        with(typeLookupElementFactory) { createLookup(classSymbol) }
 
     fun KtAnalysisSession.createLookupElementForClassLikeSymbol(
         symbol: KtClassLikeSymbol,

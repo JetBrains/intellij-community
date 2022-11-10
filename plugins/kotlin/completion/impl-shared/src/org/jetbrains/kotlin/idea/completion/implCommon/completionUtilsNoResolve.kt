@@ -2,10 +2,8 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.lookup.*
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
@@ -26,6 +24,22 @@ import org.jetbrains.kotlin.renderer.render
 
 @ApiStatus.Internal
 val KOTLIN_CAST_REQUIRED_COLOR = JBColor(0x4E4040, 0x969696)
+
+tailrec fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
+    if (this is LookupElementDecorator<*>) {
+        delegate.putUserDataDeep(key, value)
+    } else {
+        putUserData(key, value)
+    }
+}
+
+tailrec fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
+    return if (this is LookupElementDecorator<*>) {
+        getDelegate().getUserDataDeep(key)
+    } else {
+        getUserData(key)
+    }
+}
 
 val PsiElement.isInsideKtTypeReference: Boolean
     get() = getNonStrictParentOfType<KtTypeReference>() != null
@@ -179,8 +193,14 @@ fun kotlinIdentifierPartPattern(): ElementPattern<Char> =
 
 
 fun LookupElementPresentation.prependTailText(text: String, grayed: Boolean) {
-    val tails = tailFragments
+    val tails = tailFragments.toList()
     clearTail()
     appendTailText(text, grayed)
     tails.forEach { appendTailText(it.text, it.isGrayed) }
 }
+
+fun PrefixMatcher.asNameFilter(): (Name) -> Boolean {
+    return { name -> !name.isSpecial && prefixMatches(name.identifier) }
+}
+
+infix fun <T> ((T) -> Boolean).exclude(otherFilter: (T) -> Boolean): (T) -> Boolean = { this(it) && !otherFilter(it) }

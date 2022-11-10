@@ -41,6 +41,8 @@ class KotlinFirCompletionContributor : CompletionContributor() {
         }
 
         context.dummyIdentifier = identifierProviderService.provideDummyIdentifier(context)
+
+        identifierProviderService.correctPositionForParameter(context)
     }
 }
 

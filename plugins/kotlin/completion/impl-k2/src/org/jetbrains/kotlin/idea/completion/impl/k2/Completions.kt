@@ -41,6 +41,7 @@ internal object Completions {
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
                 complete(factory.declarationFromUnresolvedNameContributor(1), positionContext)
                 complete(factory.declarationFromOverridableMembersContributor(1), positionContext)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext)
             }
 
             is FirAnnotationTypeNameReferencePositionContext -> {
@@ -101,6 +102,7 @@ internal object Completions {
                 complete(factory.declarationFromUnresolvedNameContributor(0), positionContext) // for parameter declaration
                 complete(factory.declarationFromOverridableMembersContributor(0), positionContext)
                 complete(factory.keywordContributor(0), positionContext)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext)
             }
         }
     }

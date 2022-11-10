@@ -38,22 +38,6 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-tailrec fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
-    if (this is LookupElementDecorator<*>) {
-        getDelegate().putUserDataDeep(key, value)
-    } else {
-        putUserData(key, value)
-    }
-}
-
-tailrec fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
-    return if (this is LookupElementDecorator<*>) {
-        getDelegate().getUserDataDeep(key)
-    } else {
-        getUserData(key)
-    }
-}
-
 var LookupElement.isDslMember: Boolean? by UserDataProperty(Key.create("DSL_LOOKUP_ITEM"))
 
 fun LookupElement.assignPriority(priority: ItemPriority): LookupElement {
@@ -75,10 +59,6 @@ val KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY = Key<Unit>("KEEP_OLD_ARGUMENT_LIST_ON_TAB
 fun LookupElement.keepOldArgumentListOnTab(): LookupElement {
     putUserData(KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY, Unit)
     return this
-}
-
-fun PrefixMatcher.asNameFilter(): (Name) -> Boolean {
-    return { name -> !name.isSpecial && prefixMatches(name.identifier) }
 }
 
 fun PrefixMatcher.asStringNameFilter() = { name: String -> prefixMatches(name) }
