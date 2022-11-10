@@ -3681,6 +3681,24 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/newJ2k/libraryUsage")
+    public static class LibraryUsage extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaLibraryUsage.java")
+        public void testJavaLibraryUsage() throws Exception {
+            runTest("testData/newJ2k/libraryUsage/javaLibraryUsage.java");
+        }
+
+        @TestMetadata("kotlinLibraryUsage.java")
+        public void testKotlinLibraryUsage() throws Exception {
+            runTest("testData/newJ2k/libraryUsage/kotlinLibraryUsage.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/list")
     public static class List extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
