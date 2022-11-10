@@ -162,7 +162,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
           future.complete(id)
         }
 
-        override fun onImportFailed(projectPath: String?) {
+        override fun onImportFailed(projectPath: String?, t: Throwable) {
           LOG.info("Gradle import failure: ${id.ideProjectId}")
           val future = externalSystemState[id] ?: return
           future.completeExceptionally(IllegalStateException("Gradle project ${id.ideProjectId} import failed."))
