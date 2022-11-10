@@ -567,9 +567,21 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)) {
+      if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)
+          && !isToStringCallForCurrentBuilder(expression.getRExpression())) {
         myPossibleSideEffect = expression;
       }
+    }
+
+    private boolean isToStringCallForCurrentBuilder(@Nullable PsiExpression expression) {
+      if (expression == null) {
+        return false;
+      }
+      PsiExpression downExpression = PsiUtil.skipParenthesizedExprDown(expression);
+      if (!(downExpression instanceof PsiMethodCallExpression psiMethodCallExpression)) {
+        return false;
+      }
+      return isToStringCall(psiMethodCallExpression) && isCallToStringBuilderMethod(psiMethodCallExpression);
     }
 
     @Override

@@ -78,6 +78,7 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testCharacterPlusAppend() { doTestFor("StringBuilder"); }
   public void testSideEffect() { doTestFor("StringBuilder"); }
   public void testSideEffect2() { doTestFor("StringBuilder"); }
+  public void testSideEffect3() { doTestFor("StringBuilder"); }
 
   public void testComplexSignOnNextLine() {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
