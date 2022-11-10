@@ -5,68 +5,63 @@ import com.intellij.ide.minimap.utils.MiniMessagesBundle
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.selected
 import java.awt.Component
 import javax.swing.*
 
 
-class MinimapConfigurable : Configurable {
+class MinimapConfigurable : BoundConfigurable(MiniMessagesBundle.message("settings.name")) {
 
   companion object {
     const val ID = "com.intellij.minimap"
   }
 
-  private val enabled = JBCheckBox(MiniMessagesBundle.message("settings.enable")).apply {
-    toolTipText = MiniMessagesBundle.message("settings.enable.hint")
-  }
-
-  private val alignmentLeft = JRadioButton(MiniMessagesBundle.message("settings.left"))
-  private val alignmentRight = JRadioButton(MiniMessagesBundle.message("settings.right"))
+  private lateinit var enabled: JBCheckBox
+  private lateinit var alignmentLeft: JRadioButton
+  private lateinit var alignmentRight: JRadioButton
 
   private var lastState = MinimapSettings.getInstance().state.copy()
 
-  private val fileTypeComboBox: ComboBox<FileType>
+  private lateinit var fileTypeComboBox: ComboBox<FileType>
 
-  init {
-    val textFileTypes = (FileTypeManager.getInstance() as FileTypeManagerImpl).registeredFileTypes
-      .filter { !it.isBinary && it.defaultExtension.isNotBlank() }.distinctBy { it.defaultExtension }
-      .sortedBy { if (lastState.fileTypes.contains(it.defaultExtension)) 0 else 1 }.toTypedArray()
-
-    fileTypeComboBox = ComboBox(textFileTypes).apply {
-      isSwingPopup = false
+  override fun createPanel() = panel {
+    row {
+      enabled = checkBox(MiniMessagesBundle.message("settings.enable"))
+        .applyToComponent {
+          toolTipText = MiniMessagesBundle.message("settings.enable.hint")
+        }.component
     }
-
-    fileTypeComboBox.addActionListener {
-      val fileType = fileTypeComboBox.item ?: return@addActionListener
-      if (lastState.fileTypes.contains(fileType.defaultExtension)) {
-        lastState.fileTypes -= fileType.defaultExtension
-      }
-      else {
-        lastState.fileTypes += fileType.defaultExtension
-      }
-    }
-
-    fileTypeComboBox.renderer = FileTypeListCellRenderer()
-  }
-
-  override fun getDisplayName() = MiniMessagesBundle.message("settings.name")
-
-  override fun createComponent() = panel {
-    row { cell(enabled) }
     indent {
       buttonsGroup {
         row(MiniMessagesBundle.message("settings.alignment")) {
-          cell(alignmentLeft)
-          cell(alignmentRight)
+          alignmentLeft = radioButton(MiniMessagesBundle.message("settings.left")).component
+          alignmentRight = radioButton(MiniMessagesBundle.message("settings.right")).component
         }
       }
       row(MiniMessagesBundle.message("settings.file.types")) {
-        cell(fileTypeComboBox)
+        val textFileTypes = (FileTypeManager.getInstance() as FileTypeManagerImpl).registeredFileTypes
+          .filter { !it.isBinary && it.defaultExtension.isNotBlank() }.distinctBy { it.defaultExtension }
+          .sortedBy { if (lastState.fileTypes.contains(it.defaultExtension)) 0 else 1 }
+
+        fileTypeComboBox = comboBox(textFileTypes, FileTypeListCellRenderer())
+          .applyToComponent {
+            isSwingPopup = false
+            addActionListener {
+              val fileType = fileTypeComboBox.item ?: return@addActionListener
+              if (lastState.fileTypes.contains(fileType.defaultExtension)) {
+                lastState.fileTypes -= fileType.defaultExtension
+              }
+              else {
+                lastState.fileTypes += fileType.defaultExtension
+              }
+            }
+          }.component
       }
-    }
+    }.enabledIf(enabled.selected)
   }
 
   override fun isModified() = MinimapSettings.getInstance().state != getState()
@@ -101,8 +96,6 @@ class MinimapConfigurable : Configurable {
 
     lastState = state.copy()
   }
-
-  override fun disposeUIResources() = Unit
 
   private fun getState() = MinimapSettingsState(enabled = enabled.isSelected,
                                                 rightAligned = alignmentRight.isSelected,
