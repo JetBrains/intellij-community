@@ -4,6 +4,7 @@ package com.intellij.ide.util.scopeChooser
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.CommonProcessors
@@ -31,7 +32,10 @@ private class ScopeChooserComboCoroutineHelper(private val chooserCombo: ScopeCh
   fun scheduleRebuildModelAndSelectScope(selection: Any?): Promise<*> = scope.launch(Dispatchers.EDT) {
     val model = DefaultComboBoxModel<ScopeDescriptor>()
 
-    val dataContext = DataManager.getInstance().dataContextFromFocusAsync.await()
+    val dataContext = DataManager.getInstance()
+      .dataContextFromFocusAsync
+      .await()
+      .toAsync()
     val descriptors = chooserCombo.processScopes(dataContext)
 
     chooserCombo.updateModel(model, descriptors)
@@ -41,9 +45,14 @@ private class ScopeChooserComboCoroutineHelper(private val chooserCombo: ScopeCh
     chooserCombo.preselectedScope = null
   }.asPromise()
 
-  fun scheduleProcessScopes(dataContext: DataContext): Promise<*> = scope.launch(Dispatchers.EDT) {
-    chooserCombo.processScopes(dataContext)
-  }.asPromise()
+  @RequiresEdt
+  fun scheduleProcessScopes(dataContext: DataContext): Promise<*> {
+    val asyncDataContext = dataContext.toAsync()
+
+    return scope.launch(Dispatchers.EDT) {
+      chooserCombo.processScopes(asyncDataContext)
+    }.asPromise()
+  }
 }
 
 @RequiresEdt
@@ -61,3 +70,5 @@ private suspend fun ScopeChooserCombo.processScopes(dataContext: DataContext): L
       .filter { accepts(it) }
   }
 }
+
+private fun DataContext.toAsync() = Utils.wrapToAsyncDataContext(this)
