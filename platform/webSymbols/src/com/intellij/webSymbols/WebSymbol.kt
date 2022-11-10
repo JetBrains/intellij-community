@@ -5,8 +5,6 @@ import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.symbol.DocumentationSymbol
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.model.presentation.PresentableSymbol
-import com.intellij.model.presentation.SymbolPresentation
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
@@ -23,10 +21,9 @@ import javax.swing.Icon
 
 /*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
- * DEPRECATION -> @JvmDefault
  **/
-@Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
-interface WebSymbol : WebSymbolsScope, Symbol, PresentableSymbol, DocumentationSymbol, NavigatableSymbol {
+@Suppress("INAPPLICABLE_JVM_NAME")
+interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableSymbol {
 
   val origin: WebSymbolOrigin
 
@@ -124,30 +121,25 @@ interface WebSymbol : WebSymbolsScope, Symbol, PresentableSymbol, DocumentationS
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     emptyList()
 
-  override fun getSymbolPresentation(): SymbolPresentation {
-    @Suppress("HardCodedStringLiteral")
-    val description = if (name.contains(' ')) {
-      "${name} ${matchedName}"
-    }
-    else {
-      // TODO use kind description provider
-      val kindName = kind.replace('-', ' ').lowercase(Locale.US).let {
-        when {
-          it.endsWith("ies") -> it.substring(0, it.length - 3) + "y"
-          it.endsWith("ses") -> it.substring(0, it.length - 2)
-          it.endsWith("s") -> it.substring(0, it.length - 1)
-          else -> it
-        }
-      }
-      "${namespace} $kindName '$matchedName'"
-    }
-    return SymbolPresentation.create(icon, name, description, description)
-  }
-
   val presentation: TargetPresentation
-    get() = symbolPresentation.let {
-      TargetPresentation.builder(it.shortDescription)
-        .icon(it.icon)
+    get() {
+      val description = if (name.contains(' ')) {
+        "${name} ${matchedName}"
+      }
+      else {
+        // TODO use kind description provider
+        val kindName = kind.replace('-', ' ').lowercase(Locale.US).let {
+          when {
+            it.endsWith("ies") -> it.substring(0, it.length - 3) + "y"
+            it.endsWith("ses") -> it.substring(0, it.length - 2)
+            it.endsWith("s") -> it.substring(0, it.length - 1)
+            else -> it
+          }
+        }
+        "${namespace} $kindName '$matchedName'"
+      }
+      return TargetPresentation.builder(description)
+        .icon(icon)
         .presentation()
     }
 
