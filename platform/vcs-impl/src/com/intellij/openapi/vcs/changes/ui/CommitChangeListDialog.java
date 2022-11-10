@@ -255,14 +255,14 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                             comment, customResultHandler);
   }
 
-  private static boolean showCommitDialog(@NotNull Project project,
-                                          @NotNull Set<AbstractVcs> affectedVcses,
-                                          @NotNull Collection<?> included,
-                                          @Nullable LocalChangeList initialChangeList,
-                                          @NotNull List<? extends CommitExecutor> executors,
-                                          boolean showVcsCommit,
-                                          @Nullable String comment,
-                                          @Nullable CommitResultHandler customResultHandler) {
+  public static boolean showCommitDialog(@NotNull Project project,
+                                         @NotNull Set<AbstractVcs> affectedVcses,
+                                         @NotNull Collection<?> included,
+                                         @Nullable LocalChangeList initialChangeList,
+                                         @NotNull List<? extends CommitExecutor> executors,
+                                         boolean showVcsCommit,
+                                         @Nullable String comment,
+                                         @Nullable CommitResultHandler customResultHandler) {
     List<Change> changes = ContainerUtil.filterIsInstance(included, Change.class);
     for (BaseCheckinHandlerFactory factory : getCommitHandlerFactories(affectedVcses)) {
       BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
@@ -279,7 +279,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
   }
 
-  private static void showNothingToCommitMessage(@NotNull Project project) {
+  public static void showNothingToCommitMessage(@NotNull Project project) {
     Messages.showInfoMessage(project, message("commit.dialog.no.changes.detected.text"),
                              message("commit.dialog.no.changes.detected.title"));
   }
