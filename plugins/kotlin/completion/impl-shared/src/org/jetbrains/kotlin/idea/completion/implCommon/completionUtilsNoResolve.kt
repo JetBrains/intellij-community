@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
@@ -175,3 +176,11 @@ fun kotlinIdentifierStartPattern(): ElementPattern<Char> =
 
 fun kotlinIdentifierPartPattern(): ElementPattern<Char> =
     StandardPatterns.character().javaIdentifierPart().andNot(singleCharPattern('$')) or singleCharPattern('@')
+
+
+fun LookupElementPresentation.prependTailText(text: String, grayed: Boolean) {
+    val tails = tailFragments
+    clearTail()
+    appendTailText(text, grayed)
+    tails.forEach { appendTailText(it.text, it.isGrayed) }
+}

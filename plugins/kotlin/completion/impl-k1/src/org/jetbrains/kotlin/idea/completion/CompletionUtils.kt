@@ -89,13 +89,6 @@ fun ((String) -> Boolean).toNameFilter(): (Name) -> Boolean {
 
 infix fun <T> ((T) -> Boolean).or(otherFilter: (T) -> Boolean): (T) -> Boolean = { this(it) || otherFilter(it) }
 
-fun LookupElementPresentation.prependTailText(text: String, grayed: Boolean) {
-    val tails = tailFragments
-    clearTail()
-    appendTailText(text, grayed)
-    tails.forEach { appendTailText(it.text, it.isGrayed) }
-}
-
 enum class CallableWeightEnum {
     local, // local non-extension
     thisClassMember,
