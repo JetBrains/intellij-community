@@ -30,6 +30,7 @@ class JavaScriptSupporterTest : BasePlatformTestCase() {
   }
 
   fun `test multiline string template`() {
+    // TODO: probably, it is useless test, because full line cannot generate multiline strings...
     val file = myFixture.configureByText(JavaScriptFileType.INSTANCE, FilesTest.readFile("supporter/multiline-string.js", "js"))
     val supporter = JSSupporter()
     val template = supporter.createStringTemplate(file, TextRange(0, file.textLength))!!
