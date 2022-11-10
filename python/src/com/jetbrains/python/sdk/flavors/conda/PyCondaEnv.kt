@@ -13,7 +13,6 @@ import com.intellij.execution.target.createProcessWithResult
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.io.exists
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.flavors.conda.CondaPathFix.Companion.shouldBeFixed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -89,12 +88,10 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
       addParameter("--no-capture-output")
     }
 
-    if (targetedCommandLineBuilder.shouldBeFixed) {
-      if (sdk != null) {
-        CondaPathFix.BySdk(sdk).fix(targetedCommandLineBuilder)
-      } else {
-        CondaPathFix.ByCondaFullPath(Path.of(fullCondaPathOnTarget)).fix(targetedCommandLineBuilder)
-      }
+    if (sdk != null) {
+      targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
+    } else {
+      targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(fullCondaPathOnTarget)
     }
   }
 
@@ -113,10 +110,7 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
           addParameter(identity.envName)
         }
       }
-
-      if (targetedCommandLineBuilder.shouldBeFixed) {
-        CondaPathFix.ByCondaFullPath(Path.of(fullCondaPathOnTarget)).fix(targetedCommandLineBuilder)
-      }
+      targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(fullCondaPathOnTarget)
     }
   }
 
