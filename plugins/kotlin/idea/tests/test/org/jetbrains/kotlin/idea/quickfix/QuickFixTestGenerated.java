@@ -2429,6 +2429,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/autoImports/conflictWithLocalIdentifier.kt");
             }
 
+            @TestMetadata("conflictWithTopLevelIdentifier.kt")
+            public void testConflictWithTopLevelIdentifier() throws Exception {
+                runTest("testData/quickfix/autoImports/conflictWithTopLevelIdentifier.kt");
+            }
+
             @TestMetadata("enumEntries.kt")
             public void testEnumEntries() throws Exception {
                 runTest("testData/quickfix/autoImports/enumEntries.kt");
