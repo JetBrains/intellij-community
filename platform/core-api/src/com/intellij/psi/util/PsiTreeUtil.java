@@ -74,7 +74,7 @@ public class PsiTreeUtil {
    *
    * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
-   * @param strict   whether to return {@code true} if ancestor and parent are the same.
+   * @param strict   whether to start search from element ({@code true}) or from element's parent ({@code false}).
    * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
   @Contract("null, _, _ -> false")
