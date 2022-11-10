@@ -47,7 +47,7 @@ class LocalFullLineCompletionProvider private constructor(
           oneTokenMode = query.mode == FullLineCompletionMode.ONE_TOKEN,
           numSuggestions = config.proposalsLimit,
         ),
-        ExecutionContext(Dispatchers.Main, indicator::checkCanceled)
+        ExecutionContext(checkCancelled = indicator::checkCanceled)
       )
       rawCompletions.mapNotNull {
         if (it.fullLineCompletionResult.text.trim().isNotEmpty()) {
