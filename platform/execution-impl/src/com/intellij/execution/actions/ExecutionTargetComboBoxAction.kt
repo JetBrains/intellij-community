@@ -2,7 +2,6 @@
 package com.intellij.execution.actions
 
 import com.intellij.execution.*
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.project.DumbAware
@@ -51,11 +50,10 @@ class ExecutionTargetComboBoxAction : ComboBoxAction(), DumbAware {
     presentation.setText(name, false)
   }
 
-  override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
+  override fun createPopupActionGroup(button: JComponent, dataContext: DataContext): DefaultActionGroup {
     val actionGroup = DefaultActionGroup()
 
-    val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button))
-                  ?: return actionGroup
+    val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return actionGroup
 
     actionGroup.addAll(getTargetActions(project))
 
