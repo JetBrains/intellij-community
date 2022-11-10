@@ -155,6 +155,7 @@ class ClusterPipeline(RedisCluster[_StrType], Generic[_StrType]):
     def __init__(
         self,
         nodes_manager,
+        commands_parser,
         result_callbacks: Any | None = ...,
         cluster_response_callbacks: Any | None = ...,
         startup_nodes: Any | None = ...,

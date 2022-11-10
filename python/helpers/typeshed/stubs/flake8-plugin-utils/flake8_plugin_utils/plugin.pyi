@@ -1,9 +1,11 @@
 import argparse
 import ast
-from typing import Any, Generic, Iterable, Iterator, TypeVar
+from collections.abc import Iterable, Iterator
+from typing import Any, Generic, TypeVar
+from typing_extensions import TypeAlias
 
-FLAKE8_ERROR = tuple[int, int, str, type[Any]]
-TConfig = TypeVar("TConfig")  # noqa: Y001
+FLAKE8_ERROR: TypeAlias = tuple[int, int, str, type[Any]]
+TConfig = TypeVar("TConfig")  # noqa: Y001  # Name of the TypeVar matches the name at runtime
 
 class Error:
     code: str

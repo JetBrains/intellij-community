@@ -293,7 +293,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAiter() {
-    doTest("AsyncGenerator[int, Any]",
+    doTest("AsyncIterator[int]",
            """
              async def asyncgen():
                  yield 42
@@ -302,7 +302,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAnext() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("Awaitable[int]",
            """
              async def asyncgen():
                  yield 42
@@ -321,7 +321,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorAsend() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("Awaitable[int]",
            """
              async def asyncgen():
                  yield 42

@@ -13,7 +13,7 @@ NO_KEY: Any
 class QueryableAttribute(
     interfaces._MappedAttribute,
     interfaces.InspectionAttr,
-    interfaces.PropComparator,
+    interfaces.PropComparator[Any],
     traversals.HasCopyInternals,
     roles.JoinTargetRole,
     roles.OnClauseRole,

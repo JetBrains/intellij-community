@@ -1,27 +1,25 @@
-from typing import Any
+from typing import Any, ClassVar
 
 import passlib.utils.handlers as uh
 
-class _BcryptCommon(uh.SubclassBackendMixin, uh.TruncateMixin, uh.HasManyIdents, uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: ignore
-    name: str
-    setting_kwds: Any
-    checksum_size: int
-    checksum_chars: Any
-    default_ident: Any
-    ident_values: Any
-    ident_aliases: Any
-    min_salt_size: int
-    max_salt_size: int
-    salt_chars: Any
-    final_salt_chars: str
-    default_rounds: int
-    min_rounds: int
-    max_rounds: int
-    rounds_cost: str
-    truncate_size: int
+class _BcryptCommon(uh.SubclassBackendMixin, uh.TruncateMixin, uh.HasManyIdents, uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: ignore[misc]
+    name: ClassVar[str]
+    checksum_size: ClassVar[int]
+    checksum_chars: ClassVar[str]
+    default_ident: ClassVar[str]
+    ident_values: ClassVar[tuple[str, ...]]
+    ident_aliases: ClassVar[dict[str, str]]
+    min_salt_size: ClassVar[int]
+    max_salt_size: ClassVar[int]
+    salt_chars: ClassVar[str]
+    final_salt_chars: ClassVar[str]
+    default_rounds: ClassVar[int]
+    min_rounds: ClassVar[int]
+    max_rounds: ClassVar[int]
+    rounds_cost: ClassVar[str]
+    truncate_size: ClassVar[int | None]
     @classmethod
     def from_string(cls, hash): ...
-    def to_string(self): ...
     @classmethod
     def needs_update(cls, hash, **kwds): ...
     @classmethod
@@ -34,19 +32,18 @@ class _PyBcryptBackend(_BcryptCommon): ...
 class _OsCryptBackend(_BcryptCommon): ...
 class _BuiltinBackend(_BcryptCommon): ...
 
-class bcrypt(_NoBackend, _BcryptCommon):  # type: ignore
-    backends: Any
+class bcrypt(_NoBackend, _BcryptCommon):  # type: ignore[misc]
+    backends: ClassVar[tuple[str, ...]]
 
 class _wrapped_bcrypt(bcrypt):
-    setting_kwds: Any
-    truncate_size: Any
+    truncate_size: ClassVar[None]
 
 class bcrypt_sha256(_wrapped_bcrypt):
-    name: str
-    ident_values: Any
-    ident_aliases: Any
-    default_ident: Any
-    version: int
+    name: ClassVar[str]
+    ident_values: ClassVar[tuple[str, ...]]
+    ident_aliases: ClassVar[dict[str, str]]
+    default_ident: ClassVar[str]
+    version: ClassVar[int]
     @classmethod
     def using(cls, version: Any | None = ..., **kwds): ...  # type: ignore[override]
     prefix: Any
@@ -54,5 +51,4 @@ class bcrypt_sha256(_wrapped_bcrypt):
     def identify(cls, hash): ...
     @classmethod
     def from_string(cls, hash): ...
-    def to_string(self): ...
     def __init__(self, version: Any | None = ..., **kwds) -> None: ...

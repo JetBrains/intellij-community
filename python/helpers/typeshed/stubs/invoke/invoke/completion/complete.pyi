@@ -1,4 +1,5 @@
-from typing import Iterable, NoReturn, Sequence
+from collections.abc import Iterable, Sequence
+from typing import NoReturn
 
 from ..collection import Collection
 from ..parser import ParserContext, ParseResult

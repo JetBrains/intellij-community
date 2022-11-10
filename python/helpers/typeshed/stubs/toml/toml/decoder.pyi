@@ -1,18 +1,13 @@
-import sys
 from _typeshed import SupportsRead
-from typing import Any, Callable, Generic, MutableMapping, Pattern, Text, TypeVar, overload
+from collections.abc import Callable, MutableMapping
+from pathlib import PurePath
+from typing import Any, Generic, Pattern, TypeVar, overload
+from typing_extensions import TypeAlias
 
 _MutableMappingT = TypeVar("_MutableMappingT", bound=MutableMapping[str, Any])
+_PathLike: TypeAlias = str | bytes | PurePath
 
-if sys.version_info >= (3, 0):
-    from pathlib import PurePath
-
-    FNFError = FileNotFoundError
-    _PathLike = str | bytes | PurePath
-else:
-    FNFError = IOError
-    _PathLike = Text
-
+FNFError = FileNotFoundError
 TIME_RE: Pattern[str]
 
 class TomlDecodeError(ValueError):
@@ -33,20 +28,20 @@ class CommentValue:
 
 @overload
 def load(
-    f: _PathLike | list[Any] | SupportsRead[Text],  # list[_PathLike] is invariance
+    f: _PathLike | list[Any] | SupportsRead[str],  # list[_PathLike] is invariance
     _dict: type[_MutableMappingT],
     decoder: TomlDecoder[_MutableMappingT] | None = ...,
 ) -> _MutableMappingT: ...
 @overload
 def load(
-    f: _PathLike | list[Any] | SupportsRead[Text],  # list[_PathLike] is invariance
+    f: _PathLike | list[Any] | SupportsRead[str],  # list[_PathLike] is invariance
     _dict: type[dict[str, Any]] = ...,
     decoder: TomlDecoder[dict[str, Any]] | None = ...,
 ) -> dict[str, Any]: ...
 @overload
-def loads(s: Text, _dict: type[_MutableMappingT], decoder: TomlDecoder[_MutableMappingT] | None = ...) -> _MutableMappingT: ...
+def loads(s: str, _dict: type[_MutableMappingT], decoder: TomlDecoder[_MutableMappingT] | None = ...) -> _MutableMappingT: ...
 @overload
-def loads(s: Text, _dict: type[dict[str, Any]] = ..., decoder: TomlDecoder[dict[str, Any]] | None = ...) -> dict[str, Any]: ...
+def loads(s: str, _dict: type[dict[str, Any]] = ..., decoder: TomlDecoder[dict[str, Any]] | None = ...) -> dict[str, Any]: ...
 
 class InlineTableDict: ...
 

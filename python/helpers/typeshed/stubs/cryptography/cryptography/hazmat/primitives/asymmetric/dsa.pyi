@@ -14,7 +14,7 @@ class DSAParametersWithNumbers(DSAParameters):
     @abstractmethod
     def parameter_numbers(self) -> DSAParameterNumbers: ...
 
-class DSAParameterNumbers(object):
+class DSAParameterNumbers:
     @property
     def p(self) -> int: ...
     @property
@@ -43,7 +43,7 @@ class DSAPrivateKeyWithSerialization(DSAPrivateKey):
     @abstractmethod
     def private_numbers(self) -> DSAPrivateNumbers: ...
 
-class DSAPrivateNumbers(object):
+class DSAPrivateNumbers:
     @property
     def x(self) -> int: ...
     @property
@@ -65,7 +65,7 @@ class DSAPublicKey(metaclass=ABCMeta):
 
 DSAPublicKeyWithSerialization = DSAPublicKey
 
-class DSAPublicNumbers(object):
+class DSAPublicNumbers:
     @property
     def y(self) -> int: ...
     @property

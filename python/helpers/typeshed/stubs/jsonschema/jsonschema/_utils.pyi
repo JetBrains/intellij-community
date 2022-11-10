@@ -1,5 +1,6 @@
 from _typeshed import SupportsKeysAndGetItem
-from typing import Any, Generator, Iterable, Iterator, Mapping, MutableMapping, Sized
+from collections.abc import Generator, Iterable, Iterator, Mapping, MutableMapping, Sized
+from typing import Any
 
 class URIDict(MutableMapping[str, str]):
     def normalize(self, uri: str) -> str: ...

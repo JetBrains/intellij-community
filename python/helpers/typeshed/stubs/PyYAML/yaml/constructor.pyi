@@ -1,9 +1,10 @@
-from typing import Any, Pattern, Union
+from typing import Any, Pattern
+from typing_extensions import TypeAlias
 
 from yaml.error import MarkedYAMLError
 from yaml.nodes import ScalarNode
 
-_Scalar = Union[str, int, float, bool, None]
+_Scalar: TypeAlias = str | int | float | bool | None
 
 class ConstructorError(MarkedYAMLError): ...
 

@@ -1,8 +1,9 @@
-from typing import Callable
+from collections.abc import Callable
+from typing_extensions import TypeAlias
 
 from .dammit import EntitySubstitution as EntitySubstitution
 
-_EntitySubstitution = Callable[[str], str]
+_EntitySubstitution: TypeAlias = Callable[[str], str]
 
 class Formatter(EntitySubstitution):
     HTML: str

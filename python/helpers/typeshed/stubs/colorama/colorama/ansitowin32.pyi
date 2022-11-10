@@ -1,6 +1,8 @@
 import sys
 from _typeshed import SupportsWrite
-from typing import Any, Callable, Optional, Pattern, Sequence, TextIO, Union
+from types import TracebackType
+from typing import Any, Callable, Pattern, Sequence, TextIO
+from typing_extensions import TypeAlias
 
 if sys.platform == "win32":
     from .winterm import WinTerm
@@ -13,14 +15,16 @@ class StreamWrapper:
     def __init__(self, wrapped: TextIO, converter: SupportsWrite[str]) -> None: ...
     def __getattr__(self, name: str) -> Any: ...
     def __enter__(self, *args: object, **kwargs: object) -> TextIO: ...
-    def __exit__(self, *args: Any, **kwargs: Any) -> None: ...
+    def __exit__(
+        self, __t: type[BaseException] | None, __value: BaseException | None, __traceback: TracebackType | None, **kwargs: Any
+    ) -> None: ...
     def write(self, text: str) -> None: ...
     def isatty(self) -> bool: ...
     @property
     def closed(self) -> bool: ...
 
-_WinTermCall = Callable[[Optional[int], bool, bool], None]
-_WinTermCallDict = dict[int, Union[tuple[_WinTermCall], tuple[_WinTermCall, int], tuple[_WinTermCall, int, bool]]]
+_WinTermCall: TypeAlias = Callable[[int | None, bool, bool], None]
+_WinTermCallDict: TypeAlias = dict[int, tuple[_WinTermCall] | tuple[_WinTermCall, int] | tuple[_WinTermCall, int, bool]]
 
 class AnsiToWin32:
     ANSI_CSI_RE: Pattern[str] = ...
