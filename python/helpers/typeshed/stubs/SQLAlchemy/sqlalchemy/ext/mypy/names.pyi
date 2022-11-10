@@ -1,16 +1,16 @@
 from typing import Any
+from typing_extensions import TypeAlias
 
 from ...util import symbol
 
-ClassDef = Any  # from mypy.nodes
-Expression = Any  # from mypy.nodes
-MemberExpr = Any  # from mypy.nodes
-NameExpr = Any  # from mypy.nodes
-SymbolNode = Any  # from mypy.nodes
-TypeInfo = Any  # from mypy.nodes
-StrExpr = Any  # from mypy.nodes
-SemanticAnalyzerPluginInterface = Any  # from mypy.plugin
-UnboundType = Any  # from mypy.types
+_ClassDef: TypeAlias = Any  # mypy.nodes.ClassDef
+_Expression: TypeAlias = Any  # mypy.nodes.Expression
+_MemberExpr: TypeAlias = Any  # mypy.nodes.MemberExpr
+_NameExpr: TypeAlias = Any  # mypy.nodes.NameExpr
+_SymbolNode: TypeAlias = Any  # mypy.nodes.SymbolNode
+_TypeInfo: TypeAlias = Any  # mypy.nodes.TypeInfo
+_SemanticAnalyzerPluginInterface: TypeAlias = Any  # mypy.plugin.SemanticAnalyzerPluginInterface
+_UnboundType: TypeAlias = Any  # mypy.types.UnboundType
 
 COLUMN: symbol
 RELATIONSHIP: symbol
@@ -30,9 +30,9 @@ AS_DECLARATIVE_BASE: symbol
 DECLARATIVE_MIXIN: symbol
 QUERY_EXPRESSION: symbol
 
-def has_base_type_id(info: TypeInfo, type_id: int) -> bool: ...
-def mro_has_id(mro: list[TypeInfo], type_id: int) -> bool: ...
-def type_id_for_unbound_type(type_: UnboundType, cls: ClassDef, api: SemanticAnalyzerPluginInterface) -> int | None: ...
-def type_id_for_callee(callee: Expression) -> int | None: ...
-def type_id_for_named_node(node: NameExpr | MemberExpr | SymbolNode) -> int | None: ...
+def has_base_type_id(info: _TypeInfo, type_id: int) -> bool: ...
+def mro_has_id(mro: list[_TypeInfo], type_id: int) -> bool: ...
+def type_id_for_unbound_type(type_: _UnboundType, cls: _ClassDef, api: _SemanticAnalyzerPluginInterface) -> int | None: ...
+def type_id_for_callee(callee: _Expression) -> int | None: ...
+def type_id_for_named_node(node: _NameExpr | _MemberExpr | _SymbolNode) -> int | None: ...
 def type_id_for_fullname(fullname: str) -> int | None: ...

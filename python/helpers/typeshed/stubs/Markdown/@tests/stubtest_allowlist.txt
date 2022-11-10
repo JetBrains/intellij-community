@@ -9,3 +9,4 @@ markdown.extensions.legacy_attrs.LegacyAttrs.run
 markdown.extensions.toc.TocTreeprocessor.run
 markdown.extensions.toc.slugify
 markdown.preprocessors.ReferencePreprocessor
+markdown.postprocessors.UnescapePostprocessor  # deprecated

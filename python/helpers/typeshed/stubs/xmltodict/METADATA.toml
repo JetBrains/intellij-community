@@ -1,1 +1,4 @@
-version = "0.12.*"
+version = "0.13.*"
+
+[tool.stubtest]
+ignore_missing_stub = false

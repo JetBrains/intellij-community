@@ -1,4 +1,4 @@
-from typing import Any, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 
 from ..sql.operators import ColumnOperators
 from ..util import memoized_property
@@ -37,7 +37,7 @@ class CompositeProperty(DescriptorProperty):
         def create_row_processor(self, query, procs, labels): ...
 
     class Comparator(PropComparator[_T], Generic[_T]):
-        __hash__: Any
+        __hash__: ClassVar[None]  # type: ignore[assignment]
         @memoized_property
         def clauses(self): ...
         def __clause_element__(self): ...

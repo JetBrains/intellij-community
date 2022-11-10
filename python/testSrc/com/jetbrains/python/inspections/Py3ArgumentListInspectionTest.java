@@ -104,4 +104,14 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                        BAR = enum.auto()
                    """);
   }
+
+  // PY-27398
+  public void testInitializingDataclass() {
+    doMultiFileTest();
+  }
+
+  // PY-28957
+  public void testDataclassesReplace() {
+    doMultiFileTest();
+  }
 }

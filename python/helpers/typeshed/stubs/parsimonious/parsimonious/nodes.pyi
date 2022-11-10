@@ -1,5 +1,6 @@
 from collections.abc import Callable, Iterator, Sequence
-from typing import Any, Match, NoReturn, TypeVar
+from re import Match
+from typing import Any, NoReturn, TypeVar
 
 from parsimonious.exceptions import VisitationError as VisitationError
 from parsimonious.expressions import Expression

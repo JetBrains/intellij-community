@@ -1,5 +1,3 @@
-from typing import Any
-
 from stripe.api_resources.abstract import (
     ListableAPIResource as ListableAPIResource,
     UpdateableAPIResource as UpdateableAPIResource,
@@ -8,5 +6,5 @@ from stripe.api_resources.abstract import (
 
 class Authorization(ListableAPIResource, UpdateableAPIResource):
     OBJECT_NAME: str
-    def approve(self, idempotency_key: Any | None = ..., **params): ...
-    def decline(self, idempotency_key: Any | None = ..., **params): ...
+    def approve(self, idempotency_key: str | None = ..., **params): ...
+    def decline(self, idempotency_key: str | None = ..., **params): ...

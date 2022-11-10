@@ -96,7 +96,7 @@ PGUuid = UUID
 class TSVECTOR(sqltypes.TypeEngine):
     __visit_name__: str
 
-class ENUM(sqltypes.NativeForEmulated, sqltypes.Enum):  # type: ignore  # base classes incompatible
+class ENUM(sqltypes.NativeForEmulated, sqltypes.Enum):  # type: ignore[misc]  # base classes incompatible
     native_enum: bool
     create_type: Any
     def __init__(self, *enums, **kw) -> None: ...

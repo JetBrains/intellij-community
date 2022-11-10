@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Pattern
+from re import Pattern
 from typing_extensions import TypedDict
 
 class _FinalResultType(TypedDict):

@@ -1,4 +1,7 @@
-from typing import Any
+from collections.abc import Callable, Mapping
+from hashlib import _Hash
+
+from .backends.base import Key
 
 class Algorithms:
     NONE: str
@@ -56,14 +59,14 @@ class Algorithms:
     GCM: set[str]
     SUPPORTED: set[str]
     ALL: set[str]
-    HASHES: Any
-    KEYS: Any
+    HASHES: Mapping[str, Callable[[bytes], _Hash]]
+    KEYS: Mapping[str, type[Key]]
 
-ALGORITHMS: Any
+ALGORITHMS: Algorithms
 
 class Zips:
     DEF: str
-    NONE: Any
-    SUPPORTED: Any
+    NONE: None
+    SUPPORTED: set[str | None]
 
-ZIPS: Any
+ZIPS: Zips

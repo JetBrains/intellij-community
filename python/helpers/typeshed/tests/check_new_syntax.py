@@ -44,10 +44,14 @@ def check_new_syntax(tree: ast.AST, path: Path, stub: str) -> list[str]:
     class OldSyntaxFinder(ast.NodeVisitor):
         def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
             AnnotationUnionFinder().visit(node.annotation)
+            if node.value is not None:
+                NonAnnotationUnionFinder().visit(node.value)
+            self.generic_visit(node)
 
         def visit_arg(self, node: ast.arg) -> None:
             if node.annotation is not None:
                 AnnotationUnionFinder().visit(node.annotation)
+            self.generic_visit(node)
 
         def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
             if node.returns is not None:
@@ -62,28 +66,12 @@ def check_new_syntax(tree: ast.AST, path: Path, stub: str) -> list[str]:
 
         def visit_Assign(self, node: ast.Assign) -> None:
             NonAnnotationUnionFinder().visit(node.value)
+            self.generic_visit(node)
 
         def visit_ClassDef(self, node: ast.ClassDef) -> None:
             for base in node.bases:
                 NonAnnotationUnionFinder().visit(base)
-
-    class ObjectClassdefFinder(ast.NodeVisitor):
-        def visit_ClassDef(self, node: ast.ClassDef) -> None:
-            if any(isinstance(base, ast.Name) and base.id == "object" for base in node.bases):
-                errors.append(
-                    f"{path}:{node.lineno}: Do not inherit from `object` explicitly, "
-                    f"as all classes implicitly inherit from `object` in Python 3"
-                )
             self.generic_visit(node)
-
-    class TextFinder(ast.NodeVisitor):
-        def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-            if node.module == "typing" and any(thing.name == "Text" for thing in node.names):
-                errors.append(f"{path}:{node.lineno}: Use `str` instead of `typing.Text` in a Python-3-only stub.")
-
-        def visit_Attribute(self, node: ast.Attribute) -> None:
-            if isinstance(node.value, ast.Name) and node.value.id == "typing" and node.attr == "Text":
-                errors.append(f"{path}:{node.lineno}: Use `str` instead of `typing.Text` in a Python-3-only stub.")
 
     class IfFinder(ast.NodeVisitor):
         def visit_If(self, node: ast.If) -> None:
@@ -99,10 +87,6 @@ def check_new_syntax(tree: ast.AST, path: Path, stub: str) -> list[str]:
                     f"put the code for new Python versions first, e.g. `{new_syntax}`"
                 )
             self.generic_visit(node)
-
-    ObjectClassdefFinder().visit(tree)
-    if path != Path("stdlib/typing_extensions.pyi"):
-        TextFinder().visit(tree)
 
     OldSyntaxFinder().visit(tree)
     IfFinder().visit(tree)

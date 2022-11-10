@@ -89,6 +89,7 @@ class ForeignKey(DialectKWArgs, SchemaItem):
         link_to_name: bool = ...,
         match: Any | None = ...,
         info: Any | None = ...,
+        _unresolvable: bool = ...,
         **dialect_kw,
     ) -> None: ...
     def copy(self, schema: Any | None = ..., **kw): ...

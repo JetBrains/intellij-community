@@ -1,23 +1,24 @@
 from typing import Any
+from typing_extensions import TypeAlias
 
 # Enable when pyasn1 gets stubs:
 # from pyasn1.type.univ import Sequence
-Sequence = Any
+_Sequence: TypeAlias = Any
 
-class SicilyBindResponse(Sequence):
+class SicilyBindResponse(_Sequence):
     tagSet: Any
     componentType: Any
 
-class DirSyncControlRequestValue(Sequence):
+class DirSyncControlRequestValue(_Sequence):
     componentType: Any
 
-class DirSyncControlResponseValue(Sequence):
+class DirSyncControlResponseValue(_Sequence):
     componentType: Any
 
-class SdFlags(Sequence):
+class SdFlags(_Sequence):
     componentType: Any
 
-class ExtendedDN(Sequence):
+class ExtendedDN(_Sequence):
     componentType: Any
 
 def dir_sync_control(criticality, object_security, ancestors_first, public_data_only, incremental_values, max_length, cookie): ...
