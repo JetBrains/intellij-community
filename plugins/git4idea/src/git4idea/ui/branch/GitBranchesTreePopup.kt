@@ -6,6 +6,7 @@ import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -176,7 +177,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun installRepoListener() {
     project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
       runInEdt {
+        val state = TreeState.createOn(tree)
         applySearchPattern()
+        state.applyTo(tree)
       }
     })
   }
