@@ -72,6 +72,8 @@ public class MarkdownSyntaxHighlighter extends SyntaxHighlighterBase {
     safeMap(ATTRIBUTES, MarkdownElementTypes.DEFINITION_MARKER, MarkdownHighlighterColors.DEFINITION_LIST_MARKER);
     safeMap(ATTRIBUTES, MarkdownElementTypes.DEFINITION, MarkdownHighlighterColors.DEFINITION);
     safeMap(ATTRIBUTES, MarkdownElementTypes.DEFINITION_TERM, MarkdownHighlighterColors.TERM);
+
+    safeMap(ATTRIBUTES, MarkdownElementTypes.FRONT_MATTER_HEADER_DELIMITER, MarkdownHighlighterColors.FRONT_MATTER_HEADER_DELIMITER);
   }
 
   @Override
