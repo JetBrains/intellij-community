@@ -14,6 +14,7 @@ import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBColor
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
@@ -119,6 +120,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           LoggedInPredicate().and(EnabledPredicate())
           disableSync()
         }.visibleIf(isSyncEnabled)
+        bottomGap(BottomGap.MEDIUM)
       }
       row {
         cell(categoriesPanel)

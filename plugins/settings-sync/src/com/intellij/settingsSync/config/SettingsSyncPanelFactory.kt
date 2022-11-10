@@ -24,49 +24,50 @@ internal object SettingsSyncPanelFactory {
       }
 
       SettingsCategoryDescriptor.listAll().forEach { descriptor ->
-        row {
-          if (descriptor.secondaryGroup == null) {
-            checkBox(
-              descriptor.name
-            )
-              .bindSelected({ descriptor.isSynchronized },
-                            { descriptor.isSynchronized = it })
-              .onReset { descriptor.reset() }
-              .onApply { descriptor.apply() }
-              .onIsModified { descriptor.isModified() }
-            comment(descriptor.description)
-          }
-          else {
-            val topCheckBox = ThreeStateCheckBox(descriptor.name)
-            topCheckBox.isThirdStateEnabled = false
-            val subcategoryLink = configureLink(descriptor.secondaryGroup) {
-              topCheckBox.state = getGroupState(descriptor)
-              descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+        indent {
+          row {
+            if (descriptor.secondaryGroup == null) {
+              checkBox(
+                descriptor.name
+              )
+                .bindSelected({ descriptor.isSynchronized },
+                              { descriptor.isSynchronized = it })
+                .onReset { descriptor.reset() }
+                .onApply { descriptor.apply() }
+                .onIsModified { descriptor.isModified() }
+              comment(descriptor.description)
             }
-            topCheckBox.addActionListener {
-              descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-              descriptor.secondaryGroup.getDescriptors().forEach {
-                it.isSelected = descriptor.isSynchronized
-              }
-              subcategoryLink.isEnabled = descriptor.secondaryGroup.isComplete() || descriptor.isSynchronized
-            }
-            cell(topCheckBox)
-              .onReset {
-                descriptor.reset()
+            else {
+              val topCheckBox = ThreeStateCheckBox(descriptor.name)
+              topCheckBox.isThirdStateEnabled = false
+              cell(topCheckBox)
+                .onReset {
+                  descriptor.reset()
+                  topCheckBox.state = getGroupState(descriptor)
+                }
+                .onApply {
+                  descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                  descriptor.apply()
+                }
+                .onIsModified { descriptor.isModified() }
+              val c = comment(descriptor.description)
+              val subcategoryLink = configureLink(descriptor.secondaryGroup, c.component.font.size2D) {
                 topCheckBox.state = getGroupState(descriptor)
-              }
-              .onApply {
                 descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-                descriptor.apply()
               }
-              .onIsModified { descriptor.isModified() }
-            comment(descriptor.description)
-            cell(subcategoryLink)
-              .visible(descriptor.secondaryGroup.getDescriptors().size > 1 || !descriptor.secondaryGroup.isComplete())
+              cell(subcategoryLink)
+                .visible(descriptor.secondaryGroup.getDescriptors().size > 1 || !descriptor.secondaryGroup.isComplete())
+              topCheckBox.addActionListener {
+                descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                descriptor.secondaryGroup.getDescriptors().forEach {
+                  it.isSelected = descriptor.isSynchronized
+                }
+                subcategoryLink.isEnabled = descriptor.secondaryGroup.isComplete() || descriptor.isSynchronized
+              }
+            }
+
           }
-
         }
-
       }
     }
   }
@@ -90,8 +91,11 @@ internal object SettingsSyncPanelFactory {
     }
   }
 
-  private fun configureLink(group: SettingsSyncSubcategoryGroup, onCheckBoxChange: () -> Unit): JComponent {
+  private fun configureLink(group: SettingsSyncSubcategoryGroup,
+                            fontSize: Float,
+                            onCheckBoxChange: () -> Unit): JComponent {
     val actionLink = ActionLink(message("subcategory.config.link")) {}
+    actionLink.withFont(actionLink.font.deriveFont(fontSize))
     actionLink.addActionListener {
       showSubcategories(actionLink, group.getDescriptors(), onCheckBoxChange)
     }
