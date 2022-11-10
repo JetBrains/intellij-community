@@ -3,21 +3,42 @@ package com.intellij.openapi.project.ex
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import kotlin.io.path.name
 
 abstract class ProjectManagerEx : ProjectManager() {
+  enum class PerProjectState {
+    DISABLED,
+    READY,
+    ENABLED,
+  }
 
   companion object {
 
-    @Experimental
+    private const val perProjectOptionName = "ide.per.project.instance"
+
     @JvmField
-    val IS_PER_PROJECT_INSTANCE_ENABLED: Boolean = java.lang.Boolean.getBoolean("ide.per.project.instance")
+    @Experimental
+    val IS_PER_PROJECT_INSTANCE_READY: Boolean = System.getProperty(perProjectOptionName)?.let {
+        SystemInfo.isMac && PerProjectState.valueOf(it) != PerProjectState.DISABLED
+      } ?: false
+
+    @JvmField
+    @Experimental
+    val IS_PER_PROJECT_INSTANCE_ENABLED: Boolean = System.getProperty(perProjectOptionName)?.let {
+        IS_PER_PROJECT_INSTANCE_READY && PerProjectState.valueOf(it) == PerProjectState.ENABLED
+      } ?: false
+
+    val IS_CHILD_PROCESS: Boolean by lazy { isChildProcessPath(PathManager.getSystemDir()) }
+
+    @Experimental
+    const val PER_PROJECT_SUFFIX = "INTERNAL_perProject"
 
     @JvmStatic
     fun getInstanceEx(): ProjectManagerEx = ApplicationManager.getApplication().getService(ProjectManager::class.java) as ProjectManagerEx
@@ -33,7 +54,7 @@ abstract class ProjectManagerEx : ProjectManager() {
 
     @Experimental
     @JvmStatic
-    fun isChildProcessPath(path: Path): Boolean = path.name.startsWith("perProject_")
+    fun isChildProcessPath(path: Path): Boolean = path.toString().contains(PER_PROJECT_SUFFIX)
   }
 
   @Suppress("UNUSED_PARAMETER")

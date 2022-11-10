@@ -63,6 +63,14 @@ public final class PathManager {
   private static String ourPluginsPath;
   private static String ourLogPath;
 
+  private static final ArrayList<Path> ourPerProjectLockedPaths = new ArrayList<>();
+
+  public static void lockPerProjectPath(Path path) { ourPerProjectLockedPaths.add(path); }
+
+  public static void unlockPerProjectPath(Path path) { ourPerProjectLockedPaths.remove(path); }
+
+  public static @NotNull List<Path> getPerProjectLockedPaths() { return ourPerProjectLockedPaths; }
+
   // IDE installation paths
 
   public static @NotNull String getHomePath() {

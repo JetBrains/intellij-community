@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.*
 import com.intellij.openapi.startup.ProjectPostStartupActivity
@@ -420,6 +419,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     nameResolver.request()
     val name = PathUtilRt.getFileName(path)
     return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
+  }
+
+  fun isLastOpened(path: String): Boolean {
+    return lastOpenedProjects.any { e -> e.key == path }
   }
 
   override fun willReopenProjectOnStart(): Boolean {

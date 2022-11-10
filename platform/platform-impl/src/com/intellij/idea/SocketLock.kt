@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.CliResult
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SpecialConfigFiles
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -20,10 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.MessageDecoder
-import java.io.DataInput
-import java.io.DataInputStream
-import java.io.DataOutputStream
-import java.io.IOException
+import java.io.*
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.Socket
@@ -337,7 +335,7 @@ private class MyChannelInboundHandler(lockedPaths: Array<Path>,
   private var state = State.HEADER
 
   override fun channelActive(context: ChannelHandlerContext) {
-    sendStringSequence(context, lockedPaths)
+    sendStringSequence(context, lockedPaths + PathManager.getPerProjectLockedPaths().joinToString() )
   }
 
   override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {

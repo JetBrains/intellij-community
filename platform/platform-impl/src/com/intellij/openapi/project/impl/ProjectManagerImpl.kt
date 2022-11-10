@@ -20,6 +20,7 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
+import com.intellij.idea.canonicalPath
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
@@ -59,6 +60,7 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
+import com.intellij.util.Restarter
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
@@ -70,10 +72,12 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
+import kotlin.io.path.div
 
 @Suppress("OVERRIDE_DEPRECATION")
 @Internal
@@ -86,38 +90,44 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return project is ProjectEx && project.isLight
     }
 
-    private fun openProjectInstanceCommand(
-      projectStoreBaseDir: Path,
-      isChildProcess: Boolean,
-    ): List<String> {
-      val customProperties = mapOf(
-        PathManager.PROPERTY_SYSTEM_PATH to PathManager.getSystemDir(),
-        PathManager.PROPERTY_CONFIG_PATH to PathManager.getConfigDir(),
-        PathManager.PROPERTY_LOG_PATH to PathManager.getLogDir(),
-        PathManager.PROPERTY_PLUGINS_PATH to PathManager.getPluginsDir(),
-      ).mapValuesTo(mutableMapOf()) { (key, value) ->
-        val pathResolver: (String) -> Path = if (isChildProcess) value::resolveSibling else value::resolve
-        "-D$key=${pathResolver("perProject_${projectStoreBaseDir.fileName}")}"
-      }
+    private fun readOneLine(file: Path) = Files.newBufferedReader(file).use { it.readLine().trim() }
 
-      val command = ArrayList<String>()
-      command += """${System.getProperty("java.home")}${File.separatorChar}bin${File.separatorChar}java"""
-      command += "-cp"
-      command += System.getProperty("java.class.path")
+    private fun copyLineFromFileToNewSystemDir(fileName: String, systemDir: Path) {
+      val line = readOneLine(PathManager.getSystemDir().resolve(fileName))
+      val newPath = systemDir.resolve(fileName)
+      File(newPath.parent.toUri()).mkdirs()
+      Files.write(newPath, line.toByteArray(StandardCharsets.UTF_8))
+    }
 
-      for (vmOption in VMOptions.readOptions("", true)) {
-        command += vmOption.asPatchedAgentLibOption()
-                   ?: vmOption.asPatchedVMOption("splash", "false")
-                   ?: vmOption.asPatchedVMOption("nosplash", "true")
-                   ?: vmOption.asPatchedVMOption(ConfigImportHelper.SHOW_IMPORT_CONFIG_DIALOG_PROPERTY, "default-production")
-                   ?: customProperties.keys.firstOrNull { vmOption.isVMOption(it) }?.let { customProperties.remove(it) }
-                   ?: vmOption
-      }
+    // TODO actual FileLocks?
+    private fun lockPerProjectDirForProject(
+      systemDir: Path,
+    ) {
+      // copy current token
+      copyLineFromFileToNewSystemDir(SpecialConfigFiles.TOKEN_FILE, systemDir)
 
-      command += customProperties.values
-      command += System.getProperty("idea.main.class.name", "com.intellij.idea.Main")
-      command += projectStoreBaseDir.toString()
-      return command
+      // copy current port
+      copyLineFromFileToNewSystemDir(SpecialConfigFiles.PORT_FILE, systemDir)
+
+      PathManager.lockPerProjectPath(systemDir)
+    }
+
+    private fun deleteFileFromNewSystemDir(fileName: String, systemDir: Path) {
+      val filePath = systemDir.resolve(fileName)
+      if (filePath.exists()) Files.delete(filePath)
+    }
+
+    // TODO actual FileLocks?
+    private fun clearPerProjectDirsForProject(
+      systemDir: Path,
+    ) {
+      PathManager.unlockPerProjectPath(systemDir)
+
+      // delete current token
+      deleteFileFromNewSystemDir(SpecialConfigFiles.TOKEN_FILE, systemDir)
+
+      // delete current port
+      deleteFileFromNewSystemDir(SpecialConfigFiles.PORT_FILE, systemDir)
     }
 
     private fun String.isVMOption(key: String) = startsWith("-D$key=")
@@ -158,6 +168,52 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       catch (e: NumberFormatException) {
         null
       }
+    }
+
+    private fun Path.toPerProjectDir(projectStoreBaseDir: Path): Path {
+      val projectStoreBaseDirRelative = Paths.get("/").relativize(projectStoreBaseDir)
+      return this / PER_PROJECT_SUFFIX / projectStoreBaseDirRelative
+    }
+
+    private fun Path.removePerProjectSuffix(currentProjectBaseDir: Path): Path {
+      val projectStoreBaseDirRelative = Paths.get("/").relativize(currentProjectBaseDir)
+      val suffix = PER_PROJECT_SUFFIX + File.separator + projectStoreBaseDirRelative
+      return canonicalPath(this.toString().removeSuffix(suffix))
+    }
+
+    private fun openProjectInstanceCommand(
+      projectStoreBaseDir: Path,
+    ): List<String> {
+      return listOf(
+      "open",
+      "-n",
+      Restarter.getIdeStarter().toString(),
+      "--args",
+
+      *(mapOf(
+          PathManager.PROPERTY_SYSTEM_PATH to PathManager.getSystemDir(),
+          PathManager.PROPERTY_CONFIG_PATH to PathManager.getConfigDir(),
+          PathManager.PROPERTY_LOG_PATH to PathManager.getLogDir(),
+          PathManager.PROPERTY_PLUGINS_PATH to PathManager.getPluginsDir(),
+        ).mapValuesTo(mutableMapOf()) { (key, value) ->
+          val currentProjectBaseDir = Paths.get(getOpenProjects().first().basePath ?: "")
+          val baseDir = if (IS_CHILD_PROCESS) value.removePerProjectSuffix(currentProjectBaseDir) else value
+
+          "-D$key=${baseDir.toPerProjectDir(projectStoreBaseDir)}"
+        }.values.toTypedArray()
+       ),
+
+      //for (vmOption in VMOptions.readOptions("", true)) {
+      //  command += vmOption.asPatchedAgentLibOption()
+      //             ?: vmOption.asPatchedVMOption("splash", "false")
+      //             ?: vmOption.asPatchedVMOption("nosplash", "true")
+      //             ?: vmOption.asPatchedVMOption(ConfigImportHelper.SHOW_IMPORT_CONFIG_DIALOG_PROPERTY, "default-production")
+      //             ?: customProperties.keys.firstOrNull { vmOption.isVMOption(it) }?.let { customProperties.remove(it) }
+      //             ?: vmOption
+      //}
+
+      projectStoreBaseDir.toString(),
+      )
     }
   }
 
@@ -221,6 +277,22 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
       }
     })
+
+    // register unlocking perProject dirs action
+    if (IS_PER_PROJECT_INSTANCE_READY) {
+      connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosed(project: Project) {
+          if (IS_CHILD_PROCESS) {
+            clearPerProjectDirsForProject(PathManager.getSystemDir())
+          }
+          else {
+            clearPerProjectDirsForProject(PathManager.getSystemDir().toPerProjectDir(Paths.get(project.basePath!!)))
+          }
+        }
+      }
+      )
+    }
+
     excludeRootsCache = ExcludeRootsCache(connection)
   }
 
@@ -571,25 +643,19 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return null
     }
 
-    val isChildProcess = isChildProcessPath(PathManager.getSystemDir())
-    val shouldOpenInChildProcess = !isChildProcess && IS_PER_PROJECT_INSTANCE_ENABLED
-                                   || isChildProcess && openProjects.isNotEmpty()
+    val shouldOpenInChildProcess = IS_PER_PROJECT_INSTANCE_ENABLED && openProjects.isNotEmpty() &&
+                                   // Do not reopen previously opened projects in new instances
+                                   !RecentProjectsManagerBase.getInstanceEx().isLastOpened(projectStoreBaseDir.toString())
     if (shouldOpenInChildProcess) {
       try {
         withContext(Dispatchers.IO) {
-          ProcessBuilder(openProjectInstanceCommand(projectStoreBaseDir, isChildProcess))
+          ProcessBuilder(openProjectInstanceCommand(projectStoreBaseDir))
             .redirectErrorStream(true)
             .redirectOutput(ProcessBuilder.Redirect.appendTo(PathManager.getLogDir().resolve("idea.log").toFile()))
             .start()
             .also {
               LOG.info("Child process started, PID: ${it.pid()}")
             }
-        }
-
-        withContext(Dispatchers.EDT) {
-          if (!isChildProcess) {
-            applicationEx.exit(true, true)
-          }
         }
       }
       catch (e: CancellationException) {
@@ -600,6 +666,15 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
 
       return null
+    }
+
+    // if we are opening project in current process (not yet PER_PROJECT), lock per-project directory
+    if (IS_PER_PROJECT_INSTANCE_READY) {
+      if (IS_CHILD_PROCESS) {
+        lockPerProjectDirForProject(PathManager.getSystemDir())
+      } else {
+        lockPerProjectDirForProject(PathManager.getSystemDir().toPerProjectDir(projectStoreBaseDir))
+      }
     }
 
     val activity = StartUpMeasurer.startActivity("project opening preparation")
