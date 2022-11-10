@@ -9215,6 +9215,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testFunction() throws Exception {
             runTest("testData/quickfix/inlineTypeParameterFix/function.kt");
         }
+
+        @TestMetadata("typeConstraint.kt")
+        public void testTypeConstraint() throws Exception {
+            runTest("testData/quickfix/inlineTypeParameterFix/typeConstraint.kt");
+        }
+
+        @TestMetadata("typeConstraintMultipleDef.kt")
+        public void testTypeConstraintMultipleDef() throws Exception {
+            runTest("testData/quickfix/inlineTypeParameterFix/typeConstraintMultipleDef.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
