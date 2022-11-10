@@ -675,7 +675,7 @@
     <customVcsLogUiFactoryProvider implementation="git4idea.ui.branch.dashboard.BranchesInGitLogUiFactoryProvider"/>
     <virtualFileSystem key="git-compare-branches" implementationClass="git4idea.branch.GitCompareBranchesVirtualFileSystem"/>
 
-    <statusBarWidgetFactory implementation="git4idea.light.LightGitStatusBarWidgetFactory"/>
+    <statusBarWidgetFactory id="light.edit.git" implementation="git4idea.light.LightGitStatusBarWidgetFactory"/>
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
     <statusBarWidgetFactory id="gitWidget"
                             implementation="git4idea.ui.branch.GitBranchWidget$Factory"
