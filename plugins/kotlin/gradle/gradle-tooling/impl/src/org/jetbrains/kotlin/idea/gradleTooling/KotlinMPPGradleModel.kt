@@ -21,6 +21,9 @@ interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
 
     override val sourceSetsByName: Map<String, KotlinSourceSet>
 
+    @KotlinGradlePluginVersionDependentApi
+    val dependencies: IdeaKotlinDependenciesContainer?
+
     val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer
     val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 
