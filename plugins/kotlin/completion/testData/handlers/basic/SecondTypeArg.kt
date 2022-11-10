@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo() {
     val v = HashMap<String, H<caret>
 }
