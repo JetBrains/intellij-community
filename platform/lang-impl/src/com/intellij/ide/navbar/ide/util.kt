@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.problems.ProblemListener
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.awt.AWTEvent
+import java.awt.Window
 import java.awt.event.MouseEvent
 import kotlin.coroutines.resume
 
@@ -50,7 +52,7 @@ internal fun activityFlow(project: Project): Flow<Unit> {
     }
 
     IdeEventQueue.getInstance().addActivityListener(Runnable {
-      if (!skipActivityEvent(IdeEventQueue.getCurrentEvent())) {
+      if (!skipActivityEvent(IdeEventQueue.getCurrentEvent(), project)) {
         fire()
       }
     }, disposable)
@@ -76,7 +78,14 @@ internal fun activityFlow(project: Project): Flow<Unit> {
   }.buffer(Channel.CONFLATED)
 }
 
-private fun skipActivityEvent(e: AWTEvent): Boolean {
+private fun skipActivityEvent(e: AWTEvent, project: Project): Boolean {
+
+  val window: Window? = WindowManager.getInstance().getFrame(project)
+  if (window != null && !window.isFocused) {
+    // IDEA-304798 Skip event when window is out of focus (user is in a popup)
+    return true
+  }
+
   if (e is MouseEvent && (e.id == MouseEvent.MOUSE_PRESSED || e.id == MouseEvent.MOUSE_RELEASED)) {
     return true
   }
