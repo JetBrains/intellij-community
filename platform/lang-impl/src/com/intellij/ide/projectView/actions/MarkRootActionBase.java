@@ -124,8 +124,8 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
         selection.mySelectedExcludeRoots.add(excludeFolder);
         continue;
       }
-      SourceFolder folder = ProjectRootsUtil.findSourceFolder(module, file);
-      if (folder != null) {
+      SourceFolder folder = ProjectRootsUtil.getModuleSourceRoot(file, module.getProject());
+      if (folder != null && folder.getContentEntry().getRootModel().getModule().equals(module)) {
         selection.mySelectedRoots.add(folder);
       }
       else {

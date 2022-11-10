@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -61,17 +60,7 @@ public final class JavaProjectRootsUtil {
   }
 
   public static boolean isInGeneratedCode(@NotNull VirtualFile file, @NotNull Project project) {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    Module module = fileIndex.getModuleForFile(file);
-    if (module == null || module.isDisposed()) {
-      return false;
-    }
-
-    VirtualFile sourceRoot = fileIndex.getSourceRootForFile(file);
-    if (sourceRoot == null) return false;
-
-    SourceFolder folder = ProjectRootsUtil.findSourceFolder(module, sourceRoot);
-    return folder != null && isForGeneratedSources(folder);
+    return ProjectFileIndex.getInstance(project).isInGeneratedSources(file);
   }
 
   @NotNull

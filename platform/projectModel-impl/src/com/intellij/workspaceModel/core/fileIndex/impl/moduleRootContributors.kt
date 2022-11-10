@@ -32,10 +32,13 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
     if (module != null) {
       val contentRoot = entity.contentRoot.url.virtualFile
       val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT
-      val packagePrefix = entity.asJavaSourceRoot()?.packagePrefix 
-                          ?: entity.asJavaResourceRoot()?.relativeOutputPath?.replace('/', '.') 
+      val javaProperties = entity.asJavaSourceRoot()
+      val resourceProperties = entity.asJavaResourceRoot()
+      val packagePrefix = javaProperties?.packagePrefix
+                          ?: resourceProperties?.relativeOutputPath?.replace('/', '.')
                           ?: ""
-      registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootType, packagePrefix))
+      val forGeneratedSources = javaProperties != null && javaProperties.generated || resourceProperties != null && resourceProperties.generated
+      registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootType, packagePrefix, forGeneratedSources))
       registrar.registerExclusionPatterns(entity.url, entity.contentRoot.excludedPatterns, entity)
     }
   }
@@ -75,5 +78,6 @@ internal data class ModuleSourceRootData(
   override val module: Module,
   override val customContentRoot: VirtualFile?,
   val rootType: String,
-  override val packagePrefix: String
+  override val packagePrefix: String,
+  val forGeneratedSources: Boolean
 ) : ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData, JvmPackageRootData

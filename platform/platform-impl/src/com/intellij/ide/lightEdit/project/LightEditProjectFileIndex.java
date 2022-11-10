@@ -160,4 +160,9 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
   public @Nullable JpsModuleSourceRootType<?> getContainingSourceRootType(@NotNull VirtualFile file) {
     return null;
   }
+
+  @Override
+  public boolean isInGeneratedSources(@NotNull VirtualFile file) {
+    return false;
+  }
 }
