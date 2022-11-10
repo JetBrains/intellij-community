@@ -10,4 +10,4 @@ package com.intellij.ide.minimap.settings
 data class MinimapSettingsState(var enabled: Boolean = true,
                                 var width: Int = 200,
                                 var rightAligned: Boolean = true,
-                                var fileTypes: List<String> = listOf("java,kt,php,scala,md,py,cpp,c,cs,zpln"))
+                                var fileTypes: List<String> = listOf("java", "kt", "php", "scala", "md", "py", "cpp", "c", "cs", "zpln"))

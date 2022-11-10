@@ -1,13 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.minimap
 
+import com.intellij.concurrency.JobScheduler
 import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.Editor
-import com.intellij.util.Alarm
 import com.intellij.util.ui.ImageUtil
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.ceil
 
 /**
@@ -16,8 +19,8 @@ import kotlin.math.ceil
 class MinimapImage(parentDisposable: Disposable) {
 
   companion object {
-    private const val UPDATE_DELAY_MILLIS = 200
-    private const val bufferUnscaledHeight = 500
+    private const val UPDATE_DELAY_MILLIS = 200L
+    private const val BUFFER_UNSCALED_HEIGHT = 500
   }
 
   // target small image drawn on minimap
@@ -35,15 +38,15 @@ class MinimapImage(parentDisposable: Disposable) {
 
   private var lastWidth = -1
 
-  private val alarm = Alarm(parentDisposable)
+  //private val alarm = Alarm(parentDisposable)
 
   var onImageReady: (() -> Unit)? = null
 
   private fun updateImage(editor: Editor) {
 
-    if (buWidth != contentVisibleWidth || buHeight != bufferUnscaledHeight) {
-      bufferUnscaled = ImageUtil.createImage(contentVisibleWidth, bufferUnscaledHeight, BufferedImage.TYPE_INT_ARGB)
-      buHeight = bufferUnscaledHeight
+    if (buWidth != contentVisibleWidth || buHeight != BUFFER_UNSCALED_HEIGHT) {
+      bufferUnscaled = ImageUtil.createImage(contentVisibleWidth, BUFFER_UNSCALED_HEIGHT, BufferedImage.TYPE_INT_ARGB)
+      buHeight = BUFFER_UNSCALED_HEIGHT
       buWidth = contentVisibleWidth
     }
 
@@ -61,26 +64,43 @@ class MinimapImage(parentDisposable: Disposable) {
 
     val minimapHeightEx = (buHeight * imgWidth.toDouble() / buWidth).toInt()
 
-    val downscaleSteps = (bufferUnscaled.width - imgWidth) / 100
+    // val downscaleSteps = min((bufferUnscaled.width - imgWidth) / 100, 5)
 
+    //val editorImpl =  (editor.contentComponent as EditorComponentImpl).editor
+    //val editorView = editorImpl.javaClass.getDeclaredField("myView").apply{ isAccessible = true}.get(editorImpl)
+    //val editorPainter = editorView.javaClass.getDeclaredField("myPainter").apply { isAccessible = true }.get(editorView) as EditorPainter
     for (i in 0 until blocks) {
-      editor.contentComponent.print(g)
 
-      if (downscaleSteps == 0) {
-        // Direct one-pass copy without progressive downscale
-        g2d.drawImage(bufferUnscaled,
-                      0, i * minimapHeightEx, imgWidth, (i + 1) * minimapHeightEx,
-                      0, 0, bufferUnscaled.width, bufferUnscaled.height,
-                      null)
-      }
-      else {
-        progressiveDownscale(bufferUnscaled, imgWidth, minimapHeightEx, downscaleSteps)
+      //setFlag(JComponent.IS_PRINTING, true)
+      //firePropertyChange("paintingForPrint", false, true)
+      //try {
+      //  editorPainter.paint(g)
+      //}
+      //finally {
+      //  setFlag(JComponent.IS_PRINTING, false)
+      //  firePropertyChange("paintingForPrint", true, false)
+      //}
 
-        g2d.drawImage(bufferUnscaled,
-                      0, i * minimapHeightEx, imgWidth, (i + 1) * minimapHeightEx,
-                      0, 0, imgWidth, minimapHeightEx,
-                      null)
+      invokeAndWaitIfNeeded {
+        editor.contentComponent.print(g)
       }
+
+      //   if (downscaleSteps == 0)
+      // {
+      // Direct one-pass copy without progressive downscale
+      g2d.drawImage(bufferUnscaled,
+                    0, i * minimapHeightEx, imgWidth, (i + 1) * minimapHeightEx,
+                    0, 0, bufferUnscaled.width, bufferUnscaled.height,
+                    null)
+      //   }
+      //else {
+      //  progressiveDownscale(bufferUnscaled, imgWidth, minimapHeightEx, downscaleSteps)
+      //
+      //  g2d.drawImage(bufferUnscaled,
+      //                0, i * minimapHeightEx, imgWidth, (i + 1) * minimapHeightEx,
+      //                0, 0, imgWidth, minimapHeightEx,
+      //                null)
+      //}
       g.translate(0, -buHeight)
     }
 
@@ -115,10 +135,9 @@ class MinimapImage(parentDisposable: Disposable) {
     }
   }
 
+  private val scheduled = AtomicBoolean()
+
   fun update(editor: Editor, visibleHeight: Int, visibleWidth: Int, minimapHeight: Int, force: Boolean = false) {
-    if (alarm.activeRequestCount != 0) {
-      alarm.cancelAllRequests()
-    }
 
     if (minimapHeight <= 0 || visibleHeight <= 0 || visibleWidth <= 0) {
       return
@@ -128,7 +147,19 @@ class MinimapImage(parentDisposable: Disposable) {
       lastWidth = -1
     }
 
-    alarm.addRequest({ innerUpdate(editor, visibleHeight, visibleWidth, minimapHeight) }, UPDATE_DELAY_MILLIS)
+    if (scheduled.compareAndSet(false, true)) {
+      JobScheduler.getScheduler().schedule({
+                                             try {
+                                               innerUpdate(editor, visibleHeight, visibleWidth, minimapHeight)
+                                             }
+                                             catch (e: Exception) {
+                                               e.printStackTrace()
+                                             }
+                                             finally {
+                                               scheduled.set(false)
+                                             }
+                                           }, UPDATE_DELAY_MILLIS, TimeUnit.MILLISECONDS)
+    }
   }
 
   private fun innerUpdate(editor: Editor, visibleHeight: Int, visibleWidth: Int, minimapHeight: Int) {
