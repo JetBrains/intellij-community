@@ -18,24 +18,25 @@ import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
-import kotlin.math.max
-import kotlin.math.min
 
-class GoToNextPsiElement(text: String, line: Int) : AbstractCommand(text, line) {
+class GoToNamedElementCommand(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
-    const val PREFIX: @NonNls String = CMD_PREFIX + "goToNextPsiElement"
+    const val PREFIX: @NonNls String = CMD_PREFIX + "goToNamedPsiElement"
     const val SUPPRESS_ERROR_IF_NOT_FOUND: @NonNls String = "SUPPRESS_ERROR_IF_NOT_FOUND"
     val REGEX = " ".toRegex()
+    private val COMMENTS_NAMES = setOf("KDoc", "BLOCK_COMMENT", "EOL_COMMENT", "SHEBANG_COMMENT", "DOC_COMMENT", "END_OF_LINE_COMMENT",
+                                       "C_STYLE_COMMENT")
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
     val input = extractCommandArgument(PREFIX)
-    val params = input.split(REGEX).dropLastWhile { it.isEmpty() }.toSet()
+    val params = input.split(REGEX).dropLastWhile { it.isEmpty() }.toTypedArray()
+    val position = params[0]
+    val elementName = params[1]
     ApplicationManager.getApplication().invokeLater {
-      val project = context.project
-      val editor = FileEditorManager.getInstance(project).selectedTextEditor
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor!!.document)
+      val editor = FileEditorManager.getInstance(context.project).selectedTextEditor
+      val psiFile = PsiDocumentManager.getInstance(context.project).getPsiFile(editor!!.document)
       val caretListener: CaretListener = object : CaretListener {
         override fun caretPositionChanged(e: CaretEvent) {
           actionCallback.setDone()
@@ -45,29 +46,54 @@ class GoToNextPsiElement(text: String, line: Int) : AbstractCommand(text, line) 
       actionCallback.doWhenProcessed { editor.caretModel.removeCaretListener(caretListener) }
       psiFile?.accept(object : PsiRecursiveElementWalkingVisitor(true) {
         override fun visitElement(element: PsiElement) {
-          if (params.contains(element.elementType?.debugName)) {
-            if (editor.caretModel.currentCaret.offset < element.startOffset) {
-              val spaceIndex = max(1, element.text.indexOf(" "))
-              val offset = min(element.endOffset, element.startOffset + spaceIndex)
-              if (editor.caretModel.offset == offset) {
-                actionCallback.setDone()
-              }
-              else {
-                editor.caretModel.moveToOffset(offset)
-                editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
-              }
-              stopWalking()
+          if (elementName == element.text && !hasCommentParent(psiFile, element)) {
+            val offset = measureOffset(element, position)
+            if (editor.caretModel.offset == offset) {
+              actionCallback.setDone()
             }
+            else {
+              editor.caretModel.moveToOffset(offset)
+              editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
+            }
+            stopWalking()
           }
           super.visitElement(element)
         }
+
       })
       if (params.contains(SUPPRESS_ERROR_IF_NOT_FOUND) && !actionCallback.isDone) {
-         actionCallback.setDone()
-      } else if (!actionCallback.isDone) {
-        actionCallback.reject("not found any element")
+        actionCallback.setDone()
+      }
+      else if (!actionCallback.isDone) {
+        actionCallback.reject("not found element $params")
       }
     }
     return actionCallback.toPromise()
+  }
+
+  private fun hasCommentParent(root: PsiElement, element: PsiElement): Boolean {
+    var current = element
+    while (current != root) {
+      if (COMMENTS_NAMES.contains(current.elementType?.debugName) || COMMENTS_NAMES.contains(
+          current.elementType.toString()) || COMMENTS_NAMES.contains(current.node.elementType.toString())) {
+        return true
+      }
+      current = current.parent
+    }
+    return false
+  }
+
+  private fun measureOffset(element: PsiElement, position: String): Int {
+    when (position.lowercase()) {
+      "before" -> {
+        return element.startOffset
+      }
+      "after" -> {
+        return element.endOffset
+      }
+      else -> {
+        return element.startOffset + (element.endOffset - element.startOffset) / 2
+      }
+    }
   }
 }
