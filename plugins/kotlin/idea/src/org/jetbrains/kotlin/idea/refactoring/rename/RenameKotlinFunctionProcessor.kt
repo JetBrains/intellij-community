@@ -57,7 +57,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         return DescriptorUtils.getJvmName(descriptor)
     }
 
-    protected fun processFoundReferences(
+    private fun processFoundReferences(
         element: PsiElement,
         allReferences: Collection<PsiReference>
     ): Collection<PsiReference> {
@@ -84,7 +84,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         }
     }
 
-    class FunctionWithSupersWrapper(
+    private class FunctionWithSupersWrapper(
         val originalDeclaration: KtNamedFunction,
         val supers: List<PsiElement>
     ) : KtLightElement<KtNamedFunction, KtNamedFunction>, PsiNamedElement by originalDeclaration {

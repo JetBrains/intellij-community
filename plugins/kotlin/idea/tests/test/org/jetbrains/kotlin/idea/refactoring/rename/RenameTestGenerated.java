@@ -223,6 +223,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/internalVarWithOverrides/internalFunWithOverrides.test");
     }
 
+    @TestMetadata("intersectionOverrideInKotlin/intersectionOverrideInKotlin.test")
+    public void testIntersectionOverrideInKotlin_IntersectionOverrideInKotlin() throws Exception {
+        runTest("testData/refactoring/rename/intersectionOverrideInKotlin/intersectionOverrideInKotlin.test");
+    }
+
     @TestMetadata("javaClassImportAliasByRef/javaClassImportAliasByRef.test")
     public void testJavaClassImportAliasByRef_JavaClassImportAliasByRef() throws Exception {
         runTest("testData/refactoring/rename/javaClassImportAliasByRef/javaClassImportAliasByRef.test");

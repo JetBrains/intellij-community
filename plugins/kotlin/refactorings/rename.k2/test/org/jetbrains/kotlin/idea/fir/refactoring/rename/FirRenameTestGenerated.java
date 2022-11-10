@@ -223,6 +223,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/internalVarWithOverrides/internalFunWithOverrides.test");
     }
 
+    @TestMetadata("intersectionOverrideInKotlin/intersectionOverrideInKotlin.test")
+    public void testIntersectionOverrideInKotlin_IntersectionOverrideInKotlin() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/intersectionOverrideInKotlin/intersectionOverrideInKotlin.test");
+    }
+
     @TestMetadata("javaClassImportAliasByRef/javaClassImportAliasByRef.test")
     public void testJavaClassImportAliasByRef_JavaClassImportAliasByRef() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/javaClassImportAliasByRef/javaClassImportAliasByRef.test");
