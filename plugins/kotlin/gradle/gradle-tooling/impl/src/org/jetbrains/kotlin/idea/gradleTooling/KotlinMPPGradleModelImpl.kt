@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
@@ -52,7 +53,7 @@ class KotlinAndroidSourceSetInfoImpl(
     override val kotlinSourceSetName: String,
     override val androidSourceSetName: String,
     override val androidVariantNames: Set<String>
-): KotlinAndroidSourceSetInfo {
+) : KotlinAndroidSourceSetInfo {
     constructor(info: KotlinAndroidSourceSetInfo) : this(
         kotlinSourceSetName = info.kotlinSourceSetName,
         androidSourceSetName = info.androidSourceSetName,
@@ -72,8 +73,8 @@ class KotlinSourceSetImpl(
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
     override val androidSourceSetInfo: KotlinAndroidSourceSetInfo?,
-    actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
-    isTestComponent: Boolean = false,
+    override val actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
+    override var isTestComponent: Boolean = false,
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
@@ -90,16 +91,9 @@ class KotlinSourceSetImpl(
         allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
         additionalVisibleSourceSets = HashSet(kotlinSourceSet.additionalVisibleSourceSets),
         androidSourceSetInfo = kotlinSourceSet.androidSourceSetInfo?.let(::KotlinAndroidSourceSetInfoImpl),
-        actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
-    ) {
-        this.isTestComponent = kotlinSourceSet.isTestComponent
-    }
-
-    override var actualPlatforms: KotlinPlatformContainer = actualPlatforms
-        internal set
-
-    override var isTestComponent: Boolean = isTestComponent
-        internal set
+        actualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms),
+        isTestComponent = kotlinSourceSet.isTestComponent
+    )
 
     override fun toString() = name
 
@@ -310,16 +304,19 @@ data class ExtraFeaturesImpl(
     override val isHMPPEnabled: Boolean,
 ) : ExtraFeatures
 
-data class KotlinMPPGradleModelImpl(
+data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) constructor(
     override val sourceSetsByName: Map<String, KotlinSourceSet>,
     override val targets: Collection<KotlinTarget>,
     override val extraFeatures: ExtraFeatures,
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
+    override val dependencies: IdeaKotlinDependenciesContainer?,
     override val cacheAware: CompilerArgumentsCacheAware,
     override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf(),
     override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 ) : KotlinMPPGradleModel {
+
+    @OptIn(KotlinGradlePluginVersionDependentApi::class)
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
         sourceSetsByName = mppModel.sourceSetsByName.mapValues { initialSourceSet ->
             (cloningCache[initialSourceSet] as? KotlinSourceSet) ?: KotlinSourceSetImpl(initialSourceSet.value)
@@ -336,6 +333,7 @@ data class KotlinMPPGradleModelImpl(
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
+        dependencies = mppModel.dependencies,
         cacheAware = CompilerArgumentsCacheAwareImpl(mppModel.cacheAware),
         kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) },
         kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse()

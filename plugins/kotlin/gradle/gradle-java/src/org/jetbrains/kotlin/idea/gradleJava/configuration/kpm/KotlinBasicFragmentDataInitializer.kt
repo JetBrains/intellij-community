@@ -7,7 +7,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.kpm.idea.*
+import org.jetbrains.kotlin.gradle.idea.kpm.*
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer

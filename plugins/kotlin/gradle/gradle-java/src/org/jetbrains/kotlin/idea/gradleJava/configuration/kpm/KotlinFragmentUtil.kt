@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.kpm
 
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmContentRoot
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragment
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragmentCoordinates
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmContentRoot
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragment
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragmentCoordinates
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext

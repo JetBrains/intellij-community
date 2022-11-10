@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetProtoBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.builders.buildIdeaKotlinDependenciesContainer
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImportReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
@@ -47,8 +49,10 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             val kotlinGradlePluginVersion = kotlinExtensionReflection.parseKotlinGradlePluginVersion()
             val argsMapper = CompilerArgumentsCacheMapperImpl()
 
+            val multiplatformImportReflection = KotlinMultiplatformImportReflection(kotlinExtensionReflection)
+
             val importingContext = MultiplatformModelImportingContextImpl(
-                project, kotlinGradlePluginVersion, argsMapper, modelBuilderContext
+                project, multiplatformImportReflection, kotlinGradlePluginVersion, argsMapper, modelBuilderContext
             )
 
             val sourceSets = buildSourceSets(kotlinExtensionReflection, importingContext)
@@ -62,6 +66,9 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
             val coroutinesState = getCoroutinesState(project)
             val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: NO_KOTLIN_NATIVE_HOME
+
+            val dependenciesContainer = buildIdeaKotlinDependenciesContainer(importingContext, kotlinExtensionReflection)
+
             val model = KotlinMPPGradleModelImpl(
                 sourceSetsByName = filterOrphanSourceSets(importingContext),
                 targets = importingContext.targets,
@@ -71,6 +78,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 ),
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
+                dependencies = dependenciesContainer,
                 cacheAware = argsMapper,
                 kotlinGradlePluginVersion = kotlinGradlePluginVersion
             ).apply {
