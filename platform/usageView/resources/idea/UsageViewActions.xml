@@ -20,6 +20,8 @@
     <registryKey defaultValue="true" description="Enable similarity clustering for Kotlin usages"
                  key="similarity.find.usages.kotlin.clustering.enable"/>
     <registryKey defaultValue="true" description="Clustering without resolve" key="similarity.find.usages.fast.clustering"/>
+    <registryKey defaultValue="true" description="Collect features only for simple block statements in 'if' and loop statements"
+                 key="similarity.analyze.only.simple.code.blocks"/>
     <registryKey defaultValue="true" description="Distinguish usages in one statement"
                  key="similarity.distinguish.usages.in.one.statement"/>
     <registryKey defaultValue="false" description="Parent statement condition feature"
