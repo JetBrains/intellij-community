@@ -132,25 +132,25 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private boolean myUpdateDisabled = false;
 
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull Collection<? extends Change> changes,
-                                      @Nullable LocalChangeList initialSelection,
+                                      @NotNull Collection<? extends Change> included,
+                                      @Nullable LocalChangeList initialChangeList,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
-    return commitChanges(project, changes, changes, initialSelection, executor, comment);
+    return commitChanges(project, included, included, initialChangeList, executor, comment);
   }
 
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> changes,
                                       @NotNull Collection<?> included,
-                                      @Nullable LocalChangeList initialSelection,
+                                      @Nullable LocalChangeList initialChangeList,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
     if (executor == null) {
-      return commitChanges(project, null, included, initialSelection, getCommitExecutors(project, changes), true, null,
+      return commitChanges(project, null, included, initialChangeList, getCommitExecutors(project, changes), true, null,
                            comment, null, true);
     }
     else {
-      return commitChanges(project, null, included, initialSelection, singletonList(executor), false, null,
+      return commitChanges(project, null, included, initialChangeList, singletonList(executor), false, null,
                            comment, null, true);
     }
   }
@@ -163,24 +163,25 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
    * @return true if user agreed to commit, false if he pressed "Cancel".
    */
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull Collection<? extends Change> changes,
-                                      @Nullable LocalChangeList initialSelection,
+                                      @NotNull Collection<? extends Change> included,
+                                      @Nullable LocalChangeList initialChangeList,
                                       @NotNull List<? extends CommitExecutor> executors,
                                       boolean showVcsCommit,
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler) {
-    return commitChanges(project, new ArrayList<>(changes), initialSelection, executors, showVcsCommit, comment, customResultHandler, true);
+    return commitChanges(project, new ArrayList<>(included), initialChangeList, executors, showVcsCommit, comment, customResultHandler,
+                         true);
   }
 
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull List<? extends Change> changes,
-                                      @Nullable LocalChangeList initialSelection,
+                                      @NotNull List<? extends Change> included,
+                                      @Nullable LocalChangeList initialChangeList,
                                       @NotNull List<? extends CommitExecutor> executors,
                                       boolean showVcsCommit,
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler,
                                       boolean cancelIfNoChanges) {
-    return commitChanges(project, null, changes, initialSelection, executors, showVcsCommit, null, comment, customResultHandler,
+    return commitChanges(project, null, included, initialChangeList, executors, showVcsCommit, null, comment, customResultHandler,
                          cancelIfNoChanges);
   }
 
@@ -203,7 +204,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   public static boolean commitChanges(@NotNull Project project,
                                       @SuppressWarnings("unused") @Nullable List<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,
-                                      @Nullable LocalChangeList initialSelection,
+                                      @Nullable LocalChangeList initialChangeList,
                                       @NotNull List<? extends CommitExecutor> executors,
                                       boolean showVcsCommit,
                                       @Nullable AbstractVcs forceCommitInVcs,
@@ -228,7 +229,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     SingleChangeListCommitWorkflow workflow =
-      new SingleChangeListCommitWorkflow(project, affectedVcses, included, initialSelection, executors, showVcsCommit,
+      new SingleChangeListCommitWorkflow(project, affectedVcses, included, initialChangeList, executors, showVcsCommit,
                                          comment, customResultHandler);
     CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
 
