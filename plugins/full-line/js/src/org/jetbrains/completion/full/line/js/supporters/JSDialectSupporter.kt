@@ -3,6 +3,7 @@ package org.jetbrains.completion.full.line.js.supporters
 import com.intellij.codeInsight.template.Template
 import com.intellij.lang.javascript.JSTokenTypes
 import com.intellij.lang.javascript.psi.JSReferenceExpression
+import com.intellij.lang.javascript.psi.ecma6.JSStringTemplateExpression
 import com.intellij.lang.javascript.psi.impl.JSExpressionCodeFragmentImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
@@ -53,7 +54,8 @@ abstract class JSDialectSupporter : FullLineLanguageSupporterBase() {
   }
 
   override fun isStringElement(element: PsiElement): Boolean {
-    return element.elementType == JSTokenTypes.STRING_LITERAL
+    val elementType = element.elementType
+    return elementType in listOf(JSTokenTypes.STRING_LITERAL, JSTokenTypes.REGEXP_LITERAL) || element is JSStringTemplateExpression
   }
 
   override fun isStringWalkingEnabled(element: PsiElement): Boolean {
