@@ -33,7 +33,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
@@ -63,7 +62,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack =
     ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
   private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
-  private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
   private volatile boolean myTraceIndexUpdates;
   private volatile boolean myTraceStubIndexUpdates;
   private volatile boolean myTraceSharedIndexUpdates;
@@ -172,12 +170,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       trace.indexValidationFinished();
 
       IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
-      Boolean validated = myAccessValidator.validate(indexId, () -> {
-        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
-        return index.processAllKeys(processor, scope, idFilterAdjusted);
-      });
-
-      return validated;
+      trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
+      return index.processAllKeys(processor, scope, idFilterAdjusted);
     }
     catch (StorageException e) {
       trace.lookupFailed();
@@ -325,12 +319,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       TRACE_OF_ENTRIES_LOOKUP.get()
         .indexValidationFinished();
 
-      final R validated = myAccessValidator.validate(
-        indexId,
-        () -> ConcurrencyUtil.withLock(index.getLock().readLock(), () -> computable.convert(index))
-      );
-
-      return validated;
+      return ConcurrencyUtil.withLock(index.getLock().readLock(), () -> computable.convert(index));
     }
     catch (StorageException e) {
       TRACE_OF_ENTRIES_LOOKUP.get().lookupFailed();
