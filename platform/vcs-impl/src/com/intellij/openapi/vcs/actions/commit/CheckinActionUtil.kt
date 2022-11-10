@@ -82,44 +82,38 @@ object CheckinActionUtil {
                                 forceUpdateCommitStateFromContext: Boolean) {
     StoreUtil.saveDocumentsAndProjectSettings(project)
 
-    ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
-      true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message")) {
-      performCheckIn(project, selectedChanges, selectedUnversioned, initialChangeList, pathsToCommit,
-                     executor, forceUpdateCommitStateFromContext)
-    }
-
-  }
-
-  private fun performCheckIn(project: Project,
-                             selectedChanges: List<Change>,
-                             selectedUnversioned: List<FilePath>,
-                             initialChangeList: LocalChangeList,
-                             pathsToCommit: List<FilePath>,
-                             executor: CommitExecutor?,
-                             forceUpdateCommitStateFromContext: Boolean) {
-    val included: Collection<Any>
-
-    if (selectedChanges.isEmpty() && selectedUnversioned.isEmpty()) {
-      val manager = ChangeListManager.getInstance(project)
-      val changesToCommit = pathsToCommit.flatMap { manager.getChangesIn(it) }.toSet()
-      included = initialChangeList.changes.intersect(changesToCommit)
-    }
-    else {
-      included = ContainerUtil.concat(selectedChanges, selectedUnversioned)
-    }
-
-    LOG.debug("invoking commit after update")
-
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
+      val included = getIncludedChanges(project, selectedChanges, selectedUnversioned, initialChangeList, pathsToCommit)
       workflowHandler.setCommitState(initialChangeList, included, forceUpdateCommitStateFromContext)
       workflowHandler.activate()
     }
-    else if (executor != null) {
-      CommitChangeListDialog.commitWithExecutor(project, included, initialChangeList, executor, null, null)
+    else {
+      ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
+        true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message")) {
+        val included = getIncludedChanges(project, selectedChanges, selectedUnversioned, initialChangeList, pathsToCommit)
+        if (executor != null) {
+          CommitChangeListDialog.commitWithExecutor(project, included, initialChangeList, executor, null, null)
+        }
+        else {
+          CommitChangeListDialog.commitVcsChanges(project, included, initialChangeList, null, null)
+        }
+      }
+    }
+  }
+
+  private fun getIncludedChanges(project: Project,
+                                 selectedChanges: List<Change>,
+                                 selectedUnversioned: List<FilePath>,
+                                 initialChangeList: LocalChangeList,
+                                 pathsToCommit: List<FilePath>): Collection<Any> {
+    if (selectedChanges.isEmpty() && selectedUnversioned.isEmpty()) {
+      val manager = ChangeListManager.getInstance(project)
+      val changesToCommit = pathsToCommit.flatMap { manager.getChangesIn(it) }.toSet()
+      return initialChangeList.changes.intersect(changesToCommit)
     }
     else {
-      CommitChangeListDialog.commitVcsChanges(project, included, initialChangeList, null, null)
+      return ContainerUtil.concat(selectedChanges, selectedUnversioned)
     }
   }
 
