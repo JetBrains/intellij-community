@@ -18,6 +18,8 @@ object Versions {
 
     val KOTLIN_VERSION_FOR_COMPOSE = version("1.6.10")
     val GRADLE_VERSION_FOR_COMPOSE = version("7.4.2")
+    val ANDROIDX_APPCOMPAT_VERSION_FOR_COMPOSE_OLD = version("1.4.2")
+    val ANDROIDX_KTX_VERSION_FOR_COMPOSE_OLD = version("1.7.0")
 
     object COMPOSE {
         val ANDROID_ACTIVITY_COMPOSE = version("1.4.0")
