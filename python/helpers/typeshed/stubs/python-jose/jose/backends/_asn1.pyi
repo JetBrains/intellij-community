@@ -1,18 +1,19 @@
 from typing import Any
+from typing_extensions import TypeAlias
 
 # Enable when pyasn1 gets stubs:
 # from pyasn1.type import univ
-Sequence = Any
+_Sequence: TypeAlias = Any
 
 RSA_ENCRYPTION_ASN1_OID: str
 
-class RsaAlgorithmIdentifier(Sequence):
+class RsaAlgorithmIdentifier(_Sequence):
     componentType: Any
 
-class PKCS8PrivateKey(Sequence):
+class PKCS8PrivateKey(_Sequence):
     componentType: Any
 
-class PublicKeyInfo(Sequence):
+class PublicKeyInfo(_Sequence):
     componentType: Any
 
 def rsa_private_key_pkcs8_to_pkcs1(pkcs8_key): ...

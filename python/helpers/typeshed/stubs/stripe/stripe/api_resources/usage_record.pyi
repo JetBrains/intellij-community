@@ -9,7 +9,7 @@ class UsageRecord(APIResource):
     def create(
         cls,
         api_key: Any | None = ...,
-        idempotency_key: Any | None = ...,
+        idempotency_key: str | None = ...,
         stripe_version: Any | None = ...,
         stripe_account: Any | None = ...,
         **params,

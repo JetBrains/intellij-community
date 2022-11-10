@@ -1,3 +1,4 @@
+from _typeshed import Self
 from typing import Any
 
 from . import _mysql, cursors as cursors
@@ -25,7 +26,7 @@ class Connection(_mysql.connection):
     encoding: str
     messages: Any
     def __init__(self, *args, **kwargs): ...
-    def __enter__(self): ...
+    def __enter__(self: Self) -> Self: ...
     def __exit__(self, exc_type, exc_value, traceback) -> None: ...
     def autocommit(self, on) -> None: ...
     def cursor(self, cursorclass: Any | None = ...): ...
@@ -36,13 +37,13 @@ class Connection(_mysql.connection):
     def set_character_set(self, charset) -> None: ...
     def set_sql_mode(self, sql_mode) -> None: ...
     def show_warnings(self): ...
-    Warning: Any
-    Error: Any
-    InterfaceError: Any
-    DatabaseError: Any
-    DataError: Any
-    OperationalError: Any
-    IntegrityError: Any
-    InternalError: Any
-    ProgrammingError: Any
-    NotSupportedError: Any
+    Warning: type[BaseException]
+    Error: type[BaseException]
+    InterfaceError: type[BaseException]
+    DatabaseError: type[BaseException]
+    DataError: type[BaseException]
+    OperationalError: type[BaseException]
+    IntegrityError: type[BaseException]
+    InternalError: type[BaseException]
+    ProgrammingError: type[BaseException]
+    NotSupportedError: type[BaseException]

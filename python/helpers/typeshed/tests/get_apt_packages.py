@@ -10,5 +10,5 @@ if not distributions:
 
 for distribution in distributions:
     with open(f"stubs/{distribution}/METADATA.toml", "rb") as file:
-        for apt_package in tomli.load(file).get("stubtest_apt_dependencies", []):
+        for apt_package in tomli.load(file).get("tool", {}).get("stubtest", {}).get("apt_dependencies", []):
             print(apt_package)

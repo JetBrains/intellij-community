@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any
 
 GROUP_NAME: str
@@ -13,6 +14,7 @@ def extract_from_dir(
     comment_tags=...,
     callback: Any | None = ...,
     strip_comment_tags: bool = ...,
+    directory_filter: Callable[[str], bool] | None = ...,
 ) -> None: ...
 def check_and_call_extract_file(
     filepath, method_map, options_map, callback, keywords, comment_tags, strip_comment_tags, dirpath: Any | None = ...

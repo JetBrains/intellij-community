@@ -13,7 +13,12 @@ code_mapping_severe: dict[str, int]
 code_mappings_by_level: dict[int, dict[str, int]]
 
 def code_mapping(
-    level: int, msg: str, extra_directives: Container[str], extra_roles: Container[str], default: int = ...
+    level: int,
+    msg: str,
+    extra_directives: Container[str],
+    extra_roles: Container[str],
+    extra_substitutions: Container[str],
+    default: int = ...,
 ) -> int: ...
 
 class reStructuredTextChecker:

@@ -1,11 +1,11 @@
 from _typeshed import Self
+from _typeshed.dbapi import DBAPIConnection
 from abc import abstractmethod
 from collections.abc import Callable, Mapping
 from types import TracebackType
 from typing import Any, TypeVar, overload
 from typing_extensions import TypeAlias
 
-from ..dbapi import DBAPIConnection
 from ..log import Identified, _EchoFlag, echo_property
 from ..pool import Pool
 from ..sql.compiler import Compiled

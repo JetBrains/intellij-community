@@ -1,2 +1,4 @@
 version = "1.7.*"
-stubtest = false  # A display server (e.g. X11) is required to import pynput
+
+[tool.stubtest]
+skip = true  # A display server (e.g. X11) is required to import pynput

@@ -1,4 +1,10 @@
-from typing import Any
+from collections.abc import Mapping
+from typing import Any, overload
+from typing_extensions import Literal
+
+from ..engine import Engine
+from ..engine.url import URL
+from ..ext.asyncio import AsyncEngine
 
 class ConnectionKiller:
     proxy_refs: Any
@@ -37,14 +43,22 @@ class ReconnectFixture:
     def restart(self) -> None: ...
 
 def reconnecting_engine(url: Any | None = ..., options: Any | None = ...): ...
-def testing_engine(
-    url: Any | None = ...,
-    options: Any | None = ...,
-    future: Any | None = ...,
-    asyncio: bool = ...,
+@overload
+def testing_engine(  # type: ignore[misc]
+    url: URL | str | None = ...,
+    options: Mapping[str, Any] | None = ...,
+    future: bool | None = ...,
+    asyncio: Literal[False] = ...,
     transfer_staticpool: bool = ...,
-    _sqlite_savepoint: bool = ...,
-): ...
+) -> Engine: ...
+@overload
+def testing_engine(
+    url: URL | str | None = ...,
+    options: Mapping[str, Any] | None = ...,
+    future: bool | None = ...,
+    asyncio: Literal[True] = ...,
+    transfer_staticpool: bool = ...,
+) -> AsyncEngine: ...
 def mock_engine(dialect_name: Any | None = ...): ...
 
 class DBAPIProxyCursor:

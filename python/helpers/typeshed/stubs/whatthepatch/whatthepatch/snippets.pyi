@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Pattern
+from re import Pattern
 
 def remove(path: str) -> None: ...
 def findall_regex(items: Sequence[str], regex: Pattern[str]) -> list[int]: ...

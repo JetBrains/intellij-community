@@ -1,25 +1,26 @@
 from collections.abc import Sequence
 from typing import Any
+from typing_extensions import TypeAlias
 
-AssignmentStmt = Any  # from mypy.nodes
-Expression = Any  # from mypy.nodes
-RefExpr = Any  # from mypy.nodes
-TypeInfo = Any  # from mypy.nodes
-Var = Any  # from mypy.nodes
-StrExpr = Any  # from mypy.nodes
-SemanticAnalyzerPluginInterface = Any  # from mypy.plugin
-ProperType = Any  # from mypy.types
+_AssignmentStmt: TypeAlias = Any  # mypy.nodes.AssignmentStmt
+_Expression: TypeAlias = Any  # mypy.nodes.Expression
+_RefExpr: TypeAlias = Any  # mypy.nodes.RefExpr
+_TypeInfo: TypeAlias = Any  # mypy.nodes.TypeInfo
+_Var: TypeAlias = Any  # mypy.nodes.Var
+_StrExpr: TypeAlias = Any  # mypy.nodes.StrExpr
+_SemanticAnalyzerPluginInterface: TypeAlias = Any  # mypy.plugin.SemanticAnalyzerPluginInterface
+_ProperType: TypeAlias = Any  # mypy.types.ProperType
 
 def infer_type_from_right_hand_nameexpr(
-    api: SemanticAnalyzerPluginInterface,
-    stmt: AssignmentStmt,
-    node: Var,
-    left_hand_explicit_type: ProperType | None,
-    infer_from_right_side: RefExpr,
-) -> ProperType | None: ...
+    api: _SemanticAnalyzerPluginInterface,
+    stmt: _AssignmentStmt,
+    node: _Var,
+    left_hand_explicit_type: _ProperType | None,
+    infer_from_right_side: _RefExpr,
+) -> _ProperType | None: ...
 def infer_type_from_left_hand_type_only(
-    api: SemanticAnalyzerPluginInterface, node: Var, left_hand_explicit_type: ProperType | None
-) -> ProperType | None: ...
+    api: _SemanticAnalyzerPluginInterface, node: _Var, left_hand_explicit_type: _ProperType | None
+) -> _ProperType | None: ...
 def extract_python_type_from_typeengine(
-    api: SemanticAnalyzerPluginInterface, node: TypeInfo, type_args: Sequence[Expression]
-) -> ProperType: ...
+    api: _SemanticAnalyzerPluginInterface, node: _TypeInfo, type_args: Sequence[_Expression]
+) -> _ProperType: ...

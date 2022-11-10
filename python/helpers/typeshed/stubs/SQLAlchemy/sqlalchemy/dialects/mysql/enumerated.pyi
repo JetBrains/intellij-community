@@ -3,7 +3,7 @@ from typing import Any
 from ...sql import sqltypes
 from .types import _StringType
 
-class ENUM(sqltypes.NativeForEmulated, sqltypes.Enum, _StringType):  # type: ignore  # incompatible with base class
+class ENUM(sqltypes.NativeForEmulated, sqltypes.Enum, _StringType):  # type: ignore[misc]  # incompatible with base class
     __visit_name__: str
     native_enum: bool
     def __init__(self, *enums, **kw) -> None: ...

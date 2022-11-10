@@ -1,14 +1,15 @@
 import asyncio as asyncio
 from collections.abc import Callable, Coroutine
 from typing import Any
+from typing_extensions import TypeAlias
 
 from .langhelpers import memoized_property
 
-_greenlet = Any  # actually greenlet.greenlet
+_Greenlet: TypeAlias = Any  # actually greenlet.greenlet
 
 def is_exit_exception(e): ...
 
-class _AsyncIoGreenlet(_greenlet):
+class _AsyncIoGreenlet(_Greenlet):
     driver: Any
     gr_context: Any
     def __init__(self, fn, driver) -> None: ...
