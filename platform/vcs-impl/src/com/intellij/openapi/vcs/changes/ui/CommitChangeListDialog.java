@@ -131,6 +131,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private boolean myDisposed = false;
   private boolean myUpdateDisabled = false;
 
+  /**
+   * @deprecated Prefer using {@link #commitWithExecutor} or {@link #commitVcsChanges}.
+   */
+  @Deprecated
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> included,
                                       @Nullable LocalChangeList initialChangeList,
@@ -139,6 +143,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return commitChanges(project, null, included, initialChangeList, executor, comment);
   }
 
+  /**
+   * @deprecated Prefer using {@link #commitWithExecutor} or {@link #commitVcsChanges}.
+   */
+  @Deprecated
   public static boolean commitChanges(@NotNull Project project,
                                       @SuppressWarnings("unused") @Nullable Collection<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,
@@ -154,12 +162,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   /**
-   * Shows the commit dialog, and performs the selected action: commit, commit & push, create patch, etc.
-   *
-   * @param customResultHandler If this is not null, after commit is completed, custom result handler is called instead of
-   *                            showing the default notification in case of commit or failure.
-   * @return true if user agreed to commit, false if he pressed "Cancel".
+   * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
+  @Deprecated
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> included,
                                       @Nullable LocalChangeList initialChangeList,
@@ -171,6 +176,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                          true);
   }
 
+  /**
+   * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
+   */
+  @Deprecated
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull List<? extends Change> included,
                                       @Nullable LocalChangeList initialChangeList,
@@ -199,6 +208,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return affectedVcses;
   }
 
+  /**
+   * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
+   */
+  @Deprecated
   public static boolean commitChanges(@NotNull Project project,
                                       @SuppressWarnings("unused") @Nullable List<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,
@@ -255,6 +268,22 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                             comment, customResultHandler);
   }
 
+  /**
+   * Shows the commit dialog for local changes and performs the selected action: commit, commit & push, create patch, etc.
+   *
+   * @param affectedVcses       Used for vcs-specific commit {@link com.intellij.openapi.vcs.checkin.CheckinHandler} and {@link RefreshableOnComponent}.
+   * @param included            Files selected for commit by default.
+   *                            Pass {@link Change} for modified and {@link com.intellij.openapi.vfs.VirtualFile} for unversioned files.
+   * @param initialChangeList   Changelist to be selected by default. If not set, {@link ChangeListManager#getDefaultChangeList()} will be used.
+   * @param executors           Additional commit executors, available in the dialog. See also {@code showVcsCommit}.
+   * @param showVcsCommit       Whether default "Commit into VCS" action is available in the dialog.
+   *                            This does not affect "Commit & Push" and similar actions, use {@link AbstractVcs#getCommitExecutors()} or
+   *                            {@link AbstractCommitWorkflow#getCommitExecutors(Project, Collection)}.
+   * @param comment             Pre-entered commit message.
+   * @param customResultHandler If this is not null, after commit is completed, passed handler is called instead of default
+   *                            {@link ShowNotificationCommitResultHandler}.
+   * @return true if user agreed to commit, false if he pressed "Cancel".
+   */
   public static boolean showCommitDialog(@NotNull Project project,
                                          @NotNull Set<AbstractVcs> affectedVcses,
                                          @NotNull Collection<?> included,
