@@ -158,6 +158,19 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return getClassRootForFile(file, getInfoForFileOrDirectory(file));
   }
 
+  @Override
+  public @Nullable JpsModuleSourceRootType<?> getContainingSourceRootType(@NotNull VirtualFile file) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet =
+        myWorkspaceFileIndex.findFileSetWithCustomData(file, true, true, false, false, ModuleSourceRootData.class);
+      if (fileSet == null) return null;
+
+      return SourceRootTypeRegistry.getInstance().findTypeById(fileSet.getData().getRootType());
+    }
+    SourceFolder sourceFolder = getSourceFolder(file);
+    return sourceFolder != null ? sourceFolder.getRootType() : null;
+  }
+
   @Nullable
   public static VirtualFile getClassRootForFile(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return info.isInProject(file) ? info.getLibraryClassRoot() : null;

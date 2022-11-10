@@ -21,6 +21,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -121,6 +122,12 @@ class ModuleRootsInProjectFileIndexTest {
       assertEquals(isResources, fileIndex.isUnderSourceRootOfType(dir, JavaModuleSourceRootTypes.RESOURCES))
       assertEquals(!isResources, fileIndex.isUnderSourceRootOfType(dir, JavaModuleSourceRootTypes.SOURCES))
     }
+    
+    assertNull(fileIndex.getContainingSourceRootType(contentRoot))
+    assertEquals(JavaSourceRootType.SOURCE, fileIndex.getContainingSourceRootType(srcDir))
+    assertEquals(JavaSourceRootType.TEST_SOURCE, fileIndex.getContainingSourceRootType(testDir))
+    assertEquals(JavaResourceRootType.RESOURCE, fileIndex.getContainingSourceRootType(resourceDir))
+    assertEquals(JavaResourceRootType.TEST_RESOURCE, fileIndex.getContainingSourceRootType(testResourceDir))
   }
 
   @Test

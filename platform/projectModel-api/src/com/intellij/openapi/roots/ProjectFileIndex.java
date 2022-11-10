@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
 
@@ -160,6 +161,12 @@ public interface ProjectFileIndex extends FileIndex {
    * @return true if {@code file} is ignored, false otherwise.
    */
   boolean isUnderIgnored(@NotNull VirtualFile file);
+
+  /**
+   * Returns type of the module source root which contains the given {@code file}, or {@code null} if {@code file} doesn't belong to sources 
+   * of modules.
+   */
+  @Nullable JpsModuleSourceRootType<?> getContainingSourceRootType(@NotNull VirtualFile file);
 
   @Nullable
   default SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
