@@ -1007,6 +1007,229 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/swapBinaryExpression")
+    public static class SwapBinaryExpression extends AbstractSharedK1IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/assignment.kt");
+        }
+
+        @TestMetadata("conjunction.kt")
+        public void testConjunction() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/conjunction.kt");
+        }
+
+        @TestMetadata("conjunctionLiteral.kt")
+        public void testConjunctionLiteral() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/conjunctionLiteral.kt");
+        }
+
+        @TestMetadata("disjunction.kt")
+        public void testDisjunction() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/disjunction.kt");
+        }
+
+        @TestMetadata("disjunctionLiteral.kt")
+        public void testDisjunctionLiteral() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/disjunctionLiteral.kt");
+        }
+
+        @TestMetadata("divide.kt")
+        public void testDivide() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/divide.kt");
+        }
+
+        @TestMetadata("divideAssign.kt")
+        public void testDivideAssign() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/divideAssign.kt");
+        }
+
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/equals.kt");
+        }
+
+        @TestMetadata("greaterThan.kt")
+        public void testGreaterThan() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/greaterThan.kt");
+        }
+
+        @TestMetadata("greaterThanEquals.kt")
+        public void testGreaterThanEquals() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/greaterThanEquals.kt");
+        }
+
+        @TestMetadata("identityEquals.kt")
+        public void testIdentityEquals() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/identityEquals.kt");
+        }
+
+        @TestMetadata("in.kt")
+        public void testIn() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/in.kt");
+        }
+
+        @TestMetadata("infixFunction.kt")
+        public void testInfixFunction() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/infixFunction.kt");
+        }
+
+        @TestMetadata("is.kt")
+        public void testIs() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/is.kt");
+        }
+
+        @TestMetadata("lessThan.kt")
+        public void testLessThan() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/lessThan.kt");
+        }
+
+        @TestMetadata("lessThanEquals.kt")
+        public void testLessThanEquals() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/lessThanEquals.kt");
+        }
+
+        @TestMetadata("minus.kt")
+        public void testMinus() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/minus.kt");
+        }
+
+        @TestMetadata("minusAssign.kt")
+        public void testMinusAssign() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/minusAssign.kt");
+        }
+
+        @TestMetadata("multipleOperands.kt")
+        public void testMultipleOperands() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/multipleOperands.kt");
+        }
+
+        @TestMetadata("multipleOperandsWithDifferentPrecedence.kt")
+        public void testMultipleOperandsWithDifferentPrecedence() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/multipleOperandsWithDifferentPrecedence.kt");
+        }
+
+        @TestMetadata("multipleOperandsWithDifferentPrecedence2.kt")
+        public void testMultipleOperandsWithDifferentPrecedence2() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/multipleOperandsWithDifferentPrecedence2.kt");
+        }
+
+        @TestMetadata("multipleOperandsWithDifferentPrecedence3.kt")
+        public void testMultipleOperandsWithDifferentPrecedence3() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/multipleOperandsWithDifferentPrecedence3.kt");
+        }
+
+        @TestMetadata("multipleOperandsWithDifferentPrecedence4.kt")
+        public void testMultipleOperandsWithDifferentPrecedence4() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/multipleOperandsWithDifferentPrecedence4.kt");
+        }
+
+        @TestMetadata("multipleOperandsWithDifferentPrecedence5.kt")
+        public void testMultipleOperandsWithDifferentPrecedence5() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/multipleOperandsWithDifferentPrecedence5.kt");
+        }
+
+        @TestMetadata("multipleOperandsWithDifferentPrecedence6.kt")
+        public void testMultipleOperandsWithDifferentPrecedence6() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/multipleOperandsWithDifferentPrecedence6.kt");
+        }
+
+        @TestMetadata("multiply.kt")
+        public void testMultiply() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/multiply.kt");
+        }
+
+        @TestMetadata("multiplyAssign.kt")
+        public void testMultiplyAssign() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/multiplyAssign.kt");
+        }
+
+        @TestMetadata("nonBinaryExpr.kt")
+        public void testNonBinaryExpr() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/nonBinaryExpr.kt");
+        }
+
+        @TestMetadata("notEquals.kt")
+        public void testNotEquals() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/notEquals.kt");
+        }
+
+        @TestMetadata("notIdentityEquals.kt")
+        public void testNotIdentityEquals() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/notIdentityEquals.kt");
+        }
+
+        @TestMetadata("notIn.kt")
+        public void testNotIn() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/notIn.kt");
+        }
+
+        @TestMetadata("notIs.kt")
+        public void testNotIs() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/notIs.kt");
+        }
+
+        @TestMetadata("nullOperand.kt")
+        public void testNullOperand() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/nullOperand.kt");
+        }
+
+        @TestMetadata("plus.kt")
+        public void testPlus() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/plus.kt");
+        }
+
+        @TestMetadata("plusAssign.kt")
+        public void testPlusAssign() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/plusAssign.kt");
+        }
+
+        @TestMetadata("plusInt.kt")
+        public void testPlusInt() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/plusInt.kt");
+        }
+
+        @TestMetadata("plusMinus.kt")
+        public void testPlusMinus() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/plusMinus.kt");
+        }
+
+        @TestMetadata("rangeTo.kt")
+        public void testRangeTo() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/rangeTo.kt");
+        }
+
+        @TestMetadata("remainder.kt")
+        public void testRemainder() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/remainder.kt");
+        }
+
+        @TestMetadata("remainderAssign.kt")
+        public void testRemainderAssign() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/remainderAssign.kt");
+        }
+
+        @TestMetadata("times.kt")
+        public void testTimes() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/times.kt");
+        }
+
+        @TestMetadata("timesAssign.kt")
+        public void testTimesAssign() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/timesAssign.kt");
+        }
+
+        @TestMetadata("xor.kt")
+        public void testXor() throws Exception {
+            runTest("../testData/intentions/swapBinaryExpression/xor.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/underscoresInNumericLiteral")
     public abstract static class UnderscoresInNumericLiteral extends AbstractSharedK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
