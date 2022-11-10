@@ -6,6 +6,7 @@ package com.intellij.ide.navbar.ide
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -13,9 +14,14 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.FileStatusListener
+import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.problems.ProblemListener
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -34,15 +40,36 @@ internal fun UISettings.isNavbarShown(): Boolean {
   return showNavigationBar && !presentationMode
 }
 
-internal fun activityFlow(): Flow<Unit> {
+internal fun activityFlow(project: Project): Flow<Unit> {
   return channelFlow {
     val disposable: Disposable = Disposer.newDisposable()
+
+    // Just a Unit-returning shortcut
+    fun fire() {
+      trySend(Unit)
+    }
+
     IdeEventQueue.getInstance().addActivityListener(Runnable {
       if (!skipActivityEvent(IdeEventQueue.getCurrentEvent())) {
-        trySend(Unit)
+        fire()
       }
     }, disposable)
-    trySend(Unit)
+
+    FileStatusManager.getInstance(project).addFileStatusListener(object : FileStatusListener {
+      override fun fileStatusesChanged() = fire()
+      override fun fileStatusChanged(virtualFile: VirtualFile) = fire()
+    }, disposable)
+
+    project.messageBus.connect(disposable).apply {
+      subscribe(ProblemListener.TOPIC, object : ProblemListener {
+        override fun problemsAppeared(file: VirtualFile) = fire()
+        override fun problemsDisappeared(file: VirtualFile) = fire()
+      })
+      subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { fire() })
+    }
+
+    fire()
+
     awaitClose {
       Disposer.dispose(disposable)
     }

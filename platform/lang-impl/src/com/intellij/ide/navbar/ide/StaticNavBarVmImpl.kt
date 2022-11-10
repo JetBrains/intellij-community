@@ -45,7 +45,7 @@ internal class StaticNavBarVmImpl(
               this@supervisorScope, // scope will die once [_isVisible] changes
               project,
               initialItems = defaultModel(project),
-              activityFlow = activityFlow().throttle(DEFAULT_UI_RESPONSE_TIMEOUT),
+              activityFlow = activityFlow(project).throttle(DEFAULT_UI_RESPONSE_TIMEOUT),
             )
           }
         }
