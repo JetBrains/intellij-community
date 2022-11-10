@@ -109,6 +109,36 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         package org.apache.commons.lang3;
         public class Validate {
           public native static <T> T notNull(T object);
+        }""",
+      """
+        package org.junit.jupiter.api.function;
+        public interface Executable {
+          void execute() throws Throwable;
+        }""",
+      """
+        package org.junit.jupiter.api;
+        import org.junit.jupiter.api.function.Executable;
+        import java.util.function.Supplier;
+        public class Assertions {
+        public static <T extends Throwable> T assertThrows(Class<T> expectedType, Executable executable) {
+            return null;
+          }
+        public static <T extends Throwable> T assertThrows(Class<T> expectedType, Executable executable, Supplier<String> messageSupplier) {
+            return null;
+          }
+        }""",
+      """
+        package org.assertj.core.api.ThrowableAssert;
+        public interface ThrowingCallable {
+          void call() throws Throwable;
+        }""",
+      """
+        package org.assertj.core.api;
+        import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
+        public class Assertions {
+          public static Object assertThatThrownBy(ThrowingCallable shouldRaiseThrowable) {
+            return null;
+          }
         }"""};
   }
 
@@ -620,6 +650,38 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
             catch (NumberFormatException e) {
               return false;
             }
+          }
+        }
+        """);
+  }
+  @SuppressWarnings("Convert2Lambda")
+  public void testIgnoreInTestContainers() {
+    doTest(
+      """        
+        import org.junit.jupiter.api.function.Executable;
+        class X {
+          public void test(String s){
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()->Short.parseShort(s));
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()->Short.parseShort(s),
+            () -> {
+                Short./*Result of 'Short.parseShort()' is ignored*/parseShort/**/(s);
+                return "test";
+             });
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()-> {
+              Short.parseShort("s");
+            });
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()-> {
+                twice("abc");
+            });
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, (new Executable() {
+              @Override
+              public void execute() {
+               twice("abc");
+            }}));
+            org.assertj.core.api.Assertions.assertThatThrownBy((((()->Short.parseShort(s)))));
+          }
+          private static String twice(String s) {
+            return s+s;
           }
         }
         """);
