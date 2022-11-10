@@ -45,26 +45,31 @@ public class AnsiEscapeDecoder {
       return;
     }
 
-    effectiveLexer.append(text);
-    effectiveLexer.advance();
-
     List<Pair<String, Key>> chunks = null;
-    AnsiElementType elementType;
-    while ((elementType = effectiveLexer.getElementType()) != null) {
-      String elementText = effectiveLexer.getElementTextSmart();
-      assert elementText != null;
-      if (elementType == AnsiStreamingLexer.SGR) {
-        effectiveEmulator.processSgr(elementText);
-      }
-      else if (elementType == AnsiStreamingLexer.TEXT) {
-        chunks = processTextChunk(chunks, elementText, outputType, textAcceptor);
-      }
-      else {
-        assert elementType == AnsiStreamingLexer.CONTROL;
-        // Commands other than SGR are unhandled currently. Extend here when it's needed.
-      }
+
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (effectiveLexer) {
+      effectiveLexer.append(text);
       effectiveLexer.advance();
+
+      AnsiElementType elementType;
+      while ((elementType = effectiveLexer.getElementType()) != null) {
+        String elementText = effectiveLexer.getElementTextSmart();
+        assert elementText != null;
+        if (elementType == AnsiStreamingLexer.SGR) {
+          effectiveEmulator.processSgr(elementText);
+        }
+        else if (elementType == AnsiStreamingLexer.TEXT) {
+          chunks = processTextChunk(chunks, elementText, outputType, textAcceptor);
+        }
+        else {
+          assert elementType == AnsiStreamingLexer.CONTROL;
+          // Commands other than SGR are unhandled currently. Extend here when it's needed.
+        }
+        effectiveLexer.advance();
+      }
     }
+
     if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
       ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(chunks);
     }
