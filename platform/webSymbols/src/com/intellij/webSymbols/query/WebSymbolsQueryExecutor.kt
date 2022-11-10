@@ -11,9 +11,8 @@ import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWOR
 
 /*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
- * DEPRECATION -> @JvmDefault
  **/
-@Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
+@Suppress("INAPPLICABLE_JVM_NAME")
 interface WebSymbolsQueryExecutor : ModificationTracker {
 
   val context: WebSymbolsContext
