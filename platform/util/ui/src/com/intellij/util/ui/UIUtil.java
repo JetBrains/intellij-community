@@ -699,7 +699,7 @@ public final class UIUtil {
   public static @NotNull Font getFont(@NotNull FontSize size, @Nullable Font base) {
     if (base == null) base = StartupUiUtil.getLabelFont();
 
-    return base.deriveFont(getFontSize(size));
+    return JBFont.create(base).deriveFont(getFontSize(size));
   }
 
   public static float getFontSize(@NotNull FontSize size) {
