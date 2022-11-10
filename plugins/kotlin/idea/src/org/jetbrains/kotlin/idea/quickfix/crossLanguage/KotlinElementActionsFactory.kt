@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
@@ -16,6 +17,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PropertyUtilBase
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -388,19 +390,25 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         override fun startInWriteAction(): Boolean = true
 
-        override fun getText(): String =
-            QuickFixBundle.message("create.annotation.text", StringUtilRt.getShortName(request.qualifiedName))
+        override fun getText(): String = QuickFixBundle.message("create.annotation.text", StringUtilRt.getShortName(request.qualifiedName))
 
         override fun getFamilyName(): String = QuickFixBundle.message("create.annotation.family")
 
         override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
 
-        override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-            val target = pointer.element ?: return
-            val entry = addAnnotationEntry(target, request, annotationTarget)
-            ShortenReferences.DEFAULT.process(entry)
+        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+            PsiTreeUtil.findSameElementInCopy(pointer.element, file)?.addAnnotation()
+            return IntentionPreviewInfo.DIFF
         }
 
+        override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+            pointer.element?.addAnnotation() ?: return
+        }
+
+        private fun KtModifierListOwner.addAnnotation() {
+            val entry = addAnnotationEntry(this, request, annotationTarget)
+            ShortenReferences.DEFAULT.process(entry)
+        }
     }
 
     override fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {
