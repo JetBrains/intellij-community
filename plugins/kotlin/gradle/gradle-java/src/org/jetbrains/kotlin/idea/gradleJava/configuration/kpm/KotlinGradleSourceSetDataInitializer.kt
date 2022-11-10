@@ -10,8 +10,8 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragment
-import org.jetbrains.kotlin.gradle.kpm.idea.name
+import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragment
+import org.jetbrains.kotlin.gradle.idea.kpm.name
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData

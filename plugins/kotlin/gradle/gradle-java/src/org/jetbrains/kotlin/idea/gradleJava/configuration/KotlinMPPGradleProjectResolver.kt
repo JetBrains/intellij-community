@@ -629,9 +629,17 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 ideModule = ideModule,
                 resolverCtx = resolverCtx
             ) ?: return
-            populateModuleDependenciesByCompilations(context)
-            populateModuleDependenciesByPlatformPropagation(context)
-            populateModuleDependenciesBySourceSetVisibilityGraph(context)
+
+
+            context.populateModuleDependenciesByKGP()
+
+            /* Fallback for older Kotlin Gradle Plugin versions */
+            @OptIn(KotlinGradlePluginVersionDependentApi::class)
+            if (context.mppModel.dependencies == null) {
+                populateModuleDependenciesByCompilations(context)
+                populateModuleDependenciesByPlatformPropagation(context)
+                populateModuleDependenciesBySourceSetVisibilityGraph(context)
+            }
         }
 
         internal fun getSiblingKotlinModuleData(

@@ -53,7 +53,10 @@ class KotlinSourceSetProtoBuilder(
         val dependsOnSourceSets = origin.dependsOn.map { it.name }.toSet()
         val additionalVisibleSourceSets = origin.additionalVisibleSourceSets.map { it.name }.toSet()
 
-        val sourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
+        val sourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = dependencies@{
+            /* Eagerly return empty, if dependencies are resolved using KGP */
+            if (importingContext.useKgpDependencyResolution()) return@dependencies emptyArray()
+
             val androidDependenciesForSourceSet = buildAndroidSourceSetDependencies(androidDeps, origin.instance)
             val includeAndroidDependencies = importingContext.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)
 
@@ -68,7 +71,10 @@ class KotlinSourceSetProtoBuilder(
                 .toTypedArray()
         }
 
-        val intransitiveSourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
+        val intransitiveSourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = dependencies@{
+            /* Eagerly return empty, if dependencies are resolved using KGP */
+            if (importingContext.useKgpDependencyResolution()) return@dependencies emptyArray()
+
             buildIntransitiveSourceSetDependencies(origin.instance, importingContext)
                 .map { importingContext.dependencyMapper.getId(it) }
                 .distinct()
