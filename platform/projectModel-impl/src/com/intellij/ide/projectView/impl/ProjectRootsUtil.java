@@ -48,7 +48,8 @@ public final class ProjectRootsUtil {
   }
 
   public static boolean isModuleSourceRoot(@NotNull VirtualFile virtualFile, @NotNull final Project project) {
-    return getModuleSourceRoot(virtualFile, project) != null;
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    return fileIndex.isInSourceContent(virtualFile) && virtualFile.equals(fileIndex.getSourceRootForFile(virtualFile));
   }
 
   @Nullable
