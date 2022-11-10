@@ -37,6 +37,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -163,21 +164,25 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   protected abstract void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
     throws IncorrectOperationException;
 
-  @NotNull
-  protected HtmlChunk getDescription(@NotNull Icon itemIcon) {
+  protected @Nullable HtmlChunk getDescription(@NotNull Icon itemIcon) {
     Path filePath;
     String directoryPath = null;
-    if (myDirectories.size() == 1) {
-      TargetDirectory directory = myDirectories.get(0);
-      PsiDirectory psiDirectory = directory.getDirectory();
-      directoryPath = psiDirectory == null ? "" : psiDirectory.getVirtualFile().getPresentableUrl();
-      filePath = Path.of("", directory.getPathToCreate());
-      for (String component : mySubPath) {
-        filePath = filePath.resolve(component);
+    try {
+      if (myDirectories.size() == 1) {
+        TargetDirectory directory = myDirectories.get(0);
+        PsiDirectory psiDirectory = directory.getDirectory();
+        directoryPath = psiDirectory == null ? "" : psiDirectory.getVirtualFile().getPresentableUrl();
+        filePath = Path.of("", directory.getPathToCreate());
+        for (String component : mySubPath) {
+          filePath = filePath.resolve(component);
+        }
+        filePath = filePath.resolve(myNewFileName);
+      } else {
+        filePath = Path.of("", mySubPath).resolve(myNewFileName);
       }
-      filePath = filePath.resolve(myNewFileName);
-    } else {
-      filePath = Path.of("", mySubPath).resolve(myNewFileName);
+    }
+    catch (InvalidPathException e) {
+      return null;
     }
     HtmlChunk fileReference = fragment(icon("file", itemIcon), nbsp(), text(filePath.toString()));
     HtmlBuilder builder = new HtmlBuilder();
