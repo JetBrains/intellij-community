@@ -51,8 +51,8 @@ import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
-import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory;
+import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.isMainFunction

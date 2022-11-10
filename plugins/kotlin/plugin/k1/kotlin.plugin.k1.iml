@@ -148,5 +148,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="kotlin.searching.base" />
   </component>
 </module>

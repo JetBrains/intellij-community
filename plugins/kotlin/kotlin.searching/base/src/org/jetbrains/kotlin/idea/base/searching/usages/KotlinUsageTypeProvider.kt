@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.findUsages
+package org.jetbrains.kotlin.idea.base.searching.usages
 
 import com.intellij.psi.PsiElement
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.impl.rules.UsageType
 import com.intellij.usages.impl.rules.UsageTypeProviderEx
-import org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypes.toUsageType
-import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinUsageTypes.toUsageType
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType

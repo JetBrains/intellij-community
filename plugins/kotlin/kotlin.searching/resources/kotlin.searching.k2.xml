@@ -19,5 +19,11 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2SearchUsagesSupport"/>
     <usageTypeProvider implementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2UsageTypeProvider"/>
+
+    <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesProviderBase"/>
+
+    <elementDescriptionProvider
+            implementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2ElementDescriptionProvider"
+            order="first"/>
   </extensions>
 </idea-plugin>

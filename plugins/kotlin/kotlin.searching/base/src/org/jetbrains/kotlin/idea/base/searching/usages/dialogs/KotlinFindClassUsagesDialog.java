@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.findUsages.dialogs;
+package org.jetbrains.kotlin.idea.base.searching.usages.dialogs;
 
 import com.intellij.find.findUsages.FindClassUsagesDialog;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
-import org.jetbrains.kotlin.idea.findUsages.KotlinClassFindUsagesOptions;
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions;
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport;
 import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtClassOrObject;

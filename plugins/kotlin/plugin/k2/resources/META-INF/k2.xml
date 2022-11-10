@@ -19,6 +19,7 @@
   <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="searching-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="codeInsigts.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes-fir.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -157,17 +158,11 @@
 
     <java.elementFinder implementation="org.jetbrains.kotlin.asJava.finder.JavaElementFinder"/>
 
-    <elementDescriptionProvider
-            implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProviderBase"
-            order="first"/>
-
-    <findUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory"/>
 
     <targetElementEvaluator language="kotlin"
                             implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
 
-    <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesProviderBase"/>
     <lang.elementManipulator forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
                              implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
@@ -237,7 +232,7 @@
     <module name="kotlin.code-insight.live-templates-k2"/>
     <module name="kotlin.code-insight.postfix-templates-k2"/>
 
-    <module name="kotlin.search.k2"/>
+    <module name="kotlin.searching.k2"/>
     <module name="kotlin.refactorings.k2"/>
     <module name="kotlin.refactorings.rename.k2"/>
 

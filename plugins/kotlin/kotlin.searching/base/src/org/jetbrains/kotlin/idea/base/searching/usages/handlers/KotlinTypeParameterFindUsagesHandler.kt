@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.findUsages.handlers
+package org.jetbrains.kotlin.idea.base.searching.usages.handlers
 
 import com.intellij.find.findUsages.AbstractFindUsagesDialog
 import com.intellij.find.findUsages.FindUsagesOptions
@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
-import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinTypeParameterFindUsagesDialog
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
+import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinTypeParameterFindUsagesDialog
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.psi.KtTypeParameter
 

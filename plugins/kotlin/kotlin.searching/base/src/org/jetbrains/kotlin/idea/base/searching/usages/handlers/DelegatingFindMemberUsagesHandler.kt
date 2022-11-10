@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.findUsages.handlers
+package org.jetbrains.kotlin.idea.base.searching.usages.handlers
 
 import com.intellij.find.findUsages.AbstractFindUsagesDialog
 import com.intellij.find.findUsages.FindUsagesHandler
@@ -13,8 +13,8 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.findUsages.KotlinCallableFindUsagesOptions
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinCallableFindUsagesOptions
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class DelegatingFindMemberUsagesHandler(

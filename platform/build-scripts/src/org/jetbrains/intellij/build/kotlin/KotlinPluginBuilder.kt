@@ -175,6 +175,7 @@ object KotlinPluginBuilder {
     "kotlin.code-insight.line-markers-k2",
     "kotlin.fir",
     "kotlin.searching.k2",
+    "kotlin.searching.base",
     "kotlin.highlighting",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",

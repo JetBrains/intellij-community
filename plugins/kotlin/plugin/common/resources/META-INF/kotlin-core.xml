@@ -432,10 +432,6 @@
 
     <lang.sliceProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.slicer.KotlinSliceProvider"/>
 
-    <fileStructureGroupRuleProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinDeclarationGroupRuleProvider"/>
-    <fileStructureGroupRuleProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinDeclarationSecondLevelGroupRuleProvider"/>
-
-    <findUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory"/>
 
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAliasedImportedElementSearcher"/>
@@ -459,9 +455,6 @@
             implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
     <safeDelete.importSearcher implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinImportSearcher"/>
 
-    <importFilteringRule implementation="org.jetbrains.kotlin.idea.findUsages.KotlinImportFilteringRule"/>
-
-    <elementDescriptionProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinNonCodeSearchElementDescriptionProvider"/>
 
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>

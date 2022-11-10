@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinUsageTypeProvider
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.mainReference

@@ -43,7 +43,7 @@ import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.deleteSingle
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinClassHandler

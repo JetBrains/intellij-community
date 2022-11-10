@@ -6,9 +6,9 @@ import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypeProvider
-import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum
-import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinUsageTypeProvider
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch

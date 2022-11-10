@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.findUsages.dialogs;
+package org.jetbrains.kotlin.idea.base.searching.usages.dialogs;
 
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -14,7 +14,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
-import org.jetbrains.kotlin.idea.findUsages.KotlinPropertyFindUsagesOptions;
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
@@ -101,7 +101,7 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
         KtNamedDeclaration property = (KtNamedDeclaration) getPsiElement();
         if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD) || property.hasModifier(KtTokens.OPEN_KEYWORD) ||
-            property instanceof KtParameter && !((KtParameter)property).hasValOrVar()) {
+            property instanceof KtParameter && !((KtParameter) property).hasValOrVar()) {
             searchForBase = createCheckbox(JavaBundle.message("find.options.include.accessors.base.checkbox"),
                                            getFindUsagesOptions().isSearchForBaseAccessors, true);
             JComponent decoratedCheckbox = new ComponentPanelBuilder(searchForBase).
@@ -176,7 +176,7 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                 if (parent instanceof KtPrimaryConstructor) {
                     parent = parent.getParent();
                     if (parent instanceof KtClass) {
-                        return ((KtClass)parent).isData();
+                        return ((KtClass) parent).isData();
                     }
                 }
             }

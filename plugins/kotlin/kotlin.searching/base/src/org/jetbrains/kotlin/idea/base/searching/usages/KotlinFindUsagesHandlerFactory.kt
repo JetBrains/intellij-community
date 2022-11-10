@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.findUsages
+package org.jetbrains.kotlin.idea.base.searching.usages
 
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesHandler.NULL_HANDLER
@@ -9,12 +9,11 @@ import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.findUsages.handlers.DelegatingFindMemberUsagesHandler
-import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler
-import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindMemberUsagesHandler
-import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinTypeParameterFindUsagesHandler
+import org.jetbrains.kotlin.idea.base.searching.usages.handlers.DelegatingFindMemberUsagesHandler
+import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
+import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindMemberUsagesHandler
+import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinTypeParameterFindUsagesHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector

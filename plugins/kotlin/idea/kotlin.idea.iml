@@ -105,5 +105,6 @@
     <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
+    <orderEntry type="module" module-name="kotlin.searching.base" />
   </component>
 </module>

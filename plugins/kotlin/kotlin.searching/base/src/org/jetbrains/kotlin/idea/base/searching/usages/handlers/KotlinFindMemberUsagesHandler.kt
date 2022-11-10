@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.findUsages.handlers
+package org.jetbrains.kotlin.idea.base.searching.usages.handlers
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.find.FindManager
@@ -29,16 +29,20 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinCallableFindUsagesOptions
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
+import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindFunctionUsagesDialog
+import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropertyUsagesDialog
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.*
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.getTopMostOverriddenElementsToHighlight
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isDataClassComponentFunction
-import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinFindFunctionUsagesDialog
-import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinFindPropertyUsagesDialog
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
@@ -212,7 +216,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
             if (forceDisableComponentAndDestructionSearch) return true
 
-            if (KotlinFindPropertyUsagesDialog.getDisableComponentAndDestructionSearch(project)) return true
+            if (org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropertyUsagesDialog.getDisableComponentAndDestructionSearch(project)) return true
 
             return if (getUserData(FIND_USAGES_ONES_FOR_DATA_CLASS_KEY) == true) {
                 if (resetSingleFind) {

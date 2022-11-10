@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesProviderBase
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
