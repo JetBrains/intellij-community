@@ -309,7 +309,6 @@ public final class MadTestingUtil {
            && !name.endsWith("system")
            && !name.endsWith("config") // temporary stuff from tests or debug IDE
            && !name.equals("build")    // the dir is too deep and has almost no sources, descending there is a waste of time
-           && !name.equals("testData") // the dir is too deep and has no compilable sources, descending there is a waste of time
     ;
   }
 
