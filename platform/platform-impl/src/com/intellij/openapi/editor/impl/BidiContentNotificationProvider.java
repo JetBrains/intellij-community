@@ -65,7 +65,7 @@ final class BidiContentNotificationProvider implements EditorNotificationProvide
     if (group instanceof ActionGroup) {
       JPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.MAIN_MENU, (ActionGroup)group).getComponent();
       AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-      if (event instanceof MouseEvent) {
+      if (event instanceof MouseEvent && ((MouseEvent)event).getComponent().isShowing()) {
         JBPopupMenu.showByEvent((MouseEvent)event, popupMenu);
       }
       else {
