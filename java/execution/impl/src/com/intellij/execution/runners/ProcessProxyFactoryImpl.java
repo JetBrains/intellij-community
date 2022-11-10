@@ -6,9 +6,11 @@ import com.intellij.execution.configurations.JavaCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,8 +35,13 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
           ProcessProxyImpl proxy = new ProcessProxyImpl(StringUtil.getShortName(mainClass));
           String port = String.valueOf(proxy.getPortNumber());
           String binPath = proxy.getBinPath();
+          JavaSdkVersion jdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(javaParameters.getJdk());
+          if (jdkVersion != null && !jdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) {
+            throw new ExecutionException(JavaBundle.message("error.message.ide.does.not.support.starting.processes.using.old.java", 
+                                                            jdkVersion.getDescription()));
+          }
 
-          if (runtimeJarFile && JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_5)) {
+          if (runtimeJarFile) {
             javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
           }
           else {
@@ -49,6 +56,9 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
           }
 
           return proxy;
+        }
+        catch (ExecutionException e) {
+          throw e;
         }
         catch (Exception e) {
           Logger.getInstance(ProcessProxy.class).warn(e);
