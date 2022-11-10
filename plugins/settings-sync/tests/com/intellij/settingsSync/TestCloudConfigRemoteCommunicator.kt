@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.settingsSync.CloudConfigServerCommunicator.Companion.createCloudConfigClient
 import com.intellij.util.io.inputStream
 import org.junit.Assert
+import java.time.Instant
 import java.util.concurrent.CountDownLatch
 
 internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
@@ -25,8 +26,16 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
 
   override fun getVersionOnServer(): SettingsSnapshot? {
     val updateResult = receiveUpdates()
-    return if (updateResult is UpdateResult.Success) updateResult.settingsSnapshot else null
+    return when (updateResult) {
+      is UpdateResult.Success -> updateResult.settingsSnapshot
+      UpdateResult.FileDeletedFromServer -> snapshotForDeletion()
+      UpdateResult.NoFileOnServer -> null
+      is UpdateResult.Error -> throw AssertionError(updateResult.message)
+    }
   }
+
+  private fun snapshotForDeletion() =
+    SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true), emptySet(), null)
 
   override fun awaitForPush(): SettingsSnapshot? {
     pushedLatch = CountDownLatch(1)
