@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -360,10 +359,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         .filter { it != CheckinHandler.DUMMY }
 
     @JvmStatic
-    fun getCommitExecutors(project: Project, changes: Collection<Change>): List<CommitExecutor> =
-      getCommitExecutors(project, getAffectedVcses(changes, project))
-
-    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
+    fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
       return vcses.flatMap { it.commitExecutors } +
              ChangeListManager.getInstance(project).registeredExecutors +
              LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)

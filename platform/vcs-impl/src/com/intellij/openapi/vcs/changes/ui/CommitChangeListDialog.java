@@ -140,16 +140,16 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull Collection<? extends Change> changes,
+                                      @SuppressWarnings("unused") @Nullable Collection<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,
                                       @Nullable LocalChangeList initialChangeList,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
     if (executor != null) {
-      return commitWithExecutor(project, included, initialChangeList, executor, comment);
+      return commitWithExecutor(project, included, initialChangeList, executor, comment, null);
     }
     else {
-      return commitVcsChanges(project, changes, included, initialChangeList, comment);
+      return commitVcsChanges(project, included, initialChangeList, comment, null);
     }
   }
 
@@ -224,7 +224,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                            @NotNull Collection<?> included,
                                            @Nullable LocalChangeList initialChangeList,
                                            @NotNull CommitExecutor executor,
-                                           @Nullable String comment) {
+                                           @Nullable String comment,
+                                           @Nullable CommitResultHandler customResultHandler) {
     boolean showVcsCommit = false;
     Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
     if (affectedVcses.isEmpty()) {
@@ -233,14 +234,15 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     List<CommitExecutor> executors = singletonList(executor);
-    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, null);
+    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit,
+                            comment, customResultHandler);
   }
 
   public static boolean commitVcsChanges(@NotNull Project project,
-                                         @NotNull Collection<? extends Change> changes,
                                          @NotNull Collection<?> included,
                                          @Nullable LocalChangeList initialChangeList,
-                                         @Nullable String comment) {
+                                         @Nullable String comment,
+                                         @Nullable CommitResultHandler customResultHandler) {
     boolean showVcsCommit = true;
     Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
     if (affectedVcses.isEmpty()) {
@@ -248,8 +250,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       return false;
     }
 
-    List<CommitExecutor> executors = getCommitExecutors(project, changes);
-    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, null);
+    List<CommitExecutor> executors = getCommitExecutors(project, affectedVcses);
+    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit,
+                            comment, customResultHandler);
   }
 
   private static boolean showCommitDialog(@NotNull Project project,
