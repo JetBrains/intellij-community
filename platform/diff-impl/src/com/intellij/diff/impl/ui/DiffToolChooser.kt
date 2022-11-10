@@ -7,16 +7,11 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
 @Suppress("DialogTitleCapitalization")
 abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(), CustomComponentAction {
-
-  private var panel: DialogPanel? = null
-  private var segmentedButton: SegmentedButton<FrameDiffTool>? = null
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -51,10 +46,10 @@ abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(
   abstract fun getActiveTool(): DiffTool
   abstract fun getForcedDiffTool(): DiffTool?
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    panel = panel {
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
+    panel {
       row {
-        segmentedButton = segmentedButton(getTools(), FrameDiffTool::getName).apply {
+        segmentedButton(getTools(), FrameDiffTool::getName).apply {
           (getActiveTool() as? FrameDiffTool)?.let {
             selectedItem = it
           }
@@ -62,7 +57,4 @@ abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(
         }
       }
     }
-
-    return panel!!
-  }
 }
