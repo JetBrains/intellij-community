@@ -5,6 +5,9 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -24,6 +27,9 @@ interface ReferredEntity : WorkspaceEntity {
   }
 
   companion object : Type<ReferredEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(version: Int, name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ReferredEntity {
       val builder = builder()
       builder.version = version

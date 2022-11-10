@@ -4,6 +4,9 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -40,6 +43,9 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<SampleWithSymbolicIdEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(booleanProperty: Boolean,
                         stringProperty: String,
                         stringListProperty: List<String>,
@@ -86,6 +92,9 @@ interface ChildWpidSampleEntity : WorkspaceEntity {
   }
 
   companion object : Type<ChildWpidSampleEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildWpidSampleEntity {
       val builder = builder()
       builder.data = data

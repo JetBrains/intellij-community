@@ -4,6 +4,9 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -64,6 +67,9 @@ interface OneEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<OneEntityWithSymbolicId, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(myName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OneEntityWithSymbolicId {
       val builder = builder()
       builder.myName = myName
@@ -123,6 +129,9 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   }
 
   companion object : Type<EntityWithSoftLinks, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(link: OneSymbolicId,
                         manyLinks: List<OneSymbolicId>,
                         inContainer: Container,
@@ -171,6 +180,9 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
   }
 
   companion object : Type<SoftLinkReferencedChild, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SoftLinkReferencedChild {
       val builder = builder()
       builder.entitySource = entitySource

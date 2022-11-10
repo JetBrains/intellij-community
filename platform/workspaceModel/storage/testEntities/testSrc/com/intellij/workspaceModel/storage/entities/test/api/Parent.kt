@@ -2,6 +2,9 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -31,6 +34,9 @@ interface XParentEntity : WorkspaceEntity {
   }
 
   companion object : Type<XParentEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XParentEntity {
       val builder = builder()
       builder.parentProperty = parentProperty
@@ -69,6 +75,9 @@ interface XChildEntity : WorkspaceEntity {
   }
 
   companion object : Type<XChildEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XChildEntity {
       val builder = builder()
       builder.childProperty = childProperty
@@ -99,6 +108,9 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
   }
 
   companion object : Type<XChildWithOptionalParentEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): XChildWithOptionalParentEntity {
@@ -132,6 +144,9 @@ interface XChildChildEntity : WorkspaceEntity {
   }
 
   companion object : Type<XChildChildEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XChildChildEntity {
       val builder = builder()
       builder.entitySource = entitySource

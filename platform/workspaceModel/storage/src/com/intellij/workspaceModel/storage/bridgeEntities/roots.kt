@@ -8,6 +8,9 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -35,6 +38,9 @@ interface ContentRootEntity : WorkspaceEntity {
   }
 
   companion object : Type<ContentRootEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(url: VirtualFileUrl,
                         excludedPatterns: List<String>,
                         entitySource: EntitySource,
@@ -81,6 +87,9 @@ interface SourceRootEntity : WorkspaceEntity {
   }
 
   companion object : Type<SourceRootEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(url: VirtualFileUrl,
                         rootType: String,
                         entitySource: EntitySource,
@@ -116,6 +125,9 @@ interface SourceRootOrderEntity : WorkspaceEntity {
   }
 
   companion object : Type<SourceRootOrderEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(orderOfSourceRoots: List<VirtualFileUrl>,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
@@ -149,6 +161,9 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
   }
 
   companion object : Type<CustomSourceRootPropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(propertiesXmlTag: String,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
@@ -185,6 +200,9 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
   }
 
   companion object : Type<JavaSourceRootPropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(generated: Boolean,
                         packagePrefix: String,
                         entitySource: EntitySource,
@@ -223,6 +241,9 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
   }
 
   companion object : Type<JavaResourceRootPropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(generated: Boolean,
                         relativeOutputPath: String,
                         entitySource: EntitySource,

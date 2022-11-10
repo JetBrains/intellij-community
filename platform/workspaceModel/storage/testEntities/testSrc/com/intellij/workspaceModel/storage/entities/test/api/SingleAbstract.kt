@@ -6,6 +6,9 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -24,6 +27,9 @@ interface ParentSingleAbEntity : WorkspaceEntity {
   }
 
   companion object : Type<ParentSingleAbEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentSingleAbEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -55,6 +61,9 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
   }
 
   companion object : Type<ChildSingleAbstractBaseEntity, Builder<ChildSingleAbstractBaseEntity>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(commonData: String,
                         entitySource: EntitySource,
                         init: (Builder<ChildSingleAbstractBaseEntity>.() -> Unit)? = null): ChildSingleAbstractBaseEntity {
@@ -82,6 +91,9 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
   }
 
   companion object : Type<ChildSingleFirstEntity, Builder>(ChildSingleAbstractBaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(commonData: String,
                         firstData: String,
                         entitySource: EntitySource,
@@ -117,6 +129,9 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
   }
 
   companion object : Type<ChildSingleSecondEntity, Builder>(ChildSingleAbstractBaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(commonData: String,
                         secondData: String,
                         entitySource: EntitySource,

@@ -6,6 +6,9 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -22,6 +25,9 @@ interface CollectionFieldEntity : WorkspaceEntity {
   }
 
   companion object : Type<CollectionFieldEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(versions: Set<Int>,
                         names: List<String>,
                         entitySource: EntitySource,

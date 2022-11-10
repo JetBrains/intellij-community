@@ -3,6 +3,9 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -28,6 +31,9 @@ interface ParentWithNullsMultiple : WorkspaceEntity {
   }
 
   companion object : Type<ParentWithNullsMultiple, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentWithNullsMultiple {
       val builder = builder()
       builder.parentData = parentData
@@ -57,6 +63,9 @@ interface ChildWithNullsMultiple : WorkspaceEntity {
   }
 
   companion object : Type<ChildWithNullsMultiple, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildWithNullsMultiple {
       val builder = builder()
       builder.childData = childData

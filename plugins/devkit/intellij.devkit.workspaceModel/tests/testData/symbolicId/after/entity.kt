@@ -7,6 +7,9 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -30,6 +33,9 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<SimpleSymbolicIdEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(version: Int,
                         name: String,
                         related: SimpleId,

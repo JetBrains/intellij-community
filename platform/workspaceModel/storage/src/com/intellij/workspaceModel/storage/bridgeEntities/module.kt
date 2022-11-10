@@ -4,6 +4,9 @@ package com.intellij.workspaceModel.storage.bridgeEntities
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -44,6 +47,9 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<ModuleEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(name: String,
                         dependencies: List<ModuleDependencyItem>,
                         entitySource: EntitySource,
@@ -86,6 +92,9 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
   }
 
   companion object : Type<ModuleCustomImlDataEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(customModuleOptions: Map<String, String>,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ModuleCustomImlDataEntity {
@@ -120,6 +129,9 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
   }
 
   companion object : Type<ModuleGroupPathEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(path: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
       val builder = builder()
       builder.path = path.toMutableWorkspaceList()
@@ -159,6 +171,9 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
   }
 
   companion object : Type<JavaModuleSettingsEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(inheritedCompilerOutput: Boolean,
                         excludeOutput: Boolean,
                         entitySource: EntitySource,
@@ -207,6 +222,9 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
   }
 
   companion object : Type<ExternalSystemModuleOptionsEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ExternalSystemModuleOptionsEntity {
       val builder = builder()
       builder.entitySource = entitySource

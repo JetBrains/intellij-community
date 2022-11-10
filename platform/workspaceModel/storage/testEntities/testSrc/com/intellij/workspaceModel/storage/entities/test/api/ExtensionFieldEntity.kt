@@ -1,5 +1,8 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -22,6 +25,9 @@ interface MainEntity : WorkspaceEntity {
   }
 
   companion object : Type<MainEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(x: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MainEntity {
       val builder = builder()
       builder.x = x
@@ -55,6 +61,9 @@ interface AttachedEntity : WorkspaceEntity {
   }
 
   companion object : Type<AttachedEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntity {
       val builder = builder()
       builder.data = data

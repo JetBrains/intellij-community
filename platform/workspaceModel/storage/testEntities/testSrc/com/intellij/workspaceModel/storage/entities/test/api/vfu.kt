@@ -4,6 +4,9 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
@@ -28,6 +31,9 @@ interface VFUEntity : WorkspaceEntity {
   }
 
   companion object : Type<VFUEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String,
                         fileProperty: VirtualFileUrl,
                         entitySource: EntitySource,
@@ -64,6 +70,9 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
   }
 
   companion object : Type<VFUWithTwoPropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String,
                         fileProperty: VirtualFileUrl,
                         secondFileProperty: VirtualFileUrl,
@@ -101,6 +110,9 @@ interface NullableVFUEntity : WorkspaceEntity {
   }
 
   companion object : Type<NullableVFUEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NullableVFUEntity {
       val builder = builder()
       builder.data = data
@@ -131,6 +143,9 @@ interface ListVFUEntity : WorkspaceEntity {
   }
 
   companion object : Type<ListVFUEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String,
                         fileProperty: List<VirtualFileUrl>,
                         entitySource: EntitySource,
@@ -165,6 +180,9 @@ interface SetVFUEntity : WorkspaceEntity {
   }
 
   companion object : Type<SetVFUEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String,
                         fileProperty: Set<VirtualFileUrl>,
                         entitySource: EntitySource,

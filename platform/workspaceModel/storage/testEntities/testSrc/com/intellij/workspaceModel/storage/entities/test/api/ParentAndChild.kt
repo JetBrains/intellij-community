@@ -6,6 +6,9 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -27,6 +30,9 @@ interface ParentEntity : WorkspaceEntity {
   }
 
   companion object : Type<ParentEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentEntity {
       val builder = builder()
       builder.parentData = parentData
@@ -59,6 +65,9 @@ interface ChildEntity : WorkspaceEntity {
   }
 
   companion object : Type<ChildEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildEntity {
       val builder = builder()
       builder.childData = childData

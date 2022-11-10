@@ -4,6 +4,9 @@ package com.intellij.workspaceModel.storage.bridgeEntities
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -28,6 +31,9 @@ interface FacetsOrderEntity : WorkspaceEntity {
   }
 
   companion object : Type<FacetsOrderEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(orderOfFacets: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetsOrderEntity {
       val builder = builder()
       builder.orderOfFacets = orderOfFacets.toMutableWorkspaceList()
@@ -64,6 +70,9 @@ interface FacetExternalSystemIdEntity : WorkspaceEntity {
   }
 
   companion object : Type<FacetExternalSystemIdEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(externalSystemId: String,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): FacetExternalSystemIdEntity {
@@ -103,6 +112,9 @@ interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
   }
 
   companion object : Type<ArtifactExternalSystemIdEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(externalSystemId: String,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ArtifactExternalSystemIdEntity {
@@ -142,6 +154,9 @@ interface LibraryExternalSystemIdEntity: WorkspaceEntity {
   }
 
   companion object : Type<LibraryExternalSystemIdEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(externalSystemId: String,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): LibraryExternalSystemIdEntity {
@@ -180,6 +195,9 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   }
 
   companion object : Type<ArtifactsOrderEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(orderOfArtifacts: List<String>,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ArtifactsOrderEntity {

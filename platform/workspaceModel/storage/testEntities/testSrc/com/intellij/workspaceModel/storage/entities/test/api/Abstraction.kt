@@ -5,6 +5,9 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -27,6 +30,9 @@ interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<HeadAbstractionEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): HeadAbstractionEntity {
       val builder = builder()
       builder.data = data
@@ -58,6 +64,9 @@ interface BaseEntity : WorkspaceEntity {
   }
 
   companion object : Type<BaseEntity, Builder<BaseEntity>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder<BaseEntity>.() -> Unit)? = null): BaseEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -85,6 +94,9 @@ interface CompositeBaseEntity : BaseEntity {
   }
 
   companion object : Type<CompositeBaseEntity, Builder<CompositeBaseEntity>>(BaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder<CompositeBaseEntity>.() -> Unit)? = null): CompositeBaseEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -108,6 +120,9 @@ interface MiddleEntity : BaseEntity {
   }
 
   companion object : Type<MiddleEntity, Builder>(BaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(property: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MiddleEntity {
       val builder = builder()
       builder.property = property
@@ -144,6 +159,9 @@ interface LeftEntity : CompositeBaseEntity {
   }
 
   companion object : Type<LeftEntity, Builder>(CompositeBaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LeftEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -181,6 +199,9 @@ interface RightEntity : CompositeBaseEntity {
   }
 
   companion object : Type<RightEntity, Builder>(CompositeBaseEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): RightEntity {
       val builder = builder()
       builder.entitySource = entitySource

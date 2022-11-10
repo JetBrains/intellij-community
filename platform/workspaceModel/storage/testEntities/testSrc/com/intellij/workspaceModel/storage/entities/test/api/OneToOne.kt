@@ -2,6 +2,9 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -32,6 +35,9 @@ interface OoParentEntity : WorkspaceEntity {
   }
 
   companion object : Type<OoParentEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentEntity {
       val builder = builder()
       builder.parentProperty = parentProperty
@@ -75,6 +81,9 @@ interface OoChildEntity : WorkspaceEntity {
   }
 
   companion object : Type<OoChildEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildEntity {
       val builder = builder()
       builder.childProperty = childProperty
@@ -117,6 +126,9 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
   }
 
   companion object : Type<OoChildWithNullableParentEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithNullableParentEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -172,6 +184,9 @@ interface OoParentWithPidEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<OoParentWithPidEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithPidEntity {
       val builder = builder()
       builder.parentProperty = parentProperty
@@ -214,6 +229,9 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
   }
 
   companion object : Type<OoChildForParentWithPidEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): OoChildForParentWithPidEntity {
@@ -263,6 +281,9 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<OoChildAlsoWithPidEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildAlsoWithPidEntity {
       val builder = builder()
       builder.childProperty = childProperty
@@ -309,6 +330,9 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
   }
 
   companion object : Type<OoParentWithoutPidEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithoutPidEntity {
       val builder = builder()
       builder.parentProperty = parentProperty
@@ -359,6 +383,9 @@ interface OoChildWithPidEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<OoChildWithPidEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithPidEntity {
       val builder = builder()
       builder.childProperty = childProperty

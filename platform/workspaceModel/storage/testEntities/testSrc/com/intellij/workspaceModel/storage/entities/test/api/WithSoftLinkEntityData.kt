@@ -3,6 +3,9 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -55,6 +58,9 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<NamedEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(myName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NamedEntity {
       val builder = builder()
       builder.myName = myName
@@ -107,6 +113,9 @@ interface NamedChildEntity : WorkspaceEntity {
   }
 
   companion object : Type<NamedChildEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NamedChildEntity {
       val builder = builder()
       builder.childProperty = childProperty
@@ -150,6 +159,9 @@ interface WithSoftLinkEntity : WorkspaceEntity {
   }
 
   companion object : Type<WithSoftLinkEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(link: NameId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): WithSoftLinkEntity {
       val builder = builder()
       builder.link = link
@@ -184,6 +196,9 @@ interface ComposedLinkEntity : WorkspaceEntity {
   }
 
   companion object : Type<ComposedLinkEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(link: ComposedId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ComposedLinkEntity {
       val builder = builder()
       builder.link = link
@@ -224,6 +239,9 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<WithListSoftLinksEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(myName: String,
                         links: List<NameId>,
                         entitySource: EntitySource,
@@ -274,6 +292,9 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<ComposedIdSoftRefEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(myName: String,
                         link: NameId,
                         entitySource: EntitySource,

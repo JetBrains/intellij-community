@@ -7,6 +7,9 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -39,6 +42,9 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<ArtifactEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(name: String,
                         artifactType: String,
                         includeInProjectBuild: Boolean,
@@ -81,6 +87,9 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
   }
 
   companion object : Type<ArtifactPropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(providerType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactPropertiesEntity {
       val builder = builder()
       builder.providerType = providerType
@@ -110,6 +119,9 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
   }
 
   companion object : Type<PackagingElementEntity, Builder<PackagingElementEntity>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder<PackagingElementEntity>.() -> Unit)? = null): PackagingElementEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -136,6 +148,9 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
   }
 
   companion object : Type<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(PackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource,
                         init: (Builder<CompositePackagingElementEntity>.() -> Unit)? = null): CompositePackagingElementEntity {
       val builder = builder()
@@ -162,6 +177,9 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
   }
 
   companion object : Type<DirectoryPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(directoryName: String,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): DirectoryPackagingElementEntity {
@@ -196,6 +214,9 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
   }
 
   companion object : Type<ArchivePackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(fileName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArchivePackagingElementEntity {
       val builder = builder()
       builder.fileName = fileName
@@ -225,6 +246,9 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
   }
 
   companion object : Type<ArtifactRootElementEntity, Builder>(CompositePackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactRootElementEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -254,6 +278,9 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
   }
 
   companion object : Type<ArtifactOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactOutputPackagingElementEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -289,6 +316,9 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
   }
 
   companion object : Type<ModuleOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleOutputPackagingElementEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -318,6 +348,9 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
   }
 
   companion object : Type<LibraryFilesPackagingElementEntity, Builder>(PackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryFilesPackagingElementEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -353,6 +386,9 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
   }
 
   companion object : Type<ModuleSourcePackagingElementEntity, Builder>(PackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleSourcePackagingElementEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -382,6 +418,9 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
   }
 
   companion object : Type<ModuleTestOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleTestOutputPackagingElementEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -411,6 +450,9 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEn
   }
 
   companion object : Type<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(PackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(filePath: VirtualFileUrl,
                         entitySource: EntitySource,
                         init: (Builder<FileOrDirectoryPackagingElementEntity>.() -> Unit)? = null): FileOrDirectoryPackagingElementEntity {
@@ -435,6 +477,9 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
   }
 
   companion object : Type<DirectoryCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(filePath: VirtualFileUrl,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): DirectoryCopyPackagingElementEntity {
@@ -468,6 +513,9 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
   }
 
   companion object : Type<ExtractedDirectoryPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(filePath: VirtualFileUrl,
                         pathInArchive: String,
                         entitySource: EntitySource,
@@ -503,6 +551,9 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
   }
 
   companion object : Type<FileCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(filePath: VirtualFileUrl,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): FileCopyPackagingElementEntity {
@@ -539,6 +590,9 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
   }
 
   companion object : Type<CustomPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(typeId: String,
                         propertiesXmlTag: String,
                         entitySource: EntitySource,

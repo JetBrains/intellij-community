@@ -2,6 +2,9 @@
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.workspaceModel.storage.*
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -35,6 +38,9 @@ interface FacetEntity: WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<FacetEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(name: String,
                         facetType: String,
                         moduleId: ModuleId,

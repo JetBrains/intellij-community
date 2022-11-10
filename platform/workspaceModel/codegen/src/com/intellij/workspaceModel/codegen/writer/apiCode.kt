@@ -133,6 +133,9 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
   if (mandatoryFields.isNotEmpty()) {
     val fields = mandatoryFields.joinToString { "${it.name}: ${it.valueType.javaType}" }
     section(companionObjectHeader) {
+      line("@${JvmOverloads::class.fqn}")
+      line("@${JvmStatic::class.fqn}")
+      line("@${JvmName::class.fqn}(\"create\")")
       section("operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
         list(mandatoryFields) {
@@ -151,6 +154,9 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
   }
   else {
     section(companionObjectHeader) {
+      line("@${JvmOverloads::class.fqn}")
+      line("@${JvmStatic::class.fqn}")
+      line("@${JvmName::class.fqn}(\"create\")")
       section("operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
         line("init?.invoke(builder)")
