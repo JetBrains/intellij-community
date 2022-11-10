@@ -8,7 +8,6 @@ use std::io::{BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output};
 use std::sync::Once;
-use std::time::SystemTime;
 use log::{debug, warn};
 use utils::{get_path_from_env_var, PathExt};
 

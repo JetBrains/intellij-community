@@ -181,11 +181,12 @@ mod tests {
         assert!(result.exit_status.success(), "Launcher didn't exit successfully");
 
         let dump = result.dump.expect("Launcher exited successfully, but there is no output");
+        let test_root_dir = test.test_root_dir.path();
 
         let jbr_dir = match std::env::consts::OS {
-            "linux" => test.test_root_dir.join("jbr"),
-            "macos" => test.test_root_dir.join("Contents").join("jbr"),
-            "windows" => test.test_root_dir.join("jbr"),
+            "linux" => test_root_dir.join("jbr"),
+            "macos" => test_root_dir.join("Contents").join("jbr"),
+            "windows" => test_root_dir.join("jbr"),
             unsupported_os => panic!("Unsupported OS: {unsupported_os}")
         };
 
