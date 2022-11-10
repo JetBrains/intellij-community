@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -119,8 +120,11 @@ final class RefreshWorker {
           processQueue(threadEvents);
         }
         catch (RefreshCancelledException ignored) { }
-        catch (Throwable e) {
-          LOG.error(e);
+        catch (ProcessCanceledException e) {
+          myCancelled = true;
+        }
+        catch (Throwable t) {
+          LOG.error(t);
           myCancelled = true;
         }
         return threadEvents;
