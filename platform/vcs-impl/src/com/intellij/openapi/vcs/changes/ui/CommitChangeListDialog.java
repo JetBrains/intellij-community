@@ -19,7 +19,10 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsActions;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
@@ -72,7 +75,6 @@ import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitExecutors;
 import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitHandlerFactories;
 import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.cleanActionText;
 import static java.lang.Math.max;
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -183,7 +185,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull List<? extends Change> changes,
+                                      @SuppressWarnings("unused") @Nullable List<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,
                                       @Nullable LocalChangeList initialSelection,
                                       @NotNull List<? extends CommitExecutor> executors,
@@ -213,8 +215,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       return false;
     }
 
-    AbstractVcs[] vcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    for (BaseCheckinHandlerFactory factory : getCommitHandlerFactories(asList(vcses))) {
+    List<Change> changes = ContainerUtil.filterIsInstance(included, Change.class);
+    for (BaseCheckinHandlerFactory factory : getCommitHandlerFactories(affectedVcses)) {
       BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
       if (handler != null && !handler.beforeCommitDialogShown(project, changes, executors, showVcsCommit)) {
         return false;
