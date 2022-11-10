@@ -23,6 +23,11 @@ public class K2KotlinVariablePrintingTestGenerated extends AbstractK2KotlinVaria
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("extractCapturesFromSuspendLambdas.kt")
+    public void testExtractCapturesFromSuspendLambdas() throws Exception {
+        runTest("../testData/variables/extractCapturesFromSuspendLambdas.kt");
+    }
+
     @TestMetadata("nestedInlineFunctions.kt")
     public void testNestedInlineFunctions() throws Exception {
         runTest("../testData/variables/nestedInlineFunctions.kt");
