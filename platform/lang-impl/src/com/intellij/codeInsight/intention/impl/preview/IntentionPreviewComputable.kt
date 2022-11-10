@@ -80,79 +80,34 @@ internal class IntentionPreviewComputable(private val project: Project,
   fun generatePreview(): IntentionPreviewInfo? {
     if (project.isDisposed) return null
     val origPair = ShowIntentionActionsHandler.chooseFileForAction(originalFile, originalEditor, action) ?: return null
-    val origFile: PsiFile
-    val selection: TextRange
-    val caretOffset: Int
-    val fileFactory = PsiFileFactory.getInstance(project)
-    if (origPair.first != originalFile) {
-      val manager = InjectedLanguageManager.getInstance(project)
-      origFile = fileFactory.createFileFromText(
-        origPair.first.name, origPair.first.fileType, manager.getUnescapedText(origPair.first))
-      val selectionModel = origPair.second.selectionModel
-      val start = mapInjectedOffsetToUnescaped(origPair.first, selectionModel.selectionStart)
-      val end = if (selectionModel.selectionEnd == selectionModel.selectionStart) start else
-        mapInjectedOffsetToUnescaped(origPair.first, selectionModel.selectionEnd)
-      selection = TextRange(start, end)
-      val caretModel = origPair.second.caretModel
-      caretOffset = when (caretModel.offset) {
-        selectionModel.selectionStart -> start
-        selectionModel.selectionEnd -> end
-        else -> mapInjectedOffsetToUnescaped(origPair.first, caretModel.offset)
-      }
-    }
-    else {
-      origFile = originalFile
-      selection = TextRange(originalEditor.selectionModel.selectionStart, originalEditor.selectionModel.selectionEnd)
-      caretOffset = originalEditor.caretModel.offset
-    }
     ProgressManager.checkCanceled()
     val writable = originalEditor.document.isWritable
     try {
-      val (result: IntentionPreviewInfo, psiFileCopy: PsiFile?) = invokePreview(origFile, selection, caretOffset)
-      ProgressManager.checkCanceled()
-      val comparisonManager = ComparisonManager.getInstance()
-      return when (result) {
-        IntentionPreviewInfo.DIFF,
-        IntentionPreviewInfo.DIFF_NO_TRIM -> {
-          val document = psiFileCopy!!.viewProvider.document
-          val correctedOrigFile = psiFileCopy.originalFile
-          val anotherFile = correctedOrigFile != origFile
-          val policy = if (result == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
-          IntentionPreviewDiffResult(
-            psiFile = psiFileCopy,
-            origFile = correctedOrigFile,
-            policy = policy,
-            fileName = if (anotherFile) psiFileCopy.name else null,
-            normalDiff = !anotherFile,
-            lineFragments = comparisonManager.compareLines(correctedOrigFile.text, document.text, policy, DumbProgressIndicator.INSTANCE))
-        }
-        IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
-        is IntentionPreviewInfo.CustomDiff -> {
-          IntentionPreviewDiffResult(
-            fileFactory.createFileFromText("__dummy__", result.fileType(), result.modifiedText()),
-            fileFactory.createFileFromText("__dummy__", result.fileType(), result.originalText()),
-            comparisonManager.compareLines(result.originalText(), result.modifiedText(),
-                                           ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
-            fileName = result.fileName(),
-            normalDiff = false,
-            policy = ComparisonPolicy.TRIM_WHITESPACES)
-        }
-        else -> result
-      }
+      return invokePreview(origPair.first, origPair.second)
     }
     finally {
       originalEditor.document.setReadOnly(!writable)
     }
   }
 
-  private fun invokePreview(origFile: PsiFile, selection: TextRange, caretOffset: Int): Pair<IntentionPreviewInfo, PsiFile?> {
+  private fun invokePreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo? {
     var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
-    val fileToCopy = action.getElementToMakeWritable(origFile) ?. containingFile ?: origFile
-    val psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
-    val editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
-    if (fileToCopy == origFile) {
-      editorCopy.caretModel.moveToOffset(caretOffset)
-      editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
+    var fileToCopy = action.getElementToMakeWritable(origFile) ?. containingFile ?: origFile
+    val psiFileCopy: PsiFile
+    val editorCopy: IntentionPreviewEditor
+    val anotherFile = fileToCopy != origFile
+    if (!anotherFile) {
+      val fileFactory = PsiFileFactory.getInstance(project)
+      if (origFile != originalFile) { // injection
+        val manager = InjectedLanguageManager.getInstance(project)
+        fileToCopy = fileFactory.createFileFromText(origFile.name, origFile.fileType, manager.getUnescapedText(origFile))
+      }
+      psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
+      editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
+      setupEditor(editorCopy, origFile, origEditor)
+    } else {
+      psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
+      editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
     }
     originalEditor.document.setReadOnly(true)
     ProgressManager.checkCanceled()
@@ -161,27 +116,86 @@ internal class IntentionPreviewComputable(private val project: Project,
         .postponeFormattingInside { info = action.generatePreview(project, editorCopy, psiFileCopy) }
     }
     if (info == IntentionPreviewInfo.FALLBACK_DIFF && fileToCopy == origFile) {
-      if (!action.startInWriteAction()) return info to null
-      if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return info to null
-      val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return info to null
-      val unwrapped = IntentionActionDelegate.unwrap(action)
-      val cls = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.java
-      val loader = cls.classLoader
-      val thirdParty = loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
-      if (!thirdParty) {
-        logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action ${cls.name}|${action.familyName}")
-      }
-      ProgressManager.checkCanceled()
-      IntentionPreviewUtils.previewSession(editorCopy) {
-        PostprocessReformattingAspect.getInstance(project)
-          .postponeFormattingInside { action.invoke(project, editorCopy, psiFileCopy) }
-      }
-      info = IntentionPreviewInfo.DIFF
+      info = generateFallbackDiff(editorCopy, psiFileCopy)
     }
     val manager = PsiDocumentManager.getInstance(project)
     manager.commitDocument(editorCopy.document)
     manager.doPostponedOperationsAndUnblockDocument(editorCopy.document)
-    return Pair(info, psiFileCopy)
+    val comparisonManager = ComparisonManager.getInstance()
+    return when (val result = info) {
+      IntentionPreviewInfo.DIFF,
+      IntentionPreviewInfo.DIFF_NO_TRIM -> {
+        val document = psiFileCopy.viewProvider.document
+        val policy = if (info == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
+        IntentionPreviewDiffResult(
+          psiFile = psiFileCopy,
+          origFile = fileToCopy,
+          policy = policy,
+          fileName = if (anotherFile) psiFileCopy.name else null,
+          normalDiff = !anotherFile,
+          lineFragments = comparisonManager.compareLines(fileToCopy.text, document.text, policy, DumbProgressIndicator.INSTANCE))
+      }
+      IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
+      is IntentionPreviewInfo.CustomDiff -> {
+        val fileFactory = PsiFileFactory.getInstance(project)
+        IntentionPreviewDiffResult(
+          fileFactory.createFileFromText("__dummy__", result.fileType(), result.modifiedText()),
+          fileFactory.createFileFromText("__dummy__", result.fileType(), result.originalText()),
+          comparisonManager.compareLines(result.originalText(), result.modifiedText(),
+                                         ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
+          fileName = result.fileName(),
+          normalDiff = false,
+          policy = ComparisonPolicy.TRIM_WHITESPACES)
+      }
+      else -> result
+    }
+  }
+
+  private fun generateFallbackDiff(editorCopy: IntentionPreviewEditor, psiFileCopy: PsiFile): IntentionPreviewInfo {
+    // Fallback algorithm for intention actions that don't support preview normally
+    // works only for registered intentions (not for compilation or inspection quick-fixes)
+    if (!action.startInWriteAction()) return IntentionPreviewInfo.EMPTY
+    if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return IntentionPreviewInfo.EMPTY
+    val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return IntentionPreviewInfo.EMPTY
+    val unwrapped = IntentionActionDelegate.unwrap(action)
+    val cls = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.java
+    val loader = cls.classLoader
+    val thirdParty = loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
+    if (!thirdParty) {
+      logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action ${cls.name}|${action.familyName}")
+    }
+    ProgressManager.checkCanceled()
+    IntentionPreviewUtils.previewSession(editorCopy) {
+      PostprocessReformattingAspect.getInstance(project)
+        .postponeFormattingInside { action.invoke(project, editorCopy, psiFileCopy) }
+    }
+    return IntentionPreviewInfo.DIFF
+  }
+
+  private fun setupEditor(editorCopy: IntentionPreviewEditor, origFile: PsiFile, origEditor: Editor) {
+    ProgressManager.checkCanceled()
+    val selection: TextRange
+    val caretOffset: Int
+    if (origFile != originalFile) { // injection
+      val selectionModel = origEditor.selectionModel
+      val start = mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionStart)
+      val end = if (selectionModel.selectionEnd == selectionModel.selectionStart) start
+      else
+        mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionEnd)
+      selection = TextRange(start, end)
+      val caretModel = origEditor.caretModel
+      caretOffset = when (caretModel.offset) {
+        selectionModel.selectionStart -> start
+        selectionModel.selectionEnd -> end
+        else -> mapInjectedOffsetToUnescaped(origFile, caretModel.offset)
+      }
+    }
+    else {
+      selection = TextRange(originalEditor.selectionModel.selectionStart, originalEditor.selectionModel.selectionEnd)
+      caretOffset = originalEditor.caretModel.offset
+    }
+    editorCopy.caretModel.moveToOffset(caretOffset)
+    editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
   }
 
   private fun mapInjectedOffsetToUnescaped(injectedFile: PsiFile, injectedOffset: Int): Int {
