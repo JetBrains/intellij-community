@@ -112,11 +112,13 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                                            editor.reviewData,
                                                            editor.detailsData)
 
-    val itemComponentFactory = createItemComponentFactory(project,
-                                                          editor.detailsData, editor.commentsData, editor.reviewData,
-                                                          reviewThreadsModelsProvider, editor.avatarIconsProvider,
-                                                          suggestedChangesHelper,
-                                                          editor.securityService.currentUser
+    val itemComponentFactory = createItemComponentFactory(
+      project,
+      editor.detailsData, editor.commentsData, editor.reviewData,
+      reviewThreadsModelsProvider, editor.avatarIconsProvider,
+      suggestedChangesHelper,
+      editor.securityService.ghostUser,
+      editor.securityService.currentUser
     )
     val descriptionWrapper = Wrapper().apply {
       isOpaque = false
@@ -222,18 +224,24 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
                                          suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                                         ghostUser: GHUser,
                                          currentUser: GHUser)
     : GHPRTimelineItemComponentFactory {
 
     val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, detailsModel.value)
     val diffFactory = GHPRReviewThreadDiffComponentFactory(project, EditorFactory.getInstance())
-    val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
     return GHPRTimelineItemComponentFactory(
       project,
-      detailsDataProvider, commentsDataProvider, reviewDataProvider, avatarIconsProvider, reviewThreadsModelsProvider,
+      detailsDataProvider,
+      commentsDataProvider,
+      reviewDataProvider,
+      avatarIconsProvider,
+      reviewThreadsModelsProvider,
       diffFactory,
-      eventsFactory, selectInToolWindowHelper,
-      suggestedChangeHelper, currentUser
+      selectInToolWindowHelper,
+      suggestedChangeHelper,
+      ghostUser,
+      currentUser
     )
   }
 }

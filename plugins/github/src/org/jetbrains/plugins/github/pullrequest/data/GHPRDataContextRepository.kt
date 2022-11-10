@@ -92,6 +92,10 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
     val accountDetails = GithubAccountInformationProvider.getInstance().getInformation(requestExecutor, indicator, account)
     indicator.checkCanceled()
 
+    indicator.text = GithubBundle.message("pull.request.loading.ghost")
+    val ghostUserDetails = requestExecutor.execute(indicator, GHGQLRequests.User.find(account.server, "ghost"))
+                           ?: error("Couldn't load ghost user details")
+
     indicator.text = GithubBundle.message("pull.request.loading.repo.info")
     val repositoryInfo =
       requestExecutor.execute(indicator, GHGQLRequests.Repo.find(GHRepositoryCoordinates(account.server,
@@ -116,6 +120,7 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
     val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
 
     val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project),
+                                                  ghostUserDetails,
                                                   account, currentUser, currentUserTeams,
                                                   repositoryInfo)
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)

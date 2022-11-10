@@ -12,17 +12,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHGitActor
@@ -48,8 +44,10 @@ import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.Dimension
-import java.util.*
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -60,10 +58,12 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
-                                       private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>,
                                        private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
                                        private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                                       ghostUser: GHUser,
                                        private val currentUser: GHUser) : TimelineItemComponentFactory<GHPRTimelineItem> {
+
+  private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider, ghostUser)
 
   override fun createComponent(item: GHPRTimelineItem): Item {
     try {
@@ -117,7 +117,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       actionsPanel = null
     }
     val titlePanel = NonOpaquePanel(HorizontalLayout(JBUIScale.scale(12))).apply {
-      add(actionTitle(details.author, GithubBundle.message("pull.request.timeline.created"), details.createdAt))
+      add(eventComponentFactory.actionTitle(details.author, GithubBundle.message("pull.request.timeline.created"), details.createdAt))
       if (actionsPanel != null && actionsPanel.componentCount > 0) add(actionsPanel)
     }
 
@@ -137,7 +137,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       })
     }
     val titlePanel = NonOpaquePanel(HorizontalLayout(JBUIScale.scale(12))).apply {
-      add(actionTitle(comment.author, GithubBundle.message("pull.request.timeline.commented"), comment.createdAt))
+      add(eventComponentFactory.actionTitle(comment.author, GithubBundle.message("pull.request.timeline.commented"), comment.createdAt))
       if (actionsPanel.componentCount > 0) add(actionsPanel)
     }
 
@@ -181,7 +181,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       COMMENTED, DISMISSED -> GithubBundle.message("pull.request.timeline.reviewed")
     }
     val titlePanel = NonOpaquePanel(HorizontalLayout(JBUIScale.scale(12))).apply {
-      add(actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt))
+      add(eventComponentFactory.actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt))
       if (actionsPanel.componentCount > 0) add(actionsPanel)
     }
 
@@ -247,24 +247,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       return LinkLabel<Any>("", avatarIconsProvider.getIcon(user?.avatarUrl, GHUIUtil.AVATAR_SIZE), LinkListener { _, _ ->
         user?.url?.let { BrowserUtil.browse(it) }
       })
-    }
-
-    fun actionTitle(avatarIconsProvider: GHAvatarIconsProvider, actor: GHActor?, @Language("HTML") actionHTML: String, date: Date)
-      : JComponent {
-      return HorizontalBox().apply {
-        add(userAvatar(avatarIconsProvider, actor))
-        add(Box.createRigidArea(JBDimension(8, 0)))
-        add(actionTitle(actor, actionHTML, date))
-      }
-    }
-
-    fun actionTitle(actor: GHActor?, actionHTML: String, date: Date): JComponent {
-      //language=HTML
-      val text = """<a href='${actor?.url}'>${actor?.login ?: "unknown"}</a> $actionHTML ${GHUIUtil.formatActionDate(date)}"""
-
-      return HtmlEditorPane(text).apply {
-        foreground = UIUtil.getContextHelpForeground()
-      }
     }
   }
 }

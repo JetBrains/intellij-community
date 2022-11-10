@@ -4,13 +4,16 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.CollaborationToolsIcons
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.github.GithubIcons
+import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHGitRefName
@@ -22,11 +25,14 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComp
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import java.util.*
+import javax.swing.Box
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHAvatarIconsProvider)
+class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHAvatarIconsProvider,
+                                            private val ghostUser: GHUser)
   : GHPRTimelineEventComponentFactory<GHPRTimelineEvent> {
 
   private val simpleEventDelegate = SimpleEventComponentFactory()
@@ -48,6 +54,25 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
     throw IllegalStateException("""Unknown event type "${item.javaClass.canonicalName}"""")
   }
 
+  fun actionTitle(avatarIconsProvider: GHAvatarIconsProvider, actor: GHActor?, @Language("HTML") actionHTML: String, date: Date)
+    : JComponent {
+    return HorizontalBox().apply {
+      add(GHPRTimelineItemComponentFactory.userAvatar(avatarIconsProvider, actor))
+      add(Box.createRigidArea(JBDimension(8, 0)))
+      add(actionTitle(actor, actionHTML, date))
+    }
+  }
+
+  fun actionTitle(actor: GHActor?, actionHTML: String, date: Date): JComponent {
+    val actualActor = actor ?: ghostUser
+    //language=HTML
+    val text = """<a href='${actualActor.url}'>${actualActor.login}</a> $actionHTML ${GHUIUtil.formatActionDate(date)}"""
+
+    return HtmlEditorPane(text).apply {
+      foreground = UIUtil.getContextHelpForeground()
+    }
+  }
+
   private abstract inner class EventComponentFactory<T : GHPRTimelineEvent> : GHPRTimelineEventComponentFactory<T> {
 
     protected fun eventItem(item: GHPRTimelineEvent, @Language("HTML") titleHTML: String): Item {
@@ -57,7 +82,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
     protected fun eventItem(markerIcon: Icon,
                             item: GHPRTimelineEvent,
                             @Language("HTML") titleHTML: String): Item {
-      return Item(markerIcon, GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, item.actor, titleHTML, item.createdAt))
+      return Item(markerIcon, actionTitle(avatarIconsProvider, item.actor, titleHTML, item.createdAt))
     }
   }
 
@@ -89,7 +114,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
             .appendParagraph(reviewersHTML(event.addedReviewers, event.removedReviewers))
             .appendParagraph(event.rename?.let { renameHTML(it.first, it.second) }.orEmpty())
 
-          Item(GithubIcons.Timeline, GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor, "", event.createdAt),
+          Item(GithubIcons.Timeline, actionTitle(avatarIconsProvider, event.actor, "", event.createdAt),
                HtmlEditorPane(builder.toString()).apply {
                  border = JBUI.Borders.emptyLeft(28)
                  foreground = UIUtil.getContextHelpForeground()
@@ -220,12 +245,12 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
       return when (event) {
         is GHPRReviewDismissedEvent ->
           Item(GithubIcons.Timeline,
-               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
-                                                            GithubBundle.message(
-                                                              "pull.request.timeline.stale.review.dismissed",
-                                                              event.reviewAuthor?.login
-                                                              ?: GithubBundle.message("pull.request.timeline.stale.review.author")),
-                                                            event.createdAt),
+               actionTitle(avatarIconsProvider, event.actor,
+                           GithubBundle.message(
+                             "pull.request.timeline.stale.review.dismissed",
+                             event.reviewAuthor?.login
+                             ?: GithubBundle.message("pull.request.timeline.stale.review.author")),
+                           event.createdAt),
                event.dismissalMessageHTML?.let {
                  HtmlEditorPane(it).apply {
                    border = JBUI.Borders.emptyLeft(28)
@@ -233,35 +258,35 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
                })
         is GHPRReadyForReviewEvent ->
           Item(GithubIcons.Review,
-               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
-                                                            GithubBundle.message("pull.request.timeline.marked.as.ready"),
-                                                            event.createdAt))
+               actionTitle(avatarIconsProvider, event.actor,
+                           GithubBundle.message("pull.request.timeline.marked.as.ready"),
+                           event.createdAt))
 
         is GHPRConvertToDraftEvent ->
           Item(GithubIcons.Review,
-               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
-                                                            GithubBundle.message("pull.request.timeline.marked.as.draft"),
-                                                            event.createdAt))
+               actionTitle(avatarIconsProvider, event.actor,
+                           GithubBundle.message("pull.request.timeline.marked.as.draft"),
+                           event.createdAt))
 
         is GHPRCrossReferencedEvent -> {
           Item(GithubIcons.Timeline,
-               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
-                                                            GithubBundle.message("pull.request.timeline.mentioned"),
-                                                            event.createdAt),
+               actionTitle(avatarIconsProvider, event.actor,
+                           GithubBundle.message("pull.request.timeline.mentioned"),
+                           event.createdAt),
                createComponent(event.source))
         }
         is GHPRConnectedEvent -> {
           Item(GithubIcons.Timeline,
-               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
-                                                            GithubBundle.message("pull.request.timeline.connected"),
-                                                            event.createdAt),
+               actionTitle(avatarIconsProvider, event.actor,
+                           GithubBundle.message("pull.request.timeline.connected"),
+                           event.createdAt),
                createComponent(event.subject))
         }
         is GHPRDisconnectedEvent -> {
           Item(GithubIcons.Timeline,
-               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
-                                                            GithubBundle.message("pull.request.timeline.disconnected"),
-                                                            event.createdAt),
+               actionTitle(avatarIconsProvider, event.actor,
+                           GithubBundle.message("pull.request.timeline.disconnected"),
+                           event.createdAt),
                createComponent(event.subject))
         }
 
