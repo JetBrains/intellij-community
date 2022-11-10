@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,24 +33,26 @@ import com.intellij.xml.XmlExtension.AttributeValuePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.WeakHashMap;
-
 import static com.intellij.xml.util.HtmlUtil.hasHtml;
 
 public class XmlEqTypedHandler extends TypedHandlerDelegate {
+
+  private static final Key<Integer> QUOTE_INSERTED_AT = new Key<>("xml.eq-handler.quote-inserted-at");
+
   private boolean needToInsertQuotes = false;
-  private final Map<Caret, Integer> quoteInsertedAt = new WeakHashMap<>();
 
   @NotNull
   @Override
   public Result beforeCharTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
-    if (c == '"' || (c == '\'' && hasHtml(file))) {
-      var currentCaret = editor.getCaretModel().getCurrentCaret();
-      var caretPos = quoteInsertedAt.remove(currentCaret);
-      if (caretPos != null && caretPos == currentCaret.getOffset()) {
-        return Result.STOP;
-      }
+    var currentCaret = editor.getCaretModel().getCurrentCaret();
+    var quoteInsertedAt = currentCaret.getUserData(QUOTE_INSERTED_AT);
+    if (quoteInsertedAt != null) {
+      currentCaret.putUserData(QUOTE_INSERTED_AT, null);
+    }
+    if ((c == '"' || (c == '\'' && hasHtml(file)))
+        && quoteInsertedAt != null
+        && quoteInsertedAt == currentCaret.getOffset()) {
+      return Result.STOP;
     }
     if (c == '=' && WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
       if (XmlGtTypedHandler.fileContainsXmlLanguage(file)) {
@@ -95,7 +98,7 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
       }
       needToInsertQuotes = false;
       Caret caret = editor.getCaretModel().getCurrentCaret();
-      quoteInsertedAt.put(caret, caret.getOffset());
+      caret.putUserData(QUOTE_INSERTED_AT, caret.getOffset());
     }
 
     return super.charTyped(c, project, editor, file);
