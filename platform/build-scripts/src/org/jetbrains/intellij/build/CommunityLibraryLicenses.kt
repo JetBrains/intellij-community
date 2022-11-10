@@ -555,10 +555,6 @@ object CommunityLibraryLicenses {
                    libraryName = "kotlin-stdlib-jdk8",
                    url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt"),
-    LibraryLicense(name = "kotlinx-datetime",
-                   libraryName = "kotlinx-datetime",
-                   url = "https://github.com/Kotlin/kotlinx-datetime")
-      .apache("https://github.com/Kotlin/kotlinx-datetime/blob/master/LICENSE.txt"),
     LibraryLicense(name = "kotlinx-datetime-jvm",
                    libraryName = "kotlinx-datetime-jvm",
                    url = "https://github.com/Kotlin/kotlinx-datetime")
