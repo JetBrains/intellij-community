@@ -385,7 +385,8 @@ public final class VfsUtil extends VfsUtilCore {
       return null;
     }
 
-    VirtualFile parent = createDirectoryIfMissing(fileSystem, path.substring(0, pos));
+    String parentPath = StringUtil.defaultIfEmpty(path.substring(0, pos), "/");
+    VirtualFile parent = createDirectoryIfMissing(fileSystem, parentPath);
     if (parent == null) {
       return null;
     }
