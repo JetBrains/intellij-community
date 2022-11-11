@@ -6,6 +6,8 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
@@ -55,12 +57,29 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
     }
   }
 
-  fun scheduleUpdateTree(): CompletableFuture<*> {
-    return scope.launch(Dispatchers.Default) {
-      readActionBlocking {
-        treeBuilder.updateVisibleTree()
-      }
-    }.asCompletableFuture()
+  fun scheduleUpdateTree() {
+    scope.launch(Dispatchers.Default) {
+      treeBuilder.updateVisibleTreeInReadAction()
+    }
+  }
+
+  fun scheduleMarkPsiFilesAsDirtyAndUpdateTree(files: List<PsiFile>) {
+    val virtualFiles = files.asSequence()
+      .filter { it.isValid }
+      .map { it.virtualFile }
+      .toList()
+
+    scheduleMarkFilesAsDirtyAndUpdateTree(virtualFiles)
+  }
+
+  fun scheduleMarkFilesAsDirtyAndUpdateTree(files: List<VirtualFile>) {
+    val validFiles = files.filter { it.isValid }
+    if (validFiles.isEmpty()) return
+
+    scope.launch(Dispatchers.Default) {
+      validFiles.forEach { treeBuilder.markFileAsDirty(it) }
+      treeBuilder.updateVisibleTreeInReadAction()
+    }
   }
 }
 
@@ -94,10 +113,13 @@ private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
 @RequiresReadLock
 private fun TodoTreeBuilder.updateVisibleTree() {
   if (isUpdatable) {
-    if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
-      validateCache()
+    if (hasDirtyFiles()) { // suppress redundant cache validations
       todoTreeStructure.validateCache()
     }
     model.invalidateAsync()
   }
+}
+
+private suspend fun TodoTreeBuilder.updateVisibleTreeInReadAction() = readActionBlocking {
+  updateVisibleTree()
 }
