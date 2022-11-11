@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.Label
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.DslLabel
@@ -70,8 +69,8 @@ internal class CellImpl<T : JComponent>(
     super.align(align)
 
     (component as? DslLabel)?.let {
-      if (it.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP && horizontalAlign != HorizontalAlign.FILL) {
-        UiDslException.error("Labels with MAX_LINE_LENGTH_WORD_WRAP don't support align, text = ${it.text}")
+      if (it.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) {
+        it.limitPreferredSize = horizontalAlign == HorizontalAlign.FILL
       }
     }
 

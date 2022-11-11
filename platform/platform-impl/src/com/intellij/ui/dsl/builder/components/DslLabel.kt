@@ -53,6 +53,8 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
       updateEditorPaneText()
     }
 
+  var limitPreferredSize = false
+
   @Nls
   private var userText: String? = null
 
@@ -100,15 +102,15 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
 
   override fun getMinimumSize(): Dimension {
     val result = super.getMinimumSize()
-    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) Dimension(min(getSupposedWidth(DEFAULT_COMMENT_WIDTH / 2), result.width),
-                                                                     result.height)
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP && limitPreferredSize)
+      Dimension(min(getSupposedWidth(DEFAULT_COMMENT_WIDTH / 2), result.width), result.height)
     else result
   }
 
   override fun getPreferredSize(): Dimension {
     val result = super.getPreferredSize()
-    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) Dimension(min(getSupposedWidth(DEFAULT_COMMENT_WIDTH), result.width),
-                                                                     result.height)
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP && limitPreferredSize)
+      Dimension(min(getSupposedWidth(DEFAULT_COMMENT_WIDTH), result.width), result.height)
     else result
   }
 

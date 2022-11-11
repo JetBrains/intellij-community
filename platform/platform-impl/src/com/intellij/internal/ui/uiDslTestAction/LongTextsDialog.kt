@@ -2,30 +2,33 @@
 package com.intellij.internal.ui.uiDslTestAction
 
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.Action
 import javax.swing.JComponent
 
+internal class LongTextsDialog : DialogWrapper(false) {
 
-internal fun showLongTextsDialog() {
-  val times = 50
-  object : DialogWrapper(false) {
-    init {
-      init()
-      title = "Long Texts"
-      setOKButtonText("Close")
-    }
+  init {
+    init()
+    title = "Long Texts"
+    setOKButtonText("Close")
+  }
 
-    override fun createActions(): Array<Action> {
-      return arrayOf(okAction)
-    }
+  override fun createActions(): Array<Action> {
+    return arrayOf(okAction)
+  }
 
-    override fun createCenterPanel(): JComponent {
-      return panel {
-        row {
-          text("NotSupportedNow:" + "NoSpace".repeat(times))
-        }
+  override fun createCenterPanel(): JComponent? {
+    val times = 50
+
+    return panel {
+      row {
+        text("WordWrapInsideWordsIsNotSupported:" + "NoSpace".repeat(times))
+      }
+
+      group("Word Wrap") {
         row {
           text("Text ".repeat(times))
         }
@@ -40,6 +43,17 @@ internal fun showLongTextsDialog() {
             .comment("CellComment ".repeat(times), maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
         }
       }
+
+      group("Align Right Shouldn't Wrap") {
+        row {
+          text("Right aligned text")
+            .align(AlignX.RIGHT)
+        }
+        row {
+          comment("Right aligned comment")
+            .align(AlignX.RIGHT)
+        }
+      }
     }
-  }.show()
+  }
 }

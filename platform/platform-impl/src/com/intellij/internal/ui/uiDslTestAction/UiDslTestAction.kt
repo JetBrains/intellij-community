@@ -62,7 +62,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     return panel {
       row {
         button("Long texts") {
-          showLongTextsDialog()
+          LongTextsDialog().show()
         }
       }
 

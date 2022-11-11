@@ -5,10 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
@@ -98,6 +95,7 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
   val result = DslLabel(DslLabelType.COMMENT)
   result.action = action
   result.maxLineLength = maxLineLength
+  result.limitPreferredSize = maxLineLength == MAX_LINE_LENGTH_WORD_WRAP
   result.text = text
   return result
 }

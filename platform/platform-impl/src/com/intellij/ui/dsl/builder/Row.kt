@@ -246,7 +246,7 @@ interface Row {
    * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
-   * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL to the cell and cannot use another horizontal alignment
+   * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL, with other horizontal aligns word wrap is not supported
    *
    * It is preferable to use [label] method for short plain single-lined strings because labels use less resources and simpler
    *
@@ -263,7 +263,7 @@ interface Row {
    * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
-   * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL to the cell and cannot use another horizontal alignment
+   * * MAX_LINE_LENGTH_WORD_WRAP sets AlignX.FILL, with other horizontal aligns word wrap is not supported
    *
    * @see DEFAULT_COMMENT_WIDTH
    * @see MAX_LINE_LENGTH_WORD_WRAP
