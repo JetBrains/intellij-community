@@ -945,15 +945,6 @@
 
     <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="FoldingGroup"/>
-
-      <add-to-group group-id="EditorPopupMenu1"/>
-    </group>
-
-    <group id="EditorLangPopupMenu">
-      <separator/>
       <group id="EditorPopupMenu.GoTo" popup="true">
         <reference ref="ShowNavBar"/>
         <reference ref="GotoDeclaration"/>
@@ -963,6 +954,15 @@
         <reference ref="GotoRelated"/>
         <reference ref="GotoTest"/>
       </group>
+      <separator/>
+      <reference ref="FoldingGroup"/>
+
+      <add-to-group group-id="EditorPopupMenu1"/>
+    </group>
+
+    <group id="EditorLangPopupMenu">
+      <separator/>
+      <reference ref="RefactoringMenu"/>
       <reference ref="Generate"/>
       <separator/>
 
