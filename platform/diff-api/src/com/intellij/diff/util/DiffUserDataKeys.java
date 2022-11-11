@@ -139,6 +139,7 @@ public interface DiffUserDataKeys {
 
   /**
    * Override left and right borders of area showing changed lines
+   * see {@link com.intellij.openapi.diff.LineStatusMarkerDrawUtil#getGutterArea}
    */
   Key<Producer<IntPair>> CUSTOM_GUTTER_AREA_FUNC = Key.create("Diff.customGutterAreaFunc");
 }
