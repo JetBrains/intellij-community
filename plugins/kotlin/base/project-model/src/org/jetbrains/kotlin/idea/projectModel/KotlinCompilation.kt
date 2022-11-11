@@ -2,16 +2,11 @@
 package org.jetbrains.kotlin.idea.projectModel
 
 interface KotlinCompilation : KotlinComponent {
-
-    @Deprecated("Use allSourceSets or declaredSourceSets instead", ReplaceWith("declaredSourceSets"))
-    val sourceSets: Collection<KotlinSourceSet>
-        get() = declaredSourceSets
-
     /**
      * All source sets participated in this compilation, including those available
      * via dependsOn.
      */
-    val allSourceSets: Collection<KotlinSourceSet>
+    val allSourceSets: Set<KotlinSourceSet>
 
     /**
      * Only directly declared source sets of this compilation, i.e. those which are included
@@ -21,7 +16,7 @@ interface KotlinCompilation : KotlinComponent {
      * compilations (like jvmMain for JVM compilations) or manually included source sets
      * (like 'jvm().compilations["main"].source(mySourceSet)' )
      */
-    val declaredSourceSets: Collection<KotlinSourceSet>
+    val declaredSourceSets: Set<KotlinSourceSet>
 
     val associateCompilations: Set<KotlinCompilationCoordinates>
 
