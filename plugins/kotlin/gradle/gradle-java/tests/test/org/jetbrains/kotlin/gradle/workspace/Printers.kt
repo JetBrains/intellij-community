@@ -12,36 +12,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.kotlin.utils.Printer
 
-object WorkspaceModelPrinters {
-    val moduleNamesPrinter: WorkspaceModelPrinter
-        get() = WorkspaceModelPrinter {
-            addContributor(NoopModulePrinterContributor())
-        }
-
-    val moduleDependenciesPrinter get() = WorkspaceModelPrinter {
-        addContributor(SanitizingOrderEntryPrinterContributor())
-    }
-
-    val moduleKotlinFacetSettingsPrinter get() = WorkspaceModelPrinter {
-        addContributor(KotlinFacetSettingsPrinterContributor())
-    }
-
-    val libraryNamesPrinter get() = WorkspaceModelPrinter {
-        addContributor(SanitizingLibraryPrinterContributor())
-    }
-
-    val sdkNamesPrinter get() = WorkspaceModelPrinter {
-        addContributor(NoopSdkPrinterContributor())
-    }
-
-    val fullWorkspacePrinter get() = WorkspaceModelPrinter {
-        addContributor(KotlinFacetSettingsPrinterContributor())
-        addContributor(SanitizingOrderEntryPrinterContributor())
-        addContributor(SanitizingLibraryPrinterContributor())
-        addContributor(NoopSdkPrinterContributor())
-    }
-}
-
 class WorkspaceModelPrinter(
     private val moduleContributor: WorkspaceModelPrinterContributor<ModulePrinterEntity>? = null,
     private val libraryContributor: WorkspaceModelPrinterContributor<LibraryPrinterEntity>? = null,

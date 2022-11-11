@@ -21,12 +21,12 @@ fun checkWorkspaceModel(project: Project, testDataDir: File, kotlinPluginVersion
         """No expected files found for workspace model checks (KGP ${kotlinClassifier}, Gradle: ${gradleClassifier}).
            |Expected at least one file with name '<mode>[-<kotlinPluginVersion>][-GradleVersion].txt' in '${testDataDir.absoluteFile}'.
            |Where <mode> is one of the following:
-           |${ WorkspacePrintingMode.values().joinToString(System.lineSeparator()) { "'${it.filePrefix}': ${it.description}" } }
+           |${WorkspacePrintingMode.values().joinToString(System.lineSeparator()) { "'${it.filePrefix}': ${it.description}" }}
         """.trimMargin()
     }
 
     for ((expectedFile, mode) in matchingFiles) {
-        val actualWorkspaceModelText = mode.printer().print(project)
+        val actualWorkspaceModelText = mode.printer.build().print(project)
 
         KotlinTestUtils.assertEqualsToFile(
             expectedFile,
@@ -66,37 +66,53 @@ private fun findMatchingFiles(
 enum class WorkspacePrintingMode(
     val filePrefix: String,
     val description: String,
-    val printer: () -> WorkspaceModelPrinter,
+    val printer: WorkspaceModelPrinterFactory,
 ) {
     FULL(
         filePrefix = "workspace",
         description = "List of all modules with Kotlin Facets and dependencies, list of all libraries and list all SDKs",
-        printer = WorkspaceModelPrinters::fullWorkspacePrinter,
+        printer = WorkspaceModelPrinterFactory {
+            addContributor(KotlinFacetSettingsPrinterContributor())
+            addContributor(SanitizingOrderEntryPrinterContributor())
+            addContributor(SanitizingLibraryPrinterContributor())
+            addContributor(NoopSdkPrinterContributor())
+        }
     ),
     MODULES(
         filePrefix = "modules",
         description = "List of all modules in a project",
-        printer = WorkspaceModelPrinters::moduleNamesPrinter,
+        printer = WorkspaceModelPrinterFactory {
+            addContributor(NoopModulePrinterContributor())
+        }
     ),
     MODULE_DEPENDENCIES(
         filePrefix = "dependencies",
         description = "List of all modules in a project with their dependencies",
-        printer = WorkspaceModelPrinters::moduleDependenciesPrinter,
+        printer = WorkspaceModelPrinterFactory {
+            addContributor(SanitizingOrderEntryPrinterContributor())
+        }
+
     ),
     MODULE_FACETS(
         filePrefix = "facets",
         description = "List of all modules in a project with their Kotlin Facet settings",
-        printer = WorkspaceModelPrinters::moduleKotlinFacetSettingsPrinter
+        printer = WorkspaceModelPrinterFactory {
+            addContributor(KotlinFacetSettingsPrinterContributor())
+        }
     ),
     LIBRARIES(
         filePrefix = "libraries",
         description = "List of all libraries in a project",
-        printer = WorkspaceModelPrinters::libraryNamesPrinter,
+        printer = WorkspaceModelPrinterFactory {
+            this.addContributor(SanitizingLibraryPrinterContributor())
+        }
     ),
     SDKS(
         filePrefix = "sdks",
         description = "List of all SDKs in a project",
-        printer = WorkspaceModelPrinters::sdkNamesPrinter,
+        printer = WorkspaceModelPrinterFactory {
+            addContributor(NoopSdkPrinterContributor())
+        }
     ),
     // TODO: module roots
 }

@@ -35,3 +35,10 @@ fun WorkspaceModelPrinter(
 ): WorkspaceModelPrinter {
     return WorkspaceModelPrinterFactory().also(printerConfiguration).build()
 }
+
+@Suppress("TestFunctionName")
+fun WorkspaceModelPrinterFactory(
+    printerConfiguration: WorkspaceModelPrinterFactory.() -> Unit
+): WorkspaceModelPrinterFactory {
+    return WorkspaceModelPrinterFactory().also(printerConfiguration)
+}
