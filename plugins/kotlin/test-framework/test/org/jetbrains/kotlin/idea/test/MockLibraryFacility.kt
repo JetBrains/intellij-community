@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.platform.js.JsPlatform
+import org.jetbrains.kotlin.platform.JsPlatform
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import java.io.File
 
