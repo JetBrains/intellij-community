@@ -1,10 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
-import com.intellij.application.options.ModulesComboBox;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.execution.util.PathMappingsComponent;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -12,18 +8,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.HideableDecorator;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
-import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,21 +27,7 @@ import java.util.function.Consumer;
 
 public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private final Project myProject;
-  private TextFieldWithBrowseButton myWorkingDirectoryTextField;
-  private EnvironmentVariablesComponent myEnvsComponent;
-  private RawCommandLineEditor myInterpreterOptionsTextField;
-  private ComboBox myInterpreterComboBox;
-  private JRadioButton myUseModuleSdkRadioButton;
-  private ModulesComboBox myModuleComboBox;
-  private JPanel myMainPanel;
-  private JRadioButton myUseSpecifiedSdkRadioButton;
-  private JBLabel myPythonInterpreterJBLabel;
-  private JBLabel myInterpreterOptionsJBLabel;
-  private JBLabel myWorkingDirectoryJBLabel;
-  private JPanel myHideablePanel;
-  private PathMappingsComponent myPathMappingsComponent;
-  private JBCheckBox myAddContentRootsCheckbox;
-  private JBCheckBox myAddSourceRootsCheckbox;
+  private final PyPluginCommonOptionsPanel content;
   private JComponent labelAnchor;
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
@@ -60,17 +35,15 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   public PyPluginCommonOptionsForm(PyCommonOptionsFormData data) {
     // setting modules
     myProject = data.getProject();
+    content = new PyPluginCommonOptionsPanel();
     final List<Module> validModules = data.getValidModules();
     validModules.sort(new ModulesAlphaComparator());
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
-    myModuleComboBox.setModules(validModules);
-    myModuleComboBox.setSelectedModule(selection);
+    content.moduleComboBox.setModules(validModules);
+    content.moduleComboBox.setSelectedModule(selection);
 
-    myInterpreterComboBox.setMinimumAndPreferredWidth(100);
-    myInterpreterComboBox
-      .setRenderer(new PySdkListCellRenderer("<" + PyBundle.message("python.sdk.rendering.project.default") + ">"));
-    myWorkingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
-                                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    content.workingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
+                                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     ActionListener listener = new ActionListener() {
       @Override
@@ -78,35 +51,11 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
         updateControls();
       }
     };
-    myUseSpecifiedSdkRadioButton.addActionListener(listener);
-    myUseModuleSdkRadioButton.addActionListener(listener);
-    myInterpreterComboBox.addActionListener(listener);
-    myModuleComboBox.addActionListener(listener);
+    content.useSpecifiedSdkRadioButton.addActionListener(listener);
+    content.useModuleSdkRadioButton.addActionListener(listener);
+    content.interpreterComboBox.addActionListener(listener);
+    content.moduleComboBox.addActionListener(listener);
 
-    setAnchor(myEnvsComponent.getLabel());
-
-
-    final HideableDecorator decorator =
-      new HideableDecorator(myHideablePanel, PyBundle.message("python.sdk.common.options.environment"), false) {
-        @Override
-        protected void on() {
-          super.on();
-          storeState();
-        }
-
-        @Override
-        protected void off() {
-          super.off();
-          storeState();
-        }
-
-        private void storeState() {
-          PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
-        }
-      };
-    decorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
-    decorator.setContentComponent(myMainPanel);
-    myPathMappingsComponent.setAnchor(myEnvsComponent.getLabel());
     updateControls();
 
     addInterpreterComboBoxActionListener(new ActionListener() {
@@ -120,14 +69,12 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   private void updateControls() {
-    myModuleComboBox.setEnabled(myUseModuleSdkRadioButton.isSelected());
-    myInterpreterComboBox.setEnabled(myUseSpecifiedSdkRadioButton.isSelected());
-    myPathMappingsComponent.setVisible(PythonSdkUtil.isRemote(getSelectedSdk()));
+    content.pathMappingsRow.visible(PythonSdkUtil.isRemote(getSelectedSdk()));
   }
 
   @Override
   public JPanel getMainPanel() {
-    return myHideablePanel;
+    return content.panel;
   }
 
   @Override
@@ -136,12 +83,12 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void addInterpreterComboBoxActionListener(ActionListener listener) {
-    myInterpreterComboBox.addActionListener(listener);
+    content.interpreterComboBox.addActionListener(listener);
   }
 
   @Override
   public void removeInterpreterComboBoxActionListener(ActionListener listener) {
-    myInterpreterComboBox.removeActionListener(listener);
+    content.interpreterComboBox.removeActionListener(listener);
   }
 
   @Override
@@ -151,28 +98,28 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public String getInterpreterOptions() {
-    return myInterpreterOptionsTextField.getText().trim();
+    return content.interpreterOptionsTextField.getText().trim();
   }
 
   @Override
   public void setInterpreterOptions(String interpreterOptions) {
-    myInterpreterOptionsTextField.setText(interpreterOptions);
+    content.interpreterOptionsTextField.setText(interpreterOptions);
   }
 
   @Override
   public String getWorkingDirectory() {
-    return FileUtil.toSystemIndependentName(myWorkingDirectoryTextField.getText().trim());
+    return FileUtil.toSystemIndependentName(content.workingDirectoryTextField.getText().trim());
   }
 
   @Override
   public void setWorkingDirectory(String workingDirectory) {
-    myWorkingDirectoryTextField.setText(workingDirectory == null ? "" : FileUtil.toSystemDependentName(workingDirectory));
+    content.workingDirectoryTextField.setText(workingDirectory == null ? "" : FileUtil.toSystemDependentName(workingDirectory));
   }
 
   @Override
   @Nullable
   public String getSdkHome() {
-    Sdk selectedSdk = (Sdk)myInterpreterComboBox.getSelectedItem();
+    Sdk selectedSdk = (Sdk)content.interpreterComboBox.getSelectedItem();
     return selectedSdk == null ? null : selectedSdk.getHomePath();
   }
 
@@ -189,12 +136,12 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
       sdkList.add(sdk);
     }
 
-    myInterpreterComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
+    content.interpreterComboBox.setModel(new CollectionComboBoxModel<>(sdkList, selection));
   }
 
   @Override
   public Module getModule() {
-    return myModuleComboBox.getSelectedModule();
+    return content.moduleComboBox.getSelectedModule();
   }
 
   @Override
@@ -205,53 +152,53 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void setModule(Module module) {
-    myModuleComboBox.setSelectedModule(module);
+    content.moduleComboBox.setSelectedModule(module);
   }
 
   @Override
   public boolean isUseModuleSdk() {
-    return myUseModuleSdkRadioButton.isSelected();
+    return content.useModuleSdkRadioButton.isSelected();
   }
 
   @Override
   public void setUseModuleSdk(boolean useModuleSdk) {
     if (useModuleSdk) {
-      myUseModuleSdkRadioButton.setSelected(true);
+      content.useModuleSdkRadioButton.setSelected(true);
     }
     else {
-      myUseSpecifiedSdkRadioButton.setSelected(true);
+      content.useSpecifiedSdkRadioButton.setSelected(true);
     }
     updateControls();
   }
 
   @Override
   public boolean isPassParentEnvs() {
-    return myEnvsComponent.isPassParentEnvs();
+    return content.envsComponent.isPassParentEnvs();
   }
 
   @Override
   public void setPassParentEnvs(boolean passParentEnvs) {
-    myEnvsComponent.setPassParentEnvs(passParentEnvs);
+    content.envsComponent.setPassParentEnvs(passParentEnvs);
   }
 
   @Override
   public Map<String, String> getEnvs() {
-    return myEnvsComponent.getEnvs();
+    return content.envsComponent.getEnvs();
   }
 
   @Override
   public void setEnvs(Map<String, String> envs) {
-    myEnvsComponent.setEnvs(envs);
+    content.envsComponent.setEnvs(envs);
   }
 
   @Override
   public PathMappingSettings getMappingSettings() {
-    return myPathMappingsComponent.getMappingSettings();
+    return content.pathMappingsComponent.getMappingSettings();
   }
 
   @Override
   public void setMappingSettings(@Nullable PathMappingSettings mappingSettings) {
-    myPathMappingsComponent.setMappingSettings(mappingSettings);
+    content.pathMappingsComponent.setMappingSettings(mappingSettings);
   }
 
   private Sdk getSelectedSdk() {
@@ -259,7 +206,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
       Module module = getModule();
       return module == null ? null : ModuleRootManager.getInstance(module).getSdk();
     }
-    Sdk sdk = (Sdk)myInterpreterComboBox.getSelectedItem();
+    Sdk sdk = (Sdk)content.interpreterComboBox.getSelectedItem();
     if (sdk == null) {
       return ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
@@ -274,29 +221,25 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void setAnchor(JComponent anchor) {
     labelAnchor = anchor;
-    myPythonInterpreterJBLabel.setAnchor(anchor);
-    myInterpreterOptionsJBLabel.setAnchor(anchor);
-    myWorkingDirectoryJBLabel.setAnchor(anchor);
-    myEnvsComponent.setAnchor(anchor);
   }
 
   @Override
   public boolean shouldAddContentRoots() {
-    return myAddContentRootsCheckbox.isSelected();
+    return content.addContentRootsCheckbox.isSelected();
   }
 
   @Override
   public boolean shouldAddSourceRoots() {
-    return myAddSourceRootsCheckbox.isSelected();
+    return content.addSourceRootsCheckbox.isSelected();
   }
 
   @Override
   public void setAddContentRoots(boolean flag) {
-    myAddContentRootsCheckbox.setSelected(flag);
+    content.addContentRootsCheckbox.setSelected(flag);
   }
 
   @Override
   public void setAddSourceRoots(boolean flag) {
-    myAddSourceRootsCheckbox.setSelected(flag);
+    content.addSourceRootsCheckbox.setSelected(flag);
   }
 }

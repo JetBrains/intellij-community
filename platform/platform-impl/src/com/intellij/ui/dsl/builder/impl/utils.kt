@@ -41,7 +41,9 @@ private val LOG = Logger.getInstance("JetBrains UI DSL")
  * Components that can have assigned labels
  */
 private val ALLOWED_LABEL_COMPONENTS = listOf(
+  JCheckBox::class,
   JComboBox::class,
+  JRadioButton::class,
   JSlider::class,
   JSpinner::class,
   JTable::class,
