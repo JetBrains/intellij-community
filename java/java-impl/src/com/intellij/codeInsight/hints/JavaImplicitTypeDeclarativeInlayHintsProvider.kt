@@ -31,6 +31,7 @@ class JavaImplicitTypeDeclarativeInlayHintsProvider : InlayHintsProvider {
         val type = element.type
         if (type == PsiPrimitiveType.NULL) return
         sink.addPresentation(InlineInlayPosition(identifier.textRange.endOffset, true), hasBackground = true) {
+          text(": ")
           JavaTypeHintsFactory.typeHint(type, this)
         }
       }
