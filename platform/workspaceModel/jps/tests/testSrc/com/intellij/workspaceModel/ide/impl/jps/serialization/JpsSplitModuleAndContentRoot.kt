@@ -1,5 +1,7 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.facet.mock.MockFacetType
+import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.testFramework.ApplicationRule
@@ -439,6 +441,29 @@ class JpsSplitModuleAndContentRoot {
     checkSaveProjectAfterChange("after/addContentRoot", "after/addContentRoot") { builder, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       assertTrue(moduleEntity.javaSettings!!.inheritedCompilerOutput)
+    }
+  }
+
+  @Test
+  fun `add custom facet`() {
+    checkSaveProjectAfterChange("before/addContentRoot", "after/addCustomFacet") { builder, configLocation ->
+      val mockFacetType = MockFacetType()
+      registerFacetType(mockFacetType, projectModel.disposableRule.disposable)
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      builder addEntity FacetEntity("MyFacet", MockFacetType.ID.toString(), moduleEntity.symbolicId, getInternalFileSource(moduleEntity.entitySource)!!) {
+        this.module = moduleEntity
+      }
+    }
+  }
+
+  @Test
+  fun `load custom facet`() {
+    checkSaveProjectAfterChange("after/addCustomFacet", "after/addCustomFacet") { builder, configLocation ->
+      val mockFacetType = MockFacetType()
+      registerFacetType(mockFacetType, projectModel.disposableRule.disposable)
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val facetEntity = moduleEntity.facets.single()
+      assertEquals("MyFacet", facetEntity.name)
     }
   }
 
