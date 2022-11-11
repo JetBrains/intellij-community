@@ -21,6 +21,7 @@ import java.awt.Dimension
 import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.DefaultCaret
+import kotlin.math.min
 
 /**
  * Denied content and reasons
@@ -99,13 +100,15 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
 
   override fun getMinimumSize(): Dimension {
     val result = super.getMinimumSize()
-    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) Dimension(getSupposedWidth(DEFAULT_COMMENT_WIDTH / 2), result.height)
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) Dimension(min(getSupposedWidth(DEFAULT_COMMENT_WIDTH / 2), result.width),
+                                                                     result.height)
     else result
   }
 
   override fun getPreferredSize(): Dimension {
     val result = super.getPreferredSize()
-    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) Dimension(getSupposedWidth(DEFAULT_COMMENT_WIDTH), result.height)
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) Dimension(min(getSupposedWidth(DEFAULT_COMMENT_WIDTH), result.width),
+                                                                     result.height)
     else result
   }
 
