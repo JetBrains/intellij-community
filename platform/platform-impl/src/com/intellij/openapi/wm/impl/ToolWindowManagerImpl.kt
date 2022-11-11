@@ -13,6 +13,7 @@ import com.intellij.ide.UiActivityMonitor
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
@@ -672,7 +673,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
   private fun isIndependentToolWindowResizeEnabled(): Boolean =
     if (isNewUi)
-      Registry.`is`("ide.experimental.ui.toolwindow.independent.sizes")
+      UISettings.getInstance().rememberSizeForEachToolWindow
     else
       Registry.`is`("toolwindow.independent.sizes")
 

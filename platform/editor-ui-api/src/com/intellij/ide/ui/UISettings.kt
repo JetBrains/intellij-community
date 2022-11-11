@@ -263,6 +263,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.wideScreenSupport = value
     }
 
+  var rememberSizeForEachToolWindow: Boolean
+    get() = state.rememberSizeForEachToolWindow
+    set(value) {
+      state.rememberSizeForEachToolWindow = value
+    }
+
   var sortBookmarks: Boolean
     get() = state.sortBookmarks
     set(value) {

@@ -84,6 +84,8 @@ private val cdLeftToolWindowLayout
   get() = CheckboxDescriptor(message("checkbox.left.toolwindow.layout"), settings::leftHorizontalSplit, groupName = windowOptionGroupName)
 private val cdRightToolWindowLayout
   get() = CheckboxDescriptor(message("checkbox.right.toolwindow.layout"), settings::rightHorizontalSplit, groupName = windowOptionGroupName)
+private val cdRememberSizeForEachToolWindow
+  get() = CheckboxDescriptor(message("checkbox.remember.size.for.each.tool.window"), settings::rememberSizeForEachToolWindow, groupName = windowOptionGroupName)
 private val cdUseCompactTreeIndents
   get() = CheckboxDescriptor(message("checkbox.compact.tree.indents"), settings::compactTreeIndents, groupName = uiOptionGroupName)
 private val cdShowTreeIndents
@@ -392,7 +394,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         )
         twoColumnsRow(
           {
-            checkBox(cdShowToolWindowNumbers).visible(!ExperimentalUI.isNewUI())
+            if (ExperimentalUI.isNewUI()) {
+              checkBox(cdRememberSizeForEachToolWindow)
+            }
+            else {
+              checkBox(cdShowToolWindowNumbers)
+            }
           })
       }
 
