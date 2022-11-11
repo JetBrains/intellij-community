@@ -37,7 +37,7 @@ internal class VariableLookupElementFactory {
             symbol.javaSetterName?.let { builder = builder.withLookupString(it.asString()) }
         }
 
-        return withSymbolInfo(symbol, builder)
+        return withSymbolInfo(symbol, builder, substitutor)
     }
 
     private fun KtAnalysisSession.createLookupElementBuilder(
@@ -63,12 +63,8 @@ internal class VariableLookupElementFactory {
                     substitutor.substitute(it).render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
                 }
 
-                val typeText =
-                    substitutor.substitute(functionalType.returnType).render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
-
                 LookupElementBuilder.create(lookupObject, symbol.name.asString())
                     .withTailText(tailText, true)
-                    .withTypeText(typeText)
                     .withInsertHandler(FunctionInsertionHandler)
             }
             is CallableInsertionStrategy.WithSuperDisambiguation -> {
@@ -79,10 +75,8 @@ internal class VariableLookupElementFactory {
                 val lookupObject = VariableLookupObject(symbol.name, options, rendered)
                 markIfSyntheticJavaProperty(
                     LookupElementBuilder.create(lookupObject, symbol.name.asString())
-                        .withTypeText(symbolType.render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT))
                         .withTailText(getTailText(symbol, substitutor), true), symbol
-                )
-                    .withInsertHandler(VariableInsertionHandler)
+                ).withInsertHandler(VariableInsertionHandler)
             }
         }
     }

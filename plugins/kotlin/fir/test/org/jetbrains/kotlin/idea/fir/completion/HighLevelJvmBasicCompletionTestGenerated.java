@@ -1575,6 +1575,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/parameterNameAndType/Simple.kt");
             }
 
+            @TestMetadata("TypeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("../completion/testData/basic/common/parameterNameAndType/TypeAlias.kt");
+            }
+
             @TestMetadata("TypeParameter1.kt")
             public void testTypeParameter1() throws Exception {
                 runTest("../completion/testData/basic/common/parameterNameAndType/TypeParameter1.kt");

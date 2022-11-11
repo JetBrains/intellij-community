@@ -1575,6 +1575,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/parameterNameAndType/Simple.kt");
             }
 
+            @TestMetadata("TypeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/TypeAlias.kt");
+            }
+
             @TestMetadata("TypeParameter1.kt")
             public void testTypeParameter1() throws Exception {
                 runTest("../testData/basic/common/parameterNameAndType/TypeParameter1.kt");
