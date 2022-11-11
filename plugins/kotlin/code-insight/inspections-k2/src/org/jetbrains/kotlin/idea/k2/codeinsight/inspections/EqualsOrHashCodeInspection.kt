@@ -161,7 +161,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         }
         var bodyText = ""
         analyze(targetClass) {
-            val classSymbol = targetClass.getClassOrObjectSymbol()
+            val classSymbol = targetClass.getClassOrObjectSymbol() ?: return@analyze
             val equalsMethod = findEqualsMethodForClass(classSymbol) as? KtFunctionSymbol ?: return@analyze
             val superContainingEqualsMethod = equalsMethod.getContainingSymbol() ?: return@analyze
 
@@ -297,7 +297,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 return text
             }
 
-            val classSymbol = targetClass.getClassOrObjectSymbol()
+            val classSymbol = targetClass.getClassOrObjectSymbol() ?: return@analyze
             val hashCodeMethod = findHashCodeMethodForClass(classSymbol) as? KtFunctionSymbol ?: return@analyze
             val superContainingHashCodeMethod = hashCodeMethod.getContainingSymbol() ?: return@analyze
 
