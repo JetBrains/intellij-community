@@ -8,10 +8,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
-import com.intellij.util.DocumentUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
-import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
 import org.intellij.plugins.markdown.lang.MarkdownFileType
@@ -37,16 +36,41 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
       if (editor.getUserData(DISABLE_TABLE_INLAYS) == true) {
         return true
       }
-      if (element is MarkdownTableRow || element is MarkdownTableSeparatorRow) {
-        if (DocumentUtil.isAtLineStart(element.startOffset, editor.document) && TableUtils.findTable(element)?.hasCorrectBorders() == true) {
-          val presentation = VerticalBarPresentation.create(factory, editor, element)
-          sink.addInlineElement(element.startOffset, false, presentation, false)
-        }
-      } else if (element is MarkdownTable && element.hasCorrectBorders()) {
+      if (element is MarkdownTable && element.hasCorrectBorders()) {
+        processTableRows(element, editor, sink)
         val presentation = HorizontalBarPresentation.create(factory, editor, element)
         sink.addBlockElement(element.startOffset, false, true, -1, presentation)
       }
       return true
+    }
+
+    private fun processTableRows(table: MarkdownTable, editor: Editor, sink: InlayHintsSink) {
+      val regularRows = table.getRows(true)
+      val separatorRow = table.separatorRow ?: return
+      val rows = regularRows.asSequence() + sequenceOf(separatorRow)
+      for (row in rows) {
+        val presentation = VerticalBarPresentation.create(factory, editor, row)
+        val startOffset = row.calculateStartOffsetForInlay()
+        sink.addInlineElement(startOffset, false, presentation, false)
+      }
+    }
+
+    private fun PsiElement.calculateStartOffsetForInlay(): Int {
+      return when (this) {
+        is MarkdownTableSeparatorRow -> calculateStartOffsetForInlay()
+        is MarkdownTableRow -> startOffset
+        else -> error("This method should not be called on anything other than MarkdownTableRow or MarkdownTableSeparatorRow")
+      }
+    }
+
+    /**
+     * This is a quick fix for calculating the correct start offset of table separator row.
+     * Currently, if the table is indented, the table separator element will contain line indentation as well.
+     * The problem only occurs with table separator row - regular rows elements don't include leading indents.
+     */
+    private fun MarkdownTableSeparatorRow.calculateStartOffsetForInlay(): Int {
+      val nonWhitespaceIndex = text.indexOfFirst { !it.isWhitespace() }
+      return startOffset + nonWhitespaceIndex.coerceAtLeast(0)
     }
   }
 
