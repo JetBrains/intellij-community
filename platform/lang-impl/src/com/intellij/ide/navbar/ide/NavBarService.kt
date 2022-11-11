@@ -6,9 +6,9 @@ import com.intellij.ide.navbar.actions.NavBarActionHandler
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.ide.navbar.impl.pathToItem
-import com.intellij.ide.navbar.ui.FloatingModeHelper
 import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
+import com.intellij.ide.navbar.ui.showHint
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -81,7 +81,7 @@ internal class NavBarService(private val project: Project) : Disposable {
           // wait while panel will fill itself with item components
           yield()
         }
-        FloatingModeHelper.showHint(dataContext, barScope, project, component)
+        showHint(dataContext, barScope, project, component)
         vm.selectTail()
         vm.showPopup()
       }
