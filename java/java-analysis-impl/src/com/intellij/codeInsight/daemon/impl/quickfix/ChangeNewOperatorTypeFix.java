@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -16,10 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
@@ -166,10 +161,12 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
         }
       }
     }
+    final PsiClass aClass = PsiTypesUtil.getPsiClass(newType);
+    if (aClass != null && (aClass.isEnum() || aClass.isAnnotationType())) return;
     PsiNewExpression newExpression = (PsiNewExpression)expression;
-    if (highlightInfo != null) {
-      highlightInfo.registerFix(new ChangeNewOperatorTypeFix(newType, newExpression), null, null, null, null);
-    }
+    final PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
+    if (reference != null && reference.getText().equals(newType.getCanonicalText())) return;
+    highlightInfo.registerFix(new ChangeNewOperatorTypeFix(newType, newExpression), null, null, null, null);
   }
 
   /* Guesswork
