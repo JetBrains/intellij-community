@@ -170,8 +170,8 @@ data class KotlinCompilationCoordinatesImpl(
 @Suppress("DEPRECATION_ERROR")
 data class KotlinCompilationImpl(
     override val name: String,
-    override val allSourceSets: Collection<KotlinSourceSet>,
-    override val declaredSourceSets: Collection<KotlinSourceSet>,
+    override val allSourceSets: Set<KotlinSourceSet>,
+    override val declaredSourceSets: Set<KotlinSourceSet>,
     override val dependencies: Array<KotlinDependencyId>,
     override val output: KotlinCompilationOutput,
     @Suppress("OverridingDeprecatedMember", "DEPRECATION_ERROR")
@@ -218,12 +218,12 @@ data class KotlinCompilationImpl(
         private fun cloneSourceSetsWithCaching(
             sourceSets: Collection<KotlinSourceSet>,
             cloningCache: MutableMap<Any, Any>
-        ): List<KotlinSourceSet> =
+        ): Set<KotlinSourceSet> =
             sourceSets.map { initialSourceSet ->
                 (cloningCache[initialSourceSet] as? KotlinSourceSet) ?: KotlinSourceSetImpl(initialSourceSet).also {
                     cloningCache[initialSourceSet] = it
                 }
-            }
+            }.toMutableSet()
 
         private fun cloneCompilationCoordinatesWithCaching(
             coordinates: Set<KotlinCompilationCoordinates>,
