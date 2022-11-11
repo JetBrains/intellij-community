@@ -8,26 +8,18 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
-fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(project: Project, testDataDir: File) {
-    checkWorkspaceModel(project, testDataDir, kotlinPluginVersion, gradleVersion)
+fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(project: Project, testDataDir: File, vararg checkModes: WorkspacePrintingMode) {
+    checkWorkspaceModel(project, testDataDir, kotlinPluginVersion, gradleVersion, checkModes.asList())
 }
 
-fun checkWorkspaceModel(project: Project, testDataDir: File, kotlinPluginVersion: KotlinToolingVersion, gradleVersion: String) {
+fun checkWorkspaceModel(project: Project, testDataDir: File, kotlinPluginVersion: KotlinToolingVersion, gradleVersion: String, checkModes: List<WorkspacePrintingMode>) {
     val kotlinClassifier = with(kotlinPluginVersion) { "$major.$minor.$patch" }
-    val gradleClassifier = gradleVersion
-    val matchingFiles = findMatchingFiles(testDataDir, kotlinClassifier, gradleClassifier)
+    val filesWithExpectedTestData = findExpectedTestDataFiles(testDataDir, kotlinClassifier, gradleVersion, checkModes)
 
-    check(matchingFiles.isNotEmpty()) {
-        """No expected files found for workspace model checks (KGP ${kotlinClassifier}, Gradle: ${gradleClassifier}).
-           |Expected at least one file with name '<mode>[-<kotlinPluginVersion>][-GradleVersion].txt' in '${testDataDir.absoluteFile}'.
-           |Where <mode> is one of the following:
-           |${WorkspacePrintingMode.values().joinToString(System.lineSeparator()) { "'${it.filePrefix}': ${it.description}" }}
-        """.trimMargin()
-    }
-
-    for ((expectedFile, mode) in matchingFiles) {
+    for ((expectedFile, mode) in filesWithExpectedTestData) {
         val actualWorkspaceModelText = mode.printer.build().print(project)
 
+        // NB: KotlinTestUtils handle non-existent expectedFile fine
         KotlinTestUtils.assertEqualsToFile(
             expectedFile,
             actualWorkspaceModelText
@@ -35,12 +27,12 @@ fun checkWorkspaceModel(project: Project, testDataDir: File, kotlinPluginVersion
     }
 }
 
-private fun findMostSpecificExistingFile(
+private fun findMostSpecificExistingFileOrNewDefault(
     testDataDir: File,
     kotlinClassifier: String,
     gradleClassifier: String,
     mode: WorkspacePrintingMode,
-): File? {
+): File {
     val prioritisedClassifyingParts = sequenceOf(
         listOf(kotlinClassifier, gradleClassifier),
         listOf(kotlinClassifier),
@@ -51,16 +43,16 @@ private fun findMostSpecificExistingFile(
     return prioritisedClassifyingParts
         .map { classifierParts -> fileWithClassifyingParts(testDataDir, mode, classifierParts) }
         .firstNotNullOfOrNull { it.takeIf(File::exists) }
+        ?: fileWithClassifyingParts(testDataDir, mode, classifyingParts = emptyList()) // Non-existent file
 }
 
-private fun findMatchingFiles(
+private fun findExpectedTestDataFiles(
     testDataDir: File,
     kotlinClassifier: String,
     gradleClassifier: String,
-): List<Pair<File, WorkspacePrintingMode>> = WorkspacePrintingMode.values().mapNotNull { mode ->
-    findMostSpecificExistingFile(testDataDir, kotlinClassifier, gradleClassifier, mode)?.let { file ->
-        file to mode
-    }
+    checkModes: List<WorkspacePrintingMode>,
+): List<Pair<File, WorkspacePrintingMode>> = checkModes.map { mode ->
+    findMostSpecificExistingFileOrNewDefault(testDataDir, kotlinClassifier, gradleClassifier, mode) to mode
 }
 
 enum class WorkspacePrintingMode(
