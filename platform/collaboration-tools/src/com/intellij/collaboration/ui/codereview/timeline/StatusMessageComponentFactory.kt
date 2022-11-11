@@ -1,19 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.timeline
 
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
-import java.awt.Color
 import javax.swing.JComponent
 
 object StatusMessageComponentFactory {
   fun create(messageComponent: JComponent, type: StatusMessageType = StatusMessageType.INFO): JComponent {
     val line = VerticalRoundedLineComponent(6).apply {
       foreground = when (type) {
-        StatusMessageType.INFO -> Color(0xB3D8F8)
-        StatusMessageType.SECONDARY_INFO -> Color(0xB5B9BD)
-        StatusMessageType.SUCCESS -> Color(0xC7E3D4)
-        StatusMessageType.ERROR -> Color(0xECC5C6)
-        StatusMessageType.WARNING -> Color(0xF1E4C9)
+        StatusMessageType.INFO -> JBColor.namedColor("Review.MetaInfo.StatusLine.Blue", ColorUtil.fromHex("#40B6E0B2"))
+        StatusMessageType.SECONDARY_INFO -> JBColor.namedColor("Review.MetaInfo.StatusLine.Gray", ColorUtil.fromHex("#9AA7B0B3"))
+        StatusMessageType.SUCCESS -> JBColor.namedColor("Review.MetaInfo.StatusLine.Green", ColorUtil.fromHex("#62B543B3"))
+        StatusMessageType.WARNING -> JBColor.namedColor("Review.MetaInfo.StatusLine.Orange", ColorUtil.fromHex("#F26522B3"))
+        StatusMessageType.ERROR -> JBColor.namedColor("Review.MetaInfo.StatusLine.Orange", ColorUtil.fromHex("#62B543B3"))
       }
     }
     return JBUI.Panels.simplePanel(8, 0)

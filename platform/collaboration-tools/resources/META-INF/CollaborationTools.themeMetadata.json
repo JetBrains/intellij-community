@@ -1,0 +1,26 @@
+{
+  "name": "CollaborationTools",
+  "fixed": false,
+  "ui": [
+    {
+      "key": "Review.MetaInfo.StatusLine.Blue",
+      "description": "Information status line color",
+      "since": "[2022.3]"
+    },
+    {
+      "key": "Review.MetaInfo.StatusLine.Gray",
+      "description": "Secondary information status line color",
+      "since": "[2022.3]"
+    },
+    {
+      "key": "Review.MetaInfo.StatusLine.Green",
+      "description": "Success status line color",
+      "since": "[2022.3]"
+    },
+    {
+      "key": "Review.MetaInfo.StatusLine.Orange",
+      "description": "Warning status line color",
+      "since": "[2022.3]"
+    }
+  ]
+}
