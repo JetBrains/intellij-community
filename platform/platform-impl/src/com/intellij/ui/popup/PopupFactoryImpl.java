@@ -612,6 +612,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                               Color textColor,
                                                               Color fillColor,
                                                               @Nullable HyperlinkListener listener) {
+    if (textColor == null) {
+      textColor = MessageType.INFO.getTitleForeground();
+    }
+    if (fillColor == null) {
+      fillColor = MessageType.INFO.getPopupBackground();
+    }
+
     JEditorPane text = IdeTooltipManager.initPane(htmlContent, new HintHint().setTextFg(textColor).setAwtTooltip(true), null);
 
     if (listener != null) {
@@ -650,7 +657,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
   public @NotNull BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent,
                                                               @NotNull MessageType messageType,
                                                               @Nullable HyperlinkListener listener) {
-    return createHtmlTextBalloonBuilder(htmlContent, messageType.getDefaultIcon(), messageType.getPopupBackground(), listener);
+    return createHtmlTextBalloonBuilder(htmlContent, messageType.getDefaultIcon(), messageType.getTitleForeground(),
+                                        messageType.getPopupBackground(), listener).setBorderColor(messageType.getBorderColor());
   }
 
   public static class InlineActionItem implements AnActionHolder {
