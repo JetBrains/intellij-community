@@ -34,7 +34,10 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
    */
   abstract fun getHint(element: PsiElement, file: PsiFile): String?
 
-  open fun logClickToFUS(element: PsiElement) {}
+  /**
+   * @param hint result of [getHint]
+   */
+  open fun logClickToFUS(element: PsiElement, hint: String) {}
 
   override fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
     if (!acceptsFile(file)) return emptyList()
@@ -52,7 +55,7 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
       if (!InlayHintsUtils.isFirstInLine(element)) continue
       val hint = getHint(element, file)
       if (hint == null) continue
-      val handler = ClickHandler(element)
+      val handler = ClickHandler(element, hint)
       val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
       lenses.add(range to ClickableTextCodeVisionEntry(hint, id, handler))
     }
@@ -60,14 +63,15 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
   }
 
   private inner class ClickHandler(
-    element: PsiElement
+    element: PsiElement,
+    private val hint: String,
   ) : (MouseEvent?, Editor) -> Unit {
     private val elementPointer = SmartPointerManager.createPointer(element)
 
     override fun invoke(event: MouseEvent?, editor: Editor) {
       if (isInlaySettingsEditor(editor)) return
       val element = elementPointer.element ?: return
-      logClickToFUS(element)
+      logClickToFUS(element, hint)
       handleClick(editor, element, event)
     }
   }

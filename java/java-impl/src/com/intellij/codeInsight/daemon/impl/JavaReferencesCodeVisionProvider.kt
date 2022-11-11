@@ -21,7 +21,7 @@ class JavaReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
 
   override fun getHint(element: PsiElement, file: PsiFile): String? = JavaTelescope.usagesHint(element as PsiMember, file)
 
-  override fun logClickToFUS(element: PsiElement) {
+  override fun logClickToFUS(element: PsiElement, hint: String) {
     JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.project)
   }
 
