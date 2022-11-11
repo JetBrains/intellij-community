@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.workspace
 
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 
 private enum class SanitationState {
     TAKE, TAKE_ON_THIS_HOST, EXCLUDE;
@@ -20,8 +21,9 @@ private enum class SanitationState {
  * ```
  * `{{KGP_VERSION}}` stubs will be replaced by the KGP version used in a test
  */
-internal fun MultiplePluginVersionGradleImportingTestCase.sanitizeExpectedFile(
+internal fun sanitizeExpectedFile(
     text: String,
+    kotlinPluginVersion: KotlinToolingVersion,
 ): String = buildString {
     var currentState = SanitationState.TAKE
 
@@ -32,7 +34,7 @@ internal fun MultiplePluginVersionGradleImportingTestCase.sanitizeExpectedFile(
             currentState = nextState
         } else {
             checkUnexpectedCommands(currentState, line, index + 1)
-            appendLine(sanitizeLine(line))
+            appendLine(sanitizeLine(line, kotlinPluginVersion))
         }
     }
 }
@@ -70,7 +72,7 @@ private fun checkUnexpectedCommands(currentState: SanitationState, nextLine: Str
     }
 }
 
-private fun MultiplePluginVersionGradleImportingTestCase.sanitizeLine(line: String): String =
+private fun sanitizeLine(line: String, kotlinPluginVersion: KotlinToolingVersion): String =
     line.replace(kgpVersionPlaceholderPattern, kotlinPluginVersion.toString())
 
 private const val LINUX_HOST_CLASSIFIER = "LINUX"

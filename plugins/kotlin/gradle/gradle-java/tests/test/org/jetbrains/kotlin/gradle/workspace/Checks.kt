@@ -5,14 +5,17 @@ package org.jetbrains.kotlin.gradle.workspace
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
-fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(
-    project: Project, testDataDir: File, testClassifier: String? = null
-) {
+fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(project: Project, testDataDir: File) {
+    checkWorkspaceModel(project, testDataDir, kotlinPluginVersion, gradleVersion)
+}
+
+fun checkWorkspaceModel(project: Project, testDataDir: File, kotlinPluginVersion: KotlinToolingVersion, gradleVersion: String) {
     val kotlinClassifier = with(kotlinPluginVersion) { "$major.$minor.$patch" }
     val gradleClassifier = gradleVersion
-    val matchingFiles = findMatchingFiles(testDataDir, kotlinClassifier, gradleClassifier, testClassifier)
+    val matchingFiles = findMatchingFiles(testDataDir, kotlinClassifier, gradleClassifier)
 
     check(matchingFiles.isNotEmpty()) {
         """No expected files found for workspace model checks (KGP ${kotlinClassifier}, Gradle: ${gradleClassifier}).
@@ -27,9 +30,8 @@ fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(
 
         KotlinTestUtils.assertEqualsToFile(
             expectedFile,
-            actualWorkspaceModelText,
-            ::sanitizeExpectedFile
-        )
+            actualWorkspaceModelText
+        ) { sanitizeExpectedFile(it, kotlinPluginVersion) }
     }
 }
 
@@ -37,14 +39,13 @@ private fun findMostSpecificExistingFile(
     testDataDir: File,
     kotlinClassifier: String,
     gradleClassifier: String,
-    testClassifier: String?,
     mode: WorkspacePrintingMode,
 ): File? {
     val prioritisedClassifyingParts = sequenceOf(
-        listOfNotNull(kotlinClassifier, gradleClassifier, testClassifier),
-        listOfNotNull(kotlinClassifier, testClassifier),
-        listOfNotNull(gradleClassifier, testClassifier),
-        listOfNotNull(testClassifier),
+        listOf(kotlinClassifier, gradleClassifier),
+        listOf(kotlinClassifier),
+        listOf(gradleClassifier),
+        emptyList(),
     )
 
     return prioritisedClassifyingParts
@@ -56,9 +57,8 @@ private fun findMatchingFiles(
     testDataDir: File,
     kotlinClassifier: String,
     gradleClassifier: String,
-    testClassifier: String?
 ): List<Pair<File, WorkspacePrintingMode>> = WorkspacePrintingMode.values().mapNotNull { mode ->
-    findMostSpecificExistingFile(testDataDir, kotlinClassifier, gradleClassifier, testClassifier, mode)?.let { file ->
+    findMostSpecificExistingFile(testDataDir, kotlinClassifier, gradleClassifier, mode)?.let { file ->
         file to mode
     }
 }
