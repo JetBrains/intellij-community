@@ -128,7 +128,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       descriptionWrapper.setContent(itemComponentFactory.createComponent(detailsModel.value))
     }
 
-    val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory).apply {
+    val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, JBUIScale.scale(8)).apply {
       border = JBUI.Borders.emptyBottom(16)
     }
 
@@ -156,10 +156,10 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                          AC().grow().gap("push"))
 
       add(header, CC().growX().maxWidth("$maxWidth"))
-      add(descriptionWrapper, CC().growX().maxWidth("$maxWidth"))
+      add(descriptionWrapper, CC().growX())
       add(timeline, CC().growX().minWidth(""))
 
-      val fullTimelineWidth = JBUIScale.scale(GHUIUtil.AVATAR_SIZE) + maxWidth
+      val fullTimelineWidth = GHPRTimelineItemUIUtil.maxTimelineItemWidth
 
       add(errorPanel, CC().hideMode(2).width("$fullTimelineWidth"))
       add(loadingIcon, CC().hideMode(2).width("$fullTimelineWidth"))
@@ -241,6 +241,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       selectInToolWindowHelper,
       suggestedChangeHelper,
       ghostUser,
+      detailsModel.value.author,
       currentUser
     )
   }

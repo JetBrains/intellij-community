@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
 import java.util.*
 
 class GHPRReviewDismissedEvent(override val actor: GHActor?,
                                override val createdAt: Date,
-                               val dismissalMessageHTML: String?,
+                               val dismissalMessageHTML: @NlsSafe String?,
                                @JsonProperty("review") review: ReviewAuthor?)
   : GHPRTimelineEvent.Complex {
 

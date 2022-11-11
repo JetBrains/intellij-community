@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
@@ -11,7 +12,7 @@ import java.util.*
 open class GHPullRequestReview(id: String,
                                val url: String,
                                val author: GHActor?,
-                               val body: String,
+                               val body: @NlsSafe String,
                                val state: GHPullRequestReviewState,
                                val createdAt: Date,
                                val viewerCanUpdate: Boolean)
