@@ -84,6 +84,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantConstructorKeyword/inParameters.kt");
         }
 
+        @TestMetadata("privateConstructor.kt")
+        public void testPrivateConstructor() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantConstructorKeyword/privateConstructor.kt");
+        }
+
         @TestMetadata("varargVal.kt")
         public void testVarargVal() throws Exception {
             runTest("../testData/inspectionsLocal/redundantConstructorKeyword/varargVal.kt");

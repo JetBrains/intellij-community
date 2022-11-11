@@ -5,8 +5,8 @@ class WithComments
 /**
  * Some nasty constructor
  */
-constructor(
+constructor<caret>(
     /* First parameter */
-    val first: Int,<caret>
+    val first: Int,
     /* Second Parameter */
     val second: Double)
