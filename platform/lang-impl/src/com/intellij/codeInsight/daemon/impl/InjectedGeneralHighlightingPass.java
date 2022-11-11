@@ -36,7 +36,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLanguageFragmentKey;
 
-public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
+final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   private final Predicate<PsiFile> myInjectedFilesFilter;
 
   InjectedGeneralHighlightingPass(@NotNull PsiFile file,
@@ -398,7 +398,8 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
 
   static void overrideDefaultHighlights(@NotNull EditorColorsScheme scheme,
                                         @NotNull TextRange range,
-                                        TextAttributesKey @NotNull [] keys, @NotNull HighlightInfoHolder holder) {
+                                        TextAttributesKey @NotNull [] keys,
+                                        @NotNull HighlightInfoHolder holder) {
     if (range.isEmpty()) {
       return;
     }
