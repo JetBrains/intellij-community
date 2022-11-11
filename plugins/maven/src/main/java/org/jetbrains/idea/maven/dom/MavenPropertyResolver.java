@@ -34,7 +34,7 @@ public final class MavenPropertyResolver {
 
   public static void doFilterText(Module module,
                                   String text,
-                                  Properties additionalProperties,
+                                  Map<String, String> additionalProperties,
                                   @Nullable String propertyEscapeString,
                                   Appendable out) throws IOException {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
@@ -64,7 +64,7 @@ public final class MavenPropertyResolver {
                                    @Nullable MavenProject mavenProject,
                                    MavenDomProjectModel projectDom,
                                    String text,
-                                   Properties additionalProperties,
+                                   Map<String, String> additionalProperties,
                                    @Nullable String escapeString,
                                    boolean escapeWindowsPath,
                                    @Nullable Map<String, String> resolvedPropertiesParam,
@@ -119,7 +119,7 @@ public final class MavenPropertyResolver {
           resolved = doResolvePropertyForMavenProject(propertyName, mavenProjectsManager, mavenProject, additionalProperties);
         }
         else {
-          resolved = doResolvePropertyForMavenDomModel(propertyName, mavenProjectsManager, projectDom, additionalProperties);
+          resolved = doResolvePropertyForMavenDomModel(propertyName, projectDom, additionalProperties);
         }
 
         if (resolved == null) {
@@ -166,7 +166,7 @@ public final class MavenPropertyResolver {
 
     StringBuilder res = new StringBuilder();
     try {
-      doFilterText(PATTERN, manager, mavenProject, projectDom, text, collectPropertiesFromDOM(mavenProject, projectDom), null, false, null,
+      doFilterText(PATTERN, manager, mavenProject, projectDom, text, collectPropertyMapFromDOM(mavenProject, projectDom), null, false, null,
                    res);
     }
     catch (IOException e) {
@@ -176,10 +176,22 @@ public final class MavenPropertyResolver {
     return res.toString();
   }
 
+  /**
+   * @deprecated use {@link MavenPropertyResolver#collectPropertyMapFromDOM(MavenProject, MavenDomProjectModel)} instead
+   */
+  @Deprecated
   public static Properties collectPropertiesFromDOM(@Nullable MavenProject project, MavenDomProjectModel projectDom) {
-    Properties result = new Properties();
+    var result = new Properties();
 
-    collectPropertiesFromDOM(projectDom.getProperties(), result);
+    result.putAll(collectPropertyMapFromDOM(project, projectDom));
+
+    return result;
+  }
+
+  public static Map<String, String> collectPropertyMapFromDOM(@Nullable MavenProject project, MavenDomProjectModel projectDom) {
+    var result = new HashMap<String, String>();
+
+    collectPropertyMapFromDOM(projectDom.getProperties(), result);
 
     if (project != null) {
       collectPropertiesForActivatedProfiles(project, projectDom, result);
@@ -188,20 +200,20 @@ public final class MavenPropertyResolver {
   }
 
   private static void collectPropertiesForActivatedProfiles(@NotNull MavenProject project,
-                                                            MavenDomProjectModel projectDom, Properties result) {
+                                                            MavenDomProjectModel projectDom, Map<String, String> result) {
     Collection<String> activeProfiles = project.getActivatedProfilesIds().getEnabledProfiles();
     for (MavenDomProfile each : projectDom.getProfiles().getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
       if (idTag == null || !activeProfiles.contains(idTag.getValue().getTrimmedText())) continue;
-      collectPropertiesFromDOM(each.getProperties(), result);
+      collectPropertyMapFromDOM(each.getProperties(), result);
     }
   }
 
-  private static void collectPropertiesFromDOM(MavenDomProperties props, Properties result) {
+  private static void collectPropertyMapFromDOM(MavenDomProperties props, Map<String, String> result) {
     XmlTag propsTag = props.getXmlTag();
     if (propsTag != null) {
       for (XmlTag each : propsTag.getSubTags()) {
-        result.setProperty(each.getName(), each.getValue().getTrimmedText());
+        result.put(each.getName(), each.getValue().getTrimmedText());
       }
     }
   }
@@ -210,7 +222,7 @@ public final class MavenPropertyResolver {
   private static String doResolvePropertyForMavenProject(String propName,
                                                          MavenProjectsManager projectsManager,
                                                          MavenProject mavenProject,
-                                                         Properties additionalProperties) {
+                                                         Map<String, String> additionalProperties) {
     boolean hasPrefix = false;
     String unprefixed = propName;
 
@@ -280,7 +292,7 @@ public final class MavenPropertyResolver {
     result = selectedProject.getModelMap().get(unprefixed);
     if (result != null) return result;
 
-    result = additionalProperties.getProperty(propName);
+    result = additionalProperties.get(propName);
     if (result != null) return result;
 
     result = mavenProject.getProperties().getProperty(propName);
@@ -295,9 +307,8 @@ public final class MavenPropertyResolver {
 
   @Nullable
   private static String doResolvePropertyForMavenDomModel(String propName,
-                                                          MavenProjectsManager projectsManager,
                                                           MavenDomProjectModel projectDom,
-                                                          Properties additionalProperties) {
+                                                          Map<String, String> additionalProperties) {
     if (propName.startsWith("parent.")) {
       MavenDomParent parentDomElement = projectDom.getMavenParent();
       if (!parentDomElement.exists()) {
@@ -329,7 +340,7 @@ public final class MavenPropertyResolver {
     result = MavenServerUtil.collectSystemProperties().getProperty(propName);
     if (result != null) return result;
 
-    result = additionalProperties.getProperty(propName);
+    result = additionalProperties.get(propName);
     if (result != null) return result;
 
 
