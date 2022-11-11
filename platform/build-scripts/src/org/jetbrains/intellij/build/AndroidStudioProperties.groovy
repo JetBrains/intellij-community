@@ -222,9 +222,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @Override
       @CompileDynamic
       void copyAdditionalFilesBlocking(BuildContext buildContext, String targetDirectory) {
-        new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win"))
+        new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win/x64"))
           .includeAll()
-          .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/win"))
+          .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/win/x64"))
       }
     }
   }
@@ -245,9 +245,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @Override
       @CompileDynamic
       void copyAdditionalFiles(BuildContext buildContext, Path targetDirectory, JvmArchitecture arch) {
-        new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux"))
+        new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux/x64"))
           .includeAll()
-          .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/linux"))
+          .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/linux/x64"))
       }
     }
   }
@@ -272,10 +272,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     @Override
     @CompileDynamic
-    void copyAdditionalFilesBlocking(BuildContext buildContext, String targetDirectory) {
+    void copyAdditionalFilesBlocking(BuildContext buildContext, Path targetDirectory, JvmArchitecture arch) {
       new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
         .includeAll()
-        .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/mac"))
+        .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/mac/" + arch))
     }
   }
 
