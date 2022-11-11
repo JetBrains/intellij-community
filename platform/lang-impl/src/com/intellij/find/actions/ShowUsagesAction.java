@@ -691,7 +691,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     String hint = getSecondInvocationHint(actionHandler);
 
     JPanel advertiserComponent = null;
-    if (advertiser.addAdvertisement(hint) || advertiser.addSpeedSearchAdvertisement() != null) {
+    if (advertiser.addAdvertisement(hint) | advertiser.addSpeedSearchAdvertisement() != null) {
       advertiserComponent = advertiser.getComponent();
     }
 
