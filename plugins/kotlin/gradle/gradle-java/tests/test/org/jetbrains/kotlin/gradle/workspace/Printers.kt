@@ -14,27 +14,27 @@ import org.jetbrains.kotlin.utils.Printer
 
 object WorkspaceModelPrinters {
     val moduleNamesPrinter: WorkspaceModelPrinter
-        get() = ProjectPrinter {
+        get() = WorkspaceModelPrinter {
             addContributor(NoopModulePrinterContributor())
         }
 
-    val moduleDependenciesPrinter get() = ProjectPrinter {
+    val moduleDependenciesPrinter get() = WorkspaceModelPrinter {
         addContributor(SanitizingOrderEntryPrinterContributor())
     }
 
-    val moduleKotlinFacetSettingsPrinter get() = ProjectPrinter {
+    val moduleKotlinFacetSettingsPrinter get() = WorkspaceModelPrinter {
         addContributor(KotlinFacetSettingsPrinterContributor())
     }
 
-    val libraryNamesPrinter get() = ProjectPrinter {
+    val libraryNamesPrinter get() = WorkspaceModelPrinter {
         addContributor(SanitizingLibraryPrinterContributor())
     }
 
-    val sdkNamesPrinter get() = ProjectPrinter {
+    val sdkNamesPrinter get() = WorkspaceModelPrinter {
         addContributor(NoopSdkPrinterContributor())
     }
 
-    val fullWorkspacePrinter get() = ProjectPrinter {
+    val fullWorkspacePrinter get() = WorkspaceModelPrinter {
         addContributor(KotlinFacetSettingsPrinterContributor())
         addContributor(SanitizingOrderEntryPrinterContributor())
         addContributor(SanitizingLibraryPrinterContributor())
