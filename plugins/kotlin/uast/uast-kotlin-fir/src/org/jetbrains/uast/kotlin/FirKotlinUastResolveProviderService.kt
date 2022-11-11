@@ -376,7 +376,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                             buildClassType(enumClassId)
                         }
                     else ->
-                        buildClassType(classOrObject.getClassOrObjectSymbol())
+                        classOrObject.getClassOrObjectSymbol()?.let(::buildClassType)
                 } ?: return null
                 val psiClass = toPsiClass(ktType, source = null, classOrObject, classOrObject.typeOwnerKind)
                 return when (classOrObject) {

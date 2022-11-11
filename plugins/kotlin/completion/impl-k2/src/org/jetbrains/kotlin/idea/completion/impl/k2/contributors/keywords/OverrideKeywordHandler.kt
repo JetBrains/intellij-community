@@ -85,7 +85,7 @@ internal class OverrideKeywordHandler(
         val isImplement = (memberSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
         val additionalIcon = if (isImplement) AllIcons.Gutter.ImplementingMethod else AllIcons.Gutter.OverridingMethod
         val icon = RowIcon(baseIcon, additionalIcon)
-        val baseClass = classOrObject.getClassOrObjectSymbol()
+        val baseClass = classOrObject.getClassOrObjectSymbol()!!
         val baseClassIcon = getIcon(baseClass)
         val isSuspendFunction = (memberSymbol as? KtFunctionSymbol)?.isSuspend == true
         val baseClassName = baseClass.nameOrAnonymous.asString()

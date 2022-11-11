@@ -1089,7 +1089,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
     anchor: PsiElement,
     fileToEdit: KtFile = container.containingFile as KtFile
 ): D {
-    val psiFactory = KtPsiFactory(container)
+    val psiFactory = KtPsiFactory.contextual(container)
     val newLine = psiFactory.createNewLine()
 
     fun calcNecessaryEmptyLines(decl: KtDeclaration, after: Boolean): Int {

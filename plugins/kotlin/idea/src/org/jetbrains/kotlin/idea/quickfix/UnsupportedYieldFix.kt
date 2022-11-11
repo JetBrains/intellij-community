@@ -30,7 +30,7 @@ class UnsupportedYieldFix(psiElement: PsiElement) : KotlinQuickFixAction<PsiElem
         }
 
         if (psiElement.node.elementType == KtTokens.IDENTIFIER) {
-            psiElement.replace(KtPsiFactory(psiElement).createIdentifier("`yield`"))
+            psiElement.replace(KtPsiFactory.contextual(psiElement).createIdentifier("`yield`"))
         }
     }
 

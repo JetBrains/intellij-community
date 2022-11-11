@@ -30,7 +30,7 @@ object CastExpressionFixFactories {
         familyName(KotlinBundle.lazyMessage("fix.cast.expression.family"))
         actionName { psi, input -> KotlinBundle.message("fix.cast.expression.text", psi.text, input.typePresentation) }
         applyToWithEditorRequired { psi, input, project, editor ->
-            val expressionToInsert = KtPsiFactory(psi).createExpressionByPattern("$0 as $1", psi, input.typeSourceCode)
+            val expressionToInsert = KtPsiFactory.contextual(psi).createExpressionByPattern("$0 as $1", psi, input.typeSourceCode)
             val newExpression = psi.replaced(expressionToInsert)
 
             allowAnalysisOnEdt {
