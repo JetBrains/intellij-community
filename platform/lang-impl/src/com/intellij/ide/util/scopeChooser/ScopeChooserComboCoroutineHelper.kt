@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.CommonProcessors
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -59,7 +60,7 @@ private class ScopeChooserComboCoroutineHelper(private val chooserCombo: ScopeCh
 private suspend fun ScopeChooserCombo.processScopes(dataContext: DataContext): List<ScopeDescriptor> {
   val predefinedScopes = getPredefinedScopesAsync(dataContext).await()
 
-  return withContext(Dispatchers.Default) {
+  return readAction {
     val processor = CommonProcessors.CollectProcessor<ScopeDescriptor>()
     doProcessScopes(
       dataContext,

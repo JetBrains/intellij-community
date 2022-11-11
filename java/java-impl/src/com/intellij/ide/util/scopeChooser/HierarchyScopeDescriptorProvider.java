@@ -7,10 +7,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 
 final class HierarchyScopeDescriptorProvider implements ScopeDescriptorProvider {
 
+  @RequiresReadLock
   @Override
   public ScopeDescriptor @NotNull [] getScopeDescriptors(@NotNull Project project,
                                                          @NotNull DataContext dataContext) {

@@ -19,6 +19,7 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 
 public interface ScopeDescriptorProvider {
@@ -27,6 +28,7 @@ public interface ScopeDescriptorProvider {
 
   ExtensionPointName<ScopeDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.scopeDescriptorProvider");
 
+  @RequiresReadLock
   ScopeDescriptor @NotNull [] getScopeDescriptors(@NotNull Project project,
                                                   @NotNull DataContext dataContext);
 }
