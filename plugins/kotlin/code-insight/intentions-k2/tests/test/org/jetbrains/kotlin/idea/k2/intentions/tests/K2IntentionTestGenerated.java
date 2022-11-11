@@ -1870,94 +1870,116 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments")
-    public static class AddNamesInCommentToJavaCallArguments extends AbstractK2IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class AddNamesInCommentToJavaCallArguments extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/fakeOverrides")
+        public static class FakeOverrides extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("intersectionOverrideMethodCall.kt")
+            public void testIntersectionOverrideMethodCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/fakeOverrides/intersectionOverrideMethodCall.kt");
+            }
+
+            @TestMetadata("intersectionOverrideMethodCall2.kt")
+            public void testIntersectionOverrideMethodCall2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/fakeOverrides/intersectionOverrideMethodCall2.kt");
+            }
+
+            @TestMetadata("substitutionOverrideMethodCall.kt")
+            public void testSubstitutionOverrideMethodCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/fakeOverrides/substitutionOverrideMethodCall.kt");
+            }
+
+            @TestMetadata("substitutionOverrideMethodCall2.kt")
+            public void testSubstitutionOverrideMethodCall2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/fakeOverrides/substitutionOverrideMethodCall2.kt");
+            }
         }
 
-        @TestMetadata("constructorCall.kt")
-        public void testConstructorCall() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/constructorCall.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments")
+        public static class Uncategorized extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("genericSuperTypeMethodCall.kt")
-        public void testGenericSuperTypeMethodCall() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/genericSuperTypeMethodCall.kt");
-        }
+            @TestMetadata("constructorCall.kt")
+            public void testConstructorCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/constructorCall.kt");
+            }
 
-        @TestMetadata("genericSuperTypeMethodCall2.kt")
-        public void testGenericSuperTypeMethodCall2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/genericSuperTypeMethodCall2.kt");
-        }
+            @TestMetadata("kotlinFunctionCall.kt")
+            public void testKotlinFunctionCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/kotlinFunctionCall.kt");
+            }
 
-        @TestMetadata("kotlinFunctionCall.kt")
-        public void testKotlinFunctionCall() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/kotlinFunctionCall.kt");
-        }
+            @TestMetadata("kotlinMethodCallOverridingJavaMethod.kt")
+            public void testKotlinMethodCallOverridingJavaMethod() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/kotlinMethodCallOverridingJavaMethod.kt");
+            }
 
-        @TestMetadata("kotlinMethodCallOverridingJavaMethod.kt")
-        public void testKotlinMethodCallOverridingJavaMethod() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/kotlinMethodCallOverridingJavaMethod.kt");
-        }
+            @TestMetadata("methodCall.kt")
+            public void testMethodCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCall.kt");
+            }
 
-        @TestMetadata("methodCall.kt")
-        public void testMethodCall() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCall.kt");
-        }
+            @TestMetadata("methodCallChained.kt")
+            public void testMethodCallChained() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallChained.kt");
+            }
 
-        @TestMetadata("methodCallChained.kt")
-        public void testMethodCallChained() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallChained.kt");
-        }
+            @TestMetadata("methodCallChained2.kt")
+            public void testMethodCallChained2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallChained2.kt");
+            }
 
-        @TestMetadata("methodCallChained2.kt")
-        public void testMethodCallChained2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallChained2.kt");
-        }
+            @TestMetadata("methodCallWithComments.kt")
+            public void testMethodCallWithComments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments.kt");
+            }
 
-        @TestMetadata("methodCallWithComments.kt")
-        public void testMethodCallWithComments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments.kt");
-        }
+            @TestMetadata("methodCallWithComments2.kt")
+            public void testMethodCallWithComments2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments2.kt");
+            }
 
-        @TestMetadata("methodCallWithComments2.kt")
-        public void testMethodCallWithComments2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments2.kt");
-        }
+            @TestMetadata("methodCallWithLambdaArgument.kt")
+            public void testMethodCallWithLambdaArgument() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgument.kt");
+            }
 
-        @TestMetadata("methodCallWithLambdaArgument.kt")
-        public void testMethodCallWithLambdaArgument() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgument.kt");
-        }
+            @TestMetadata("methodCallWithLambdaArgumentOnly.kt")
+            public void testMethodCallWithLambdaArgumentOnly() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgumentOnly.kt");
+            }
 
-        @TestMetadata("methodCallWithLambdaArgumentOnly.kt")
-        public void testMethodCallWithLambdaArgumentOnly() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgumentOnly.kt");
-        }
+            @TestMetadata("methodCallWithNoArguments.kt")
+            public void testMethodCallWithNoArguments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithNoArguments.kt");
+            }
 
-        @TestMetadata("methodCallWithNoArguments.kt")
-        public void testMethodCallWithNoArguments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithNoArguments.kt");
-        }
+            @TestMetadata("methodCallWithVararg.kt")
+            public void testMethodCallWithVararg() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithVararg.kt");
+            }
 
-        @TestMetadata("methodCallWithVararg.kt")
-        public void testMethodCallWithVararg() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithVararg.kt");
-        }
+            @TestMetadata("partialNameComments.kt")
+            public void testPartialNameComments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/partialNameComments.kt");
+            }
 
-        @TestMetadata("partialNameComments.kt")
-        public void testPartialNameComments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/partialNameComments.kt");
-        }
+            @TestMetadata("partialNameComments2.kt")
+            public void testPartialNameComments2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/partialNameComments2.kt");
+            }
 
-        @TestMetadata("partialNameComments2.kt")
-        public void testPartialNameComments2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/partialNameComments2.kt");
-        }
-
-        @TestMetadata("superTypeCall.kt")
-        public void testSuperTypeCall() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/superTypeCall.kt");
+            @TestMetadata("superTypeCall.kt")
+            public void testSuperTypeCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/superTypeCall.kt");
+            }
         }
     }
 
