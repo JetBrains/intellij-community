@@ -15,6 +15,7 @@ class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.co
   override fun LessonContext.runTask() {
     task("RunClass") {
       text(PythonLessonsBundle.message("python.run.configuration.lets.run", action(it)))
+      timerCheck { configurations().isNotEmpty() }
       //Wait toolwindow
       checkToolWindowState("Run", true)
       test {
