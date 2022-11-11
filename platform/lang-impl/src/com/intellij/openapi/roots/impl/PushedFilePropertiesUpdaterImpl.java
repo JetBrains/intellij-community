@@ -118,9 +118,6 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         if (file == null) continue;
         boolean isDirectory = file.isDirectory();
         List<FilePropertyPusher<?>> pushers = isDirectory ? FilePropertyPusher.EP_NAME.getExtensionList() : filePushers;
-        for (FilePropertyPusher<?> pusher : pushers) {
-          pusher.getFileDataKey().setPersistentValue(file, null);
-        }
         ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers));
       }
     }
