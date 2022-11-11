@@ -197,6 +197,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity?.endAndStart("loading entities from files")
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
+      fileContentReader.clearCache()
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
       return builder to sourcesToUpdate
@@ -235,7 +236,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     sourcesToSave.clear()
     sourcesToSave.addAll(storeToEntitySources.second)
 
-    fileContentReader.clearCache()
     activity?.end()
     activity = null
   }
