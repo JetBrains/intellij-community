@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.hints.codeVision.ReferencesCodeVisionProvider
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.PsiElement
@@ -19,7 +20,11 @@ class JavaReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
 
   override fun acceptsElement(element: PsiElement): Boolean = element is PsiMember && element !is PsiTypeParameter
 
-  override fun getHint(element: PsiElement, file: PsiFile): String? = JavaTelescope.usagesHint(element as PsiMember, file)
+  override fun getHint(element: PsiElement, file: PsiFile): String? {
+    val inspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(element)
+    if (inspection.isEntryPoint(element)) return null;
+    return JavaTelescope.usagesHint(element as PsiMember, file)
+  }
 
   override fun logClickToFUS(element: PsiElement, hint: String) {
     JavaCodeVisionUsageCollector.USAGES_CLICKED_EVENT_ID.log(element.project)
