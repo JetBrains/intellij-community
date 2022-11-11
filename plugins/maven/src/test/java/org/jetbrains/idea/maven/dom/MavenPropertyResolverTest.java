@@ -19,35 +19,14 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCase {
-
-  private static String resolve(Module module,
-                                String text,
-                                Map<String, String> additionalProperties,
-                                String propertyEscapeString) {
-    StringBuilder sb = new StringBuilder();
-
-    try {
-      MavenPropertyResolver.doFilterText(module, text, additionalProperties, propertyEscapeString, sb);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    return sb.toString();
-  }
-
-
   @Test
   public void testResolvingProjectAttributes() {
     importProject("<groupId>test</groupId>" +
@@ -297,33 +276,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     PsiDocumentManager.getInstance(myProject).commitDocument(doc);
 
     assertEquals("value", resolve("${uncomitted}", myProjectPom));
-  }
-
-  @Test
-  public void testEscapingProperties() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    assertEquals("foo ^project bar",
-                 resolve(getModule("project"), "foo ^${project.artifactId} bar", Map.of(), "/"));
-    assertEquals("foo ${project.artifactId} bar",
-                 resolve(getModule("project"), "foo ^^${project.artifactId} bar", Map.of(), "^^"));
-    assertEquals("project ${project.artifactId} project ${project.artifactId}",
-                 resolve(getModule("project"),
-                         "${project.artifactId} ^${project.artifactId} ${project.artifactId} ^${project.artifactId}",
-                         Map.of(), "^"));
-  }
-
-  @Test
-  public void testMavenConfigProperties() throws IOException {
-    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dprop=value");
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    assertEquals("foo value bar",
-                 resolve(getModule("project"), "foo ${prop} bar", Map.of(), "/"));
   }
 
   @Test
