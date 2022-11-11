@@ -22,7 +22,10 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
-import org.jetbrains.completion.full.line.language.*
+import org.jetbrains.completion.full.line.language.FullLineConfiguration
+import org.jetbrains.completion.full.line.language.LangState
+import org.jetbrains.completion.full.line.language.LocationMatcher
+import org.jetbrains.completion.full.line.language.RedCodePolicy
 import org.jetbrains.completion.full.line.language.formatters.DummyPsiCodeFormatter
 import org.jetbrains.completion.full.line.language.supporters.FullLineLanguageSupporterBase
 import org.jetbrains.completion.full.line.python.PythonIconSet

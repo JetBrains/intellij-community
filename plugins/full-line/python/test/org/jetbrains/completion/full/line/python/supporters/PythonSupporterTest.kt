@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.language.supporters
+package org.jetbrains.completion.full.line.python.supporters
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.fixtures.BasePlatformTestCase

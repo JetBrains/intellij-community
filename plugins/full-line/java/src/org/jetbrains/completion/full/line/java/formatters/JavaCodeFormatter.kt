@@ -5,7 +5,9 @@ import org.jetbrains.completion.full.line.language.formatters.CodeFormatterBase
 import org.jetbrains.completion.full.line.language.formatters.PlainTextFormatter
 import org.jetbrains.completion.full.line.language.formatters.SkippedElementsFormatter
 
-class JavaCodeFormatter : CodeFormatterBase(
-  SkippedElementsFormatter(PsiComment::class.java),
-  PlainTextFormatter(),
-)
+class JavaCodeFormatter : CodeFormatterBase() {
+  override val elementFormatters = listOf(
+    SkippedElementsFormatter(PsiComment::class.java),
+    PlainTextFormatter(),
+  )
+}

@@ -1,13 +1,15 @@
 package org.jetbrains.completion.full.line.python.formatters
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.text.findTextRange
 import com.jetbrains.python.PythonFileType
 import org.jetbrains.completion.full.line.FilesTest
 import org.jetbrains.completion.full.line.FilesTest.readFile
-import org.jetbrains.completion.full.line.language.formatters.CodeFormatterTest
-import org.jetbrains.completion.full.line.python.formatters.PythonCodeFormatter
+import org.jetbrains.completion.full.line.language.formatters.CodeFormatterBase
 
-abstract class PythonCodeFormatterTest : CodeFormatterTest(PythonCodeFormatter()) {
+abstract class PythonCodeFormatterTest : BasePlatformTestCase() {
+  abstract val formatter: CodeFormatterBase
 
   protected fun testFile(originFilename: String, formattedFilename: String? = null) {
     if (formattedFilename == null) {
@@ -29,7 +31,11 @@ abstract class PythonCodeFormatterTest : CodeFormatterTest(PythonCodeFormatter()
       assert(actualCode.length >= offset)
     }
     val file = myFixture.configureByText(PythonFileType.INSTANCE, actualCode)
-    val ideaContent = formatter.format(file, TextRange(0, offset ?: file.textLength), myFixture.editor)
+    val range = offset?.let { TextRange(0, offset) }
+                ?: actualCode.findTextRange("<caret>")?.let { TextRange(0, it.startOffset) }
+                ?: TextRange(0, file.textLength)
+
+    val ideaContent = formatter.format(file, range, myFixture.editor)
 
     assertEquals(expectedCode, ideaContent)
   }

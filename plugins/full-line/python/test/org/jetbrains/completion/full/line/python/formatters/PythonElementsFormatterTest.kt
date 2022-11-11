@@ -1,8 +1,18 @@
 package org.jetbrains.completion.full.line.python.formatters
 
 class PythonElementsFormatterTest : PythonCodeFormatterTest() {
+  override val formatter = PythonCodeFormatter()
+
   fun `test numerical`() {
-    testFile("test-elements/numerical.py")
+    testFile("test-elements/v2/numerical.py")
+  }
+
+  fun `test strings`() {
+    testFile("test-elements/v2/strings.py")
+  }
+
+  fun `test imports`() {
+    testFile("test-elements/v2/imports.py")
   }
 
   fun `test parameter list without closed bracket`() {
@@ -10,16 +20,16 @@ class PythonElementsFormatterTest : PythonCodeFormatterTest() {
   }
 
   fun `test function params without type`() {
-    testCodeFragment("def checkout_branch(branch):\n    return None", "def checkout_branch(branch):\n\treturn None")
+    testCodeFragment("def checkout_branch(branch):\n    return None", "def checkout_branch(branch):⇥return None")
   }
 
   fun `test function params with type`() {
-    testCodeFragment("def checkout_branch(branch: str):\n    return None", "def checkout_branch(branch: str):\n\treturn None")
+    testCodeFragment("def checkout_branch(branch: str):\n    return None", "def checkout_branch(branch: str):⇥return None")
   }
 
   fun `test function params with type and default value`() {
     testCodeFragment("def checkout_branch(branch: str=\"master\"):\n    return None",
-                     "def checkout_branch(branch: str=\"master\"):\n\treturn None")
+                     "def checkout_branch(branch: str = \"master\"):⇥return None")
   }
 
   fun `test not fully filled import`() {
@@ -34,11 +44,23 @@ class PythonElementsFormatterTest : PythonCodeFormatterTest() {
     testCodeFragment("from  import tqdm", "from ", 5)
   }
 
-  fun `test strings`() {
-    testFile("test-elements/strings.py")
-  }
+  fun `test incomplete string`() {
+    testCodeFragment("a = \"simple ", "a = \"simple ")
+    testCodeFragment("a = \"simple str", "a = \"simple str")
+    testCodeFragment("a = \"simple string\"", "a = \"simple string\"")
 
-  fun `test imports`() {
-    testFile("test-elements/imports.py")
+    testCodeFragment("a = 'simple ", "a = \"simple ")
+    testCodeFragment("a = 'simple str", "a = \"simple str")
+    testCodeFragment("a = 'simple string'", "a = \"simple string\"")
+
+    testCodeFragment("a = \"<caret>simple string\"", "a = \"")
+    testCodeFragment("a = \"simp<caret>le string\"", "a = \"simp")
+    testCodeFragment("a = \"simple str<caret>ing\"", "a = \"simple str")
+    testCodeFragment("a = \"simple string<caret>\"", "a = \"simple string")
+
+    testCodeFragment("a = '<caret>simple string'", "a = \"")
+    testCodeFragment("a = 'simp<caret>le string'", "a = \"simp")
+    testCodeFragment("a = 'simple str<caret>ing'", "a = \"simple str")
+    testCodeFragment("a = 'simple string<caret>'", "a = \"simple string")
   }
 }
