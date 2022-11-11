@@ -103,15 +103,14 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
     }
     val oldMethodCall = findMethodCallInside(calls.firstOrNull()) ?: throw IllegalStateException()
     val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull()) ?: throw IllegalStateException()
-    val parametrizedDuplicatesNumber = duplicates.size - exactDuplicates.size
     fun confirmChangeSignature(): Boolean {
-      val dialog = SignatureSuggesterPreviewDialog(method, parametrizedExtraction.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber)
+      val dialog = SignatureSuggesterPreviewDialog(method, parametrizedExtraction.method, oldMethodCall, newMethodCall, duplicates.size)
       return dialog.showAndGet()
     }
     val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> {default} } ?: ::confirmChangeSignature
     val isGoodSignatureChange = isGoodSignatureChange(extractOptions.elements, extractOptions.inputParameters,
                                                       parametrizedExtraction.callElements, updatedParameters)
-    val changeSignature = parametrizedDuplicatesNumber > 0 && isGoodSignatureChange && confirmChange()
+    val changeSignature = exactDuplicates.isEmpty() && duplicates.isNotEmpty() && isGoodSignatureChange && confirmChange()
     duplicates = if (changeSignature) duplicatesWithUnifiedParameters else exactDuplicates
     val parameters = if (changeSignature) updatedParameters else extractOptions.inputParameters
     val extractedElements = if (changeSignature) parametrizedExtraction else ExtractedElements(calls, method)
