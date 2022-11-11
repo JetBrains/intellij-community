@@ -47,6 +47,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public abstract class TodoTreeBuilder implements Disposable {
@@ -68,7 +69,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    * to perform some (perhaps, CPU expensive) operation. These "dirty" files are
    * validated in {@code validateCache()} method.
    */
-  protected final HashSet<VirtualFile> myDirtyFileSet = new HashSet<>();
+  protected final Set<VirtualFile> myDirtyFileSet = ConcurrentHashMap.newKeySet();
 
   //used from EDT and from StructureTreeModel invoker thread
   protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap();
