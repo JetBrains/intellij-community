@@ -9,14 +9,17 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.parsing.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
 fun KtContainerNode.getControlFlowElementDescription(): String? {
     when (node.elementType) {
@@ -201,6 +204,13 @@ fun KtDotQualifiedExpression.replaceFirstReceiver(
     return replacedExpression
 }
 
+val KtQualifiedExpression.callExpression: KtCallExpression?
+    get() = selectorExpression as? KtCallExpression
+
+fun KtCallExpression.singleArgumentExpression(): KtExpression? {
+    return valueArguments.singleOrNull()?.getArgumentExpression()
+}
+
 /**
  * Checks if there are any annotations in type or its type arguments.
  */
@@ -246,6 +256,14 @@ fun KtConstantExpression.getClassId(): ClassId? {
     }
 }
 
+fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
+    val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression ?: return false
+    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT && deparenthesized.text.toIntOrNull() == value
+}
+
+fun KtExpression.isZeroIntegerConstant() = isIntegerConstantOfValue(0)
+fun KtExpression.isOneIntegerConstant() = isIntegerConstantOfValue(1)
+
 fun KtPsiFactory.appendSemicolonBeforeLambdaContainingElement(element: PsiElement) {
     val previousElement = KtPsiUtil.skipSiblingsBackwardByPredicate(element) {
         it!!.node.elementType in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
@@ -254,3 +272,18 @@ fun KtPsiFactory.appendSemicolonBeforeLambdaContainingElement(element: PsiElemen
         previousElement.parent.addAfter(createSemicolon(), previousElement)
     }
 }
+
+fun IElementType.invertedComparison(): KtSingleValueToken? = when (this) {
+    KtTokens.LT -> KtTokens.GT
+    KtTokens.GT -> KtTokens.LT
+    KtTokens.GTEQ -> KtTokens.LTEQ
+    KtTokens.LTEQ -> KtTokens.GTEQ
+    else -> null
+}
+
+/**
+ * Returns the first parent of `this` that is not a [KtParenthesizedExpression] and tries to cast it to [KtPrefixExpression].
+ * Useful to unwrap statements like `!((...))` or `-((...))`.
+ */
+fun PsiElement.getWrappingPrefixExpressionOrNull(): KtPrefixExpression? =
+    (getLastParentOfTypeInRow<KtParenthesizedExpression>() ?: this).parent as? KtPrefixExpression

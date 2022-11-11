@@ -1499,6 +1499,219 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceCallWithBinaryOperator")
+        public static class ReplaceCallWithBinaryOperator extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("compareToFromJava.kt")
+            public void testCompareToFromJava() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/compareToFromJava.kt");
+            }
+
+            @TestMetadata("divSanityTest.kt")
+            public void testDivSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/divSanityTest.kt");
+            }
+
+            @TestMetadata("dynamicEquals.kt")
+            public void testDynamicEquals() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/dynamicEquals.kt");
+            }
+
+            @TestMetadata("equals.kt")
+            public void testEquals() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equals.kt");
+            }
+
+            @TestMetadata("equalsBetweenInconvertibleTypes.kt")
+            public void testEqualsBetweenInconvertibleTypes() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsBetweenInconvertibleTypes.kt");
+            }
+
+            @TestMetadata("equalsCompareTo.kt")
+            public void testEqualsCompareTo() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsCompareTo.kt");
+            }
+
+            @TestMetadata("equalsDoubleSmartCast.kt")
+            public void testEqualsDoubleSmartCast() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsDoubleSmartCast.kt");
+            }
+
+            @TestMetadata("equalsDoubleSmartCastFromGeneric.kt")
+            public void testEqualsDoubleSmartCastFromGeneric() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsDoubleSmartCastFromGeneric.kt");
+            }
+
+            @TestMetadata("equalsExtensionFunction.kt")
+            public void testEqualsExtensionFunction() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsExtensionFunction.kt");
+            }
+
+            @TestMetadata("equalsFloatSmartCast.kt")
+            public void testEqualsFloatSmartCast() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsFloatSmartCast.kt");
+            }
+
+            @TestMetadata("equalsFloatingPointLiteral1.kt")
+            public void testEqualsFloatingPointLiteral1() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsFloatingPointLiteral1.kt");
+            }
+
+            @TestMetadata("equalsFloatingPointLiteral2.kt")
+            public void testEqualsFloatingPointLiteral2() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsFloatingPointLiteral2.kt");
+            }
+
+            @TestMetadata("equalsFloatingPointType.kt")
+            public void testEqualsFloatingPointType() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsFloatingPointType.kt");
+            }
+
+            @TestMetadata("extensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/extensionFunction.kt");
+            }
+
+            @TestMetadata("functionLiteralArgument.kt")
+            public void testFunctionLiteralArgument() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/functionLiteralArgument.kt");
+            }
+
+            @TestMetadata("greater.kt")
+            public void testGreater() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/greater.kt");
+            }
+
+            @TestMetadata("lessEquals.kt")
+            public void testLessEquals() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/lessEquals.kt");
+            }
+
+            @TestMetadata("minusSanityTest.kt")
+            public void testMinusSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/minusSanityTest.kt");
+            }
+
+            @TestMetadata("missingDefaultArgument.kt")
+            public void testMissingDefaultArgument() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/missingDefaultArgument.kt");
+            }
+
+            @TestMetadata("modSanityTest.kt")
+            public void testModSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/modSanityTest.kt");
+            }
+
+            @TestMetadata("multipleArguments.kt")
+            public void testMultipleArguments() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/multipleArguments.kt");
+            }
+
+            @TestMetadata("notEquals.kt")
+            public void testNotEquals() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/notEquals.kt");
+            }
+
+            @TestMetadata("notEqualsBrackets.kt")
+            public void testNotEqualsBrackets() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/notEqualsBrackets.kt");
+            }
+
+            @TestMetadata("notEqualsBracketsComplex.kt")
+            public void testNotEqualsBracketsComplex() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/notEqualsBracketsComplex.kt");
+            }
+
+            @TestMetadata("notOperatorCompareTo.kt")
+            public void testNotOperatorCompareTo() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/notOperatorCompareTo.kt");
+            }
+
+            @TestMetadata("notOperatorPlus.kt")
+            public void testNotOperatorPlus() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/notOperatorPlus.kt");
+            }
+
+            @TestMetadata("operatorCannotBeApplied.kt")
+            public void testOperatorCannotBeApplied() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/operatorCannotBeApplied.kt");
+            }
+
+            @TestMetadata("platformTypeEquals.kt")
+            public void testPlatformTypeEquals() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/platformTypeEquals.kt");
+            }
+
+            @TestMetadata("plusDouble.kt")
+            public void testPlusDouble() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/plusDouble.kt");
+            }
+
+            @TestMetadata("plusFromJava.kt")
+            public void testPlusFromJava() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/plusFromJava.kt");
+            }
+
+            @TestMetadata("plusSanityTest.kt")
+            public void testPlusSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/plusSanityTest.kt");
+            }
+
+            @TestMetadata("qualifier.kt")
+            public void testQualifier() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/qualifier.kt");
+            }
+
+            @TestMetadata("rangeToSanityTest.kt")
+            public void testRangeToSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/rangeToSanityTest.kt");
+            }
+
+            @TestMetadata("remSanityTest.kt")
+            public void testRemSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/remSanityTest.kt");
+            }
+
+            @TestMetadata("safeCompareTo.kt")
+            public void testSafeCompareTo() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/safeCompareTo.kt");
+            }
+
+            @TestMetadata("super.kt")
+            public void testSuper() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/super.kt");
+            }
+
+            @TestMetadata("timesSanityTest.kt")
+            public void testTimesSanityTest() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/timesSanityTest.kt");
+            }
+
+            @TestMetadata("typeArguments.kt")
+            public void testTypeArguments() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/typeArguments.kt");
+            }
+
+            @TestMetadata("unacceptableVararg1.kt")
+            public void testUnacceptableVararg1() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/unacceptableVararg1.kt");
+            }
+
+            @TestMetadata("unacceptableVararg2.kt")
+            public void testUnacceptableVararg2() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/unacceptableVararg2.kt");
+            }
+
+            @TestMetadata("validNamedArgument.kt")
+            public void testValidNamedArgument() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/validNamedArgument.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty")
         public static class ReplaceSizeCheckWithIsNotEmpty extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {

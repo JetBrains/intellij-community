@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
 internal sealed class ReplaceSizeCheckInspectionBase : LocalInspectionTool() {
 
@@ -181,12 +180,3 @@ private val REPLACEABLE_COUNT_CALL = ReplaceableCall(
     },
     hasIsNotEmpty = false
 )
-
-internal fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
-    val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression ?: return false
-    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT && deparenthesized.text == value.toString()
-}
-
-// TODO: also support 0x0, 0b0, ...?
-internal fun KtExpression.isZeroIntegerConstant() = isIntegerConstantOfValue(0)
-internal fun KtExpression.isOneIntegerConstant() = isIntegerConstantOfValue(1)
