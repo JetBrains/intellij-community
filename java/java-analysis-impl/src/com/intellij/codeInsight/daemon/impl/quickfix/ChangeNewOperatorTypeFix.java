@@ -100,14 +100,9 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
       newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + toType.getCanonicalText() + "()" + (anonymousClass != null ? "{}" : ""), originalExpression);
       PsiExpressionList argumentList = originalExpression.getArgumentList();
       if (argumentList == null) return;
-      newExpression.getArgumentList().replace(commentTracker.markUnchanged(argumentList));
-      if (anonymousClass == null) { //just to prevent useless inference
-        if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, originalExpression, toType)) {
-          final PsiElement paramList = RemoveRedundantTypeArgumentsUtil
-            .replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
-          newExpression = PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
-        }
-      }
+      final PsiExpressionList newArgumentList = newExpression.getArgumentList();
+      assert newArgumentList != null;
+      newArgumentList.replace(commentTracker.markUnchanged(argumentList));
 
       if (anonymousClass != null) {
         PsiAnonymousClass newAnonymousClass = newExpression.getAnonymousClass();
@@ -125,7 +120,12 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
       selection = null;
       caretOffset = -1;
     }
-    PsiElement element = commentTracker.replaceAndRestoreComments(originalExpression, newExpression);
+    PsiNewExpression element = (PsiNewExpression)commentTracker.replaceAndRestoreComments(originalExpression, newExpression);
+    if (PsiDiamondTypeUtil.canCollapseToDiamond(element, element, toType)) {
+      final PsiJavaCodeReferenceElement reference = element.getClassOrAnonymousClassReference();
+      assert reference != null;
+      RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(reference.getParameterList());
+    }
     editor.getCaretModel().moveToOffset(element.getTextRange().getEndOffset() + caretOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     if (selection != null) {
