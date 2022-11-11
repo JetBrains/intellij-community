@@ -242,6 +242,16 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testFoldedParametersInExactDuplicates(){
+    val default = DuplicatesMethodExtractor.changeSignatureDefault
+    try {
+      DuplicatesMethodExtractor.changeSignatureDefault = false
+      doTest()
+    } finally {
+      DuplicatesMethodExtractor.changeSignatureDefault = default
+    }
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")

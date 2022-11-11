@@ -75,7 +75,8 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     val calls = callsToReplace?.map { it.element!! } ?: return
-    val finder = JavaDuplicatesFinder(extractOptions.elements)
+    val parameterExpressions = extractOptions.inputParameters.flatMap { parameter -> parameter.references }.toSet()
+    val finder = JavaDuplicatesFinder(extractOptions.elements).withPredefinedChanges(parameterExpressions)
     var duplicates = finder
       .findDuplicates(method.containingClass ?: file)
       .filterNot { duplicate ->
@@ -85,9 +86,8 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
     //TODO check same data output
     //TODO check same flow output (+ same return values)
 
-    val parameterExpressions = extractOptions.inputParameters.flatMap { parameter -> parameter.references }
     val changedExpressions = duplicates.flatMap { it.changedExpressions.map(ChangedExpression::pattern) }
-    val duplicatesFinder = finder.withPredefinedChanges((parameterExpressions + changedExpressions).toSet())
+    val duplicatesFinder = finder.withPredefinedChanges(changedExpressions.toSet())
 
     val duplicatesWithUnifiedParameters = duplicates.mapNotNull { duplicatesFinder.createDuplicate(it.pattern, it.candidate) }
 
