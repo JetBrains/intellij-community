@@ -53,6 +53,32 @@ class MarkdownNoTableBordersInspectionTest: LightPlatformCodeInsightFixture4Test
     doTest(expected)
   }
 
+  @Test
+  fun `no inspection for top level indented table`() {
+    // language=Markdown
+    val expected = """
+       | none | none |
+       |------|------|
+       | some | some |
+
+    trimIndent marker
+    """.trimIndent()
+    doTest(expected)
+  }
+
+  @Test
+  fun `no inspection for indented table inside list`() {
+    // language=Markdown
+    val expected = """
+    * Some list item with a table
+      
+      | none | none |
+      |------|------|
+      | some | some |
+    """.trimIndent()
+    doTest(expected)
+  }
+
   private fun doTest(expected: String) {
     TableTestUtils.runWithChangedSettings(myFixture.project) {
       myFixture.configureByText("some.md", expected)

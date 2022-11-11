@@ -333,7 +333,11 @@ object TableModificationUtils {
   }
 
   fun MarkdownTableSeparatorRow.hasCorrectBorders(): Boolean {
-    return text.let { it.startsWith(TableProps.SEPARATOR_CHAR) && it.endsWith(TableProps.SEPARATOR_CHAR) }
+    val text = text
+    val first = text.firstOrNull { !it.isWhitespace() }
+    val last = text.lastOrNull { !it.isWhitespace() }
+    return first == TableProps.SEPARATOR_CHAR && last == TableProps.SEPARATOR_CHAR
+    //return text.let { it.startsWith(TableProps.SEPARATOR_CHAR) && it.endsWith(TableProps.SEPARATOR_CHAR) }
   }
 
   fun MarkdownTable.hasCorrectBorders(): Boolean {
