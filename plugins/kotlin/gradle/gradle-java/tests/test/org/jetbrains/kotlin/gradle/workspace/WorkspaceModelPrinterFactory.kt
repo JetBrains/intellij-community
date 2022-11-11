@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.gradle.workspace
 
-class ProjectPrinterFactory {
+class WorkspaceModelPrinterFactory {
     private val myModulePrinterContributors = mutableListOf<ModulePrinterContributor>()
     private val myLibraryPrinterContributors = mutableListOf<LibraryPrinterContributor>()
     private val mySdkPrinterContributors = mutableListOf<SdkPrinterContributor>()
@@ -30,8 +30,8 @@ class ProjectPrinterFactory {
 }
 
 @Suppress("TestFunctionName")
-fun ProjectPrinter(
-    printerConfiguration: ProjectPrinterFactory.() -> Unit
+fun WorkspaceModelPrinter(
+    printerConfiguration: WorkspaceModelPrinterFactory.() -> Unit
 ): WorkspaceModelPrinter {
-    return ProjectPrinterFactory().also(printerConfiguration).build()
+    return WorkspaceModelPrinterFactory().also(printerConfiguration).build()
 }
