@@ -18,7 +18,6 @@ import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
 import javax.swing.JPanel
 
-
 class MinimapConfigurable : BoundConfigurable(MiniMessagesBundle.message("settings.name")) {
 
   companion object {
@@ -59,6 +58,7 @@ class MinimapConfigurable : BoundConfigurable(MiniMessagesBundle.message("settin
       row(MiniMessagesBundle.message("settings.file.types")) {
         val textFileTypes = (FileTypeManager.getInstance() as FileTypeManagerImpl).registeredFileTypes
           .filter { !it.isBinary && it.defaultExtension.isNotBlank() }.distinctBy { it.defaultExtension }
+          .sortedBy { it.defaultExtension.lowercase() }
           .sortedBy { if (fileTypes.contains(it.defaultExtension)) 0 else 1 }
 
         fileTypeComboBox = comboBox(textFileTypes, FileTypeListCellRenderer())
@@ -110,12 +110,15 @@ class MinimapConfigurable : BoundConfigurable(MiniMessagesBundle.message("settin
   }
 
   private inner class FileTypeListCellRenderer : DefaultListCellRenderer() {
-    private val container = JPanel(null).apply {
-      layout = BoxLayout(this, BoxLayout.X_AXIS)
-    }
+    private val container = JPanel(null)
     private val checkBox = JBCheckBox()
 
     init {
+      isOpaque = false
+      container.isOpaque = false
+      checkBox.isOpaque = false
+
+      container.layout = BoxLayout(container, BoxLayout.X_AXIS)
       container.add(checkBox)
       container.add(this)
     }

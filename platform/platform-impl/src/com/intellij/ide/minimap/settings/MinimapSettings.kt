@@ -6,7 +6,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(name = "Minimap", storages = [Storage(value = "Minimap.xml")])
 class MinimapSettings : PersistentStateComponent<MinimapSettingsState> {
@@ -30,11 +29,6 @@ class MinimapSettings : PersistentStateComponent<MinimapSettingsState> {
   }
 
   override fun loadState(state: MinimapSettingsState) {
-    try {
-      XmlSerializerUtil.copyBean(state, this.state)
-    }
-    catch (e: Exception) {
-      //
-    }
+    this.state = state.copy()
   }
 }
