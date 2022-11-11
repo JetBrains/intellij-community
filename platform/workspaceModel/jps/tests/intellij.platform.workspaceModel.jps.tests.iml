@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage.testEntities" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.workspaceModel.jps" />
 </module>
