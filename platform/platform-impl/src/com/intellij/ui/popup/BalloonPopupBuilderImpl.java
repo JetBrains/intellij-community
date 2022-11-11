@@ -28,7 +28,7 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   private final JComponent myContent;
 
-  private Color myBorder = JBUI.CurrentTheme.Tooltip.borderColor();
+  private Color myBorder = MessageType.INFO.getBorderColor();
   @Nullable private Insets myBorderInsets;
   private Color myFill = MessageType.INFO.getPopupBackground();
   private boolean myHideOnMouseOutside = true;
