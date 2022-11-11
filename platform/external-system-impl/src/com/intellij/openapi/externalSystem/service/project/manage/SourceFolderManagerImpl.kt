@@ -211,7 +211,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
         for ((eventFile, sourceFolders) in p) {
           val (_, url, type, packagePrefix, generated) = sourceFolders
           val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
-                             ?: model.addContentEntry(url)
+                             ?: model.addContentEntry(url, true)
           val sourceFolder = contentEntry.addSourceFolder(url, type, true)
           if (!packagePrefix.isNullOrEmpty()) {
             sourceFolder.packagePrefix = packagePrefix
