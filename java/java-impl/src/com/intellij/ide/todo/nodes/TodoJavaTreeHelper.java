@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
     return super.contains(node, element);
   }
 
+  @RequiresReadLock
   @Override
   public void addPackagesToChildren(@NotNull final ArrayList<? super AbstractTreeNode<?>> children,
                                     @Nullable final Module module,

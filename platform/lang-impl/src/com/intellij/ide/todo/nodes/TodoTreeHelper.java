@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,12 +37,14 @@ public class TodoTreeHelper {
     myProject = project;
   }
 
+  @RequiresReadLock
   public void addPackagesToChildren(@NotNull ArrayList<? super AbstractTreeNode<?>> children,
                                     @Nullable Module module,
                                     @NotNull TodoTreeBuilder builder) {
     addDirsToChildren(collectContentRoots(module), children, builder);
   }
 
+  @RequiresReadLock
   protected @NotNull List<? extends VirtualFile> collectContentRoots(@Nullable Module module) {
     final List<VirtualFile> roots = new ArrayList<>();
     ContainerUtil.addAll(roots, module != null ?
@@ -50,6 +53,7 @@ public class TodoTreeHelper {
     return roots;
   }
 
+  @RequiresReadLock
   protected void addDirsToChildren(@NotNull List<? extends VirtualFile> roots,
                                    @NotNull ArrayList<? super AbstractTreeNode<?>> children,
                                    @NotNull TodoTreeBuilder builder) {
