@@ -23,6 +23,7 @@ class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.config
     task("RunClass") {
       text(JavaLessonsBundle.message("java.run.configuration.lets.run", icon(AllIcons.Actions.Execute), action(it),
                                      strong(ExecutionBundle.message("default.runner.start.action.text").dropMnemonic())))
+      timerCheck { configurations().isNotEmpty() }
       //Wait toolwindow
       checkToolWindowState("Run", true)
       test {
