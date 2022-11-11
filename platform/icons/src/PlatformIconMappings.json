@@ -617,7 +617,6 @@
       "documentation.svg": "toolwindows/documentation.svg",
       "endpoints.svg": "icons/toolWindowEndpoints.svg",
       "find.svg": "toolwindows/toolWindowFind.svg",
-      "findExternalUsages.svg": "toolwindows/toolWindowFindExternalUsages.svg",
       "gradle.svg": "icons/toolWindowGradle.svg",
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
       "messages.svg": "toolwindows/toolWindowMessages.svg",
