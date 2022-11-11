@@ -29,13 +29,13 @@ import java.util.Objects;
 /**
  * Widget to display basic hg status in the status bar.
  */
-public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
+final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   private static final @NonNls String ID = "hg";
 
   private final @NotNull HgVcs myVcs;
   private final @NotNull HgProjectSettings myProjectSettings;
 
-  public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
+  HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
     super(project, vcs.getShortName());
     myVcs = vcs;
     myProjectSettings = projectSettings;
@@ -70,7 +70,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
+  protected @NotNull JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
     return HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent())).asListPopup();
   }
 
@@ -79,10 +79,10 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     myProjectSettings.setRecentRootPath(path);
   }
 
-  public static class Listener implements VcsRepositoryMappingListener {
+  static final class Listener implements VcsRepositoryMappingListener {
     private final Project myProject;
 
-    public Listener(@NotNull Project project) {
+    Listener(@NotNull Project project) {
       myProject = project;
     }
 

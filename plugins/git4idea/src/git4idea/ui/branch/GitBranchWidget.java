@@ -128,7 +128,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-      return (isEnabledByDefault() || ExperimentalUI.isNewUI()) && !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
+      return (ExperimentalUI.isNewUI() || isEnabledByDefault()) && !GitRepositoryManager.getInstance(project).getRepositories().isEmpty();
     }
 
     @Override
@@ -138,8 +138,13 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isEnabledByDefault() {
-      return !ExperimentalUI.isNewUI() && // Disabled by default in ExperimentalUI per designers request.
-             (!ToolbarSettings.getInstance().isVisible() || !ToolbarSettings.getInstance().isAvailable());
+      // disabled by default in ExperimentalUI per designers request
+      if (ExperimentalUI.isNewUI()) {
+        return false;
+      }
+
+      ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
+      return !toolbarSettings.isVisible() || !toolbarSettings.isAvailable();
     }
 
     @Override
