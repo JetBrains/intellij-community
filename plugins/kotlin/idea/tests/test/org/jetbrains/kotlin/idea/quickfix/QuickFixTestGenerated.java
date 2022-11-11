@@ -5234,6 +5234,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/insideIfCondition.kt");
                     }
 
+                    @TestMetadata("insideIfConditionWithNegation.kt")
+                    public void testInsideIfConditionWithNegation() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/insideIfConditionWithNegation.kt");
+                    }
+
                     @TestMetadata("kt10983.kt")
                     public void testKt10983() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/kt10983.kt");

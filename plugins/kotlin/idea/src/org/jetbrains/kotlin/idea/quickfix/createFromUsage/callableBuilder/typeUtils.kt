@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
 import org.jetbrains.kotlin.idea.util.withoutRedundantAnnotations
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -247,6 +248,9 @@ fun KtExpression.guessTypes(
             }
             val lambdaTypes = functionalExpression.guessTypes(context, module, pseudocode?.parent, coerceUnusedToUnit)
             lambdaTypes.mapNotNull { it.getFunctionType()?.arguments?.lastOrNull()?.type }.toTypedArray()
+        }
+        parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> {
+            parent.guessTypes(context, module, pseudocode, coerceUnusedToUnit)
         }
         else -> {
             pseudocode?.getElementValue(this)?.let {
