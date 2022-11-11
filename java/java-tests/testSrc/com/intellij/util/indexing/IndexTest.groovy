@@ -823,7 +823,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
 
     assertTrue(foundId[0])
-    assertTrue(!foundStub[0])
+    assertTrue(foundStub[0])
   }
 
   void testNullProjectScope() throws Throwable {
