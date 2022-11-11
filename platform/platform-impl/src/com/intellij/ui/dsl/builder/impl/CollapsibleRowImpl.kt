@@ -5,11 +5,18 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.UiSwitcher
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.Expandable
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
+import java.awt.event.ActionEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import javax.swing.AbstractAction
+import javax.swing.JComponent
+import javax.swing.KeyStroke
 import javax.swing.border.EmptyBorder
 
 @ApiStatus.Internal
@@ -21,11 +28,13 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
   RowImpl(dialogPanelConfig, panelContext, parent, RowLayout.INDEPENDENT), CollapsibleRow {
 
   private val collapsibleTitledSeparator = CollapsibleTitledSeparatorImpl(title)
+  private var registeredKeyStroke: KeyStroke? = null
 
   override var expanded by collapsibleTitledSeparator::expanded
 
   override fun setTitle(title: String) {
     collapsibleTitledSeparator.text = title
+    updateMnemonicRegistration()
   }
 
   override fun setTitleFont(font: Font) {
@@ -74,6 +83,28 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
       }
     }.align(AlignY.FILL)
     applyUiSwitcher(expandablePanel as PanelImpl, CollapsibleRowUiSwitcher(this))
+
+    collapsibleTitledSeparator.actionMap.put(ACTION_KEY, object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        expanded = !expanded
+      }
+    })
+    updateMnemonicRegistration()
+  }
+
+  private fun updateMnemonicRegistration() {
+    val inputMap = collapsibleTitledSeparator.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+    registeredKeyStroke?.let { inputMap.remove(it) }
+
+    val text = TextWithMnemonic.parse(collapsibleTitledSeparator.text)
+    val mnemonic = text.mnemonicCode
+    if (mnemonic == KeyEvent.VK_UNDEFINED) {
+      registeredKeyStroke = null
+    }
+    else {
+      registeredKeyStroke = KeyStroke.getKeyStroke(mnemonic, InputEvent.ALT_DOWN_MASK, false)
+      inputMap.put(registeredKeyStroke, ACTION_KEY)
+    }
   }
 
   private fun applyUiSwitcher(panel: PanelImpl, uiSwitcher: UiSwitcher) {
@@ -96,3 +127,5 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
     }
   }
 }
+
+private const val ACTION_KEY = "[CollapsibleRow] Collapse/Expand on mnemonic"
