@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff
 
-import com.intellij.diff.tools.simple.SimpleAlignedDiffModel.Companion.ALIGNED_CHANGE_INLAY_PRIORITY
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -44,21 +43,18 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
   fun insertAfter(lineIndex: Int, component: JComponent, priority: Int = 0): Disposable? {
     if (Disposer.isDisposed(this)) return null
 
-    // Inlays added inside diff with aligned changes mode on, should conform the following rules to not break changes aligning:
-    // 1. Inlays should be added "above" line, except the last line.
-    // 2. The priority should be greater than ALIGNED_CHANGE_INLAY_PRIORITY or less in case of last line.
+    // TODO: rework diff mode with aligned changes.
+    //  This mode uses Inlays and some comments may look bad with this mode enabled because of the positioning
     val wrappedComponent = ComponentWrapper(component)
-    val isLastLine = lineIndex == editor.document.lineCount - 1
-    val offset = editor.document.getLineEndOffset(if (isLastLine) lineIndex else lineIndex + 1)
-    val inlayPriority = if (isLastLine) ALIGNED_CHANGE_INLAY_PRIORITY + 1 + priority else ALIGNED_CHANGE_INLAY_PRIORITY - 1 - priority
+    val offset = editor.document.getLineEndOffset(lineIndex)
 
     return EditorEmbeddedComponentManager.getInstance()
       .addComponent(editor, wrappedComponent,
                     EditorEmbeddedComponentManager.Properties(EditorEmbeddedComponentManager.ResizePolicy.none(),
                                                               null,
-                                                              isLastLine,
-                                                              !isLastLine,
-                                                              inlayPriority,
+                                                              false,
+                                                              false,
+                                                              priority,
                                                               offset))?.also {
         managedInlays[wrappedComponent] = it
         Disposer.register(it, Disposable { managedInlays.remove(wrappedComponent) })
