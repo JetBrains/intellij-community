@@ -66,6 +66,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.yaml.snakeyaml.parser.ParserException;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
@@ -743,8 +744,15 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
 
     if (profilePath != null && !profilePath.isEmpty()) {
-      if (YamlInspectionProfileImpl.isYamlFile(profilePath)){
-        return YamlInspectionProfileImpl.loadFrom(project, profilePath).buildEffectiveProfile();
+      if (YamlInspectionProfileImpl.isYamlFile(profilePath)) {
+        try {
+          return YamlInspectionProfileImpl.loadFrom(project, profilePath).buildEffectiveProfile();
+        }
+        catch (ParserException e) {
+          // snakeyaml doesn't provide any information about where the YAML stream comes from,
+          // its StreamReader constructor hardcodes the name to "'reader'".
+          throw new InspectionApplicationException("Parse error in " + profilePath + ": " + e);
+        }
       }
       InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
       if (inspectionProfile == null) {

@@ -2,7 +2,8 @@
 package com.intellij.codeInspection;
 
 /** Terminates the process with the given message, without a stack trace. */
-public class InspectionApplicationException extends Exception {
+public class InspectionApplicationException extends RuntimeException {
+  /** Terminates the process with the given message, without a stack trace. */
   public InspectionApplicationException(String message) {
     super(message);
   }
