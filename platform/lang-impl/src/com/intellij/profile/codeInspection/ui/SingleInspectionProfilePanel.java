@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
@@ -471,6 +472,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myProfile.resetToEmpty(getProject());
         loadDescriptorsConfigs(false);
@@ -598,7 +603,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    new TreeSpeedSearch(tree, o -> {
+    new TreeSpeedSearch(tree, false, o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
       return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
     });
@@ -736,13 +741,15 @@ public class SingleInspectionProfilePanel extends JPanel {
           // need this in order to correctly load plugin-supplied descriptions
           final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
           final String description = defaultDescriptor.loadDescription(); //NON-NLS
+          final InspectionProfileEntry tool = defaultDescriptor.getToolWrapper().getTool();
           try {
             if (description == null) throw new NullPointerException();
-            DescriptionEditorPaneKt.readHTML(myDescription, SearchUtil.markup(description, myProfileFilter.getFilter()));
+            String markedDescription = SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(description, tool.getClass().getClassLoader()), myProfileFilter.getFilter());
+            DescriptionEditorPaneKt.readHTML(myDescription, markedDescription);
           }
           catch (Throwable t) {
             LOG.error("Failed to load description for: " +
-                      defaultDescriptor.getToolWrapper().getTool().getClass() +
+                      tool.getClass() +
                       "; description: " +
                       description, t);
           }
@@ -953,6 +960,11 @@ public class SingleInspectionProfilePanel extends JPanel {
                 tableSettings.onScopesOrderChanged();
               }
             }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
+            }
           });
         severityPanel = wrappedTable.createPanel();
         final Dimension panelSize = new Dimension(getMinimumSize().width, 81);
@@ -1077,7 +1089,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             if (context != null) {
               Settings settings = Settings.KEY.getData(context);
               SearchTextField searchTextField = SearchTextField.KEY.getData(context);
-              String configId = url.getHost();
+              String configId = url.getAuthority(); //using `getAuthority` instead of `getHost` to support white spaces in configId
               String search = url.getQuery();
               if (settings != null) {
                 Configurable configurable = settings.find(configId);

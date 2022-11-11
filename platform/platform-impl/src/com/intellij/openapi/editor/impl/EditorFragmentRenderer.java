@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -283,7 +283,7 @@ final class EditorFragmentRenderer {
         GraphicsUtil.setupAAPainting(g2);
         g2.setClip(new RoundRectangle2D.Double(0, 0, size.width - .5, size.height - .5, 2, 2));
         UIUtil.drawImage(g2, myCacheLevel1, 0, 0, this);
-        if (StartupUiUtil.isUnderDarcula()) {
+        if (StartupUiUtil.isUnderDarcula() && !ExperimentalUI.isNewUI()) {
           //Add glass effect
           Shape s = new Rectangle(0, 0, size.width, size.height);
           double cx = size.width / 2.0;

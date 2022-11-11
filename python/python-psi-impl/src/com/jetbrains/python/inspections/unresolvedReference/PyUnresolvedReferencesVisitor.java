@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyCustomType;
@@ -300,7 +301,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(expr)) {
           return;
         }
-        ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(expr, refText));
+        ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(refText));
         ContainerUtil.addAll(fixes, getAddSelfFixes(myTypeEvalContext, node, expr));
         ContainerUtil.addIfNotNull(fixes, getCreateFunctionQuickFix(expr));
         ContainerUtil.addIfNotNull(fixes, getAddParameterQuickFix(refName, expr));
@@ -940,18 +941,18 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return null;
   }
 
-  LocalQuickFix getCreateFunctionQuickFix(PyReferenceExpression expr) {
+  @Nullable LocalQuickFix getCreateFunctionQuickFix(@NotNull PyReferenceExpression expr) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(expr);
     if (callExpression != null && (!(callExpression.getCallee() instanceof PyQualifiedExpression) ||
                                    ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
-      return new UnresolvedRefCreateFunctionQuickFix(callExpression, expr);
+      return new UnresolvedRefCreateFunctionQuickFix(expr);
     }
     return null;
   }
 
-  LocalQuickFix getTrueFalseQuickFix(PyReferenceExpression expr, String refText) {
+  @Nullable LocalQuickFix getTrueFalseQuickFix(@NotNull String refText) {
     if (refText.equals("true") || refText.equals("false")) {
-      return new UnresolvedRefTrueFalseQuickFix(expr);
+      return new UnresolvedRefTrueFalseQuickFix(refText);
     }
     return null;
   }
@@ -1036,27 +1037,30 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return Collections.emptyList();
   }
 
-  LocalQuickFix getCreateClassFix(@NonNls String refText, PsiElement element) {
+  @Nullable LocalQuickFix getCreateClassFix(@NonNls String refText, PsiElement element) {
     if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !StringUtil.toUpperCase(refText).equals(refText)) {
-      PsiElement anchor = element;
       if (element instanceof PyQualifiedExpression) {
         PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
         if (qualifier == null) {
           final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);
           if (fromImport != null) qualifier = fromImport.getImportSource();
         }
+        PsiFile destination = null;
         if (qualifier != null) {
           final PyType type = myTypeEvalContext.getType(qualifier);
           if (type instanceof PyModuleType) {
-            anchor = ((PyModuleType)type).getModule();
+            destination = ((PyModuleType)type).getModule();
           }
           else {
-            anchor = null;
+            return null;
           }
         }
-        if (anchor != null) {
-          return new CreateClassQuickFix(refText, anchor);
+        if (destination == null) {
+          InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
+          PsiLanguageInjectionHost injectionHost = injectionManager.getInjectionHost(element);
+          destination = ObjectUtils.chooseNotNull(injectionHost, element).getContainingFile();
         }
+        return new CreateClassQuickFix(refText, destination);
       }
     }
     return null;

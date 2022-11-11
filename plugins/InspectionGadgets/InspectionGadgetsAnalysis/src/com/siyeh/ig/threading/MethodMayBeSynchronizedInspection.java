@@ -70,7 +70,7 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
   private static class MethodMayBeSynchronizedVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiElement parent = statement.getParent();
       if (!(parent instanceof PsiCodeBlock)) {

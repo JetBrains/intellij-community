@@ -56,11 +56,16 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     get() = getCasePreview()
 
   override val previewLanguage: Language?
-    get() = Language.findLanguageByID("JAVA")
+    get() =
+      CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.asSequence()
+        .filter { it.modelId == id }
+        .map { Language.findLanguageByID(it.language) }
+        .firstOrNull()
+      ?: Language.findLanguageByID("JAVA")
 
   override fun isModified(): Boolean {
     return (isEnabled != (settings.isProviderEnabled(id) && settings.codeVisionEnabled)
-            || positionComboBox.item != (settings.getPositionForGroup(id) ?: settings.defaultPosition))
+            || positionComboBox.item != (settings.getPositionForGroup(id) ?: CodeVisionAnchorKind.Default))
   }
 
   override fun apply() {

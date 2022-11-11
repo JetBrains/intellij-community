@@ -26,8 +26,7 @@ class RegistrationIndexer {
     myPlugin = plugin;
   }
 
-  @NotNull
-  Map<String, List<RegistrationEntry>> indexFile() {
+  @NotNull Map<String, List<RegistrationEntry>> indexFile() {
     process(myPlugin);
 
     return myValueMap;
@@ -71,8 +70,8 @@ class RegistrationIndexer {
     );
   }
 
-  private void processListeners(RegistrationEntry.RegistrationType listenerType,
-                                List<Listeners> listenerContainer) {
+  private void processListeners(@NotNull RegistrationEntry.RegistrationType listenerType,
+                                @NotNull List<? extends Listeners> listenerContainer) {
     processElements(listenerType,
                     listenerContainer,
                     Listeners::getListeners,

@@ -146,6 +146,12 @@ public class InjectedCaret implements Caret {
   }
 
   @Override
+  public @NotNull TextRange getSelectionRange() {
+    TextRange range = myDelegate.getSelectionRange();
+    return TextRange.create(myEditorWindow.getDocument().hostToInjected(range.getStartOffset()), myEditorWindow.getDocument().hostToInjected(range.getEndOffset()));
+  }
+
+  @Override
   public void setSelection(int startOffset, int endOffset) {
     TextRange hostRange = myEditorWindow.getDocument().injectedToHost(new ProperTextRange(startOffset, endOffset));
     myDelegate.setSelection(hostRange.getStartOffset(), hostRange.getEndOffset());

@@ -27,7 +27,7 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public boolean hasSelection() {
-    return false;
+    return myEnd > myStart;
   }
 
   @NotNull
@@ -68,6 +68,13 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void moveCaretRelatively(int columnShift, int lineShift, boolean withSelection, boolean scrollToCaret) {
+    if (lineShift == 0) {
+      myEnd += columnShift;
+      if (!withSelection) {
+        myStart = myEnd;
+      }
+      return;
+    }
     throw notImplemented();
   }
 
@@ -138,9 +145,14 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void setSelection(int startOffset, int endOffset) {
-    if (startOffset < 0 || startOffset > endOffset) throw new IllegalArgumentException();
-    myStart = startOffset;
-    myEnd = endOffset;
+    if (startOffset < 0) throw new IllegalArgumentException();
+    if (startOffset > endOffset) {
+      myStart = endOffset;
+      myEnd = startOffset;
+    } else {
+      myStart = startOffset;
+      myEnd = endOffset;
+    }
   }
 
   @Override

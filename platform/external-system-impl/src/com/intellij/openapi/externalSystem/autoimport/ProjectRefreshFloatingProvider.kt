@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
+import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.DisposableWrapperList
 
@@ -14,6 +15,10 @@ internal class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(
   override val autoHideable = false
 
   private val toolbarComponents = DisposableWrapperList<Pair<Project, FloatingToolbarComponent>>()
+
+  override fun isApplicable(dataContext: DataContext): Boolean {
+    return isInsideMainEditor(dataContext)
+  }
 
   private fun updateToolbarComponents(project: Project) {
     forEachToolbarComponent(project) {

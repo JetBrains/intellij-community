@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.WaitFor;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -79,14 +80,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     FileUtil.copyDir(artifactDir, localRepo);
     assertTrue(localIndex.getArtifactIds("junit").isEmpty());
     File artifactFile = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit/junit/4.0/junit-4.0.pom");
-    MavenIndicesManager.getInstance(myProject).addArtifactIndexAsync(null, artifactFile);
-    new WaitFor(5000) {
-      @Override
-      protected boolean condition() {
-        return !localIndex.getArtifactIds("junit").isEmpty();
-      }
-    };
-
+    PlatformTestUtil.waitForPromise(MavenIndicesManager.getInstance(myProject).addArtifactIndexAsync(null, artifactFile));
     Set<String> versions = localIndex.getVersions("junit", "junit");
     assertFalse(versions.isEmpty());
     assertTrue(versions.contains("4.0"));

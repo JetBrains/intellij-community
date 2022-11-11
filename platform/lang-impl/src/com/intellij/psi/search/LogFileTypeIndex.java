@@ -2,12 +2,11 @@
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -18,6 +17,7 @@ import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.storage.AbstractIntLog;
 import com.intellij.util.indexing.impl.storage.IntLog;
+import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.StorageLockContext;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -41,21 +41,23 @@ import java.util.function.IntConsumer;
  * Implementation of {@link FileTypeIndexImpl} based on plain change log.
  * Does not support indexing unsaved changes (content-less indexes don't require them).
  */
-public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, Void>, FileTypeNameEnumerator {
+public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, Void>, FileTypeNameEnumerator,
+                                               MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
-
-  private final @NotNull Disposable myDisposable;
 
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
   private final @NotNull SimpleStringPersistentEnumerator myFileTypeEnumerator;
-  private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-  private final @NotNull ConcurrentIntObjectMap<Ref<String>> myId2FileNameCache = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final @NotNull ConcurrentIntObjectMap<Ref<String>> myId2FileNameCache =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private final @NotNull FileBasedIndexExtension<FileType, Void> myExtension;
   private final @NotNull ReadWriteLock myLock = new ReentrantReadWriteLock();
 
   private final @NotNull AtomicBoolean myInMemoryMode = new AtomicBoolean();
   private final @NotNull ID<FileType, Void> myIndexId;
 
+  private final @NotNull FileTypeIndex.IndexChangeListener myIndexChangedPublisher;
   private final @NotNull MemorySnapshot mySnapshot;
 
   public LogFileTypeIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException, StorageException {
@@ -65,15 +67,19 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     myPersistentLog = new LogBasedIntIntIndex(new IntLog(storageFile.resolveSibling(storageFile.getFileName().toString() + ".log.index"),
                                                          true,
                                                          new StorageLockContext(false, true)));
-    myFileTypeEnumerator = new SimpleStringPersistentEnumerator(IndexInfrastructure.getStorageFile(myIndexId).resolveSibling("fileType.enum"));
+    myFileTypeEnumerator =
+      new SimpleStringPersistentEnumerator(IndexInfrastructure.getStorageFile(myIndexId).resolveSibling("fileType.enum"));
 
     if (myExtension.dependsOnFileContent()) {
       throw new IllegalArgumentException(myExtension.getName() + " should not depend on content");
     }
 
-    myDisposable = Disposer.newDisposable();
+    myIndexChangedPublisher =
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(FileTypeIndex.INDEX_CHANGE_TOPIC);
 
-    mySnapshot = loadIndexToMemory(myPersistentLog);
+    mySnapshot = loadIndexToMemory(myPersistentLog, id -> {
+      myIndexChangedPublisher.changedForFileType(getFileTypeById(id));
+    });
   }
 
   @Override
@@ -141,7 +147,8 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       return indexedFileTypeId == actualFileTypeId
              ? FileIndexingState.UP_TO_DATE
              : FileIndexingState.OUT_DATED;
-    } catch (StorageException e) {
+    }
+    catch (StorageException e) {
       LOG.error(e);
       return FileIndexingState.OUT_DATED;
     }
@@ -287,13 +294,17 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
 
   @Override
   public void dispose() {
-    Disposer.dispose(myDisposable);
     try {
       myPersistentLog.close();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public int keysCountApproximately() {
+    return myFileTypeEnumerator.getSize();
   }
 
   @Override
@@ -353,10 +364,14 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   private static class MemorySnapshot implements IntIntIndex {
     private final @NotNull Int2ObjectMap<BitSet> myInvertedIndex;
     private final @NotNull IntList myForwardIndex;
+    private final @NotNull IntConsumer myInvertedIndexChangeCallback;
 
-    private MemorySnapshot(@NotNull Int2ObjectMap<BitSet> invertedIndex, @NotNull IntList forwardIndex) {
+    private MemorySnapshot(@NotNull Int2ObjectMap<BitSet> invertedIndex,
+                           @NotNull IntList forwardIndex,
+                           @NotNull IntConsumer invertedIndexChangeCallback) {
       myInvertedIndex = invertedIndex;
       myForwardIndex = forwardIndex;
+      myInvertedIndexChangeCallback = invertedIndexChangeCallback;
     }
 
     @Override
@@ -371,7 +386,19 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       if (data != 0) {
         myInvertedIndex.computeIfAbsent(data, __ -> new BitSet()).set(inputId);
       }
+      notifyInvertedIndexChanged(data, indexedData);
       return updated;
+    }
+
+    private void notifyInvertedIndexChanged(int newData, int oldData) {
+      if (oldData != newData) {
+        if (oldData != 0) {
+          myInvertedIndexChangeCallback.accept(oldData);
+        }
+        if (newData != 0) {
+          myInvertedIndexChangeCallback.accept(newData);
+        }
+      }
     }
 
     public synchronized @NotNull IntSeq getFileIds(int data) {
@@ -396,7 +423,8 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     }
   }
 
-  private static @NotNull MemorySnapshot loadIndexToMemory(@NotNull LogBasedIntIntIndex intLogIndex) throws StorageException {
+  private static @NotNull MemorySnapshot loadIndexToMemory(@NotNull LogBasedIntIntIndex intLogIndex,
+                                                           @NotNull IntConsumer invertedIndexChangeCallback) throws StorageException {
     Int2ObjectMap<BitSet> invertedIndex = new Int2ObjectOpenHashMap<>();
     IntList forwardIndex = new IntArrayList();
     intLogIndex.processEntries((data, inputId) -> {
@@ -413,7 +441,10 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       }
       return true;
     });
-    return new MemorySnapshot(invertedIndex, forwardIndex);
+    invertedIndex.forEach((id, __) -> {
+      invertedIndexChangeCallback.accept(id);
+    });
+    return new MemorySnapshot(invertedIndex, forwardIndex, invertedIndexChangeCallback);
   }
 
   private static boolean setForwardIndexData(@NotNull IntList forwardIndex, int data, int inputId) {
@@ -431,7 +462,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     class FromBitSet implements IntSeq {
       private final BitSet myBitSet;
 
-      private FromBitSet(@NotNull BitSet set) {myBitSet = set;}
+      private FromBitSet(@NotNull BitSet set) { myBitSet = set; }
 
       @Override
       public void forEach(@NotNull IntConsumer consumer) {

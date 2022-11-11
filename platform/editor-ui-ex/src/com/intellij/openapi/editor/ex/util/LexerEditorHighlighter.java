@@ -139,7 +139,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       }
 
       int latestValidOffset = mySegments.getLastValidOffset();
-      return new HighlighterIteratorImpl(Math.min(startOffset, latestValidOffset));
+      return new HighlighterIteratorImpl(Math.max(0, Math.min(startOffset, latestValidOffset)));
     }
   }
 

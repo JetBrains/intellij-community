@@ -2,6 +2,9 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -12,18 +15,47 @@ public class DaemonTooltipsUtil {
   @NotNull
   public static String getWrappedTooltip(String message,
                                          String shortName,
+                                         boolean showToolDescription) {
+    return getWrappedTooltip(message, shortName, getShortcutText(), showToolDescription);
+  }
+
+  @NlsSafe
+  @NotNull
+  public static String getWrappedTooltip(String message,
+                                         String shortName,
                                          String shortcutText,
                                          boolean showToolDescription) {
+    return getWrappedTooltipWithCustomReference(message, "#inspection/" + shortName, shortcutText, showToolDescription);
+  }
+
+  @NlsSafe
+  @NotNull
+  public static String getWrappedTooltipWithCustomReference(String message, String reference, boolean showToolDescription) {
+    return getWrappedTooltipWithCustomReference(message, reference, getShortcutText(), showToolDescription);
+  }
+
+  @NlsSafe
+  @NotNull
+  public static String getWrappedTooltipWithCustomReference(String message, String reference, String shortcutText,
+                                                            boolean showToolDescription) {
     String link = "";
     if (showToolDescription) {
-      //noinspection HardCodedStringLiteral
       link = " <a "
-             + "href=\"#inspection/" + shortName + "\""
+             + "href=\"" + reference + "\""
              + (StartupUiUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
              + ">" + DaemonBundle.message("inspection.extended.description")
              + "</a> " + shortcutText;
     }
     return XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message)
                                                                   : XmlStringUtil.escapeString(message)) + link);
+  }
+
+  @NotNull
+  public static String getShortcutText() {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager == null) {
+      return "";
+    }
+    return "(" + KeymapUtil.getShortcutsText(keymapManager.getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)) + ")";
   }
 }

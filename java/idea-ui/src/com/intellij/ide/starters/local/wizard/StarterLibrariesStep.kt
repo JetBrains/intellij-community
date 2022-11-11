@@ -14,8 +14,10 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
-import com.intellij.util.containers.Convertor
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -154,13 +156,13 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
       }
     }
 
-    TreeSpeedSearch(librariesList, Convertor { treePath: TreePath ->
+    TreeSpeedSearch(librariesList, false) { treePath: TreePath ->
       when (val dataObject = (treePath.lastPathComponent as DefaultMutableTreeNode).userObject) {
         is LibraryCategory -> dataObject.title
         is Library -> dataObject.title
         else -> ""
       }
-    })
+    }
 
     librariesList.selectionModel.addTreeSelectionListener(TreeSelectionListener { e ->
       val path = e.path
@@ -178,13 +180,9 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
 
     return panel {
       if (starterContext.starterPack.starters.size > 1) {
-        row {
-          cell(isFullWidth = true) {
-            label(messages?.frameworkVersionLabel ?: JavaStartersBundle.message("title.project.version.label"))
-
-            component(startersComboBox)
-          }
-        }.largeGapAfter()
+        row(messages?.frameworkVersionLabel ?: JavaStartersBundle.message("title.project.version.label")) {
+          cell(startersComboBox)
+        }.bottomGap(BottomGap.SMALL)
       }
 
       row {
@@ -192,7 +190,7 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
       }
 
       row {
-        component(JPanel(GridBagLayout()).apply {
+        cell(JPanel(GridBagLayout()).apply {
           add(ScrollPaneFactory.createScrollPane(librariesList).apply {
             preferredSize = Dimension(0, 0)
           }, gridConstraint(0, 0))
@@ -214,8 +212,9 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
               addToCenter(selectedLibrariesPanel)
             }, gridConstraint(0, 1))
           }, gridConstraint(1, 0))
-        }).constraints(push, grow)
-      }
+        }).horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+      }.resizableRow()
     }.withVisualPadding()
   }
 

@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.diagnostic.debug
+import com.intellij.diagnostic.runActivity
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
@@ -20,77 +22,69 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-internal class ModuleBridgeLoaderService(private val project: Project) {
-  private var storeToEntitySources: Pair<EntityStorage, List<EntitySource>>? = null
-  private var activity: Activity? = null
-
-  init {
-    if (!project.isDefault) {
-      val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
-      val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-      if (projectModelSynchronizer != null) {
-        if (workspaceModel.loadedFromCache && projectModelSynchronizer.hasNoSerializedJpsModules()) {
-          LOG.warn("Loaded from cache, but no serialized modules found. Workspace model cache will be ignored, project structure will be recreated.")
-          workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
-          project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
-        }
-        if (!workspaceModel.loadedFromCache) {
-          LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
-          activity = StartUpMeasurer.startActivity("modules loading without cache", ActivityCategory.DEFAULT)
-          storeToEntitySources = projectModelSynchronizer.loadProjectToEmptyStorage(project)
-        }
-        else {
-          activity = StartUpMeasurer.startActivity("modules loading with cache", ActivityCategory.DEFAULT)
-          loadModules()
-        }
-      }
-    }
-  }
-
-  private fun loadModules() {
-    val childActivity = activity?.startChild("modules instantiation")
-    val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
-    val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
-    moduleManager.loadModules(entities)
-    childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
-    childActivity?.end()
-    val librariesActivity = StartUpMeasurer.startActivity("libraries instantiation", ActivityCategory.DEFAULT)
-    (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
-    librariesActivity.end()
-    activity?.end()
-    activity = null
-  }
-
-  class ModuleBridgeProjectServiceInitializedListener : ProjectServiceContainerInitializedListener {
-    override fun serviceCreated(project: Project) {
-      LOG.debug { "Project component initialized" }
-      if (project.isDefault) return
-      val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
-      if (!workspaceModel.loadedFromCache) {
-        val moduleLoaderService = project.getService(ModuleBridgeLoaderService::class.java)
-        val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-        if (projectModelSynchronizer == null) return
-        projectModelSynchronizer.applyLoadedStorage(moduleLoaderService.storeToEntitySources)
-        project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
-        moduleLoaderService.storeToEntitySources = null
-        moduleLoaderService.loadModules()
-      }
-      WriteAction.runAndWait<RuntimeException> {
-        (ProjectRootManager.getInstance(project) as ProjectRootManagerBridge).setupTrackedLibrariesAndJdks()
-      }
-      WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
-    }
-
-    companion object {
-      private val LOG = logger<ModuleBridgeProjectServiceInitializedListener>()
-    }
-  }
-
+private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedListener {
   companion object {
     private val LOG = logger<ModuleBridgeLoaderService>()
+  }
+
+  private suspend fun loadModules(project: Project, activity: Activity?, loadedFromCache: Boolean) {
+    val componentManager = project as ComponentManagerEx
+
+    val childActivity = activity?.startChild("modules instantiation")
+    // ModuleManagerComponentBridge calls WorkspaceModel in init - getting entityStorage
+    componentManager.getServiceAsync(WorkspaceModel::class.java).await()
+
+    val moduleManager = componentManager.getServiceAsync(ModuleManager::class.java).await() as ModuleManagerComponentBridge
+    val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
+    moduleManager.loadModules(entities, loadedFromCache)
+    childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
+    childActivity?.end()
+
+    runActivity("libraries instantiation") {
+      (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
+    }
+    activity?.end()
+  }
+
+  override suspend fun execute(project: Project) {
+    val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
+    val componentManagerEx = project as ComponentManagerEx
+    val workspaceModel = componentManagerEx.getServiceAsync(WorkspaceModel::class.java).await() as WorkspaceModelImpl
+    if (workspaceModel.loadedFromCache) {
+      val activity = StartUpMeasurer.startActivity("modules loading with cache")
+      if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
+        LOG.warn("Loaded from cache, but no serialized modules found. " +
+                 "Workspace model cache will be ignored, project structure will be recreated.")
+        workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
+        project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
+      }
+      loadModules(project, activity, workspaceModel.loadedFromCache)
+    }
+    else {
+      LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
+      val activity = StartUpMeasurer.startActivity("modules loading without cache")
+      val storeToEntitySources = projectModelSynchronizer.loadProjectToEmptyStorage(project)
+
+      projectModelSynchronizer.applyLoadedStorage(storeToEntitySources)
+      project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
+      loadModules(project, activity, workspaceModel.loadedFromCache)
+    }
+
+    runActivity("tracked libraries setup") {
+      // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
+      val jdkTableDeferred = (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsync(ProjectJdkTable::class.java)
+      val projectRootManager = componentManagerEx.getServiceAsync(ProjectRootManager::class.java).await() as ProjectRootManagerBridge
+      jdkTableDeferred.join()
+      withContext(Dispatchers.EDT) {
+        ApplicationManager.getApplication().runWriteAction {
+          projectRootManager.setupTrackedLibrariesAndJdks()
+        }
+      }
+    }
+    WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
   }
 }

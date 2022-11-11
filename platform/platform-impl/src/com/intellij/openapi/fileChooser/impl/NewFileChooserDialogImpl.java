@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +21,7 @@ import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
+import com.intellij.util.UriUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -151,7 +151,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     try {
       var store = path.getFileSystem().getFileStores().iterator().next();
       if (ZIP_FS_TYPE.equals(store.type())) {
-        var localPath = StringUtil.trimTrailing(store.name(), '/');
+        var localPath = UriUtil.trimTrailingSlashes(store.name());
         var localFile = toVirtualFile(Path.of(localPath));
         if (localFile != null) {
           return myJarFs.get().refreshAndFindFileByPath(localFile.getPath() + '!' + path);

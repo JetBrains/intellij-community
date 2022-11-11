@@ -18,8 +18,11 @@ interface PossibleSourceTypesTestBase {
     val sources = mutableSetOf<PsiElement>()
     accept(object : PsiRecursiveElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        if (psiPredicate(element))
-          element.toUElementOfExpectedTypes(*uastTypes)?.let { sources += element }
+        if (psiPredicate(element)) {
+          element.toUElementOfExpectedTypes(*uastTypes)?.let {
+            sources += element
+          }
+        }
         super.visitElement(element)
       }
     })
@@ -37,17 +40,17 @@ interface PossibleSourceTypesTestBase {
   }
 
   fun checkConsistencyWithRequiredTypes(psiFile: PsiFile, vararg uastTypes: Class<out UElement>) {
-    val byPlain = psiFile.getPsiSourcesByPlainVisitor(uastTypes = *uastTypes)
-    val byLanguageAware = psiFile.getPsiSourcesByLanguageAwareVisitor(uastTypes = *uastTypes)
-    val byLanguageUnaware = psiFile.getPsiSourcesByLanguageUnawareVisitor(uastTypes = *uastTypes)
+    val byPlain = psiFile.getPsiSourcesByPlainVisitor(uastTypes = uastTypes)
+    val byLanguageAware = psiFile.getPsiSourcesByLanguageAwareVisitor(uastTypes = uastTypes)
+    val byLanguageUnaware = psiFile.getPsiSourcesByLanguageUnawareVisitor(uastTypes = uastTypes)
 
     Assert.assertEquals(
-      "Filtering PSI elements with getPossiblePsiSourceTypes should not lost or add any conversions",
+      "Filtering PSI elements with getPossiblePsiSourceTypes(${listOf(*uastTypes)}) should not lost or add any conversions",
       byPlain,
       byLanguageUnaware)
 
     Assert.assertEquals(
-      "UastFacade implementation should be in sync with language UastLanguagePlugin's one",
+      "UastFacade implementation(${listOf(*uastTypes)}) should be in sync with language UastLanguagePlugin's one",
       byLanguageAware,
       byLanguageUnaware)
   }

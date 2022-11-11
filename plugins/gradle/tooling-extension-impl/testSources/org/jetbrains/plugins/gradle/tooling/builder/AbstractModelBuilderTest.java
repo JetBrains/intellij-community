@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
@@ -13,7 +13,6 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
-import gnu.trove.THash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
@@ -38,7 +37,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatriciesKt;
+import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -89,7 +88,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-  public static Collection<Object[]> data() {
+  public static Collection<String[]> data() {
     return Arrays.asList(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS);
   }
 
@@ -170,8 +169,8 @@ public abstract class AbstractModelBuilderTest {
 
   public static void assumeGradleCompatibleWithJava(@NotNull String gradleVersion) {
     assumeTrue("Gradle version [" + gradleVersion + "] is incompatible with Java version [" + JavaVersion.current() + "]",
-               GradleJvmSupportMatriciesKt.isSupported(GradleVersion.version(gradleVersion),
-                                                       JavaVersion.current()));
+               GradleJvmSupportMatrices.isSupported(GradleVersion.version(gradleVersion),
+                                                      JavaVersion.current()));
 
     if (GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0) {
       assumeThat(JavaVersion.current().feature, new CustomMatcher<Integer>("Java version older than 9") {
@@ -194,8 +193,6 @@ public abstract class AbstractModelBuilderTest {
       Init.class,
       Multimap.class,
       ShortTypeHandling.class,
-      // trove4j jar
-      THash.class,
       // fastutil
       Object2ObjectMap.class,
       // ion-java jar

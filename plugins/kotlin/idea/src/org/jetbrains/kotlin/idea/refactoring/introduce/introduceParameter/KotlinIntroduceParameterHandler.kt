@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
@@ -18,15 +18,20 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.core.moveInsideParenthesesAndReplaceWith
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
@@ -174,7 +179,7 @@ fun selectNewParameterContext(
         editor = editor,
         file = file,
         title = KotlinBundle.message("title.introduce.parameter.to.declaration"),
-        elementKinds = listOf(CodeInsightUtils.ElementKind.EXPRESSION),
+        elementKinds = listOf(ElementKind.EXPRESSION),
         elementValidator = ::validateExpressionElements,
         getContainers = { _, parent ->
             val parents = parent.parents
@@ -245,14 +250,14 @@ open class KotlinIntroduceParameterHandler(
             else -> null
         }
         val bodyValidator: ((String) -> Boolean)? =
-            body?.let { NewDeclarationNameValidator(it, sequenceOf(it), NewDeclarationNameValidator.Target.VARIABLES) }
+            body?.let { Fe10KotlinNewDeclarationNameValidator(it, sequenceOf(it), KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER) }
         val nameValidator = CollectingNameValidator(targetParent.getValueParameters().mapNotNull { it.name }, bodyValidator ?: { true })
 
         val suggestedNames = SmartList<String>().apply {
             if (physicalExpression is KtProperty && !isUnitTestMode()) {
                 addIfNotNull(physicalExpression.name)
             }
-            addAll(KotlinNameSuggester.suggestNamesByType(replacementType, nameValidator, "p"))
+            addAll(Fe10KotlinNameSuggester.suggestNamesByType(replacementType, nameValidator, "p"))
         }
 
         val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent, functionDescriptor) ?: return

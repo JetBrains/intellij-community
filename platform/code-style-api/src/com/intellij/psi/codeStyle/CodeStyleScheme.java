@@ -37,13 +37,6 @@ public interface CodeStyleScheme extends Scheme {
   String getName();
 
   boolean isDefault();
-
-  default boolean isUsedForVisualFormatting() {
-    return false;
-  }
-
-  default void setUsedForVisualFormatting(boolean isUsedForVisualFormatting) { }
-
   @NotNull
   CodeStyleSettings getCodeStyleSettings();
 }

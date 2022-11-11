@@ -2,17 +2,18 @@
 package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
+import com.intellij.collaboration.auth.DefaultAccountHolder
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.ExceptionUtil
-import com.intellij.collaboration.ui.codereview.avatar.AvatarIconsProvider
-import com.intellij.collaboration.ui.codereview.avatar.CachingAvatarIconsProvider
+import com.intellij.collaboration.ui.findIndex
+import com.intellij.collaboration.ui.items
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.ModalityState
@@ -28,7 +29,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.future.asCompletableFuture
-import java.awt.Image
+import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
@@ -39,12 +40,12 @@ import kotlin.properties.Delegates.observable
 class AccountsPanelFactory<A : Account, Cred>
 private constructor(disposable: Disposable,
                     private val accountManager: AccountManager<A, Cred>,
-                    private val defaultAccountHolder: PersistentDefaultAccountHolder<A>?,
+                    private val defaultAccountHolder: DefaultAccountHolder<A>?,
                     private val accountsModel: AccountsListModel<A, Cred>,
                     private val detailsLoader: AccountsDetailsLoader<A, *>) {
 
   constructor(accountManager: AccountManager<A, Cred>,
-              defaultAccountHolder: PersistentDefaultAccountHolder<A>,
+              defaultAccountHolder: DefaultAccountHolder<A>,
               accountsModel: AccountsListModel.WithDefault<A, Cred>,
               detailsLoader: AccountsDetailsLoader<A, *>,
               disposable: Disposable) : this(disposable, accountManager, defaultAccountHolder, accountsModel, detailsLoader)
@@ -55,11 +56,11 @@ private constructor(disposable: Disposable,
               disposable: Disposable) : this(disposable, accountManager, null, accountsModel, detailsLoader)
 
   init {
-    accountManager.addListener(disposable, object : AccountsListener<A> {
-      override fun onAccountCredentialsChanged(account: A) {
+    DisposingMainScope(disposable).launch {
+      accountManager.accountsState.collect {
         if (!isModified()) reset()
       }
-    })
+    }
   }
 
   fun accountsPanelCell(row: Row, needAddBtnWithDropdown: Boolean, defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
@@ -164,6 +165,8 @@ private constructor(disposable: Disposable,
         override fun updateButton(e: AnActionEvent) {
           isEnabled = isEnabled && accountsModel.defaultAccount != accountsList.selectedValue
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.EDT
       })
     }
 
@@ -191,6 +194,8 @@ private constructor(disposable: Disposable,
       }
 
       private fun loadDetails(startIdx: Int, endIdx: Int) {
+        if (startIdx < 0 || endIdx < 0) return
+
         for (i in startIdx..endIdx) {
           val account = listModel.getElementAt(i)
           resultsMap[account]?.cancel(true)
@@ -213,42 +218,3 @@ private constructor(disposable: Disposable,
     })
   }
 }
-
-private class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader: AccountsDetailsLoader<A, *>,
-                                                      private val defaultAvatarIcon: Icon,
-                                                      private val avatarUrlSupplier: (A) -> String?)
-  : AvatarIconsProvider<A> {
-
-  private val cachingDelegate = object : CachingAvatarIconsProvider<Pair<A, String>>(defaultAvatarIcon) {
-    override fun loadImageAsync(key: Pair<A, String>): CompletableFuture<Image?> =
-      detailsLoader.loadAvatarAsync(key.first, key.second).asCompletableFuture()
-  }
-
-
-  override fun getIcon(key: A?, iconSize: Int): Icon {
-    val account = key ?: return cachingDelegate.getIcon(null, iconSize)
-    val uri = avatarUrlSupplier(key) ?: return cachingDelegate.getIcon(null, iconSize)
-    return cachingDelegate.getIcon(account to uri, iconSize)
-  }
-}
-
-private fun <E> ListModel<E>.findIndex(item: E): Int {
-  for (i in 0 until size) {
-    if (getElementAt(i) == item) return i
-  }
-  return -1
-}
-
-private val <E> ListModel<E>.items
-  get() = Iterable {
-    object : Iterator<E> {
-      private var idx = -1
-
-      override fun hasNext(): Boolean = idx < size - 1
-
-      override fun next(): E {
-        idx++
-        return getElementAt(idx)
-      }
-    }
-  }

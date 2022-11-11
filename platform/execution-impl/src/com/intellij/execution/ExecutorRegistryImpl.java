@@ -20,6 +20,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -85,7 +86,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }, null);
   }
 
-  final static class ExecutorRegistryActionConfigurationTuner implements ActionConfigurationCustomizer {
+  static final class ExecutorRegistryActionConfigurationTuner implements ActionConfigurationCustomizer {
     @Override
     public void customize(@NotNull ActionManager manager) {
       if (Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
@@ -143,7 +144,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionManager actionManager) {
-    if (RunToolbarProcess.isAvailable()) {
+    if (ToolbarSettings.getInstance().isAvailable()) {
       RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
         if (executor instanceof ExecutorGroup) {
 
@@ -186,13 +187,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  @NonNls
-  private static String newConfigurationContextActionId(@NotNull Executor executor) {
+  private static @NonNls String newConfigurationContextActionId(@NotNull Executor executor) {
     return "newConfiguration" + executor.getContextActionId();
   }
 
   private static boolean isExecutorInMainGroup(@NotNull Executor executor) {
-    return !Registry.is("executor.actions.submenu") || executor.getId().equals(ToolWindowId.RUN) || executor.getId().equals(ToolWindowId.DEBUG);
+    String id = executor.getId();
+    return id.equals(ToolWindowId.RUN) || id.equals(ToolWindowId.DEBUG) || !Registry.is("executor.actions.submenu", true);
   }
 
   private static void registerActionInGroup(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
@@ -200,11 +201,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     ((DefaultActionGroup)actionManager.getAction(groupId)).add(action, actionManager);
   }
 
-  @NotNull
-  private static AnAction registerAction(@NotNull ActionManager actionManager,
-                                         @NotNull String actionId,
-                                         @NotNull AnAction anAction,
-                                         @NotNull Map<String, AnAction> map) {
+  private static @NotNull AnAction registerAction(@NotNull ActionManager actionManager,
+                                                  @NotNull String actionId,
+                                                  @NotNull AnAction anAction,
+                                                  @NotNull Map<String, AnAction> map) {
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
       actionManager.registerAction(actionId, anAction);
@@ -521,8 +521,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
-      if (e.getProject() == null) return null;
-      return RunManager.getInstance(e.getProject()).getSelectedConfiguration();
+      Project project = e.getProject();
+      RunManager runManager = project == null ? null : RunManager.getInstanceIfCreated(project);
+      return runManager == null ? null : runManager.getSelectedConfiguration();
     }
 
     protected void run(@NotNull Project project, @NotNull RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
@@ -789,7 +790,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (builder == null) {
           return;
         }
-        ExecutionEnvironment environment = builder.activeTarget().dataContext(dataContext).build();
+
+        RunToolbarData rtData = dataContext.getData(RunToolbarData.RUN_TOOLBAR_DATA_KEY);
+        if(rtData != null) {
+          ExecutionTarget target = rtData.getExecutionTarget();
+          builder = target == null ?  builder.activeTarget() : builder.target(target);
+        }
+        else {
+          builder = builder.activeTarget();
+        }
+
+        ExecutionEnvironment environment = builder.dataContext(dataContext).build();
         if(environmentCustomization != null) environmentCustomization.accept(environment);
         ExecutionManager.getInstance(project).restartRunProfile(environment);
       }

@@ -30,6 +30,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ja
             UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifier = P) -> PsiTypeParameter:P: P
             UTypeReferenceExpression (name = java.util.Set<Pizza.Ingredient>) -> USimpleNameReferenceExpression (identifier = Set) -> PsiClass:Set: Set
             UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> PsiClass:Ingredient: Ingredient
+            UField (name = ingredients) -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> null: null
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> USimpleNameReferenceExpression (identifier = HashSet) -> null: null
             UComment -> USimpleNameReferenceExpression (identifier = Builder) -> PsiClass:Builder: Builder
             UComment -> USimpleNameReferenceExpression (identifier = ingredients) -> PsiField:ingredients: ingredients
@@ -47,6 +48,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ja
         UAnnotation (fqName = java.lang.Override) -> USimpleNameReferenceExpression (identifier = Override) -> PsiClass:Override: Override
         UAnnotation (fqName = java.lang.Override) -> USimpleNameReferenceExpression (identifier = Override) -> PsiClass:Override: Override
         UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+            UReturnExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> PsiMethod:String: null
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
         UComment -> UQualifiedReferenceExpression -> PsiClass:Ingredient: Ingredient
         UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Pizza) -> PsiClass:Pizza: Pizza

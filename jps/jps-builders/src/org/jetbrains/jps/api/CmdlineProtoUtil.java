@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
@@ -23,7 +23,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 public final class CmdlineProtoUtil {
 
   public static CmdlineRemoteProto.Message.ControllerMessage createUpToDateCheckRequest(String project,
-                                                                                        List<? extends TargetTypeBuildScope> scopes,
+                                                                                        List<TargetTypeBuildScope> scopes,
                                                                                         Collection<String> paths,
                                                                                         final Map<String, String> userData,
                                                                                         final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
@@ -34,7 +34,7 @@ public final class CmdlineProtoUtil {
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createBuildRequest(@NotNull String project,
-                                                                                List<? extends TargetTypeBuildScope> scopes,
+                                                                                List<TargetTypeBuildScope> scopes,
                                                                                 Collection<String> paths,
                                                                                 final Map<String, String> userData,
                                                                                 final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
@@ -69,7 +69,7 @@ public final class CmdlineProtoUtil {
 
   private static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
                                                                                           @NotNull String project,
-                                                                                          List<? extends TargetTypeBuildScope> scopes,
+                                                                                          List<TargetTypeBuildScope> scopes,
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,
                                                                                           final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,

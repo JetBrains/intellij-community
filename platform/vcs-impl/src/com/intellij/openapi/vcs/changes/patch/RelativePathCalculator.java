@@ -1,28 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 
 public final class RelativePathCalculator {
-  private static final int ourNumOfAllowedStepsAbove = 1;
-  private static final int ourAllowedStepsDown = 2;
-
-  private final String myShifted;
-  private final String myBase;
-
-  private boolean myRename;
-
-  public RelativePathCalculator(@NotNull String base, @NotNull String shifted) {
-    myShifted = shifted;
-    myBase = base;
-  }
+  private static final int MAX_STEPS_UP = 3; // max depth of ../../../../../../ chain
+  private static final int MAX_STEPS_DOWN = 4; // max depth of ./very/deep/path/to/shifted/directory/
 
   private static boolean stringEqual(@NotNull String s1, @NotNull String s2) {
     if (!SystemInfo.isFileSystemCaseSensitive) {
@@ -31,14 +21,15 @@ public final class RelativePathCalculator {
     return s1.equals(s2);
   }
 
-  public @NlsSafe @NotNull String execute() {
-    if (stringEqual(myShifted, myBase)) {
+  @Contract("_, _, false -> !null")
+  public static @NlsSafe @SystemIndependent String computeRelativePath(@NotNull @SystemIndependent String base,
+                                                                       @NotNull @SystemIndependent String shifted,
+                                                                       boolean relativePathsOnly) {
+    if (stringEqual(shifted, base)) {
       return ".";
     }
-    final String[] baseParts = split(myBase);
-    final String[] shiftedParts = split(myShifted);
-
-    myRename = checkRename(baseParts, shiftedParts);
+    String[] baseParts = base.split("/");
+    String[] shiftedParts = shifted.split("/");
 
     int cnt = 0;
     while (true) {
@@ -53,13 +44,21 @@ public final class RelativePathCalculator {
       ++cnt;
     }
 
-    final int stepsUp = baseParts.length - cnt - 1;
-    if (!myRename && stepsUp > ourNumOfAllowedStepsAbove && shiftedParts.length - cnt <= ourAllowedStepsDown) {
-      return myShifted;
+    int stepsUp = baseParts.length - cnt - 1;
+    int stepsDown = shiftedParts.length - cnt - 1;
+
+    if (stepsDown > MAX_STEPS_DOWN) {
+      return relativePathsOnly ? null : shifted;
     }
-    final StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < stepsUp; i++) {
-      sb.append("../");
+
+    StringBuilder sb = new StringBuilder();
+    if (stepsUp < MAX_STEPS_UP) {
+      for (int i = 0; i < stepsUp; i++) {
+        sb.append("../");
+      }
+    }
+    else {
+      sb.append(StringUtil.ELLIPSIS + "/");
     }
 
     for (int i = cnt; i < shiftedParts.length - 1; i++) {
@@ -76,33 +75,6 @@ public final class RelativePathCalculator {
     }
 
     return sb.toString();
-  }
-
-  private boolean isRename() {
-    return myRename;
-  }
-
-  private static boolean checkRename(final String[] baseParts, final String[] shiftedParts) {
-    if (baseParts.length == shiftedParts.length) {
-      for (int i = 0; i < baseParts.length; i++) {
-        if (!stringEqual(baseParts[i], shiftedParts[i])) {
-          return i == baseParts.length - 1;
-        }
-      }
-    }
-    return false;
-  }
-
-  public static @NlsContexts.Label @Nullable String getMovedString(final String beforeName, final String afterName) {
-    if (beforeName != null && afterName != null && !stringEqual(beforeName, afterName)) {
-      RelativePathCalculator calculator = new RelativePathCalculator(beforeName, afterName);
-      String result = calculator.execute();
-
-      return calculator.isRename()
-             ? VcsBundle.message("change.file.renamed.to.text", result)
-             : VcsBundle.message("change.file.moved.to.text", result);
-    }
-    return null;
   }
 
   public static String[] split(@NotNull String s) {

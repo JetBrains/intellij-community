@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.trigger", 4);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.trigger", 5);
   private static final StringEventField CONTEXT = EventFields.String("context", List.of("history", "log"));
   private static final ClassEventField CLASS = EventFields.Class("class");
   public static final BooleanEventField PARENT_COMMIT = EventFields.Boolean("parent_commit");
@@ -32,6 +32,9 @@ public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
   private static final VarargEventId FILTER_SET = GROUP.registerVarargEvent("filter.set",
                                                                             CONTEXT,
                                                                             FILTER_NAME);
+
+  private static final EventId1<FilterResetType> FILTER_RESET =
+    GROUP.registerEvent("filter.reset", EventFields.Enum("type", FilterResetType.class));
   private static final EventId1<String> TABLE_CLICKED =
     GROUP.registerEvent("table.clicked", EventFields.String("target", List.of("node", "arrow", "root.column")));
   private static final EventId2<String, Boolean> HISTORY_SHOWN =
@@ -63,6 +66,10 @@ public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
     FILTER_SET.log(getContext(false), FILTER_NAME.with(name));
   }
 
+  public static void triggerFilterReset(@NotNull FilterResetType resetType) {
+    FILTER_RESET.log(resetType);
+  }
+
   private static EventPair<String> getContext(boolean isFromHistory) {
     return CONTEXT.with(isFromHistory ? "history" : "log");
   }
@@ -81,5 +88,10 @@ public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
 
   public static void triggerTabNavigated(Project project) {
     TAB_NAVIGATED.log(project);
+  }
+
+  public enum FilterResetType {
+    ALL_OPTION,
+    CLOSE_BUTTON
   }
 }

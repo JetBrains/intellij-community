@@ -11,3 +11,6 @@ open class <caret>Server {
         println("Server")
     }
 }
+
+
+// FIR_COMPARISON

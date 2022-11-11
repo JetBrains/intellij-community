@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.util.registry
@@ -32,6 +32,7 @@ class RegistryKeyBean private constructor() {
     private val pendingRemovalKeys = HashSet<String>()
 
     @ApiStatus.Internal
+    @JvmStatic
     fun addKeysFromPlugins() {
       val point = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
         .getExtensionPoint<RegistryKeyBean>("com.intellij.registryKey")

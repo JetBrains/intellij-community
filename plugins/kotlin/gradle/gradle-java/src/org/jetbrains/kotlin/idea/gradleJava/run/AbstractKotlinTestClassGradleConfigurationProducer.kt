@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.run
 
@@ -12,10 +12,13 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.gradle.run.KotlinGradleConfigurationProducer
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -31,7 +34,7 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
     abstract fun isApplicable(module: Module, platform: TargetPlatform): Boolean
 
     final override fun isApplicable(module: Module): Boolean {
-        if (!module.isNewMPPModule) {
+        if (!module.isNewMultiPlatformModule) {
             return false
         }
 
@@ -123,6 +126,10 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
     ): Boolean {
         if (!context.check()) {
             return false
+        }
+
+        context.location?.psiElement?.parent.safeAs<KtNamedFunction>()?.let {
+            if (KotlinMainFunctionDetector.getInstance().isMain(it)) return false
         }
 
         if (!forceGradleRunner) {

@@ -4,10 +4,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -141,7 +138,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       queueTasks(delayedTasks, "Push on VFS changes");
     }
     if (pushingSomethingSynchronously) {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> scheduleDumbModeReindexingIfNeeded());
+      Application app = ApplicationManager.getApplication();
+      if (app.isDispatchThread()) {
+        scheduleDumbModeReindexingIfNeeded();
+      }
+      else {
+        app.invokeLater(this::scheduleDumbModeReindexingIfNeeded, myProject.getDisposed());
+      }
     }
   }
 
@@ -205,6 +208,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       applyScannersToFile(fileOrDir, sessions);
       return true;
     }, IndexableFilesDeduplicateFilter.create());
+    finishVisitors(sessions);
+  }
+
+  public static void finishVisitors(List<IndexableFileScanner.IndexableFileVisitor> sessions) {
+    for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
+      session.visitingFinished();
+    }
   }
 
   private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
@@ -345,7 +355,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
             EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-            Module module = ModuleEntityUtils.findModuleBridge(moduleEntity, storage);
+            Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
             if (module == null) {
               return Stream.empty();
             }
@@ -388,7 +398,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   public static void invokeConcurrentlyIfPossible(@NotNull List<? extends Runnable> tasks) {
     if (tasks.isEmpty()) return;
-    if (tasks.size() == 1 || ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    if (tasks.size() == 1 || ApplicationManager.getApplication().isWriteAccessAllowed() || DumbServiceImpl.isSynchronousTaskExecution()) {
       for (Runnable r : tasks) r.run();
       return;
     }

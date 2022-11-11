@@ -1,5 +1,5 @@
 // "Create function 'bar'" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
+// DISABLE-ERRORS
 
 class A<T>(val t: T)
 

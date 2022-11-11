@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
@@ -94,13 +95,15 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   override fun attachToolWindow(toolWindow: ToolWindow) {
     toolWindows.add(toolWindow)
-    initContentManager(toolWindow.contentManager)
+    initContentManager(toolWindow)
   }
 
-  private fun initContentManager(contentManager: ContentManager) {
-    val listener = ContentProvidersListener()
+  private fun initContentManager(toolWindow: ToolWindow) {
+    val contentManager = toolWindow.contentManager
+    val listener = ContentProvidersListener(toolWindow)
     contentManager.addContentManagerListener(listener)
     Disposer.register(this, Disposable { contentManager.removeContentManagerListener(listener) })
+    project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener)
 
     val contents = addedContents.filter { it.resolveContentManager() === contentManager }
     contents.forEach {
@@ -184,9 +187,18 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     IJSwingUtilities.updateComponentTreeUI(content.component)
   }
 
-  private inner class ContentProvidersListener : ContentManagerListener {
+  private inner class ContentProvidersListener(val toolWindow: ToolWindow) : ContentManagerListener, ToolWindowManagerListener {
+    override fun stateChanged(toolWindowManager: ToolWindowManager) {
+      if (toolWindow.isVisible) {
+        val content = toolWindow.contentManager.selectedContent ?: return
+        initLazyContent(content)
+      }
+    }
+
     override fun selectionChanged(event: ContentManagerEvent) {
-      initLazyContent(event.content)
+      if (toolWindow.isVisible) {
+        initLazyContent(event.content)
+      }
     }
   }
 

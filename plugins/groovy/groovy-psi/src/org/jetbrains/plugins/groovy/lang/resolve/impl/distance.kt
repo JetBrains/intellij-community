@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
 import org.jetbrains.plugins.groovy.lang.resolve.api.DelegateArgumentMapping
+import org.jetbrains.plugins.groovy.lang.sam.samDistance
 
 fun <X : CallParameter> compare(left: ArgumentMapping<X>, right: ArgumentMapping<X>): Int {
   if (left is DelegateArgumentMapping) {
@@ -57,7 +58,7 @@ fun positionalParametersDistance(map: Map<Argument, CallParameter>, context: Psi
   for ((argument, parameter) in map) {
     val runtimeType = argument.runtimeType ?: continue
     val parameterType = parameter.type ?: continue
-    result += parameterDistance(runtimeType, parameterType, context)
+    result += parameterDistance(runtimeType, argument, parameterType, context)
   }
   return result
 }
@@ -65,11 +66,11 @@ fun positionalParametersDistance(map: Map<Argument, CallParameter>, context: Psi
 /**
  * @see org.codehaus.groovy.runtime.MetaClassHelper.calculateParameterDistance
  */
-fun parameterDistance(argument: PsiType, parameter: PsiType, context: PsiElement): Long {
-  return parameterDistance0(argument, TypeConversionUtil.erasure(parameter), context)
+fun parameterDistance(argument: PsiType, argumentCompileTime: Argument?, parameter: PsiType, context: PsiElement): Long {
+  return parameterDistance0(argument, argumentCompileTime, TypeConversionUtil.erasure(parameter), context)
 }
 
-private fun parameterDistance0(argument: PsiType, parameter: PsiType, context: PsiElement): Long {
+private fun parameterDistance0(argument: PsiType, argumentCompileTime: Argument?, parameter: PsiType, context: PsiElement): Long {
   if (argument == parameter) return 0
   val parameterClass = (parameter as? PsiClassType)?.resolve()
   val argumentClass = (argument as? PsiClassType)?.resolve()
@@ -108,6 +109,10 @@ private fun parameterDistance0(argument: PsiType, parameter: PsiType, context: P
     argumentClass
   }
 
+  val samDistance = samDistance(argumentCompileTime, parameterClass)
+  if (samDistance != null) {
+    return (objectDistance + samDistance) shl OBJECT_SHIFT
+  }
   while (argumentClass2 != null) {
     if (argumentClass2 == parameterClass) break
     if (argumentClass2.qualifiedName == GroovyCommonClassNames.GROOVY_LANG_GSTRING && parameterClass?.qualifiedName == CommonClassNames.JAVA_LANG_STRING) {

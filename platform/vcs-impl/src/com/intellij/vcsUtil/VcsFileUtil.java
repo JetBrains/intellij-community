@@ -47,7 +47,6 @@ public final class VcsFileUtil {
    * @param processor function to execute on each chunk
    * @param <T>       type of result value
    * @return list of result values
-   * @throws VcsException
    */
   @NotNull
   public static <T> List<T> foreachChunk(@NotNull List<String> arguments,
@@ -69,7 +68,6 @@ public final class VcsFileUtil {
    * @param arguments the arguments to chunk
    * @param groupSize size of argument groups that should be put in the same chunk (like a name and a value)
    * @param consumer  consumer to feed each chunk
-   * @throws VcsException
    */
   public static void foreachChunk(@NotNull List<String> arguments,
                                   int groupSize,

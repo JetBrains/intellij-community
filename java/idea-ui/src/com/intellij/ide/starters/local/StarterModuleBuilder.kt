@@ -22,7 +22,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -109,7 +109,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
 
     @JvmStatic
-    internal fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
+    fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
       val contentRoot = module.rootManager.contentRoots.firstOrNull()
       if (contentRoot != null) {
         val fileEditorManager = FileEditorManager.getInstance(module.project)
@@ -206,12 +206,8 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   override fun setupModule(module: Module) {
     super.setupModule(module)
 
-    if (starterContext.isCreatingNewProject) {
-      val project = module.project
-
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, java.lang.Boolean.TRUE)
-      project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, java.lang.Boolean.TRUE)
-    }
+    val isMaven = starterContext.projectType?.id?.contains("Maven", ignoreCase = true) ?: false
+    ExternalSystemUtil.configureNewModule(module, starterContext.isCreatingNewProject, isMaven)
 
     startGenerator(module)
   }

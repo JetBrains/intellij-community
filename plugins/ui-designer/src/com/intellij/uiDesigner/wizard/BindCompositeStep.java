@@ -9,10 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class BindCompositeStep extends StepAdapter{
   private final WizardData myData;
   private final JPanel myCardHolder;

@@ -1,7 +1,7 @@
 fun test() {
     if (true &&
-            <caret>)
+        <caret>)
 }
 
-// SET_TRUE: ALIGN_MULTILINE_BINARY_OPERATION
-// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER
+// SET_FALSE: CONTINUATION_INDENT_IN_IF_CONDITIONS
+// IGNORE_FORMATTER

@@ -172,7 +172,7 @@ public class  MarkdownManipulatorTest extends BasePlatformTestCase {
 
     PsiElement element = myFixture.getFile().findElementAt(offset);
     MarkdownCodeFence codeFence = (MarkdownCodeFence)InjectedLanguageManager.getInstance(getProject()).getInjectionHost(element);
-
+    assertNotNull("Failed to find fence element", codeFence);
     final var manipulator = ElementManipulators.getNotNullManipulator(codeFence);
     final var newCodeFence = WriteCommandAction.runWriteCommandAction(myFixture.getProject(), (Computable<MarkdownCodeFence>)() -> {
       return manipulator.handleContentChange(codeFence, TextRange.from(element.getTextOffset(), element.getTextLength()), newContent);

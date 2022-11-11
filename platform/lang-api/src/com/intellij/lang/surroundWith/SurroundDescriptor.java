@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface SurroundDescriptor {
   /**
-   * Returns the list of elements which will be included in the surrounded region for
+   * Returns the array of elements which will be included in the surrounded region for
    * the specified selection in the specified file, or an empty array if no surrounders
    * from this surround descriptor are applicable to the specified selection.
    *
@@ -29,7 +29,7 @@ public interface SurroundDescriptor {
   PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset);
 
   /**
-   * @return the list of surrounders (surround templates) which can be used for this code fragment type
+   * @return the array of surrounders (surround templates) which can be used for this code fragment type
    */
   Surrounder @NotNull [] getSurrounders();
 

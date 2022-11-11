@@ -12,7 +12,7 @@ Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtNameRe
 run -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
 runnable -> USimpleNameReferenceExpression (identifier = runnable) from KtNameReferenceExpression
 run -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
-Runnable -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
+Runnable -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 println -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
 run -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
 runnable2 -> USimpleNameReferenceExpression (identifier = runnable2) from KtNameReferenceExpression
@@ -20,6 +20,7 @@ run -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) 
 Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtNameReferenceExpression
 Closeable -> USimpleNameReferenceExpression (identifier = Closeable) from KtNameReferenceExpression
 InputStream -> USimpleNameReferenceExpression (identifier = InputStream) from KtObjectLiteralExpression
-InputStream -> UObjectLiteralExpression from KtNameReferenceExpression
+InputStream -> USimpleNameReferenceExpression (identifier = InputStream) from KtSuperTypeCallEntry
+InputStream -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) from KtNameReferenceExpression
 Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtNameReferenceExpression
 Int -> USimpleNameReferenceExpression (identifier = Int) from KtNameReferenceExpression

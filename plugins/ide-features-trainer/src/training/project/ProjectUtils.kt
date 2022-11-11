@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.project
 
 import com.intellij.ide.GeneralSettings
@@ -19,7 +19,6 @@ import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.util.Consumer
 import com.intellij.util.io.createDirectories
@@ -63,22 +62,19 @@ object ProjectUtils {
           dest.delete()
         }
         langSupport.installAndOpenLearningProject(dest, projectToClose) {
-          it.basePath?.let { path ->
-            copyLearnProjectIcon(File(path))
-          }
           postInitCallback(it)
         }
       }
       else {
         val path = langSupport.getLearningProjectPath(dest).toAbsolutePath().toString()
         LangManager.getInstance().setLearningProjectPath(langSupport, path)
-        openOrImportLearningProject(dest, OpenProjectTask(projectToClose = projectToClose), langSupport, postInitCallback)
+        openOrImportLearningProject(dest, OpenProjectTask { this.projectToClose = projectToClose }, langSupport, postInitCallback)
       }
     }
   }
 
   private fun getLearningInstallationContentRoot(langSupport: LangSupport): Path? {
-    val storedProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport)
+    val storedProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport.primaryLanguage)
     val path = if (storedProjectPath != null) langSupport.getContentRootPath(Paths.get(storedProjectPath)) else null
     val canonicalPlace = learningProjectsPath.resolve(langSupport.contentRootDirectoryName)
 
@@ -230,15 +226,6 @@ object ProjectUtils {
     return File(canonicalPath, langSupport.contentRootDirectoryName).toPath()
   }
 
-  private fun copyLearnProjectIcon(projectDir: File) {
-    val iconPath = "learnProjects/.idea"
-    val iconUrl = ProjectUtils::class.java.classLoader.getResource(iconPath) ?: throw IllegalArgumentException(
-      "Unable to locate icon for learn project by path: $iconPath")
-    val ideaDir = File(projectDir, ".idea")
-    FileUtil.ensureExists(ideaDir)
-    FileUtils.copyResourcesRecursively(iconUrl, ideaDir)
-  }
-
   private fun createVersionFile(newProjectDirectory: Path) {
     PrintWriter(newProjectDirectory.resolve(FEATURE_TRAINER_VERSION).toFile(), "UTF-8").use {
       it.println(featureTrainerVersion)
@@ -279,10 +266,8 @@ object ProjectUtils {
     } ?: error("Failed to find content entry for file: ${sourcesRoot.name}")
 
     contentEntry.addSourceFolder(sourcesRoot, false)
-    runWriteAction {
-      rootsModel.commit()
-      project.save()
-    }
+    runWriteAction(rootsModel::commit)
+    project.save()
   }
 
   fun closeAllEditorsInProject(project: Project) {

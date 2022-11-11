@@ -44,10 +44,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @State(name = "Palette2",defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
 public final class Palette implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(Palette.class);

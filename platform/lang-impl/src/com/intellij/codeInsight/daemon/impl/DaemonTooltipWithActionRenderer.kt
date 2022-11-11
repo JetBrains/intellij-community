@@ -316,6 +316,8 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
       return isShowActions()
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       setShowActions(state)
       reloader.reload(myCurrentWidth > 0)
@@ -341,6 +343,8 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
     override fun isSelected(e: AnActionEvent): Boolean {
       return myCurrentWidth > 0
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       TooltipActionsLogger.logShowDescription(e.project, TooltipActionsLogger.Source.Gear, e.inputEvent, e.place)

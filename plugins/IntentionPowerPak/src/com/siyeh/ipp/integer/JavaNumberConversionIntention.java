@@ -23,13 +23,16 @@ import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static com.siyeh.ipp.integer.JavaNumberConverters.*;
 
 public class JavaNumberConversionIntention extends AbstractNumberConversionIntention {
-  private static final ImmutableList<NumberConverter> JAVA_1_CONVERTERS = immutableList(
-    INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC);
-  private static final ImmutableList<NumberConverter> JAVA_5_CONVERTERS = immutableList(
-    INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
-  private static final ImmutableList<NumberConverter> JAVA_7_CONVERTERS = immutableList(
-    INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_BINARY, INTEGER_TO_OCTAL, 
-    FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
+
+  private static class Holder {
+    static final ImmutableList<NumberConverter> JAVA_1_CONVERTERS = immutableList(
+      INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC);
+    static final ImmutableList<NumberConverter> JAVA_5_CONVERTERS = immutableList(
+      INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
+    static final ImmutableList<NumberConverter> JAVA_7_CONVERTERS = immutableList(
+      INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_BINARY, INTEGER_TO_OCTAL,
+      FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
+  }
 
   @Override
   @Nullable
@@ -56,12 +59,12 @@ public class JavaNumberConversionIntention extends AbstractNumberConversionInten
     if (!(file instanceof PsiJavaFile)) return Collections.emptyList();
     LanguageLevel level = PsiUtil.getLanguageLevel(file);
     if (level.isLessThan(LanguageLevel.JDK_1_5)) {
-      return JAVA_1_CONVERTERS;
+      return Holder.JAVA_1_CONVERTERS;
     }
     if (level.isLessThan(LanguageLevel.JDK_1_7)) {
-      return JAVA_5_CONVERTERS;
+      return Holder.JAVA_5_CONVERTERS;
     }
-    return JAVA_7_CONVERTERS;
+    return Holder.JAVA_7_CONVERTERS;
   }
 
   @Override

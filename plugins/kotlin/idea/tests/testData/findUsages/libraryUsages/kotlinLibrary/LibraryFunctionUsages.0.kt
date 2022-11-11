@@ -10,3 +10,5 @@ fun test() {
     val f = ::foo
     <caret>foo()
 }
+
+// FIR_COMPARISON

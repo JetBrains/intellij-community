@@ -105,7 +105,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
   private static class NonShortCircuitBooleanVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.AND) && !tokenType.equals(JavaTokenType.OR)) {
@@ -115,7 +115,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.ANDEQ) && !tokenType.equals(JavaTokenType.OREQ)) {

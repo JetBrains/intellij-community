@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -224,6 +224,24 @@ interface MyInterface {
     void myAbstractMethod()
 
     default void myDefaultMethod() {}
+}"""
+  }
+
+  void 'test statically imported method with DELEGATE_ONLY'() {
+    highlightingTest """
+import groovy.transform.CompileStatic
+import static java.lang.String.valueOf
+
+@CompileStatic
+class Main {
+
+  static void func(@DelegatesTo(value = Main, strategy = Closure.DELEGATE_ONLY) Closure<String> cl) {}
+
+  static void main(String[] args) {
+    func {
+      valueOf(3) 
+    }
+  }
 }"""
   }
 }

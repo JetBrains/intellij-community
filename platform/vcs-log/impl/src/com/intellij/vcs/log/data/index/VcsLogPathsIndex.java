@@ -351,8 +351,8 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
 
     @Override
-    public boolean isEqual(LightFilePath path1, LightFilePath path2) {
-      return path1.equals(path2);
+    public boolean isEqual(@Nullable LightFilePath path1, @Nullable LightFilePath path2) {
+      return Objects.equals(path1, path2);
     }
 
     @Override
@@ -378,8 +378,8 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
 
     @Override
-    public boolean isEqual(Couple<Integer> val1, Couple<Integer> val2) {
-      return val1.equals(val2);
+    public boolean isEqual(@Nullable Couple<Integer> val1, @Nullable Couple<Integer> val2) {
+      return Objects.equals(val1, val2);
     }
 
     @Override

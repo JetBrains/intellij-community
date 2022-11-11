@@ -48,6 +48,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myInfo = processInfo;
 
     myProgress = new JProgressBar(SwingConstants.HORIZONTAL);
+    myProgress.setOpaque(false);
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, myProgress);
 
     myText = new TextPanel();

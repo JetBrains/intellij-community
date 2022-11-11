@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.events;
 
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -19,17 +19,8 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
     mySuspendContext = suspendContext;
   }
 
-  /**
-   * @deprecated override {@link #contextAction(SuspendContextImpl)}
-   */
-  @Deprecated(forRemoval = true)
-  public void contextAction() throws Exception {
-    throw new AbstractMethodError();
-  }
-
   public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-    //noinspection deprecation
-    contextAction();
+    throw new AbstractMethodError();
   }
 
   @Override

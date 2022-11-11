@@ -217,6 +217,61 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "three fourthree<caret> ");
   }
 
+  public void testCopyPasteFromEmptySelection() {
+    initText("<caret>one two \n" +
+             "three<caret> four");
+    executeAction("EditorCopy");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one two \n" +
+                      "one two<caret> \n" +
+                      "three four\n" +
+                      "three four<caret>");
+  }
+
+  public void testCopyPasteFromEmptySelectionMultiCaretOnEachLine() {
+    initText("<caret>one <caret>two \n" +
+             "three<caret> four<caret>");
+    executeAction("EditorCopy");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one two \n" +
+                      "one two<caret> \n" +
+                      "three four\n" +
+                      "three four<caret>");
+  }
+
+  public void testCopyPasteFromEmptySelectionMultipleCaretsAtLineStart() {
+    initText("\tone two \n" +
+             " hi<caret> \n" +
+             "\tthree four ");
+    int tabSize = getEditor().getSettings().getTabSize(getProject());
+    getEditor().getSettings().setCaretInsideTabs(true);
+    executeAction("EditorCopy");
+    executeAction("EditorLineStart");
+    getEditor().getCaretModel().moveToVisualPosition(new VisualPosition(1,0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(0,0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(0,1));
+    getEditor().getCaretModel().addCaret(new VisualPosition(0, tabSize));
+    getEditor().getCaretModel().addCaret(new VisualPosition(2,0));
+    getEditor().getCaretModel().addCaret(new VisualPosition(2,1));
+    getEditor().getCaretModel().addCaret(new VisualPosition(2, tabSize));
+    checkResultByText("<caret><caret>\t<caret>one two \n" +
+                      "<caret> hi \n" +
+                      "<caret><caret>\t<caret>three four ");
+    executeAction("EditorPaste");
+    checkResultByText(" hi \n" +
+                      " hi \n" +
+                      " hi \n" +
+                      "<caret><caret>\t<caret>one two \n" +
+                      " hi \n" +
+                      "<caret> hi \n" +
+                      " hi \n" +
+                      " hi \n" +
+                      " hi \n" +
+                      "<caret><caret>\t<caret>three four ");
+  }
+
   public void testCutAndPaste() {
     initText("<selection>one<caret></selection> two \n" +
              "<selection>three<caret></selection> four ");
@@ -225,6 +280,86 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     executeAction("EditorPaste");
     checkResultByText(" twoone<caret> \n" +
                       " fourthree<caret> ");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithCaretAtLineEnd() {
+    initText("<caret>one \n" +
+             "two \n" +
+             "th<caret>ree \n" +
+             "four ");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>four ");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one \n" +
+                      "two<caret> \n" +
+                      "three \n" +
+                      "four<caret> ");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithCaretAtLineStart() {
+    initText("<caret>one \n" +
+             "two \n" +
+             "th<caret>ree \n" +
+             "four ");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>four ");
+    executeAction("EditorPaste");
+    checkResultByText("one \n" +
+                      "<caret>two \n" +
+                      "three \n" +
+                      "<caret>four ");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithFewerCaret() {
+    initText("<caret>one \n" +
+             "two \n" +
+             "th<caret>ree \n" +
+             "four<caret> ");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>");
+    executeAction("EditorLineEnd");
+    executeAction("EditorPaste");
+    checkResultByText("one \n" +
+                      "two<caret> \n" +
+                      "three \n" +
+                      "<caret>");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithMultipleCaretsOnSingleLine() {
+    initText("<caret>one \n" +
+             "two \n" +
+             "th<caret>ree \n" +
+             "four<caret> ");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>");
+    getEditor().getCaretModel().addCaret(new VisualPosition(0,2));
+    executeAction("EditorPaste");
+    checkResultByText("one \n" +
+                      "three \n" +
+                      "<caret>tw<caret>o \n" +
+                      "four \n" +
+                      "<caret>");
+  }
+
+  public void testCutFromEmptySelectionAndPasteWithMultipleCaretsOnSingleLineAndLineStart() {
+    initText("<caret>one \n" +
+             "two \n" +
+             "th<caret>ree \n" +
+             "four<caret> ");
+    executeAction("EditorCut");
+    checkResultByText("<caret>two \n" +
+                      "<caret>");
+    initText("<caret>t<caret>w<caret>o \n");
+    executeAction("EditorPaste");
+    checkResultByText("one \n" +
+                      "three \n" +
+                      "four \n" +
+                      "<caret>t<caret>w<caret>o \n");
   }
 
   public void testPasteSingleItem() {

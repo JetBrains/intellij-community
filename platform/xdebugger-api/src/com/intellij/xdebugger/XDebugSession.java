@@ -48,14 +48,12 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   /**
    * Position from the current frame
-   * @return
    */
   @Nullable
   XSourcePosition getCurrentPosition();
 
   /**
    * Position from the top frame
-   * @return
    */
   @Nullable
   XSourcePosition getTopFramePosition();

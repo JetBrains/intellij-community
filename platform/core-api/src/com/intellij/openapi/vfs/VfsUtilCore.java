@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -24,10 +24,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Various utility methods for working with {@link VirtualFile}.
@@ -37,7 +34,7 @@ public class VfsUtilCore {
 
   private static final @NonNls String MAILTO = "mailto";
 
-  public static final @NonNls String LOCALHOST_URI_PATH_PREFIX = "localhost/";
+  private static final @NonNls String LOCALHOST_URI_PATH_PREFIX = "localhost/";
   public static final char VFS_SEPARATOR_CHAR = '/';
   public static final String VFS_SEPARATOR = "/";
 
@@ -60,6 +57,13 @@ public class VfsUtilCore {
    * @return {@code true} if {@code file} is located under one of {@code roots} or equal to one of them
    */
   public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<? extends VirtualFile> roots) {
+    return isUnderFiles(file, roots);
+  }
+
+  /**
+   * @return {@code true} if {@code file} is located under one of {@code roots} or equal to one of them
+   */
+  public static boolean isUnderFiles(@NotNull VirtualFile file, @Nullable Collection<? extends VirtualFile> roots) {
     if (roots == null || roots.isEmpty()) return false;
 
     VirtualFile parent = file;
@@ -268,7 +272,7 @@ public class VfsUtilCore {
   public static boolean iterateChildrenRecursively(@NotNull VirtualFile root,
                                                    @Nullable VirtualFileFilter filter,
                                                    @NotNull ContentIterator iterator,
-                                                   VirtualFileVisitor.@NotNull Option... options) {
+                                                   VirtualFileVisitor.Option @NotNull ... options) {
     VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>(options) {
       @Override
       public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
@@ -336,9 +340,10 @@ public class VfsUtilCore {
     }
   }
 
+  @NotNull
   public static <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
-                                                                                         @NotNull VirtualFileVisitor<?> visitor,
-                                                                                         @NotNull Class<E> eClass) throws E {
+                                                                                                  @NotNull VirtualFileVisitor<?> visitor,
+                                                                                                  @NotNull Class<E> eClass) throws E {
     try {
       return visitChildrenRecursively(file, visitor);
     }
@@ -445,7 +450,7 @@ public class VfsUtilCore {
         return prefix + URLUtil.SCHEME_SEPARATOR + suffix;
       }
       else if (removeLocalhostPrefix && prefix.equals(URLUtil.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
-        // sometimes (e.g. in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it
+        // sometimes (e.g., in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it
         return prefix + ":///" + suffix.substring(LOCALHOST_URI_PATH_PREFIX.length());
       }
       else {
@@ -699,6 +704,33 @@ public class VfsUtilCore {
     return components;
   }
 
+  /**
+   * Compares the virtual files by paths.
+   * This method is equivalent to {@code v1.getPath().compareTo(v2.getPath())} but more efficient, because
+   * it performs root traversal to avoid calling {@link VirtualFile#getPath()} which creates too many string objects.
+   */
+  public static int compareByPath(@Nullable VirtualFile v1, @Nullable VirtualFile v2) {
+    if (!Objects.equals(v1, v2)) {
+      if (v1 == null) {
+        return -1;
+      }
+
+      if (v2 == null) {
+        return 1;
+      }
+
+      VirtualFile[] parents1 = getPathComponents(v1);
+      VirtualFile[] parents2 = getPathComponents(v2);
+      for (int i = 0; i < Math.min(parents1.length, parents2.length); i++) {
+        if (!parents1[i].equals(parents2[i])) {
+          return parents1[i].getName().compareTo(parents2[i].getName());
+        }
+      }
+      return v1.getName().compareTo(v2.getName());
+    }
+    return 0;
+  }
+  
   public static boolean hasInvalidFiles(@NotNull Iterable<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {
@@ -759,10 +791,10 @@ public class VfsUtilCore {
   @ApiStatus.Experimental
   public static boolean isAncestorOrSelf(@NotNull @SystemIndependent String ancestorPath, @NotNull VirtualFile file) {
     ancestorPath = FileUtil.toCanonicalPath(ancestorPath);
-    List<VirtualFile> hierarchy = getHierarchy(file);
     if (ancestorPath.isEmpty()) {
       return true;
     }
+    List<VirtualFile> hierarchy = getHierarchy(file);
     int i = 0;
     boolean result = false;
     int j;

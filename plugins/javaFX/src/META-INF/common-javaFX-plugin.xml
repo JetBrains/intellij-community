@@ -49,16 +49,19 @@
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxIdsIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxCustomComponentsIndex"/>
     <intentionAction>
+      <language>XML</language>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxCollapseSubTagToAttributeIntention</className>
       <bundleName>messages.JavaFXBundle</bundleName>
       <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxExpandAttributeIntention</className>
       <bundleName>messages.JavaFXBundle</bundleName>
       <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention</className>
       <bundleName>messages.JavaFXBundle</bundleName>
       <categoryKey>group.name.javafx</categoryKey>

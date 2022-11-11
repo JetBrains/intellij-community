@@ -68,6 +68,7 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
                                                                          packageName = "org.intellij.plugins.markdown")
 
       "intellij.grazie.core" -> IntellijIconClassGeneratorModuleConfig(className = "GrazieIcons", packageName = "com.intellij.grazie.icons")
+      "intellij.sh.core" -> IntellijIconClassGeneratorModuleConfig(className = "ShIcons", packageName = "com.intellij.sh")
       else -> super.getConfigForModule(moduleName)
     }
   }

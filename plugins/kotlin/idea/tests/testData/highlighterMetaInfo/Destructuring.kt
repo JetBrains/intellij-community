@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 data class Box(val v: Int)
 fun consume(x: Int) {}
 

@@ -8,9 +8,6 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class HorizontalLabeledIcon implements Icon {
   private final Icon myIcon;
   private final String[] myStrings;

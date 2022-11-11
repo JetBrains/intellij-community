@@ -19,15 +19,19 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.*
 import com.intellij.ui.components.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.jcef.JCEFHtmlPanel
-import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
+import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -180,9 +184,9 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
       }
     }
 
-    searchAlarm = SingleAlarm(Runnable {
+    searchAlarm = SingleAlarm({
       service.handleSearch(searchTextField.text.trim())
-    }, 500, ModalityState.NON_MODAL, service)
+    }, 500, service, ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL)
 
     searchTextField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -250,20 +254,24 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
   private fun showInstallFromVcsDialog(service: PyPackagingToolWindowService): Pair<String, Boolean>? {
     var editable = false
     var link = ""
-    val systems = arrayOf(message("python.toolwindow.packages.add.package.vcs.git"),
-                          message("python.toolwindow.packages.add.package.vcs.svn"),
-                          message("python.toolwindow.packages.add.package.vcs.hg"),
-                          message("python.toolwindow.packages.add.package.vcs.bzr"))
+    val systems = listOf(message("python.toolwindow.packages.add.package.vcs.git"),
+                         message("python.toolwindow.packages.add.package.vcs.svn"),
+                         message("python.toolwindow.packages.add.package.vcs.hg"),
+                         message("python.toolwindow.packages.add.package.vcs.bzr"))
     var vcs = systems.first()
 
     val panel = panel {
       row {
-        comboBox<String>(DefaultComboBoxModel(systems), getter = { vcs },
-                         setter = { vcs = it!! })
-        textField({ link }, { link = it }).growPolicy(GrowPolicy.MEDIUM_TEXT)
+        comboBox(systems)
+          .bindItem({ vcs }, { vcs = it!! })
+        textField()
+          .columns(COLUMNS_MEDIUM)
+          .bindText({ link }, { link = it })
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
-        checkBox(message("python.toolwindow.packages.add.package.as.editable"), { editable }, { editable = it })
+        checkBox(message("python.toolwindow.packages.add.package.as.editable"))
+          .bindSelected({ editable }, { editable = it })
       }
     }
 
@@ -289,12 +297,14 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
                               FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor())
     }
     val panel = panel {
-      row {
-        label(message("python.toolwindow.packages.add.package.path"))
-        textField().growPolicy(GrowPolicy.MEDIUM_TEXT)
+      row(message("python.toolwindow.packages.add.package.path")) {
+        cell(textField)
+          .columns(COLUMNS_MEDIUM)
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
-        checkBox(message("python.toolwindow.packages.add.package.as.editable"), { editable }, { editable = it })
+        checkBox(message("python.toolwindow.packages.add.package.as.editable"))
+          .bindSelected({ editable }, { editable = it })
       }
     }
 

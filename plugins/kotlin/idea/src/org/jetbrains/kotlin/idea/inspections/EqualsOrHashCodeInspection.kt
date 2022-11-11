@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -10,7 +10,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
 import org.jetbrains.kotlin.idea.actions.generate.findDeclaredEquals
 import org.jetbrains.kotlin.idea.actions.generate.findDeclaredHashCode
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.classOrObjectVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 object DeleteEqualsAndHashCodeFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("delete.equals.and.hash.code.fix.text")
@@ -52,6 +53,7 @@ sealed class GenerateEqualsOrHashCodeFix : LocalQuickFix {
         KotlinGenerateEqualsAndHashcodeAction().doInvoke(project, null, descriptor.psiElement.parent as KtClass)
     }
 }
+
 
 class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

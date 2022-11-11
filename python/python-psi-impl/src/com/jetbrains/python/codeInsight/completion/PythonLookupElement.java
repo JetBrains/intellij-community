@@ -92,7 +92,7 @@ public class PythonLookupElement extends LookupElement implements Comparable<Loo
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
     presentation.setItemTextBold(isBold);
     presentation.setTailText(getTailText());

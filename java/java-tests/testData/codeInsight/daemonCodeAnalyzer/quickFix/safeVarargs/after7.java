@@ -1,4 +1,4 @@
-// "Annotate as '@SafeVarargs'" "true"
+// "Annotate as '@SafeVarargs'" "true-preview"
 import java.util.List;
 public class Test {
     public <T> @SafeVarargs

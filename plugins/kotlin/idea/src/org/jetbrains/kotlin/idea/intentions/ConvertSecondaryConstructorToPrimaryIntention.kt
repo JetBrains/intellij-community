@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -6,11 +6,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.intentions.ConvertSecondaryConstructorToPrimaryIntention.Companion.tryConvertToPropertyByParameterInitialization
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -53,6 +55,8 @@ class ConvertSecondaryConstructorToPrimaryIntention : SelfTargetingRangeIntentio
         val delegationDescriptor = resolvedDelegationCall.candidateDescriptor
         return isReachableByDelegationFrom(delegationDescriptor, context, visited + constructor)
     }
+
+    override fun startInWriteAction(): Boolean = false
 
     override fun applicabilityRange(element: KtSecondaryConstructor): TextRange? {
         val delegationCall = element.getDelegationCall()
@@ -139,44 +143,51 @@ class ConvertSecondaryConstructorToPrimaryIntention : SelfTargetingRangeIntentio
         val context = klass.analyzeWithContent()
         val factory = KtPsiFactory(klass)
         val constructorCommentSaver = CommentSaver(element)
-        val constructorInClass = klass.createPrimaryConstructorIfAbsent()
-        val constructor = factory.createPrimaryConstructorWithModifiers(element.modifierList?.text?.replace("\n", " "))
+        val initializer = runWriteAction {
+            val constructorInClass = klass.createPrimaryConstructorIfAbsent()
+            val constructor = factory.createPrimaryConstructorWithModifiers(element.modifierList?.text?.replace("\n", " "))
 
-        val parameterToPropertyMap = mutableMapOf<ValueParameterDescriptor, PropertyDescriptor>()
-        val initializer = element.extractInitializer(parameterToPropertyMap, context, factory) ?: return
+            val parameterToPropertyMap = mutableMapOf<ValueParameterDescriptor, PropertyDescriptor>()
+            val initializer = element.extractInitializer(parameterToPropertyMap, context, factory) ?: return@runWriteAction null
 
-        element.moveParametersToPrimaryConstructorAndInitializers(constructor, parameterToPropertyMap, context, factory)
+            element.moveParametersToPrimaryConstructorAndInitializers(constructor, parameterToPropertyMap, context, factory)
 
-        val argumentList = element.getDelegationCall().valueArgumentList
-        for (superTypeListEntry in klass.superTypeListEntries) {
-            val typeReference = superTypeListEntry.typeReference ?: continue
-            val type = context[BindingContext.TYPE, typeReference]
-            if ((type?.constructor?.declarationDescriptor as? ClassifierDescriptorWithTypeParameters)?.kind == ClassKind.CLASS) {
-                val superTypeCallEntry = factory.createSuperTypeCallEntry(
-                    "${typeReference.text}${argumentList?.text ?: "()"}"
-                )
-                superTypeListEntry.replace(superTypeCallEntry)
-                break
+            val argumentList = element.getDelegationCall().valueArgumentList
+            for (superTypeListEntry in klass.superTypeListEntries) {
+                val typeReference = superTypeListEntry.typeReference ?: continue
+                val type = context[BindingContext.TYPE, typeReference]
+                if ((type?.constructor?.declarationDescriptor as? ClassifierDescriptorWithTypeParameters)?.kind == ClassKind.CLASS) {
+                    val superTypeCallEntry = factory.createSuperTypeCallEntry(
+                        "${typeReference.text}${argumentList?.text ?: "()"}"
+                    )
+                    superTypeListEntry.replace(superTypeCallEntry)
+                    break
+                }
             }
-        }
 
-        with(constructorInClass.replace(constructor)) {
-            constructorCommentSaver.restore(this)
-        }
+            with(constructorInClass.replace(constructor)) {
+                constructorCommentSaver.restore(this)
+            }
+            initializer
+        } ?: return
 
         if ((initializer.body as? KtBlockExpression)?.statements?.isNotEmpty() == true) {
             val hasPropertyAfterInitializer = element.parent.children.takeLastWhile { it !== element }.any {
                 it is KtProperty && ReferencesSearch.search(it, initializer.useScope).findFirst() != null
             }
-            if (hasPropertyAfterInitializer) {
-                // In this case we must move init {} down, because it uses a property declared below
-                klass.addDeclaration(initializer)
-                element.delete()
-            } else {
-                element.replace(initializer)
+            runWriteAction {
+                if (hasPropertyAfterInitializer) {
+                    // In this case we must move init {} down, because it uses a property declared below
+                    klass.addDeclaration(initializer)
+                    element.delete()
+                } else {
+                    element.replace(initializer)
+                }
             }
         } else {
-            element.delete()
+            runWriteAction {
+                element.delete()
+            }
         }
     }
 

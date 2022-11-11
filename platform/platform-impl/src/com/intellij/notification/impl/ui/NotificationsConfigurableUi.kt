@@ -12,9 +12,14 @@ import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nullable
-import java.awt.Dimension
 import javax.swing.JCheckBox
 import javax.swing.ListSelectionModel
 
@@ -43,32 +48,29 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
   init {
     ui = panel {
       row {
-        useBalloonNotifications = checkBox(IdeBundle.message("notifications.configurable.display.balloon.notifications"),
-                                           { settings.SHOW_BALLOONS },
-                                           { settings.SHOW_BALLOONS = it }).component
+        useBalloonNotifications = checkBox(IdeBundle.message("notifications.configurable.display.balloon.notifications"))
+          .bindSelected(settings::SHOW_BALLOONS)
+          .component
       }
       row {
-        useSystemNotifications = checkBox(IdeBundle.message("notifications.configurable.enable.system.notifications"),
-                                          { settings.SYSTEM_NOTIFICATIONS },
-                                          { settings.SYSTEM_NOTIFICATIONS = it }).component
+        useSystemNotifications = checkBox(IdeBundle.message("notifications.configurable.enable.system.notifications"))
+          .bindSelected(settings::SYSTEM_NOTIFICATIONS)
+          .component
       }
-      val r = row {
+      row {
         notificationSettings = NotificationSettingsUi(notificationsList.model.getElementAt(0), useBalloonNotifications.selected)
-        cell {
-          scrollPane(notificationsList)
-        }
-        cell(isVerticalFlow = true) {
-          component(notificationSettings.ui).withLargeLeftGap().constraints(CCFlags.pushX)
-        }
+        scrollCell(notificationsList)
+        cell(notificationSettings.ui)
+          .verticalAlign(VerticalAlign.TOP)
       }
       if (ActionCenter.isEnabled()) {
-        r.largeGapAfter()
         row {
-          label(IdeBundle.message("notifications.configurable.do.not.ask.title"))
-        }
-        fullRow {
-          component(myDoNotAskConfigurableUi.createComponent())
-        }
+          cell(myDoNotAskConfigurableUi.createComponent())
+            .label(IdeBundle.message("notifications.configurable.do.not.ask.title"), LabelPosition.TOP)
+            .horizontalAlign(HorizontalAlign.FILL)
+            .verticalAlign(VerticalAlign.FILL)
+        }.topGap(TopGap.SMALL)
+          .resizableRow()
       }
     }
     ScrollingUtil.ensureSelectionExists(notificationsList)
@@ -128,5 +130,3 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
 
   override fun getComponent() = ui
 }
-
-private infix fun Int.x(height: Int) = Dimension(this, height)

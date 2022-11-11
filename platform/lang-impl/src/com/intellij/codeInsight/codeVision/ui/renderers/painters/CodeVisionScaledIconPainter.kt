@@ -20,7 +20,7 @@ class CodeVisionScaledIconPainter(val yShiftIconMultiplier: Double = 0.865, val 
     g2d.composite = composite
   }
 
-  fun scaleFactor(iconValue: Int, neededValue: Int) = (neededValue * scaleMultiplier).toFloat() / iconValue
+  fun scaleFactor(iconValue: Int, neededValue: Int): Float = (neededValue * scaleMultiplier).toFloat() / iconValue
   fun width(icon: Icon, scaleFactor: Float): Int = (icon.iconWidth * scaleFactor).toDouble().roundToInt()
   fun height(icon: Icon, scaleFactor: Float): Int = (icon.iconHeight * scaleFactor).toDouble().roundToInt()
 

@@ -507,7 +507,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
 
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));

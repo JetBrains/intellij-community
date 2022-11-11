@@ -5,83 +5,48 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsShortCommitDetails
+import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
+import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
-import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 
 private val LOG = Logger.getInstance("Git.Rebase.Log.Action.CommitDetailsLoader")
 
-internal fun getOrLoadDetails(project: Project, data: VcsLogData, commitList: List<VcsShortCommitDetails>): List<VcsCommitMetadata> {
-  val commitsToLoad = HashSet<VcsShortCommitDetails>(commitList)
-  val result = HashMap<VcsShortCommitDetails, VcsCommitMetadata>()
-  commitList.forEach { commit ->
-    val commitMetadata = (commit as? VcsCommitMetadata) ?: getCommitDataFromCache(data, commit)
-    if (commitMetadata != null) {
-      result[commit] = commitMetadata
-    }
-    else {
-      commitsToLoad.add(commit)
-    }
-  }
-  val loadedDetails = loadDetails(project, data, commitsToLoad)
-  result.putAll(loadedDetails)
-  return commitList.map {
-    result[it] ?: throw LoadCommitDetailsException()
-  }
+internal fun getOrLoadDetails(project: Project, data: VcsLogData, selection: VcsLogCommitSelection): List<VcsCommitMetadata> {
+  val cachedCommits = ArrayList(selection.cachedMetadata)
+  if (cachedCommits.none { it is LoadingDetails }) return cachedCommits
+
+  return loadDetails(project, data, selection)
 }
 
-private fun getCommitDataFromCache(data: VcsLogData, commit: VcsShortCommitDetails): VcsCommitMetadata? {
-  val commitIndex = data.getCommitIndex(commit.id, commit.root)
-  val commitData = data.commitDetailsGetter.getCommitDataIfAvailable(commitIndex)
-  if (commitData != null) {
-    return commitData
+private fun loadDetails(project: Project, data: VcsLogData, selection: VcsLogCommitSelection): List<VcsCommitMetadata> {
+  try {
+    val loadedDetails = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      ThrowableComputable<List<VcsCommitMetadata>, VcsException> {
+        return@ThrowableComputable data.miniDetailsGetter.getCommitDetails(selection.ids)
+      },
+      GitBundle.message("rebase.log.action.progress.indicator.loading.commit.message.title", selection.size),
+      true,
+      project
+    )
+    if (loadedDetails.size != selection.size) throw LoadCommitDetailsException()
+    return loadedDetails
   }
-
-  val message = data.index.dataGetter?.getFullMessage(commitIndex)
-  if (message != null) {
-    return VcsCommitMetadataImpl(commit.id, commit.parents, commit.commitTime, commit.root, commit.subject,
-                                 commit.author, message, commit.committer, commit.authorTime)
+  catch (e: VcsException) {
+    val error = GitBundle.message("rebase.log.action.loading.commit.message.failed.message", selection.size)
+    LOG.warn(error, e)
+    val notification = VcsNotifier.STANDARD_NOTIFICATION
+      .createNotification(error, NotificationType.ERROR)
+      .setDisplayId(GitNotificationIdsHolder.COULD_NOT_LOAD_CHANGES_OF_COMMIT_LOG)
+    VcsNotifier.getInstance(project).notify(notification)
+    throw LoadCommitDetailsException()
   }
-  return null
-}
-
-private fun loadDetails(
-  project: Project,
-  data: VcsLogData,
-  commits: Collection<VcsShortCommitDetails>
-): Map<VcsShortCommitDetails, VcsCommitMetadata> {
-  val result = HashMap<VcsShortCommitDetails, VcsCommitMetadata>()
-  ProgressManager.getInstance().runProcessWithProgressSynchronously(
-    {
-      try {
-        val commitList = commits.toList()
-        if (commitList.isEmpty()) {
-          return@runProcessWithProgressSynchronously
-        }
-        val root = commits.first().root
-        val commitListData = VcsLogUtil.getDetails(data.getLogProvider(root), root, commitList.map { it.id.asString() })
-        result.putAll(commitList.zip(commitListData))
-      }
-      catch (e: VcsException) {
-        val error = GitBundle.message("rebase.log.action.loading.commit.message.failed.message", commits.size)
-        LOG.warn(error, e)
-        val notification = VcsNotifier.STANDARD_NOTIFICATION
-          .createNotification(error, NotificationType.ERROR)
-          .setDisplayId(GitNotificationIdsHolder.COULD_NOT_LOAD_CHANGES_OF_COMMIT_LOG)
-        VcsNotifier.getInstance(project).notify(notification)
-      }
-    },
-    GitBundle.message("rebase.log.action.progress.indicator.loading.commit.message.title", commits.size),
-    true,
-    project
-  )
-  return result
 }
 
 internal class LoadCommitDetailsException : Exception()

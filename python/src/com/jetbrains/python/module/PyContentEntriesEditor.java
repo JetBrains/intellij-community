@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.module;
 
 import com.intellij.facet.impl.ui.FacetErrorPanel;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.module.Module;
@@ -31,7 +32,6 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 
 public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   private final List<PyRootTypeProvider> myRootTypeProviders;
@@ -286,7 +286,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
           // Since we use the same icon for explicit namespace package "roots", we forcibly replace icons
           // for other "false" packages with the one for a plain directory to avoid confusion.
           Icon defaultIcon = super.updateIcon(entry, file, originalIcon);
-          if (defaultIcon == PlatformIcons.PACKAGE_ICON) {
+          if (defaultIcon == AllIcons.Nodes.Package) {
             return PlatformIcons.FOLDER_ICON;
           }
           return defaultIcon;

@@ -26,7 +26,7 @@ public abstract class CoverageRunner {
 
   /**
    * When multiple coverage runners are available for one {@link CoverageEngine}, 
-   * {@link #getPresentableName()} is used to render coverage runner in UI.
+   * {@code getPresentableName()} is used to render coverage runner in UI.
    */
   @NotNull
   @NonNls

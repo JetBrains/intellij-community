@@ -1,4 +1,4 @@
-// "Replace method call with Test2.nnn" "false"
+// "Replace method call with 'Test2.nnn()'" "false"
 class Test {
   static void example() {
     Test t = new Test();

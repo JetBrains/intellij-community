@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -8,11 +8,14 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.refactoring.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -23,6 +26,10 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
+/**
+ * Tests:
+ * [org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.ConvertEnumToSealedClass]
+ */
 class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
     KtClass::class.java,
     KotlinBundle.lazyMessage("convert.to.sealed.class")
@@ -37,9 +44,10 @@ class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
     override fun applyTo(element: KtClass, editor: Editor?) {
         val name = element.name ?: return
         if (name.isEmpty()) return
+        val doesSupportDataObjects = element.languageVersionSettings.supportsFeature(LanguageFeature.DataObjects)
 
         for (klass in element.withExpectedActuals()) {
-            klass as? KtClass ?: continue
+            if (klass !is KtClass) continue
 
             val classDescriptor = klass.resolveToDescriptorIfAny() ?: continue
             val isExpect = classDescriptor.isExpect
@@ -54,7 +62,13 @@ class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
             for (member in klass.declarations) {
                 if (member !is KtEnumEntry) continue
 
-                val obj = psiFactory.createDeclaration<KtObjectDeclaration>("object ${member.name}")
+                val obj = psiFactory.createDeclaration<KtObjectDeclaration>(
+                    listOfNotNull(
+                        "data".takeIf { doesSupportDataObjects },
+                        "object",
+                        member.name,
+                    ).joinToString(" ")
+                )
 
                 val initializers = member.initializerList?.initializers ?: emptyList()
                 if (initializers.isNotEmpty()) {

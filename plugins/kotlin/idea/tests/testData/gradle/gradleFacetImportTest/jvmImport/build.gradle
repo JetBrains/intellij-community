@@ -20,7 +20,7 @@ dependencies {
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.7"
-    kotlinOptions.freeCompilerArgs = ["-Xsingle-module", "-Xdump-declarations-to", "tmp"]
+    kotlinOptions.freeCompilerArgs = ["-Xdump-declarations-to", "tmp"]
 }
 
 compileTestKotlin {

@@ -49,8 +49,8 @@ class GradleSdkSettingsStep(
       message = GradleBundle.message(
         "gradle.settings.wizard.unsupported.jdk.message",
         javaVersion.toFeatureString(),
-        MINIMUM_SUPPORTED_JAVA,
-        MAXIMUM_SUPPORTED_JAVA,
+        MINIMUM_SUPPORTED_JAVA.toFeatureString(),
+        MAXIMUM_SUPPORTED_JAVA.toFeatureString(),
         preferredGradleVersion.version))
       .asWarning()
       .ask(component)

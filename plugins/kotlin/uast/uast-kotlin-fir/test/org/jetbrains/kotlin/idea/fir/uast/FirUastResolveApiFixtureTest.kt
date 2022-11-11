@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.fir.uast
 
 import com.intellij.openapi.project.Project
@@ -14,6 +14,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastResolveApiFixtureTestBase {
     override val isFirUastPlugin: Boolean = true
+    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
@@ -25,8 +26,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         "MultiResolveJava",
         // TODO: multiResolve, getArgumentForParameter, return type for ambiguous call
         "MultiResolveJavaAmbiguous",
-        // TODO: resolve to setter, not getter
-        "ResolveFromBaseJava",
         // TODO: multiResolve
         "MultiResolveInClass",
         // TODO: multiResolve, return type for ambiguous call
@@ -142,6 +141,18 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("AssigningArrayElementType", ::checkAssigningArrayElementType)
     }
 
+    fun testMapFunctions() {
+        doCheck("MapFunctions", ::checkMapFunctions)
+    }
+
+    fun testListIterator() {
+        doCheck("ListIterator", ::checkListIterator)
+    }
+
+    fun testStringJVM() {
+        doCheck("StringJVM", ::checkStringJVM)
+    }
+
     fun testDivByZero() {
         doCheck("DivByZero", ::checkDivByZero)
     }
@@ -170,7 +181,36 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("SyntheticEnumMethods", ::checkSyntheticEnumMethods)
     }
 
+    fun testImplicitReceiverType() {
+        doCheck("ImplicitReceiverType", ::checkImplicitReceiverType)
+    }
+
     fun testSubstitutedReceiverType() {
         doCheck("SubstitutedReceiverType", ::checkSubstitutedReceiverType)
     }
+
+    fun testCallKindOfSamConstructor() {
+        doCheck("CallKindOfSamConstructor", ::checkCallKindOfSamConstructor)
+    }
+
+    fun testArrayAccessOverloads() {
+        doCheck("ArrayAccessOverloads", ::checkArrayAccessOverloads)
+    }
+
+    fun testOperatorOverloads() {
+        doCheck("OperatorOverloads", ::checkOperatorOverloads)
+    }
+
+    fun testResolveSyntheticJavaPropertyAccessor() {
+        doCheck("ResolveSyntheticJavaPropertyAccessor", ::checkResolveSyntheticJavaPropertyAccessor)
+    }
+
+    fun testResolveKotlinPropertyAccessor() {
+        doCheck("ResolveKotlinPropertyAccessor", ::checkResolveKotlinPropertyAccessor)
+    }
+
+    fun testResolveToSubstituteOverride() {
+        doCheck("ResolveToSubstituteOverride", ::checkResolveToSubstituteOverride)
+    }
+
 }

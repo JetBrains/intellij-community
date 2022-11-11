@@ -571,6 +571,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrap);
         child = processParenthesisBlock(result, child, wrapStrategy, myJavaSettings.ALIGN_MULTILINE_RECORDS);
       }
+      else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.DECONSTRUCTION_LIST) {
+        Wrap wrap = Wrap.createWrap(getWrapType(myJavaSettings.DECONSTRUCTION_LIST_WRAP), false);
+        WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrap);
+        child = processParenthesisBlock(result, child, wrapStrategy, myJavaSettings.ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS);
+      }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.RESOURCE_LIST) {
         Wrap wrap = Wrap.createWrap(getWrapType(mySettings.RESOURCE_LIST_WRAP), false);
         child = processParenthesisBlock(result, child,
@@ -1198,7 +1203,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * Defines contract for associating operation type and particular wrap instance. I.e. given wrap object <b>may</b> be returned
    * from subsequent {@link #getReservedWrap(IElementType)} call if given operation type is used as an argument there.
    * <p/>
-   * Default implementation ({@link AbstractJavaBlock#setReservedWrap(Wrap, IElementType)}) does nothing.
+   * @implNote default implementation does nothing.
    * <p/>
    * <b>Note:</b> this method is considered to be a legacy heritage and is assumed to be removed as soon as formatting processing
    * is refactored

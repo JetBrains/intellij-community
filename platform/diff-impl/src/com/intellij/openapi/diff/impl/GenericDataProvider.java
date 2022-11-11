@@ -22,7 +22,7 @@ public class GenericDataProvider implements DataProvider {
     myGenericData = new HashMap<>();
   }
 
-  public void putData(DataKey key, Object value) {
+  public <T> void putData(DataKey<T> key, T value) {
     myGenericData.put(key.getName(), value);
   }
 

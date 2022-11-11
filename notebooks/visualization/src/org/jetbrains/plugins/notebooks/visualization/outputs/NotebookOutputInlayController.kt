@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -72,7 +73,7 @@ class NotebookOutputInlayController private constructor(
       isRelatedToPrecedingText = true,
       showAbove = false,
       priority = editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY,
-      offset = editor.document.getLineEndOffset(lines.last),
+      offset = computeInlayOffset(editor.document, lines),
     )
 
   init {
@@ -90,7 +91,10 @@ class NotebookOutputInlayController private constructor(
     }
   }
 
-  override fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, intervalIterator: ListIterator<NotebookCellLines.Interval>) {
+  override fun paintGutter(editor: EditorImpl,
+                           g: Graphics,
+                           r: Rectangle,
+                           interval: NotebookCellLines.Interval) {
     val yOffset = innerComponent.yOffsetFromEditor(editor) ?: return
     val bounds = Rectangle()
     val oldClip = g.clipBounds
@@ -247,9 +251,11 @@ class NotebookOutputInlayController private constructor(
           ?.takeIf { it.isNotEmpty() }
         ?: return null
 
+      val expectedOffset = computeInlayOffset(editor.document, interval.lines)
       val controller =
         currentControllers
           .filterIsInstance<NotebookOutputInlayController>()
+          .filter { it.inlay.offset == expectedOffset } // see DS-3445, may occur when external program changes file
           .maxByOrNull { it.rankCompatibility(outputDataKeys) }
         ?: NotebookOutputInlayController(this, editor, interval.lines)
       return controller.takeIf { it.updateData(outputDataKeys) }
@@ -315,3 +321,6 @@ private fun <A, B> Iterator<A>.zip(other: Iterator<B>): Iterator<Pair<A, B>> = o
 }
 
 private var JComponent.outputComponentFactory: NotebookOutputComponentFactory<*, *>? by SwingClientProperty("outputComponentFactory")
+
+private fun computeInlayOffset(document: Document, lines: IntRange): Int =
+  document.getLineEndOffset(lines.last)

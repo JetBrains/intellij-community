@@ -112,7 +112,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
+  protected ListPopup createPopup(@NotNull DataContext context) {
     WidgetState state = getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
     Editor editor = getEditor();
     PsiFile psiFile = getPsiFile();

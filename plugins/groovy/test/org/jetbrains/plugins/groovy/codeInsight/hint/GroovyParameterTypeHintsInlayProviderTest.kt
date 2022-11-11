@@ -26,8 +26,15 @@ class GroovyParameterTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {
   }
 
   override fun tearDown() {
-    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault()
-    super.tearDown()
+    try {
+      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testSingleType() {

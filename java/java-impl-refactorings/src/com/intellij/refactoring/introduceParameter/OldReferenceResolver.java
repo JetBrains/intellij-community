@@ -29,6 +29,7 @@ import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -155,7 +156,7 @@ public class OldReferenceResolver {
                 initializer = (PsiExpression)initializer.copy();
                 initializer.accept(new JavaRecursiveElementWalkingVisitor() {
                   @Override
-                  public void visitReferenceExpression(PsiReferenceExpression expression) {
+                  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
                     super.visitReferenceExpression(expression);
                     if (Comparing.strEqual(parameter.getName(), expression.getText())) {
                       map.put(expression, tempVar);

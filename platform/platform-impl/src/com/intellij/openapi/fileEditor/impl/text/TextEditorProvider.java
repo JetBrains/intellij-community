@@ -35,11 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public class TextEditorProvider implements DefaultPlatformFileEditorProvider, QuickDefinitionProvider, DumbAware {
+public class TextEditorProvider implements DefaultPlatformFileEditorProvider, TextBasedFileEditorProvider, QuickDefinitionProvider, DumbAware {
   protected static final Logger LOG = Logger.getInstance(TextEditorProvider.class);
 
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
@@ -291,6 +287,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
 
     EditorWrapper(@NotNull Editor editor) {
       myEditor = editor;
+      ClientFileEditorManager.assignClientId(this, ClientEditorManager.getClientId(editor));
     }
 
     @Override

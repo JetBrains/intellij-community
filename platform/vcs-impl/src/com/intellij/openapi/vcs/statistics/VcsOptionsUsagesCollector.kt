@@ -23,8 +23,6 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     val conf = VcsConfiguration.getInstance(project)
     val confDefault = VcsConfiguration()
 
-    addBoolIfDiffers(set, conf, confDefault, { it.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT }, OFFER_MOVE_PARTIALLY_COMMITTED)
-    addConfirmationIfDiffers(set, conf, confDefault, { it.MOVE_TO_FAILED_COMMIT_CHANGELIST }, OFFER_MOVE_FAILED_COMMITTED)
     addConfirmationIfDiffers(set, conf, confDefault, { it.REMOVE_EMPTY_INACTIVE_CHANGELISTS }, OFFER_REMOVE_EMPTY_CHANGELIST)
 
     addBoolIfDiffers(set, conf, confDefault, { it.MAKE_NEW_CHANGELIST_ACTIVE }, CHANGELIST_MAKE_NEW_ACTIVE)
@@ -33,14 +31,12 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     addBoolIfDiffers(set, conf, confDefault, { it.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT }, COMMIT_BEFORE_CHECK_CODE_SMELL)
     addBoolIfDiffers(set, conf, confDefault, { it.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT }, COMMIT_BEFORE_CHECK_CODE_CLEANUP)
     addBoolIfDiffers(set, conf, confDefault, { it.CHECK_NEW_TODO }, COMMIT_BEFORE_CHECK_TODO)
-    addBoolIfDiffers(set, conf, confDefault, { it.FORCE_NON_EMPTY_COMMENT }, COMMIT_BEFORE_CHECK_NON_EMPTY_COMMENT)
     addBoolIfDiffers(set, conf, confDefault, { it.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT }, COMMIT_BEFORE_OPTIMIZE_IMPORTS)
     addBoolIfDiffers(set, conf, confDefault, { it.REFORMAT_BEFORE_PROJECT_COMMIT }, COMMIT_BEFORE_REFORMAT_PROJECT)
     addBoolIfDiffers(set, conf, confDefault, { it.REARRANGE_BEFORE_PROJECT_COMMIT }, COMMIT_BEFORE_REARRANGE)
 
     addBoolIfDiffers(set, conf, confDefault, { it.CLEAR_INITIAL_COMMIT_MESSAGE }, COMMIT_CLEAR_INITIAL_COMMENT)
     addBoolIfDiffers(set, conf, confDefault, { it.USE_COMMIT_MESSAGE_MARGIN }, COMMIT_USE_RIGHT_MARGIN)
-    addBoolIfDiffers(set, conf, confDefault, { it.SHOW_UNVERSIONED_FILES_WHILE_COMMIT }, COMMIT_SHOW_UNVERSIONED)
 
     addBoolIfDiffers(set, conf, confDefault, { it.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN }, SHOW_CHANGES_PREVIEW)
     addBoolIfDiffers(set, conf, confDefault, { it.INCLUDE_TEXT_INTO_SHELF }, INCLUDE_TEXT_INTO_SHELF)
@@ -91,10 +87,8 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("vcs.settings", 3)
-    private val OFFER_MOVE_PARTIALLY_COMMITTED = GROUP.registerVarargEvent("offer.move.partially.committed", EventFields.Enabled)
+    private val GROUP = EventLogGroup("vcs.settings", 4)
 
-    private val OFFER_MOVE_FAILED_COMMITTED = GROUP.registerEvent("offer.move.failed.committed", EventFields.Enum("value", ConfirmationOption::class.java))
     private val OFFER_REMOVE_EMPTY_CHANGELIST = GROUP.registerEvent("offer.remove.empty.changelist", EventFields.Enum("value", ConfirmationOption::class.java))
 
     private val CHANGELIST_MAKE_NEW_ACTIVE = GROUP.registerVarargEvent("changelist.make.new.active", EventFields.Enabled)
@@ -102,13 +96,11 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     private val COMMIT_BEFORE_CHECK_CODE_SMELL = GROUP.registerVarargEvent("commit.before.check.code.smell", EventFields.Enabled)
     private val COMMIT_BEFORE_CHECK_CODE_CLEANUP = GROUP.registerVarargEvent("commit.before.check.code.cleanup", EventFields.Enabled)
     private val COMMIT_BEFORE_CHECK_TODO = GROUP.registerVarargEvent("commit.before.check.todo", EventFields.Enabled)
-    private val COMMIT_BEFORE_CHECK_NON_EMPTY_COMMENT = GROUP.registerVarargEvent("commit.before.check.non.empty.comment", EventFields.Enabled)
     private val COMMIT_BEFORE_OPTIMIZE_IMPORTS = GROUP.registerVarargEvent("commit.before.optimize.imports", EventFields.Enabled)
     private val COMMIT_BEFORE_REFORMAT_PROJECT = GROUP.registerVarargEvent("commit.before.reformat.project", EventFields.Enabled)
     private val COMMIT_BEFORE_REARRANGE = GROUP.registerVarargEvent("commit.before.rearrange", EventFields.Enabled)
     private val COMMIT_CLEAR_INITIAL_COMMENT = GROUP.registerVarargEvent("commit.clear.initial.comment", EventFields.Enabled)
     private val COMMIT_USE_RIGHT_MARGIN = GROUP.registerVarargEvent("commit.use.right.margin", EventFields.Enabled)
-    private val COMMIT_SHOW_UNVERSIONED = GROUP.registerVarargEvent("commit.show.unversioned", EventFields.Enabled)
     private val SHOW_CHANGES_PREVIEW = GROUP.registerVarargEvent("show.changes.preview", EventFields.Enabled)
     private val INCLUDE_TEXT_INTO_SHELF = GROUP.registerVarargEvent("include.text.into.shelf", EventFields.Enabled)
     private val CHECK_CONFLICTS_IN_BACKGROUND = GROUP.registerVarargEvent("check.conflicts.in.background", EventFields.Enabled)

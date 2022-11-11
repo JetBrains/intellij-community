@@ -10,16 +10,18 @@ import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.runner.IdeLaunchEvent
-import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.hyphenateTestName
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.timing.eventually
 import io.kotest.assertions.withClue
 import io.kotest.inspectors.shouldForAtLeastOne
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
 import org.kodein.di.direct
@@ -27,6 +29,8 @@ import org.kodein.di.instance
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import java.nio.file.Path
+import java.util.*
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -42,10 +46,18 @@ class RunIdeEventsTest {
   @Mock
   private lateinit var ide: InstalledIde
 
-  @Disabled("Rewrite the test to be more stable")
-  @Test
-  fun eventsForIdeLaunchShouldBeFired() {
-    val testName = object {}.javaClass.enclosingMethod.name.hyphenateTestName()
+  @AfterEach
+  fun afterEach() {
+    StarterListener.unsubscribe()
+  }
+
+  @Disabled("Is not stable")
+  @RepeatedTest(value = 200)
+  fun `events for ide launch should be fired`(testInfo: TestInfo) {
+    val firedEvents = Collections.synchronizedList(mutableListOf<IdeLaunchEvent>())
+    StarterListener.subscribe { event: IdeLaunchEvent -> synchronized(firedEvents) { firedEvents.add(event) } }
+
+    val testName = testInfo.displayName.hyphenateTestName()
     val paths = IDEDataPaths.createPaths(testName, testDirectory, useInMemoryFs = false)
 
     val projectHome = testCase.projectInfo?.downloadAndUnpackProject()
@@ -57,18 +69,23 @@ class RunIdeEventsTest {
                                  patchVMOptions = { this },
                                  ciServer = di.direct.instance())
 
-    val firedEvents = mutableListOf<IdeLaunchEvent>()
-
-    StarterListener.subscribe { event: IdeLaunchEvent -> firedEvents.add(event) }
-
-    catchAll {
+    try {
       context.runIDE(commands = CommandChain())
     }
+    catch (_: Throwable) {
+    }
 
-    runBlocking { delay(3.seconds) }
+    runBlocking {
+      eventually(duration = 2.seconds, poll = 200.milliseconds) {
+        withClue("There should be 2 events fired. Events: ${firedEvents.map { it.state }}") {
+          firedEvents.shouldHaveSize(2)
+        }
+      }
+    }
 
     assertSoftly {
-      withClue("During IDE run should be fired 2 events: before ide start and after ide finished") {
+      withClue("During IDE run should be fired 2 events: before ide start and after ide finished. " +
+               "Events: ${firedEvents.map { it.state }}") {
         firedEvents.shouldForAtLeastOne { it.state.shouldBe(EventState.BEFORE) }
         firedEvents.shouldForAtLeastOne { it.state.shouldBe(EventState.AFTER) }
       }

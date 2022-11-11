@@ -19,6 +19,10 @@ public class ActionToolbarSpacer extends JLabel {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(false);
     }
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

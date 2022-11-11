@@ -24,6 +24,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
@@ -48,6 +49,8 @@ public final class ActionUtil {
   private static final Logger LOG = Logger.getInstance(ActionUtil.class);
 
   public static final Key<Boolean> ALLOW_PlAIN_LETTER_SHORTCUTS = Key.create("ALLOW_PlAIN_LETTER_SHORTCUTS");
+  @ApiStatus.Internal
+  public static final Key<Boolean> ALLOW_ACTION_PERFORM_WHEN_HIDDEN = Key.create("ALLOW_ACTION_PERFORM_WHEN_HIDDEN");
 
   private static final Key<Boolean> WAS_ENABLED_BEFORE_DUMB = Key.create("WAS_ENABLED_BEFORE_DUMB");
   @ApiStatus.Internal
@@ -325,7 +328,8 @@ public final class ActionUtil {
     manager.fireBeforeActionPerformed(action, event);
     Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component != null && !UIUtil.isShowing(component) &&
-        !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) {
+        !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
+        !Boolean.TRUE.equals(ClientProperty.get(component, ALLOW_ACTION_PERFORM_WHEN_HIDDEN))) {
       String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
       LOG.warn("Action is not performed because target component is not showing: " +
                "action=" + id + ", component=" + component.getClass().getName());

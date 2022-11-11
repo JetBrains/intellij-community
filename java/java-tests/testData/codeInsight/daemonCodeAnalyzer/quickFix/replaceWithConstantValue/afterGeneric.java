@@ -1,4 +1,4 @@
-// "Replace with 'null'" "true"
+// "Replace with 'null'" "true-preview"
 import java.util.stream.*;
 
 class Test {

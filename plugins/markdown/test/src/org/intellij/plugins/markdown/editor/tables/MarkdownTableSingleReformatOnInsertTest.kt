@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase() {
   fun `test single column without alignment`() {
     // language=Markdown

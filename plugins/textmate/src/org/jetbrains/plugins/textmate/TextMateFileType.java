@@ -64,6 +64,11 @@ public final class TextMateFileType extends LanguageFileType implements FileType
            || registeredType == PlainTextFileType.INSTANCE;
   }
 
+  @Override
+  public boolean isReadOnly() {
+    return true;
+  }
+
   private static class TextMateFileDetector implements FileTypeRegistry.FileTypeDetector {
     @Override
     public @Nullable FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {

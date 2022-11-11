@@ -6,6 +6,8 @@ class X {
       case Integer i -> 3;
       case default -> 4;
       case null -> 10;
+      case <error descr="Cannot resolve symbol 'Point'">Point</error>() point -> 5;
+      case <error descr="Cannot resolve symbol 'Point'">Point</error>(double x, double y) -> 6;
     };
   }
 

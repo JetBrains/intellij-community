@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.injection.aliases
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.lexer.EmbeddedTokenTypesProvider
-import com.intellij.openapi.util.text.StringUtil
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
 import org.jetbrains.annotations.ApiStatus
 
@@ -32,6 +31,39 @@ object CodeFenceLanguageGuesser {
     return guessLanguage(value)?.takeIf { LanguageUtil.isInjectableLanguage(it) }
   }
 
+  private fun findLanguage(
+    value: String,
+    registeredLanguages: Collection<Language>,
+    embeddedTokenTypesProviders: Sequence<EmbeddedTokenTypesProvider>
+  ): Language? {
+    val entry = CodeFenceLanguageAliases.findRegisteredEntry(value) ?: value
+    val registered = registeredLanguages.find { it.id.equals(entry, ignoreCase = true) }
+    if (registered != null) {
+      return registered
+    }
+    val providers = embeddedTokenTypesProviders.filter { it.name.equals(entry, ignoreCase = true) }
+    return providers.map { it.elementType.language }.firstOrNull()
+  }
+
+  private fun findLanguage(value: String): Language? {
+    val registeredLanguages = Language.getRegisteredLanguages()
+    val embeddedTokenTypesProviders = EmbeddedTokenTypesProvider.getProviders().asSequence()
+    val exactMatch = findLanguage(value, registeredLanguages, embeddedTokenTypesProviders)
+    if (exactMatch != null) {
+      return exactMatch
+    }
+    var index = value.lastIndexOf(' ')
+    while (index != -1) {
+      val nameWithoutCustomizations = value.substring(0, index)
+      val language = findLanguage(nameWithoutCustomizations, registeredLanguages, embeddedTokenTypesProviders)
+      if (language != null) {
+        return language
+      }
+      index = value.lastIndexOf(' ', startIndex = (index - 1).coerceAtLeast(0))
+    }
+    return null
+  }
+
   /**
    * Guess IntelliJ Language from Markdown info-string.
    * It may either be lower-cased id or some of the aliases.
@@ -43,25 +75,14 @@ object CodeFenceLanguageGuesser {
    */
   @JvmStatic
   private fun guessLanguage(value: String): Language? {
-    val name = CodeFenceLanguageAliases.findId(value)
-
+    // Custom providers should handle customizations by themselves
     for (provider in customProviders) {
-      val lang = provider.getLanguageByInfoString(name)
-      if (lang != null) return lang
+      val lang = provider.getLanguageByInfoString(value)
+      if (lang != null) {
+        return lang
+      }
     }
-
-    val lower = StringUtil.toLowerCase(name)
-    val candidate = Language.findLanguageByID(lower)
-    if (candidate != null) return candidate
-
-    for (language in Language.getRegisteredLanguages()) {
-      if (StringUtil.toLowerCase(language.id) == lower) return language
-    }
-
-    for (provider in EmbeddedTokenTypesProvider.getProviders()) {
-      if (provider.name.equals(name, ignoreCase = true)) return provider.elementType.language
-    }
-
-    return null
+    val name = value.lowercase()
+    return findLanguage(name)
   }
 }

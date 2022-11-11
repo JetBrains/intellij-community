@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
 import com.sun.jdi.ObjectReference
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class CoroutineStackFrame(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfCoroutineStackFrame>("kotlinx.coroutines.debug.internal.StackTraceFrame", context) {

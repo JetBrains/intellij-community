@@ -12,6 +12,7 @@ abstract class SchemeManagerBase<T: Scheme, in MUTABLE_SCHEME : T>(internal val 
   @Volatile
   internal var currentPendingSchemeName: String? = null
 
+  @Volatile
   override var activeScheme: T? = null
     internal set
 

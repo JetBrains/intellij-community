@@ -133,7 +133,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection implem
     );
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (METHODS.test(expression)) {
         registerMethodCallError(expression, expression);
@@ -141,7 +141,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection implem
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiMethod constructor = expression.resolveConstructor();
       if (constructor == null) {

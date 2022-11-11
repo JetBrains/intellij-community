@@ -19,6 +19,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -76,7 +77,7 @@ public class PushDownConflicts {
       if (!member.hasModifierProperty(PsiModifier.STATIC)) {
         member.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (expression.getMethodExpression().getQualifierExpression() instanceof PsiSuperExpression) {
               final PsiMethod resolvedMethod = expression.resolveMethod();

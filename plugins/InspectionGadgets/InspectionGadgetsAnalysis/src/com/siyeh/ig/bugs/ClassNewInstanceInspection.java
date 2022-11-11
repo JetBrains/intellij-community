@@ -135,7 +135,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
   private static class ClassNewInstanceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"newInstance".equals(methodName)) {

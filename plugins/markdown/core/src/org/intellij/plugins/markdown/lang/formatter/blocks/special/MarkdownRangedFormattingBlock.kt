@@ -8,7 +8,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
-import org.intellij.plugins.markdown.util.MarkdownTextUtil
+import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownTextUtil
 
 /**
  * Markdown special formatting block that covers

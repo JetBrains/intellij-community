@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author anna
@@ -38,7 +39,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+  public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
     super.visitAssignmentExpression(expression);
 
     final PsiExpression lExpression = expression.getLExpression();
@@ -78,7 +79,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         if (lExpression instanceof PsiReferenceExpression &&
             ((PsiReferenceExpression)lExpression).resolve() instanceof PsiLocalVariable &&
             !canBeVariableType(rtype)) {
-          tryToRemoveLocalVariableAssignment((PsiLocalVariable)((PsiReferenceExpression)lExpression).resolve(), rExpression, rtype);
+          tryToRemoveLocalVariableAssignment((PsiLocalVariable)Objects.requireNonNull(((PsiReferenceExpression)lExpression).resolve()), rExpression, rtype);
         } else {
           myLabeler.migrateExpressionType(lExpression, rtype, myStatement, TypeConversionUtil.isAssignable(ltype, rtype), false);
         }
@@ -95,7 +96,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+  public void visitArrayAccessExpression(final @NotNull PsiArrayAccessExpression expression) {
     super.visitArrayAccessExpression(expression);
     final PsiExpression indexExpression = expression.getIndexExpression();
     if (indexExpression != null) {
@@ -111,14 +112,17 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       }
       else {
         myLabeler.setConversionMapping(expression, conversion);
-        myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), myTypeEvaluator.evaluateType(expression));
+        PsiType type = myTypeEvaluator.evaluateType(expression);
+        if (type != null) {
+          myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), type);
+        }
       }
 
     }
   }
 
   @Override
-  public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+  public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
     super.visitSwitchLabelStatement(statement);
     final PsiExpression caseValue = statement.getCaseValue();
     if (caseValue != null) {
@@ -127,14 +131,16 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         final PsiSwitchStatement switchStatement = statement.getEnclosingSwitchStatement();
         if (switchStatement != null) {
           final PsiExpression expression = switchStatement.getExpression();
-          myLabeler.migrateExpressionType(expression, typeView.getType(), myStatement, false, false);
+          if (expression != null) {
+            myLabeler.migrateExpressionType(expression, typeView.getType(), myStatement, false, false);
+          }
         }
       }
     }
   }
 
   @Override
-  public void visitInstanceOfExpression(final PsiInstanceOfExpression expression) {
+  public void visitInstanceOfExpression(final @NotNull PsiInstanceOfExpression expression) {
     super.visitInstanceOfExpression(expression);
     final PsiTypeElement typeElement = expression.getCheckType();
     if (typeElement != null) {
@@ -148,7 +154,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
+  public void visitTypeCastExpression(final @NotNull PsiTypeCastExpression expression) {
     super.visitTypeCastExpression(expression);
     final PsiTypeElement typeElement = expression.getCastType();
     if (typeElement != null) {
@@ -161,7 +167,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitVariable(PsiVariable variable) {
+  public void visitVariable(@NotNull PsiVariable variable) {
     super.visitVariable(variable);
 
     final PsiExpression initializer = variable.getInitializer();
@@ -172,7 +178,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReturnStatement(final PsiReturnStatement statement) { // has to change method return type corresponding to new value type
+  public void visitReturnStatement(final @NotNull PsiReturnStatement statement) { // has to change method return type corresponding to new value type
     super.visitReturnStatement(statement);
 
     final PsiElement method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
@@ -196,7 +202,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
 
     if (qualifierExpression != null && qualifierExpression.isPhysical()) {
@@ -218,10 +224,16 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
           final PsiType type = conversion.conversionType();
           if (parent instanceof PsiMethodCallExpression) {
             myLabeler.setConversionMapping((PsiMethodCallExpression)parent, conversion);
-            myTypeEvaluator.setType(new TypeMigrationUsageInfo(parent), type != null ? type: myTypeEvaluator.evaluateType((PsiExpression)parent));
+            PsiType targetType = type != null ? type : myTypeEvaluator.evaluateType((PsiExpression)parent);
+            if (targetType != null) {
+              myTypeEvaluator.setType(new TypeMigrationUsageInfo(parent), targetType);
+            }
           } else {
             myLabeler.setConversionMapping(expression, conversion);
-            myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), type != null ? type: myTypeEvaluator.evaluateType(expression));
+            PsiType targetType = type != null ? type : myTypeEvaluator.evaluateType(expression);
+            if (targetType != null) {
+              myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), targetType);
+            }
           }
         }
       }
@@ -235,7 +247,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitIfStatement(PsiIfStatement statement) {
+  public void visitIfStatement(@NotNull PsiIfStatement statement) {
     super.visitIfStatement(statement);
     final PsiExpression condition = statement.getCondition();
     if (condition != null) {
@@ -247,7 +259,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitForeachStatement(final PsiForeachStatement statement) {
+  public void visitForeachStatement(final @NotNull PsiForeachStatement statement) {
     super.visitForeachStatement(statement);
     final PsiExpression value = statement.getIteratedValue();
     final PsiParameter psiParameter = statement.getIterationParameter();
@@ -260,6 +272,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       else if (psiType instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)psiType).resolveGenerics();
         final PsiClass psiClass = resolveResult.getElement();
+        if (psiClass == null) return;
         final PsiType targetTypeParameter = getTargetTypeParameter(psiClass, value, typeView);
         if (targetTypeParameter == null) return;
         psiType = resolveResult.getSubstitutor().substitute(targetTypeParameter);
@@ -313,7 +326,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitNewExpression(final PsiNewExpression expression) {
+  public void visitNewExpression(final @NotNull PsiNewExpression expression) {
     super.visitNewExpression(expression);
     final PsiExpression[] dimensions = expression.getArrayDimensions();
     for (PsiExpression dimension : dimensions) {
@@ -326,13 +339,13 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitArrayInitializerExpression(final PsiArrayInitializerExpression expression) {
+  public void visitArrayInitializerExpression(final @NotNull PsiArrayInitializerExpression expression) {
     super.visitArrayInitializerExpression(expression);
     processArrayInitializer(expression, expression);
   }
 
   @Override
-  public void visitUnaryExpression(final PsiUnaryExpression expression) {
+  public void visitUnaryExpression(final @NotNull PsiUnaryExpression expression) {
     super.visitUnaryExpression(expression);
     final TypeView typeView = new TypeView(expression);
     if (typeView.isChanged()) {
@@ -356,7 +369,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+  public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
     super.visitPolyadicExpression(expression);
     final PsiExpression[] operands = expression.getOperands();
     if (operands.length == 0) return;
@@ -427,7 +440,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitCallExpression(PsiCallExpression callExpression) {
+  public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
     super.visitCallExpression(callExpression);
     final JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
     final PsiElement method = resolveResult.getElement();
@@ -460,7 +473,9 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         if (qualifierType instanceof PsiClassType) {
           final PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)qualifierType).resolveGenerics();
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myStatement.getProject());
-          final PsiType migrationType = elementFactory.createType(classResolveResult.getElement(), composeIfNotAssignable(classResolveResult.getSubstitutor(), evalSubstitutor));
+          PsiClass psiClass = classResolveResult.getElement();
+          if (psiClass == null) return;
+          final PsiType migrationType = elementFactory.createType(psiClass, composeIfNotAssignable(classResolveResult.getSubstitutor(), evalSubstitutor));
           myLabeler.migrateExpressionType(qualifier, migrationType, myStatement, migrationType.equals(qualifierType), true);
         }
       }
@@ -560,7 +575,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
 
   private void tryToRemoveLocalVariableAssignment(@NotNull PsiLocalVariable variable, @NotNull PsiExpression valueExpression, @NotNull PsiType migrationType) {
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-    final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, variable, valueExpression);
+    final PsiElement[] refs = DefUseUtil.getRefs(Objects.requireNonNull(codeBlock), variable, valueExpression);
     if (refs.length == 0) {
       myLabeler.setConversionMapping(valueExpression, new TypeConversionDescriptorBase() {
         @Override
@@ -572,6 +587,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
             if (decl == null) return null;
             final Project project = var.getProject();
             final PsiAssignmentExpression assignment = ExpressionUtils.splitDeclaration(decl, project);
+            if (assignment == null) return null;
             final PsiExpression rExpression = assignment.getRExpression();
             if (rExpression == null) return null;
             assignment.replace(rExpression);

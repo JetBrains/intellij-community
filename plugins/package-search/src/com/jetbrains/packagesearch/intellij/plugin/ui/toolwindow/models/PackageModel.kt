@@ -1,7 +1,22 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
@@ -12,6 +27,7 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal sealed class PackageModel(
     val groupId: String,
@@ -64,14 +80,14 @@ internal sealed class PackageModel(
                 val remoteVersions = async { evaluateRemoteVersions(remoteInfo, normalizer) }
                 val latestInstalledVersion = async {
                     usageInfo.asFlow()
-                        .map { it.version }
-                        .map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                        .map { it.declaredVersion }
+                        .map { normalizer.parse(it) }
                         .toList()
                         .maxOrNull()
                         ?: error("An installed package must always have at least one usage")
                 }
                 val declaredVersions = async {
-                    usageInfo.map { it.version }.map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                    usageInfo.map { it.declaredVersion }.map { normalizer.parse(it) }
                 }
                 Installed(
                     groupId,
@@ -104,7 +120,7 @@ internal sealed class PackageModel(
             buildString {
                 appendLine(identifier)
                 for (usage in usageInfo) {
-                    appendLine(usage.version)
+                    appendLine(usage.declaredVersion)
                 }
 
                 if (remoteInfo != null) {
@@ -189,7 +205,7 @@ internal sealed class PackageModel(
             remoteInfo?.versions?.asFlow()
                 ?.map { PackageVersion.from(it) }
                 ?.filterIsInstance<PackageVersion.Named>()
-                ?.map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                ?.map { normalizer.parse(it) }
                 ?.toList()
                 ?: emptyList()
 

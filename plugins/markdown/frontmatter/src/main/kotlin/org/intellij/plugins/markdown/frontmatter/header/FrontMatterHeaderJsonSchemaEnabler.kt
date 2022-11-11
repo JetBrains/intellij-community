@@ -6,11 +6,9 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaEnabler
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterHeaderMarkerProvider
 
-internal class FrontMatterHeaderJsonSchemaEnabler: JsonSchemaEnabler {
+internal class FrontMatterHeaderJsonSchemaEnabler : JsonSchemaEnabler {
   override fun isEnabledForFile(file: VirtualFile, project: Project?): Boolean {
-    if (FrontMatterHeaderMarkerProvider.isFrontMatterSupportEnabled()) {
-      return file.fileType == MarkdownFileType.INSTANCE
-    }
-    return false
+    return file.fileType == MarkdownFileType.INSTANCE
+           && FrontMatterHeaderMarkerProvider.isFrontMatterSupportEnabled()
   }
 }

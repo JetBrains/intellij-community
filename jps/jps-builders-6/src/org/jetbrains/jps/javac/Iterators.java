@@ -301,7 +301,7 @@ public class Iterators {
           buffer.add(elem);
         }
         buffer.clear();
-        return Collections.<T>emptyList().iterator();
+        return Collections.emptyIterator();
       }
     }));
   }

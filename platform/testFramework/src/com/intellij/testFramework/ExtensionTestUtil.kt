@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.Disposable
@@ -12,16 +12,19 @@ import org.jetbrains.annotations.TestOnly
 
 @TestOnly
 object ExtensionTestUtil {
+
   /**
    * @see ExtensionPointImpl.maskAll
    */
   @JvmOverloads
   @JvmStatic
-  fun <T> maskExtensions(pointName: ExtensionPointName<T>,
-                         newExtensions: List<T>,
-                         parentDisposable: Disposable,
-                         fireEvents: Boolean = true,
-                         areaInstance: AreaInstance? = null) {
+  fun <T : Any> maskExtensions(
+    pointName: ExtensionPointName<T>,
+    newExtensions: List<T>,
+    parentDisposable: Disposable,
+    fireEvents: Boolean = true,
+    areaInstance: AreaInstance? = null,
+  ) {
     (pointName.getPoint(areaInstance) as ExtensionPointImpl<T>).maskAll(newExtensions, parentDisposable, fireEvents)
   }
 
@@ -34,11 +37,13 @@ object ExtensionTestUtil {
    */
   @JvmStatic
   @JvmOverloads
-  fun <T> addExtensions(pointName: ExtensionPointName<T>,
-                        extensionsToAdd: List<T>,
-                        parentDisposable: Disposable,
-                        fireEvents: Boolean = true,
-                        areaInstance: AreaInstance? = null) {
+  fun <T : Any> addExtensions(
+    pointName: ExtensionPointName<T>,
+    extensionsToAdd: List<T>,
+    parentDisposable: Disposable,
+    fireEvents: Boolean = true,
+    areaInstance: AreaInstance? = null,
+  ) {
     maskExtensions(pointName, pointName.extensionList + extensionsToAdd, parentDisposable, fireEvents, areaInstance)
   }
 

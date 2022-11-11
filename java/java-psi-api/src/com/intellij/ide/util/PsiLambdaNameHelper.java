@@ -30,13 +30,13 @@ public final class PsiLambdaNameHelper {
               int index;
 
               @Override
-              public void visitLambdaExpression(PsiLambdaExpression expression) {
+              public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
                 map.put(expression, "$" + index++);
                 super.visitLambdaExpression(expression);
               }
 
               @Override
-              public void visitClass(PsiClass aClass) {
+              public void visitClass(@NotNull PsiClass aClass) {
                 if (aClass == upper) {
                   super.visitClass(aClass);
                 }

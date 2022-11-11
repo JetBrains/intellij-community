@@ -384,14 +384,14 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return true;
   }
 
-  static boolean addCustomRootsForLibrary(@NotNull OrderEntry forOrderEntry,
-                                          @NotNull OrderRootType type,
-                                          @NotNull Collection<? super VirtualFile> result,
-                                          @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+  static boolean addCustomRootsForLibraryOrSdk(@NotNull LibraryOrSdkOrderEntry forOrderEntry,
+                                               @NotNull OrderRootType type,
+                                               @NotNull Collection<? super VirtualFile> result,
+                                               @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
       final List<String> urls = new ArrayList<>();
       final boolean added =
-        handler.addCustomRootsForLibrary(forOrderEntry, type, urls);
+        handler.addCustomRootsForLibraryOrSdk(forOrderEntry, type, urls);
       for (String url : urls) {
         ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
       }
@@ -402,14 +402,14 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return false;
   }
 
-  static boolean addCustomRootUrlsForLibrary(@NotNull OrderEntry forOrderEntry,
-                                             @NotNull OrderRootType type,
-                                             @NotNull Collection<? super String> result,
-                                             @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+  static boolean addCustomRootUrlsForLibraryOrSdk(@NotNull LibraryOrSdkOrderEntry forOrderEntry,
+                                                  @NotNull OrderRootType type,
+                                                  @NotNull Collection<? super String> result,
+                                                  @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
       final List<String> urls = new ArrayList<>();
       final boolean added =
-        handler.addCustomRootsForLibrary(forOrderEntry, type, urls);
+        handler.addCustomRootsForLibraryOrSdk(forOrderEntry, type, urls);
       result.addAll(urls);
       if (added) {
         return true;
@@ -434,6 +434,17 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
       if (added) return true;
     }
     return false;
+  }
+
+  static void addCustomRootsUrlsForModule(@NotNull OrderRootType type,
+                                         @NotNull ModuleRootModel rootModel,
+                                         @NotNull Collection<String> result,
+                                         boolean includeProduction,
+                                         boolean includeTests,
+                                         @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+    for (OrderEnumerationHandler handler : customHandlers) {
+      handler.addCustomModuleRoots(type, rootModel, result, includeProduction, includeTests);
+    }
   }
 
   @Override

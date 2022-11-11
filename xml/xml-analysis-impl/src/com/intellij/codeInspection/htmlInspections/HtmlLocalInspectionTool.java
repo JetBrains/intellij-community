@@ -24,10 +24,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,12 +45,16 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
     // should be overridden
   }
 
+  protected void checkAttributeValue(@NotNull final XmlAttributeValue attributeValue, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    // should be overridden
+  }
+
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlToken(final XmlToken token) {
+      public void visitXmlToken(final @NotNull XmlToken token) {
         IElementType tokenType = token.getTokenType();
         if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_TAG_NAME) {
           PsiElement element = token.getPrevSibling();
@@ -71,9 +72,15 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
       }
 
       @Override
-      public void visitXmlAttribute(final XmlAttribute attribute) {
+      public void visitXmlAttribute(final @NotNull XmlAttribute attribute) {
         checkAttribute(attribute, holder, isOnTheFly);
       }
+
+      @Override
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
+        checkAttributeValue(value, holder, isOnTheFly);
+      }
+
     };
   }
 }

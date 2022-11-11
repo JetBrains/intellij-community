@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -36,6 +36,7 @@ internal fun convertParentImpl(
                 convertParentImpl(service, uElement, grandParent)?.let { return it }
                 parent = grandParent
             }
+
             is KtFile -> {
                 parent.toUElementOfType<UClass>()?.let { return it } // mutlifile facade class
             }
@@ -57,22 +58,26 @@ internal fun convertParentImpl(
         when (psi.useSiteTarget?.getAnnotationUseSiteTarget()) {
             AnnotationUseSiteTarget.PROPERTY_GETTER ->
                 parent = (parentUnwrapped as? KtProperty)?.getter
-                         ?: (parentUnwrapped as? KtParameter)?.toLightGetter()
-                         ?: parent
+                    ?: (parentUnwrapped as? KtParameter)?.toLightGetter()
+                            ?: parent
 
             AnnotationUseSiteTarget.PROPERTY_SETTER ->
                 parent = (parentUnwrapped as? KtProperty)?.setter
-                         ?: (parentUnwrapped as? KtParameter)?.toLightSetter()
-                         ?: parent
+                    ?: (parentUnwrapped as? KtParameter)?.toLightSetter()
+                            ?: parent
+
             AnnotationUseSiteTarget.FIELD ->
                 parent = (parentUnwrapped as? KtProperty)
                     ?: (parentUnwrapped as? KtParameter)
                         ?.takeIf { it.isPropertyParameter() }
                         ?.let(LightClassUtil::getLightClassBackingField)
                             ?: parent
+
             AnnotationUseSiteTarget.SETTER_PARAMETER ->
                 parent = (parentUnwrapped as? KtParameter)
                     ?.toLightSetter()?.parameterList?.parameters?.firstOrNull() ?: parent
+
+            else -> {}
         }
     }
     if ((psi is UastKotlinPsiVariable || psi is UastKotlinPsiParameter) && parent != null) {
@@ -102,8 +107,16 @@ internal fun convertParentImpl(
 
     if (parent is KtLambdaArgument) {
         parent = parent.parent
+    } 
+    
+    if (parent is KtParameter && parent.ownerFunction == null) {
+        parent = parent.parent
     }
 
+    if (parent is KtUserType &&  parent.parent.parent is KtConstructorCalleeExpression) {
+        parent =  parent.parent.parent.parent
+    } 
+    
     if (psi is KtSuperTypeCallEntry) {
         parent = parent?.parent
     }
@@ -161,6 +174,10 @@ internal fun convertParentImpl(
 
     if (result is UEnumConstant && element is UDeclaration) {
         return result.initializingClass
+    }
+
+    if (element !is KotlinUAnonymousClass && result is KotlinUObjectLiteralExpression) {
+        result.constructorCall?.let { return it }
     }
 
     if (result is UCallExpression && result.uastParent is UEnumConstant) {

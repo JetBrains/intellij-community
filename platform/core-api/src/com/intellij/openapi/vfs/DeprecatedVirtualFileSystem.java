@@ -24,9 +24,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
       ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> extensionPoint = app.getExtensionArea().getExtensionPointIfRegistered(VirtualFileSystem.EP_NAME.getName());
       MessageBusConnection connection;
       if (extensionPoint != null) {
-        Disposable extensionDisposable = ExtensionPointUtil.createExtensionDisposable(this, extensionPoint, (ep) -> {
-          return ep.getKey().equals(getProtocol());
-        });
+        Disposable extensionDisposable = ExtensionPointUtil.createExtensionDisposable(this, extensionPoint, ep -> ep.getKey().equals(getProtocol()));
         connection = app.getMessageBus().connect(extensionDisposable);
       }
       else {

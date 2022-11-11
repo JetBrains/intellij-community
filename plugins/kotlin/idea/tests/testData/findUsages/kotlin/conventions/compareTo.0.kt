@@ -18,3 +18,6 @@ fun test() {
     A(0) > 1
     A(0) >= 1
 }
+
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
@@ -31,7 +31,6 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
 import java.util.jar.JarFile;
@@ -46,17 +45,10 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance(JavaFileManagerImpl.class);
 
   private final PsiManagerEx myManager;
-  private volatile Set<String> myNontrivialPackagePrefixes;
   private boolean myDisposed;
 
   public JavaFileManagerImpl(Project project) {
     myManager = PsiManagerEx.getInstanceEx(project);
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        myNontrivialPackagePrefixes = null;
-      }
-    });
   }
 
   @Override
@@ -140,23 +132,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
   @Override
   public @NotNull Collection<String> getNonTrivialPackagePrefixes() {
-    Set<String> names = myNontrivialPackagePrefixes;
-    if (names == null) {
-      names = new HashSet<>();
-      ProjectRootManager rootManager = ProjectRootManager.getInstance(myManager.getProject());
-      List<VirtualFile> sourceRoots = rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
-      ProjectFileIndex fileIndex = rootManager.getFileIndex();
-      for (VirtualFile sourceRoot : sourceRoots) {
-        if (sourceRoot.isDirectory()) {
-          String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
-          if (packageName != null && !packageName.isEmpty()) {
-            names.add(packageName);
-          }
-        }
-      }
-      myNontrivialPackagePrefixes = names;
-    }
-    return names;
+    return PackagePrefixElementFinder.getInstance(myManager.getProject()).getAllPackagePrefixes(GlobalSearchScope.projectScope(myManager.getProject()));
   }
 
   @Override

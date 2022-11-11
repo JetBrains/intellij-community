@@ -19,36 +19,26 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 
 public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
   private static final Condition<PsiElement> CONSTRUCTOR = expression -> {
-    if (!(expression instanceof PsiReferenceExpression) &&
-        !(expression instanceof PsiMethodCallExpression)) {
-      return false;
-    }
+    PsiReferenceExpression ref = expression instanceof PsiMethodCallExpression call ? call.getMethodExpression() :
+                                 expression instanceof PsiReferenceExpression r ? r :
+                                 null;
+    if (ref == null) return false;
 
-    PsiReferenceExpression ref = expression instanceof PsiMethodCallExpression ?
-                                 ((PsiMethodCallExpression)expression).getMethodExpression() :
-                                 (PsiReferenceExpression)expression;
-
-    PsiExpression qualifierExpression = ref.getQualifierExpression();
-
-    //disabled for qualified elements
-    //todo implement proper support for Foo<Bar>, Foo.new Bar() and java.util.Foo
-    if (qualifierExpression != null) return false;
+    PsiExpression qualifier = ref.getQualifierExpression();
 
     JavaResolveResult result = ref.advancedResolve(true);
-
     PsiElement element = result.getElement();
-    if (element != null && !(element instanceof PsiClass)) return false;
-    if (element != null) {
-      PsiMethod[] constructors = ((PsiClass)element).getConstructors();
-      if (constructors.length > 0) {
-        PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
-        if (ContainerUtil.and(constructors, m -> !helper.isAccessible(m, ref, (PsiClass)element))) {
-          // All constructors aren't accessible
-          return false;
-        }
-      }
-    }
-    return true;
+
+    //todo implement proper support for Foo<Bar>, Foo.new Bar()
+    if (qualifier != null && (!(qualifier instanceof PsiReferenceExpression) || element == null)) return false;
+
+    if (element == null) return true;
+    if (!(element instanceof PsiClass cls)) return false;
+    PsiMethod[] constructors = cls.getConstructors();
+    if (constructors.length == 0) return true;
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+    // Check whether there's at least one accessible constructor
+    return !ContainerUtil.and(constructors, m -> !helper.isAccessible(m, ref, cls));
   };
 
   protected NewExpressionPostfixTemplate() {
@@ -63,20 +53,16 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
 
   @Override
   public void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
-    if (!(expression instanceof PsiReferenceExpression)) {
-      super.expandForChooseExpression(expression, editor);
-      return;
-    }
-    PsiReferenceExpression refExpression = (PsiReferenceExpression)expression;
-    JavaResolveResult result = refExpression.advancedResolve(true);
-    PsiElement element = result.getElement();
+    if (expression instanceof PsiReferenceExpression ref) {
+      JavaResolveResult result = ref.advancedResolve(true);
+      PsiElement element = result.getElement();
 
-    if (!(element instanceof PsiClass)) {
-      super.expandForChooseExpression(expression, editor);
-      return;
+      if (element instanceof PsiClass psiClass) {
+        WriteAction.run(() -> insertConstructorCallWithSmartBraces(expression, editor, psiClass));
+        return;
+      }
     }
-
-    WriteAction.run(() -> insertConstructorCallWithSmartBraces(expression, editor, (PsiClass)element));
+    super.expandForChooseExpression(expression, editor);
   }
 
   public void insertConstructorCallWithSmartBraces(@NotNull PsiElement expression,
@@ -87,7 +73,7 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
     Project project = expression.getProject();
 
     SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaClass);
-    replaceExpressionTextByNewExpressionInDocument(project, expression, document);
+    int startOffset = replaceExpressionTextByNewExpressionInDocument(project, expression, document);
 
     if (!javaClass.isValid()) {
       javaClass = pointer.getElement();
@@ -97,13 +83,14 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
 
     JavaPsiClassReferenceElement item = JavaClassNameCompletionContributor.createClassLookupItem(javaClass, true);
 
-    item.handleInsert(createInsertionContext(editor, file, item));
+    item.handleInsert(createInsertionContext(editor, file, item, startOffset));
   }
 
   @NotNull
   private static InsertionContext createInsertionContext(@NotNull Editor editor,
                                                          @NotNull PsiFile file,
-                                                         @NotNull JavaPsiClassReferenceElement item) {
+                                                         @NotNull JavaPsiClassReferenceElement item,
+                                                         int startOffset) {
     Document document = editor.getDocument();
     final OffsetMap offsetMap = new OffsetMap(document);
     final InsertionContext insertionContext = new InsertionContext(offsetMap,
@@ -112,15 +99,17 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
                                                                    file, editor, false);
 
     int offset = editor.getCaretModel().getOffset();
-    return CompletionUtil.newContext(insertionContext, item, offset, offset);
+    return CompletionUtil.newContext(insertionContext, item, startOffset, offset);
   }
 
-  private static void replaceExpressionTextByNewExpressionInDocument(@NotNull Project project,
-                                                                     @NotNull PsiElement expression,
-                                                                     @NotNull Document document) {
+  private static int replaceExpressionTextByNewExpressionInDocument(@NotNull Project project,
+                                                                    @NotNull PsiElement expression,
+                                                                    @NotNull Document document) {
     TextRange range = expression.getTextRange();
-    document.replaceString(range.getStartOffset(), range.getEndOffset(), "new " + expression.getText());
+    String newPrefix = "new ";
+    document.replaceString(range.getStartOffset(), range.getEndOffset(), newPrefix + expression.getText());
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
+    return range.getStartOffset() + newPrefix.length();
   }
 }

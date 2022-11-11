@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
@@ -23,14 +23,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.SwingUndoUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static java.awt.FlowLayout.CENTER;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
@@ -233,7 +235,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     rightPanel.add(myReplaceToolbarWrapper);
     float initialProportion = maximizeLeftPanelOnResize? MAX_LEFT_PANEL_PROP : DEFAULT_PROP;
 
-    if (isNewUI) {
+    if (isNewUI && myReplaceRunnable != null) {
       ActionToolbar modeToolbar = createToolbar(new DefaultActionGroup(modeAction));
       modeToolbar.setReservePlaceAutoPopupIcon(false);
       JComponent modeToolbarComponent = modeToolbar.getComponent();
@@ -319,8 +321,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   public void resetUndoRedoActions() {
-    UIUtil.resetUndoRedoActions(mySearchTextComponent);
-    UIUtil.resetUndoRedoActions(myReplaceTextComponent);
+    SwingUndoUtil.resetUndoRedoActions(mySearchTextComponent);
+    SwingUndoUtil.resetUndoRedoActions(myReplaceTextComponent);
   }
 
   @Override
@@ -593,7 +595,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
     }
 
-    UIUtil.addUndoRedoActions(innerTextComponent);
+    SwingUndoUtil.addUndoRedoActions(innerTextComponent);
     wrapper.setContent(outerComponent);
 
     if (search) {
@@ -604,7 +606,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
     // Display empty text only when focused
     innerTextComponent.putClientProperty(
-      "StatusVisibleFunction", (BooleanFunction<JTextComponent>)(c -> c.getText().isEmpty() && c.isFocusOwner()));
+      TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JTextComponent>)(c -> c.getText().isEmpty() && c.isFocusOwner()));
 
     innerTextComponent.putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE);
     innerTextComponent.setBackground(UIUtil.getTextFieldBackground());
@@ -915,6 +917,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       presentation.setText(FindBundle.message(replaceMode ? "find.tooltip.switch.to.find" : "find.tooltip.switch.to.replace"));
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myEventDispatcher.getMulticaster().toggleSearchReplaceMode();

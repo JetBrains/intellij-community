@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -98,7 +98,6 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
 
     final FontMetrics fontMetrics = myStartIndex.getFontMetrics(myStartIndex.getFont());
     final Dimension minSize = new Dimension(myStartIndex.getPreferredSize());
-    //noinspection HardCodedStringLiteral
     minSize.width = fontMetrics.stringWidth("AAAAA");
     myStartIndex.setMinimumSize(minSize);
     myEndIndex.setMinimumSize(minSize);

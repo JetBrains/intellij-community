@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
 import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -208,9 +209,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 UIUtil.dispatchAllInvocationEvents()
 
                 if (!shouldBeAvailableAfterExecution()) {
+                    var action = findActionWithText(actionHint.expectedText)
+                    action = if (action == null) null else IntentionActionDelegate.unwrap(action)
                     assertNull(
-                        "Action '${actionHint.expectedText}' is still available after its invocation in test " + fileName,
-                        findActionWithText(actionHint.expectedText)
+                        "Action '${actionHint.expectedText}' (${action?.javaClass}) is still available after its invocation in test " + fileName,
+                        action
                     )
                 }
             } else {
@@ -284,11 +287,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 val group = highlight.problemGroup
                 if (group is SuppressableProblemGroup) {
                     val at = myFixture.file.findElementAt(highlight.actualStartOffset) ?: continue
-                    val actions = highlight.quickFixActionRanges[0].first.getOptions(at, null)
-                    for (action in actions) {
-                        if (action.text == text) {
-                            return action
-                        }
+                    val action = highlight.findRegisteredQuickFix<IntentionAction?> { desc, range ->
+                        desc.getOptions(at, null).find { action -> action.text == text }
+                    }
+                    if (action != null) {
+                        return action
                     }
                 }
             }

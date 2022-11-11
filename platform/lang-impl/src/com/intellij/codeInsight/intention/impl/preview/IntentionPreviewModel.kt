@@ -1,57 +1,46 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.preview
 
-import com.intellij.diff.comparison.ComparisonManager
-import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
+import com.intellij.diff.fragments.LineFragmentImpl
+import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LineNumberConverter
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.ui.JBUI
+import one.util.streamex.StreamEx
 import java.awt.Color
 
 internal class IntentionPreviewModel {
   companion object {
-    fun reformatRange(project: Project, psiFileCopy: PsiFile, lineFragment: LineFragment) {
-      val start = lineFragment.startOffset2
-      val end = lineFragment.endOffset2
 
-      if (start >= end) return
-
-      val document = FileDocumentManager.getInstance().getDocument(psiFileCopy.viewProvider.virtualFile)
-      if (document != null) PsiDocumentManager.getInstance(project).commitDocument(document)
-
-      CodeStyleManager.getInstance(project).reformatRange(psiFileCopy, start, end, true)
-    }
+    private fun squash(lines: List<LineFragment>): List<LineFragment> = StreamEx.of(lines)
+      .collapse({f1, f2 -> f2.startLine1 - f1.endLine1 == 1 && f2.startLine2 - f1.endLine2 == 1},
+                { f1, f2 ->
+                  LineFragmentImpl(f1.startLine1, f2.endLine1, f1.startLine2, f2.endLine2,
+                                   f1.startOffset1, f2.endOffset1, f1.startOffset2, f2.endOffset2)
+                }).toList()
 
     fun createEditors(project: Project, result: IntentionPreviewDiffResult?): List<EditorEx> {
       if (result == null) return emptyList()
 
       val psiFileCopy: PsiFile = result.psiFile
-      val lines: List<LineFragment> = result.lineFragments
-
-      if (result.fakeDiff) {
-        lines.forEach { lineFragment -> reformatRange(project, psiFileCopy, lineFragment) }
-      }
 
       val fileText = psiFileCopy.text
-      val origText = result.origFile.text
-      val diff = ComparisonManager.getInstance().compareLines(origText, fileText,
-                                                              ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE)
+      val origFile = result.origFile
+      val origText = origFile.text
+      val diff = squash(result.lineFragments)
       var diffs = diff.mapNotNull { fragment ->
         val start = getOffset(fileText, fragment.startLine2)
         val end = getOffset(fileText, fragment.endLine2)
@@ -74,7 +63,7 @@ internal class IntentionPreviewModel {
         var highlightingType = HighlightingType.UPDATED
         if (fragment.endLine2 - fragment.startLine2 == 1 && fragment.endLine1 - fragment.startLine1 == 1) {
           val prefix = StringUtil.commonPrefixLength(oldText, newText)
-          val suffix = StringUtil.commonSuffixLength(oldText, newText)
+          val suffix = StringUtil.commonSuffixLength(oldText, newText).coerceAtMost(oldText.length - prefix)
           if (prefix > 0 || suffix > 0) {
             var endPos = newText.length - suffix
             if (endPos > prefix) {
@@ -103,10 +92,32 @@ internal class IntentionPreviewModel {
       }
       if (diffs.isNotEmpty()) {
         val last = diffs.last()
-        val maxLine = if (result.fakeDiff) last.startLine + last.length else -1
-        return diffs.map { it.createEditor(project, result.origFile.fileType, maxLine) }
+        val maxLine = if (result.normalDiff) last.startLine + last.length else -1
+        val fileName = result.fileName
+        val editors = diffs.map { it.createEditor(project, origFile.fileType, maxLine) }
+        val fileNameEditor = createFileNamePresentation(fileName, origFile, project)
+        return listOfNotNull(fileNameEditor) + editors
       }
       return emptyList()
+    }
+
+    private fun createFileNamePresentation(fileName: String?, origFile: PsiFile, project: Project): EditorEx? {
+      fileName ?: return null
+      val commenter = LanguageCommenters.INSTANCE.forLanguage(origFile.language) ?: return null
+      var comment: String? = null
+      val linePrefix = commenter.lineCommentPrefix
+      if (linePrefix != null) {
+        comment = "$linePrefix $fileName"
+      }
+      else {
+        val prefix = commenter.blockCommentPrefix
+        val suffix = commenter.blockCommentSuffix
+        if (prefix != null && suffix != null) {
+          comment = "$prefix $fileName $suffix"
+        }
+      }
+      comment ?: return null
+      return DiffInfo(comment, 0, comment.length).createEditor(project, origFile.fileType, -1)
     }
 
     private enum class HighlightingType { ADDED, UPDATED, DELETED }
@@ -169,6 +180,7 @@ internal class IntentionPreviewModel {
       }
 
       editor.backgroundColor = getEditorBackground()
+      editor.colorsScheme.setColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR, editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR))
 
       editor.settings.isUseSoftWraps = true
       editor.scrollingModel.disableAnimation()

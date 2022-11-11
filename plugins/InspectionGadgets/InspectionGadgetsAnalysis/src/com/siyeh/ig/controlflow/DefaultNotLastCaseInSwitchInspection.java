@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection impleme
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       visitSwitchBlock(expression);
     }
@@ -113,9 +114,10 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection impleme
         final PsiStatement child = statements[i];
         if (child instanceof PsiSwitchLabelStatementBase) {
           final PsiSwitchLabelStatementBase label = (PsiSwitchLabelStatementBase)child;
-          if (label.isDefaultCase()) {
+          PsiElement defaultElement = SwitchUtils.findDefaultElement(label);
+          if (defaultElement != null) {
             if (labelSeen) {
-              registerStatementError(label, label, JavaElementKind.fromElement(statement).subject());
+              registerError(defaultElement.getFirstChild(), label, JavaElementKind.fromElement(statement).subject());
             }
             return;
           }

@@ -2,12 +2,12 @@ UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpres
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
 UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> Decompiled_Class: Unit
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
 UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> Decompiled_Class: Object
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> Decompiled_Class: Unit
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = TODO) -> FUN: TODO
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: foo
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
@@ -16,7 +16,7 @@ UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifie
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: bar
-    ULocalVariable (name = z) -> UQualifiedReferenceExpression -> null: null
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = filterIsInstance) -> FUN: filterIsInstance
+    ULocalVariable (name = z) -> UQualifiedReferenceExpression -> Decompiled_Method: filterIsInstance
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = filterIsInstance) -> FUN: filterIsInstance
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -203,7 +205,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
 
     CommentTracker ct = new CommentTracker();
 
-    if(!lambda.isPhysical()) {
+    if (!lambda.isPhysical() && !IntentionPreviewUtils.isPreviewElement(lambda)) {
       lambda = (PsiLambdaExpression)nextCall.getArgumentList().add(lambda);
     }
     PsiElement body = lambda.getBody();
@@ -215,17 +217,16 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     PsiParameter[] prevParameters = previousLambda.getParameterList().getParameters();
     LOG.assertTrue(prevParameters.length == 1);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    for(PsiReference ref : ReferencesSearch.search(nextParameters[0], new LocalSearchScope(body)).findAll()) {
-      PsiElement e = ref.getElement();
+    for(PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(nextParameters[0], body)) {
       PsiExpression replacement = ct.markUnchanged(previousBody);
-      if (e.getParent() instanceof PsiExpression &&
-          ParenthesesUtils.areParenthesesNeeded(previousBody, (PsiExpression)e.getParent(), false)) {
-        replacement = factory.createExpressionFromText("(a)", e);
+      if (ref.getParent() instanceof PsiExpression &&
+          ParenthesesUtils.areParenthesesNeeded(previousBody, (PsiExpression)ref.getParent(), false)) {
+        replacement = factory.createExpressionFromText("(a)", ref);
         PsiExpression parenthesized = ((PsiParenthesizedExpression)replacement).getExpression();
         LOG.assertTrue(parenthesized != null);
         parenthesized.replace(previousBody);
       }
-      ct.replace(e, replacement);
+      ct.replace(ref, replacement);
     }
     ct.replace(lambda.getParameterList(), previousLambda.getParameterList());
     ExpressionUtils.bindReferenceTo(nextRef, newName);

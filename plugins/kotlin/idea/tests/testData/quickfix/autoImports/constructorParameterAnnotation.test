@@ -1,7 +1,7 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import class 'SomeAnnotation'" "true"
 // ERROR: Unresolved reference: SomeAnnotation
-
+/* IGNORE_FIR */
 package some
 
 class X(@set:SomeAnnotation<caret> var field: Int)
@@ -13,9 +13,9 @@ package other
 annotation class SomeAnnotation
 //-----------------------
 // FILE: first.after.kt
-// "Import" "true"
+// "Import class 'SomeAnnotation'" "true"
 // ERROR: Unresolved reference: SomeAnnotation
-
+/* IGNORE_FIR */
 package some
 
 import other.SomeAnnotation

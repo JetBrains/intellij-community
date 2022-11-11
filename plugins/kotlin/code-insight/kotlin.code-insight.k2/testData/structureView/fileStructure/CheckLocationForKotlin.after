@@ -1,0 +1,21 @@
+-CheckLocationForKotlin.kt
+ -class Third : A3
+  fun equals(other: Any?): Boolean location=→Any
+  fun foo123(): Unit location=→A3
+  fun foo12_(): Unit location=→A2
+  fun foo1_3(): Unit location=→A3
+  fun foo1__(): Unit location=→A1
+  fun foo_23(): Unit location=→A3
+  fun foo_2_(): Unit location=→A2
+  fun foo__3(): Unit location=→A3
+  fun foo___(): Unit location=→First
+  fun hashCode(): Int location=→Any
+  fun toString(): String location=→Any
+  val bar123: String location=→A3
+  val bar12_: String location=→A2
+  val bar1_3: String location=→A3
+  val bar1__: String location=→A1
+  val bar_23: String location=→A3
+  val bar_2_: String location=→A2
+  val bar__3: String location=→A3
+  val bar___: String location=→First

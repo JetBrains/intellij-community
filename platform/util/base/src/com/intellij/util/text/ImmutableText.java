@@ -440,7 +440,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     }
 
     void getChars(int start, int end, char @NotNull [] dest, int destPos) {
-      final int cesure = head.length();
+      int cesure = head.length();
       if (end <= cesure) {
         ImmutableText.getChars(head, start, end, dest, destPos);
       }
@@ -455,7 +455,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
 
     @Override
     public CharSequence subSequence(int start, int end) {
-      final int cesure = head.length();
+      int cesure = head.length();
       if (end <= cesure) {
         return head.subSequence(start, end);
       }

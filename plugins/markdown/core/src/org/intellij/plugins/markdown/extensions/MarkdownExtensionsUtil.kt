@@ -16,7 +16,7 @@ import javax.swing.Icon
 @ApiStatus.Internal
 object MarkdownExtensionsUtil {
   fun collectConfigurableExtensions(enabledOnly: Boolean = false): Sequence<MarkdownConfigurableExtension> {
-    val generatingProviders = CodeFenceGeneratingProvider.all.asSequence().filterIsInstance<MarkdownConfigurableExtension>()
+    val generatingProviders = CodeFenceGeneratingProvider.collectProviders().asSequence().filterIsInstance<MarkdownConfigurableExtension>()
     val previewExtensions = MarkdownBrowserPreviewExtension.Provider.all.asSequence().filterIsInstance<MarkdownConfigurableExtension>()
     val all = generatingProviders + previewExtensions
     return when {
@@ -34,7 +34,7 @@ object MarkdownExtensionsUtil {
   }
 
   inline fun <reified T: CodeFenceGeneratingProvider> findCodeFenceGeneratingProvider(): T? {
-    return CodeFenceGeneratingProvider.EP_NAME.findExtension(T::class.java)
+    return CodeFenceGeneratingProvider.collectProviders().filterIsInstance<T>().firstOrNull()
   }
 
   fun loadIcon(icon: Icon, format: String): ByteArray {

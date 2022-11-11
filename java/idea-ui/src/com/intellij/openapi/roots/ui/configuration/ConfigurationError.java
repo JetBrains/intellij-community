@@ -49,7 +49,7 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
 
   /**
    * Called when user invokes "Ignore" action
-   * @param "true" if user invokes "Ignore", "false" if user wish to not ignore this error anymore
+   * @param b "true" if user invokes "Ignore", "false" if user wish to not ignore this error anymore
    */
   public void ignore(final boolean b) {
     if (b != myIgnored) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -73,7 +74,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleCustomImlDataEntity;
 import one.util.streamex.StreamEx;
+import org.jdom.Element;
 import org.jetbrains.annotations.*;
 import org.xml.sax.SAXParseException;
 
@@ -85,6 +94,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -104,9 +114,12 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
     myBus = project.getMessageBus();
     MessageBusConnection connection = myBus.connect(this);
+    
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, new ExternalAnnotationsRootListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
+        if (event.isCausedByWorkspaceModelChangesOnly()) return;
         dropAnnotationsCache();
       }
     });
@@ -1108,6 +1121,50 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
       if (file != null && ANNOTATIONS_XML.equals(file.getName()) && isUnderAnnotationRoot(file)) {
         dropAnnotationsCache();
       }
+    }
+  }
+
+  private class ExternalAnnotationsRootListener implements WorkspaceModelChangeListener {
+    @Override
+    public void changed(@NotNull VersionedStorageChange event) {
+      if (hasAnnotationRootInChanges(event, LibraryEntity.class, this::hasAnnotationRoot) ||
+          hasAnnotationRootInChanges(event, ModuleCustomImlDataEntity.class, this::hasAnnotationRoot)) {
+        dropAnnotationsCache();
+      }
+    }
+
+    private <T extends WorkspaceEntity> boolean hasAnnotationRootInChanges(@NotNull VersionedStorageChange event,
+                                                                           @NotNull Class<T> entityClass,
+                                                                           @NotNull Predicate<T> hasAnnotationRoot) {
+      for (EntityChange<T> change : event.getChanges(entityClass)) {
+        T newEntity = change.getNewEntity();
+        T oldEntity = change.getOldEntity();
+        if (newEntity != null && hasAnnotationRoot.test(newEntity) || oldEntity != null && hasAnnotationRoot.test(oldEntity)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private boolean hasAnnotationRoot(LibraryEntity e) {
+      return e.getRoots().stream().anyMatch(root -> "ANNOTATIONS".equals(root.getType().getName()));
+    }
+
+    private boolean hasAnnotationRoot(ModuleCustomImlDataEntity e) {
+      String tagCustomData = e.getRootManagerTagCustomData();
+      if (tagCustomData != null) {
+        try {
+          Element element = JDOMUtil.load(tagCustomData);
+          Element child = element.getChild("annotation-paths");
+          if (child != null && !child.getChildren("root").isEmpty()) {
+            return true;
+          }
+        }
+        catch (Throwable ex) {
+          return false;
+        }
+      }
+      return false;
     }
   }
 }

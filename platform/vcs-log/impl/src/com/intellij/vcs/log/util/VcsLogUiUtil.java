@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -95,7 +95,7 @@ public final class VcsLogUiUtil {
   @NotNull
   public static JScrollPane setupScrolledGraph(@NotNull VcsLogGraphTable graphTable, int border) {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(graphTable, border);
-    ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    ClientProperty.put(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     graphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
   }
@@ -171,7 +171,7 @@ public final class VcsLogUiUtil {
 
     @Override
     public void queryPlace(@NotNull Place place) {
-      List<CommitId> commits = myUi.getVcsLog().getSelectedCommits();
+      List<CommitId> commits = myUi.getTable().getSelection().getCommits();
       if (commits.size() > 0) {
         place.putPath(PLACE_KEY, commits.get(0));
       }

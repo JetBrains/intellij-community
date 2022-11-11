@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -29,6 +30,7 @@ import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FlipOperandsFix extends AbstractFix {
     private final XPathBinaryExpression myExpression;
@@ -46,7 +48,7 @@ public class FlipOperandsFix extends AbstractFix {
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.flip.binary.expression");
     }
 
@@ -80,4 +82,9 @@ public class FlipOperandsFix extends AbstractFix {
     protected boolean requiresEditor() {
         return false;
     }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new FlipOperandsFix(PsiTreeUtil.findSameElementInCopy(myToken, target));
+  }
 }

@@ -205,6 +205,11 @@ public abstract class ChooseByNameFilter<T> {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (state) {
         createPopup();

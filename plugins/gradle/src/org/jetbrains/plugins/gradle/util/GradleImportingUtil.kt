@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleImportingUtil")
 
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -53,11 +51,6 @@ fun whenResolveTaskStarted(action: () -> Unit, parentDisposable: Disposable) {
 fun getProjectDataLoadPromise(parentDisposable: Disposable): Promise<Project> {
   return getResolveTaskFinishPromise(parentDisposable)
     .thenAsync { project -> getProjectDataLoadPromise(project, null) }
-}
-
-@IntellijInternalApi
-fun getExecutionTaskFinishPromise(parentDisposable: Disposable): Promise<Project> {
-  return getExternalSystemTaskFinishPromise(parentDisposable) { it.type == ExternalSystemTaskType.EXECUTE_TASK }
 }
 
 @TestOnly
@@ -142,12 +135,10 @@ private fun getProjectDataLoadPromise(project: Project, expectedProjectPath: Str
   val connection = project.messageBus.connect(parentDisposable)
 
   connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-    override fun onImportFinished(projectPath: String?) {
+    override fun onFinalTasksFinished(projectPath: String?) {
       if (expectedProjectPath == null || expectedProjectPath == projectPath) {
         Disposer.dispose(parentDisposable)
-        invokeLater {
-          promise.setResult(project)
-        }
+        promise.setResult(project)
       }
     }
 

@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.containers.ContainerUtil
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -38,9 +37,9 @@ class DebugLogManager {
 
   fun getSavedCategories(): List<Category> {
     val properties = PropertiesComponent.getInstance()
-    return ContainerUtil.concat(fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG),
-                                fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE),
-                                fromString(properties.getValue(LOG_ALL_CATEGORIES), DebugLogLevel.ALL))
+    return fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG) +
+           fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE) +
+           fromString(properties.getValue(LOG_ALL_CATEGORIES), DebugLogLevel.ALL)
   }
 
   fun clearCategories(categories: List<Category>) {

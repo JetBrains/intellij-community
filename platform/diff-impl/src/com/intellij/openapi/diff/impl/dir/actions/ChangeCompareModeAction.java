@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -54,5 +55,10 @@ class ChangeCompareModeAction extends DumbAwareAction {
     final boolean on = myModel.getCompareMode() == myMode;
     e.getPresentation().setIcon(on ? ON : OFF);
     e.getPresentation().setSelectedIcon(on ? ON_SELECTED : OFF);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

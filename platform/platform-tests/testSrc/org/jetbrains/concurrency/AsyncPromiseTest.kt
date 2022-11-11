@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
@@ -357,9 +357,9 @@ class AsyncPromiseTest {
   fun testExceptionInsideComputationIsLogged() {
     val loggedError = AtomicBoolean()
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
         loggedError.set(true)
-        return false
+        return Action.NONE
       }
     }) {
       val promise = ReadAction.nonBlocking {
@@ -380,5 +380,23 @@ class AsyncPromiseTest {
       assertThat(cause).isInstanceOf(UnsupportedOperationException::class.java)
       assertThat(loggedError.get()).isTrue()
     }
+  }
+
+  @Test
+  fun `processed method should reject the passed promise`() {
+    fun <T> AsyncPromise<T>.onErrorIgnore(): AsyncPromise<T> =
+      onError { /* ignore to not throw as an unobserved exception in tests */ }
+
+    fun doTest(promise: Promise<Any>) {
+      val newPromise = AsyncPromise<Any>().onErrorIgnore()
+      promise.processed(newPromise)
+      assertTrue(promise.isRejected)
+      assertTrue(newPromise.isRejected, "A promise $newPromise should be rejected by a promise $promise")
+    }
+
+    doTest(AsyncPromise<Any>().onErrorIgnore().apply {
+      setError("error 1")
+    })
+    doTest(rejectedPromise("error 2"))
   }
 }

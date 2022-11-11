@@ -173,8 +173,17 @@ public interface EditorSettings {
   boolean isShowingSpecialChars();
   void setShowingSpecialChars(boolean value);
 
-  @Nullable Boolean isShowVisualFormattingLayer();
-  void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer);
+  /**
+   * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
+   */
+  @Deprecated
+  default @Nullable Boolean isShowVisualFormattingLayer() { return null; }
+
+  /**
+   * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
+   */
+  @Deprecated
+  default void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {}
 
   boolean isInsertParenthesesAutomatically();
 }

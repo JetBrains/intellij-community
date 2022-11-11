@@ -62,6 +62,6 @@ b -> UParameter (name = b)
 Int -> USimpleNameReferenceExpression (identifier = Int)
 objectLiteral -> UMethod (name = objectLiteral)
     object -> UClass (name = null)
-    Parent -> UObjectLiteralExpression
+    Parent -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2))
     b -> USimpleNameReferenceExpression (identifier = b)
     a -> USimpleNameReferenceExpression (identifier = a)

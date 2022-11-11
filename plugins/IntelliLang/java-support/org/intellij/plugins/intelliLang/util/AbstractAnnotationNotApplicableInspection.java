@@ -26,7 +26,7 @@ public abstract class AbstractAnnotationNotApplicableInspection extends LocalIns
       final String annotationName = getAnnotationName(holder.getProject());
 
       @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
+      public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         final String name = annotation.getQualifiedName();
         if (annotationName.equals(name)) {
           checkAnnotation(annotation, holder);

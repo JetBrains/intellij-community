@@ -774,9 +774,7 @@ public final class AnnotationsHighlightUtil {
     if (!(containerRef instanceof PsiClassObjectAccessExpression)) return null;
     PsiType containerType = ((PsiClassObjectAccessExpression)containerRef).getOperand().getType();
     if (!(containerType instanceof PsiClassType)) return null;
-    PsiClass container = ((PsiClassType)containerType).resolve();
-    if (container == null) return null;
-    return container;
+    return ((PsiClassType)containerType).resolve();
   }
 
   static HighlightInfo checkReceiverPlacement(@NotNull PsiReceiverParameter parameter) {

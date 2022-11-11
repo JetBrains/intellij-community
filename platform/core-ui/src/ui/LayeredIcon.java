@@ -75,6 +75,16 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   @NotNull
   @Override
+  public LayeredIcon replaceBy(@NotNull IconReplacer replacer) {
+    LayeredIcon result = new LayeredIcon(this);
+    for (int i = 0; i < result.myIcons.length; i++) {
+      result.myIcons[i] = replacer.replaceIcon(result.myIcons[i]);
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
   public LayeredIcon copy() {
     return new LayeredIcon(this);
   }

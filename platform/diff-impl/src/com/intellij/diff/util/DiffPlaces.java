@@ -17,4 +17,5 @@ public interface DiffPlaces {
   @NonNls String MERGE = "Merge";
   @NonNls String DIR_DIFF = "DirDiff";
   @NonNls String EXTERNAL = "External";
+  @NonNls String BLANK = "BlankDiffWindow";
 }

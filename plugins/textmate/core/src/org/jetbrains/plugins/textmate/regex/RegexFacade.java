@@ -48,7 +48,7 @@ public final class RegexFacade {
                          int gosOffset,
                          boolean matchBeginOfString,
                          @Nullable Runnable checkCancelledCallback) {
-    gosOffset = gosOffset >= 0 ? gosOffset : byteOffset;
+    gosOffset = gosOffset != byteOffset ? Integer.MAX_VALUE : byteOffset;
     int options = matchBeginOfString ? Option.NONE : Option.NOTBOS;
 
     LastMatch lastResult = matchResult.get();

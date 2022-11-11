@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import groovy.transform.CompileStatic
@@ -31,10 +31,10 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
     result.parentProjectPath = project.parent?.path
 
     for (it in project.configurations) {
-      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible))
+      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, extractStringList(it, "getDeclarationAlternatives")))
     }
     for (it in project.buildscript.configurations) {
-      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true))
+      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true, extractStringList(it, "getDeclarationAlternatives")))
     }
 
     def convention = project.convention
@@ -93,6 +93,16 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       project, e, "Project extensions data import errors"
     ).withDescription(
       "Unable to resolve some context data of gradle scripts. Some codeInsight features inside *.gradle files can be unavailable.")
+  }
+
+  @NotNull private static List<String> extractStringList(Object instance, String methodName) {
+    try {
+      Method method = instance.class.getMethod(methodName)
+      List<String> result = method.invoke(instance) as List<String>
+      return result != null ? result : Collections.<String>emptyList()
+    } catch (NoSuchMethodException | SecurityException | ClassCastException ignored) {
+      return Collections.emptyList()
+    }
   }
 
   static String getType(object) {

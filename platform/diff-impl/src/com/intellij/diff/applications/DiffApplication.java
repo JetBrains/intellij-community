@@ -4,6 +4,8 @@ package com.intellij.diff.applications;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.actions.BlankDiffWindowUtil;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
@@ -15,12 +17,15 @@ import com.intellij.idea.SplashManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,11 +33,10 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 final class DiffApplication extends DiffApplicationBase {
   DiffApplication() {
-    super(2, 3);
+    super(0, 2, 3);
   }
 
   @Override
@@ -54,15 +58,22 @@ final class DiffApplication extends DiffApplicationBase {
 
   @NotNull
   @Override
-  public Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
+  public CompletableFuture<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
     List<String> filePaths = args.subList(1, args.size());
     List<VirtualFile> files = findFilesOrThrow(filePaths, currentDirectory);
     Project project = guessProject(files);
 
     CompletableFuture<CliResult> future = new CompletableFuture<>();
     ApplicationManager.getApplication().invokeLater(() -> {
-      SimpleDiffRequestChain chain = SimpleDiffRequestChain.fromProducer(new MyDiffRequestProducer(project, files));
-      chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL);
+      DiffRequestChain chain;
+      if (files.isEmpty()) {
+        chain = BlankDiffWindowUtil.createBlankDiffRequestChain(project);
+        BlankDiffWindowUtil.setupBlankContext(chain);
+      }
+      else {
+        chain = SimpleDiffRequestChain.fromProducer(new MyDiffRequestProducer(project, files));
+        chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL);
+      }
 
       WindowWrapper.Mode mode = project != null ? WindowWrapper.Mode.FRAME : WindowWrapper.Mode.MODAL;
       DiffDialogHints dialogHints = new DiffDialogHints(mode, null, wrapper -> {
@@ -105,6 +116,12 @@ final class DiffApplication extends DiffApplicationBase {
       else {
         return DiffRequestFactory.getInstance().getTitle(myFiles.get(0), myFiles.get(1));
       }
+    }
+
+    @Override
+    public @Nullable FileType getContentType() {
+      VirtualFile file = ContainerUtil.find(myFiles, Conditions.notNull());
+      return file != null ? file.getFileType() : null;
     }
 
     @Override

@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="kotlinx-serialization-protobuf" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-protobuf-jvm:1.4.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.4.0/kotlinx-serialization-protobuf-jvm-1.4.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.4.0/kotlinx-serialization-protobuf-jvm-1.4.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

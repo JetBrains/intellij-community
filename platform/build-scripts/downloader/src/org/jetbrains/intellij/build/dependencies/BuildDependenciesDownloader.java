@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies;
 
+import com.github.luben.zstd.ZstdInputStreamNoFinalizer;
+import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.Striped;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -11,14 +12,15 @@ import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesSpan
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTraceEventAttributes;
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTracer;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
@@ -29,17 +31,25 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@SuppressWarnings("SSBasedInspection")
+@SuppressWarnings({"SSBasedInspection", "UnstableApiUsage"})
 @ApiStatus.Internal
 final public class BuildDependenciesDownloader {
+  private static final Logger LOG = Logger.getLogger(BuildDependenciesDownloader.class.getName());
+
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
-  private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
-    .version(HttpClient.Version.HTTP_1_1).build();
   private static final Striped<Lock> fileLocks = Striped.lock(1024);
   private static final AtomicBoolean cleanupFlag = new AtomicBoolean(false);
+
+  // increment on semantic changes in extract code to invalidate all current caches
+  private static final int EXTRACT_CODE_VERSION = 3;
+
+  // increment on semantic changes in download code to invalidate all current caches
+  // e.g. when some issues in extraction code were fixed
+  private static final int DOWNLOAD_CODE_VERSION = 1;
 
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
@@ -48,31 +58,31 @@ final public class BuildDependenciesDownloader {
   @NotNull
   public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
 
-  public static void debug(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(message);
+  // init is very expensive due to SSL initialization
+  private static final class HttpClientHolder {
+    private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
+      .version(HttpClient.Version.HTTP_1_1).build();
   }
 
-  public static void info(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(message);
-  }
-
-  public static void warn(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println("WARNING: " + message);
-  }
-
-  public static Map<String, String> getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
-    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("gradle.properties");
-    return BuildDependenciesUtil.loadPropertiesFile(propertiesFile);
+  public static DependenciesProperties getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
+    try {
+      return new DependenciesProperties(communityRoot);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String packaging) {
     return getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, null, packaging);
   }
 
-  public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String classifier, String packaging) {
+  public static URI getUriForMavenArtifact(String mavenRepository,
+                                           String groupId,
+                                           String artifactId,
+                                           String version,
+                                           String classifier,
+                                           String packaging) {
     String result = mavenRepository;
     if (!result.endsWith("/")) {
       result += "/";
@@ -117,52 +127,57 @@ final public class BuildDependenciesDownloader {
 
   public static synchronized Path downloadFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot, URI uri) {
     cleanUpIfRequired(communityRoot);
-
+    String uriString = uri.toString();
     try {
-      String uriString = uri.toString();
       String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1);
-      String fileName = DigestUtils.sha256Hex(uriString).substring(0, 10) + "-" + lastNameFromUri;
+      String fileName = hashString(uriString + "V" + DOWNLOAD_CODE_VERSION).substring(0, 10) + "-" + lastNameFromUri;
       Path targetFile = getDownloadCachePath(communityRoot).resolve(fileName);
 
       downloadFile(uri, targetFile);
       return targetFile;
     }
     catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Cannot download " + uriString, e);
     }
   }
 
-  public static synchronized Path extractFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot, Path archiveFile, BuildDependenciesExtractOptions... options) {
+  public static synchronized Path extractFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot,
+                                                             Path archiveFile,
+                                                             BuildDependenciesExtractOptions... options) {
     cleanUpIfRequired(communityRoot);
 
     try {
       Path cachePath = getDownloadCachePath(communityRoot);
 
       String toHash = archiveFile.toString() + getExtractOptionsShortString(options);
-      String directoryName = archiveFile.getFileName().toString() + "." + DigestUtils.sha256Hex(toHash).substring(0, 6) + ".d";
+      String directoryName = archiveFile.getFileName().toString() + "." + hashString(toHash).substring(0, 6) + ".d";
       Path targetDirectory = cachePath.resolve(directoryName);
       Path flagFile = cachePath.resolve(directoryName + ".flag");
       extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options);
 
       return targetDirectory;
     }
+    catch (RuntimeException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
+  private static @NotNull String hashString(@NotNull String s) {
+    return new BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36);
+  }
+
   private static byte[] getExpectedFlagFileContent(Path archiveFile, Path targetDirectory, BuildDependenciesExtractOptions[] options)
     throws IOException {
-    // Increment this number to force all clients to extract content again
-    // e.g. when some issues in extraction code were fixed
-    int codeVersion = 2;
 
     long numberOfTopLevelEntries;
     try (Stream<Path> stream = Files.list(targetDirectory)) {
       numberOfTopLevelEntries = stream.count();
     }
 
-    return (codeVersion + "\n" + archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS) + "\n" +
+    return (EXTRACT_CODE_VERSION + "\n" + archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS) + "\n" +
             "topLevelEntries:" + numberOfTopLevelEntries + "\n" +
             "options:" + getExtractOptionsShortString(options) + "\n").getBytes(StandardCharsets.UTF_8);
   }
@@ -178,10 +193,13 @@ final public class BuildDependenciesDownloader {
   }
 
   // assumes file at `archiveFile` is immutable
-  private static void extractFileWithFlagFileLocation(Path archiveFile, Path targetDirectory, Path flagFile, BuildDependenciesExtractOptions[] options)
+  private static void extractFileWithFlagFileLocation(Path archiveFile,
+                                                      Path targetDirectory,
+                                                      Path flagFile,
+                                                      BuildDependenciesExtractOptions[] options)
     throws Exception {
     if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
-      debug("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
+      LOG.fine("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
 
       // Update file modification time to maintain FIFO caches i.e.
       // in persistent cache folder on TeamCity agent
@@ -200,7 +218,7 @@ final public class BuildDependenciesDownloader {
       BuildDependenciesUtil.cleanDirectory(targetDirectory);
     }
 
-    info(" * Extracting " + archiveFile + " to " + targetDirectory);
+    LOG.info(" * Extracting " + archiveFile + " to " + targetDirectory);
     extractCount.incrementAndGet();
 
     Files.createDirectories(targetDirectory);
@@ -208,40 +226,65 @@ final public class BuildDependenciesDownloader {
     List<Path> filesAfterCleaning = BuildDependenciesUtil.listDirectory(targetDirectory);
     if (!filesAfterCleaning.isEmpty()) {
       throw new IllegalStateException("Target directory " + targetDirectory + " is not empty after cleaning: " +
-                                      filesAfterCleaning.stream().map(path -> path.toString()).collect(
-                                        Collectors.joining(" ")));
+                                      filesAfterCleaning.stream().map(Path::toString).collect(Collectors.joining(" ")));
     }
 
-    byte[] start;
-    try (InputStream stream = Files.newInputStream(archiveFile)) {
-      start = stream.readNBytes(2);
+    ByteBuffer start = ByteBuffer.allocate(4);
+    try (FileChannel channel = FileChannel.open(archiveFile)) {
+      channel.read(start, 0);
     }
-    if (start.length < 2) {
-      throw new IllegalStateException("File " + archiveFile + " is smaller than 2 bytes, could not be extracted");
+    start.flip();
+    if (start.remaining() != 4) {
+      throw new IllegalStateException("File " + archiveFile + " is smaller than 4 bytes, could not be extracted");
     }
 
     boolean stripRoot = Arrays.stream(options).anyMatch(opt -> opt == BuildDependenciesExtractOptions.STRIP_ROOT);
 
-    if (start[0] == (byte)0x50 && start[1] == (byte)0x4B) {
+    int magicNumber = start.order(ByteOrder.LITTLE_ENDIAN).getInt(0);
+    if (magicNumber == 0xFD2FB528) {
+      Path unwrappedArchiveFile = archiveFile.getParent().resolve(archiveFile.getFileName() + ".unwrapped");
+      try {
+        try (OutputStream out = Files.newOutputStream(unwrappedArchiveFile)) {
+          try (ZstdInputStreamNoFinalizer input = new ZstdInputStreamNoFinalizer(Files.newInputStream(archiveFile))) {
+            input.transferTo(out);
+          }
+        }
+        BuildDependenciesUtil.extractZip(unwrappedArchiveFile, targetDirectory, stripRoot);
+      }
+      finally {
+        Files.deleteIfExists(unwrappedArchiveFile);
+      }
+    }
+    else if (start.get(0) == (byte)0x50 && start.get(1) == (byte)0x4B) {
       BuildDependenciesUtil.extractZip(archiveFile, targetDirectory, stripRoot);
     }
-    else if (start[0] == (byte)0x1F && start[1] == (byte)0x8B) {
+    else if (start.get(0) == (byte)0x1F && start.get(1) == (byte)0x8B) {
       BuildDependenciesUtil.extractTarGz(archiveFile, targetDirectory, stripRoot);
     }
-    else if (start[0] == (byte)0x42 && start[1] == (byte)0x5A) {
+    else if (start.get(0) == (byte)0x42 && start.get(1) == (byte)0x5A) {
       BuildDependenciesUtil.extractTarBz2(archiveFile, targetDirectory, stripRoot);
     }
     else {
-      throw new IllegalStateException("Unknown archive format at " + archiveFile + ". Currently only .tar.gz or .zip are supported");
+      throw new IllegalStateException("Unknown archive format at " + archiveFile + "." +
+                                      " Magic number (little endian hex): " + Integer.toHexString(magicNumber) + "." +
+                                      " Currently only .tar.gz or .zip are supported");
     }
 
     Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options));
     if (!checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
-      throw new IllegalStateException("checkFlagFile must be true right after extracting the archive. flagFile:" + flagFile + " archiveFile:" + archiveFile + " target:" + targetDirectory);
+      throw new IllegalStateException("checkFlagFile must be true right after extracting the archive. flagFile:" +
+                                      flagFile +
+                                      " archiveFile:" +
+                                      archiveFile +
+                                      " target:" +
+                                      targetDirectory);
     }
   }
 
-  public static void extractFile(Path archiveFile, Path target, BuildDependenciesCommunityRoot communityRoot, BuildDependenciesExtractOptions... options) {
+  public static void extractFile(Path archiveFile,
+                                 Path target,
+                                 BuildDependenciesCommunityRoot communityRoot,
+                                 BuildDependenciesExtractOptions... options) {
     cleanUpIfRequired(communityRoot);
 
     final Lock lock = fileLocks.get(target);
@@ -250,11 +293,13 @@ final public class BuildDependenciesDownloader {
       // Extracting different archive files into the same target should overwrite target each time
       // That's why flagFile should be dependent only on target location
       Path flagFile = getProjectLocalDownloadCache(communityRoot)
-        .resolve(DigestUtils.sha256Hex(target.toString()).substring(0, 6) + "-" + target.getFileName().toString() + ".flag.txt");
+        .resolve(hashString(target.toString()).substring(0, 6) + "-" + target.getFileName().toString() + ".flag.txt");
       extractFileWithFlagFileLocation(archiveFile, target, flagFile, options);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       throw new RuntimeException(e);
-    } finally {
+    }
+    finally {
       lock.unlock();
     }
   }
@@ -296,19 +341,17 @@ final public class BuildDependenciesDownloader {
             .setHeader("User-Agent", "Build Script Downloader")
             .build();
 
-          info(" * Downloading " + uri + " -> " + target);
+          LOG.info(" * Downloading " + uri + " -> " + target);
 
-          HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+          HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
           if (response.statusCode() != 200) {
             StringBuilder builder =
               new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");
 
             Map<String, List<String>> headers = response.headers().map();
-            for (String headerName : headers.keySet().stream().sorted().collect(Collectors.toList())) {
-              for (String value : headers.get(headerName)) {
-                builder.append("Header: ").append(headerName).append(": ").append(value).append("\n");
-              }
-            }
+            headers.keySet().stream().sorted()
+              .flatMap(headerName -> headers.get(headerName).stream().map(value -> "Header: " + headerName + ": " + value + "\n"))
+              .forEach(builder::append);
 
             builder.append("\n");
             if (Files.exists(tempFile)) {
@@ -350,7 +393,8 @@ final public class BuildDependenciesDownloader {
       finally {
         span.close();
       }
-    } finally {
+    }
+    finally {
       lock.unlock();
     }
   }
@@ -375,7 +419,7 @@ final public class BuildDependenciesDownloader {
       StringWriter writer = new StringWriter();
       t.printStackTrace(new PrintWriter(writer));
 
-      warn("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
+      LOG.warning("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
     }
   }
 

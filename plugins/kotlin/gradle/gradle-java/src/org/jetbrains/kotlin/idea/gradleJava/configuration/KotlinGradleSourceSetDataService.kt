@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
@@ -27,29 +28,26 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
-import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.*
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
-import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
-import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
+import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
-import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.roots.findAll
-import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
@@ -108,7 +106,7 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
 
             val moduleNode = ExternalSystemApiUtil.findParent(sourceSetNode, ProjectKeys.MODULE) ?: continue
             val kotlinFacet = configureFacetByGradleModule(ideModule, modelsProvider, moduleNode, sourceSetNode) ?: continue
-            val currentModuleCompilerVersion = ideModule.externalCompilerVersion?.let(IdeKotlinVersion.Companion::opt)
+            val currentModuleCompilerVersion = ExternalCompilerVersionProvider.get(ideModule)
             if (currentModuleCompilerVersion != null) {
                 maxCompilerVersion = maxOf(maxCompilerVersion ?: currentModuleCompilerVersion, currentModuleCompilerVersion)
             }
@@ -177,11 +175,8 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 
             val modifiableModel = modelsProvider.getModifiableLibraryModel(ideLibrary) as LibraryEx.ModifiableModelEx
             if (anyNonJvmModules || ideLibrary.looksAsNonJvmLibrary()) {
-                detectLibraryKind(modifiableModel.getFiles(OrderRootType.CLASSES))?.let { modifiableModel.kind = it }
-            } else if (
-                ideLibrary is LibraryEx &&
-                (ideLibrary.kind === JSLibraryKind || ideLibrary.kind === NativeLibraryKind || ideLibrary.kind === CommonLibraryKind)
-            ) {
+                detectLibraryKind(ideLibrary, project)?.let { modifiableModel.kind = it }
+            } else if (ideLibrary is LibraryEx && ideLibrary.kind in NON_JVM_LIBRARY_KINDS) {
                 modifiableModel.forgetKind()
             }
         }
@@ -189,7 +184,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 
     private fun Library.looksAsNonJvmLibrary(): Boolean {
         name?.let { name ->
-            if (nonJvmSuffixes.any { it in name } || name.startsWith(KOTLIN_NATIVE_LIBRARY_PREFIX))
+            if (NON_JVM_SUFFIXES.any { it in name } || name.startsWith(KOTLIN_NATIVE_LIBRARY_PREFIX))
                 return true
         }
 
@@ -199,7 +194,13 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
     companion object {
         val LOG = Logger.getInstance(KotlinGradleLibraryDataService::class.java)
 
-        val nonJvmSuffixes = listOf("-common", "-js", "-native", "-kjsm", "-metadata")
+        val NON_JVM_LIBRARY_KINDS: List<PersistentLibraryKind<*>> = listOf(
+            KotlinJavaScriptLibraryKind,
+            KotlinNativeLibraryKind,
+            KotlinCommonLibraryKind
+        )
+
+        val NON_JVM_SUFFIXES = listOf("-common", "-js", "-native", "-kjsm", "-metadata")
     }
 }
 

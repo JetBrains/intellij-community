@@ -4,9 +4,11 @@ package com.intellij.openapi.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -239,6 +241,11 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myBrowseButton.isVisible() && myBrowseButton.isEnabled());
     }
@@ -304,13 +311,6 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (e.isConsumed()) return true;
     return super.processKeyBinding(ks, e, condition, pressed);
   }
-  /**
-   * @deprecated use {@link #addActionListener(ActionListener)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
-    addActionListener(actionListener);
-  }
 
   private static final class LazyDisposable implements Activatable {
     private final WeakReference<ComponentWithBrowseButton<?>> reference;
@@ -324,10 +324,16 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     public void showNotify() {
       ComponentWithBrowseButton<?> component = reference.get();
       if (component == null) return; // component is collected
-      Disposable disposable = ApplicationManager.getApplication() == null ? null :
-                              UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(component));
-      if (disposable == null) return; // parent disposable not found
-      Disposer.register(disposable, component);
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        DataManager dataManager = app.getServiceIfCreated(DataManager.class);
+        if (dataManager != null) {
+          Disposable disposable = UI_DISPOSABLE.getData(dataManager.getDataContext(component));
+          if (disposable != null) {
+            Disposer.register(disposable, component);
+          }
+        }
+      }
     }
   }
 }

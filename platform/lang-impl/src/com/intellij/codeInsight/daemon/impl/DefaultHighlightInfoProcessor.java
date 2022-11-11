@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -12,11 +12,13 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
@@ -53,13 +55,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
-          ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-            ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
-            TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
-            if (highlightingPass != null) {
-              highlightingPass.doApplyInformationToEditor();
-            }
-          }, session.getProgressIndicator());
+          showAutoImportHints(editor, psiFile, session.getProgressIndicator());
         }
 
         repaintErrorStripeAndIcon(editor, project);
@@ -67,12 +63,23 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     });
   }
 
+  static void showAutoImportHints(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull ProgressIndicator progressIndicator) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
+      TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
+      if (highlightingPass != null) {
+        highlightingPass.doApplyInformationToEditor();
+      }
+    }, progressIndicator);
+  }
+
   static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project) {
     MarkupModel markup = editor.getMarkupModel();
     if (markup instanceof EditorMarkupModelImpl) {
       ((EditorMarkupModelImpl)markup).repaintTrafficLightIcon();
+      ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
     }
-    ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
   }
 
   @Override
@@ -114,7 +121,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                    long range,
                                                    @Nullable List<? extends HighlightInfo> infos,
                                                    @NotNull HighlightingSession highlightingSession) {
-    DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRange.startOffset(range), TextRange.endOffset(range), existing -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range), existing -> {
       if (existing.getGroup() == Pass.UPDATE_ALL && range == existing.getVisitingTextRange()) {
         if (infos != null) {
           for (HighlightInfo created : infos) {

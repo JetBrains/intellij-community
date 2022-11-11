@@ -25,6 +25,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
-    <provider implementation="org.jetbrains.idea.kpmsearch.KpmSearchFactoryProvider"/>
+    <provider implementation="org.jetbrains.idea.packagesearch.PackageSearchProviderFactory"/>
   </extensions>
 </idea-plugin>

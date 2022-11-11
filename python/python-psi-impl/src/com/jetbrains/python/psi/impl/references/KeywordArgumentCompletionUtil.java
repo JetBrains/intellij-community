@@ -234,7 +234,6 @@ public class KeywordArgumentCompletionUtil {
     /**
      * is name of kwargs parameter the same as transmitted to __init__ call
      *
-     * @return
      */
     public boolean isKwArgsTransit() {
       return kwArgsTransit;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -42,7 +42,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
     ValueMarkup existing = markers.getMarkup(value);
     Promise<Object> markPromise;
     if (existing != null) {
-      markPromise = markers.unmarkValueAsync(value);
+      markPromise = markers.unmarkValue(value);
     }
     else {
       Component component = event.getData(CONTEXT_COMPONENT);
@@ -55,7 +55,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
       dialog.show();
       ValueMarkup markup = dialog.getConfiguredMarkup();
       if (dialog.isOK() && markup != null) {
-        markPromise = markers.markValueAsync(value, markup);
+        markPromise = markers.markValue(value, markup);
       } else {
         return;
       }

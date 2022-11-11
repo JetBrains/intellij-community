@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ml.ngram
 
 import com.intellij.completion.ngram.slp.counting.trie.ArrayTrieCounter
@@ -44,7 +44,8 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
 
   fun learnNextToken(token: String) {
     updatePrevTokens(token)
-
+    val vocabulary = vocabulary
+    val model = model
     if (vocabulary is VocabularyWithLimit && model is NGramModel) {
       val indices = vocabulary.toIndicesWithLimit(prevTokens, model)
       if (indices.size > 1) {
@@ -60,6 +61,7 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
   }
 
   private fun scoreTokens(tokens: List<String>): Double {
+    val vocabulary = vocabulary
     if (vocabulary is VocabularyWithLimit) {
       val queryIndices = vocabulary.toExistingIndices(tokens)
       return model.modelToken(queryIndices, queryIndices.size - 1).first

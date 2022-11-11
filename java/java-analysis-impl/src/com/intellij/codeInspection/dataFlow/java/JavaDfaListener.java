@@ -69,13 +69,6 @@ public interface JavaDfaListener extends DfaListener {
              !PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), anchor, false)) {
       callBeforeExpressionPush(value, expression, state, (PsiConditionalExpression)parent);
     }
-    else if (parent instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
-      if ((polyadic.getOperationTokenType().equals(JavaTokenType.ANDAND) || polyadic.getOperationTokenType().equals(JavaTokenType.OROR)) &&
-          PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyadic.getOperands()), anchor, false)) {
-        callBeforeExpressionPush(value, expression, state, polyadic);
-      }
-    }
   }
 
   /**

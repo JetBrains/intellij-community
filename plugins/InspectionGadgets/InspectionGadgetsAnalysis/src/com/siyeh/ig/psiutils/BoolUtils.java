@@ -30,11 +30,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.util.OptionalUtil.*;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
+import static com.intellij.psi.JavaTokenType.*;
 
 public final class BoolUtils {
 
@@ -82,6 +84,32 @@ public final class BoolUtils {
   @NotNull
   public static String getNegatedExpressionText(@Nullable PsiExpression condition, CommentTracker tracker) {
     return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES, tracker);
+  }
+
+  /**
+   * Returns the number of logical operands in the expression.
+   *
+   * @param condition The expression
+   * @return the number of logical operands in the expression
+   */
+  public static int getLogicalOperandCount(@Nullable PsiExpression condition) {
+    PsiExpression unparenthesizedExpression = PsiUtil.skipParenthesizedExprDown(condition);
+    if (!(unparenthesizedExpression instanceof PsiPolyadicExpression)) {
+      return 1;
+    }
+    PsiPolyadicExpression infixExpression= (PsiPolyadicExpression) unparenthesizedExpression;
+    if (!ANDAND.equals(infixExpression.getOperationTokenType())
+        && !OROR.equals(infixExpression.getOperationTokenType())
+        && (PsiType.BOOLEAN.equals(infixExpression.getOperands()[0].getType())
+            || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(infixExpression.getOperands()[0].getType()))
+            || !Arrays.asList(AND, OR).contains(infixExpression.getOperationTokenType()))) {
+      return 1;
+    }
+    int nbOperands= 0;
+    for (PsiExpression operand : infixExpression.getOperands()) {
+      nbOperands+= getLogicalOperandCount(operand);
+    }
+    return nbOperands;
   }
 
   private static final CallMatcher STREAM_ANY_MATCH = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "anyMatch");

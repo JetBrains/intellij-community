@@ -88,16 +88,16 @@ public interface PsiClass
   PsiReferenceList getImplementsList();
 
   /**
-   * Returns the list of class types for the classes that this class or interface extends.
+   * Returns the array of class types for the classes that this class or interface extends.
    *
-   * @return the list of extended class types, or an empty list for anonymous classes.
+   * @return the array of extended class types, or an empty list for anonymous classes.
    */
   PsiClassType @NotNull [] getExtendsListTypes();
 
   /**
-   * Returns the list of class types for the interfaces that this class implements.
+   * Returns the array of class types for the interfaces that this class implements.
    *
-   * @return the list of extended class types, or an empty list for anonymous classes,
+   * @return the array of extended class types, or an empty list for anonymous classes,
    * enums and annotation types
    */
   PsiClassType @NotNull [] getImplementsListTypes();
@@ -113,9 +113,9 @@ public interface PsiClass
   }
 
   /**
-   * Returns the list of class types that this class or interface explicitly permits.
+   * Returns the array of class types that this class or interface explicitly permits.
    *
-   * @return the list of explicitly permitted classes.
+   * @return the array of explicitly permitted classes.
    */
   default PsiClassType @NotNull [] getPermitsListTypes() {
     PsiReferenceList permitsList = getPermitsList();
@@ -135,86 +135,86 @@ public interface PsiClass
   PsiClass getSuperClass();
 
   /**
-   * Returns the list of interfaces implemented by the class, or extended by the interface.
+   * Returns the array of interfaces implemented by the class, or extended by the interface.
    *
-   * @return the list of interfaces.
+   * @return the array of interfaces.
    */
   PsiClass @NotNull [] getInterfaces();
 
   /**
-   * Returns the list of classes and interfaces extended or implemented by the class.
+   * Returns the array of classes and interfaces extended or implemented by the class.
    *
-   * @return the list of classes or interfaces. May return zero elements when jdk is
+   * @return the array of classes or interfaces. May return zero elements when jdk is
    * not configured, so no java.lang.Object is found
    */
   PsiClass @NotNull [] getSupers();
 
   /**
-   * Returns the list of class types for the classes and interfaces extended or
+   * Returns the array of class types for the classes and interfaces extended or
    * implemented by the class.
    *
-   * @return the list of class types for the classes or interfaces.
+   * @return the array of class types for the classes or interfaces.
    * For the class with no explicit extends list, the returned list always contains at least one element for the java.lang.Object type.
    * If psiClass is java.lang.Object, returned list is empty.
    */
   PsiClassType @NotNull [] getSuperTypes();
 
   /**
-   * Returns the list of fields in the class.
+   * Returns the array of fields in the class.
    *
-   * @return the list of fields.
+   * @return the array of fields.
    */
   @Override
   PsiField @NotNull [] getFields();
 
   /**
-   * Returns the list of methods in the class.
+   * Returns the array of methods in the class.
    *
-   * @return the list of methods.
+   * @return the array of methods.
    */
   @Override
   PsiMethod @NotNull [] getMethods();
 
   /**
-   * Returns the list of constructors for the class.
+   * Returns the array of constructors for the class.
    *
-   * @return the list of constructors,
+   * @return the array of constructors,
    */
   PsiMethod @NotNull [] getConstructors();
 
   /**
-   * Returns the list of inner classes for the class.
+   * Returns the array of inner classes for the class.
    *
-   * @return the list of inner classes.
+   * @return the array of inner classes.
    */
   @Override
   PsiClass @NotNull [] getInnerClasses();
 
   /**
-   * Returns the list of class initializers for the class.
+   * Returns the array of class initializers for the class.
    *
-   * @return the list of class initializers.
+   * @return the array of class initializers.
    */
   PsiClassInitializer @NotNull [] getInitializers();
 
   /**
-   * Returns the list of fields in the class and all its superclasses.
+   * Returns the array of fields in the class and all its superclasses.
    *
-   * @return the list of fields.
+   * @return the array of fields.
    */
   PsiField @NotNull [] getAllFields();
 
   /**
-   * Returns the list of methods in the class and all its superclasses.
+   * Returns the array of methods in the class and all its superclasses.
    *
-   * @return the list of methods.
+   * @return the array of methods.
    */
   PsiMethod @NotNull [] getAllMethods();
 
   /**
-   * Returns the list of inner classes for the class and all its superclasses.
+   * Returns the array of inner classes for the class and all its superclasses.
    *
-   * @return the list of inner classes.
+   * @return the array of inner classes.
    */
   PsiClass @NotNull [] getAllInnerClasses();
 

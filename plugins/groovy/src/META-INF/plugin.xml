@@ -39,11 +39,6 @@
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
 
-  <projectListeners>
-    <listener class="org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroModuleListener"
-              topic="com.intellij.openapi.project.ModuleListener"/>
-  </projectListeners>
-
   <extensionPoints>
     <extensionPoint name="methodComparator" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
     <extensionPoint name="overloadResolver" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver"/>
@@ -111,6 +106,9 @@
 
     <extensionPoint name="customAnnotationChecker" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker"/>
+
+    <extensionPoint name="completionCustomizer" dynamic="true"
+                    interface="org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionCustomizer"/>
 
     <extensionPoint name="convertToJava.customMethodInvocator" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator"/>
@@ -531,10 +529,10 @@
 
     <codeInsight.template.postfixTemplateProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateProvider"/>
 
-    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Generic"/>
-    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Expression"/>
-    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Statement"/>
-    <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Declaration"/>
+    <liveTemplateContext contextId="GROOVY" implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Generic"/>
+    <liveTemplateContext contextId="GROOVY_EXPRESSION" baseContextId="GROOVY" implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Expression"/>
+    <liveTemplateContext contextId="GROOVY_STATEMENT" baseContextId="GROOVY" implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Statement"/>
+    <liveTemplateContext contextId="GROOVY_DECLARATION" baseContextId="GROOVY" implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Declaration"/>
 
     <defaultLiveTemplates file="liveTemplates/Groovy.xml"/>
 
@@ -1333,6 +1331,11 @@
     <notificationGroup id="Grape" displayType="BALLOON" bundle="messages.GroovyBundle" key="notification.group.grape"/>
     <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
     <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.groovy.config.wizard.IntelliJGroovyNewProjectWizard"/>
+
+    <persistentFsConnectionListener implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyPersistentFsConnectionListener"/>
+
+    <internal.statistic.libraryUsageImportProcessor language="Groovy"
+                                                    implementationClass="org.jetbrains.plugins.groovy.stats.GroovyLibraryUsageImportProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

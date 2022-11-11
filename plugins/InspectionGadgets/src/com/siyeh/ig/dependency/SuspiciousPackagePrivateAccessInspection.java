@@ -2,6 +2,7 @@
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
@@ -313,6 +314,11 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     @Override
     public String getFamilyName() {
       return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.family.name");
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
     }
 
     @Override

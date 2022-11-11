@@ -34,7 +34,6 @@ import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -282,8 +281,7 @@ public final class PyResolveUtil {
         .map(context::getType)
         .nonNull()
         .flatMap(type -> {
-          final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
-          final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
+          final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
           return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
         }));
 

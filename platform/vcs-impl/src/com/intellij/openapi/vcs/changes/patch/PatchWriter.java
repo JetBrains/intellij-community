@@ -36,7 +36,7 @@ public final class PatchWriter {
                                   @NotNull Path basePath,
                                   @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext) throws IOException {
-    writePatches(project, file, basePath, patches, commitContext, StandardCharsets.UTF_8, false);
+    writePatches(project, file, basePath, patches, commitContext, StandardCharsets.UTF_8);
   }
 
   public static void writePatches(@NotNull Project project,
@@ -44,10 +44,20 @@ public final class PatchWriter {
                                   @Nullable Path basePath,
                                   @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext,
-                                  @NotNull Charset charset, boolean includeBinaries) throws IOException {
+                                  @NotNull Charset charset) throws IOException {
+    writePatches(project, file, basePath, patches, null, commitContext, charset);
+  }
+
+  public static void writePatches(@NotNull Project project,
+                                  @NotNull Path file,
+                                  @Nullable Path basePath,
+                                  @NotNull List<? extends FilePatch> patches,
+                                  @Nullable String commitMessage,
+                                  @Nullable CommitContext commitContext,
+                                  @NotNull Charset charset) throws IOException {
     Files.createDirectories(file.getParent());
     try (Writer writer = new OutputStreamWriter(Files.newOutputStream(file), charset)) {
-      write(project, writer, basePath, patches, commitContext, includeBinaries);
+      write(project, writer, basePath, patches, commitMessage, commitContext);
     }
   }
 
@@ -55,12 +65,12 @@ public final class PatchWriter {
                             @NotNull Writer writer,
                             @Nullable Path basePath,
                             @NotNull List<? extends FilePatch> patches,
-                            @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
+                            @Nullable String commitMessage,
+                            @Nullable CommitContext commitContext) throws IOException {
     String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
+    UnifiedDiffWriter.writeCommitMessageHeader(project, writer, lineSeparator, commitMessage);
     UnifiedDiffWriter.write(project, basePath, patches, writer, lineSeparator, commitContext, null);
-    if (includeBinaries) {
-      BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
-    }
+    BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
   }
 
   /**
@@ -72,6 +82,7 @@ public final class PatchWriter {
    * 1) They always use unix separators for header lines
    * 2) They might automatically convert separators for content lines (ex: core.autocrlf for git). If we create patch with CRLF content line separators, it will issue a warning for CR as "trailing space".
    * <p>
+   *
    * @see <a href=https://youtrack.jetbrains.com/issue/IDEA-40539>IDEA-40539</a>
    */
   public static boolean shouldForceUnixLineSeparator(@Nullable Project project) {
@@ -83,22 +94,17 @@ public final class PatchWriter {
                                              @NotNull List<? extends FilePatch> patches,
                                              @NotNull Path basePath,
                                              @Nullable CommitContext commitContext) throws IOException {
-    StringWriter writer = new StringWriter();
-    write(project, writer, basePath, patches, commitContext, true);
-    CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
+    writeAsPatchToClipboard(project, patches, null, basePath, commitContext);
   }
 
-  /**
-   * @deprecated Use {@link #calculateBaseDirForWritingPatch}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
-    File commonAncestor = ChangesUtil.findCommonAncestor(changes);
-    if (commonAncestor == null || ChangesUtil.getAffectedVcses(changes, project).size() != 1) {
-      return project.getBaseDir();
-    }
-    VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor));
-    return vcsRoot == null ? project.getBaseDir() : vcsRoot;
+  public static void writeAsPatchToClipboard(@NotNull Project project,
+                                             @NotNull List<? extends FilePatch> patches,
+                                             @Nullable String commitMessage,
+                                             @NotNull Path basePath,
+                                             @Nullable CommitContext commitContext) throws IOException {
+    StringWriter writer = new StringWriter();
+    write(project, writer, basePath, patches, commitMessage, commitContext);
+    CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
   }
 
   public static @NotNull Path calculateBaseDirForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
@@ -111,5 +117,32 @@ public final class PatchWriter {
       vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor));
     }
     return vcsRoot == null ? ProjectKt.getStateStore(project).getProjectBasePath() : vcsRoot.toNioPath();
+  }
+
+  /**
+   * @deprecated Use overload without {@code includeBinaries} parameter.
+   */
+  @Deprecated
+  public static void writePatches(@NotNull Project project,
+                                  @NotNull Path file,
+                                  @Nullable Path basePath,
+                                  @NotNull List<? extends FilePatch> patches,
+                                  @Nullable CommitContext commitContext,
+                                  @NotNull Charset charset,
+                                  boolean includeBinaries) throws IOException {
+    writePatches(project, file, basePath, patches, commitContext, charset);
+  }
+
+  /**
+   * @deprecated Use overload without {@code includeBinaries} parameter.
+   */
+  @Deprecated
+  private static void write(@NotNull Project project,
+                            @NotNull Writer writer,
+                            @Nullable Path basePath,
+                            @NotNull List<? extends FilePatch> patches,
+                            @Nullable CommitContext commitContext,
+                            boolean includeBinaries) throws IOException {
+    write(project, writer, basePath, patches, null, commitContext);
   }
 }

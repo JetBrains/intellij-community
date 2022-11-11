@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.console
 
@@ -75,7 +75,7 @@ class ReplOutputHandler(
             RUNTIME_ERROR -> outputProcessor.printRuntimeError("${content.trim()}\n")
             INTERNAL_ERROR -> outputProcessor.printInternalErrorMessage(content)
             SUCCESS -> runner.commandHistory.lastUnprocessedEntry()?.entryText?.let { runner.successfulLine(it) }
-            null -> logError(ReplOutputHandler::class.java, "Unexpected output type:\n$outputType")
+            else -> logError(ReplOutputHandler::class.java, "Unexpected output type:\n$outputType")
         }
 
         if (outputType in setOf(SUCCESS, COMPILE_ERROR, INTERNAL_ERROR, RUNTIME_ERROR, READLINE_END)) {

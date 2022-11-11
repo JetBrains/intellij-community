@@ -10,7 +10,7 @@ import java.awt.Component
 @Internal
 interface TaskSupport {
 
-  fun taskCancellationNonCancellableInternal(): TaskCancellation
+  fun taskCancellationNonCancellableInternal(): TaskCancellation.NonCancellable
 
   fun taskCancellationCancellableInternal(): TaskCancellation.Cancellable
 
@@ -26,6 +26,13 @@ interface TaskSupport {
   ): T
 
   suspend fun <T> withModalProgressIndicatorInternal(
+    owner: ModalTaskOwner,
+    title: @ProgressTitle String,
+    cancellation: TaskCancellation,
+    action: suspend CoroutineScope.() -> T,
+  ): T
+
+  fun <T> runBlockingModalInternal(
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,

@@ -82,7 +82,9 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
       // If sdk is target that supports local VFS, there is no reason to copy editable packages to remote_sources
       // since their paths should be available locally (to be edited)
       // Such packages are in user content roots, so we report them to remote_sync script
-      val moduleRoots = project.modules.flatMap { it.rootManager.contentRoots.asList() }.mapNotNull { targetWithVfs.getTargetPathFromVfs(it) }
+      val moduleRoots = project.modules.flatMap { it.rootManager.contentRoots.asList() }.mapNotNull {
+        targetWithVfs.getTargetPathFromVfs(it)
+      }
       if (moduleRoots.isNotEmpty()) {
         execution.addParameter("--project-roots")
         for (root in moduleRoots) {

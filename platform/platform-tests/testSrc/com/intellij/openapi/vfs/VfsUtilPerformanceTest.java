@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
@@ -16,11 +16,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -286,7 +286,7 @@ public class VfsUtilPerformanceTest {
     List<VFileEvent> events = new ArrayList<>(N);
     VirtualDirectoryImpl temp = createTempFsDirectory();
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       PlatformTestUtil.startPerformanceTest("many files creations", 3_000, () -> {
         assertEquals(N, events.size());
         processEvents(events);
@@ -332,7 +332,7 @@ public class VfsUtilPerformanceTest {
   }
 
   private static void processEvents(List<? extends VFileEvent> events) {
-    WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
+    WriteCommandAction.runWriteCommandAction(null, () -> RefreshQueue.getInstance().processEvents(false, events));
   }
 
   private void eventsForCreating(List<? super VFileEvent> events, int N, VirtualDirectoryImpl temp) {
@@ -356,5 +356,4 @@ public class VfsUtilPerformanceTest {
       .map(v->new VFileDeleteEvent(this, v, false))
       .forEach(events::add);
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -25,20 +26,20 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
+public final class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   public CompilerErrorTreeView(Project project, Runnable rerunAction) {
     super(project, null, true, true, rerunAction);
   }
 
   @Override
-  protected void fillRightToolbarGroup(DefaultActionGroup group) {
+  protected void fillRightToolbarGroup(@NotNull DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
     group.addSeparator();
     group.add(new CompilerPropertiesAction());
   }
 
   @Override
-  protected void addExtraPopupMenuActions(DefaultActionGroup group) {
+  protected void addExtraPopupMenuActions(@NotNull DefaultActionGroup group) {
     group.addSeparator();
     group.add(new ExcludeFromCompileAction(myProject) {
       @Override
@@ -62,11 +63,10 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   }
 
   @Override
-  protected ErrorViewStructure createErrorViewStructure(Project project, boolean canHideWarnings) {
+  protected @NotNull ErrorViewStructure createErrorViewStructure(Project project, boolean canHideWarnings) {
     return new ErrorViewStructure(project, canHideWarnings) {
-      @NotNull
       @Override
-      protected GroupingElement createGroupingElement(String groupName, Object data, VirtualFile file) {
+      protected @NotNull GroupingElement createGroupingElement(String groupName, Object data, VirtualFile file) {
         return new GroupingElement(groupName, data, file) {
           @Override
           public boolean isRenderWithBoldFont() {
@@ -79,7 +79,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   private class SuppressJavacWarningsAction extends AnAction {
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final NavigatableMessageElement messageElement = (NavigatableMessageElement)getSelectedErrorTreeElement();
       final String[] text = messageElement.getText();
       final String id = text[0].substring(1, text[0].indexOf("]"));
@@ -100,14 +100,21 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(false);
       final Project project = e.getProject();
       if (project == null) {
         return;
       }
-      final ErrorTreeElement errorTreeElement = getSelectedErrorTreeElement();
+      final ErrorTreeElement errorTreeElement =
+        Utils.getOrCreateUpdateSession(e).compute(this, "getSelectedErrorTreeElement", ActionUpdateThread.EDT, CompilerErrorTreeView.this::getSelectedErrorTreeElement);
+
       if (errorTreeElement instanceof NavigatableMessageElement) {
         final NavigatableMessageElement messageElement = (NavigatableMessageElement)errorTreeElement;
         final String[] text = messageElement.getText();
@@ -151,29 +158,29 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       }
     }
 
-    protected SuppressFix getSuppressAction(@NotNull final String id) {
+    protected SuppressFix getSuppressAction(final @NotNull String id) {
       return new SuppressFix(id) {
         @Override
         @SuppressWarnings({"SimplifiableIfStatement"})
-        public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
+        public boolean isAvailable(final @NotNull Project project, final @NotNull PsiElement context) {
           if (getContainer(context) instanceof PsiClass) return false;
           return super.isAvailable(project, context);
         }
 
         @Override
-        protected boolean use15Suppressions(@NotNull final PsiJavaDocumentedElement container) {
+        protected boolean use15Suppressions(final @NotNull PsiJavaDocumentedElement container) {
           return true;
         }
       };
     }
   }
 
-  private class SuppressJavacWarningForClassAction extends SuppressJavacWarningsAction {
+  private final class SuppressJavacWarningForClassAction extends SuppressJavacWarningsAction {
     @Override
-    protected SuppressFix getSuppressAction(@NotNull final String id) {
+    protected SuppressFix getSuppressAction(final @NotNull String id) {
       return new SuppressForClassFix(id){
         @Override
-        protected boolean use15Suppressions(@NotNull final PsiJavaDocumentedElement container) {
+        protected boolean use15Suppressions(final @NotNull PsiJavaDocumentedElement container) {
           return true;
         }
       };

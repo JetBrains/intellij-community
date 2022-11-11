@@ -8,11 +8,11 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.EarlyAccessRegistryManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,17 +31,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
-  private final IconPathPatcher iconPathPatcher = createPathPatcher();
+  private IconPathPatcher iconPathPatcher;
   private static final String KEY = "ide.experimental.ui";
 
-  public static boolean previewPluginInstalled = false;
-
   public static boolean isNewUI() {
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) || previewPluginInstalled;
+    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
   }
 
   public static boolean isNewNavbar() {
     return isNewUI() && Registry.is("ide.experimental.ui.navbar.scroll");
+  }
+
+  public static boolean isEditorTabsWithScrollBar() {
+    return isNewUI() && Registry.is("ide.experimental.ui.editor.tabs.scrollbar");
   }
 
   public static ExperimentalUI getInstance() {
@@ -60,20 +62,18 @@ public abstract class ExperimentalUI {
 
       patchUIDefaults(isEnabled);
       if (isEnabled) {
-        int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
-        if (tabPlacement == SwingConstants.LEFT
-            || tabPlacement == SwingConstants.RIGHT
-            || tabPlacement == SwingConstants.BOTTOM) {
-          UISettings.getInstance().setEditorTabPlacement(SwingConstants.TOP);
-        }
-
         if (getInstance().isIconPatcherSet.compareAndSet(false, true)) {
+          if (getInstance().iconPathPatcher != null) {
+            IconLoader.removePathPatcher(getInstance().iconPathPatcher);
+          }
+          getInstance().iconPathPatcher = getInstance().createPathPatcher();
           IconLoader.installPathPatcher(getInstance().iconPathPatcher);
         }
         getInstance().onExpUIEnabled();
       }
       else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
         IconLoader.removePathPatcher(getInstance().iconPathPatcher);
+        getInstance().iconPathPatcher = null;
         getInstance().onExpUIDisabled();
       }
     }
@@ -82,6 +82,10 @@ public abstract class ExperimentalUI {
   public void lookAndFeelChanged() {
     if (isNewUI()) {
       if (isIconPatcherSet.compareAndSet(false, true)) {
+        if (iconPathPatcher != null) {
+          IconLoader.removePathPatcher(iconPathPatcher);
+        }
+        iconPathPatcher = createPathPatcher();
         IconLoader.installPathPatcher(iconPathPatcher);
       }
       patchUIDefaults(true);
@@ -89,21 +93,22 @@ public abstract class ExperimentalUI {
   }
 
   private IconPathPatcher createPathPatcher() {
-    Map<String, String> paths = loadIconMappings();
+    Map<ClassLoader, Map<String, String>> paths = getIconMappings();
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
-        return paths.get(Strings.trimStart(path, "/"));
+        Map<String, String> mappings = paths.get(classLoader);
+        return mappings != null ? mappings.get(Strings.trimStart(path, "/")) : null;
       }
 
       @Override
       public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
-        return getClass().getClassLoader();
+        return originalClassLoader;
       }
     };
   }
 
-  public abstract Map<String, String> loadIconMappings();
+  public abstract Map<ClassLoader, Map<String, String>> getIconMappings();
 
   public abstract void onExpUIEnabled();
   public abstract void onExpUIDisabled();

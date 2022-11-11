@@ -6,8 +6,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ui.InspectionOptionsPanel
-import com.intellij.formatting.service.CoreFormattingService
-import com.intellij.formatting.service.FormattingServiceUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
@@ -16,11 +14,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import java.util.concurrent.atomic.AtomicBoolean
-
 
 val INSPECTION_KEY = Key.create<IncorrectFormattingInspection>(IncorrectFormattingInspection().shortName)
-var notificationShown = AtomicBoolean(false)
 
 class IncorrectFormattingInspection(
   @JvmField var reportPerFile: Boolean = false,  // generate only one warning per file
@@ -40,36 +35,28 @@ class IncorrectFormattingInspection(
       return null
     }
 
-    // Doesn't work with external and async formatters since they modify the file
-    if (FormattingServiceUtil.findService(file, true, true) !is CoreFormattingService) {
-      return null
-    }
-
     // Perform only for main PSI tree
-    val baseLanguage: Language = file.getViewProvider().getBaseLanguage()
-    val mainFile = file.getViewProvider().getPsi(baseLanguage)
+    val baseLanguage: Language = file.viewProvider.baseLanguage
+    val mainFile = file.viewProvider.getPsi(baseLanguage)
     if (file != mainFile) {
       return null
     }
-
-    val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
 
     if (isKotlinPlugged && kotlinOnly && file.language.id != "kotlin") {
       return null
     }
 
-    val scope = CheckingScope(file, document, manager, isOnTheFly)
+    val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
 
-    val changes = scope
-      .getChanges()
-      .takeIf { it.isNotEmpty() }
-      ?: return null
+    val formattingChanges = detectFormattingChanges(file) ?: return null
+    if (formattingChanges.mismatches.isEmpty()) return null
 
+    val helper = IncorrectFormattingInspectionHelper(formattingChanges, file, document, manager, isOnTheFly)
     return if (reportPerFile) {
-      arrayOf(scope.createGlobalReport())
+      arrayOf(helper.createGlobalReport())
     }
     else {
-      scope.createAllReports(changes)
+      helper.createAllReports()
     }
   }
 

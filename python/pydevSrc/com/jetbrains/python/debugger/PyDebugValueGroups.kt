@@ -5,12 +5,18 @@ import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueGroup
+import com.jetbrains.python.debugger.pydev.ProcessDebugger
 import javax.swing.Icon
 
 
 const val PROTECTED_ATTRS_NAME = "Protected Attributes"
 const val DUNDER_LEN = "__len__"
-val PROTECTED_ATTRS_EXCLUDED = setOf(DUNDER_LEN, "__exception__")
+const val DUNDER_EX = "__exception__"
+val PROTECTED_ATTRS_EXCLUDED = setOf(DUNDER_LEN, DUNDER_EX)
+
+const val DOUBLE_UNDERSCORE = "__"
+val HIDE_TYPES: Set<String> = setOf("function", "type", "classobj", "module")
+val HIDE_MODULES: Set<String> = setOf("typing")
 
 
 fun extractChildrenToGroup(groupName: String,
@@ -21,7 +27,7 @@ fun extractChildrenToGroup(groupName: String,
                            excludedNames: Set<String>) {
   val filterResult = filterChildren(children, predicate, excludedNames)
   node.addChildren(filterResult.filteredChildren, filterResult.groupElements.isEmpty())
-  addGroupValues(groupName, icon, node, filterResult.groupElements, null)
+  addGroupValues(groupName, icon, node, filterResult.groupElements, null, ProcessDebugger.GROUP_TYPE.DEFAULT, null)
 }
 
 
@@ -51,17 +57,21 @@ private fun filterChildren(children: XValueChildrenList, predicate: (String) -> 
 fun addGroupValues(groupName: String,
                    groupIcon: Icon,
                    node: XCompositeNode,
-                   groupElements: Map<String, XValue>,
+                   groupElements: Map<String, XValue>?,
+                   myDebugProcess: PyFrameAccessor?,
+                   groupType: ProcessDebugger.GROUP_TYPE,
                    nameSuffix: String?) {
-  if (groupElements.isEmpty()) return
   val group = object : XValueGroup(groupName) {
     override fun computeChildren(node: XCompositeNode) {
-      val list = XValueChildrenList()
-      for ((key, value) in groupElements) {
-        val name = if (nameSuffix == null) key else key + nameSuffix
-        list.add(name, value)
-      }
-      node.addChildren(list, true)
+        val list: XValueChildrenList? =
+          if (groupType == ProcessDebugger.GROUP_TYPE.DEFAULT) {
+            getDefaultGroupNodes(groupElements, nameSuffix)
+          }
+          else {
+            myDebugProcess?.let { getSpecialGroupNodes(it, nameSuffix, groupType) }
+          }
+
+        list?.let { node.addChildren(list, true) }
     }
 
     override fun getIcon(): Icon {
@@ -70,3 +80,36 @@ fun addGroupValues(groupName: String,
   }
   node.addChildren(XValueChildrenList.bottomGroup(group), true)
 }
+
+private fun getDefaultGroupNodes(groupElements: Map<String, XValue>?, nameSuffix: String?): XValueChildrenList {
+  val list = XValueChildrenList()
+  groupElements?.let {
+    for ((key, value) in groupElements) {
+      val name = addSuffix(key, nameSuffix)
+      list.add(name, value)
+    }
+  }
+  return list
+}
+
+private fun getSpecialGroupNodes(myDebugProcess: PyFrameAccessor,
+                                 nameSuffix: String?,
+                                 groupType: ProcessDebugger.GROUP_TYPE): XValueChildrenList {
+  return addSuffix(myDebugProcess.loadSpecialVariables(groupType) ?: XValueChildrenList(), nameSuffix)
+}
+
+private fun addSuffix(list: XValueChildrenList, nameSuffix: String?): XValueChildrenList {
+  nameSuffix?.let {
+    val result = XValueChildrenList()
+    for (i in 0 until list.size()) {
+      val value = list.getValue(i)
+      val name = list.getName(i)
+      result.add(addSuffix(name, it), value)
+    }
+    return result
+  }
+  return list
+
+}
+
+private fun addSuffix(name: String, nameSuffix: String?): String = if (nameSuffix == null) name else name + nameSuffix

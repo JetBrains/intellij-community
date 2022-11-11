@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import java.awt.Graphics
@@ -45,5 +46,8 @@ interface NotebookCellInlayController {
   fun paintGutter(editor: EditorImpl,
                   g: Graphics,
                   r: Rectangle,
-                  intervalIterator: ListIterator<NotebookCellLines.Interval>)
+                  interval: NotebookCellLines.Interval)
+
+
+  fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval) {}
 }

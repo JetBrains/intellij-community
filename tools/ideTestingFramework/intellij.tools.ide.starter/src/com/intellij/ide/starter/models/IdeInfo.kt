@@ -8,9 +8,10 @@ data class IdeInfo(
   val platformPrefix: String,
   val executableFileName: String,
   val buildType: String = BuildType.EAP.type,
+  val additionalModules: List<String> = emptyList(),
   val buildNumber: String = "",
   val version: String = "",
-  val tag: String? = null
+  val tag: String? = null,
 ) {
   companion object
 

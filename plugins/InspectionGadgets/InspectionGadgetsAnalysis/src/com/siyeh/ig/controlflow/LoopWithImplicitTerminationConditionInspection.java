@@ -151,19 +151,19 @@ public class LoopWithImplicitTerminationConditionInspection
   private static class LoopWithImplicitTerminationConditionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
       check(statement, false);
     }
 
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
       check(statement, true);
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       check(statement, false);
     }

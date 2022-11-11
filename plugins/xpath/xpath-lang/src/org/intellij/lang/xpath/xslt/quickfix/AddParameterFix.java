@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -41,7 +42,7 @@ public class AddParameterFix extends AddParamBase {
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.add.parameter.to.template");
     }
 
@@ -59,5 +60,10 @@ public class AddParameterFix extends AddParamBase {
     @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myTemplate.isValid();
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new AddParameterFix(myName, PsiTreeUtil.findSameElementInCopy(myTemplate, target));
     }
 }

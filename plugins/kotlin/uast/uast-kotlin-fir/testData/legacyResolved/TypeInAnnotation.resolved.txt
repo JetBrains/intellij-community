@@ -1,1 +1,1 @@
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = Test) -> null: null
+UAnnotation (fqName = null) -> USimpleNameReferenceExpression (identifier = Test) -> null: null

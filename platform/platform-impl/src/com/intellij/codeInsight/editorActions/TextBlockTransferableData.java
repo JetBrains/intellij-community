@@ -2,6 +2,9 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
@@ -9,15 +12,21 @@ import java.awt.datatransfer.Transferable;
 public interface TextBlockTransferableData {
   int PLAIN_TEXT_PRIORITY = 0;
 
-  DataFlavor getFlavor();
+  @Nullable DataFlavor getFlavor();
 
-  int getOffsetCount();
-  int getOffsets(final int[] offsets, final int index);
-  int setOffsets(final int[] offsets, final int index);
+  default int getOffsetCount() { return 0; }
+
+  default int getOffsets(int @NotNull [] offsets, int index) {
+    return index;
+  }
+
+  default int setOffsets(int @NotNull [] offsets, int index) {
+    return index;
+  }
 
   /**
    * Priority defines an order in which resulting transferable will mention available DataFlavor-s.
-   * 
+   *
    * @see Transferable#getTransferDataFlavors()
    */
   default int getPriority() { return PLAIN_TEXT_PRIORITY; }

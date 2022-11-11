@@ -10,6 +10,7 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,12 +34,15 @@ public final class ActionHint {
   private final boolean myShouldPresent;
   private final ProblemHighlightType myHighlightType;
   private final boolean myExactMatch;
+  private final boolean myCheckPreview;
 
-  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch) {
+  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch,
+                     boolean preview) {
     myExpectedText = expectedText;
     myShouldPresent = shouldPresent;
     myHighlightType = severity;
     myExactMatch = exactMatch;
+    myCheckPreview = preview;
   }
 
   /**
@@ -65,6 +69,13 @@ public final class ActionHint {
   }
 
   /**
+   * @return true if generated intention preview should be checked
+   */
+  public boolean shouldCheckPreview() {
+    return myCheckPreview;
+  }
+
+  /**
    * Finds the action which matches this ActionHint and returns it or returns null
    * if this ActionHint asserts that no action should be present.
    *
@@ -75,10 +86,10 @@ public final class ActionHint {
    */
   @Nullable
   public IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions, @NotNull Supplier<String> infoSupplier) {
-    IntentionAction result = actions.stream().filter(t -> {
+    IntentionAction result = ContainerUtil.find(actions, t -> {
       String text = t.getText();
       return myExactMatch ? text.equals(myExpectedText) : text.startsWith(myExpectedText);
-    }).findFirst().orElse(null);
+    });
     if(myShouldPresent) {
       if(result == null) {
         fail(exceptionHeader() + " not found\nAvailable actions: " +
@@ -146,14 +157,16 @@ public final class ActionHint {
 
     assert comment != null : commenter;
     // "quick fix action text to perform" "should be available"
-    Pattern pattern = Pattern.compile("^" + Pattern.quote(comment) + " \"(.*)\" \"(\\w+)\".*", Pattern.DOTALL);
+    Pattern pattern = Pattern.compile("^" + Pattern.quote(comment) + " \"(.*)\" \"(\\w+)(?:-(\\w+))?\".*", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);
     TestCase.assertTrue("No comment found in " + file.getVirtualFile(), matcher.matches());
     final String text = matcher.group(1);
     String state = matcher.group(2);
+    String previewState = matcher.group(3);
+    boolean checkPreview = "preview".equals(previewState);
     if(state.equals("true") || state.equals("false")) {
-      return new ActionHint(text, Boolean.parseBoolean(state), null, exactMatch);
+      return new ActionHint(text, Boolean.parseBoolean(state), null, exactMatch, checkPreview);
     }
-    return new ActionHint(text, true, ProblemHighlightType.valueOf(state), exactMatch);
+    return new ActionHint(text, true, ProblemHighlightType.valueOf(state), exactMatch, checkPreview);
   }
 }

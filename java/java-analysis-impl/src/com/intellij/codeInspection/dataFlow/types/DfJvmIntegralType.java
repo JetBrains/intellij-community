@@ -44,6 +44,9 @@ public interface DfJvmIntegralType extends DfIntegralType, DfPrimitiveType {
   @Override
   @NotNull
   default DfType fromRelation(@NotNull RelationType relationType) {
+    if (relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
+      return DfType.TOP;
+    }
     return DfTypes.rangeClamped(getRange().fromRelation(relationType), getLongRangeType());
   }
 

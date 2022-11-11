@@ -28,21 +28,30 @@ public interface HashingStrategy<T> {
     return CaseInsensitiveStringHashingStrategy.INSTANCE;
   }
   static @NotNull HashingStrategy<CharSequence> caseInsensitiveCharSequence() {
-    return CaseInsensitiveCharSequenceHashingStrategy.INSTANCE;
+    return CharSequenceHashingStrategy.CASE_INSENSITIVE_INSTANCE;
+  }
+  static @NotNull HashingStrategy<CharSequence> caseSensitiveCharSequence() {
+    return CharSequenceHashingStrategy.CASE_SENSITIVE_INSTANCE;
   }
 }
 
-final class CaseInsensitiveCharSequenceHashingStrategy implements HashingStrategy<CharSequence> {
-  static final CaseInsensitiveCharSequenceHashingStrategy INSTANCE = new CaseInsensitiveCharSequenceHashingStrategy();
+final class CharSequenceHashingStrategy implements HashingStrategy<CharSequence> {
+  private final boolean myCaseSensitive;
+  static final CharSequenceHashingStrategy CASE_SENSITIVE_INSTANCE = new CharSequenceHashingStrategy(true);
+  static final CharSequenceHashingStrategy CASE_INSENSITIVE_INSTANCE = new CharSequenceHashingStrategy(false);
+
+  CharSequenceHashingStrategy(boolean sensitive) {
+    myCaseSensitive = sensitive;
+  }
 
   @Override
   public int hashCode(CharSequence object) {
-    return Strings.stringHashCodeInsensitive(object);
+    return myCaseSensitive ? Strings.stringHashCode(object) : Strings.stringHashCodeInsensitive(object);
   }
 
   @Override
   public boolean equals(CharSequence s1, CharSequence s2) {
-    return StringUtilRt.equal(s1, s2, false);
+    return StringUtilRt.equal(s1, s2, myCaseSensitive);
   }
 }
 

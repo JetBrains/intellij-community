@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -44,6 +44,10 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         }
 
     override fun autoImportReferenceAtCursor(editor: Editor, file: PsiFile): Boolean {
+        return autoImportReferenceAtOffset(editor, file, editor.caretModel.offset)
+    }
+
+    override fun autoImportReferenceAtOffset(editor: Editor, file: PsiFile, offset: Int): Boolean {
         if (file !is KtFile || !DaemonListeners.canChangeFileSilently(file)) return false
 
         fun hasUnresolvedImportWhichCanImport(name: String): Boolean = file.importDirectives.any {
@@ -70,14 +74,13 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             return result
         }
 
-        val caretOffset = editor.caretModel.offset
         val document = editor.document
-        val lineNumber = document.getLineNumber(caretOffset)
+        val lineNumber = document.getLineNumber(offset)
         val startOffset = document.getLineStartOffset(lineNumber)
         val endOffset = document.getLineEndOffset(lineNumber)
 
         return file.elementsInRange(TextRange(startOffset, endOffset))
             .flatMap { it.collectDescendantsOfType<KtSimpleNameExpression>() }
-            .any { it.endOffset != caretOffset && it.autoImport() }
+            .any { it.endOffset != offset && it.autoImport() }
     }
 }

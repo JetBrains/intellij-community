@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ToolWindowEventSource
@@ -22,18 +23,12 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
-import java.util.function.Supplier
+import java.awt.event.MouseEvent
 
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
   companion object {
-    fun createMoveGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
-      val result = DefaultActionGroup.createPopupGroup(Supplier { UIBundle.message("tool.window.new.stripe.move.to.action.group.name") })
-      result.add(MoveToAction(toolWindow, ToolWindowAnchor.LEFT))
-      result.add(MoveToAction(toolWindow, ToolWindowAnchor.RIGHT))
-      result.add(MoveToAction(toolWindow, ToolWindowAnchor.BOTTOM))
-      return result
-    }
+    fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveToAction.Group(toolWindow)
   }
 
   init {
@@ -56,7 +51,9 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
     myPresentation.isEnabledAndVisible = true
   }
 
-  fun syncIcon() {
+  fun updatePresentation() {
+    updateToolTipText()
+
     myPresentation.icon = toolWindow.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(myPresentation)
   }
@@ -88,20 +85,23 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
     @Suppress("DialogTitleCapitalization")
     HelpTooltip()
       .setTitle(toolWindow.stripeTitle)
-      .setLocation(getAlignment(toolWindow.anchor))
+      .setLocation(getAlignment(toolWindow.anchor, toolWindow.isSplitMode))
       .setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.id)))
       .setInitialDelay(0)
       .setHideDelay(0)
       .installOn(this)
+    HelpTooltip.setMasterPopupOpenCondition(this) { !(parent as AbstractDroppableStripe).isDroppingButton() }
   }
+
+  override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
 }
 
-private fun getAlignment(anchor: ToolWindowAnchor): HelpTooltip.Alignment {
+private fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
   return when (anchor) {
     ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
     ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
     ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
-    ToolWindowAnchor.BOTTOM -> HelpTooltip.Alignment.RIGHT
+    ToolWindowAnchor.BOTTOM -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
     else -> HelpTooltip.Alignment.RIGHT
   }
 }
@@ -128,17 +128,6 @@ private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
   return group
 }
 
-private class MoveToAction(private val toolWindow: ToolWindowImpl,
-                           private val anchor: ToolWindowAnchor) : AnAction(anchor.capitalizedDisplayName), DumbAware {
-  override fun actionPerformed(e: AnActionEvent) {
-    toolWindow.setAnchor(anchor = anchor, runnable = null)
-  }
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = toolWindow.anchor != anchor
-  }
-}
-
 private class HideAction(private val toolWindow: ToolWindowImpl)
   : AnAction(UIBundle.message("tool.window.new.stripe.hide.action.name")), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
@@ -155,6 +144,10 @@ private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleA
     e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(e.presentation)
     return window.isVisible
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

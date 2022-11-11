@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import org.junit.jupiter.api.Assertions.*
@@ -30,8 +29,8 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
   @Test
   fun cancellation() {
     val t = object : Throwable() {}
-    val ce = assertThrows<CancellationException> {
-      withJob(Job()) {
+    val ce = assertThrows<CurrentJobCancellationException> {
+      withCurrentJob<Unit>(Job()) {
         throw assertThrows<JobCanceledException> {
           ensureCurrentJob { currentJob ->
             testNoExceptions()
@@ -43,7 +42,7 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
     }
     //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
     @Suppress("AssertBetweenInconvertibleTypes")
-    assertSame(t, ce.cause)
+    assertSame(t, ce.cause.cause.cause)
   }
 
   @Test
@@ -57,8 +56,8 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
   fun `cancelled by child failure`() {
     val job = Job()
     val t = Throwable()
-    val ce = assertThrows<CancellationException> {
-      withJob(job) {
+    val ce = assertThrows<CurrentJobCancellationException> {
+      withCurrentJob<Unit>(job) {
         throw assertThrows<JobCanceledException> {
           ensureCurrentJob { currentJob ->
             testNoExceptions()
@@ -73,7 +72,7 @@ class EnsureCurrentJobWithJobTest : CancellationTest() {
         }
       }
     }
-    assertSame(t, ce.cause)
+    assertSame(t, ce.cause.cause.cause)
     assertFalse(job.isActive)
     assertTrue(job.isCancelled)
     assertTrue(job.isCompleted)

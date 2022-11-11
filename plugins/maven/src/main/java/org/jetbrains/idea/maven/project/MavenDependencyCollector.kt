@@ -2,27 +2,25 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.ide.plugins.DependencyCollector
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 
-class MavenDependencyCollector : DependencyCollector {
-  override fun collectDependencies(project: Project): List<String> {
-    val result = mutableSetOf<String>()
-    for (mavenProject in MavenProjectsManager.getInstance(project).projects) {
-      for (dependency in mavenProject.dependencies) {
-        result.add(dependency.groupId + ":" + dependency.artifactId)
-      }
-    }
-    return result.toList()
+internal class MavenDependencyCollector : DependencyCollector {
+
+  override fun collectDependencies(project: Project): Set<String> {
+    return MavenProjectsManager.getInstance(project)
+      .projects
+      .asSequence()
+      .flatMap { it.dependencies }
+      .map { it.groupId + ":" + it.artifactId }
+      .toSet()
   }
 }
 
-class MavenDependencyUpdater(private val project: Project) : MavenImportListener {
+internal class MavenDependencyUpdater(private val project: Project) : MavenImportListener {
+
   override fun importFinished(importedProjects: Collection<MavenProject>, newModules: List<Module>) {
-    ApplicationManager.getApplication().executeOnPooledThread {
-      PluginAdvertiserService.getInstance().rescanDependencies(project)
-    }
+    PluginAdvertiserService.getInstance(project).rescanDependencies()
   }
 }

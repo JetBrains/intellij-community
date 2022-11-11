@@ -164,7 +164,7 @@ public class EclipseClasspathWriter {
 
             EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, model);
 
-            final String[] nativeRoots = libraryOrderEntry.getUrls(NativeLibraryOrderRootType.getInstance());
+            final String[] nativeRoots = libraryOrderEntry.getRootUrls(NativeLibraryOrderRootType.getInstance());
             if (nativeRoots.length > 0) {
               EJavadocUtil.setupAttributes(orderEntry, nativeRoot -> EPathUtil.collapse2EclipsePath(nativeRoot, model), EclipseXml.DLL_LINK, nativeRoots);
             }

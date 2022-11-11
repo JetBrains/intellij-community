@@ -3,6 +3,7 @@ package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorBundle;
@@ -44,6 +45,11 @@ public class FindFurtherAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     boolean enabled = myRangeSearch.isButtonFindFurtherEnabled(directionForward);
     e.getPresentation().setEnabled(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

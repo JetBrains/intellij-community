@@ -129,7 +129,6 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         NewProjectWizardBaseData.setName(step, projectName);
         LanguageNewProjectWizardData.setLanguage(step, "Java");
         BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
-        GradleJavaNewProjectWizardData.setGroupId(step, "");
         GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
       });
     });
@@ -152,6 +151,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "    id 'java'\n" +
                  "}\n" +
                  "\n" +
+                 "group 'org.example'\n" +
                  "version '1.0-SNAPSHOT'\n" +
                  "\n" +
                  "repositories {\n" +
@@ -178,7 +178,6 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         BuildSystemJavaNewProjectWizardData.setBuildSystem(step, "Gradle");
         assertEquals(projectName, GradleJavaNewProjectWizardData.getParentData(step).getExternalName());
         GradleJavaNewProjectWizardData.setArtifactId(step, "childModule");
-        GradleJavaNewProjectWizardData.setGroupId(step, "");
         GradleJavaNewProjectWizardData.setAddSampleCode(step, false);
       });
     });

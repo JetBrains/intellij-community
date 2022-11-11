@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>fnType<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>suspend<!> () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Unit<!> = {}
 
 val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>fnFnType<!>: () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>suspend<!> () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Unit<!> = {  -> {}}

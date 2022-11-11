@@ -157,7 +157,14 @@ public final class IntToIntBtree {
   private int myOptimizedInserts;
   private boolean myCanUseLastKey;
 
+  /**
+   * Lookup given key in BTree, and return true if key is exist in the Tree (associated value is returned
+   * in result[0]), false if there is no such key in the Tree (result is untouched then)
+   *
+   * @return true if key was found, false otherwise
+   */
   public boolean get(int key, int @NotNull [] result) throws IOException {
+    assert result.length > 0 : "result.length must be >0";
     if (key == 0) {
       if (hasZeroKey) {
         result[0] = zeroKeyValue;

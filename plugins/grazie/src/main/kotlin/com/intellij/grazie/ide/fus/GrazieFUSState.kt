@@ -1,16 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.fus
 
+import ai.grazie.nlp.langs.LanguageISO
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.CheckingContext
-import com.intellij.grazie.detector.model.LanguageISO
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator
 import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector

@@ -820,7 +820,7 @@ public final class EditorTestUtil {
           Pair.create(it.getEndOffset(), "</" + keyText + ">")
         );
       })
-      .sorted(MARKERS_COMPARATOR).collect(Collectors.toList());
+      .sorted(MARKERS_COMPARATOR).toList();
 
     StringBuilder sb = new StringBuilder();
     int lastEnd = 0;

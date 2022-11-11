@@ -3,6 +3,7 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.options.ConfigurableUi
 
+@Deprecated("Port to Kotlin UI DSL, this interface is not needed")
 interface ConfigurableUiEx<S> : ConfigurableUi<S> {
   fun buildUi(builder: LayoutBuilder)
 }

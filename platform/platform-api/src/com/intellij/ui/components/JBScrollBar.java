@@ -139,6 +139,13 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     super.setUnitIncrement(increment);
   }
 
+  public void toggle(boolean isOn) {
+    ScrollBarUI ui = getUI();
+    if (ui instanceof DefaultScrollBarUI) {
+      ((DefaultScrollBarUI)ui).toggle(isOn);
+    }
+  }
+
   /**
    * Computes the block increment for scrolling if the viewport's view.
    * Otherwise returns {@code super.getBlockIncrement}.

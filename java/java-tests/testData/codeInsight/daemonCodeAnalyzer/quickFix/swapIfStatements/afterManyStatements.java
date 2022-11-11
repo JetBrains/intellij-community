@@ -1,4 +1,4 @@
-// "Swap 'if' statements" "true"
+// "Swap 'if' statements" "true-preview"
 class A {
 
   void m() {

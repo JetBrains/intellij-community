@@ -608,11 +608,11 @@ class RetypeEditorNotificationProvider : EditorNotifications.Provider<EditorNoti
     val panel: EditorNotificationPanel
 
     if (retypeSession.retypePaused) {
-      panel = EditorNotificationPanel(fileEditor)
+      panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
       panel.setText("Pause retyping. Click on editor to resume")
     }
     else {
-      panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
+      panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN, EditorNotificationPanel.Status.Info)
       panel.setText("Retyping")
     }
     panel.createActionLabel("Stop without report") {

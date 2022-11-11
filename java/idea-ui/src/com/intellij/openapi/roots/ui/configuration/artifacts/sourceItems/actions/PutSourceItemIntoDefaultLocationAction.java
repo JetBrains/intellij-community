@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -38,6 +39,11 @@ public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocati
       presentation.setText(JavaUiBundle.message("action.text.put.source.item.into.0", getTargetLocationText(paths)));
     }
     presentation.setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

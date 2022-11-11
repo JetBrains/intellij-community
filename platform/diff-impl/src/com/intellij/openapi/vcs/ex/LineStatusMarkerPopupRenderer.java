@@ -4,15 +4,9 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.diff.DiffApplicationSettings;
-import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffManager;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
@@ -26,13 +20,11 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NonNls;
@@ -41,11 +33,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions.*;
 
 public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRenderer {
   /**
@@ -130,11 +122,11 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     JComponent editorComponent = null;
     if (range.hasVcsLines()) {
-      String content = getVcsContent(range).toString();
+      String content = getVcsContent(myTracker, range).toString();
       EditorTextField textField = LineStatusMarkerPopupPanel.createTextField(editor, content);
 
       LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(myTracker.getProject(), textField, myTracker.getVcsDocument(),
-                                                                     getVcsTextRange(range), getFileType());
+                                                                     getVcsTextRange(myTracker, range), getFileType());
 
       installWordDiff(editor, textField, range, disposable);
 
@@ -153,7 +145,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     Range newRange = myTracker.findRange(range);
     if (newRange != null) {
       showHintAt(editor, newRange, mousePosition);
-    } else {
+    }
+    else {
       HintManagerImpl.getInstanceImpl().hideHints(HintManager.HIDE_BY_SCROLLING, false, false);
     }
   }
@@ -165,8 +158,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return;
     if (!range.hasLines() || !range.hasVcsLines()) return;
 
-    CharSequence vcsContent = getVcsContent(range);
-    CharSequence currentContent = getCurrentContent(range);
+    CharSequence vcsContent = getVcsContent(myTracker, range);
+    CharSequence currentContent = getCurrentContent(myTracker, range);
 
     List<DiffFragment> wordDiff = BackgroundTaskUtil.tryComputeFast(
       indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
@@ -174,26 +167,6 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, range.getLine1(), range.getLine2(), wordDiff, disposable);
     LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(textField, wordDiff);
-  }
-
-  @NotNull
-  private CharSequence getCurrentContent(Range range) {
-    return DiffUtil.getLinesContent(myTracker.getDocument(), range.getLine1(), range.getLine2());
-  }
-
-  @NotNull
-  private CharSequence getVcsContent(Range range) {
-    return DiffUtil.getLinesContent(myTracker.getVcsDocument(), range.getVcsLine1(), range.getVcsLine2());
-  }
-
-  @NotNull
-  private TextRange getCurrentTextRange(@NotNull Range range) {
-    return DiffUtil.getLinesRange(myTracker.getDocument(), range.getLine1(), range.getLine2());
-  }
-
-  @NotNull
-  private TextRange getVcsTextRange(@NotNull Range range) {
-    return DiffUtil.getLinesRange(myTracker.getVcsDocument(), range.getVcsLine1(), range.getVcsLine2());
   }
 
 
@@ -205,6 +178,11 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       myRange = range;
       myEditor = editor;
       if (actionId != null) ActionUtil.copyFrom(this, actionId);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -274,14 +252,15 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      final String content = getVcsContent(range) + "\n";
-      CopyPasteManager.getInstance().setContents(new StringSelection(content));
+      copyVcsContent(myTracker, range);
     }
   }
 
   public class ShowLineStatusRangeDiffAction extends RangeMarkerAction implements LightEditCompatible {
     public ShowLineStatusRangeDiffAction(@NotNull Editor editor, @NotNull Range range) {
-      super(editor, range, IdeActions.ACTION_SHOW_DIFF_COMMON);
+      super(editor, range, "Vcs.ShowDiffChangedLines");
+      setShortcutSet(new CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Vcs.ShowDiffChangedLines"),
+                                              KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_DIFF_COMMON)));
     }
 
     @Override
@@ -291,39 +270,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      Range ourRange = expand(range, myTracker.getDocument(), myTracker.getVcsDocument());
-
-      DiffContent vcsContent = createDiffContent(myTracker.getVcsDocument(),
-                                                 myTracker.getVirtualFile(),
-                                                 getVcsTextRange(ourRange));
-      DiffContent currentContent = createDiffContent(myTracker.getDocument(),
-                                                     myTracker.getVirtualFile(),
-                                                     getCurrentTextRange(ourRange));
-
-      SimpleDiffRequest request = new SimpleDiffRequest(DiffBundle.message("dialog.title.diff.for.range"),
-                                                        vcsContent, currentContent,
-                                                        DiffBundle.message("diff.content.title.up.to.date"),
-                                                        DiffBundle.message("diff.content.title.current.range"));
-
-      DiffManager.getInstance().showDiff(myTracker.getProject(), request);
-    }
-
-    @NotNull
-    private DiffContent createDiffContent(@NotNull Document document, @Nullable VirtualFile highlightFile, @NotNull TextRange textRange) {
-      final Project project = myTracker.getProject();
-      DocumentContent content = DiffContentFactory.getInstance().create(project, document, highlightFile);
-      return DiffContentFactory.getInstance().createFragment(project, content, textRange);
-    }
-
-    @NotNull
-    private Range expand(@NotNull Range range, @NotNull Document document, @NotNull Document uDocument) {
-      boolean canExpandBefore = range.getLine1() != 0 && range.getVcsLine1() != 0;
-      boolean canExpandAfter = range.getLine2() < getLineCount(document) && range.getVcsLine2() < getLineCount(uDocument);
-      int offset1 = range.getLine1() - (canExpandBefore ? 1 : 0);
-      int uOffset1 = range.getVcsLine1() - (canExpandBefore ? 1 : 0);
-      int offset2 = range.getLine2() + (canExpandAfter ? 1 : 0);
-      int uOffset2 = range.getVcsLine2() + (canExpandAfter ? 1 : 0);
-      return new Range(offset1, offset2, uOffset1, uOffset2);
+      showDiff(myTracker, range);
     }
   }
 
@@ -339,6 +286,11 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       myEditor = editor;
       myRange = range;
       myMousePosition = position;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

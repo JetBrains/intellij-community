@@ -8,20 +8,18 @@ import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen.Companion.getSharedTypeIfApplicable
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegenInfo
-import org.jetbrains.kotlin.codegen.CodegenFactory
-import org.jetbrains.kotlin.codegen.DefaultCodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus
-import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.resolve.BindingContext
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 
 
 class OldFragmentCompilerCodegen(
@@ -93,7 +91,7 @@ class OldFragmentCompilerCodegen(
         methodDescriptor: FunctionDescriptor,
         parameterInfo: CodeFragmentParameterInfo,
         state: GenerationState
-    ): CompiledDataDescriptor.MethodSignature {
+    ): CompiledCodeFragmentData.MethodSignature {
         val typeMapper = state.typeMapper
         val asmSignature = typeMapper.mapSignatureSkipGeneric(methodDescriptor)
 
@@ -101,7 +99,7 @@ class OldFragmentCompilerCodegen(
             getSharedTypeIfApplicable(param, typeMapper) ?: sigParam.asmType
         }
 
-        return CompiledDataDescriptor.MethodSignature(asmParameters, asmSignature.returnType)
+        return CompiledCodeFragmentData.MethodSignature(asmParameters, asmSignature.returnType)
     }
 
     private fun getLocalFunctionSuffixes(

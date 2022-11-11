@@ -165,8 +165,9 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     //    or in other field initializer which directly writes this field or calls any method
     boolean isFinal = target.hasModifierProperty(PsiModifier.FINAL);
     int offset = Integer.MAX_VALUE;
-    if (target.getInitializer() != null) {
-      offset = target.getInitializer().getTextRange().getStartOffset();
+    PsiExpression fieldInitializer = target.getInitializer();
+    if (fieldInitializer != null) {
+      offset = fieldInitializer.getTextOffset();
       if (isFinal) return offset;
     }
     PsiClass aClass = Objects.requireNonNull(target.getContainingClass());

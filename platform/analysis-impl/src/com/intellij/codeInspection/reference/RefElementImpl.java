@@ -25,11 +25,12 @@ import java.util.List;
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement, WritableRefElement {
   protected static final Logger LOG = Logger.getInstance(RefElement.class);
 
-  private static final int IS_DELETED_MASK = 0b10000;
-  private static final int IS_INITIALIZED_MASK = 0b100000;
-  private static final int IS_REACHABLE_MASK = 0b1000000;
-  private static final int IS_ENTRY_MASK = 0b10000000;
-  private static final int IS_PERMANENT_ENTRY_MASK = 0b1_00000000;
+  private static final int IS_DELETED_MASK         = 0b10000; // 5th bit
+  private static final int IS_INITIALIZED_MASK     = 0b100000; // 6th bit
+  private static final int IS_REACHABLE_MASK       = 0b1000000; // 7th bit
+  private static final int IS_ENTRY_MASK           = 0b10000000; // 8th bit
+  private static final int IS_PERMANENT_ENTRY_MASK = 0b1_00000000; // 9th bit
+  private static final int REFERENCES_BUILT_MASK   = 0b10_00000000; // 10th bit
 
   private final SmartPsiElementPointer<?> myID;
 
@@ -190,6 +191,15 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     if (myOutReferences.isEmpty()) {
       myOutReferences = null;
     }
+  }
+
+  public void setReferencesBuilt(boolean built) {
+    setFlag(built, REFERENCES_BUILT_MASK);
+  }
+
+  @Override
+  public boolean areReferencesBuilt() {
+    return checkFlag(REFERENCES_BUILT_MASK);
   }
 
   public void setEntry(boolean entry) {

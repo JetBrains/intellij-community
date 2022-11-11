@@ -81,7 +81,6 @@ public final class GdkMethodUtil {
    * @param place         - context of processing
    * @param processor     - processor to use
    * @param categoryClass - category class to process
-   * @return
    */
   public static boolean processCategoryMethods(final PsiElement place,
                                                final PsiScopeProcessor processor,

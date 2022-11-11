@@ -1,4 +1,4 @@
-// "Set variable type to 'FileInputStream'" "true"
+// "Set variable type to 'FileInputStream'" "true-preview"
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 

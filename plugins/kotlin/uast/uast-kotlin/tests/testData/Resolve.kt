@@ -16,7 +16,7 @@ fun bar() {
     date.time = 1000 // setter from Java
     listOf("").last() // overloaded extension from stdlib
     mutableMapOf(1 to "1").entries.first().setValue("123") // call on nested method in stdlib
-    val intRange = 0L..3L
+    val intRange: ClosedRange<Long> = 0L..3L
     intRange.contains(2 as Int) // extension-fun with @JvmName("longRangeContains")
     IntRange(1, 2) // constructor from stdlib
 }

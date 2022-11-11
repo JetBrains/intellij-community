@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.bigPopup.ShowFilterAction;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,11 @@ public class SearchEverywhereFiltersAction<T> extends ShowFilterAction {
   @Override
   public boolean isEnabled() {
     return true;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

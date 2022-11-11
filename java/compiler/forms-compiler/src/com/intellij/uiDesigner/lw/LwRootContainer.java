@@ -10,8 +10,6 @@ import org.jdom.Element;
 import java.util.ArrayList;
 
 /**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
   */
 public final class LwRootContainer extends LwContainer implements IRootContainer{
   private String myClassToBind;

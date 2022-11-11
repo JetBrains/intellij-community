@@ -26,17 +26,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.INVALID_INSIDE_REFERENCE;
+
 /**
  * @author peter
  */
 public class GroovyTypedHandler extends TypedHandlerDelegate {
-  static final TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(GroovyTokenTypes.mSEMI, GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY);
   private boolean myJavaLTTyped;
 
   @NotNull
@@ -76,7 +76,6 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
         return lastElement != null && ".&".equals(lastElement.getText());
       });
     }
-
 
     return Result.CONTINUE;
   }

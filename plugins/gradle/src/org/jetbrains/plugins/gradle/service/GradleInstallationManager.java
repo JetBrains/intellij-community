@@ -330,7 +330,6 @@ public class GradleInstallationManager implements Disposable {
    * Tries to discover gradle installation path from the configured system path
    *
    * @return file handle for the gradle directory if it's possible to deduce from the system path; {@code null} otherwise
-   * @param project
    */
   @Nullable
   public File getGradleHomeFromPath(@Nullable Project project) {

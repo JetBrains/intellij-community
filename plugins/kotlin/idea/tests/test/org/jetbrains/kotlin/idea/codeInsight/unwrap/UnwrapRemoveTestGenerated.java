@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -289,6 +289,11 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
         public void testLambdaPropertyInBlock() throws Exception {
             runTest("testData/codeInsight/unwrapAndRemove/unwrapLambda/lambdaPropertyInBlock.kt");
         }
+
+        @TestMetadata("lambdaWithQualifiedReceiver.kt")
+        public void testLambdaWithQualifiedReceiver() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapLambda/lambdaWithQualifiedReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -298,9 +303,84 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
             KotlinTestUtils.runTest(this::doTestFunctionParameterUnwrapper, this, testDataFilePath);
         }
 
+        @TestMetadata("caretBeforeComma.kt")
+        public void testCaretBeforeComma() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretBeforeComma.kt");
+        }
+
+        @TestMetadata("caretInComment1.kt")
+        public void testCaretInComment1() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInComment1.kt");
+        }
+
+        @TestMetadata("caretInComment2.kt")
+        public void testCaretInComment2() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInComment2.kt");
+        }
+
+        @TestMetadata("caretInLambda.kt")
+        public void testCaretInLambda() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInLambda.kt");
+        }
+
+        @TestMetadata("caretInLambda2.kt")
+        public void testCaretInLambda2() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInLambda2.kt");
+        }
+
+        @TestMetadata("caretInLambda3.kt")
+        public void testCaretInLambda3() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInLambda3.kt");
+        }
+
+        @TestMetadata("caretInQualifier1.kt")
+        public void testCaretInQualifier1() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInQualifier1.kt");
+        }
+
+        @TestMetadata("caretInQualifier2.kt")
+        public void testCaretInQualifier2() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInQualifier2.kt");
+        }
+
+        @TestMetadata("caretInQualifier3.kt")
+        public void testCaretInQualifier3() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInQualifier3.kt");
+        }
+
+        @TestMetadata("caretInQualifier4.kt")
+        public void testCaretInQualifier4() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInQualifier4.kt");
+        }
+
+        @TestMetadata("caretInQualifier5.kt")
+        public void testCaretInQualifier5() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInQualifier5.kt");
+        }
+
+        @TestMetadata("caretInQualifier6.kt")
+        public void testCaretInQualifier6() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInQualifier6.kt");
+        }
+
+        @TestMetadata("caretInQualifier7.kt")
+        public void testCaretInQualifier7() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/caretInQualifier7.kt");
+        }
+
         @TestMetadata("functionHasMultiParam.kt")
         public void testFunctionHasMultiParam() throws Exception {
             runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/functionHasMultiParam.kt");
+        }
+
+        @TestMetadata("functionHasMultiParam1.kt")
+        public void testFunctionHasMultiParam1() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/functionHasMultiParam1.kt");
+        }
+
+        @TestMetadata("functionHasMultiParam2.kt")
+        public void testFunctionHasMultiParam2() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/functionHasMultiParam2.kt");
         }
 
         @TestMetadata("functionHasSingleParam.kt")
@@ -308,9 +388,44 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
             runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/functionHasSingleParam.kt");
         }
 
-        @TestMetadata("functionWithReceiver.kt")
-        public void testFunctionWithReceiver() throws Exception {
-            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/functionWithReceiver.kt");
+        @TestMetadata("nestedFunctionWithReceiver.kt")
+        public void testNestedFunctionWithReceiver() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/nestedFunctionWithReceiver.kt");
+        }
+
+        @TestMetadata("nestedSingleParamCall.kt")
+        public void testNestedSingleParamCall() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/nestedSingleParamCall.kt");
+        }
+
+        @TestMetadata("nestedSingleParamCall.option1.kt")
+        public void testNestedSingleParamCall_option1() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/nestedSingleParamCall.option1.kt");
+        }
+
+        @TestMetadata("topLevelMultiParamCall_beforeIdentifier.kt")
+        public void testTopLevelMultiParamCall_beforeIdentifier() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/topLevelMultiParamCall_beforeIdentifier.kt");
+        }
+
+        @TestMetadata("topLevelMultiParamCall_beforeLeftParen.kt")
+        public void testTopLevelMultiParamCall_beforeLeftParen() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/topLevelMultiParamCall_beforeLeftParen.kt");
+        }
+
+        @TestMetadata("topLevelMultiParamCall_beforeRightParen.kt")
+        public void testTopLevelMultiParamCall_beforeRightParen() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/topLevelMultiParamCall_beforeRightParen.kt");
+        }
+
+        @TestMetadata("topLevelMultiParamCall_onIdentifier.kt")
+        public void testTopLevelMultiParamCall_onIdentifier() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/topLevelMultiParamCall_onIdentifier.kt");
+        }
+
+        @TestMetadata("topLevelSingleParamCall_onIdentifier.kt")
+        public void testTopLevelSingleParamCall_onIdentifier() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter/topLevelSingleParamCall_onIdentifier.kt");
         }
     }
 }

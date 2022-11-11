@@ -92,16 +92,17 @@ object EditorConfigPsiTreeUtil {
     val caretOffset = editor.caretModel.offset
     val viewProvider = file.viewProvider
     val psiUnderCaret = viewProvider.findElementAt(caretOffset, EditorConfigLanguage)
+    val elementType = psiUnderCaret?.node?.elementType ?: return null
 
-    return when (psiUnderCaret?.node?.elementType) {
-      EditorConfigElementTypes.IDENTIFIER -> psiUnderCaret
-
-      null, TokenType.WHITE_SPACE, EditorConfigElementTypes.DOT -> {
+    return when (elementType) {
+      TokenType.WHITE_SPACE, EditorConfigElementTypes.DOT -> {
         val previousIndex = max(0, caretOffset - 1)
         val previousElement = viewProvider.findElementAt(previousIndex)
         if (previousElement?.node?.elementType != EditorConfigElementTypes.IDENTIFIER) null
         else previousElement
       }
+
+      EditorConfigElementTypes.IDENTIFIER -> psiUnderCaret
 
       else -> null
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.jvmDecompiler
 
@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.psi.KtFile
 
 class DecompileKotlinToJavaAction : AnAction(KotlinJvmDecompilerBundle.message("action.decompile.java.name")) {
@@ -42,9 +42,10 @@ class DecompileKotlinToJavaAction : AnAction(KotlinJvmDecompilerBundle.message("
 fun KtFile.canBeDecompiledToJava() = isCompiled && virtualFile?.fileType == JavaClassFileType.INSTANCE
 
 // Add action to "Attach sources" notification panel
-class DecompileKotlinToJavaActionProvider : AttachSourcesProvider {
+internal class DecompileKotlinToJavaActionProvider : AttachSourcesProvider {
+
     override fun getActions(
-        orderEntries: MutableList<LibraryOrderEntry>,
+        orderEntries: List<LibraryOrderEntry>,
         psiFile: PsiFile
     ): Collection<AttachSourcesProvider.AttachSourcesAction> {
         if (psiFile !is KtFile || !psiFile.canBeDecompiledToJava()) return emptyList()
@@ -52,7 +53,7 @@ class DecompileKotlinToJavaActionProvider : AttachSourcesProvider {
         return listOf(object : AttachSourcesProvider.AttachSourcesAction {
             override fun getName() = KotlinJvmDecompilerBundle.message("action.decompile.java.name")
 
-            override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>?): ActionCallback {
+            override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>): ActionCallback {
                 KotlinJvmDecompilerFacadeImpl.showDecompiledCode(psiFile)
                 return ActionCallback.DONE
             }

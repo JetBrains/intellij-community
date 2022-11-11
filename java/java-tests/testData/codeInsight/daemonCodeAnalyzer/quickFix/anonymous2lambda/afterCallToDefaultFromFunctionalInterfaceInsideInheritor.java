@@ -1,4 +1,4 @@
-// "Replace with lambda" "true"
+// "Replace with lambda" "true-preview"
 class Test {
   interface InOut {
     void run() throws IOException;

@@ -102,8 +102,6 @@ public final class ControlFlowBuilderUtil {
   /**
    * check whether statement is return (the statement which provides return value) statement of method or closure.
    *
-   * @param st
-   * @return
    */
   public static boolean isCertainlyReturnStatement(GrStatement st) {
     final PsiElement parent = st.getParent();

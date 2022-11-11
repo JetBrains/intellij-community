@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 import git4idea.GitVcs
 
-class GitUnversionedFilesHolder(val manager: GitRepositoryManager) : VcsManagedFilesHolderBase() {
+class GitUnversionedFilesHolder private constructor(val manager: GitRepositoryManager) : VcsManagedFilesHolderBase() {
   private val allHolders get() = manager.repositories.asSequence().map { it.untrackedFilesHolder }
 
   override fun isInUpdatingMode() = allHolders.any(GitUntrackedFilesHolder::isInUpdateMode)

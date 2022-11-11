@@ -84,7 +84,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
     }
 
     @Override
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       super.visitSuperExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null) {

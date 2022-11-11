@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.IdeaTestFixtureFactoryImpl;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.function.Predicate;
 
 /**
  * This is to be provided by the test framework and not by plugin authors.
@@ -67,5 +69,5 @@ public abstract class IdeaTestFixtureFactory {
   public abstract BareTestFixture createBareFixture();
 
   @NotNull
-  public abstract SdkTestFixture createSdkFixture();
+  public abstract SdkTestFixture createSdkFixture(@NotNull SdkType sdkType, @NotNull Predicate<String> versionFilter);
 }

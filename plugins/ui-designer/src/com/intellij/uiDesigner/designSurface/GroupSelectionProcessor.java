@@ -12,10 +12,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class GroupSelectionProcessor extends EventProcessor {
   private final GuiEditor myEditor;
   private final RadComponent myComponent;

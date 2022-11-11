@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -44,7 +44,6 @@ import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -59,7 +58,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -819,8 +817,11 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       File temp = createTempDirectory();
       VirtualFile tempDir = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
-      Project newProject = ProjectManagerEx.getInstanceEx().newProject(Paths.get(tempDir.getPath()), new OpenProjectTaskBuilder().build());
-      PlatformTestUtil.openProject(newProject);
+      Project newProject = ProjectManagerEx.getInstanceEx().openProject(Path.of(tempDir.getPath()),
+                                                                        OpenProjectTaskBuilderKt.createTestOpenProjectOptions());
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      }
       try {
         PlatformTestUtil.saveProject(newProject);
 

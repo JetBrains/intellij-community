@@ -5,16 +5,12 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,15 +21,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class BoundedTaskExecutorTest extends TestCase {
-  static {
-    Logger.setFactory(TestLoggerFactory.class);
-  }
-
+public class BoundedTaskExecutorTest extends CatchLogErrorsInAllThreadsTestCase {
   private static final Logger LOG = Logger.getInstance(BoundedTaskExecutorTest.class);
 
   @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    awaitAppPoolQuiescence("Can't start test: ");
+  }
+
+  @Override
   protected void tearDown() throws Exception {
+    //noinspection SSBasedInspection
     try {
       awaitAppPoolQuiescence("After tear down ");
     }
@@ -42,13 +41,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     }
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    awaitAppPoolQuiescence("Can't start test: ");
-  }
-
-  public String getPoolName() {
+  private String getPoolName() {
     return "A"+getName();
   }
 
@@ -59,7 +52,7 @@ public class BoundedTaskExecutorTest extends TestCase {
         .filter(thread -> thread.getName().startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX))
         .filter(thread -> thread.getState() == Thread.State.RUNNABLE)
         .filter(thread -> thread.getStackTrace().length != 0) // there can be RUNNABLE zombies with empty stacktrace
-        .collect(Collectors.toList());
+        .toList();
 
       long finish = System.currentTimeMillis();
       if (alive.isEmpty()) break;
@@ -111,8 +104,8 @@ public class BoundedTaskExecutorTest extends TestCase {
     ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(), backendExecutor, 1);
 
     Future<Integer> f1 = executor.submit(() -> 42);
-    Integer result = f1.get();
-    assertEquals(42, result.intValue());
+    int result = f1.get();
+    assertEquals(42, result);
     executor.shutdownNow();
     if (!executor.awaitTermination(100, TimeUnit.SECONDS)) fail(ThreadDumper.dumpThreadsToString());
     backendExecutor.shutdownNow();
@@ -205,7 +198,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
           @Override
           public String toString() {
-            return "iter " + finalI;
+            return "iteration " + finalI;
           }
         });
         CountDownLatch waitCompleted = new CountDownLatch(1);
@@ -295,18 +288,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     Thread.sleep(1000); // wait for a rare chance of a task executing right now
     assertEquals(N - log.length(), runnables.size());
 
-    try {
-      executor.execute(EmptyRunnable.getInstance());
-      fail("Must reject");
-    }
-    catch (RejectedExecutionException ignored) {
-    }
-    try {
-      executor.execute(EmptyRunnable.getInstance());
-      fail("Must reject");
-    }
-    catch (RejectedExecutionException ignored) {
-    }
+    BoundedScheduledExecutorTest.checkEveryPossibleSubmitThrows(executor);
 
     for (int i = 0; i < log.length(); i++) {
       assertFalse(futures[i].isCancelled());
@@ -332,18 +314,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     executor.shutdown();
     assertTrue(executor.isShutdown());
 
-    try {
-      executor.execute(EmptyRunnable.getInstance());
-      fail("Must reject");
-    }
-    catch (RejectedExecutionException ignored) {
-    }
-    try {
-      executor.execute(EmptyRunnable.getInstance());
-      fail("Must reject");
-    }
-    catch (RejectedExecutionException ignored) {
-    }
+    BoundedScheduledExecutorTest.checkEveryPossibleSubmitThrows(executor);
 
     for (int i = 0; i < N; i++) {
       assertFalse(futures[i].isCancelled());
@@ -355,7 +326,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     if (!executor.awaitTermination(100, TimeUnit.SECONDS)) fail(ThreadDumper.dumpThreadsToString());
   }
 
-  public void testNoExtraThreadsAreEverCreated() throws InterruptedException {
+  public void testNoExtraThreadsAreEverCreated() throws InterruptedException, ExecutionException {
     for (int nMaxThreads=1; nMaxThreads<10; nMaxThreads++) {
       LOG.debug("nMaxThreads = " + nMaxThreads);
       ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(),nMaxThreads);
@@ -399,23 +370,14 @@ public class BoundedTaskExecutorTest extends TestCase {
       }
 
       allStarted.countDown();
-      saturate.forEach(BoundedTaskExecutorTest::doGet);
-      futures.forEach(BoundedTaskExecutorTest::doGet);
+      ConcurrencyUtil.getAll(saturate);
+      ConcurrencyUtil.getAll(futures);
 
       //System.out.println("workers.size() = " + workers.size());
       assertTrue("Must create no more than "+nMaxThreads+" workers but got: "+workers,
                  workers.size() <= nMaxThreads);
       executor.shutdownNow();
       if (!executor.awaitTermination(100, TimeUnit.SECONDS)) fail(ThreadDumper.dumpThreadsToString());
-    }
-  }
-
-  private static Object doGet(Future<?> future) {
-    try {
-      return future.get();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 
@@ -461,15 +423,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testErrorsThrownInFiredAndForgottenTaskMustBeLogged() {
     ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(),AppExecutorUtil.getAppExecutorService(), 1);
-    List<Throwable> errors = Collections.synchronizedList(new ArrayList<>());
-    LoggedErrorProcessor processor = new LoggedErrorProcessor() {
-      @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
-        errors.add(t);
-        return false;
-      }
-    };
-    LoggedErrorProcessor.executeWith(processor, () -> {
+    Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(() -> {
       try {
         AtomicBoolean executed = new AtomicBoolean();
         executor.execute(() -> {
@@ -482,12 +436,12 @@ public class BoundedTaskExecutorTest extends TestCase {
         });
         while (!executed.get()) {}
         TimeoutUtil.sleep(100); // that tiny moment between throwing new Error() and catching it in BoundedTaskExecutor.wrapAndExecute()
-        assertTrue(errors.toString(), errors.stream().anyMatch(t -> ("error " + getName()).equals(t.getMessage())));
       }
       finally {
         executor.shutdownNow();
       }
     });
+    assertEquals("error " + getName(), error.getMessage());
   }
 
   public void testSeveralWaitAllTasksExecutedDontCauseDeadlock() throws Throwable {
@@ -516,5 +470,24 @@ public class BoundedTaskExecutorTest extends TestCase {
       wait1.get();
       wait2.get();
     }
+  }
+
+  public void testIsTerminatedMustQueryIfAllTasksAreExecuted() throws InterruptedException, ExecutionException {
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(),AppExecutorUtil.getAppExecutorService(), 1);
+    Future<?> future = executor.submit(() -> TimeoutUtil.sleep(2_000));
+    executor.shutdown();
+    assertTrue(executor.isShutdown());
+    assertFalse(executor.isTerminated());
+    future.get();
+    TimeoutUtil.sleep(20); // to let BoundedExecutor catchup the task termination
+    assertTrue(executor.toString(), executor.isTerminated());
+  }
+
+  public void testShutdownMustBeIdempotentByExecutorServiceContract() {
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(),AppExecutorUtil.getAppExecutorService(), 1);
+    executor.shutdown();
+    assertTrue(executor.isShutdown());
+    executor.shutdown();
+    assertTrue(executor.isShutdown());
   }
 }

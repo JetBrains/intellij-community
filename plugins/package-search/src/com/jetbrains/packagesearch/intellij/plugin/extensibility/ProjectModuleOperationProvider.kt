@@ -1,5 +1,22 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedDependency
@@ -8,33 +25,31 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
+import com.jetbrains.packagesearch.intellij.plugin.util.asCoroutine
 
 /**
  * Extension point that allows to modify the dependencies of a specific project.
  */
+@Deprecated(
+    "Use async version. Either AsyncProjectModuleOperationProvider or CoroutineProjectModuleOperationProvider." +
+        " Remember to change the extension point type in the xml",
+    ReplaceWith(
+        "ProjectAsyncModuleOperationProvider",
+        "com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectAsyncModuleOperationProvider"
+    ),
+    DeprecationLevel.WARNING
+)
 interface ProjectModuleOperationProvider {
 
     companion object {
 
-        private val extensions: Array<ProjectModuleOperationProvider>
-            get() = runCatching {
-                ExtensionPointName.create<ProjectModuleOperationProvider>("com.intellij.packagesearch.projectModuleOperationProvider")
-                    .extensions
-            }.getOrDefault(emptyArray())
+        private val EP_NAME = "com.intellij.packagesearch.projectModuleOperationProvider"
 
-        /**
-         * Retrieves the first provider for given [project] and [psiFile].
-         * @return The first compatible provider or `null` if none is found.
-         */
-        fun forProjectPsiFileOrNull(project: Project, psiFile: PsiFile?): ProjectModuleOperationProvider? =
-            extensions.firstOrNull { it.hasSupportFor(project, psiFile) }
+        private val extensionPointName
+            get() = ExtensionPointName.create<ProjectModuleOperationProvider>(EP_NAME)
 
-        /**
-         * Retrieves the first provider for given the [projectModuleType].
-         * @return The first compatible provider or `null` if none is found.
-         */
-        fun forProjectModuleType(projectModuleType: ProjectModuleType): ProjectModuleOperationProvider? =
-            extensions.firstOrNull { it.hasSupportFor(projectModuleType) }
+        internal val extensions
+            get() = extensionPointName.extensions.map { it.asCoroutine() }
     }
 
     /**
@@ -67,7 +82,7 @@ interface ProjectModuleOperationProvider {
     fun addDependencyToModule(
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
-    ): List<OperationFailure<out OperationItem>>
+    ): Collection<OperationFailure<out OperationItem>> = emptyList()
 
     /**
      * Removes a dependency from the given [module] using [operationMetadata].
@@ -76,7 +91,7 @@ interface ProjectModuleOperationProvider {
     fun removeDependencyFromModule(
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
-    ): List<OperationFailure<out OperationItem>>
+    ): Collection<OperationFailure<out OperationItem>> = emptyList()
 
     /**
      * Modify a dependency in the given [module] using [operationMetadata].
@@ -85,15 +100,25 @@ interface ProjectModuleOperationProvider {
     fun updateDependencyInModule(
         operationMetadata: DependencyOperationMetadata,
         module: ProjectModule
-    ): List<OperationFailure<out OperationItem>>
+    ): Collection<OperationFailure<out OperationItem>> = emptyList()
 
     /**
-     * Lists all dependencies in the given [module].
+     * Lists all dependencies declared in the given [module]. A declared dependency
+     * have to be explicitly written in the build file.
      * @return A [Collection]<[UnifiedDependency]> found in the project.
      */
-    fun listDependenciesInModule(
+    fun declaredDependenciesInModule(
         module: ProjectModule
-    ): Collection<UnifiedDependency>
+    ): Collection<DeclaredDependency> = emptyList()
+
+    /**
+     * Lists all resolved dependencies in the given [module].
+     * @return A [Collection]<[UnifiedDependency]> found in the project.
+     */
+    fun resolvedDependenciesInModule(
+        module: ProjectModule,
+        scopes: Set<String> = emptySet()
+    ): Collection<UnifiedDependency> = emptyList()
 
     /**
      * Adds the [repository] to the given [module].
@@ -102,16 +127,17 @@ interface ProjectModuleOperationProvider {
     fun addRepositoryToModule(
         repository: UnifiedDependencyRepository,
         module: ProjectModule
-    ): List<OperationFailure<out OperationItem>>
+    ): Collection<OperationFailure<out OperationItem>> = emptyList()
 
     /**
      * Removes the [repository] from the given [module].
      * @return A list containing all failures encountered during the operation. If the list is empty, the operation was successful.
      */
+
     fun removeRepositoryFromModule(
         repository: UnifiedDependencyRepository,
         module: ProjectModule
-    ): List<OperationFailure<out OperationItem>>
+    ): Collection<OperationFailure<out OperationItem>> = emptyList()
 
     /**
      * Lists all repositories in the given [module].
@@ -119,5 +145,5 @@ interface ProjectModuleOperationProvider {
      */
     fun listRepositoriesInModule(
         module: ProjectModule
-    ): Collection<UnifiedDependencyRepository>
+    ): Collection<UnifiedDependencyRepository> = emptyList()
 }

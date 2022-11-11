@@ -35,5 +35,8 @@ object IdeProductProvider {
   /** PyCharm Professional */
   val PY: IdeInfo = di.direct.instance<IdeProduct>().PY
 
+  /** CLion */
+  val CL: IdeInfo = di.direct.instance<IdeProduct>().CL
+
   fun getProducts(): List<IdeInfo> = IdeProductProvider::class.declaredMemberProperties.map { it.get(IdeProductProvider) as IdeInfo }
 }

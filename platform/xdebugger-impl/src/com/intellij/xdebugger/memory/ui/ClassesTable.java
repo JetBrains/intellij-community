@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.icons.AllIcons;
@@ -349,7 +349,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     final TypeInfo selectedClass = myModel.getSelectedClassBeforeHide();
     int newSelectedIndex = -1;
     final boolean isInitialized = !myItems.isEmpty();
-    myItems = Collections.unmodifiableList(new ArrayList<>(class2Count.keySet()));
+    myItems = List.copyOf(class2Count.keySet());
 
     int i = 0;
     for (final TypeInfo ref : class2Count.keySet()) {
@@ -411,7 +411,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     try {
       return getMousePosition() != null;
     }
-    catch (NullPointerException e) { // A workaround for https://bugs.openjdk.java.net/browse/JDK-6840067
+    catch (NullPointerException e) { // A workaround for https://bugs.openjdk.org/browse/JDK-6840067
       return false;
     }
   }

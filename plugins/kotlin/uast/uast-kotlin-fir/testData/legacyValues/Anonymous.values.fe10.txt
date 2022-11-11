@@ -18,7 +18,7 @@ UFile (package = ) [import java.io.Closeable...]
                         USimpleNameReferenceExpression (identifier = run, resolvesTo = null) [run] = external run()()
                 UDeclarationsExpression [var runnable2: java.lang.Runnable = Runnable({ ...})] = Undetermined
                     ULocalVariable (name = runnable2) [var runnable2: java.lang.Runnable = Runnable({ ...})]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
     println()
 })(Undetermined)
                             UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
@@ -56,7 +56,11 @@ UFile (package = ) [import java.io.Closeable...]
                                             ULiteralExpression (value = 0) [0] = 0
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
-                                UMethod (name = ) [private fun () = UastEmptyExpression]
+                                UMethod (name = ) [private fun () {...}]
+                                    UBlockExpression [{...}] = external <init>()()
+                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                                            UIdentifier (Identifier (InputStream)) [UIdentifier (Identifier (InputStream))]
+                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: InputStream) [<init>] = external <init>()()
         UMethod (name = withErr) [public static final fun withErr() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var runnable: <ErrorType> = anonymous null] = Undetermined

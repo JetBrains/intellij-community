@@ -4,6 +4,7 @@ package com.intellij.application.options.editor
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsState
 import com.intellij.openapi.application.ApplicationBundle.message
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.layout.*
 
 internal const val EDITOR_TABS_OPTIONS_ID = "editor.preferences.tabs"
@@ -13,8 +14,14 @@ private val ui: UISettingsState
 
 internal val showDirectoryForNonUniqueFilenames
   get() = CheckboxDescriptor(message("checkbox.show.directory.for.non.unique.files"), ui::showDirectoryForNonUniqueFilenames)
-internal val markModifiedTabsWithAsterisk
-  get() = CheckboxDescriptor(message("checkbox.mark.modified.tabs.with.asterisk"), ui::markModifiedTabsWithAsterisk)
+internal val markModifiedTabsWithAsterisk: CheckboxDescriptor
+  get() {
+    val text = if (ExperimentalUI.isNewUI()) {
+      message("checkbox.mark.modified.tabs")
+    }
+    else message("checkbox.mark.modified.tabs.with.asterisk")
+    return CheckboxDescriptor(text, ui::markModifiedTabsWithAsterisk)
+  }
 internal val showTabsTooltips
   get() = CheckboxDescriptor(message("checkbox.show.tabs.tooltips"), ui::showTabsTooltips)
 internal val showFileIcon

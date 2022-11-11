@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -16,7 +18,7 @@ final class ShowProductVersion implements ApplicationStarter {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @Override
-  public void main(String @NotNull [] args) {
+  public void main(@NotNull List<String> args) {
     System.out.println(ApplicationInfoEx.getInstanceEx().getFullVersion());
     System.exit(0);
   }

@@ -27,7 +27,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(holder.getFile());
     return new JavaElementVisitor() {
       @Override
-      public void visitIdentifier(PsiIdentifier identifier) {
+      public void visitIdentifier(@NotNull PsiIdentifier identifier) {
         String message = getIdentifierWarning(identifier);
         if (message != null) {
           holder.registerProblem(identifier, message, new RenameFix());
@@ -76,7 +76,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         PsiReferenceExpression ref = expression.getMethodExpression();
         PsiElement nameElement = ref.getReferenceNameElement();
         if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
@@ -88,7 +88,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
       }
 
       @Override
-      public void visitKeyword(PsiKeyword keyword) {
+      public void visitKeyword(@NotNull PsiKeyword keyword) {
         super.visitKeyword(keyword);
         if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !languageLevel.isAtLeast(LanguageLevel.JDK_10)) {
           @PsiModifier.ModifierConstant String modifier = keyword.getText();

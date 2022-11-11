@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.refactoring.suggested
 
 import com.intellij.openapi.util.Key
@@ -10,8 +10,8 @@ import com.intellij.refactoring.suggested.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.caches.project.forcedModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -47,7 +47,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     override fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState {
         val newDeclaration = state.declaration as? KtCallableDeclaration ?: return state
         val oldDeclaration = state.restoredDeclarationCopy() as? KtCallableDeclaration ?: return state
-        oldDeclaration.containingKtFile.forcedModuleInfo = newDeclaration.getModuleInfo()
+        oldDeclaration.containingKtFile.forcedModuleInfo = newDeclaration.moduleInfo
 
         val descriptorWithOldSignature = oldDeclaration.resolveToDescriptorIfAny() as CallableDescriptor?
         val descriptorWithNewSignature = newDeclaration.resolveToDescriptorIfAny() as CallableDescriptor?

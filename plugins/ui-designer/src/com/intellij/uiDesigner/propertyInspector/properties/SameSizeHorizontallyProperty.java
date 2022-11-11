@@ -4,10 +4,6 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class SameSizeHorizontallyProperty extends AbstractGridLayoutProperty {
   public static SameSizeHorizontallyProperty getInstance(Project project) {
     return project.getService(SameSizeHorizontallyProperty.class);

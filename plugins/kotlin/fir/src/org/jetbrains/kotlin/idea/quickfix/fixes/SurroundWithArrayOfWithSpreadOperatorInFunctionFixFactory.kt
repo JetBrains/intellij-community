@@ -4,27 +4,28 @@
  */
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPrimitiveType
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.fir.api.fixes.HLApplicatorTargetWithInput
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.fir.api.fixes.withInput
-import org.jetbrains.kotlin.idea.util.shortenReferences
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
 
-    class Input(val fullyQualifiedArrayOfCall: String, val shortArrayOfCall: String) : HLApplicatorInput
+    class Input(val fullyQualifiedArrayOfCall: String, val shortArrayOfCall: String) : KotlinApplicatorInput
 
     val applicator = applicator<KtExpression, Input> {
-        familyName(KotlinBundle.getMessage("surround.with.array.of"))
+        familyName(KotlinBundle.lazyMessage("surround.with.array.of"))
         actionName { _, input ->
             KotlinBundle.getMessage("surround.with.0", input.shortArrayOfCall)
         }
@@ -55,7 +56,8 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 
-    private fun createFix(expectedArrayType: KtType, psi: KtExpression): List<HLApplicatorTargetWithInput<KtExpression, Input>> {
+    @Suppress("unused")
+    private fun KtAnalysisSession.createFix(expectedArrayType: KtType, psi: KtExpression): List<KotlinApplicatorTargetWithInput<KtExpression, Input>> {
         val arrayClassId = (expectedArrayType as? KtUsualClassType)?.classId
         val primitiveType = arrayClassFqNameToPrimitiveType[arrayClassId?.asSingleFqName()?.toUnsafe()]
         val arrayOfCallName = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[primitiveType] ?: ArrayFqNames.ARRAY_OF_FUNCTION

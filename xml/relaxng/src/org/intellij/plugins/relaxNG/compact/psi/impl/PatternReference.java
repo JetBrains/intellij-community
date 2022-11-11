@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -155,16 +156,17 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   static class CreatePatternFix implements LocalQuickFix {
-    private final PatternReference myReference;
+
+    @IntentionName private final String myName;
 
     CreatePatternFix(PatternReference reference) {
-      myReference = reference;
+      myName = RelaxngBundle.message("relaxng.quickfix.create-pattern.name", reference.getCanonicalText());
     }
 
     @NotNull
     @Override
     public String getName() {
-      return RelaxngBundle.message("relaxng.quickfix.create-pattern.name", myReference.getCanonicalText());
+      return myName;
     }
 
     @Override
@@ -175,7 +177,8 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final RncFile rncfile = (RncFile)PsiFileFactory.getInstance(myReference.getElement().getProject()).createFileFromText("dummy.rnc", RncFileType.getInstance(), "dummy = xxx");
+      PatternReference myReference = (PatternReference)descriptor.getPsiElement().getReference();
+      final RncFile rncfile = (RncFile)PsiFileFactory.getInstance(project).createFileFromText("dummy.rnc", RncFileType.getInstance(), "dummy = xxx");
 
       final RncGrammar grammar = rncfile.getGrammar();
       assert grammar != null;

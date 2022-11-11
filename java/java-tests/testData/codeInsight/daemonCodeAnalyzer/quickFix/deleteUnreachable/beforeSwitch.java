@@ -1,4 +1,4 @@
-// "Delete unreachable statement" "true"
+// "Delete unreachable statement" "true-preview"
 class Never {
   void foo(int n) {
     return;

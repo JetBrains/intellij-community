@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
@@ -9,17 +9,17 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.receiverType
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
@@ -43,7 +43,7 @@ class SimplifiableCallInspection : AbstractKotlinInspection() {
     private fun KtCallExpression.findConversionAndResolvedCall(): Pair<Conversion, ResolvedCall<*>>? {
         val calleeText = calleeExpression?.text ?: return null
         val resolvedCall: ResolvedCall<*>? by lazy { this.resolveToCall() }
-        for (conversion in conversions) {
+        for (conversion in Holder.conversions) {
             if (conversion.shortName != calleeText) continue
             if (resolvedCall?.isCalling(conversion.fqName) == true) {
                 return conversion to resolvedCall!!
@@ -62,26 +62,8 @@ class SimplifiableCallInspection : AbstractKotlinInspection() {
         val shortName = fqName.shortName().asString()
     }
 
-    companion object {
-        private fun KtCallExpression.singleLambdaExpression(): KtLambdaExpression? {
-            val argument = valueArguments.singleOrNull() ?: return null
-            return (argument as? KtLambdaArgument)?.getLambdaExpression() ?: argument.getArgumentExpression() as? KtLambdaExpression
-        }
-
-        private fun KtLambdaExpression.singleStatement(): KtExpression? = bodyExpression?.statements?.singleOrNull()
-
-        private fun KtLambdaExpression.singleLambdaParameterName(): String? {
-            val lambdaParameters = valueParameters
-            return if (lambdaParameters.isNotEmpty()) lambdaParameters.singleOrNull()?.name else "it"
-        }
-
-        private fun KtExpression.isNameReferenceTo(name: String): Boolean =
-            this is KtNameReferenceExpression && this.getReferencedName() == name
-
-        private fun KtExpression.isNull(): Boolean =
-            this is KtConstantExpression && this.node.elementType == KtNodeTypes.NULL
-
-        private val conversions = listOf(
+    private object Holder {
+        val conversions: List<Conversion> = listOf(
             Conversion("kotlin.collections.flatMap", fun(callExpression: KtCallExpression): String? {
                 val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
                 val reference = lambdaExpression.singleStatement() ?: return null
@@ -149,3 +131,20 @@ class SimplifiableCallInspection : AbstractKotlinInspection() {
     }
 }
 
+private fun KtCallExpression.singleLambdaExpression(): KtLambdaExpression? {
+    val argument = valueArguments.singleOrNull() ?: return null
+    return (argument as? KtLambdaArgument)?.getLambdaExpression() ?: argument.getArgumentExpression() as? KtLambdaExpression
+}
+
+private fun KtLambdaExpression.singleStatement(): KtExpression? = bodyExpression?.statements?.singleOrNull()
+
+private fun KtLambdaExpression.singleLambdaParameterName(): String? {
+    val lambdaParameters = valueParameters
+    return if (lambdaParameters.isNotEmpty()) lambdaParameters.singleOrNull()?.name else "it"
+}
+
+private fun KtExpression.isNameReferenceTo(name: String): Boolean =
+    this is KtNameReferenceExpression && this.getReferencedName() == name
+
+private fun KtExpression.isNull(): Boolean =
+    this is KtConstantExpression && this.node.elementType == KtNodeTypes.NULL

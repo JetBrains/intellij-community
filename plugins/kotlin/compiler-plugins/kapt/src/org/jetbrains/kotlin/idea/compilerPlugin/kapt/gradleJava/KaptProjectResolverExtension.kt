@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.kapt.gradleJava
 
@@ -8,11 +8,11 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptModelBuilderService
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @Suppress("unused")
 class KaptProjectResolverExtension : AbstractProjectResolverExtension() {
@@ -39,7 +39,7 @@ class KaptProjectResolverExtension : AbstractProjectResolverExtension() {
                 val parentDataNode = ideModule.findParentForSourceSetDataNode(sourceSet.sourceSetName) ?: continue
 
                 fun addSourceSet(path: String, type: ExternalSystemSourceType) {
-                    val contentRootData = ContentRootData(GRADLE_SYSTEM_ID, path)
+                    val contentRootData = ContentRootData(GradleConstants.SYSTEM_ID, path)
                     contentRootData.storePath(type, path)
                     parentDataNode.createChild(ProjectKeys.CONTENT_ROOT, contentRootData)
                 }
@@ -50,7 +50,7 @@ class KaptProjectResolverExtension : AbstractProjectResolverExtension() {
                 sourceSet.generatedKotlinSourcesDirFile?.let { addSourceSet(it.absolutePath, sourceType) }
 
                 sourceSet.generatedClassesDirFile?.let { generatedClassesDir ->
-                    val libraryData = LibraryData(GRADLE_SYSTEM_ID, "kaptGeneratedClasses")
+                    val libraryData = LibraryData(GradleConstants.SYSTEM_ID, "kaptGeneratedClasses")
                     val existingNode =
                         parentDataNode.children.map { (it.data as? LibraryDependencyData)?.target }
                             .firstOrNull { it?.externalName == libraryData.externalName }

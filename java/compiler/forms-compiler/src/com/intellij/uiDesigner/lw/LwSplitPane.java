@@ -6,10 +6,6 @@ import org.jdom.Element;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class LwSplitPane extends LwContainer{
   public static final String POSITION_LEFT = "left";
   public static final String POSITION_RIGHT = "right";

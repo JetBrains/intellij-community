@@ -4,7 +4,6 @@ package com.intellij.openapi.progress.util
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
-import com.intellij.openapi.ui.DialogWrapper.PeerFactory
 import com.intellij.openapi.ui.DialogWrapperPeer
 import com.intellij.openapi.ui.DialogWrapperPeerFactory
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
@@ -13,6 +12,7 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.GlasspanePeerUnav
 import com.intellij.ui.PopupBorder
 import java.awt.Component
 import java.awt.Window
+import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JRootPane
@@ -21,7 +21,7 @@ import javax.swing.border.Border
 internal class ProgressDialogWrapper(
   private val panel: JPanel,
   private val cancelAction: () -> Unit,
-  peerFactory: PeerFactory,
+  peerFactory: Function<DialogWrapper, DialogWrapperPeer>,
 ) : DialogWrapper(peerFactory) {
 
   init {
@@ -76,7 +76,7 @@ internal class ProgressDialogWrapper(
   }
 }
 
-fun createDialogWrapper(
+internal fun createDialogWrapper(
   panel: JPanel,
   cancelAction: () -> Unit,
   window: Window,
@@ -95,22 +95,26 @@ fun createDialogWrapper(
   return dialog
 }
 
-private fun peerFactory(window: Window, lightPopup: Boolean): PeerFactory = PeerFactory { dialogWrapper ->
-  if (lightPopup && System.getProperty("vintage.progress") == null) {
-    try {
-      GlassPaneDialogWrapperPeer(dialogWrapper, window)
+private fun peerFactory(window: Window, lightPopup: Boolean): Function<DialogWrapper, DialogWrapperPeer> {
+  return java.util.function.Function { dialogWrapper ->
+    if (lightPopup) {
+      try {
+        GlassPaneDialogWrapperPeer(dialogWrapper, window)
+      }
+      catch (e: GlasspanePeerUnavailableException) {
+        DialogWrapperPeerFactory.getInstance().createPeer(dialogWrapper, window, false)
+      }
     }
-    catch (e: GlasspanePeerUnavailableException) {
+    else {
       DialogWrapperPeerFactory.getInstance().createPeer(dialogWrapper, window, false)
     }
   }
-  else {
-    DialogWrapperPeerFactory.getInstance().createPeer(dialogWrapper, window, false)
-  }
 }
 
-private fun peerFactory(project: Project?): PeerFactory = PeerFactory { dialogWrapper ->
-  DialogWrapperPeerFactory.getInstance().createPeer(dialogWrapper, project, false, IdeModalityType.IDE)
+private fun peerFactory(project: Project?): Function<DialogWrapper, DialogWrapperPeer> {
+  return Function { dialogWrapper ->
+    DialogWrapperPeerFactory.getInstance().createPeer(dialogWrapper, project, false, IdeModalityType.IDE)
+  }
 }
 
 internal fun setupProgressDialog(dialog: DialogWrapper, writeAction: Boolean) {

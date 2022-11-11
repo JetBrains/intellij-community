@@ -12,10 +12,11 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.gradle.common" />
   </component>

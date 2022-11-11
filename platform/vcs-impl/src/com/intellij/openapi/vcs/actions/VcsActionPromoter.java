@@ -28,6 +28,7 @@ public class VcsActionPromoter implements ActionPromoter {
 
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.MoveChangedLinesToChangelist", "ChangesView.Move");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
+    reorderActionPair(reorderedActions, reorderedIds, "Vcs.ShowDiffChangedLines", "Diff.ShowDiff");
 
     Set<AnAction> promoted = new HashSet<>(filter(actions, action ->
       action instanceof ShowMessageHistoryAction || action instanceof CommitActionsPanel.DefaultCommitAction ||

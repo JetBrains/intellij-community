@@ -45,7 +45,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                                   @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, GroovyBundle.message("language.groovy")) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings) {
         return new GroovyCodeStyleMainPanel(getCurrentSettings(), settings) {};
       }
 
@@ -57,7 +57,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   }
 
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new GroovyCodeStyleSettings(settings);
   }
 

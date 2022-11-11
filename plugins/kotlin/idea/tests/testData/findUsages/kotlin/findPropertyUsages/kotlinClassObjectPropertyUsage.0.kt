@@ -9,3 +9,4 @@ interface Some {
 }
 
 val a = Some.XX
+// FIR_COMPARISON

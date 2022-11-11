@@ -1,12 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.intention;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 
 
@@ -34,6 +40,22 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
 
   public void testSealedWithSameFileInheritors() {
     doTestSameFileClass();
+  }
+
+  public void testScratch() {
+    VirtualFile scratch =
+      ScratchRootType.getInstance()
+        .createScratchFile(getProject(), PathUtil.makeFileName("scratch", "java"), JavaLanguage.INSTANCE,
+                           "class Scrat<caret>ch { }", ScratchFileService.Option.create_if_missing);
+    assertNotNull(scratch);
+    myFixture.configureFromExistingVirtualFile(scratch);
+    IntentionAction intention = myFixture.findSingleIntention("Create Subclass");
+    assertNotNull(intention);
+    intention.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    myFixture.checkResult("class Scratch { }\n" +
+                          "\n" +
+                          "class <caret>ScratchImpl extends Scratch {\n" +
+                          "}");
   }
 
   private void doTestInner() {

@@ -26,7 +26,7 @@ final class ViewObsoleteNavBarAction extends ToggleAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabledAndVisible(ToolbarSettings.getInstance().isEnabled());
+    e.getPresentation().setEnabledAndVisible(ToolbarSettings.getInstance().isAvailable());
   }
 
   @Override

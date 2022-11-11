@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.*
@@ -54,7 +55,7 @@ class ChangeFunctionLiteralReturnTypeFix(
         val correspondingProperty = PsiTreeUtil.getParentOfType(functionLiteralExpression, KtProperty::class.java)
         if (correspondingProperty != null &&
             correspondingProperty.delegate == null &&
-            correspondingProperty.initializer?.let { QuickFixUtil.canEvaluateTo(it, functionLiteralExpression) } != false
+            correspondingProperty.initializer?.let { QuickFixBranchUtil.canEvaluateTo(it, functionLiteralExpression) } != false
         ) {
             val correspondingPropertyTypeRef = correspondingProperty.typeReference
             val propertyType = context.get(BindingContext.TYPE, correspondingPropertyTypeRef)
@@ -85,7 +86,7 @@ class ChangeFunctionLiteralReturnTypeFix(
 
 
         val parentFunction = PsiTreeUtil.getParentOfType(functionLiteralExpression, KtFunction::class.java, true)
-        return if (parentFunction != null && QuickFixUtil.canFunctionOrGetterReturnExpression(parentFunction, functionLiteralExpression)) {
+        return if (parentFunction != null && QuickFixBranchUtil.canFunctionOrGetterReturnExpression(parentFunction, functionLiteralExpression)) {
             val parentFunctionReturnTypeRef = parentFunction.typeReference
             val parentFunctionReturnType = context.get(BindingContext.TYPE, parentFunctionReturnTypeRef)
             if (parentFunctionReturnType != null && !KotlinTypeChecker.DEFAULT
@@ -109,13 +110,19 @@ class ChangeFunctionLiteralReturnTypeFix(
         )
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        functionLiteralReturnTypeRef?.let {
-            val newTypeRef = it.replace(KtPsiFactory(file).createType(typeSourceCode)) as KtTypeReference
-            ShortenReferences.DEFAULT.process(newTypeRef)
+        ApplicationManager.getApplication().runWriteAction {
+            functionLiteralReturnTypeRef?.let {
+                val newTypeRef = it.replace(KtPsiFactory(file).createType(typeSourceCode)) as KtTypeReference
+                ShortenReferences.DEFAULT.process(newTypeRef)
+            }
         }
         if (appropriateQuickFix != null && appropriateQuickFix.isAvailable(project, editor!!, file)) {
             appropriateQuickFix.invoke(project, editor, file)
         }
+    }
+    
+    override fun startInWriteAction(): Boolean {
+        return appropriateQuickFix == null || appropriateQuickFix.startInWriteAction()
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

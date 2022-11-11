@@ -86,7 +86,7 @@ internal class CodeStyleTest {
 
   @Test fun `do not duplicate known extra sections`() {
     val newProvider: CodeStyleSettingsProvider = object : CodeStyleSettingsProvider() {
-      override fun createCustomSettings(settings: CodeStyleSettings?): CustomCodeStyleSettings {
+      override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings {
         return object : CustomCodeStyleSettings("NewComponent", settings) {
           override fun getKnownTagNames(): List<String> {
             return ContainerUtil.concat(super.getKnownTagNames(), listOf("NewComponent-extra"))

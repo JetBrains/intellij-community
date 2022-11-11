@@ -3,7 +3,7 @@ package com.intellij.cce.dialog
 import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.actions.CompletionPrefix
 import com.intellij.cce.workspace.Config
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import java.awt.event.ItemEvent
 import javax.swing.*
 
@@ -11,25 +11,26 @@ class PrefixConfigurable : EvaluationConfigurable {
   private var prefix: CompletionPrefix = CompletionPrefix.NoPrefix
 
   private val simplePrefixSpinner = JSpinner(SpinnerNumberModel(2, 1, 5, 1))
-  private val emulateTypingCheckbox = JCheckBox("", prefix.emulateTyping)
+  private val emulateTypingCheckbox = JCheckBox(EvaluationPluginBundle.message("evaluation.settings.prefix.typing"), prefix.emulateTyping)
 
   override fun createPanel(previousState: Config): JPanel {
     prefix = previousState.actions.strategy.prefix
-    val panel = panel(title = EvaluationPluginBundle.message("evaluation.settings.prefix.title"), constraints = arrayOf(LCFlags.noGrid)) { }
-    val elements = listOf(
-      JRadioButton(EvaluationPluginBundle.message("evaluation.settings.prefix.no")).configureNoPrefix(),
-      JRadioButton(EvaluationPluginBundle.message("evaluation.settings.prefix.simple")).configureSimplePrefix(),
-      simplePrefixSpinner.configureSimplePrefix(),
-      JRadioButton(EvaluationPluginBundle.message("evaluation.settings.prefix.capitalize")).configureCapitalizePrefix(),
-      emulateTypingCheckbox.configureEmulateTyping(),
-      JLabel(EvaluationPluginBundle.message("evaluation.settings.prefix.typing"))
-    )
-    val buttonGroup = ButtonGroup()
-    elements.forEach {
-      if (it is JRadioButton) buttonGroup.add(it)
-      panel.add(it as JComponent)
+    return panel {
+      group(EvaluationPluginBundle.message("evaluation.settings.prefix.title")) {
+        buttonsGroup {
+          row {
+            radioButton(EvaluationPluginBundle.message("evaluation.settings.prefix.no"))
+              .component.configureNoPrefix()
+            radioButton(EvaluationPluginBundle.message("evaluation.settings.prefix.simple"))
+              .component.configureSimplePrefix()
+            cell(simplePrefixSpinner).component.configureSimplePrefix()
+            radioButton(EvaluationPluginBundle.message("evaluation.settings.prefix.capitalize"))
+              .component.configureCapitalizePrefix()
+            cell(emulateTypingCheckbox).component.configureEmulateTyping()
+          }
+        }
+      }
     }
-    return panel
   }
 
   override fun configure(builder: Config.Builder) {

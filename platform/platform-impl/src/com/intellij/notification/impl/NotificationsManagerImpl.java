@@ -4,7 +4,6 @@ package com.intellij.notification.impl;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManagerListener;
@@ -13,6 +12,7 @@ import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -177,7 +177,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     String groupId = notification.getGroupId();
     NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
     NotificationDisplayType type = settings.getDisplayType();
-    String toolWindowId = NotificationsConfigurationImpl.getInstanceImpl().getToolWindowId(groupId);
+    String toolWindowId = notification.getToolWindowId();
+    if (toolWindowId == null) {
+      toolWindowId = NotificationsConfigurationImpl.getInstanceImpl().getToolWindowId(groupId);
+    }
 
     if (type == NotificationDisplayType.TOOL_WINDOW &&
         (toolWindowId == null || project == null || !ToolWindowManager.getInstance(project).canShowNotification(toolWindowId))) {
@@ -339,10 +342,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0 || ActionCenter.isEnabled()) {
         frameActivateBalloonListener(balloon, () -> {
           if (!balloon.isDisposed()) {
-            int delay = 10000;
-            if (ActionCenter.isEnabled() && displayType == NotificationDisplayType.STICKY_BALLOON) {
-              delay = 300000;
-            }
+            int delay = ActionCenter.isEnabled() && displayType == NotificationDisplayType.STICKY_BALLOON ? 300000 : 10000;
             ((BalloonImpl)balloon).startSmartFadeoutTimer(delay);
           }
         });
@@ -362,9 +362,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       Disposable listenerDisposable = Disposer.newDisposable();
       Disposer.register(parentDisposable, listenerDisposable);
       ApplicationManager.getApplication().getMessageBus().connect(listenerDisposable)
-        .subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
+        .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
           @Override
-          public void onFrameActivated() {
+          public void applicationActivated(@NotNull IdeFrame ideFrame) {
             Disposer.dispose(listenerDisposable);
             callback.run();
           }
@@ -987,7 +987,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void createMergeAction(BalloonLayoutData layoutData, JPanel panel) {
-    @SuppressWarnings("deprecation") String shortTitle = NotificationParentGroup.getShortTitle(layoutData.groupId);
+    @SuppressWarnings("removal") String shortTitle = NotificationParentGroup.getShortTitle(layoutData.groupId);
     String title = shortTitle != null ? IdeBundle.message("notification.manager.merge.n.more.from", layoutData.mergeData.count, shortTitle)
                                       : IdeBundle.message("notification.manager.merge.n.more", layoutData.mergeData.count);
     LinkListener<BalloonLayoutData> listener =

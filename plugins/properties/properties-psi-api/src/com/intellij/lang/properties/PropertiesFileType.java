@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ public final class PropertiesFileType extends LanguageFileType {
 
   @Override
   public Icon getIcon() {
-    return AllIcons.FileTypes.Properties;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.PropertiesFileType);
   }
 
   @Override

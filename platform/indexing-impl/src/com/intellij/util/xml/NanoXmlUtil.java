@@ -126,14 +126,6 @@ public final class NanoXmlUtil {
    */
   @Deprecated(forRemoval = true)
   public static abstract class IXMLBuilderAdapter implements NanoXmlBuilder {
-
-    /**
-     * @deprecated left for API compatibility
-     */
-    @Deprecated(forRemoval = true)
-    protected static void stop() throws ParserStoppedXmlException {
-      throw ParserStoppedXmlException.INSTANCE;
-    }
   }
 
   public static class BaseXmlBuilder implements NanoXmlBuilder {

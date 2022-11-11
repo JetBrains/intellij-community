@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Comparing;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +54,7 @@ public final class PsiCopyPasteManager {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        if (myRecentData != null && (!myRecentData.isValid() || myRecentData.getProject() == project)) {
+        if (myRecentData != null && (!myRecentData.isValid() || myRecentData.project == project)) {
           myRecentData = null;
         }
 
@@ -61,7 +63,7 @@ public final class PsiCopyPasteManager {
           Transferable t = contents[i];
           if (t instanceof MyTransferable) {
             MyData myData = ((MyTransferable)t).myDataProxy;
-            if (!myData.isValid() || myData.getProject() == project) {
+            if (!myData.isValid() || myData.project == project) {
               myCopyPasteManager.removeContent(t);
             }
           }
@@ -71,37 +73,34 @@ public final class PsiCopyPasteManager {
   }
 
   public PsiElement @Nullable [] getElements(boolean[] isCopied) {
-    try {
-      Object transferData = myCopyPasteManager.getContents(ourDataFlavor);
-      if (!(transferData instanceof MyData)) {
-        return null;
-      }
-      MyData dataProxy = (MyData)transferData;
-      if (!Comparing.equal(dataProxy, myRecentData)) {
-        return null;
-      }
-      if (isCopied != null) {
-        isCopied[0] = myRecentData.isCopied();
-      }
-      return myRecentData.getElements();
-    }
-    catch (Exception e) {
-      LOG.debug(e);
+    MyData data = myCopyPasteManager.getContents(ourDataFlavor);
+    if (data == null || !Comparing.equal(data, myRecentData)) {
       return null;
     }
+    if (isCopied != null) {
+      isCopied[0] = myRecentData.isCopied;
+    }
+    return myRecentData.getElements();
   }
 
-  static PsiElement @Nullable [] getElements(final Transferable content) {
-    if (content == null) return null;
+  public static @NotNull Transferable newTransferable(PsiElement @NotNull ... element) {
+    return new MyTransferable(element);
+  }
+
+  public static PsiElement @Nullable [] getElements(@Nullable Transferable content) {
+    MyData data = getData(content);
+    return data == null ? null : data.getElements();
+  }
+
+  private static @Nullable MyData getData(@Nullable Transferable content) {
     Object transferData;
     try {
-      transferData = content.getTransferData(ourDataFlavor);
+      transferData = content == null ? null : content.getTransferData(ourDataFlavor);
     }
     catch (UnsupportedFlavorException | InvalidDnDOperationException | IOException e) {
       return null;
     }
-
-    return transferData instanceof MyData ? ((MyData)transferData).getElements() : null;
+    return transferData instanceof MyData ? (MyData)transferData : null;
   }
 
   public void clear() {
@@ -109,14 +108,14 @@ public final class PsiCopyPasteManager {
     myCopyPasteManager.setContents(new StringSelection(""));
   }
 
-  public void setElements(PsiElement[] elements, boolean copied) {
+  public void setElements(PsiElement @NotNull [] elements, boolean copied) {
     myRecentData = new MyData(elements, copied);
     myCopyPasteManager.setContents(new MyTransferable(myRecentData));
   }
 
   public boolean isCutElement(Object element) {
     if (myRecentData == null) return false;
-    if (myRecentData.isCopied()) return false;
+    if (myRecentData.isCopied) return false;
     PsiElement[] elements = myRecentData.getElements();
     if (elements == null) return false;
     for (PsiElement aElement : elements) {
@@ -146,23 +145,34 @@ public final class PsiCopyPasteManager {
   }
 
 
-  public static class MyData {
-    private final Project myProject;
-    private final List<SmartPsiElementPointer> myPointers = new ArrayList<>();
-    private final boolean myIsCopied;
+  static class MyData {
+    final Project project;
+    final boolean isCopied;
+    final List<SmartPsiElementPointer<?>> pointers = new ArrayList<>();
+    final String names;
+    final List<File> files;
 
-    public MyData(PsiElement[] elements, boolean copied) {
-      myProject = elements.length == 0 ? null : elements[0].getProject();
+    MyData(PsiElement @NotNull [] elements, boolean copied) {
+      project = elements.length == 0 ? null : elements[0].getProject();
       for (PsiElement element : elements) {
-        myPointers.add(SmartPointerManager.createPointer(element));
+        pointers.add(SmartPointerManager.createPointer(element));
       }
-      myIsCopied = copied;
+      isCopied = copied;
+
+      names = StringUtil.nullize(
+        Stream.of(elements)
+          .filter(PsiNamedElement.class::isInstance)
+          .map(e -> StringUtil.nullize(((PsiNamedElement)e).getName(), true))
+          .filter(Objects::nonNull)
+          .collect(Collectors.joining("\n")));
+
+      files = asFileList(elements);
     }
 
     public PsiElement[] getElements() {
       return ReadAction.compute(() -> {
         List<PsiElement> result = new ArrayList<>();
-        for (SmartPsiElementPointer pointer : myPointers) {
+        for (SmartPsiElementPointer<?> pointer : pointers) {
           PsiElement element = pointer.getElement();
           if (element != null) {
             result.add(element);
@@ -172,20 +182,28 @@ public final class PsiCopyPasteManager {
       });
     }
 
-    public boolean isCopied() {
-      return myIsCopied;
-    }
-
     public boolean isValid() {
-      return myPointers.size() > 0 && myPointers.get(0).getElement() != null;
+      if (pointers.isEmpty()) {
+        return false;
+      }
+      SmartPsiElementPointer<?> pointer = pointers.get(0);
+      VirtualFile virtualFile = pointer.getVirtualFile();
+      Project expectedProject = virtualFile == null ? null : ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+      if (expectedProject != null && expectedProject != project) {
+        // files must have moved between projects, everything is invalid, and pointer.getElement() would likely crash
+        return false;
+      }
+      return pointer.getElement() != null;
     }
 
-    @Nullable
-    public Project getProject() {
-      return myProject;
+    void fileMovedOutsideProject(@NotNull VirtualFile file) {
+      pointers.removeIf(pointer -> file.equals(pointer.getVirtualFile()));
     }
   }
 
+  /** @deprecated Use {{@link #getElements(Transferable)} and {@link #newTransferable(PsiElement...)} instead */
+  @Deprecated
+  @ApiStatus.Internal
   public static class MyTransferable implements Transferable {
     private static final DataFlavor[] DATA_FLAVORS_COPY = {
       ourDataFlavor, DataFlavor.stringFlavor, DataFlavor.javaFileListFlavor,
@@ -196,13 +214,13 @@ public final class PsiCopyPasteManager {
       LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor, LinuxDragAndDropSupport.kdeCutMarkFlavor
     };
 
-    private final MyData myDataProxy;
+    private final @NotNull MyData myDataProxy;
 
-    public MyTransferable(MyData data) {
+    MyTransferable(@NotNull MyData data) {
       myDataProxy = data;
     }
 
-    public MyTransferable(PsiElement[] selectedValues) {
+    public MyTransferable(PsiElement @NotNull [] selectedValues) {
       this(new PsiCopyPasteManager.MyData(selectedValues, true));
     }
 
@@ -213,53 +231,35 @@ public final class PsiCopyPasteManager {
       return result;
     }
 
-    @Nullable
-    private Object getTransferDataOrNull(DataFlavor flavor) throws UnsupportedFlavorException {
+    private @Nullable Object getTransferDataOrNull(DataFlavor flavor) throws UnsupportedFlavorException {
       if (ourDataFlavor.equals(flavor)) {
         return myDataProxy;
       }
       else if (DataFlavor.stringFlavor.equals(flavor)) {
-        return getDataAsText();
+        return myDataProxy.names;
       }
       else if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-        return getDataAsFileList();
+        return myDataProxy.files;
       }
       else if (flavor.equals(LinuxDragAndDropSupport.uriListFlavor)) {
-        final List<File> files = getDataAsFileList();
+        List<File> files = myDataProxy.files;
         return files == null ? null : LinuxDragAndDropSupport.toUriList(files);
       }
       else if (flavor.equals(LinuxDragAndDropSupport.gnomeFileListFlavor)) {
-        final List<File> files = getDataAsFileList();
+        List<File> files = myDataProxy.files;
         if (files == null) return null;
-        final String string = (myDataProxy.isCopied() ? "copy\n" : "cut\n") + LinuxDragAndDropSupport.toUriList(files); //NON-NLS
+        String string = (myDataProxy.isCopied ? "copy\n" : "cut\n") + LinuxDragAndDropSupport.toUriList(files);
         return new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8));
       }
-      else if (flavor.equals(LinuxDragAndDropSupport.kdeCutMarkFlavor) && !myDataProxy.isCopied()) {
+      else if (flavor.equals(LinuxDragAndDropSupport.kdeCutMarkFlavor) && !myDataProxy.isCopied) {
         return new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8));
       }
       throw new UnsupportedFlavorException(flavor);
     }
 
-    @Nullable
-    private String getDataAsText() {
-      return ReadAction.compute(() -> {
-        String names = Stream.of(myDataProxy.getElements())
-          .filter(PsiNamedElement.class::isInstance)
-          .map(e -> StringUtil.nullize(((PsiNamedElement)e).getName(), true))
-          .filter(Objects::nonNull)
-          .collect(Collectors.joining("\n"));
-        return names.isEmpty() ? null : names;
-      });
-    }
-
-    @Nullable
-    private List<File> getDataAsFileList() {
-      return ReadAction.compute(() -> asFileList(myDataProxy.getElements()));
-    }
-
     @Override
     public DataFlavor[] getTransferDataFlavors() {
-      DataFlavor[] flavors = myDataProxy.isCopied() ? DATA_FLAVORS_COPY : DATA_FLAVORS_CUT;
+      DataFlavor[] flavors = myDataProxy.isCopied ? DATA_FLAVORS_COPY : DATA_FLAVORS_CUT;
       return JBIterable.of(flavors).filter(flavor -> {
         try {
           return getTransferDataOrNull(flavor) != null;
@@ -280,9 +280,8 @@ public final class PsiCopyPasteManager {
     }
   }
 
-  @Nullable
-  public static List<File> asFileList(final PsiElement[] elements) {
-    final List<File> result = new ArrayList<>();
+  public static @Nullable List<File> asFileList(PsiElement[] elements) {
+    List<File> result = new ArrayList<>();
     for (PsiElement element : elements) {
       VirtualFile vFile = asVirtualFile(element);
       if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
@@ -292,14 +291,13 @@ public final class PsiCopyPasteManager {
     return result.isEmpty() ? null : result;
   }
 
-  @Nullable
-  public static VirtualFile asVirtualFile(@Nullable PsiElement element) {
+  public static @Nullable VirtualFile asVirtualFile(@Nullable PsiElement element) {
     PsiFileSystemItem psiFile = null;
     if (element instanceof PsiFileSystemItem) {
       psiFile = (PsiFileSystemItem)element;
     }
     else if (element instanceof PsiDirectoryContainer) {
-      final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
+      PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
       if (directories.length == 0) {
         LOG.error("No directories for " + element + " of " + element.getClass());
         return null;
@@ -328,5 +326,13 @@ public final class PsiCopyPasteManager {
       manager.clear();
       event.consume();
     }
+  }
+
+  @ApiStatus.Internal
+  public void fileMovedOutsideProject(@NotNull VirtualFile file) {
+    if (myRecentData != null) {
+      myRecentData.fileMovedOutsideProject(file);
+    }
+    myCopyPasteManager.removeIf(transferable -> transferable instanceof MyTransferable && !((MyTransferable)transferable).myDataProxy.isValid());
   }
 }

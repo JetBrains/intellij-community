@@ -92,6 +92,8 @@ public class TypeMigrationLabeler {
     myNewExpressionTypeChange = new LinkedHashMap<>();
     myClassTypeArgumentsChange = new LinkedHashMap<>();
     myProject = project;
+    myMigrationRoots = new LinkedList<>();
+    myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this, myProject);
   }
 
   public boolean hasFailedConversions() {
@@ -1019,7 +1021,7 @@ public class TypeMigrationLabeler {
     if (block != null) {
       block.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReturnStatement(PsiReturnStatement statement) {
+        public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
           final PsiExpression value = statement.getReturnValue();
           if (value != null) {
             final PsiType type = getTypeEvaluator().evaluateType(value);
@@ -1030,10 +1032,10 @@ public class TypeMigrationLabeler {
         }
 
         @Override
-        public void visitClass(PsiClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) {}
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {}
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
       });
     }
   }

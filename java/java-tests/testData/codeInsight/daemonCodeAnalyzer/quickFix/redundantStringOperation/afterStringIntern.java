@@ -1,4 +1,4 @@
-// "Remove redundant 'intern()' call" "true"
+// "Remove redundant 'intern()' call" "true-preview"
 class Foo {
   private static final String x = ("Hello "+"World"+'!');
 }

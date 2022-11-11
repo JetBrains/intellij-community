@@ -18,9 +18,6 @@ import java.awt.event.MouseEvent;
 
 import static java.lang.Math.abs;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class Splitter extends JPanel implements Splittable {
   private static final Icon SplitGlueH = EmptyIcon.create(6, 17);
   private static final Icon SplitGlueV = EmptyIcon.create(17, 6);

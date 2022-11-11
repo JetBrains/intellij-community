@@ -191,8 +191,6 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     val popup = createDialog(myParentWindow)
     myPopup = popup
 
-    Disposer.register(popup.disposable) { myProgressWindow.exitModality() }
-
     popup.show()
 
     // 'Light' popup is shown in glass pane, glass pane is 'activating' (becomes visible) in 'invokeLater' call
@@ -236,7 +234,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   }
 
   private fun createDialogPrevious(window: Window): MyDialogWrapper {
-    if (System.getProperty("vintage.progress") != null || isWriteActionProgress()) {
+    if (isWriteActionProgress()) {
       if (window.isShowing) {
         return object : MyDialogWrapper(window) {
           override fun useLightPopup(): Boolean {
@@ -307,15 +305,10 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     }
 
     override fun createPeer(project: Project?, canBeParent: Boolean): DialogWrapperPeer {
-      return if (System.getProperty("vintage.progress") == null) {
-        try {
-          GlassPaneDialogWrapperPeer(project, this)
-        }
-        catch (e: GlasspanePeerUnavailableException) {
-          super.createPeer(project, canBeParent)
-        }
+      return try {
+        GlassPaneDialogWrapperPeer(project, this)
       }
-      else {
+      catch (e: GlasspanePeerUnavailableException) {
         super.createPeer(project, canBeParent)
       }
     }

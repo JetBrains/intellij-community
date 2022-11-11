@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModulePackageIndex;
@@ -10,8 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class ModulePackageIndexImpl extends ModulePackageIndex {
+  private static final Logger LOG = Logger.getInstance(ModulePackageIndexImpl.class);
   private final ModuleFileIndex myModuleFileIndex;
   private final DirectoryIndex myDirectoryIndex;
 
@@ -36,5 +39,13 @@ public final class ModulePackageIndexImpl extends ModulePackageIndex {
   @Override
   public VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
+  }
+
+  @Override
+  public @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir) {
+    if (!dir.isDirectory()) {
+      LOG.error(dir.getPresentableUrl() + " is not a directory");
+    }
+    return myDirectoryIndex.getPackageName(dir);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -27,7 +27,7 @@ class ModifiableRootModelBridgeTest {
 
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Test(expected = Test.None::class)
   fun `removing module with modifiable model`() {
@@ -50,7 +50,7 @@ class ModifiableRootModelBridgeTest {
   @Test(expected = Test.None::class)
   fun `getting module root model from modifiable module`() {
     runWriteActionAndWait {
-      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).modifiableModel
+      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).getModifiableModel()
       val newModule = moduleModifiableModel.newModule(projectModel.projectRootDir.resolve("myModule/myModule.iml"),
                                                       EmptyModuleType.EMPTY_MODULE) as ModuleBridge
 
@@ -68,7 +68,7 @@ class ModifiableRootModelBridgeTest {
   @Test(expected = Test.None::class)
   fun `get modifiable models of renamed module`() {
     runWriteActionAndWait {
-      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).modifiableModel
+      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).getModifiableModel()
       val newModule = moduleModifiableModel.newModule(projectModel.projectRootDir.resolve("myModule/myModule.iml"),
                                                       EmptyModuleType.EMPTY_MODULE) as ModuleBridge
       moduleModifiableModel.commit()

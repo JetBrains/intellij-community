@@ -105,7 +105,6 @@ public final class ExternalSystemFacadeManager {
 
   /**
    * @return external system api facade to use
-   * @throws Exception    in case of inability to return the facade
    */
   public @NotNull RemoteExternalSystemFacade getFacade(@Nullable Project project,
                                               @NotNull String externalProjectPath,

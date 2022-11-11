@@ -15,9 +15,9 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyIt
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
 /**
- * @return corresponding [ModuleBridge] or null if module is unloaded
+ * @return corresponding [com.intellij.openapi.module.Module] or null if module is unloaded
  */
-fun ModuleEntity.findModuleBridge(snapshot: EntityStorage): ModuleBridge? {
+fun ModuleEntity.findModule(snapshot: EntityStorage): ModuleBridge? {
   return snapshot.moduleMap.getDataByEntity(this)
 }
 
@@ -26,7 +26,7 @@ fun ModuleEntity.findModuleBridge(snapshot: EntityStorage): ModuleBridge? {
  * thus the changes with these entities will be available for listening via [com.intellij.workspaceModel.ide.WorkspaceModelChangeListener]
  */
 fun ModuleEntity.isModuleUnloaded(snapshot: EntityStorage): Boolean {
-  return this.findModuleBridge(snapshot) == null
+  return this.findModule(snapshot) == null
 }
 
 /**

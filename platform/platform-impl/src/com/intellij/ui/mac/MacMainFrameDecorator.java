@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.Application;
@@ -22,8 +22,6 @@ import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Native;
 import com.sun.jna.platform.mac.CoreFoundation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,6 +29,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 import java.util.EventListener;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MacMainFrameDecorator extends IdeFrameDecorator {
@@ -119,7 +118,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           else {
             ToolbarUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {
               if (!Disposer.isDisposed(parentDisposable)) {
-                Disposer.register(parentDisposable, () -> runnable.run());
+                Disposer.register(parentDisposable, runnable::run);
               }
             });
           }
@@ -216,11 +215,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   }
 
   @Override
-  public @NotNull Promise<Boolean> toggleFullScreen(boolean state) {
+  public @NotNull CompletableFuture<Boolean> toggleFullScreen(boolean state) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Full screen state " + state + " requested for " + myFrame);
     }
-    AsyncPromise<Boolean> promise = new AsyncPromise<>();
+    CompletableFuture<Boolean> promise = new CompletableFuture<>();
     // We delay the execution using 'invokeLater' to account for the case when window might be made visible in the same EDT event.
     // macOS can auto-open that window in full-screen mode, but we won't find this out till the notification arrives.
     // That notification comes as a priority event, so such an 'invokeLater' is enough to fix the problem.
@@ -231,13 +230,13 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Full screen is already at state " + state + " for " + myFrame);
         }
-        promise.setResult(state);
+        promise.complete(state);
       }
       else if (toggleFullScreenMethod == null) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Full screen transitioning isn't supported for " + myFrame);
         }
-        promise.setResult(null);
+        promise.complete(null);
       }
       else {
         AtomicBoolean preEventReceived = new AtomicBoolean();
@@ -263,7 +262,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             if (LOG.isDebugEnabled()) {
               LOG.debug("exited full screen: " + myFrame);
             }
-            promise.setResult(false);
+            promise.complete(false);
           }
 
           @Override
@@ -271,10 +270,10 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             if (LOG.isDebugEnabled()) {
               LOG.debug("entered full screen: " + myFrame);
             }
-            promise.setResult(true);
+            promise.complete(true);
           }
         };
-        promise.onProcessed(s -> myDispatcher.removeListener(listener));
+        promise.whenComplete((aBoolean, throwable) -> myDispatcher.removeListener(listener));
         myDispatcher.addListener(listener);
 
         if (LOG.isDebugEnabled()) {
@@ -298,7 +297,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("pre-transitioning event not received for: " + myFrame);
               }
-              promise.setResult(myInFullScreen);
+              promise.complete(myInFullScreen);
             }
           });
         });

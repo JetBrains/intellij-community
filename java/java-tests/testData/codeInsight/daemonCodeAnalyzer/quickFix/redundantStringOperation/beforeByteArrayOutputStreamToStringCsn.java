@@ -26,6 +26,6 @@ class Main {
         String s4 = new String((out4.toByteArray()), (csn));
 
         String s5 = new String(foo().toByteArray(), csn);
-        String s6 = new String((foo().toByteArray()), (csn<caret>));
+        String s6 = new <caret>String((foo().toByteArray()), (csn));
     }
 }

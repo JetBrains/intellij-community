@@ -92,7 +92,7 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection implements C
   private static class UtilityClassCanBeEnumVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       if (aClass.isEnum()) {
         return;

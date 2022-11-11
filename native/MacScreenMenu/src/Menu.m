@@ -265,12 +265,10 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeRefill
             }
         } else {
             // clear Main Menu: remove all except first (AppMenu)
-            id appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
-            if (appMenu != nil) {
-                [appMenu retain];
-                [mainMenu removeAllItems];
-                [mainMenu addItem:appMenu];
-                [appMenu release];
+            if ([mainMenu numberOfItems] > 0) {
+                for (int i = [mainMenu numberOfItems]; i - 1 > 0; i--) {
+                    [mainMenu removeItemAtIndex:i - 1];
+                }
             }
         }
 

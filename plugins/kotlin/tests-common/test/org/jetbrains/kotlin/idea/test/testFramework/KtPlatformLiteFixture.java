@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
@@ -24,9 +24,14 @@ public abstract class KtPlatformLiteFixture extends KtUsefulTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-        clearFields(this);
-        myProject = null;
+        try {
+            clearFields(this);
+            myProject = null;
+        } catch (Throwable e) {
+            addSuppressedException(e);
+        } finally {
+            super.tearDown();
+        }
     }
 
     @SuppressWarnings("unchecked")

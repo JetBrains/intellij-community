@@ -322,7 +322,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
         // For compiled element walking visitor should not be used: see PsiWalkingState#elementStarted
         visitor = new JavaRecursiveElementVisitor() {
           @Override
-          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             processor.accept(reference);
           }
@@ -330,7 +330,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
       } else {
         visitor = new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             processor.accept(reference);
           }

@@ -217,28 +217,21 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
 
     if (getTestType() != cfg.getTestType()) return false;
 
-    switch (getTestType()) {
-      case TEST_FOLDER:
-        return getFolderName().equals(cfg.getFolderName());
-      case TEST_SCRIPT:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory());
-      case TEST_CLASS:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
-               getClassName().equals(cfg.getClassName());
-      case TEST_METHOD:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
-               getClassName().equals(cfg.getClassName()) &&
-               getMethodName().equals(cfg.getMethodName());
-      case TEST_FUNCTION:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
-               getMethodName().equals(cfg.getMethodName());
-      default:
-        throw new IllegalStateException("Unknown test type: " + getTestType());
-    }
+    return switch (getTestType()) {
+      case TEST_FOLDER -> getFolderName().equals(cfg.getFolderName());
+      case TEST_SCRIPT -> getScriptName().equals(cfg.getScriptName()) &&
+                          getWorkingDirectory().equals(cfg.getWorkingDirectory());
+      case TEST_CLASS -> getScriptName().equals(cfg.getScriptName()) &&
+                         getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+                         getClassName().equals(cfg.getClassName());
+      case TEST_METHOD -> getScriptName().equals(cfg.getScriptName()) &&
+                          getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+                          getClassName().equals(cfg.getClassName()) &&
+                          getMethodName().equals(cfg.getMethodName());
+      case TEST_FUNCTION -> getScriptName().equals(cfg.getScriptName()) &&
+                            getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+                            getMethodName().equals(cfg.getMethodName());
+    };
   }
 
   public static void copyParams(AbstractPythonTestRunConfigurationParams source, AbstractPythonTestRunConfigurationParams target) {

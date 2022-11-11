@@ -1,2 +1,2 @@
-// "Remove annotation" "true"
+// "Remove annotation" "true-preview"
 public interface Test {}

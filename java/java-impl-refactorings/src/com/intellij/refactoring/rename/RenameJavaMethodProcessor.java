@@ -124,9 +124,6 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   /**
    * handles rename of refs
-   * @param ref
-   * @param newName
-   * @return
    */
   @Nullable
   protected PsiElement processRef(PsiReference ref, String newName) {

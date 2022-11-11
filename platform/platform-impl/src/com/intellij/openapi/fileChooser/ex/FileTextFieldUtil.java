@@ -312,10 +312,8 @@ public final class FileTextFieldUtil {
    * Replace the path component under the caret with the file selected from the completion list.
    *
    * @param file     the selected file.
-   * @param caretPos
    * @param start    the start offset of the path component under the caret.
    * @param end      the end offset of the path component under the caret.
-   * @throws BadLocationException
    */
   private static void replacePathComponent(@NotNull FileLookup.LookupFile file,
                                            @NotNull DocumentOwner doc,

@@ -24,6 +24,7 @@ import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
@@ -43,6 +44,7 @@ public class DebuggerDfaRunner {
   private final @NotNull PsiElement myBody;
   private final @NotNull Project myProject;
   private final @NotNull ControlFlow myFlow;
+  private final @NotNull PsiElement myAnchor;
   private final @NotNull DfaInstructionState myStartingState;
   private final long myModificationStamp;
   private final DfaValueFactory myFactory;
@@ -53,10 +55,39 @@ public class DebuggerDfaRunner {
     myBody = larva.myBody;
     myProject = larva.myProject;
     myProvider = larva.myProvider;
+    myAnchor = larva.myAnchor;
     myFlow = larva.myFlow;
     DfaMemoryState state = createMemoryState(myFactory, larva.myJdiToDfa, infoMap);
     myStartingState = new DfaInstructionState(myFlow.getInstruction(larva.myOffset), state);
     myModificationStamp = larva.myStamp;
+  }
+
+  @NotNull
+  public DebuggerDfaRunner.DfaResult computeHints() {
+    if (PsiModificationTracker.getInstance(myProject).getModificationCount() != myModificationStamp) {
+      return DfaResult.EMPTY;
+    }
+    var interceptor = myProvider.createListener();
+    // computeHints() could be called several times in case if ReadAction is cancelled
+    // So we need to copy the mutable myStartingState. Otherwise, restarted analysis will start from the wrong memory state
+    DfaMemoryState memoryState = myStartingState.getMemoryState().createCopy();
+    int startingIndex = myStartingState.getInstruction().getIndex();
+    DfaInstructionState startingState = new DfaInstructionState(myStartingState.getInstruction(), memoryState);
+    BitSet reached = new BitSet();
+    reached.set(0, startingIndex);
+    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true) {
+      @Override
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
+        reached.set(instructionState.getInstruction().getIndex());
+        DfaInstructionState[] states = super.acceptInstruction(instructionState);
+        return StreamEx.of(states).filter(state -> state.getInstruction().getIndex() > startingIndex)
+          .toArray(DfaInstructionState.EMPTY_ARRAY);
+      }
+    };
+    if (interpreter.interpret(List.of(startingState)) != RunnerResult.OK) return DfaResult.EMPTY;
+    Set<PsiElement> unreachable = myFlow.computeUnreachable(reached);
+    return new DfaResult(myBody.getContainingFile(), interceptor.computeHints(),
+                         interceptor.unreachableSegments(myAnchor, unreachable));
   }
 
   /**
@@ -65,6 +96,7 @@ public class DebuggerDfaRunner {
    */
   static class Larva {
     private final @NotNull Project myProject;
+    private final @NotNull PsiElement myAnchor;
     private final @NotNull PsiElement myBody;
     private final @NotNull ControlFlow myFlow;
     private final @NotNull DfaValueFactory myFactory;
@@ -75,6 +107,7 @@ public class DebuggerDfaRunner {
     private final int myOffset;
 
     private Larva(@NotNull Project project,
+                  @NotNull PsiElement anchor,
                   @NotNull PsiElement body,
                   @NotNull ControlFlow flow,
                   @NotNull DfaValueFactory factory,
@@ -83,6 +116,7 @@ public class DebuggerDfaRunner {
                   @NotNull Map<Value, List<DfaVariableValue>> jdiToDfa,
                   @NotNull StackFrameProxyEx proxy, int offset) {
       myProject = project;
+      myAnchor = anchor;
       myBody = body;
       myFlow = flow;
       myFactory = factory;
@@ -119,7 +153,7 @@ public class DebuggerDfaRunner {
       if (offset < 0) return null;
       Map<Value, List<DfaVariableValue>> jdiToDfa = createPreliminaryJdiMap(provider, anchor, factory, proxy);
       if (jdiToDfa.isEmpty()) return null;
-      return new Larva(project, body, flow, factory, modificationStamp, provider, jdiToDfa, proxy, offset);
+      return new Larva(project, anchor, body, flow, factory, modificationStamp, provider, jdiToDfa, proxy, offset);
     }
 
     @NotNull
@@ -187,7 +221,7 @@ public class DebuggerDfaRunner {
     private static Map<Value, JdiValueInfo> requestJdi(@NotNull StackFrameProxyEx proxy, @NotNull Map<Value, List<DfaVariableValue>> map)
       throws EvaluateException {
       ClassLoaderReference classLoader = proxy.getClassLoader();
-      Predicate<ClassLoaderReference> classLoaderFilter = new Predicate<ClassLoaderReference>() {
+      Predicate<ClassLoaderReference> classLoaderFilter = new Predicate<>() {
         private @Nullable List<ClassLoaderReference> myParentLoaders = null;
 
         @Override
@@ -225,18 +259,6 @@ public class DebuggerDfaRunner {
         .nonNullValues()
         .toMap();
     }
-  }
-
-  @Nullable
-  public DebuggerDfaListener interpret() {
-    if (PsiModificationTracker.getInstance(myProject).getModificationCount() != myModificationStamp) return null;
-    var interceptor = myProvider.createListener();
-    // interpret() could be called several times in case if ReadAction is cancelled
-    // So we need to copy the mutable myStartingState. Otherwise, restarted analysis will start from the wrong memory state
-    DfaMemoryState memoryState = myStartingState.getMemoryState().createCopy();
-    DfaInstructionState startingState = new DfaInstructionState(myStartingState.getInstruction(), memoryState);
-    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true);
-    return interpreter.interpret(List.of(startingState)) == RunnerResult.OK ? interceptor : null;
   }
 
   @NotNull
@@ -325,5 +347,18 @@ public class DebuggerDfaRunner {
       constraint = constraint.arrayOf();
     }
     return constraint;
+  }
+
+  public static class DfaResult {
+    static final @NotNull DfaResult EMPTY = new DfaResult(null, Map.of(), Set.of());
+    public final @Nullable PsiFile file;
+    public final @NotNull Map<PsiElement, DfaHint> hints;
+    public final @NotNull Collection<TextRange> unreachable;
+
+    DfaResult(@Nullable PsiFile file, @NotNull Map<PsiElement, DfaHint> hints, @NotNull Collection<TextRange> unreachable) {
+      this.file = file;
+      this.hints = hints;
+      this.unreachable = unreachable;
+    }
   }
 }

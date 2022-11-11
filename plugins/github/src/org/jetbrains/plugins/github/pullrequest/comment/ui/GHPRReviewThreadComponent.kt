@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.codereview.InlineIconButton
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.icons.AllIcons

@@ -160,6 +160,7 @@
 
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangeViewToolWindowFactory"/>
+    <registryKey defaultValue="true" description="Show Version Control tool window in project without VCS" key="vcs.empty.toolwindow.show"/>
 
     <changesViewContent tabName="Repository"
                         className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
@@ -273,7 +274,6 @@
 
     <openapi.vcs.changes.vcsPreservingExecutor implementation="com.intellij.openapi.vcs.changes.DefaultPreservingExecutor" order="last" />
 
-    <postStartupActivity implementation="com.intellij.platform.PlatformVcsDetector"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$ActivateVcsesStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyStartupActivity"/>
@@ -300,6 +300,9 @@
     <projectService serviceInterface="com.intellij.ide.todo.TodoViewChangesSupport"
                     serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupportImpl"
                     overrides="true"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector" preload="notHeadless"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyPostStartUpActivity"/>
 
     <searchScopesProvider implementation="com.intellij.vcs.changes.ChangeListsSearchScopeProvider"/>
 

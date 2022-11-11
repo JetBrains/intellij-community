@@ -25,7 +25,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 
 public interface Evaluator {
   /**
-   * @throws EvaluateException
    */
   Object evaluate(EvaluationContextImpl context) throws EvaluateException;
 

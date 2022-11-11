@@ -11,13 +11,19 @@ abstract class SearchEverywhereStatistician<T : Any>(private vararg val supporte
 
   abstract fun getContext(element: T): String?
 
-  override fun serialize(element: Any, location: String): StatisticsInfo? {
-    @Suppress("UNCHECKED_CAST")
-    if (isElementSupported(element)) return serializeElement(element as T, location)
-    return null
-  }
+  abstract fun getValue(element: T, location: String): String?
 
-  abstract fun serializeElement(element: T, location: String): StatisticsInfo?
+  override fun serialize(element: Any, location: String): StatisticsInfo? {
+    if (!isElementSupported(element)) return null
+
+    @Suppress("UNCHECKED_CAST")
+    element as T
+
+    val context = getContext(element) ?: return null
+    val value = getValue(element, location) ?: return null
+
+    return StatisticsInfo(context, value)
+  }
 
   private fun isElementSupported(element: Any) = supportedClasses.any { it.isAssignableFrom(element::class.java) }
 }

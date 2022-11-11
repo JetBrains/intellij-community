@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.FileTypeInspectionDisablerKt;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GrCastFix;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GrChangeVariableType;
 import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.*;
@@ -328,6 +329,9 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                @InspectionMessage @NotNull String description,
                                LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
+    if (FileTypeInspectionDisablerKt.isTypecheckingDisabled(location.getContainingFile())) {
+      return;
+    }
     if (CompileStaticUtil.isCompileStatic(location)) {
       // filter all errors here, error will be highlighted by annotator
       if (highlightType != ProblemHighlightType.GENERIC_ERROR) {

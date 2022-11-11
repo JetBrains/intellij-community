@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -57,20 +58,30 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   private final boolean mySuggestSuperTypes;
   private final String myName;
   private final String myCanonicalText;
+  private final String myDisplayName;
 
   public MethodReturnTypeFix(@NotNull PsiMethod method, @NotNull PsiType returnType, boolean fixWholeHierarchy) {
-    this(method, returnType, fixWholeHierarchy, false);
+    this(method, returnType, fixWholeHierarchy, false, false);
   }
 
   public MethodReturnTypeFix(@NotNull PsiMethod method, @NotNull PsiType returnType, boolean fixWholeHierarchy, boolean suggestSuperTypes) {
+    this(method, returnType, fixWholeHierarchy, suggestSuperTypes, false);
+  }
+
+  public MethodReturnTypeFix(@NotNull PsiMethod method, @NotNull PsiType returnType, boolean fixWholeHierarchy, boolean suggestSuperTypes,
+                             boolean showClassName) {
     super(method);
+    myDisplayName =
+      PsiFormatUtil.formatMethod(
+      method,
+      PsiSubstitutor.EMPTY, showClassName ? PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS : PsiFormatUtilBase.SHOW_NAME,
+      0
+    );
     myReturnTypePointer = SmartTypePointerManager.getInstance(method.getProject()).createSmartTypePointer(returnType);
     myFixWholeHierarchy = fixWholeHierarchy;
     mySuggestSuperTypes = suggestSuperTypes;
     myName = method.getName();
-    if (TypeConversionUtil.isNullType(returnType)) {
-      returnType = PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
-    }
+    returnType = correctType(method, returnType);
     if (fixWholeHierarchy) {
       PsiType type = getHierarchyAdjustedReturnType(method, returnType);
       myCanonicalText = (type != null ? type : returnType).getCanonicalText();
@@ -80,14 +91,21 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
   }
 
+  private static @NotNull PsiType correctType(@NotNull PsiMethod method, @NotNull PsiType returnType) {
+    if (TypeConversionUtil.isNullType(returnType)) {
+      returnType = PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
+    }
+    return returnType;
+  }
+
 
   @NotNull
   @Override
   public String getText() {
-    if (!mySuggestSuperTypes) return QuickFixBundle.message("fix.return.type.text", myName, myCanonicalText);
+    if (!mySuggestSuperTypes) return QuickFixBundle.message("fix.return.type.text", myDisplayName, myCanonicalText);
     PsiType type = Objects.requireNonNull(myReturnTypePointer.getType());
     boolean hasPredecessor = type.getSuperTypes().length != 0;
-    return QuickFixBundle.message(hasPredecessor ? "fix.return.type.or.predecessor.text" : "fix.return.type.text", myName, myCanonicalText);
+    return QuickFixBundle.message(hasPredecessor ? "fix.return.type.or.predecessor.text" : "fix.return.type.text", myDisplayName, myCanonicalText);
   }
 
   @Override
@@ -452,13 +470,16 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       return IntentionPreviewInfo.EMPTY;
     }
     PsiMethod method = (PsiMethod)getStartElement();
-    if (method.getContainingFile() == file.getOriginalFile()) {
+    type = correctType(method, type);
+    PsiFile containingFile = method.getContainingFile();
+    if (containingFile == file.getOriginalFile()) {
       PsiMethod methodCopy = PsiTreeUtil.findSameElementInCopy(method, file);
-      PsiTypeElement typeElement = methodCopy.getReturnTypeElement();
-      if (typeElement != null) {
-        typeElement.replace(PsiElementFactory.getInstance(project).createTypeElement(type));
-        return IntentionPreviewInfo.DIFF;
+      updateMethodType(methodCopy, type);
+      if (!PsiType.VOID.equals(type)) {
+        ReturnStatementAdder adder = new ReturnStatementAdder(JavaPsiFacade.getElementFactory(project), type);
+        adder.addReturnForMethod(file, methodCopy);
       }
+      return IntentionPreviewInfo.DIFF;
     }
     PsiModifierList modifiers = method.getModifierList();
     String modifiersText = StreamEx.of(PsiModifier.MODIFIERS).filter(modifiers::hasExplicitModifier).map(mod -> mod + " ").joining();
@@ -471,6 +492,17 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     String name = method.getName();
     String origText = modifiersText + oldTypeText + name + "(" + parameters + ")";
     String newText = modifiersText + newTypeText + name + "(" + parameters + ")";
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, origText, newText);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, containingFile.getName(), origText, newText);
+  }
+
+  protected void updateMethodType(@NotNull PsiMethod method, @NotNull PsiType type) {
+    PsiTypeElement typeElement = method.getReturnTypeElement();
+    Project project = method.getProject();
+    if (typeElement != null) {
+      JavaCodeStyleManager.getInstance(project)
+        .shortenClassReferences(typeElement.replace(PsiElementFactory.getInstance(project).createTypeElement(type)));
+    } else {
+      addReturnType(project, method, type);
+    }
   }
 }

@@ -31,7 +31,9 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,9 +57,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
     Project project = dir.getProject();
-    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    VirtualFile virtualFile = dir.getVirtualFile();
-    String packageName = projectFileIndex.getPackageNameByDirectory(virtualFile);
+    String packageName = PackageIndex.getInstance(project).getPackageNameByDirectory(dir.getVirtualFile());
     if (packageName == null) return null;
     return JavaPsiFacade.getInstance(project).findPackage(packageName);
   }
@@ -180,7 +180,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
       element = askToDefineVariables ? new CreateFromTemplateDialog(project, dir, template, null, properties).create()
                                      : FileTemplateUtil.createFromTemplate(template, fileName, properties, dir);
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException | ProcessCanceledException e) {
       throw e;
     }
     catch (Exception e) {

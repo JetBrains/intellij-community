@@ -3,22 +3,49 @@
 
 package com.intellij.lang.documentation.impl
 
+import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.lang.documentation.*
+import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.model.Pointer
+import com.intellij.model.psi.impl.mockEditor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
+import com.intellij.psi.PsiFile
 import com.intellij.util.AsyncSupplier
+import com.intellij.util.SmartList
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.*
 import org.jetbrains.annotations.TestOnly
+
+@Internal // for Fleet
+fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
+  val targets = SmartList<DocumentationTarget>()
+  for (ext in DocumentationTargetProvider.EP_NAME.extensionList) {
+    targets.addAll(ext.documentationTargets(file, offset))
+  }
+  if (!targets.isEmpty()) {
+    return targets
+  }
+  // fallback to PSI
+  // TODO this fallback should be implemented inside DefaultTargetSymbolDocumentationTargetProvider, but first:
+  //  - PsiSymbol has to hold information about origin element;
+  //  - documentation target by argument list should be also implemented separately.
+  val editor = mockEditor(file) ?: return emptyList()
+  val documentationManager = DocumentationManager.getInstance(file.project)
+  val (targetElement, sourceElement) = documentationManager.findTargetElementAndContext(editor, offset, file)
+                                       ?: return emptyList()
+  return listOf(psiDocumentationTarget(targetElement, sourceElement))
+}
 
 internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   return DocumentationRequest(createPointer(), presentation)
 }
 
-@ApiStatus.Internal
+@Internal
 fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationResultData?> {
   return async(Dispatchers.Default) {
     computeDocumentation(targetPointer)
@@ -40,7 +67,7 @@ internal suspend fun computeDocumentation(targetPointer: Pointer<out Documentati
   }
 }
 
-@ApiStatus.Internal
+@Internal
 suspend fun handleLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
   return withContext(Dispatchers.Default) {
     tryResolveLink(targetPointer, url)
@@ -61,6 +88,18 @@ internal sealed class InternalResolveLinkResult<out X> {
   object InvalidTarget : InternalResolveLinkResult<Nothing>()
   object CannotResolve : InternalResolveLinkResult<Nothing>()
   class Value<X>(val value: X) : InternalResolveLinkResult<X>()
+}
+
+/**
+ * @return `null` if [contextTarget] was invalidated, or [url] cannot be resolved
+ */
+@Internal // for Fleet
+suspend fun resolveLinkToTarget(contextTarget: Pointer<out DocumentationTarget>, url: String): Pointer<out DocumentationTarget>? {
+  return when (val resolveLinkResult = resolveLink(contextTarget::dereference, url, DocumentationTarget::createPointer)) {
+    InternalResolveLinkResult.CannotResolve -> null
+    InternalResolveLinkResult.InvalidTarget -> null
+    is InternalResolveLinkResult.Value -> resolveLinkResult.value
+  }
 }
 
 internal suspend fun resolveLink(

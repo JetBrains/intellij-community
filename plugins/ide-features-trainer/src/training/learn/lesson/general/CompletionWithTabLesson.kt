@@ -31,8 +31,6 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
       }
     }
 
-  override val suitableTips = listOf("TabInLookups")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.code.completion"),
          LessonUtil.getHelpLink("auto-completing-code.html")),

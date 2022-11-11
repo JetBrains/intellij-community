@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -257,7 +258,9 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
       return;
     }
 
-    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
+    final var html = ReadAction.compute(() -> {
+      return MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
+    });
 
     // EA-75860: The lines to the top may be processed slowly; Since we're in pooled thread, we can be disposed already.
     if (!myFile.isValid() || Disposer.isDisposed(this)) {

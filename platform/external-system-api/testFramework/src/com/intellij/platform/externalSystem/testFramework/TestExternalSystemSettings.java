@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.externalSystem.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.project.Project;
@@ -16,7 +17,10 @@ public class TestExternalSystemSettings
   }
 
   @Override
-  public void subscribe(@NotNull ExternalSystemSettingsListener<TestExternalProjectSettings> listener) {
+  public void subscribe(
+    @NotNull ExternalSystemSettingsListener<TestExternalProjectSettings> listener,
+    @NotNull Disposable parentDisposable
+  ) {
     throw new UnsupportedOperationException();
   }
 

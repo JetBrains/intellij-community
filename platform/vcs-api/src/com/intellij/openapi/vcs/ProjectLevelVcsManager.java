@@ -68,7 +68,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
    *         it belongs to is not under version control.
    */
-  public abstract @Nullable AbstractVcs getVcsFor(@NotNull VirtualFile file);
+  public abstract @Nullable AbstractVcs getVcsFor(@Nullable VirtualFile file);
 
   /**
    * Returns the VCS managing the specified file path.
@@ -76,7 +76,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
    *         it belongs to is not under version control.
    */
-  public abstract @Nullable AbstractVcs getVcsFor(@NotNull FilePath file);
+  public abstract @Nullable AbstractVcs getVcsFor(@Nullable FilePath file);
 
   /**
    * Return the parent directory of the specified file which is mapped to a VCS.
@@ -94,7 +94,7 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract @Nullable VcsRoot getVcsRootObjectFor(@Nullable VirtualFile file);
 
-  public abstract @Nullable VcsRoot getVcsRootObjectFor(FilePath file);
+  public abstract @Nullable VcsRoot getVcsRootObjectFor(@Nullable FilePath file);
 
   /**
    * Checks if the specified VCS is used by any of the modules in the project.
@@ -141,13 +141,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract @NotNull VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                                              AbstractVcs vcs);
 
-  /**
-   * @param vcsActionName is used both in interface and as a key in settings.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName,
-                                                                        @NotNull AbstractVcs vcs);
-
   @RequiresEdt
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, @Nls String displayActionName);
 
@@ -191,7 +184,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
   public abstract List<VcsDirectoryMapping> getDirectoryMappings(AbstractVcs vcs);
 
-  public abstract @Nullable VcsDirectoryMapping getDirectoryMappingFor(FilePath path);
+  public abstract @Nullable VcsDirectoryMapping getDirectoryMappingFor(@Nullable FilePath path);
 
   /**
    * This method can be used only when initially loading the project configuration!

@@ -197,7 +197,11 @@ public class NlsMessages {
         for (int unit = lastUnitIndex - 1; unit > startPosition; unit--) {
           increment *= TIME_MULTIPLIERS[unit];
         }
-        return formatDuration(duration + increment, maxFragments, narrow);
+        return new NlsDurationFormatter()
+          .setDurationMeasureTimeUnit(durationTimeUnit)
+          .setNarrow(narrow)
+          .setMaxFragments(maxFragments)
+          .formatDuration(duration + increment);
       }
     }
 
@@ -340,6 +344,30 @@ public class NlsMessages {
      */
     public @NotNull NlsDurationFormatter setDurationTimeUnit(@NotNull TimeUnit durationTimeUnit) {
       this.durationTimeUnit = convert(durationTimeUnit);
+      return this;
+    }
+
+    /**
+     * Sets the unit of measurement in which the conversion will be performed. If give it seconds, then the next conversion will convert seconds to string
+     *
+     * <p>Default value: {@code MeasureUnit.MILLISECOND}, which means that all formatting will be in milliseconds
+     *
+     * @param durationTimeUnit unit of measurement
+     * @return formatter
+     */
+    public @NotNull NlsDurationFormatter setDurationMeasureTimeUnit(@NotNull MeasureUnit durationTimeUnit) {
+      if (
+        durationTimeUnit != MeasureUnit.NANOSECOND &&
+        durationTimeUnit != MeasureUnit.MICROSECOND &&
+        durationTimeUnit != MeasureUnit.MILLISECOND &&
+        durationTimeUnit != MeasureUnit.SECOND &&
+        durationTimeUnit != MeasureUnit.MINUTE &&
+        durationTimeUnit != MeasureUnit.HOUR &&
+        durationTimeUnit != MeasureUnit.DAY
+      ) {
+        throw new IllegalArgumentException("The measurement must be a measurement of time");
+      }
+      this.durationTimeUnit = durationTimeUnit;
       return this;
     }
 

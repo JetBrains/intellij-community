@@ -14,4 +14,8 @@ public abstract class SemContributor {
   static final ExtensionPointName<SemContributorEP> EP_NAME = new ExtensionPointName<>("com.intellij.semContributor");
 
   public abstract void registerSemProviders(@NotNull SemRegistrar registrar, @NotNull Project project);
+
+  protected boolean isAvailable(@NotNull Project project) {
+    return true;
+  }
 }

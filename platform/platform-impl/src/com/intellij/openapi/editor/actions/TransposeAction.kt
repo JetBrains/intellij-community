@@ -20,10 +20,12 @@ class TransposeAction : EditorAction(TransposeHandler()) {
       if (caret.offset < document.getLineEndOffset(line)) {
         val offsetBeforeCaret = DocumentUtil.getPreviousCodePointOffset(document, caret.offset)
         val offsetAfterCaret = DocumentUtil.getNextCodePointOffset(document, caret.offset)
-        val codepointBeforeCaret = document.charsSequence.subSequence(offsetBeforeCaret, caret.offset)
-        val codepointAfterCaret = document.charsSequence.subSequence(caret.offset, offsetAfterCaret)
-        document.replaceString(offsetBeforeCaret, offsetAfterCaret, "$codepointAfterCaret$codepointBeforeCaret")
-        caret.moveToOffset(offsetAfterCaret)
+        if (offsetBeforeCaret >= 0) {
+          val codepointBeforeCaret = document.charsSequence.subSequence(offsetBeforeCaret, caret.offset)
+          val codepointAfterCaret = document.charsSequence.subSequence(caret.offset, offsetAfterCaret)
+          document.replaceString(offsetBeforeCaret, offsetAfterCaret, "$codepointAfterCaret$codepointBeforeCaret")
+          caret.moveToOffset(offsetAfterCaret)
+        }
       }
       else {
         // when the caret is at EOL, swap two last characters of the line and don't move caret

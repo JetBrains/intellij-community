@@ -63,8 +63,7 @@ public final class Retries {
   private static Optional<Method> getMethodFromClass(Class<?> clazz, String methodName) {
     @SuppressWarnings("SSBasedInspection")
     var methods = Arrays.stream(clazz.getDeclaredMethods())
-      .filter(method -> methodName.equals(method.getName()))
-      .collect(Collectors.toList());
+      .filter(method -> methodName.equals(method.getName())).toList();
     if (methods.size() == 1) {
       return Optional.of(methods.get(0));
     }

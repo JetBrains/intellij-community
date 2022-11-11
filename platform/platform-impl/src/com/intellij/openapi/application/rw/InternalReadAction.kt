@@ -2,9 +2,11 @@
 package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
@@ -18,20 +20,11 @@ internal class InternalReadAction<T>(
 
   private val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
 
-  suspend fun runReadAction(): T {
-    check(!application.isDispatchThread) {
-      "Must not call from EDT"
+  suspend fun runReadAction(): T = withContext(Dispatchers.Default) {
+    check(!application.isReadAccessAllowed) {
+      "This thread unexpectedly holds the read lock"
     }
-    if (application.isReadAccessAllowed) {
-      val unsatisfiedConstraint = findUnsatisfiedConstraint()
-      check(unsatisfiedConstraint == null) {
-        "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
-      }
-      return blockingContext(action)
-    }
-    return coroutineScope {
-      readLoop()
-    }
+    readLoop()
   }
 
   private fun findUnsatisfiedConstraint(): ReadConstraint? {
@@ -82,7 +75,8 @@ internal class InternalReadAction<T>(
     }
   }
   catch (e: CancellationException) {
-    if (e.cause is CannotReadException) {
+    val cause = Cancellation.getCause(e)
+    if (cause is CannotReadException) {
       ReadResult.WritePending
     }
     else {
@@ -112,7 +106,13 @@ private sealed class ReadResult<out T> {
  */
 private suspend fun yieldToPendingWriteActions() {
   // the runnable is executed on the write thread _after_ the current or pending write action
-  yieldUntilRun(ApplicationManager.getApplication()::invokeLater)
+  yieldUntilRun { runnable ->
+    // Even if there is a modal dialog shown,
+    // it doesn't make sense to yield until it's finished
+    // to run a read action concurrently in background
+    // => yield until the current WA finishes in any modality.
+    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
+  }
 }
 
 private fun waitForConstraint(loopJob: Job, constraint: ReadConstraint): Job {
@@ -125,7 +125,7 @@ private fun waitForConstraint(loopJob: Job, constraint: ReadConstraint): Job {
 }
 
 private suspend fun yieldUntilRun(schedule: (Runnable) -> Unit) {
-  suspendCancellableCoroutine<Unit> { continuation ->
+  suspendCancellableCoroutine { continuation ->
     schedule(ResumeContinuationRunnable(continuation))
   }
 }

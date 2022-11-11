@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -25,8 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class InsertConstructorCallFix implements IntentionActionWithFixAllOption, HighPriorityAction {
   protected final PsiMethod myConstructor;
@@ -35,6 +40,11 @@ public class InsertConstructorCallFix implements IntentionActionWithFixAllOption
   public InsertConstructorCallFix(@NotNull PsiMethod constructor, @NonNls String call) {
     myConstructor = constructor;
     myCall = call;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new InsertConstructorCallFix(PsiTreeUtil.findSameElementInCopy(myConstructor, target), myCall);
   }
 
   @Override
@@ -54,14 +64,13 @@ public class InsertConstructorCallFix implements IntentionActionWithFixAllOption
     return myConstructor.isValid()
            && myConstructor.getBody() != null
            && myConstructor.getBody().getLBrace() != null
-           && BaseIntentionAction.canModify(myConstructor)
-    ;
+           && BaseIntentionAction.canModify(myConstructor);
   }
 
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myConstructor;
+    return myConstructor.getContainingFile();
   }
 
   @Override
@@ -69,7 +78,7 @@ public class InsertConstructorCallFix implements IntentionActionWithFixAllOption
     PsiStatement superCall =
       JavaPsiFacade.getElementFactory(myConstructor.getProject()).createStatementFromText(myCall,null);
 
-    PsiCodeBlock body = myConstructor.getBody();
+    PsiCodeBlock body = Objects.requireNonNull(myConstructor.getBody());
     PsiJavaToken lBrace = body.getLBrace();
     body.addAfter(superCall, lBrace);
     lBrace = (PsiJavaToken) new PsiMatcherImpl(body)

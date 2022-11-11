@@ -96,7 +96,7 @@ class EnsureCurrentJobWithIndicatorTest : CancellationTest() {
   fun `cancelled by child failure`() {
     val t = Throwable()
     val indicator = EmptyProgressIndicator()
-    val ce = assertThrows<ProcessCanceledException> {
+    val pce = assertThrows<ProcessCanceledException> {
       withIndicator(indicator) {
         throw assertThrows<ProcessCanceledException> {
           ensureCurrentJob { currentJob ->
@@ -113,6 +113,7 @@ class EnsureCurrentJobWithIndicatorTest : CancellationTest() {
         }
       }
     }
-    assertSame(t, ce.cause)
+    val ce = assertInstanceOf<CurrentJobCancellationException>(pce.cause)
+    assertSame(t, ce.originalCancellationException.cause)
   }
 }

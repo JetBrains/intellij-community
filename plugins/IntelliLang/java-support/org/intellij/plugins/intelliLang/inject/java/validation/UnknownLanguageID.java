@@ -35,7 +35,7 @@ public class UnknownLanguageID extends LocalInspectionTool {
       final String annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getLanguageAnnotationClass();
 
       @Override
-      public void visitNameValuePair(PsiNameValuePair valuePair) {
+      public void visitNameValuePair(@NotNull PsiNameValuePair valuePair) {
         final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(valuePair, PsiAnnotation.class);
         if (annotation != null) {
           final String qualifiedName = annotation.getQualifiedName();

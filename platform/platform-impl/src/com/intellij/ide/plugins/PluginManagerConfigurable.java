@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
@@ -1489,7 +1489,7 @@ public final class PluginManagerConfigurable
     ShowSettingsUtil.getInstance().editConfigurable(project,
                                                     configurable,
                                                     () -> {
-                                                      configurable.myPluginModel.enablePlugins(descriptors);
+                                                      configurable.myPluginModel.enable(descriptors);
                                                       configurable.select(descriptors);
                                                     });
   }
@@ -1520,6 +1520,11 @@ public final class PluginManagerConfigurable
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myVisible);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -1593,6 +1598,11 @@ public final class PluginManagerConfigurable
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myState = state;
       myInstalledSearchCallback.accept(this);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     public void setState(@Nullable SearchQueryParser.Installed parser) {

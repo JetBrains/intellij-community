@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This is an internal class, use {@link ProjectRootManagerEx#makeRootsChange(Runnable, boolean, boolean)} to fire {@code rootsChanged} event.
+ * This is an internal class, use {@link ProjectRootManagerEx#makeRootsChange(Runnable, RootsChangeRescanningInfo)} to fire {@code rootsChanged} event.
  */
 @ApiStatus.Internal
 public class ModuleRootEventImpl extends ModuleRootEvent {

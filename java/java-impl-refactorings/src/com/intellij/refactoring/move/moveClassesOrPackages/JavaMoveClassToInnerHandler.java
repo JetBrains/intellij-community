@@ -76,7 +76,7 @@ public class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
       if (newClass.getLanguage() != JavaLanguage.INSTANCE) continue;
       newClass.accept(new JavaRecursiveElementVisitor() {
         @Override
-        public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
+        public void visitReferenceElement(final @NotNull PsiJavaCodeReferenceElement reference) {
           PsiElement element = reference.resolve();
           if (element instanceof PsiClass) {
             for (PsiElement oldClass : oldToNewElementsMapping.keySet()) {

@@ -208,11 +208,9 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
 
-    //noinspection HardCodedStringLiteral
     String className = parentNode.getAttributeValue("class_name");
     setClassPattern(className);
 
-    //noinspection HardCodedStringLiteral
     String methodName = parentNode.getAttributeValue("method_name");
     setMethodName(methodName);
 

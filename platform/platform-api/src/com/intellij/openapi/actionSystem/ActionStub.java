@@ -18,8 +18,6 @@ import java.util.function.Supplier;
  * The main (and single) purpose of this class is to provide lazy initialization
  * of the actions.
  * ClassLoader eats up a lot of time on startup to load the actions' classes.
- *
- * @author Vladimir Kondratyev
  */
 public final class ActionStub extends AnAction implements ActionStubBase {
   private static final Logger LOG = Logger.getInstance(ActionStub.class);

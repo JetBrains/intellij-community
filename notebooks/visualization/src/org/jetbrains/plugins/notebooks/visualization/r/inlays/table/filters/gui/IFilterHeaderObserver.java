@@ -17,7 +17,6 @@ public interface IFilterHeaderObserver {
      * <p>Informs the observer than a new filter editor is created</p>
      *
      * @param  header       the associated table filter header
-     * @param  editor
      * @param  tableColumn  the associated {@link TableColumn}
      */
     void tableFilterEditorCreated(TableFilterHeader header,
@@ -29,7 +28,6 @@ public interface IFilterHeaderObserver {
      * from the filter header</p>
      *
      * @param  header       the associated table filter header
-     * @param  editor
      * @param  tableColumn  the associated {@link TableColumn}
      */
     void tableFilterEditorExcluded(TableFilterHeader header,

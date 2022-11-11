@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
@@ -34,7 +35,7 @@ public class AnnotationArgConverter {
   private void generateText(PsiAnnotationMemberValue value, final @NlsSafe StringBuilder buffer) {
     value.accept(new JavaElementVisitor() {
       @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
+      public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         buffer.append("@");
         PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
         if (ref == null) return;
@@ -53,7 +54,7 @@ public class AnnotationArgConverter {
       }
 
       @Override
-      public void visitAnnotationParameterList(PsiAnnotationParameterList list) {
+      public void visitAnnotationParameterList(@NotNull PsiAnnotationParameterList list) {
         PsiNameValuePair[] attributes = list.getAttributes();
         if (attributes.length > 0) {
           buffer.append('(');
@@ -66,7 +67,7 @@ public class AnnotationArgConverter {
       }
 
       @Override
-      public void visitNameValuePair(PsiNameValuePair pair) {
+      public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
         String name = pair.getName();
         PsiAnnotationMemberValue value = pair.getValue();
 
@@ -81,18 +82,18 @@ public class AnnotationArgConverter {
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         buffer.append(expression.getText());
       }
 
       @Override
-      public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
+      public void visitAnnotationArrayInitializer(@NotNull PsiArrayInitializerMemberValue initializer) {
         PsiAnnotationMemberValue[] initializers = initializer.getInitializers();
         processInitializers(initializers);
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
         if (arrayInitializer == null) {
           super.visitNewExpression(expression);
@@ -111,7 +112,7 @@ public class AnnotationArgConverter {
       }
 
       @Override
-      public void visitArrayInitializerExpression(PsiArrayInitializerExpression arrayInitializer) {
+      public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression arrayInitializer) {
         processInitializers(arrayInitializer.getInitializers());
       }
 

@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * This interface must be used if you have some "custom" logic for batch fixes otherwise it is enough to implement equal {@link QuickFix#getFamilyName()} for the fixes.
- *
+ * <p>
  * If the fixes don't have same "family name" the "Inspect all" view doesn't show "fix all" option 
  * so same family name must be used even if you implement the {@link BatchQuickFix} interface.
  */

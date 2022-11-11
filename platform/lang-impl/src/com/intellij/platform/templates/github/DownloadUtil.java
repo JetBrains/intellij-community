@@ -47,7 +47,7 @@ public final class DownloadUtil {
    * @param tempFile       temporary file to download to. This file is deleted on method exit.
    * @param contentChecker checks whether the downloaded content is OK or not
    * @throws IOException if an I/O error occurs
-   * @returns true if no {@code contentChecker} is provided or the provided one returned true
+   * @return true if no {@code contentChecker} is provided or the provided one returned true
    */
   public static boolean downloadAtomically(@Nullable ProgressIndicator indicator,
                                            @NotNull String url,

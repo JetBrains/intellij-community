@@ -182,12 +182,10 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
       Collection<String> beforeAnnotations = Arrays.stream(beforeModifierList.getAnnotations())
         .map(PsiAnnotation::getQualifiedName)
         .filter(Pattern.compile("lombok.*").asPredicate().negate().or(LombokClassNames.NON_NULL::equals))
-        .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
-        .collect(Collectors.toList());
+        .filter(Pattern.compile(annotationToComparePattern()).asPredicate()).toList();
       Collection<String> afterAnnotations = Arrays.stream(afterModifierList.getAnnotations())
         .map(PsiAnnotation::getQualifiedName)
-        .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
-        .collect(Collectors.toList());
+        .filter(Pattern.compile(annotationToComparePattern()).asPredicate()).toList();
 
       assertTrue("Annotations are different for " + afterModifierList.getParent(),
                  beforeAnnotations.size() == afterAnnotations.size()

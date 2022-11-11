@@ -30,7 +30,7 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   }
 
   private Library createFastUtilLibrary() {
-    return createLibrary("fastutil-min", getFastUtilJar(), IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("assertJ"));
+    return createLibrary("fastutil-min", getFastUtilJar(), IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("gson"));
   }
 
   public void testModuleSourcesAndOutput() throws Exception {

@@ -120,7 +120,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     var newChangeListName = "Comments"
     task {
-      text(GitLessonsBundle.message("git.changelists.shelf.create.changelist",
+      text(GitLessonsBundle.message("git.changelists.shelf.create.changelist", code("Comments"),
                                     LessonUtil.rawEnter(), strong(CommonBundle.getOkButtonText())))
       stateCheck {
         val changeListManager = ChangeListManager.getInstance(project)

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
@@ -143,7 +144,6 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       return true
     }
 
-
     override fun visitMethod(node: UMethod): Boolean {
       if (node.isConstructor) {
         checkImplicitCallOfSuperEmptyConstructor(node)
@@ -156,15 +156,17 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
 
     private fun processMethodOverriding(method: UMethod, overriddenMethods: Array<PsiMethod>) {
       val overrideAnnotation = method.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)
-      if (overrideAnnotation == null && method.sourcePsi?.language != Language.findLanguageByID("kotlin")) return
+      val hasOverrideModifier = overrideModifierLanguages.any { method.sourcePsi?.language != Language.findLanguageByID(it) }
+      if (overrideAnnotation == null && !hasOverrideModifier) return
       val sourcePsi = method.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
-      val sinceLanguageLevel = overriddenMethods.mapNotNull { overriddenMethod ->
+      val lastIncompatibleLevel = overriddenMethods.mapNotNull { overriddenMethod ->
         LanguageLevelUtil.getLastIncompatibleLanguageLevel(overriddenMethod, languageLevel)
       }.minOrNull() ?: return
       val toHighlight = overrideAnnotation?.uastAnchor?.sourcePsi ?: method.uastAnchor?.sourcePsi ?: return
-      registerError(toHighlight, sinceLanguageLevel, holder, isOnTheFly)
+      if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
+      registerError(toHighlight, lastIncompatibleLevel, holder, isOnTheFly)
     }
   }
 
@@ -176,8 +178,9 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val sourcePsi = sourceNode.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
-      val sinceLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(constructor, languageLevel) ?: return
-      registerError(sourcePsi, sinceLanguageLevel, holder, isOnTheFly)
+      val lastIncompatibleLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(constructor, languageLevel) ?: return
+      if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
+      registerError(sourcePsi, lastIncompatibleLevel, holder, isOnTheFly)
     }
 
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
@@ -185,8 +188,9 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       if (target !is PsiMember) return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
-      val sinceLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(target, languageLevel)
-      if (sinceLanguageLevel != null) {
+      val lastIncompatibleLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(target, languageLevel)
+      if (lastIncompatibleLevel != null) {
+        if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
         val psiClass = if (qualifier != null) {
           PsiUtil.resolveClassInType(qualifier.getExpressionType())
         }
@@ -199,7 +203,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
             if (isIgnored(superClass)) return
           }
         }
-        registerError(sourcePsi, sinceLanguageLevel, holder, isOnTheFly)
+        registerError(sourcePsi, lastIncompatibleLevel, holder, isOnTheFly)
       }
       else if (target is PsiClass && !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
         for (generifiedClass in generifiedClasses) {
@@ -232,6 +236,12 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     }
   }
 
+  /** Only runs in production because tests have incorrect SDKs when no mock SDK is available. */
+  private fun shouldReportSinceLevelForElement(lastIncompatibleLevel: LanguageLevel, context: PsiElement): Boolean? {
+    val jdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(context) ?: return null
+    return lastIncompatibleLevel.isAtLeast(jdkVersion.maxLanguageLevel) && !ApplicationManager.getApplication().isUnitTestMode
+  }
+
   private fun registerError(reference: PsiElement, sinceLanguageLevel: LanguageLevel, holder: ProblemsHolder, isOnTheFly: Boolean) {
     val targetLanguageLevel = LanguageLevelUtil.getNextLanguageLevel(sinceLanguageLevel) ?: run {
       logger.error("Unable to get the next language level for $sinceLanguageLevel")
@@ -248,6 +258,8 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   companion object {
+    private val overrideModifierLanguages = listOf("kotlin", "scala")
+
     private val logger = logger<JavaApiUsageInspection>()
 
     private var effectiveLanguageLevel: LanguageLevel? = null

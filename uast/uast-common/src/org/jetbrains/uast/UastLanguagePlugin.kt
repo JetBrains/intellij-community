@@ -23,7 +23,7 @@ interface UastLanguagePlugin {
 
     fun getInstances(): Collection<UastLanguagePlugin> = extensionPointName.extensionList
 
-    fun byLanguage(language: Language): UastLanguagePlugin? = extensionPointName.extensionList.firstOrNull { it.language === language }
+    fun byLanguage(language: Language): UastLanguagePlugin? = UastFacade.findPlugin(language)
   }
 
   data class ResolvedMethod(val call: UCallExpression, val method: PsiMethod)
@@ -72,16 +72,9 @@ interface UastLanguagePlugin {
    */
   fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement?
 
-  fun getMethodCallExpression(
-    element: PsiElement,
-    containingClassFqName: String?,
-    methodName: String
-  ): ResolvedMethod?
+  fun getMethodCallExpression(element: PsiElement, containingClassFqName: String?, methodName: String): ResolvedMethod?
 
-  fun getConstructorCallExpression(
-    element: PsiElement,
-    fqName: String
-  ): ResolvedConstructor?
+  fun getConstructorCallExpression(element: PsiElement, fqName: String): ResolvedConstructor?
 
   fun getMethodBody(element: PsiMethod): UExpression? {
     if (element is UMethod) return element.uastBody
@@ -116,8 +109,10 @@ interface UastLanguagePlugin {
 
 
   @JvmDefault
-  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
-    sequenceOf(convertElementWithParent(element, requiredTypes)).filterNotNull()
+  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> {
+    val result = convertElementWithParent(element, requiredTypes)
+    return if (result == null) emptySequence() else sequenceOf(result)
+  }
 
   @JvmDefault
   val analysisPlugin: UastAnalysisPlugin?

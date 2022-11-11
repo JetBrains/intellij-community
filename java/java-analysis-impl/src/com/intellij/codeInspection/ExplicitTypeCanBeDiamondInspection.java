@@ -39,7 +39,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         if (PsiDiamondTypeUtil.canCollapseToDiamond(expression, expression, null)) {
           final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
           LOG.assertTrue(classReference != null);

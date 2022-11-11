@@ -31,6 +31,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY = "org.gradle.api.artifacts.ClientModule";
   @NonNls public static final String GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY = "org.gradle.api.artifacts.ModuleDependency";
   @NonNls public static final String GRADLE_API_ARTIFACTS_DEPENDENCY = "org.gradle.api.artifacts.Dependency";
+  @NonNls public static final String GRADLE_API_ARTIFACTS_MINIMAL_EXTERNAL_MODULE_DEPENDENCY = "org.gradle.api.artifacts.MinimalExternalModuleDependency";
   @NonNls public static final String GRADLE_API_ARTIFACTS_DEPENDENCY_ARTIFACT = "org.gradle.api.artifacts.DependencyArtifact";
   @NonNls public static final String GRADLE_API_REPOSITORY_HANDLER = "org.gradle.api.artifacts.dsl.RepositoryHandler";
   @NonNls public static final String GRADLE_API_PUBLISHING_EXTENSION = "org.gradle.api.publish.PublishingExtension";
@@ -67,6 +68,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_LANGUAGE_JVM_TASKS_PROCESS_RESOURCES = "org.gradle.language.jvm.tasks.ProcessResources";
   @NonNls public static final String GRADLE_BUILDSETUP_TASKS_SETUP_BUILD = "org.gradle.buildsetup.tasks.SetupBuild";
   @NonNls public static final String GRADLE_API_TASK_CONTAINER = "org.gradle.api.tasks.TaskContainer";
+  @NonNls public static final String GRADLE_API_TASK_COLLECTION = "org.gradle.api.tasks.TaskCollection";
   @NonNls public static final String GRADLE_API_JAVA_ARCHIVES_MANIFEST = "org.gradle.api.java.archives.Manifest";
   @NonNls public static final String GRADLE_API_DOMAIN_OBJECT_COLLECTION = "org.gradle.api.DomainObjectCollection";
   @NonNls public static final String GRADLE_API_NAMED_DOMAIN_OBJECT_COLLECTION = "org.gradle.api.NamedDomainObjectCollection";
@@ -76,6 +78,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_ARTIFACTS_REPOSITORIES_IVY_ARTIFACT_REPOSITORY = "org.gradle.api.artifacts.repositories.IvyArtifactRepository";
   @NonNls public static final String GRADLE_API_ARTIFACTS_REPOSITORIES_FLAT_DIRECTORY_ARTIFACT_REPOSITORY = "org.gradle.api.artifacts.repositories.FlatDirectoryArtifactRepository";
   @NonNls public static final String GRADLE_API_ARTIFACTS_MAVEN_MAVEN_DEPLOYER = "org.gradle.api.artifacts.maven.MavenDeployer";
+  @NonNls public static final String GRADLE_API_ARTIFACTS_MUTABLE_VERSION_CONSTRAINT = "org.gradle.api.artifacts.MutableVersionConstraint";
   @NonNls public static final String GRADLE_API_PLUGINS_MAVEN_REPOSITORY_HANDLER_CONVENTION = "org.gradle.api.plugins.MavenRepositoryHandlerConvention";
   @NonNls public static final String GRADLE_API_INITIALIZATION_SETTINGS = "org.gradle.api.initialization.Settings";
   @NonNls public static final String GRADLE_API_EXTRA_PROPERTIES_EXTENSION = "org.gradle.api.plugins.ExtraPropertiesExtension";

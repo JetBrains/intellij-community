@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -16,27 +17,34 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.*
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.JavaModuleTestCase
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.ModuleTestSourceInfo
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
-import org.jetbrains.kotlin.idea.framework.platform
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.platform
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.caches.project.getDependentModules
+import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
-import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
+import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.test.util.addDependency
@@ -305,14 +313,14 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         c.addDependency(b)
         c.addDependency(a)
 
-        assertNotNull(a.productionSourceInfo())
-        assertNull(a.testSourceInfo())
+        assertNotNull(a.productionSourceInfo)
+        assertNull(a.testSourceInfo)
 
-        assertNull(empty.productionSourceInfo())
-        assertNull(empty.testSourceInfo())
+        assertNull(empty.productionSourceInfo)
+        assertNull(empty.testSourceInfo)
 
-        assertNull(b.productionSourceInfo())
-        assertNotNull(b.testSourceInfo())
+        assertNull(b.productionSourceInfo)
+        assertNotNull(b.testSourceInfo)
 
         b.test.assertDependenciesEqual(b.test, a.production)
         c.test.assertDependenciesEqual(c.test, c.production, b.test, a.production)
@@ -369,15 +377,16 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             ProjectRootManager.getInstance(project).projectSdk = null
         }
 
-        val firstSDK = getProjectJdkTableSafe().allJdks.firstOrNull() ?: error("no jdks are present")
+        val allJdks = runReadAction { ProjectJdkTable.getInstance() }.allJdks
+        val firstJdk = allJdks.firstOrNull() ?: error("no jdks are present")
 
         with(createFileInProject("script.kts").moduleInfo) {
             UIUtil.dispatchAllInvocationEvents()
             NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
             val filterIsInstance = dependencies().filterIsInstance<SdkInfo>()
-            filterIsInstance.singleOrNull { it.sdk == firstSDK }
-                ?: error("Unable to look up ${firstSDK.name} in ${filterIsInstance.map { it.name }} / allJdks: ${getProjectJdkTableSafe().allJdks}")
+            filterIsInstance.singleOrNull { it.sdk == firstJdk }
+                ?: error("Unable to look up ${firstJdk.name} in ${filterIsInstance.map { it.name }} / allJdks: $allJdks")
         }
     }
 
@@ -736,14 +745,14 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
     private val VirtualFile.moduleInfo: IdeaModuleInfo
         get() {
-            return PsiManager.getInstance(project).findFile(this)!!.getModuleInfo()
+            return PsiManager.getInstance(project).findFile(this)!!.moduleInfo
         }
 
     private val Module.production: ModuleProductionSourceInfo
-        get() = productionSourceInfo()!!
+        get() = productionSourceInfo!!
 
     private val Module.test: ModuleTestSourceInfo
-        get() = testSourceInfo()!!
+        get() = testSourceInfo!!
 
     private val LibraryEx.classes: LibraryInfo
         get() = object : LibraryInfo(project!!, this) {
@@ -779,17 +788,17 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     }
 
     private fun stdlibCommon(): LibraryEx = projectLibrary(
-      "kotlin-stdlib-common",
-      AdditionalKotlinArtifacts.kotlinStdlibCommon.jarRoot,
-      kind = CommonLibraryKind
+        "kotlin-stdlib-common",
+        TestKotlinArtifacts.kotlinStdlibCommon.jarRoot,
+        kind = KotlinCommonLibraryKind
     )
 
-    private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", KotlinArtifacts.instance.kotlinStdlib.jarRoot)
+    private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
 
     private fun stdlibJs(): LibraryEx = projectLibrary(
       "kotlin-stdlib-js",
-      KotlinArtifacts.instance.kotlinStdlibJs.jarRoot,
-      kind = JSLibraryKind
+      TestKotlinArtifacts.kotlinStdlibJs.jarRoot,
+      kind = KotlinJavaScriptLibraryKind
     )
 
     private fun projectLibraryWithFakeRoot(name: String): LibraryEx {

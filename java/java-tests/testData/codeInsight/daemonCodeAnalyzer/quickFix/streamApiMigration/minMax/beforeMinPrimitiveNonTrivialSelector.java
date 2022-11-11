@@ -1,4 +1,4 @@
-// "Replace with min()" "true"
+// "Replace with min()" "true-preview"
 
 public class Main {
   public void work(int[] ints) {

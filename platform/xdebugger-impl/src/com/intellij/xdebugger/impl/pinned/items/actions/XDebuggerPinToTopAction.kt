@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.pinned.items.actions
 
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
@@ -14,7 +11,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import icons.PlatformDebuggerImplIcons
 import java.awt.event.MouseEvent
-import java.util.Collections
+import java.util.*
 
 class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
 
@@ -58,7 +55,11 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
 
     }
 
-    override fun perform(node: XValueNodeImpl?, nodeName: String, e: AnActionEvent) {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
+  override fun perform(node: XValueNodeImpl?, nodeName: String, e: AnActionEvent) {
         node ?: return
         val project = e.project ?: return
 

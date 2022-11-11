@@ -6,13 +6,13 @@ fun foo1() { /// M
 } /// L
 
 fun foo2() { /// M
-    val local = fun() { /// L
+    val local = fun() { /// *, L, λ
         println() /// L
     } /// L
 } /// L
 
 fun foo3() { /// M
-    val local = { /// L
+    val local = { /// *, L, λ
         println() /// L
     } /// L
 } /// L

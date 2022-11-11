@@ -3,13 +3,11 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportBuilder
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
@@ -23,6 +21,7 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+    LOG.debug("Link Maven project '$projectFile' to existing project ${project.name}")
 
     val builder = builder
     try {

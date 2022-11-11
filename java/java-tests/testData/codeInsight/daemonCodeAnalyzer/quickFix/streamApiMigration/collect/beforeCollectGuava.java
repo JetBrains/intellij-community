@@ -1,4 +1,4 @@
-// "Replace with collect" "true"
+// "Replace with collect" "true-preview"
 package com.google.common.collect;
 
 import java.util.*;

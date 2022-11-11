@@ -83,7 +83,6 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   @Override
   public CodeStyleSettings getMainProjectCodeStyle() {
     synchronized (myStateLock) {
-      checkState();
       return mySettingsMap.get(MAIN_PROJECT_CODE_STYLE_NAME);
     }
   }

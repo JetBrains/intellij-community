@@ -55,3 +55,5 @@ fun main() = runBlocking {
 suspend fun suspendUse(value: Any) {
 
 }
+
+// IGNORE_K2

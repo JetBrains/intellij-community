@@ -55,8 +55,6 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
   @Nullable protected volatile List<PyPackage> myPackagesCache = null;
   private final AtomicBoolean myUpdatingCache = new AtomicBoolean(false);
 
-  @NotNull protected final Sdk mySdk;
-
   @Override
   public void refresh() {
     LOG.debug("Refreshing SDK roots and packages cache");
@@ -135,15 +133,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
 
   protected abstract void installUsingPipWheel(String @NotNull ... pipArgs) throws ExecutionException;
 
-  protected PyPackageManagerImplBase(@NotNull Sdk sdk) { mySdk = sdk; }
-
-  protected void subscribeToLocalChanges() {
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(getSdk(), this, () -> PythonSdkType.getInstance().setupSdkPaths(getSdk()));
-  }
-
-  protected final @NotNull Sdk getSdk() {
-    return mySdk;
-  }
+  protected PyPackageManagerImplBase(@NotNull Sdk sdk) { super(sdk); }
 
   @Override
   @NotNull
@@ -208,9 +198,9 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
       myPackagesCache = null;
       try {
         final List<PyPackage> packages = collectPackages();
-        LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages);
+        LOG.debug("Packages installed in " + getSdk().getName() + ": " + packages);
         myPackagesCache = packages;
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(mySdk);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(getSdk());
         return Collections.unmodifiableList(packages);
       }
       catch (ExecutionException e) {

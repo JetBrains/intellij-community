@@ -86,6 +86,7 @@ class SuggestedRefactoringChangeCollector(
           }
         }
       }
+      .coalesceBy(this)
       .inSmartMode(project)
       .expireWhen {
         synchronized(stateLock) { state !== initialState }

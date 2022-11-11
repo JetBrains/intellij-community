@@ -39,7 +39,7 @@ public interface LeafOccurrenceMapper<T> {
 
   interface Parameterized<P, T> {
 
-    @NotNull Collection<? extends T> mapOccurrence(P parameter, @NotNull LeafOccurrence occurrence);
+    @NotNull Collection<? extends T> mapOccurrence(@NotNull P parameter, @NotNull LeafOccurrence occurrence);
   }
 
   /**
@@ -49,10 +49,8 @@ public interface LeafOccurrenceMapper<T> {
    * if successful, passes the value to the {@code parameterizedMapper} along with the occurrence
    */
   @Contract(pure = true)
-  static <P, T> @NotNull LeafOccurrenceMapper<T> withPointer(
-    @NotNull Pointer<? extends P> pointer,
-    @NotNull Parameterized<@NotNull ? super P, ? extends T> parameterizedMapper
-  ) {
+  static <P, T> @NotNull LeafOccurrenceMapper<T> withPointer(@NotNull Pointer<? extends P> pointer,
+                                                             @NotNull Parameterized<? super @NotNull P, ? extends T> parameterizedMapper) {
     return occurrence -> {
       P value = pointer.dereference();
       return value == null ? Collections.emptyList()

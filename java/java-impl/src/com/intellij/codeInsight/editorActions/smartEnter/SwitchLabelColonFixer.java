@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiCaseLabelElementList;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.util.IncorrectOperationException;
@@ -28,7 +29,8 @@ public class SwitchLabelColonFixer implements Fixer {
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiSwitchLabelStatement && !psiElement.getText().endsWith(":")) {
       PsiSwitchLabelStatement statement = (PsiSwitchLabelStatement)psiElement;
-      if (statement.getCaseValue() != null || statement.isDefaultCase()) {
+      PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
+      if ((labelElementList != null && labelElementList.getElementCount() != 0) || statement.isDefaultCase()) {
         editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), ":");
       }
     }

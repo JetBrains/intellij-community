@@ -1,0 +1,7 @@
+// LANGUAGE_VERSION: 1.8
+data object Foo {
+
+    fun foo() = 42
+
+    val x = "y"
+}

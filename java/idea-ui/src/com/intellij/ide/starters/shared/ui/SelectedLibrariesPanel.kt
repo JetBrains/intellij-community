@@ -2,8 +2,8 @@
 package com.intellij.ide.starters.shared.ui
 
 import com.intellij.ide.starters.JavaStartersBundle
-import com.intellij.ide.starters.remote.DependencyState
-import com.intellij.ide.starters.remote.DependencyUnavailable
+import com.intellij.ide.starters.shared.DependencyState
+import com.intellij.ide.starters.shared.DependencyUnavailable
 import com.intellij.ide.starters.shared.LibraryInfo
 import com.intellij.icons.AllIcons.Actions
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -17,11 +17,13 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Cursor
 import javax.swing.JLabel
 
-internal class SelectedLibrariesPanel : JBPanelWithEmptyText(BorderLayout()) {
+@ApiStatus.Internal
+class SelectedLibrariesPanel : JBPanelWithEmptyText(BorderLayout()) {
   private val scrollablePanel: ScrollablePanel = ScrollablePanel(VerticalLayout(UIUtil.DEFAULT_VGAP))
   private val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true)
 

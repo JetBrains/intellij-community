@@ -1,26 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import java.awt.Dimension
 import java.awt.Point
 
-class RunWidgetResizeController private constructor() : DraggablePane.DragListener {
+@Service(Service.Level.PROJECT)
+internal class RunWidgetResizeController private constructor(project: Project) : DraggablePane.DragListener {
   companion object {
-    private val controller = RunWidgetResizeController()
-    fun getInstance(): RunWidgetResizeController {
-      return controller
-    }
+    fun getInstance(project: Project): RunWidgetResizeController = project.service()
   }
 
+  private val widthHelper = RunWidgetWidthHelper.getInstance(project)
   private var startWidth: Int? = null
 
   override fun dragStarted(locationOnScreen: Point) {
-    startWidth = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH
+    startWidth = widthHelper.runConfig
   }
 
   override fun dragged(locationOnScreen: Point, offset: Dimension) {
     startWidth?.let {
-      FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH = it - offset.width
+      widthHelper.runConfig = it - offset.width
     }
   }
 

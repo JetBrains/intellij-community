@@ -2,6 +2,7 @@
 package com.jetbrains.python.console.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
@@ -27,5 +28,9 @@ class ShowVarsAction(private val consoleView: PythonConsoleView, private val con
     else {
       consoleView.restoreWindow()
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 }

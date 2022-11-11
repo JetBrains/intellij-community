@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.testFramework.IdeaTestUtil
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
@@ -300,10 +301,15 @@ class ConvertToSetInspectionTest15 : KotlinLightCodeInsightFixtureTestCase() {
                 )
 
                 if (sample.problemExpected && highlightInfos.isNotEmpty()) {
-                    val localFixActions = highlightInfos
-                        .flatMap { it.quickFixActionMarkers ?: emptyList() }
-                        .map { it.first.action }
-                        .filter { it !is EmptyIntentionAction }
+                    val localFixActions:MutableList<IntentionAction> = ArrayList()
+                    highlightInfos.forEach { info ->
+                        info.findRegisteredQuickFix<Any?> { desc, _ ->
+                            if (desc.action !is EmptyIntentionAction) {
+                                localFixActions.add(desc.action)
+                            }
+                            null
+                        }
+                    }
 
                     TestCase.assertTrue(
                         "${sample.name}: No fix action found",

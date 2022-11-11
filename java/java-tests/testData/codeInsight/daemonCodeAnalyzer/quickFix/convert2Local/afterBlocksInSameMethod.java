@@ -1,4 +1,4 @@
-// "Convert field to local variable in constructor" "true"
+// "Convert field to local variable in constructor" "true-preview"
 import java.util.ArrayList;
 
 class ITest {
@@ -7,7 +7,7 @@ class ITest {
 
         //my comment to keep in code
         ArrayList<String> mayBeLocal = new ArrayList<String>();
-        if (x == 5) {
+      if (x == 5) {
       mayBeLocal.add("jjj");
     }
 

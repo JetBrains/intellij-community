@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class GroupItem implements Cloneable, PaletteGroup {
   private static final Logger LOG = Logger.getInstance(GroupItem.class);
 
@@ -134,8 +131,8 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   }
 
   @Override
-  @Nullable public Object getData(Project project, @NotNull String dataId) {
-    if (dataId.equals(getClass().getName())) {
+  public @Nullable Object getData(Project project, @NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
       return this;
     }
     return null;

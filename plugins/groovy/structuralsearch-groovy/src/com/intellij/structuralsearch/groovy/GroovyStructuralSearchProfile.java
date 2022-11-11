@@ -61,7 +61,7 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   @NotNull
   @Override
   public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
-    return GroovyTemplateContextType.class;
+    return GroovyTemplateContextType.Generic.class;
   }
 
   @NotNull

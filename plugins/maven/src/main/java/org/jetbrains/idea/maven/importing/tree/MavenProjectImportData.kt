@@ -3,17 +3,18 @@ package org.jetbrains.idea.maven.importing.tree
 
 import com.intellij.openapi.module.Module
 import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 
 open class ModuleData(val moduleName: String,
-                      val type: MavenModuleType,
+                      val type: StandardMavenModuleType,
                       val javaVersionHolder: MavenJavaVersionHolder) {
   val sourceLanguageLevel: LanguageLevel?
-    get() = if (type == MavenModuleType.TEST) javaVersionHolder.testSourceLevel else javaVersionHolder.sourceLevel
+    get() = if (type == StandardMavenModuleType.TEST_ONLY) javaVersionHolder.testSourceLevel else javaVersionHolder.sourceLevel
   val targetLanguageLevel: LanguageLevel?
-    get() = if (type == MavenModuleType.TEST) javaVersionHolder.testTargetLevel else javaVersionHolder.targetLevel
+    get() = if (type == StandardMavenModuleType.TEST_ONLY) javaVersionHolder.testTargetLevel else javaVersionHolder.targetLevel
 
   override fun toString(): String {
     return moduleName
@@ -21,22 +22,12 @@ open class ModuleData(val moduleName: String,
 }
 
 class LegacyModuleData(val module: Module,
-                       type: MavenModuleType,
+                       type: StandardMavenModuleType,
                        javaVersionHolder: MavenJavaVersionHolder,
                        val isNewModule: Boolean) : ModuleData(module.name, type, javaVersionHolder)
 
-data class MavenModuleImportData(val mavenProject: MavenProject,
-                                 val moduleData: ModuleData,
-                                 val dependencies: List<MavenImportDependency<*>>,
-                                 val changes: MavenProjectChanges?) {
-
-  val legacyModuleData: LegacyModuleData
-    get() = moduleData as LegacyModuleData
-
-  fun hasChanges(): Boolean {
-    return changes != null && changes.hasChanges()
-  }
-
+open class MavenModuleImportData(val mavenProject: MavenProject,
+                                 val moduleData: ModuleData) {
   override fun toString(): String {
     return moduleData.moduleName
   }
@@ -53,13 +44,20 @@ data class MavenModuleImportData(val mavenProject: MavenProject,
   }
 }
 
+open class MavenTreeModuleImportData(mavenProject: MavenProject,
+                                     moduleData: ModuleData,
+                                     val dependencies: List<MavenImportDependency<*>>,
+                                     val changes: MavenProjectChanges) : MavenModuleImportData(mavenProject, moduleData) {
+
+  val legacyModuleData: LegacyModuleData
+    get() = moduleData as LegacyModuleData
+
+}
+
 class MavenProjectImportData(val mavenProject: MavenProject,
                              val moduleData: ModuleData,
-                             val changes: MavenProjectChanges?,
+                             val changes: MavenProjectChanges,
                              val splittedMainAndTestModules: SplittedMainAndTestModules?) {
-  fun hasChanges(): Boolean {
-    return changes != null && changes.hasChanges()
-  }
 
   override fun toString(): String {
     return mavenProject.mavenId.toString()

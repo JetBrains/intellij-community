@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionCustomizer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
@@ -20,6 +22,8 @@ import java.util.Set;
  * @author ilyas
  */
 public class GroovyCompletionContributor extends CompletionContributor {
+
+  static final ExtensionPointName<GroovyCompletionCustomizer> EP_NAME = ExtensionPointName.create("org.intellij.groovy.completionCustomizer");
 
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL = PlatformPatterns.psiElement().afterLeafSkipping(
     StandardPatterns.alwaysFalse(),
@@ -36,7 +40,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
     GroovyConfigSlurperCompletionProvider.register(this);
     MapKeysCompletionProvider.register(this);
     GroovyDocCompletionProvider.register(this);
-    GrStatementStartCompletionProvider.register(this);
     GrInlineTransformationCompletionProvider.register(this);
     GrMainCompletionProvider.register(this);
     GrAnnotationAttributeCompletionProvider.register(this);
@@ -63,7 +66,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (!AFTER_NUMBER_LITERAL.accepts(parameters.getPosition())) {
-      super.fillCompletionVariants(parameters, result);
+      super.fillCompletionVariants(parameters, enrichResultSet(parameters, result));
     }
   }
 
@@ -80,5 +83,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
     if (position!= null && position.getNode().getElementType() == GroovyTokenTypes.mDOLLAR) {
       context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, context.getStartOffset());
     }
+  }
+
+  private static @NotNull CompletionResultSet enrichResultSet(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet) {
+    for (GroovyCompletionCustomizer customizer : EP_NAME.getExtensionList()) {
+      resultSet = customizer.customizeCompletionConsumer(parameters, resultSet);
+    }
+    return resultSet;
   }
 }

@@ -414,6 +414,10 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+    @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       NamedConfigurable selected = getSelectedConfigurable();
       if (selected instanceof FacetConfigurable) {

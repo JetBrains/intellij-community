@@ -1,4 +1,4 @@
-// "Add exception to existing catch clause" "true"
+// "Add exception to existing catch clause" "true-preview"
 import java.io.IOException;
 
 class X extends RuntimeException {}

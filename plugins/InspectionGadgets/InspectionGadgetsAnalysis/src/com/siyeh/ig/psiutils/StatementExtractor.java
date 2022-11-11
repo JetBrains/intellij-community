@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -210,11 +210,12 @@ public final class StatementExtractor {
 
     public String toString() {
       if (myAnchor instanceof PsiInstanceOfExpression) {
-        List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(myAnchor);
+        var patternVariableWrappers = JavaPsiPatternUtil.collectPatternVariableWrappers(myAnchor);
         StringBuilder sb = new StringBuilder();
-        for (PsiPatternVariable variable : variables) {
-          String initializer = JavaPsiPatternUtil.getEffectiveInitializerText(variable);
+        for (var patternVariableWrapper : patternVariableWrappers) {
+          String initializer = patternVariableWrapper.getEffectiveInitializerText();
           if (initializer != null) {
+            PsiPatternVariable variable = patternVariableWrapper.getVariable();
             sb.append(variable.getTypeElement().getText()).append(" ").append(variable.getName()).append("=")
               .append(initializer).append(";");
           }
@@ -257,7 +258,7 @@ public final class StatementExtractor {
       PsiCodeBlock body = Objects.requireNonNull(copy.getBody());
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitExpressionStatement(PsiExpressionStatement statement) {
+        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
           if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement &&
               ((PsiSwitchLabeledRuleStatement)statement.getParent()).getEnclosingSwitchBlock() == copy) {
             process(statement);
@@ -265,14 +266,14 @@ public final class StatementExtractor {
         }
 
         @Override
-        public void visitYieldStatement(PsiYieldStatement statement) {
+        public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
           if (statement.getExpression() != null && statement.findEnclosingExpression() == copy) {
             process(statement);
           }
         }
 
         @Override
-        public void visitExpression(PsiExpression expression) {
+        public void visitExpression(@NotNull PsiExpression expression) {
           // Do not go into any expressions
         }
 

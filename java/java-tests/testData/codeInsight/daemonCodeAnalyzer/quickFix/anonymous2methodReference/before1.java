@@ -1,4 +1,4 @@
-// "Replace with method reference" "true"
+// "Replace with method reference" "true-preview"
 class Test {
   interface Bar {
     int compare(String o1, String o2);

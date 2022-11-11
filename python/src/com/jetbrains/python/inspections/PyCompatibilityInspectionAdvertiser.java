@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -8,10 +8,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -45,14 +42,7 @@ import java.util.List;
  */
 public class PyCompatibilityInspectionAdvertiser implements Annotator {
 
-  private static final NotificationGroup BALLOON_NOTIFICATIONS = new NotificationGroup(
-    "Python Compatibility Inspection Advertiser",
-    NotificationDisplayType.STICKY_BALLOON,
-    false,
-    null,
-    null,
-    PyBundle.message("python.compatibility.inspection.advertiser.notifications.group.title"),
-    null);
+  private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Python Compatibility Inspection Advertiser");
   private static final Key<Boolean> DONT_SHOW_BALLOON = Key.create("showingPyCompatibilityAdvertiserBalloon");
 
   // Allow to show declined suggestion multiple times to ease debugging
@@ -187,6 +177,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
                                                 @NotNull NotificationListener listener) {
     project.putUserData(DONT_SHOW_BALLOON, true);
     BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, NotificationType.INFORMATION)
+      .setSuggestionType(true)
       .setListener((notification, event) -> {
         try {
           listener.hyperlinkUpdate(notification, event);

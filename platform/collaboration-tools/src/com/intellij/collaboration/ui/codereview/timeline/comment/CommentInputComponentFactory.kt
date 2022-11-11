@@ -2,7 +2,7 @@
 package com.intellij.collaboration.ui.codereview.timeline.comment
 
 import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.codereview.InlineIconButton
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.CancelActionConfig
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.ScrollOnChangePolicy
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.SubmitActionConfig

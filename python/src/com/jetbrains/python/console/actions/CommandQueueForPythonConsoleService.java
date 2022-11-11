@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Service for command queue in Python console.
- * It has own listener(CommandQueueListener myListener), which it notifies about the change in the command queue.
+ * It has own listener(CommandQueueListener myListener), which it notifies about the changes in the command queue.
  */
 @Service
 public final class CommandQueueForPythonConsoleService {
@@ -32,20 +32,18 @@ public final class CommandQueueForPythonConsoleService {
     return queues.get(consoleComm);
   }
 
-  // adding a new listener that is responsible for drawing the command queue
+  /**
+   * Add new listener that is responsible for drawing the command queue.
+   *
+   * @param consoleComm a console communication corresponding to a console instance for listening events
+   * @param listener    instance of a listener which will receive notifications from the service, responsible for the correct rendering of the panel
+   */
   public synchronized void addListener(@NotNull ConsoleCommunication consoleComm, @NotNull CommandQueueListener listener) {
     myListeners.put(consoleComm, listener);
   }
 
   public synchronized void removeListener(@NotNull ConsoleCommunication consoleComm) {
     myListeners.remove(consoleComm);
-  }
-
-  public synchronized void removeFirstCommand(@NotNull ConsoleCommunication consoleComm) {
-    var queue = getQueue(consoleComm);
-    if (queue != null) {
-      queue.remove();
-    }
   }
 
   @Nullable
@@ -62,7 +60,7 @@ public final class CommandQueueForPythonConsoleService {
 
   public boolean isEmpty(@NotNull ConsoleCommunication consoleComm) {
     if (consoleComm instanceof PydevConsoleCommunication) {
-      if (((PydevConsoleCommunication) consoleComm).isCommunicationClosed()) {
+      if (((PydevConsoleCommunication)consoleComm).isCommunicationClosed()) {
         return true;
       }
     }
@@ -83,7 +81,12 @@ public final class CommandQueueForPythonConsoleService {
     return queue.size() == 2;
   }
 
-  // remove one or all commands from queue
+  /**
+   * Remove commands from queue and notify CommandQueueListener.
+   *
+   * @param consoleComm       a console communication corresponding to a console instance
+   * @param exceptionOccurred if true then an exception occurred while executing the command, we should clear the queue else remove one command
+   */
   public synchronized void removeCommand(@NotNull ConsoleCommunication consoleComm, boolean exceptionOccurred) {
     var queue = getQueue(consoleComm);
     if (queue == null) return;
@@ -95,13 +98,17 @@ public final class CommandQueueForPythonConsoleService {
         }
 
         queue.clear();
-        myListeners.get(consoleComm).removeAll();
+        CommandQueueListener listener = myListeners.get(consoleComm);
+        if (listener != null) {
+          listener.removeAll();
+        }
       }
       else {
         var command = queue.remove();
         if (!command.getText().isBlank() && !command.getText().equals(STUB)) {
           myListeners.get(consoleComm).removeCommand(command);
         }
+
         if (!queue.isEmpty()) {
           execCommand(consoleComm, queue.peek());
         }
@@ -109,7 +116,13 @@ public final class CommandQueueForPythonConsoleService {
     }
   }
 
-  // if user has removed a command from the CommandQueue, we add a stub (pass)
+  /**
+   * Calls if user remove command from queue using the button.
+   * When using IPython, in order not to break the numbering of cells, inserts `pass` into the queue instead of a `codeFragment`.
+   *
+   * @param consoleComm  a console communication corresponding to a console instance
+   * @param codeFragment a text of the command that a user deleted
+   */
   public synchronized void removeCommand(@NotNull ConsoleCommunication consoleComm,
                                          @NotNull ConsoleCommunication.ConsoleCodeFragment codeFragment) {
     var queue = getQueue(consoleComm);
@@ -147,6 +160,24 @@ public final class CommandQueueForPythonConsoleService {
     }
 
     pydevConsoleExecuteActionHandler.updateConsoleState();
+  }
+
+  /**
+   * Disable Command Queue for all Python Consoles.
+   * Notify listeners that queues are disabled.
+   */
+  public synchronized void disableCommandQueue() {
+    for (var queue : queues.values()) {
+      if (queue != null) {
+        queue.clear();
+      }
+    }
+
+    for (var listener : myListeners.values()) {
+      if (listener != null) {
+        listener.disableConsole();
+      }
+    }
   }
 
   private static void execCommand(@NotNull ConsoleCommunication comm, @NotNull ConsoleCommunication.ConsoleCodeFragment code) {

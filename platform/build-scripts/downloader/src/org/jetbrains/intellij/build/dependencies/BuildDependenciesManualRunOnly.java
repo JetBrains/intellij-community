@@ -8,12 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Map;
 
 @ApiStatus.Internal
 public final class BuildDependenciesManualRunOnly {
-  @NotNull
-  public static BuildDependenciesCommunityRoot getCommunityRootFromWorkingDirectory() {
+  public static @NotNull BuildDependenciesCommunityRoot getCommunityRootFromWorkingDirectory() {
     // This method assumes the current working directory is inside intellij-based product checkout root
     Path workingDirectory = Paths.get(System.getProperty("user.dir"));
 
@@ -32,8 +30,7 @@ public final class BuildDependenciesManualRunOnly {
     throw new IllegalStateException("IDEA Community root was not found from current working directory " + workingDirectory);
   }
 
-  @NotNull
-  public static Map<String, String> getDependenciesPropertiesFromWorkingDirectory() {
+  public static DependenciesProperties getDependenciesPropertiesFromWorkingDirectory() {
     return BuildDependenciesDownloader.getDependenciesProperties(getCommunityRootFromWorkingDirectory());
   }
 }

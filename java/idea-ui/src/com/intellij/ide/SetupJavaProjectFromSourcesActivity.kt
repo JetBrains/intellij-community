@@ -14,7 +14,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
@@ -42,20 +42,23 @@ private val SETUP_JAVA_PROJECT_IS_DISABLED = SystemProperties.getBooleanProperty
 
 private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
-private val LOG = logger<SetupJavaProjectFromSourcesActivity>()
 
 internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
+  init {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override fun runActivity(project: Project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment || SETUP_JAVA_PROJECT_IS_DISABLED) {
+    if (SETUP_JAVA_PROJECT_IS_DISABLED) {
       return
     }
+
     if (!project.isOpenedByPlatformProcessor()) {
       return
     }
-    val projectDir = project.baseDir
-    if (projectDir == null) {
-      return
-    }
+    val projectDir = project.baseDir ?: return
 
     // todo get current project structure, and later setup from sources only if it wasn't manually changed by the user
 

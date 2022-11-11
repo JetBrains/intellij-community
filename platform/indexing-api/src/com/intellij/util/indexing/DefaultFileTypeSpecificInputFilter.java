@@ -7,9 +7,11 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Filters according to given set of {@link FileType}s.
+ * Filters according to given set of {@link FileType}s. Provided file types will be checked against substituted
+ * file type if applicable - see {@link SubstitutedFileType#substituteFileType}
  * <p>
- * Override {@link #acceptInput(VirtualFile)} for additional filtering (e.g., file location, fixed filenames).
+ * Override {@link #acceptInput(VirtualFile)} for additional filtering (e.g., file location, fixed filenames,
+ * original file type).
  */
 public class DefaultFileTypeSpecificInputFilter implements FileBasedIndex.FileTypeSpecificInputFilter {
   private final FileType[] myFileTypes;

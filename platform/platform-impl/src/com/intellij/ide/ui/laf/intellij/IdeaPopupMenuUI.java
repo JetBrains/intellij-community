@@ -1,14 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.WindowRoundedCornersManager;
 import com.intellij.util.ui.JBValue;
 
 import javax.swing.*;
@@ -21,8 +19,7 @@ import java.awt.event.MouseEvent;
  * @author Alexander Lobas
  */
 public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
-  private static final JBValue CORNER_RADIUS_X = new JBValue.UIInteger("PopupMenu.borderCornerRadiusX", 8);
-  private static final JBValue CORNER_RADIUS_Y = new JBValue.UIInteger("PopupMenu.borderCornerRadiusY", 8);
+  public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("PopupMenu.borderCornerRadius", 8);
 
   public IdeaPopupMenuUI() {
   }
@@ -42,10 +39,6 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
     return false;
   }
 
-  public static boolean isRoundSelectionEnabled(Component c) {
-    return isPartOfPopupMenu(c) && Registry.is("popup.menu.roundSelection.enabled", true) && ExperimentalUI.isNewUI();
-  }
-
   public static boolean isPartOfPopupMenu(Component c) {
     if (c == null) {
       return false;
@@ -56,6 +49,10 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
     return isPartOfPopupMenu(c.getParent());
   }
 
+  public static boolean isMenuBarItem(Component c) {
+    return c.getParent() instanceof JMenuBar;
+  }
+
   @Override
   public boolean isPopupTrigger(final MouseEvent event) {
     return event.isPopupTrigger();
@@ -63,34 +60,20 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
 
   @Override
   public void paint(final Graphics g, final JComponent jcomponent) {
-    if (!isUnderPopup(jcomponent)) {
-      super.paint(g, jcomponent);
+    Rectangle bounds = popupMenu.getBounds();
+    g.setColor(popupMenu.getBackground());
+    g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+    if (!isUnderPopup(jcomponent) || isRoundBorder() || SystemInfoRt.isWindows) {
       return;
     }
 
-    UISettings.setupAntialiasing(g);
-    Rectangle rectangle = popupMenu.getBounds();
-    int cornerRadiusX = CORNER_RADIUS_X.get();
-    int cornerRadiusY = CORNER_RADIUS_Y.get();
-
-    g.setColor(popupMenu.getBackground());
-    JBColor borderColor = JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51));
-    if (isRoundBorder()) {
-      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.fillRoundRect(0, 0, rectangle.width - 1, rectangle.height - 1, cornerRadiusX, cornerRadiusY);
-      g.setColor(borderColor);
-      g.drawRoundRect(0, 0, rectangle.width - 1, rectangle.height - 1, cornerRadiusX, cornerRadiusY);
-    }
-    else {
-      int delta = SystemInfoRt.isMac ? 0 : 1;
-      g.fillRect(0, 0, rectangle.width - delta, rectangle.height - delta);
-      g.setColor(borderColor);
-      g.drawRect(0, 0, rectangle.width - delta, rectangle.height - delta);
-    }
+    g.setColor(JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51)));
+    g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
   public static boolean isRoundBorder() {
-    return Registry.is("popup.menu.roundBorder.enabled", false);
+    return WindowRoundedCornersManager.isAvailable();
   }
 
   public static boolean hideEmptyIcon(Component c) {

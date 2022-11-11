@@ -1,2 +1,2 @@
-// "Remove extends list" "true"
+// "Remove extends list" "true-preview"
 @interface Foo {}

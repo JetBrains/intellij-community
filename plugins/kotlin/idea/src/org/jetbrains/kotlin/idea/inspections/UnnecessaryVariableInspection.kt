@@ -11,11 +11,13 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
-import org.jetbrains.kotlin.idea.core.util.isMultiLine
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler
 import org.jetbrains.kotlin.idea.util.nameIdentifierTextRangeInThis
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -86,11 +88,11 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
 
                     val containingDeclaration = property.getStrictParentOfType<KtDeclaration>()
                     if (containingDeclaration != null) {
-                        val validator = NewDeclarationNameValidator(
-                            container = containingDeclaration,
-                            anchor = property,
-                            target = NewDeclarationNameValidator.Target.VARIABLES,
-                            excludedDeclarations = listOfNotNull(
+                        val validator = Fe10KotlinNewDeclarationNameValidator(
+                          container = containingDeclaration,
+                          anchor = property,
+                          target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                          excludedDeclarations = listOfNotNull(
                                 DescriptorToSourceUtils.descriptorToDeclaration(initializerDescriptor) as? KtDeclaration
                             )
                         )

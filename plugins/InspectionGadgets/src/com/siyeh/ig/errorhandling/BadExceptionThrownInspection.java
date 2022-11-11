@@ -95,7 +95,7 @@ public class BadExceptionThrownInspection extends BaseInspection {
   private class BadExceptionThrownVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiExpression exception = statement.getException();
       if (exception == null) {

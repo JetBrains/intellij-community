@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.fir.plugin
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider
 
-class FirKotlinPluginKindProvider : KotlinPluginKindProvider() {
-    override fun getPluginKind(): KotlinPluginKind = KotlinPluginKind.FIR_PLUGIN
+class FirKotlinPluginKindProvider : KotlinPluginKindProvider {
+    override val pluginKind: KotlinPluginKind
+        get() = KotlinPluginKind.FIR_PLUGIN
 }

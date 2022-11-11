@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.JavaCodeContextType
 import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.ide.DataManager
@@ -48,7 +47,6 @@ import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
@@ -1213,7 +1211,7 @@ public class Test {
   void testMoreRecentExactMatchesTemplateFirst() {
     TemplateManager manager = TemplateManager.getInstance(getProject())
     Template template = manager.createTemplate("itar", "myGroup", null)
-    JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
+    JavaCodeContextType contextType = TemplateContextTypes.getByClass(JavaCodeContextType.Statement)
     ((TemplateImpl)template).templateContext.setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
@@ -1727,8 +1725,7 @@ class Cls {
   void "test live template without description"() {
     final TemplateManager manager = TemplateManager.getInstance(getProject())
     final Template template = manager.createTemplate("tpl", "user", null)
-    final JavaCodeContextType contextType =
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
+    JavaCodeContextType contextType = TemplateContextTypes.getByClass(JavaCodeContextType.Statement)
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 

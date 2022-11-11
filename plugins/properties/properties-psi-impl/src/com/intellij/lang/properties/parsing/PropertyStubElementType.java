@@ -22,6 +22,7 @@ package com.intellij.lang.properties.parsing;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyKeyIndex;
 import com.intellij.lang.properties.psi.PropertyStub;
@@ -36,7 +37,7 @@ import java.io.IOException;
 
 class PropertyStubElementType extends ILightStubElementType<PropertyStub, Property> {
   PropertyStubElementType() {
-    super("PROPERTY", PropertiesElementTypes.LANG);
+    super("PROPERTY", PropertiesLanguage.INSTANCE);
   }
 
   @Override
@@ -74,7 +75,7 @@ class PropertyStubElementType extends ILightStubElementType<PropertyStub, Proper
 
   @NotNull
   @Override
-  public PropertyStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PropertyStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     LighterASTNode keyNode = LightTreeUtil.firstChildOfType(tree, node, PropertiesTokenTypes.KEY_CHARACTERS);
     String key = intern(tree.getCharTable(), keyNode);
     return new PropertyStubImpl(parentStub, key);

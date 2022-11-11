@@ -1,4 +1,4 @@
-// "Remove qualifier" "true"
+// "Remove qualifier" "true-preview"
 class E {
     class Outer {
         public static final int SS = 0;

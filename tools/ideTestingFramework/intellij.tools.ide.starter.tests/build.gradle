@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'kotlin'
 
 buildscript {
-  ext.kotlin_version = '1.6.21'
+  ext.kotlin_version = '1.7.0'
   ext.jackson_version = '2.13.3'
 
   repositories {
@@ -40,17 +40,13 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
   implementation "org.jetbrains.intellij.deps:gradle-api:7.4"
-  implementation "org.kodein.di:kodein-di-jvm:7.9.0"
+  implementation "org.kodein.di:kodein-di-jvm:7.13.0"
 
-  implementation("com.jetbrains.intellij.performanceTesting:performance-testing-commands:222-SNAPSHOT") {
-    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-common'
-    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
-  }
+  implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
 
-  testImplementation('com.jetbrains.intellij.tools:ide-starter:222-SNAPSHOT') {
-    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-common'
-    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
-  }
+  testImplementation 'com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-starter-junit4:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-starter-junit5:LATEST-TRUNK-SNAPSHOT'
 
   testImplementation 'junit:junit:4.13.2'
 
@@ -73,10 +69,10 @@ configurations {
 
 compileKotlin {
   sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_17
 
   kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
+    jvmTarget = JavaVersion.VERSION_17.toString()
     freeCompilerArgs += [
       "-version",
       "-Xjvm-default=enable",
@@ -87,10 +83,10 @@ compileKotlin {
 
 compileTestKotlin {
   sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_17
 
   kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
+    jvmTarget = JavaVersion.VERSION_17.toString()
     freeCompilerArgs += [
       "-version",
       "-Xjvm-default=enable",

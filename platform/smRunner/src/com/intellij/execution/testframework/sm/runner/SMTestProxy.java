@@ -937,7 +937,6 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   /**
    * Recursively invalidates cached duration for container(parent) suites or updates their value
-   * @param duration
    */
   private void invalidateCachedDurationForContainerSuites(long duration) {
     // Manual duration does not need any automatic calculation

@@ -5,6 +5,7 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -93,6 +94,10 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
           }
           e.getPresentation().setIcon(defer);
           e.getPresentation().setDescription(description);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
       };
       group.add(action);

@@ -4,8 +4,8 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -60,8 +60,12 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
       require(startElement is MarkdownList)
-      val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
-      startElement.renumberInBulk(document, recursive = false, restart = true)
+      val document = file.viewProvider.document
+      if (document == null) {
+        thisLogger().error("Failed to find document for the quick fix")
+        return
+      }
+      startElement.renumberInBulk(document, recursive = false, restart = true, inWriteAction = false)
     }
   }
 }

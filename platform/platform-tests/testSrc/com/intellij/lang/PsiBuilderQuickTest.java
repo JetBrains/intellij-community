@@ -647,7 +647,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     }
 
     @Override
-    public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
+    public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(@NotNull LighterLazyParseableNode chameleon) {
       PsiBuilder builder = createBuilder(chameleon.getText());
       parse(builder);
       return builder.getLightTree();
@@ -687,7 +687,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     }
 
     @Override
-    public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
+    public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(@NotNull LighterLazyParseableNode chameleon) {
       PsiBuilder builder = createBuilder(chameleon.getText());
       parse(builder);
       return builder.getLightTree();

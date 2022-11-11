@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
@@ -94,7 +93,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
@@ -126,7 +124,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final Project myProject;
   private final @NlsContexts.TabTitle String myTitle;
   @Nullable private final String myWorkingDir;
-  @Nullable private final Function<TargetEnvironment, String> myWorkingDirFunction;
   @Nullable private Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
@@ -156,15 +153,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                 @Nullable Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
                                 @NotNull final @NlsContexts.TabTitle String title,
-                                @Nullable Function<TargetEnvironment, String> workingDirFunction,
+                                @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                 @NotNull Function<TargetEnvironment, @NotNull String> statementsToExecuteFunction) {
     myProject = project;
     mySdk = sdk;
     myTitle = title;
-    myWorkingDir = null;
-    myWorkingDirFunction = workingDirFunction;
+    myWorkingDir = workingDir;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
@@ -184,7 +180,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     mySdk = sdk;
     myTitle = title;
     myWorkingDir = workingDir;
-    myWorkingDirFunction = null;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
@@ -246,10 +241,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     actions.add(PyConsoleUtil.createPrintAction(myConsoleView));
     // Show Variables
     actions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication));
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
-      // Show Queue
-      actions.add(new ShowCommandQueueAction(myConsoleView));
-    }
+    // Show Queue
+    actions.add(new ShowCommandQueueAction(myConsoleView));
     // Console History
     actions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
     toolbarActions.addAll(actions);
@@ -448,14 +441,18 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     PythonExecution pythonConsoleScriptExecution =
       PydevConsoleCli.createPythonConsoleScriptInClientMode(ideServerPort, helpersAwareTargetRequest);
 
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
+
     PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(mySdk);
     PyRemotePathMapper pathMapper = remoteSdkAdditionalData != null
                                     ? PydevConsoleRunnerUtil.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData)
                                     : null;
     PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, pathMapper);
 
-    if (myWorkingDirFunction != null) {
-      pythonConsoleScriptExecution.setWorkingDir(myWorkingDirFunction);
+    if (myWorkingDir != null) {
+      Function<TargetEnvironment, String> targetWorkingDir =
+        TargetEnvironmentFunctions.getTargetEnvironmentValueForLocalPath(targetEnvironmentRequest, myWorkingDir);
+      pythonConsoleScriptExecution.setWorkingDir(targetWorkingDir);
     }
 
     return pythonConsoleScriptExecution;
@@ -942,6 +939,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       public void actionPerformed(@NotNull AnActionEvent e) {
         stopAndRerunConsole(false, PyBundle.message("console.stopping.console"), null);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
   }
 
@@ -969,6 +971,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       isSelected = state;
       updateEditors();
       myConsoleSettings.setUseSoftWraps(isSelected);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -1117,7 +1124,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         else {
           myConsoleListeners.clear();
         }
-        if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+        if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
           myConsoleView.restoreQueueWindow(true);
         }
       }
@@ -1192,6 +1199,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySelected = state;
 
@@ -1231,6 +1243,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(PlatformCoreDataKeys.MODULE));
         runner.run(true);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

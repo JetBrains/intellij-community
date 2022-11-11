@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -28,10 +28,10 @@ import com.intellij.xdebugger.frame.XStackFrame
 import junit.framework.AssertionFailedError
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.getTopmostElementAtOffset
+import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
-import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
-import org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepTarget
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
@@ -144,8 +144,13 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     override fun tearDown() {
-        super.tearDown()
-        classPath.clear()
+        try {
+            classPath.clear()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     private fun SuspendContextImpl.doStepOver(ignoreBreakpoints: Boolean = false) {

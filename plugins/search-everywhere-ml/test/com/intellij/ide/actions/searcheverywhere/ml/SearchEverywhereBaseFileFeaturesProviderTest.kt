@@ -57,8 +57,15 @@ internal abstract class SearchEverywhereBaseFileFeaturesProviderTest<T : SearchE
   }
 
   override fun tearDown() {
-    EditorHistoryManager.getInstance(project).removeAllFiles()
-    mockedFileStatsProvider.clearStats()
-    super.tearDown()
+    try {
+      EditorHistoryManager.getInstance(project).removeAllFiles()
+      mockedFileStatsProvider.clearStats()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 }

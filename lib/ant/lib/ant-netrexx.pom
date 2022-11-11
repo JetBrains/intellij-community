@@ -7,7 +7,7 @@
    (the "License"); you may not use this file except in compliance with
    the License.  You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+       https://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,29 +18,29 @@
 <!--
   This POM has been created manually by the Ant Development Team.
   Please contact us if you are not satisfied with the data contained in this POM.
-  URL : http://ant.apache.org
+  URL : https://ant.apache.org
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.10.5</version>
+    <version>1.10.12</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <url>http://ant.apache.org/</url>  
+  <url>https://ant.apache.org/</url>  
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-netrexx</artifactId>
-  <version>1.10.5</version>
+  <version>1.10.12</version>
   <name>Apache Ant + NetRexx</name>
   <description>NetRexxC task
-    dependency can be downloaded from http://www.ibm.com/software/awdtools/netrexx/download.html</description>
+    dependency can be downloaded from https://www.ibm.com/software/awdtools/netrexx/download.html</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.10.5</version>
+      <version>1.10.12</version>
       <scope>compile</scope>
     </dependency>
     <!-- Processed too early, before maven-antrun-plugin gets a chance to work:
@@ -70,17 +70,30 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <index>true</index>
+            <manifest>
+              <addExtensions>true</addExtensions>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.4</version>
         <executions>
           <execution>
             <phase>validate</phase>
             <configuration>
-              <tasks>
+              <target>
                 <ant dir="${basedir}/../../../.." antfile="fetch.xml" target="netrexx">
                   <property name="dest" value="optional"/>
                 </ant>
-              </tasks>
+              </target>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -89,6 +102,16 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
         </executions>
       </plugin>
     </plugins>
+    <resources>
+      <resource>
+        <directory>../../../..</directory>
+        <targetPath>META-INF</targetPath>
+        <includes>
+          <include>LICENSE</include>
+          <include>NOTICE</include>
+        </includes>
+      </resource>
+    </resources>
     <sourceDirectory>../../../../src/main</sourceDirectory>
     <testSourceDirectory>../../../../src/testcases</testSourceDirectory>
     <outputDirectory>../../../../target/${project.artifactId}/classes</outputDirectory>

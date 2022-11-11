@@ -60,7 +60,7 @@ public final class MarkdownCodeFenceHtmlCache implements Disposable {
   }
 
   private static List<File> getPluginSystemPaths() {
-    return CodeFenceGeneratingProvider.Companion.getAll$intellij_markdown_core().stream()
+    return CodeFenceGeneratingProvider.collectProviders().stream()
       .filter(MarkdownCodeFenceCacheableProvider.class::isInstance)
       .map(MarkdownCodeFenceCacheableProvider.class::cast)
       .map(provider -> provider.getCacheRootPath().toFile())

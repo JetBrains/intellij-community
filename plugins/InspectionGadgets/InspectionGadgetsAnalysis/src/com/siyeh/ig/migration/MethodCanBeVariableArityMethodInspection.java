@@ -87,7 +87,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   private class MethodCanBeVariableArityMethodVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (onlyReportPublicMethods && !method.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;

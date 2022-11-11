@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
@@ -76,7 +76,7 @@ public class MoveJavaFileHandler extends MoveFileHandler {
         final PsiReference reference = moveRenameUsage.getReference();
         if (reference != null) {
           try {
-            LOG.assertTrue(newElement != null, oldElement != null ? oldElement : reference);
+            LOG.assertTrue(newElement != null, "old element:" + (oldElement != null ? oldElement : reference) + "; contains: " + oldToNewMap.containsKey(oldElement));
             reference.bindToElement(newElement);
           } catch (IncorrectOperationException ex) {
             LOG.error(ex);

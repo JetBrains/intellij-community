@@ -39,9 +39,6 @@ public class IntellijMavenSpy extends AbstractEventSpy {
       else if (event instanceof DependencyResolutionResult) {
         onDependencyResolutionResult((DependencyResolutionResult)event);
       }
-      else {
-        printMavenEventInfo("Unknown", "event", event);
-      }
     }
     catch (Throwable e) {
       collectAndPrintLastLinesForEA(e);
@@ -77,10 +74,16 @@ public class IntellijMavenSpy extends AbstractEventSpy {
   }
 
   private static void onRepositoryEvent(RepositoryEvent event) {
+    RepositoryEvent.EventType type = event.getType();
+
+    // optimization to prevent unnecessary CPU and memory pressure on many irrelevant events
+    //   only these events are currently used (see MavenEventType)
+    if (type != RepositoryEvent.EventType.ARTIFACT_DOWNLOADING && type != RepositoryEvent.EventType.ARTIFACT_RESOLVING) return;
+
     String errMessage = event.getException() == null ? "" : event.getException().getMessage();
     String path = event.getFile() == null ? "" : event.getFile().getPath();
     String artifactCoord = event.getArtifact() == null ? "" : event.getArtifact().toString();
-    printMavenEventInfo(event.getType(), "path", path, "artifactCoord", artifactCoord, "error", errMessage);
+    printMavenEventInfo(type, "path", path, "artifactCoord", artifactCoord, "error", errMessage);
   }
 
   private static void onExecutionEvent(ExecutionEvent event) {
@@ -88,7 +91,8 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     String projectId = event.getProject() == null ? "unknown" : event.getProject().getId();
     if (mojoExec != null) {
       String errMessage = event.getException() == null ? "" : getErrorMessage(event.getException());
-      printMavenEventInfo(event.getType(), "source", mojoExec.getSource(), "goal", mojoExec.getGoal(), "id", projectId, "error",
+      printMavenEventInfo(event.getType(), "source", String.valueOf(mojoExec.getSource()), "goal", mojoExec.getGoal(), "id", projectId,
+                          "error",
                           errMessage);
     }
     else {
@@ -122,7 +126,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
           .append(project.getArtifactId()).append(":")
           .append(project.getVersion()).append("&&");
       }
-      printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", builder.toString());
+      printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", builder);
     }
     else {
       printMavenEventInfo(ExecutionEvent.Type.SessionStarted, "id", projectId, "projects", "");

@@ -18,24 +18,19 @@ import java.util.*;
 
 public class UnimplementInterfaceAction extends BaseElementAtCaretIntentionAction {
   private String myName = "Interface";
-  private final String myClassName;
-  private final boolean myIsDuplicates;
+  final String myClassName;
 
   public UnimplementInterfaceAction() {
-    this(null, false);
+    this(null);
   }
 
-  public UnimplementInterfaceAction(String className, boolean isDuplicates) {
+  public UnimplementInterfaceAction(String className) {
     myClassName = className;
-    myIsDuplicates = isDuplicates;
   }
 
   @Override
   @NotNull
   public String getText() {
-    if (myIsDuplicates) {
-      return JavaBundle.message("intention.text.implements.list.remove.others", myClassName);
-    }
     return JavaBundle.message("intention.text.unimplement.0", myName);
   }
 
@@ -45,6 +40,9 @@ public class UnimplementInterfaceAction extends BaseElementAtCaretIntentionActio
     return JavaBundle.message("intention.family.unimplement.interface.class");
   }
 
+  boolean isRemoveDuplicateExtends() {
+    return false;
+  }
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
@@ -61,7 +59,7 @@ public class UnimplementInterfaceAction extends BaseElementAtCaretIntentionActio
     final PsiClass targetClass = ObjectUtils.tryCast(topLevelRef.resolve(), PsiClass.class);
     if (targetClass == null) return false;
 
-    if (myIsDuplicates) return true;
+    if (isRemoveDuplicateExtends()) return true;
 
     for (PsiJavaCodeReferenceElement refElement : referenceList.getReferenceElements()) {
       if (isDuplicate(topLevelRef, refElement, targetClass)) return false;
@@ -98,7 +96,7 @@ public class UnimplementInterfaceAction extends BaseElementAtCaretIntentionActio
     final PsiClass targetClass = ObjectUtils.tryCast(target, PsiClass.class);
     if (targetClass == null) return;
 
-    if (myIsDuplicates) {
+    if (isRemoveDuplicateExtends()) {
       for (PsiJavaCodeReferenceElement refElement : referenceList.getReferenceElements()) {
         if (isDuplicate(topLevelRef, refElement, targetClass)) {
           refElement.delete();
@@ -143,5 +141,22 @@ public class UnimplementInterfaceAction extends BaseElementAtCaretIntentionActio
                                      @NotNull PsiClass aClass) {
     final PsiManager manager = aClass.getManager();
     return !manager.areElementsEquivalent(otherElement, element) && manager.areElementsEquivalent(otherElement.resolve(), aClass);
+  }
+
+  public static class RemoveDuplicateExtendFix  extends UnimplementInterfaceAction {
+    public RemoveDuplicateExtendFix(String className) {
+      super(className);
+    }
+
+    @Override
+    @NotNull
+    public String getText() {
+      return JavaBundle.message("intention.text.implements.list.remove.others", myClassName);
+    }
+
+    @Override
+    boolean isRemoveDuplicateExtends() {
+      return true;
+    }
   }
 }

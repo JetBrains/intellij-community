@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 
 /**
@@ -42,7 +44,11 @@ internal abstract class ColumnBasedTableAction: AnAction() {
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
     val offset = event.getData(CommonDataKeys.CARET)?.offset
-    if (project == null || editor == null || file == null || offset == null) {
+    if (project == null
+        || editor == null
+        || file == null
+        || offset == null
+        || !file.language.isMarkdownLanguage()) {
       event.presentation.isEnabledAndVisible = false
       return
     }

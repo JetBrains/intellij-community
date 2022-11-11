@@ -34,7 +34,7 @@ public interface BatchSuppressableTool {
    *
    * @param element the element on which Alt-Enter is pressed, or null if getting the list of available suppression actions in
    *                Inspections tool window
-   * @return the list of suppression actions.
+   * @return the array of suppression actions.
    */
   SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable final PsiElement element);
 

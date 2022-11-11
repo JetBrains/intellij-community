@@ -16,12 +16,10 @@ class PluginSet internal constructor(
   private val enabledPluginAndV1ModuleMap: Map<PluginId, IdeaPluginDescriptorImpl>,
   private val enabledModules: List<IdeaPluginDescriptorImpl>,
 ) {
-  fun getRawListOfEnabledModules() = enabledModules
-
   /**
    * You must not use this method before [ClassLoaderConfigurator.configure].
    */
-  fun getEnabledModules(): Sequence<IdeaPluginDescriptorImpl> = enabledModules.asSequence()
+  fun getEnabledModules(): List<IdeaPluginDescriptorImpl> = enabledModules
 
   @TestOnly
   fun getUnsortedEnabledModules(): Collection<IdeaPluginDescriptorImpl> = ArrayList(enabledModuleMap.values)

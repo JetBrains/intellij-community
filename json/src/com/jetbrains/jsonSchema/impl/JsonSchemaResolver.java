@@ -147,7 +147,7 @@ public class JsonSchemaResolver {
   @Nullable
   private static JsonPropertyAdapter findProperty(@NotNull JsonObjectValueAdapter value, @NotNull String name) {
     List<JsonPropertyAdapter> list = value.getPropertyList();
-    return list.stream().filter(p -> name.equals(p.getName())).findFirst().orElse(null);
+    return ContainerUtil.find(list, p -> name.equals(p.getName()));
   }
 
   @Nullable
@@ -156,7 +156,7 @@ public class JsonSchemaResolver {
                                         boolean topLevelSchema) {
     final MatchResult matchResult = MatchResult.create(resolveRoot);
     List<JsonSchemaObject> schemas = new ArrayList<>(matchResult.mySchemas);
-    schemas.addAll(matchResult.myExcludingSchemas.stream().flatMap(Collection::stream).collect(Collectors.toList()));
+    schemas.addAll(matchResult.myExcludingSchemas.stream().flatMap(Collection::stream).toList());
 
     final JsonSchemaObject firstSchema = getFirstValidSchema(schemas);
     if (element == null || schemas.size() == 1 || firstSchema == null) {

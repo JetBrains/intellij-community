@@ -1,4 +1,4 @@
-// "Replace 'E1' with more generic 'E'" "true"
+// "Replace 'E1' with more generic 'E'" "true-preview"
 class C {
     static class E extends Exception { }
     static class E1 extends E { }

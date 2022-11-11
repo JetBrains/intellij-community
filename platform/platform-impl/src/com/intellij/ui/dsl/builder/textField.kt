@@ -41,10 +41,6 @@ const val COLUMNS_MEDIUM = 25
 
 const val COLUMNS_LARGE = 36
 
-@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun <T : JTextComponent> Cell<T>.bindText(property: GraphProperty<String>) = bindText(property)
-
 fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
   installValidationRequestor(property)
   return applyToComponent { bind(property) }
@@ -58,9 +54,9 @@ fun <T : JTextComponent> Cell<T>.bindText(getter: () -> String, setter: (String)
   return bindText(MutableProperty(getter, setter))
 }
 
-@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun <T : JTextComponent> Cell<T>.bindIntText(property: GraphProperty<Int>): Cell<T> = bindIntText(property)
+fun <T : JTextComponent> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
+  return bind(JTextComponent::getText, JTextComponent::setText, prop)
+}
 
 fun <T : JTextComponent> Cell<T>.bindIntText(property: ObservableMutableProperty<Int>): Cell<T> {
   installValidationRequestor(property)
@@ -123,10 +119,6 @@ private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
       }
     }
   }
-}
-
-private fun <T : JTextComponent> Cell<T>.bindText(prop: MutableProperty<String>): Cell<T> {
-  return bind(JTextComponent::getText, JTextComponent::setText, prop)
 }
 
 private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {

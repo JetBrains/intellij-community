@@ -119,7 +119,17 @@ public final class IfConditionalModel extends ConditionalModel {
   private static @Nullable IfConditionalModel extractFromImplicitAssignment(@NotNull PsiIfStatement ifStatement) {
     if (ifStatement.getElseBranch() != null) return null;
     PsiStatement prevStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(ifStatement), PsiStatement.class);
-    return extractFromAssignment(ifStatement.getCondition(), ifStatement.getThenBranch(), prevStatement, false);
+    IfConditionalModel model = extractFromAssignment(ifStatement.getCondition(), ifStatement.getThenBranch(), prevStatement, false);
+    return nullIfLValueSideEffect(model);
+  }
+
+  private static @Nullable IfConditionalModel nullIfLValueSideEffect(@Nullable IfConditionalModel model) {
+    if (model == null || model.getThenBranch() instanceof PsiExpressionStatement expressionStatement &&
+                         expressionStatement.getExpression() instanceof PsiAssignmentExpression assignmentExpression &&
+                         SideEffectChecker.mayHaveSideEffects(assignmentExpression.getLExpression())) {
+      return null;
+    }
+    return model;
   }
 
   private static @Nullable IfConditionalModel extractFromAssignment(@NotNull PsiIfStatement ifStatement) {
@@ -296,7 +306,7 @@ public final class IfConditionalModel extends ConditionalModel {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (expression.isReferenceTo(myVariable)) {
         myReadBeforeWritten = PsiUtil.isAccessedForReading(expression);

@@ -1,4 +1,4 @@
-// "Replace with 'new Object[]{getObject(/*empty*/)}'" "true"
+// "Replace with 'new Object[]{getObject(/*empty*/)}'" "true-preview"
 
 class Test {
   static void foo(Object... data) { }

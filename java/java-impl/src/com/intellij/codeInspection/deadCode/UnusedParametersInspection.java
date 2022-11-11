@@ -25,6 +25,7 @@ import org.jetbrains.uast.UParameter;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -45,13 +46,15 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     if (aClass != null && ((refMethod.isAbstract() || aClass.isInterface()) && refMethod.getDerivedReferences().isEmpty())) {
       return null;
     }
-    if (refMethod.isAppMain()) return null;
     List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
     if (unusedParameters.isEmpty()) return null;
-    if (refMethod.isEntry()) return null;
     UDeclaration uMethod = refMethod.getUastElement();
     if (uMethod == null) return null;
     PsiElement element = uMethod.getJavaPsi();
+    if (refMethod.isAppMain()) {
+      if (element == null || !element.getLanguage().isKindOf("kotlin")) return null;
+    }
+    else if (refMethod.isEntry()) return null;
     if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
 
     List<ProblemDescriptor> result = new ArrayList<>();
@@ -103,14 +106,17 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
             PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
           return;
         }
+
+        List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+        if (unusedParameters.isEmpty()) return;
+        if (scope != null && scope.isTotalScope()) return;
+
         UDeclaration uastElement = refMethod.getUastElement();
         if (uastElement == null) return;
         PsiMethod element = (PsiMethod)uastElement.getJavaPsi();
         if (element == null) {
           return;
         }
-        List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
-        if (unusedParameters.isEmpty()) return;
         PsiMethod[] derived = OverridingMethodsSearch.search(element).toArray(PsiMethod.EMPTY_ARRAY);
         for (RefParameter refParameter : unusedParameters) {
           if (refMethod.isAbstract() && derived.length == 0) {
@@ -151,10 +157,11 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @NotNull
-  private static ArrayList<RefParameter> getUnusedParameters(@NotNull RefMethod refMethod) {
+  private static List<RefParameter> getUnusedParameters(@NotNull RefMethod refMethod) {
+    RefParameter[] methodParameters = refMethod.getParameters();
+    if (methodParameters.length == 0) return Collections.emptyList();
     boolean checkDeep = !refMethod.isStatic() && !refMethod.isConstructor();
     ArrayList<RefParameter> res = new ArrayList<>();
-    RefParameter[] methodParameters = refMethod.getParameters();
     RefParameter[] result = methodParameters.clone();
 
     clearUsedParameters(refMethod, result, checkDeep);

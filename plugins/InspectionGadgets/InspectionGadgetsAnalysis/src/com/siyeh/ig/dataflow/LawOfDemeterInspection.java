@@ -43,7 +43,7 @@ public class LawOfDemeterInspection extends BaseInspection {
   private class LawOfDemeterVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
       if (qualifier == null) {
@@ -58,7 +58,7 @@ public class LawOfDemeterInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (expression.getParent() instanceof PsiMethodCallExpression) {
         return;

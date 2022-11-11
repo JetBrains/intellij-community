@@ -292,6 +292,11 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       public boolean isEnabled() {
         return myPanel.isCopyEnabled(DataContext.EMPTY_CONTEXT);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.MenuPaste) {
       @Override
@@ -307,6 +312,11 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       @Override
       public boolean isVisible() {
         return myPanel.isPastePossible(DataContext.EMPTY_CONTEXT);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     return new AnActionButton[]{copyButton, pasteButton};

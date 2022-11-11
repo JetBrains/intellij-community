@@ -54,6 +54,12 @@ public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
+  
+  public void testLambdaParameters() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = false;
+    doTest();
+  }
 
   public void testParameters() {
     myTool.REPORT_PARAMETERS = true;

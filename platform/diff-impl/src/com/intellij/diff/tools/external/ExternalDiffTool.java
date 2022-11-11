@@ -3,6 +3,7 @@ package com.intellij.diff.tools.external;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManagerEx;
+import com.intellij.diff.DiffNotificationIdsHolder;
 import com.intellij.diff.chains.*;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -13,6 +14,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -24,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -55,22 +56,30 @@ public final class ExternalDiffTool {
   public static boolean wantShowExternalToolFor(@NotNull List<? extends DiffRequestProducer> diffProducers) {
     if (isDefault()) return true;
 
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     return JBIterable.from(diffProducers)
-             .map(DiffRequestProducer::getName)
-             .filter(filePath -> !FileUtilRt.getExtension(filePath).equals("tmp"))
-             .map(filePath -> fileTypeManager.getFileTypeByFileName(filePath))
+             .map(ExternalDiffTool::getFileType)
              .unique()
              .map(fileType -> ExternalDiffSettings.findDiffTool(fileType))
              .filter(Conditions.notNull())
              .first() != null;
   }
 
+  @NotNull
+  private static FileType getFileType(@NotNull DiffRequestProducer producer) {
+    FileType contentType = producer.getContentType();
+    if (contentType != null) return contentType;
+
+    String filePath = producer.getName();
+    return FileTypeManager.getInstance().getFileTypeByFileName(filePath);
+  }
+
   public static boolean checkNotTooManyRequests(@Nullable Project project, @NotNull List<? extends DiffRequestProducer> diffProducers) {
     if (diffProducers.size() <= Registry.intValue("diff.external.tool.file.limit")) return true;
     new Notification("Diff Changes Loading Error",
                      DiffBundle.message("can.t.show.diff.in.external.tool.too.many.files", diffProducers.size()),
-                     NotificationType.WARNING).notify(project);
+                     NotificationType.WARNING)
+      .setDisplayId(DiffNotificationIdsHolder.EXTERNAL_TOO_MANY_SELECTED)
+      .notify(project);
     return false;
   }
 
@@ -200,8 +209,12 @@ public final class ExternalDiffTool {
     if (!errorRequests.isEmpty()) {
       HtmlBuilder message = new HtmlBuilder()
         .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errorRequests, producer -> HtmlChunk.text(producer.getName())));
-      new Notification("Diff Changes Loading Error", DiffBundle.message("can.t.load.some.changes"), message.toString(),
-                       NotificationType.ERROR).notify(project);
+      new Notification("Diff Changes Loading Error",
+                       DiffBundle.message("can.t.load.some.changes"),
+                       message.toString(),
+                       NotificationType.ERROR)
+        .setDisplayId(DiffNotificationIdsHolder.EXTERNAL_CANT_LOAD_CHANGES)
+        .notify(project);
     }
 
     return requests;

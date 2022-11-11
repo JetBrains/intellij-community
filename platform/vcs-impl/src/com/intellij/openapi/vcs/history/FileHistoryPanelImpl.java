@@ -75,11 +75,13 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.reverseOrder;
 
 public final class FileHistoryPanelImpl extends JPanel implements DataProvider, Disposable, EditorColorsListener, CopyProvider {
-  private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
-  private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
-
   public static final DataKey<VcsFileRevision> PREVIOUS_REVISION_FOR_DIFF = DataKey.create("PREVIOUS_VCS_FILE_REVISION_FOR_DIFF");
 
+  private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
+  private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
+  private static final String VCS_HISTORY_POPUP_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup";
+  private static final String VCS_HISTORY_TOOLBAR_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup.Toolbar";
+  
   private final String myHelpId;
 
   @NotNull private final AbstractVcs myVcs;
@@ -390,10 +392,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
 
-    AnAction actionGroup = ActionManager.getInstance().getAction(popup ? VCS_HISTORY_POPUP_ACTION_GROUP : VCS_HISTORY_TOOLBAR_ACTION_GROUP);
-    result.add(actionGroup);
-    AnAction[] additionalActions =
-      myProvider.getAdditionalActions(() -> ApplicationManager.getApplication().invokeAndWait(() -> myRefresherI.refresh(true)));
+    result.add(ActionManager.getInstance().getAction(popup ? VCS_HISTORY_POPUP_ACTION_GROUP :
+                                                     VCS_HISTORY_TOOLBAR_ACTION_GROUP));
+    AnAction[] additionalActions = myProvider.getAdditionalActions(() -> {
+      ApplicationManager.getApplication().invokeAndWait(() -> myRefresherI.refresh(true));
+    });
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
         if (popup || additionalAction.getTemplatePresentation().getIcon() != null) {
@@ -401,6 +404,8 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
         }
       }
     }
+    result.add(ActionManager.getInstance().getAction(popup ? VCS_HISTORY_POPUP_PLUGIN_ACTION_GROUP :
+                                                     VCS_HISTORY_TOOLBAR_PLUGIN_ACTION_GROUP));
     if (!myIsStaticAndEmbedded) {
       result.add(new MyShowDetailsAction());
     }
@@ -966,6 +971,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_AS_TREE;
     }
@@ -982,6 +992,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     MyShowDetailsAction() {
       super(VcsBundle.messagePointer("action.ToggleAction.text.show.details"),
             VcsBundle.messagePointer("action.ToggleAction.description.show.details"), AllIcons.Actions.PreviewDetailsVertically);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

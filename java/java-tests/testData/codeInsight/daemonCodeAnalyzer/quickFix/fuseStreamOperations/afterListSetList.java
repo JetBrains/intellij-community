@@ -1,4 +1,4 @@
-// "Fuse HashSet and ArrayList into the Stream API chain" "true"
+// "Fuse HashSet and ArrayList into the Stream API chain" "true-preview"
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

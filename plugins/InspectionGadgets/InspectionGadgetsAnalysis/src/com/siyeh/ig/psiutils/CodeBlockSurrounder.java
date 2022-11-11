@@ -3,6 +3,8 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
+import com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection;
+import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -14,6 +16,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.style.ConditionalExpressionGenerator;
+import com.siyeh.ig.style.IfConditionalModel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +28,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 /**
  * A facility to ensure that there's a code block that surrounds given expression, so if parts of expression should be extracted
- * to separate statements, these is a place where new statements could be generated.
+ * to separate statements, there is a place where new statements could be generated.
  * <p>
  * The lifecycle is the following:
  * <ol>
@@ -70,10 +76,14 @@ public abstract class CodeBlockSurrounder {
   public static class SurroundResult {
     private final @NotNull PsiExpression myExpression;
     private final @NotNull PsiStatement myAnchor;
+    private final @NotNull PsiElement myContext;
+    private final @Nullable CodeBlockSurrounder mySurrounder;
 
-    SurroundResult(@NotNull PsiExpression expression, @NotNull PsiStatement anchor) {
+    SurroundResult(@NotNull PsiExpression expression, @NotNull PsiStatement anchor, @NotNull PsiElement context, @Nullable CodeBlockSurrounder surrounder) {
       myExpression = expression;
       myAnchor = anchor;
+      myContext = context;
+      mySurrounder = surrounder;
     }
 
     /**
@@ -88,6 +98,17 @@ public abstract class CodeBlockSurrounder {
      */
     public @NotNull PsiStatement getAnchor() {
       return myAnchor;
+    }
+
+    /**
+     * Tries to collapse the created code-block back if it still consists of a single statement.
+     * This method could be called after the whole refactoring is completed if it's possible that additional statements
+     * were not actually necessary.
+     */
+    public void collapse() {
+      if (mySurrounder != null && myContext.isValid()) {
+        mySurrounder.collapse(myContext);
+      }
     }
   }
 
@@ -143,13 +164,37 @@ public abstract class CodeBlockSurrounder {
     boolean physical = myExpression.isPhysical();
     PsiStatement replacement = replace(project, factory);
     assert replacement.isPhysical() == physical;
+    PsiElement anchor = anchor(replacement);
     PsiExpression newExpression = Objects.requireNonNull((PsiExpression)PsiTreeUtil.releaseMark(replacement, marker));
-    return new SurroundResult(newExpression, replacement);
+    return new SurroundResult(newExpression, replacement, anchor, this);
   }
 
+  /**
+   * Performs the replacement
+   *
+   * @param project project to use
+   * @param factory factory to use
+   * @return PSI statement, a place before which it's safe to add more statements
+   */
   @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
     throw new UnsupportedOperationException();
   }
+
+  /**
+   * @param context PSI statement returned from replace
+   * @return anchor a stable PSI anchor for subsequent use in {@link #collapse(PsiElement)}. Could be a statement itself,
+   * but there's a risk that intermediate refactoring makes it invalid, so it's better to return something bigger
+   * (e.g., a PsiBlockStatement created).
+   */
+  @NotNull PsiElement anchor(@NotNull PsiStatement context) {
+    return context;
+  }
+
+  /**
+   * Tries to collapse back the block if it becomes unnecessary
+   * @param anchor anchor previously returned by {@link #anchor(PsiStatement)}
+   */
+  void collapse(@NotNull PsiElement anchor) {}
 
   /**
    * @param expression expression to test
@@ -209,6 +254,9 @@ public abstract class CodeBlockSurrounder {
       cur = parent;
       parent = cur.getParent();
     }
+    if (parent instanceof PsiEnumConstant) {
+      return new AnonymousCallSurrounder(expression);
+    }
     if (parent instanceof PsiStatement) {
       PsiElement grandParent = parent.getParent();
       if (grandParent instanceof PsiForStatement && ((PsiForStatement)grandParent).getUpdate() == parent) return null;
@@ -223,7 +271,7 @@ public abstract class CodeBlockSurrounder {
       return forStatement((PsiStatement)parent, expression);
     }
     if (parent instanceof PsiLocalVariable) {
-      PsiDeclarationStatement decl = ObjectUtils.tryCast(parent.getParent(), PsiDeclarationStatement.class);
+      PsiDeclarationStatement decl = tryCast(parent.getParent(), PsiDeclarationStatement.class);
       if (decl != null && ArrayUtil.getFirstElement(decl.getDeclaredElements()) == parent) {
         PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
         if (!typeElement.isInferredType() ||
@@ -241,7 +289,7 @@ public abstract class CodeBlockSurrounder {
       }
     }
     if (parent instanceof PsiResourceVariable) {
-      PsiResourceList list = ObjectUtils.tryCast(parent.getParent(), PsiResourceList.class);
+      PsiResourceList list = tryCast(parent.getParent(), PsiResourceList.class);
       if (list != null && list.getParent() instanceof PsiTryStatement) {
         Iterator<PsiResourceListElement> iterator = list.iterator();
         PsiTryStatement tryStatement = (PsiTryStatement)list.getParent();
@@ -253,7 +301,7 @@ public abstract class CodeBlockSurrounder {
       }
       return null;
     }
-    if (parent instanceof PsiField && !(parent instanceof PsiEnumConstant)) {
+    if (parent instanceof PsiField) {
       return new ExtractFieldInitializerSurrounder(expression, (PsiField)parent);
     }
 
@@ -281,7 +329,7 @@ public abstract class CodeBlockSurrounder {
 
   private static CodeBlockSurrounder forStatement(PsiStatement statement, PsiExpression expression) {
     PsiElement statementParent = statement.getParent();
-    PsiForStatement forStatement = ObjectUtils.tryCast(statementParent, PsiForStatement.class);
+    PsiForStatement forStatement = tryCast(statementParent, PsiForStatement.class);
     if (statementParent instanceof PsiLabeledStatement || (forStatement != null && forStatement.getBody() != statement)) {
       statement = (PsiStatement)statementParent;
       statementParent = statement.getParent();
@@ -306,10 +354,65 @@ public abstract class CodeBlockSurrounder {
 
     @Override
     public @NotNull CodeBlockSurrounder.SurroundResult surround() {
-      return new SurroundResult(myExpression, myAnchor);
+      return new SurroundResult(myExpression, myAnchor, myAnchor, null);
     }
   }
 
+  private static class AnonymousCallSurrounder extends CodeBlockSurrounder {
+    AnonymousCallSurrounder(@NotNull PsiExpression expression) {
+      super(expression);
+    }
+
+    @Override
+    @NotNull
+    PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+      PsiExpression expression = myExpression;
+      if (expression.getParent() instanceof PsiMethodCallExpression &&
+          ((PsiMethodCallExpression)expression.getParent()).getMethodExpression() == expression) {
+        expression = (PsiExpression)expression.getParent();
+      }
+      PsiType type = expression.getType();
+      String typeText = type == null ? CommonClassNames.JAVA_LANG_OBJECT : type.getCanonicalText();
+      String text = "new java.lang.Object() { " + typeText + " evaluate() { return x;}}.evaluate()";
+      PsiMethodCallExpression anonymousCall =
+        (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(text, expression);
+      PsiReturnStatement returnStatement = Objects.requireNonNull(getReturnStatement(anonymousCall));
+      Objects.requireNonNull(returnStatement.getReturnValue()).replace(expression);
+      return Objects.requireNonNull(getReturnStatement((PsiMethodCallExpression)expression.replace(anonymousCall)));
+    }
+
+    private static @Nullable PsiReturnStatement getReturnStatement(@NotNull PsiMethodCallExpression anonymousCall) {
+      PsiNewExpression newExpression = tryCast(anonymousCall.getMethodExpression().getQualifierExpression(), PsiNewExpression.class);
+      if (newExpression == null) return null;
+      PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+      if (anonymousClass == null) return null;
+      PsiMethod[] methods = anonymousClass.getMethods();
+      if (methods.length != 1) return null;
+      PsiCodeBlock body = methods[0].getBody();
+      if (body == null) return null;
+      PsiStatement[] statements = body.getStatements();
+      if (statements.length != 1) return null;
+      return tryCast(statements[0], PsiReturnStatement.class);
+    }
+
+    @Override
+    @NotNull PsiMethodCallExpression anchor(@NotNull PsiStatement context) {
+      PsiMethod method = (PsiMethod)context.getParent().getParent();
+      PsiNewExpression newExpression = (PsiNewExpression)method.getParent().getParent();
+      return (PsiMethodCallExpression) newExpression.getParent().getParent();
+    }
+
+    @Override
+    void collapse(@NotNull PsiElement anchor) {
+      PsiMethodCallExpression anonymousCall = tryCast(anchor, PsiMethodCallExpression.class);
+      if (anonymousCall == null) return;
+      PsiReturnStatement returnStatement = getReturnStatement(anonymousCall);
+      if (returnStatement == null) return;
+      PsiExpression targetExpression = returnStatement.getReturnValue();
+      if (targetExpression == null) return;
+      new CommentTracker().replaceAndRestoreComments(anonymousCall, targetExpression);
+    }
+  }
 
   private static class LambdaCodeBlockSurrounder extends CodeBlockSurrounder {
     private final @NotNull PsiLambdaExpression myLambda;
@@ -338,6 +441,22 @@ public abstract class CodeBlockSurrounder {
       newBody = (PsiCodeBlock)myLambda.getBody().replace(newBody);
       return newBody.getStatements()[0]; // either expression statement or return statement
     }
+
+    @Override
+    @NotNull PsiLambdaExpression anchor(@NotNull PsiStatement context) {
+      return (PsiLambdaExpression)context.getParent().getParent();
+    }
+
+    @Override
+    void collapse(@NotNull PsiElement anchor) {
+      PsiLambdaExpression lambda = tryCast(anchor, PsiLambdaExpression.class);
+      if (lambda == null) return;
+      PsiElement body = lambda.getBody();
+      PsiExpression expression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(body);
+      if (expression != null) {
+        body.replace(expression);
+      }
+    }
   }
 
   private static class YieldSurrounder extends CodeBlockSurrounder {
@@ -361,6 +480,23 @@ public abstract class CodeBlockSurrounder {
       block = (PsiBlockStatement)myStatement.replace(block);
       return block.getCodeBlock().getStatements()[0];
     }
+
+    @Override
+    @NotNull PsiBlockStatement anchor(@NotNull PsiStatement context) {
+      return (PsiBlockStatement)context.getParent().getParent();
+    }
+
+    @Override
+    void collapse(@NotNull PsiElement anchor) {
+      PsiBlockStatement blockStatement = tryCast(anchor, PsiBlockStatement.class);
+      if (blockStatement == null) return;
+      PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(blockStatement.getCodeBlock());
+      if (!(statement instanceof PsiYieldStatement)) return;
+      PsiExpression expression = ((PsiYieldStatement)statement).getExpression();
+      if (expression == null) return;
+      CommentTracker ct = new CommentTracker();
+      ct.replaceAndRestoreComments(blockStatement, ct.text(expression) + ";");
+    }
   }
 
   private static class SimpleSurrounder extends CodeBlockSurrounder {
@@ -377,6 +513,26 @@ public abstract class CodeBlockSurrounder {
       block.getCodeBlock().add(myStatement);
       block = (PsiBlockStatement)myStatement.replace(block);
       return block.getCodeBlock().getStatements()[0];
+    }
+
+    @Override
+    @NotNull PsiBlockStatement anchor(@NotNull PsiStatement context) {
+      return (PsiBlockStatement)context.getParent().getParent();
+    }
+
+    @Override
+    void collapse(@NotNull PsiElement anchor) {
+      PsiBlockStatement blockStatement = tryCast(anchor, PsiBlockStatement.class);
+      if (blockStatement == null) return;
+      PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(blockStatement.getCodeBlock());
+      if (statement == null) return;
+      if (statement instanceof PsiIfStatement &&
+          blockStatement.getParent() instanceof PsiIfStatement &&
+          ((PsiIfStatement)blockStatement.getParent()).getThenBranch() == blockStatement) {
+        // if(...) {if(...)} else {...} -- do not unwrap nested `if`
+        return;
+      }
+      new CommentTracker().replaceAndRestoreComments(blockStatement, statement);
     }
   }
 
@@ -397,7 +553,7 @@ public abstract class CodeBlockSurrounder {
     @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       myField.normalizeDeclaration();
       PsiClassInitializer initializer =
-        ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(myField), PsiClassInitializer.class);
+        tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(myField), PsiClassInitializer.class);
       boolean isStatic = myField.hasModifierProperty(PsiModifier.STATIC);
       if (initializer == null || initializer.hasModifierProperty(PsiModifier.STATIC) != isStatic) {
         initializer = factory.createClassInitializer();
@@ -425,6 +581,27 @@ public abstract class CodeBlockSurrounder {
       rExpression.replace(fieldInitializer);
       Objects.requireNonNull(myField.getInitializer()).delete();
       return assignment;
+    }
+
+    @Override
+    void collapse(@NotNull PsiElement anchor) {
+      PsiExpressionStatement statement = tryCast(anchor, PsiExpressionStatement.class);
+      if (statement == null) return;
+      PsiAssignmentExpression assignment = tryCast(statement.getExpression(), PsiAssignmentExpression.class);
+      if (assignment == null) return;
+      if (myField.hasInitializer()) return;
+      PsiExpression lExpression = assignment.getLExpression();
+      if (!(lExpression instanceof PsiReferenceExpression) || !((PsiReferenceExpression)lExpression).isReferenceTo(myField) ||
+          ((PsiReferenceExpression)lExpression).getQualifierExpression() != null) {
+        return;
+      }
+      PsiExpression rExpression = assignment.getRExpression();
+      if (rExpression == null) return;
+      PsiCodeBlock block = tryCast(statement.getParent(), PsiCodeBlock.class);
+      if (block == null || !(block.getParent() instanceof PsiClassInitializer)) return;
+      if (block.getStatementCount() != 1) return;
+      myField.setInitializer(rExpression);
+      block.getParent().delete();
     }
   }
 
@@ -533,6 +710,19 @@ public abstract class CodeBlockSurrounder {
       Objects.requireNonNull(whileStatement.getCondition()).replace(lOperands);
       return ifStatement;
     }
+
+    @Override
+    @NotNull PsiWhileStatement anchor(@NotNull PsiStatement context) {
+      return (PsiWhileStatement)context.getParent().getParent().getParent();
+    }
+
+    @Override
+    void collapse(@NotNull PsiElement anchor) {
+      PsiWhileStatement whileStatement = tryCast(anchor, PsiWhileStatement.class);
+      if (whileStatement != null) {
+        ConditionalBreakInInfiniteLoopInspection.tryTransform(whileStatement);
+      }
+    }
   }
 
   private static class TernaryToIfSurrounder extends CodeBlockSurrounder {
@@ -601,6 +791,21 @@ public abstract class CodeBlockSurrounder {
       elseStatement =
         (PsiStatement)((PsiBlockStatement)Objects.requireNonNull(ifStatement.getElseBranch())).getCodeBlock().add(elseStatement);
       return then ? thenStatement : elseStatement;
+    }
+
+    @Override
+    @NotNull PsiIfStatement anchor(@NotNull PsiStatement context) {
+      // PsiCodeBlock -> PsiBlockStatement -> PsiIfStatement
+      return (PsiIfStatement)context.getParent().getParent().getParent();
+    }
+
+    @Override
+    void collapse(@NotNull PsiElement anchor) {
+      PsiIfStatement ifStatement = tryCast(anchor, PsiIfStatement.class);
+      if (ifStatement == null) return;
+      PsiStatement result = collapseIf(ifStatement, "?:");
+      if (result == null) return;
+      myUpstream.collapse(myUpstream.anchor(result));
     }
   }
 
@@ -689,5 +894,32 @@ public abstract class CodeBlockSurrounder {
       }
       return rOperands;
     }
+
+    @Override
+    void collapse(@NotNull PsiElement anchor) {
+      PsiIfStatement ifStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor), PsiIfStatement.class);
+      if (ifStatement == null) return;
+      PsiStatement result = collapseIf(ifStatement, "&&", "||");
+      if (result == null) return;
+      myUpstream.collapse(myUpstream.anchor(result));
+    }
+  }
+
+  @Nullable
+  private static PsiStatement collapseIf(PsiIfStatement ifStatement, String... operators) {
+    IfConditionalModel model = IfConditionalModel.from(ifStatement, false);
+    if (model == null) return null;
+    ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);
+    if (generator == null) return null;
+    String operator = generator.getTokenType();
+    if (!ArrayUtil.contains(operator, operators)) return null;
+    CommentTracker commentTracker = new CommentTracker();
+    String conditional = generator.generate(commentTracker);
+    commentTracker.replace(model.getThenExpression(), conditional);
+    PsiStatement branch = model.getElseBranch();
+    if (!PsiTreeUtil.isAncestor(ifStatement, branch, true)) {
+      commentTracker.delete(branch);
+    }
+    return (PsiStatement)commentTracker.replaceAndRestoreComments(ifStatement, model.getThenBranch());
   }
 }

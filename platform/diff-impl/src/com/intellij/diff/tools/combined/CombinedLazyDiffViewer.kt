@@ -3,10 +3,10 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
-import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -17,7 +17,7 @@ internal class CombinedLazyDiffViewer(size: Dimension? = null) : DiffViewer {
     .apply {
       add(JBUI.Panels.simplePanel()
             .apply {
-              background = UIUtil.getListBackground()
+              background = EditorColorsManager.getInstance().globalScheme.defaultBackground
               preferredSize = size ?: HEIGHT.get().let { height -> Dimension(height, height) }
             })
     }

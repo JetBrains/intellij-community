@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -106,10 +107,12 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void setSelected(@NotNull AnActionEvent e, boolean selected) {
-    if (!selected) {
-      return;
-    }
     final Project project = findProject();
     if (project == null) {
       return;

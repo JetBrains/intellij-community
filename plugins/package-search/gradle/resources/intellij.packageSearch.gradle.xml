@@ -7,6 +7,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <!--suppress PluginXmlCapitalization -->
         <localInspection
+                language="UAST"
                 bundle="messages.packageSearchBundle"
                 enabledByDefault="true"
                 groupKey="packagesearch.inspection.upgrade.group"
@@ -15,7 +16,9 @@
                 hasStaticDescription="true"
                 level="WEAK WARNING"/>
 
+        <!--suppress PluginXmlCapitalization -->
         <localInspection
+                language="UAST"
                 bundle="messages.packageSearchBundle"
                 enabledByDefault="true"
                 groupKey="packagesearch.inspection.upgrade.group"
@@ -24,18 +27,16 @@
                 hasStaticDescription="true"
                 level="WEAK WARNING"/>
 
-        <packagesearch.projectModuleOperationProvider
+        <packagesearch.coroutineProjectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleProjectModuleOperationProvider"/>
-        <packagesearch.moduleTransformer
+
+        <packagesearch.coroutineModuleTransformer
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleTransformer"/>
 
-        <packagesearch.moduleChangesSignalProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.ExternalProjectSignalProvider"/>
-
-        <packagesearch.moduleChangesSignalProvider
+        <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.SmartModeSignalProvider"/>
 
-        <packagesearch.moduleChangesSignalProvider
+        <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleLinkSignalProvider"/>
 
         <packagesearch.flowModuleChangesSignalProvider

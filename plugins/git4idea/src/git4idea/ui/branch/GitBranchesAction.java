@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,10 +37,7 @@ public class GitBranchesAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    GitRepository repository = file == null ?
-                               GitBranchUtil.getCurrentRepository(project) :
-                               GitBranchUtil.getRepositoryOrGuess(project, file);
+    GitRepository repository = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());
     if (repository != null) {
       if (Registry.is("git.branches.popup.tree", false)) {
         GitBranchesTreePopup.show(project, repository);
@@ -53,7 +51,8 @@ public class GitBranchesAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed());
+    e.getPresentation().setEnabledAndVisible(project != null && !project.isDisposed() &&
+                                             !GitRepositoryManager.getInstance(project).getRepositories().isEmpty());
   }
 
   @Override

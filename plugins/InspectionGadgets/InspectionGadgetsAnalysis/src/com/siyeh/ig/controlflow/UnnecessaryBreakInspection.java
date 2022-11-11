@@ -35,7 +35,7 @@ public class UnnecessaryBreakInspection extends BaseInspection {
   private static class UnnecessaryBreakVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       super.visitBreakStatement(statement);
       final PsiStatement exitedStatement = statement.findExitedStatement();
       if (exitedStatement == null) {

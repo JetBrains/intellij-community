@@ -9,10 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ComponentPtrDescriptor extends NodeDescriptor<ComponentPtr> {
   private ComponentPtr myPtr;
   /**

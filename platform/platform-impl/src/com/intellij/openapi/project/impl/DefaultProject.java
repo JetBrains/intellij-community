@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -23,14 +22,12 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.messages.MessageBus;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 import org.picocontainer.PicoContainer;
 
 import java.util.Map;
 
-/**
- * @author peter
- */
 final class DefaultProject extends UserDataHolderBase implements Project {
   private static final Logger LOG = Logger.getInstance(DefaultProject.class);
 
@@ -52,6 +49,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
       ((DefaultProjectImpl)project).init();
     }
   };
+
+  @Override
+  public ComponentManager getActualComponentManager() {
+    return getDelegate();
+  }
 
   @Override
   public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
@@ -101,12 +103,6 @@ final class DefaultProject extends UserDataHolderBase implements Project {
     return getDelegate().hasComponent(interfaceClass);
   }
 
-  @Override
-  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-    //noinspection deprecation
-    return getDelegate().getComponents(baseClass);
-  }
-
   // make default project facade equal to any other default project facade
   // to enable Map<Project, T>
   @Override
@@ -117,6 +113,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   @Override
   public int hashCode() {
     return DefaultProjectImpl.DEFAULT_HASH_CODE;
+  }
+
+  @Override
+  public String toString() {
+    return "Project" + (isDisposed() ? " (Disposed)" : "") + DefaultProjectImpl.TEMPLATE_PROJECT_NAME;
   }
 
   @Override
@@ -198,6 +199,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   }
 
   @Override
+  public CoroutineScope getCoroutineScope() {
+    return ApplicationManager.getApplication().getCoroutineScope();
+  }
+
+  @Override
   @Deprecated
   public BaseComponent getComponent(@NotNull String name) {
     return getDelegate().getComponent(name);
@@ -225,7 +231,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public @NotNull PicoContainer getPicoContainer() {
-    return getDelegate().getPicoContainer();
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -264,7 +270,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   private final Project actualContainerInstance;
 
   DefaultProjectImpl(@NotNull Project actualContainerInstance) {
-    super((ComponentManagerImpl)ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication(), false);
 
     this.actualContainerInstance = actualContainerInstance;
   }
@@ -272,10 +278,6 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   @Override
   public boolean isParentLazyListenersIgnored() {
     return true;
-  }
-
-  @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
   }
 
   @Override
@@ -310,7 +312,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
     // do not leak internal delegate, use DefaultProject everywhere instead
     registerServiceInstance(Project.class, actualContainerInstance, ComponentManagerImpl.fakeCorePluginDescriptor);
     registerComponents();
-    createComponents(null);
+    createComponents();
     Disposer.register(actualContainerInstance, this);
   }
 

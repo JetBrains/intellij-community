@@ -164,7 +164,11 @@ public abstract class Compressor implements Closeable {
 
   public static class Jar extends Zip {
     public Jar(@NotNull File file) throws IOException {
-      super(new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(file.toPath()))));
+      this(file.toPath());
+    }
+
+    public Jar(@NotNull Path file) throws IOException {
+      super(new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(file))));
     }
 
     public final void addManifest(@NotNull Manifest manifest) throws IOException {

@@ -68,7 +68,7 @@ public class BooleanParameterInspection extends BaseInspection {
   private class BooleanParameterVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
         final PsiClass aClass = method.getContainingClass();

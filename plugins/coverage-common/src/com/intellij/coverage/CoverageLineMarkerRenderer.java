@@ -399,6 +399,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(getLineEntry() != null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private final class EditCoverageColorsAction extends AnAction {
@@ -458,6 +463,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
         }
         colorAndFontOptions.disposeUIResources();
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

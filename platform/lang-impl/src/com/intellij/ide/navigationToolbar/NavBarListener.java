@@ -284,8 +284,9 @@ public final class NavBarListener
 
   @Override
   public void selectionChanged() {
+    myPanel.updateSelection();
     myPanel.updateItems();
-    myPanel.scrollSelectionToVisible();
+    myPanel.scrollSelectionToVisible(true);
   }
 
   @Override

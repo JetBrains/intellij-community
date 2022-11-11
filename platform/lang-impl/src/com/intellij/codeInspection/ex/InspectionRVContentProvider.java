@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -312,9 +311,12 @@ public abstract class InspectionRVContentProvider {
                 result.remove(fix.getFamilyName());
 
                 @NlsActions.ActionText String fixActionText;
-                try { fixActionText = StringUtil.escapeMnemonics(fix.getFamilyName()); }
-                catch (AbstractMethodError e) { fixActionText = LangBundle.message("action.name.not.available.text"); }
-
+                try {
+                  fixActionText = fix.getFamilyName();
+                }
+                catch (AbstractMethodError e) {
+                  fixActionText = LangBundle.message("action.name.not.available.text");
+                }
                 final var commonWrapper = new LocalQuickFixesWrapper(fixActionText,
                                                                      List.of(((LocalQuickFixWrapper)quickFixAction).getFix(), fix),
                                                                      presentation.getToolWrapper());

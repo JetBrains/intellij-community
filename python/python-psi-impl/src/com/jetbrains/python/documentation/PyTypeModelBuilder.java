@@ -237,9 +237,6 @@ public class PyTypeModelBuilder {
   /**
    * Builds tree-like type model for PyType
    *
-   * @param type
-   * @param allowUnions
-   * @return
    */
   public TypeModel build(@Nullable PyType type,
                          boolean allowUnions) {

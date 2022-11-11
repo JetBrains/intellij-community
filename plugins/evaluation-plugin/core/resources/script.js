@@ -1,5 +1,5 @@
 const favoriteFeatures = getFavoriteFeaturesFromCookie();
-isCodeGolf = false
+isCompletionGolf = false
 
 document.addEventListener("click", function (e) {
     const suggestionDiv = e.target.closest(".suggestion");
@@ -59,7 +59,7 @@ function selectFavoriteFeature(type, name, element) {
 }
 
 function getLookup(sessionDiv) {
-    if (isCodeGolf) {
+    if (isCompletionGolf) {
         const sessionId = sessionDiv.dataset.id.split(" ")[0];
         const lookups = sessions[sessionId]["_lookups"];
         return lookups[sessionDiv.dataset.cl]
@@ -74,7 +74,7 @@ function getLookup(sessionDiv) {
 }
 
 function getId(sessionDiv) {
-    if (isCodeGolf) {
+    if (isCompletionGolf) {
         return sessionDiv.dataset.id
     } else {
         return sessionDiv.id;
@@ -91,7 +91,7 @@ function updatePopup(sessionDiv) {
     popup.appendChild(prefixDiv);
     const needAddFeatures = sessionDiv.classList.contains("suggestions");
     closeAllLists();
-    if (!isCodeGolf && needAddFeatures) {
+    if (!isCompletionGolf && needAddFeatures) {
         addCommonFeatures(sessionDiv, popup);
     } else {
         addSuggestions(sessionDiv, popup, lookup);
@@ -130,7 +130,7 @@ function addSuggestions(sessionDiv, popup, lookup) {
         let suggestionDiv = document.createElement("DIV");
         suggestionDiv.setAttribute("class", "suggestion");
         suggestionDiv.setAttribute("id", `${getId(sessionDiv)} ${i}`);
-        let p = document.createElement(isCodeGolf ? "code" : "plaintext");
+        let p = document.createElement(isCompletionGolf ? "code" : "plaintext");
         p.setAttribute("class", "suggestion-p");
         if (sessions[sessionId].expectedText == suggestions[i].text) {
             p.setAttribute("style", "font-weight: bold;");

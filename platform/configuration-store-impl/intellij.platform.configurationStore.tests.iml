@@ -17,7 +17,6 @@
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.configurationStore.impl" />

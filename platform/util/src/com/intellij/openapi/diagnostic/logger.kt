@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
 
-@Suppress("UnusedReceiverParameter")
 inline fun <reified T : Any> T.thisLogger() = Logger.getInstance(T::class.java)
 
 inline fun <reified T : Any> logger() = Logger.getInstance(T::class.java)
@@ -16,7 +15,7 @@ inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> @NonNls String)
   }
 }
 
-inline fun Logger.trace(@NonNls lazyMessage : () -> String) {
+inline fun Logger.trace(@NonNls lazyMessage: () -> String) {
   if (isTraceEnabled) {
     trace(lazyMessage())
   }
@@ -31,10 +30,11 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
 
 fun <T> Result<T>.getOrLogException(logger: Logger): T? {
   return onFailure { e ->
-    when (e) {
-      is ProcessCanceledException,
-      is CancellationException -> throw e
-      else -> logger.error(e)
+    if (e is ProcessCanceledException || e is CancellationException) {
+      throw e
+    }
+    else {
+      logger.error(e)
     }
   }.getOrNull()
 }

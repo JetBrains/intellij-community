@@ -479,6 +479,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 "<..<"                                    { return storeToken(T_RANGE_BOTH_OPEN); }
 "..."                                     { return storeToken(T_ELLIPSIS); }
 "*."                                      { return storeToken(T_SPREAD_DOT); }
+"??."                                     { return storeToken(T_SAFE_CHAIN_DOT); }
 "?."                                      { return storeToken(T_SAFE_DOT); }
 ".&"                                      { return storeToken(T_METHOD_CLOSURE); }
 "::"                                      { return storeToken(T_METHOD_REFERENCE); }

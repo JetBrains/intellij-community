@@ -491,12 +491,12 @@ public abstract class DebuggerUtils {
     final Ref<Boolean> rv = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitPostfixExpression(final PsiPostfixExpression expression) {
+      public void visitPostfixExpression(final @NotNull PsiPostfixExpression expression) {
         rv.set(Boolean.TRUE);
       }
 
       @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         final PsiElement psiElement = expression.resolve();
         if (psiElement instanceof PsiLocalVariable) {
           if (visibleLocalVariables != null) {
@@ -518,7 +518,7 @@ public abstract class DebuggerUtils {
       }
 
       @Override
-      public void visitPrefixExpression(final PsiPrefixExpression expression) {
+      public void visitPrefixExpression(final @NotNull PsiPrefixExpression expression) {
         final IElementType op = expression.getOperationTokenType();
         if (JavaTokenType.PLUSPLUS.equals(op) || JavaTokenType.MINUSMINUS.equals(op)) {
           rv.set(Boolean.TRUE);
@@ -529,12 +529,12 @@ public abstract class DebuggerUtils {
       }
 
       @Override
-      public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(final @NotNull PsiAssignmentExpression expression) {
         rv.set(Boolean.TRUE);
       }
 
       @Override
-      public void visitCallExpression(final PsiCallExpression callExpression) {
+      public void visitCallExpression(final @NotNull PsiCallExpression callExpression) {
         rv.set(Boolean.TRUE);
         //final PsiMethod method = callExpression.resolveMethod();
         //if (method == null || !isSimpleGetter(method)) {
@@ -554,26 +554,23 @@ public abstract class DebuggerUtils {
     if (typeComponent == null) {
       return false;
     }
-    return SyntheticTypeComponentProvider.EP_NAME.extensions().noneMatch(provider -> provider.isNotSynthetic(typeComponent)) &&
-           SyntheticTypeComponentProvider.EP_NAME.extensions().anyMatch(provider -> provider.isSynthetic(typeComponent));
+    if (ContainerUtil.exists(SyntheticTypeComponentProvider.EP_NAME.getExtensionList(),
+                             provider -> provider.isNotSynthetic(typeComponent))) {
+      return false;
+    }
+    return ContainerUtil.exists(SyntheticTypeComponentProvider.EP_NAME.getExtensionList(), provider -> provider.isSynthetic(typeComponent));
   }
 
   public static boolean isInsideSimpleGetter(@NotNull PsiElement contextElement) {
-    return SimplePropertyGetterProvider.EP_NAME.extensions().anyMatch(provider -> provider.isInsideSimpleGetter(contextElement));
+    return ContainerUtil.exists(SimplePropertyGetterProvider.EP_NAME.getExtensionList(),
+                                provider -> provider.isInsideSimpleGetter(contextElement));
   }
 
   public static boolean isPrimitiveType(final String typeName) {
     return ourPrimitiveTypeNames.contains(typeName);
   }
 
-  protected static class ArrayClass {
-    public String className;
-    public int dims;
-
-    public ArrayClass(String className, int dims) {
-      this.className = className;
-      this.dims = dims;
-    }
+  protected record ArrayClass(String className, int dims) {
   }
 
   public static DebuggerUtils getInstance() {
@@ -603,7 +600,7 @@ public abstract class DebuggerUtils {
       return true;
     }
 
-    return JavaDebugAware.EP_NAME.extensions().anyMatch(provider -> provider.isBreakpointAware(file));
+    return ContainerUtil.exists(JavaDebugAware.EP_NAME.getExtensionList(), provider -> provider.isBreakpointAware(file));
   }
 
   public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {

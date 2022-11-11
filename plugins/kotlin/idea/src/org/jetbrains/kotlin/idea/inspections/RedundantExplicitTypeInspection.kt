@@ -3,11 +3,10 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeIntention
@@ -18,6 +17,8 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.types.KotlinType
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class RedundantExplicitTypeInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         propertyVisitor(fun(property) {
@@ -26,7 +27,6 @@ class RedundantExplicitTypeInspection : AbstractKotlinInspection() {
                 holder.registerProblem(
                     typeReference,
                     KotlinBundle.message("explicitly.given.type.is.redundant.here"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     IntentionWrapper(RemoveExplicitTypeIntention())
                 )
             }

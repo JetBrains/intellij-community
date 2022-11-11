@@ -54,7 +54,9 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
     val moduleEntity = moduleEntity ?: return@lazy emptyList<ContentEntryBridge>()
     val contentEntries = moduleEntity.contentRoots.toMutableList()
 
-    contentEntries.sortBy { it.url.url }
+    // We used to sort content roots previously, but this affects performance too much
+    // Please process unordered list of content roots, or perform the sorting on your side
+    //contentEntries.sortBy { it.url.url }
     contentEntries.map { contentRoot ->
       ContentEntryBridge(rootModel, contentRoot.sourceRoots.toList(), contentRoot, updater)
     }

@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModulePackageIndex
 import com.intellij.openapi.roots.ModuleRootManager
@@ -26,16 +27,15 @@ import com.intellij.util.Query
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
-import org.jetbrains.kotlin.idea.caches.project.SourceType
-import org.jetbrains.kotlin.idea.caches.project.sourceType
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.project.platform
-import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
-import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -68,8 +68,6 @@ fun PsiDirectory.getFqNameWithImplicitPrefixOrRoot(): FqName = getFqNameWithImpl
 
 private fun VirtualFile.hasExplicitPackagePrefix(project: Project): Boolean =
     toPsiDirectory(project)?.getPackage()?.qualifiedName?.isNotEmpty() == true
-
-fun KtFile.packageMatchesDirectory(): Boolean = packageFqName == getFqNameByDirectory()
 
 fun KtFile.packageMatchesDirectoryOrImplicit() =
     packageFqName == getFqNameByDirectory() || packageFqName == parent?.getFqNameWithImplicitPrefix()
@@ -121,7 +119,8 @@ private class PureKotlinSourceFoldersHolder {
      */
     fun hasPurePrefixInPath(module: Module, path: String): Boolean {
         val pureFolders = moduleMap.getOrPut(module) {
-            KotlinFacet.get(module)?.configuration?.settings?.pureKotlinSourceFolders?.takeIf { it.isNotEmpty() && !module.isAndroidModule() }
+            KotlinFacet.get(module)?.configuration?.settings?.pureKotlinSourceFolders
+                ?.takeIf { it.isNotEmpty() && !module.isAndroidModule() }
         } ?: return true
 
         return pureFolders.any { path.startsWith(it, ignoreCase = true) }
@@ -188,7 +187,7 @@ private fun Module.chooseSourceRootPath(allowedPaths: List<Path>, sourceFolderPa
         externalContentRoots.singleOrNull()?.let { return it.path }
 
         // jvmMain/java, jvmMain/kotlin case
-        if (externalContentRoots.size == 2 && externalContentRoots.any { it.path.name == "java" } && platform?.isJvm() == true) {
+        if (externalContentRoots.size == 2 && externalContentRoots.any { it.path.name == "java" } && platform.isJvm()) {
             externalContentRoots.find { it.path.name == "kotlin" }?.let { return it.path }
         }
 
@@ -205,10 +204,10 @@ private fun Module.findSourceRootPathByExternalProject(
 }
 
 private fun Module.findContentRootsByExternalProject(): Collection<ExternalSystemContentRootContributor.ExternalContentRoot>? {
-    val sourceRootTypes = when (sourceType?.takeUnless { isAndroidModule() }) {
+    val sourceRootTypes = when (kotlinSourceRootType?.takeUnless { isAndroidModule() }) {
+        SourceKotlinRootType -> listOf(ExternalSystemSourceType.SOURCE)
+        TestSourceKotlinRootType -> listOf(ExternalSystemSourceType.TEST)
         null -> listOf(ExternalSystemSourceType.SOURCE, ExternalSystemSourceType.TEST)
-        SourceType.PRODUCTION -> listOf(ExternalSystemSourceType.SOURCE)
-        SourceType.TEST -> listOf(ExternalSystemSourceType.TEST)
     }
 
     val externalContentRoots = ExternalSystemApiUtil.getExternalProjectContentRoots(this, sourceRootTypes) ?: return null

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,7 +42,7 @@ public final class StaleIndexesChecker {
       if (data != null) {
         String name;
         try {
-          name = VfsImplUtil.getRecordPath(freeRecord);
+          name = getRecordPath(freeRecord);
         }
         catch (Exception e) {
           name = e.getMessage();
@@ -65,6 +64,16 @@ public final class StaleIndexesChecker {
     }
 
     return staleFiles.keySet();
+  }
+
+  private static String getRecordPath(int record) {
+    StringBuilder name = new StringBuilder(FSRecords.getName(record));
+    int parent = FSRecords.getParent(record);
+    while (parent > 0) {
+      name.insert(0, FSRecords.getName(parent) + "/");
+      parent = FSRecords.getParent(parent);
+    }
+    return name.toString();
   }
 
   static void clearStaleIndexes(@NotNull IntSet staleIds) {

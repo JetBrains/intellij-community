@@ -32,18 +32,13 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
 
     @NotNull
     static LoggerInitializerParameter find(@NotNull String parameter) {
-      switch (parameter) {
-        case "TYPE":
-          return TYPE;
-        case "NAME":
-          return NAME;
-        case "TOPIC":
-          return TOPIC;
-        case "NULL":
-          return NULL;
-        default:
-          return UNKNOWN;
-      }
+      return switch (parameter) {
+        case "TYPE" -> TYPE;
+        case "NAME" -> NAME;
+        case "TOPIC" -> TOPIC;
+        case "NULL" -> NULL;
+        default -> UNKNOWN;
+      };
     }
   }
 
@@ -147,23 +142,17 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
         parametersBuilder.append(", ");
       }
       switch (loggerInitializerParameter) {
-        case TYPE:
-          parametersBuilder.append(psiClass.getName()).append(".class");
-          break;
-        case NAME:
-          parametersBuilder.append(psiClass.getName()).append(".class.getName()");
-          break;
-        case TOPIC:
+        case TYPE -> parametersBuilder.append(psiClass.getName()).append(".class");
+        case NAME -> parametersBuilder.append(psiClass.getName()).append(".class.getName()");
+        case TOPIC -> {
           if (!topicPresent) {
             // sanity check; either implementation of CustomLogParser or predefined loggers is wrong
             throw new IllegalStateException("Topic can never be a parameter when topic was not set.");
           }
           parametersBuilder.append('"').append(StringUtil.escapeStringCharacters(topic)).append('"');
-          break;
-        case NULL:
-          parametersBuilder.append("null");
-          break;
-        default:
+        }
+        case NULL -> parametersBuilder.append("null");
+        default ->
           // sanity check; either implementation of CustomLogParser or predefined loggers is wrong
           throw new IllegalStateException("Unexpected logger initializer parameter " + loggerInitializerParameter);
       }
@@ -171,7 +160,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return parametersBuilder.toString();
   }
 
-  private boolean hasFieldByName(@NotNull PsiClass psiClass, @NotNull String fieldName) {
+  private static boolean hasFieldByName(@NotNull PsiClass psiClass, @NotNull String fieldName) {
     final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
     for (PsiField psiField : psiFields) {
       if (fieldName.equals(psiField.getName())) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -34,6 +35,11 @@ public class ToggleShowElementContentAction extends ToggleAction implements Dumb
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return myEditor.getSubstitutionParameters().isShowContentForType(myType);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

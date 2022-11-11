@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -61,6 +62,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString(getCodeUsagesString());
       myCurrentUsageView = UsageViewManager.getInstance(myProject).createUsageView(UsageTarget.EMPTY_ARRAY, usages, presentation, null);
+      ((UsageViewImpl)myCurrentUsageView).expandRoot();
       setToComponent(myCurrentUsageView.getComponent());
     }
     catch (ProcessCanceledException e) {

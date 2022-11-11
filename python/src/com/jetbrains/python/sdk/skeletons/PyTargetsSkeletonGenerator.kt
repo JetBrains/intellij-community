@@ -41,6 +41,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
 
   private val foundBinaries: MutableSet<String> = HashSet()
 
+  @Deprecated("There should be no difference in your code between local and remote")
   private fun isLocalTarget() = targetEnvRequest is LocalTargetEnvironmentRequest
 
   override fun commandBuilder(): Builder {

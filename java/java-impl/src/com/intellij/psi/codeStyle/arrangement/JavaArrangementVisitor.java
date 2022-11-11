@@ -126,7 +126,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitClass(PsiClass aClass) {
+  public void visitClass(@NotNull PsiClass aClass) {
     boolean isSectionCommentsDetected = registerSectionComments(aClass);
     TextRange range = isSectionCommentsDetected ? getElementRangeWithoutComments(aClass) : aClass.getTextRange();
 
@@ -142,11 +142,11 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitTypeParameter(PsiTypeParameter parameter) {
+  public void visitTypeParameter(@NotNull PsiTypeParameter parameter) {
   }
 
   @Override
-  public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+  public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
     JavaElementArrangementEntry entry = createNewEntry(aClass.getTextRange(), ANONYMOUS_CLASS, aClass.getName());
     if (entry == null) {
       return;
@@ -162,7 +162,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitField(PsiField field) {
+  public void visitField(@NotNull PsiField field) {
     boolean isSectionCommentsDetected = registerSectionComments(field);
 
     // There is a possible case that more than one field is declared for the same type like 'int i, j;'.
@@ -290,7 +290,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       private static final int MAX_METHOD_LOOKUP_DEPTH = 3;
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         PsiElement ref = expression.resolve();
         if (ref instanceof PsiField && containingClassFields.contains(ref) && hasSameStaticModifier(field, (PsiField)ref)) {
           referencedElements.add((PsiField)ref);
@@ -365,7 +365,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitClassInitializer(PsiClassInitializer initializer) {
+  public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
     JavaElementArrangementEntry entry = createNewEntry(initializer.getTextRange(), INIT_BLOCK, null);
     if (entry == null) {
       return;
@@ -405,7 +405,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitMethod(PsiMethod method) {
+  public void visitMethod(@NotNull PsiMethod method) {
     boolean isSectionCommentsDetected = registerSectionComments(method);
     final TextRange range = isSectionCommentsDetected ? getElementRangeWithoutComments(method)
                                                       : method.getTextRange();
@@ -482,7 +482,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+  public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
   }
 
   private void processEntry(@Nullable JavaElementArrangementEntry entry,
@@ -578,7 +578,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression psiMethodCallExpression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression psiMethodCallExpression) {
       PsiReference reference = psiMethodCallExpression.getMethodExpression().getReference();
       if (reference == null) {
         return;
@@ -601,7 +601,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       PsiMethod method = tryCast(expression.resolve(), PsiMethod.class);
       if (method == null) return;
       assert myBaseMethod != null;

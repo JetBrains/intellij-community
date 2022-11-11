@@ -74,7 +74,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    * @param sdkModel the sdks model
    * @param sdkTypeFilter sdk types filter predicate to show
    * @param sdkFilter filters Sdk instances that are listed, it implicitly includes the {@param sdkTypeFilter}
-   * @param suggestedSdkFilter
    * @param creationFilter a filter of SdkType that allowed to create a new Sdk with that control
    * @param onNewSdkAdded a callback that is executed once a new Sdk is added to the list
    */

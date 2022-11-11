@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.CommonBundle
-import com.intellij.execution.IS_RUN_MANAGER_INITIALIZED
-import com.intellij.execution.RunManager
-import com.intellij.execution.RunManagerListener
-import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
@@ -13,7 +10,9 @@ import com.intellij.execution.runToolbar.data.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.ActivityTracker
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -24,7 +23,8 @@ import com.intellij.util.messages.Topic
 import java.util.*
 import javax.swing.SwingUtilities
 
-class RunToolbarSlotManager(val project: Project) {
+@Service(Service.Level.PROJECT)
+class RunToolbarSlotManager(private val project: Project) {
   companion object {
     private val LOG = Logger.getInstance(RunToolbarSlotManager::class.java)
     fun getInstance(project: Project): RunToolbarSlotManager = project.service()
@@ -41,7 +41,7 @@ class RunToolbarSlotManager(val project: Project) {
   internal val activeListener = RWAddedController()
   internal val stateListeners = RWStateController()
 
-  internal var mainSlotData = SlotDate(UUID.randomUUID().toString())
+  internal var mainSlotData = SlotDate(project, UUID.randomUUID().toString())
 
   val activeProcesses = RWActiveProcesses()
   private val dataIds = mutableListOf<String>()
@@ -152,6 +152,7 @@ class RunToolbarSlotManager(val project: Project) {
 
   private fun clear() {
     dataIds.clear()
+    mainSlotData.clear()
 
     slotsData.clear()
     slotsData[mainSlotData.id] = mainSlotData
@@ -236,7 +237,6 @@ class RunToolbarSlotManager(val project: Project) {
     val sortedSlots = mutableListOf<SlotDate>()
     sortedSlots.add(mainSlotData)
     sortedSlots.addAll(dataIds.mapNotNull { slotsData[it] }.toList())
-
     return sortedSlots.filter { it.configuration == env.runnerAndConfigurationSettings }
   }
 
@@ -281,7 +281,48 @@ class RunToolbarSlotManager(val project: Project) {
 
       if (!isCompoundProcess) {
         if (getMoveNewOnTop(env)) {
-          moveToTop(slot.id)
+          // RIDER-77316: we shouldn't move the main slot to the secondary slot list if this will create a duplicate configuration in the
+          // secondary slots.
+
+          // See the run widget guide for detailed algorithm and Cases explanation:
+          // https://youtrack.jetbrains.com/articles/RIDER-A-1413/New-Toolbar-Run-Widget-Guide
+          val secondarySlotsContainingMainSlotConfig = dataIds
+            .asSequence()
+            .mapNotNull { slotsData[it] }
+            .filter { it.configuration == mainSlotData.configuration }
+            .toList()
+
+          if (secondarySlotsContainingMainSlotConfig.isEmpty()) {
+            // Case 1: there are no slots corresponding to the main one in the secondary slot list. So, move the new slot to the main
+            // position, and move the former main slot to the secondary slot list (effectively creating a new secondary slot).
+            moveToTop(slot.id)
+          } else {
+            // Case 2: there's at least one secondary slot corresponding to the main one.
+
+            fun removeFormerMainSlotAndMoveCurrentToTop() {
+              val formerMain = mainSlotData
+              formerMain.environment = null // deactivate to avoid any UI questions when removing it
+              moveToTop(slot.id)
+              removeSlot(formerMain.id) // delete completely
+            }
+
+            if (mainSlotData.environment != null) {
+              // Case 2.1: the former main slot has an active process, so we'll need to mark one of the corresponding secondary slots as
+              // active instead:
+              val freeSlotCorrespondingToMain = secondarySlotsContainingMainSlotConfig.firstOrNull { it.environment == null }
+              if (freeSlotCorrespondingToMain != null) {
+                // Case 2.1.1: we've found the new free slot to enable the (former) main configuration there.
+                freeSlotCorrespondingToMain.environment = mainSlotData.environment
+                removeFormerMainSlotAndMoveCurrentToTop()
+              } else {
+                // Case 2.1.2: there are no free slots for the former main active configuration to move to. Add a new one then.
+                moveToTop(slot.id)
+              }
+            } else {
+              // Case 2.2: the former main slot is inactive. Let's just remove it after replacement.
+              removeFormerMainSlotAndMoveCurrentToTop()
+            }
+          }
         }
       }
     }
@@ -334,7 +375,7 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   private fun addSlot(configuration: RunnerAndConfigurationSettings? = null, id: String = UUID.randomUUID().toString()): SlotDate {
-    val slot = SlotDate(id)
+    val slot = SlotDate(project, id)
     slot.configuration = configuration
     dataIds.add(slot.id)
     slotsData[slot.id] = slot
@@ -354,6 +395,10 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
 
+  /**
+   * Make the slot with [id] the main slot, moving the former main slot to the secondary slot list. This function is no-op if the slot with
+   * the passed [id] is already the main one.
+   */
   internal fun moveToTop(id: String) {
     if (mainSlotData.id == id) return
 
@@ -431,8 +476,8 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   private fun saveSlotsConfiguration() {
-    if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
-      val runManager = RunManager.getInstance(project)
+    val runManager = project.serviceIfCreated<RunManager>()
+    if (runManager != null) {
       mainSlotData.configuration?.let {
         if (runManager.hasSettings(it) &&
             it != runManager.selectedConfiguration &&
@@ -446,7 +491,9 @@ class RunToolbarSlotManager(val project: Project) {
 
     val slotOrder = getSlotOrder()
     val configurations = getConfigurationMap(slotOrder)
-    if (RunToolbarProcess.logNeeded) LOG.info("MANAGER saveSlotsConfiguration: ${configurations} RunToolbar")
+    if (RunToolbarProcess.logNeeded) {
+      LOG.info("MANAGER saveSlotsConfiguration: ${configurations} RunToolbar")
+    }
 
     runToolbarSettings.setConfigurations(configurations, slotOrder)
     publishConfigurations(configurations)
@@ -474,7 +521,7 @@ class RunToolbarSlotManager(val project: Project) {
   }
 }
 
-internal open class SlotDate(override var id: String) : RunToolbarData {
+internal open class SlotDate(val project: Project, override var id: String) : RunToolbarData {
   companion object {
     var index = 0
   }
@@ -483,8 +530,19 @@ internal open class SlotDate(override var id: String) : RunToolbarData {
     id = value
   }
 
+  override var executionTarget: ExecutionTarget? = null
+    get() = environment?.executionTarget ?: run {
+      configuration?.configuration.let {
+        val targets = ExecutionTargetManager.getInstance(project).getTargetsFor(it)
+        if(field != null && targets.contains(field)) field else targets.firstOrNull()
+      }
+    } ?: run {
+      ExecutionTargetManager.getInstance(project).activeTarget
+    }
+
   override var configuration: RunnerAndConfigurationSettings? = null
     get() = environment?.runnerAndConfigurationSettings ?: field
+
 
   override var environment: ExecutionEnvironment? = null
     set(value) {
@@ -492,6 +550,7 @@ internal open class SlotDate(override var id: String) : RunToolbarData {
         field = value
       value?.let {
         configuration = it.runnerAndConfigurationSettings
+        executionTarget = it.executionTarget
       }
     }
 

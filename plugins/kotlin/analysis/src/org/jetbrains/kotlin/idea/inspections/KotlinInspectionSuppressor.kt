@@ -10,11 +10,10 @@ import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.highlighter.createSuppressWarningActions
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.findSingleLiteralStringTemplateText
-import org.jetbrains.kotlin.idea.util.findSuppressAnnotation
-import org.jetbrains.kotlin.idea.util.findSuppressedTools
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -45,7 +44,13 @@ class KotlinInspectionSuppressor : InspectionSuppressor, RedundantSuppressionDet
 
     override fun getSuppressionIds(element: PsiElement): String? = suppressionIds(element).ifNotEmpty { joinToString(separator = ",") }
 
-    fun suppressionIds(element: PsiElement): List<String> = element.safeAs<KtAnnotated>()?.findSuppressedTools().orEmpty()
+    fun suppressionIds(element: PsiElement): List<String> {
+        if (element !is KtAnnotated) {
+            return emptyList()
+        }
+
+        return KotlinPsiHeuristics.findSuppressedEntities(element) ?: emptyList()
+    }
 
     override fun createRemoveRedundantSuppressionFix(toolId: String): LocalQuickFix = RemoveRedundantSuppression(toolId)
 
@@ -64,7 +69,7 @@ private class RemoveRedundantSuppression(private val toolId: String) : LocalQuic
                 .withAttachment(name = "class.txt", content = descriptor.psiElement.javaClass)
                 .withPsiAttachment("element.txt", descriptor.psiElement)
 
-        val suppressAnnotationEntry = annotated.findSuppressAnnotation()
+        val suppressAnnotationEntry = KotlinPsiHeuristics.findSuppressAnnotation(annotated)
             ?: throw KotlinExceptionWithAttachments("Suppress annotation is not found")
                 .withPsiAttachment("element.txt", descriptor.psiElement)
                 .withPsiAttachment("annotatedElement.txt", annotated)

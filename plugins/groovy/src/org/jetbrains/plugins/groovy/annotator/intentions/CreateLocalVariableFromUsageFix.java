@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -18,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -68,6 +70,15 @@ public class CreateLocalVariableFromUsageFix extends Intention {
     assert vFile != null;
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, vFile, textOffset);
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints(myRefExpression);
+    PsiType type = constraints.length == 0 || constraints[0].getType().equals(PsiPrimitiveType.VOID) ? JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project)) : constraints[0].getType();
+    GrVariableDeclaration declaration = GroovyPsiElementFactory.getInstance(project)
+      .createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, "", type, myRefExpression.getReferenceName());
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, "", declaration.getText());
   }
 
   @Override

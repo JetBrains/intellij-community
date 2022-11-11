@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -282,7 +283,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
                                                       @Nullable GlobalSearchScope scope) {
     Query<VirtualFile> query = DirectoryIndex.getInstance(module.getProject()).getDirectoriesByPackageName(packageName, false);
 
-    return StreamEx.of(query.findAll()).filter(scope == null ? file -> true : file -> scope.contains(file))
+    return StreamEx.of(query.findAll()).filter(scope == null ? Predicates.alwaysTrue() : file -> scope.contains(file))
       .<PsiFileSystemItem>map(PsiManager.getInstance(module.getProject())::findDirectory)
       .nonNull()
       .toList();

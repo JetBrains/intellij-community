@@ -62,12 +62,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected final Path myFile;
   private final Version myVersion;
   private final boolean myDoCaching;
-  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock(true);
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
   private volatile boolean myDirtyStatusUpdateInProgress;
 
   private boolean myClosed;
-  private boolean myDirty;
+  private volatile boolean myDirty;
   private volatile boolean myCorrupted;
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
   private @Nullable Flushable myMarkCleanCallback;
@@ -438,15 +438,22 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   private Data findValueFor(int idx) throws IOException {
-    lockStorageRead();
+    boolean shouldLock = shouldLockOnValueOf();
+    if (shouldLock) {
+      lockStorageRead();
+    }
     try {
       int addr = indexToAddr(idx);
-      return myKeyStorage.read(addr);
+      return myKeyStorage.read(addr, shouldLock);
     }
     finally {
-      unlockStorageRead();
+      if (shouldLock) {
+        unlockStorageRead();
+      }
     }
   }
+
+  protected abstract boolean shouldLockOnValueOf();
 
   int reEnumerate(Data key) throws IOException {
     if (!canReEnumerate()) throw new IncorrectOperationException();
@@ -511,13 +518,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public boolean isDirty() {
-    lockStorageRead();
-    try {
-      return myDirty;
-    }
-    finally {
-      unlockStorageRead();
-    }
+    return myDirty;
   }
 
   public boolean isCorrupted() {
@@ -531,13 +532,18 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public void force() {
+    if (!isDirty()) return;
     getWriteLock().lock();
     try {
       lockStorageWrite();
       try {
-        myKeyStorage.force();
-        if (myStorage.isDirty() || isDirty()) {
-          doFlush();
+        if (isDirty()) {
+          if (myKeyStorage.isDirty()) {
+            myKeyStorage.force();
+          }
+          if (myStorage.isDirty()) {
+            doFlush();
+          }
         }
       }
       catch (IOException e) {
@@ -636,10 +642,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       return null;
     }
     catch (IOException io) {
+      LOG.error(io);
       markCorrupted();
       throw io;
     }
     catch (Throwable e) {
+      LOG.error(e);
       markCorrupted();
       throw new RuntimeException(e);
     }

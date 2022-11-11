@@ -53,6 +53,11 @@ public class RegistryToggleAction extends ToggleAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Registry.get(myKey).setValue(state);
     doWhenDone(e);

@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.j2k.ast.Nullability
+import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
-
 import org.jetbrains.kotlin.nj2k.types.JKJavaDisjunctionType
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 import org.jetbrains.kotlin.nj2k.useExpression
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class TryStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
@@ -70,11 +70,10 @@ class TryStatementConversion(context: NewJ2kConverterContext) : RecursiveApplica
     private fun convertCatchSection(javaCatchSection: JKJavaTryCatchSection): List<JKKtTryCatchSection> {
         javaCatchSection.block.detach(javaCatchSection)
         val typeElement = javaCatchSection.parameter.type
-        return typeElement.type.let {
-            (it as? JKJavaDisjunctionType)?.disjunctions ?: listOf(it)
-        }.map {
+        val parameterTypes = typeElement.type.safeAs<JKJavaDisjunctionType>()?.disjunctions ?: listOf(typeElement.type)
+        return parameterTypes.map { type ->
             val parameter = JKParameter(
-                JKTypeElement(it.updateNullability(Nullability.NotNull), typeElement.annotationList.copyTreeAndDetach()),
+                JKTypeElement(type.updateNullability(NotNull), typeElement.annotationList.copyTreeAndDetach()),
                 javaCatchSection.parameter.name.copyTreeAndDetach()
             )
             JKKtTryCatchSection(

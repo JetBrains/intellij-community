@@ -9,3 +9,5 @@ class B() : A {
         println(foo) // not highlighted `foo`
     }
 }
+
+// FIR_COMPARISON

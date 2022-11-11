@@ -25,7 +25,7 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
   private static class NewExceptionWithoutArgumentsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null || !argumentList.isEmpty()) {
@@ -49,7 +49,7 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       super.visitMethodReferenceExpression(expression);
       if (!expression.isConstructor()) {
         return;

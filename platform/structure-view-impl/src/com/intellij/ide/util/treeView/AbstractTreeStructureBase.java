@@ -4,6 +4,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.projectView.SettingsProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.openapi.actionSystem.CompositeDataProvider;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -86,19 +87,17 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   public abstract @Nullable List<TreeStructureProvider> getProviders();
 
-  @SuppressWarnings("unchecked")
   public @Nullable Object getDataFromProviders(@NotNull List<AbstractTreeNode<?>> selectedNodes, @NotNull String dataId) {
     List<TreeStructureProvider> providers = getProvidersDumbAware();
     if (providers.isEmpty()) {
       return null;
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return ContainerUtil.nullize(ContainerUtil.flattenIterables(ContainerUtil.mapNotNull(
-        providers, provider -> (Iterable<DataProvider>)provider.getData(selectedNodes, dataId)
-      )));
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      List<DataProvider> bgtProviders = ContainerUtil.mapNotNull(providers, o -> (DataProvider)o.getData(selectedNodes, dataId));
+      return bgtProviders.isEmpty() ? null : CompositeDataProvider.compose(bgtProviders);
     }
     for (TreeStructureProvider treeStructureProvider : providers) {
-      final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
+      Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
       if (fromProvider != null) {
         return fromProvider;
       }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -116,7 +117,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
     final boolean shouldSuggestDialog = activeIntroducer instanceof InplaceIntroduceConstantPopup &&
                                         activeIntroducer.startsOnTheSameElement(selectedExpr, null);
-    if (classes.size() == 1 || editor == null || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
+    if (classes.size() == 1 || editor == null || IntentionPreviewUtils.isPreviewElement(myParentClass) || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
     else if (!classes.isEmpty()){
@@ -214,7 +215,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                  anchorStatementIfAll, tempAnchorElement, editor,
                                  myParentClass);
 
-    WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(() -> runnable.run());
+    if (IntentionPreviewUtils.isPreviewElement(myParentClass)) {
+      runnable.run();
+    }
+    else {
+      WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(runnable::run);
+    }
     return false;
   }
 
@@ -896,7 +902,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiField[] refConstantFields = new PsiField[1];
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           final PsiElement resolve = expression.resolve();
           if (resolve instanceof PsiField &&
@@ -927,7 +933,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       final PsiElement psiElement = expression.resolve();
       if ((PsiUtil.isJvmLocalVariable(psiElement)) &&
           !PsiTreeUtil.isAncestor(myInitializer, psiElement, false)) {
@@ -939,14 +945,14 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (!PsiMethodReferenceUtil.isResolvedBySecondSearch(expression)) {
         super.visitMethodReferenceExpression(expression);
       }
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression callExpression) {
+    public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
       if (!myCheckThrowables) return;
       final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(callExpression);
@@ -956,13 +962,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       myCheckThrowables = false;
       super.visitClass(aClass);
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       myCheckThrowables = false;
       super.visitLambdaExpression(expression);
     }

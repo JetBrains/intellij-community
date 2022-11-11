@@ -3,6 +3,7 @@ package com.intellij.refactoring.detector.actions
 
 import com.intellij.CommonBundle
 import com.intellij.json.JsonFileType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
@@ -22,10 +23,12 @@ import org.jetbrains.research.kotlinrminer.ide.Refactoring
 
 class FindRefactoringInCommitAction : DumbAwareAction() {
 
-  override fun update(e: AnActionEvent) {
-    val log = e.getData(VcsLogDataKeys.VCS_LOG)
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
-    e.presentation.isEnabledAndVisible = e.project != null && log != null && log.selectedCommits.isNotEmpty()
+  override fun update(e: AnActionEvent) {
+    val log = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
+
+    e.presentation.isEnabledAndVisible = e.project != null && log != null && log.commits.isNotEmpty()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

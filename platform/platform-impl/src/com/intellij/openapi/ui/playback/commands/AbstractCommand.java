@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.Application;
@@ -14,6 +14,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public abstract class AbstractCommand implements PlaybackCommand {
 
@@ -33,6 +34,14 @@ public abstract class AbstractCommand implements PlaybackCommand {
     else {
       return myText;
     }
+  }
+
+  public ArrayList<String> extractCommandList(String prefix, String delimiter) {
+    ArrayList<String> arguments = new ArrayList<>();
+    for (String argument: extractCommandArgument(prefix).split(delimiter)) {
+      arguments.add(argument.trim());
+    }
+    return arguments;
   }
 
   private final @NonNls @NotNull String myText;

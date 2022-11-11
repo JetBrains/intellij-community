@@ -224,8 +224,6 @@ public final class DfaBinOpValue extends DfaValue {
      * @param state memory state
      * @param dividend dividend
      * @param divisor divisor
-     * @param dividendRange
-     * @param divisorRange
      * @return true if it's known that dividend is within divisor range
      */
     private static boolean withinDivisorRange(@NotNull DfaMemoryState state,

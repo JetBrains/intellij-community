@@ -61,7 +61,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitIfStatement(PsiIfStatement ifStatement) {
+      public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
         PsiStatement[] thenStatements = unwrap(ifStatement.getThenBranch());
         PsiStatement[] elseStatements = unwrap(ifStatement.getElseBranch());
         for (IfStatementInspector inspector : ourInspectors) {
@@ -869,7 +869,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       boolean conditionHasSideEffects = SideEffectChecker.mayHaveSideEffects(condition);
       if (!isOnTheFly && conditionHasSideEffects) return null;
       List<PsiLocalVariable> conditionVariables = new ArrayList<>();
-      boolean conditionVariablesCantBeChangedTransitively = StreamEx.ofTree(((PsiElement)condition), el -> StreamEx.of(el.getChildren()))
+      boolean conditionVariablesCantBeChangedTransitively = StreamEx.ofTree((PsiElement)condition, el -> StreamEx.of(el.getChildren()))
         .allMatch(element -> {
           if (!(element instanceof PsiReferenceExpression)) {
             return !(element instanceof PsiMethodCallExpression);

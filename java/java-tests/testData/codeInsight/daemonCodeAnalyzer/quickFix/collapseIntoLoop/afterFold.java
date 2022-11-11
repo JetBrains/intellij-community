@@ -1,4 +1,4 @@
-// "Collapse into loop" "true"
+// "Collapse into loop" "true-preview"
 class X {
   public int hashCode() {
     int result = super.hashCode();

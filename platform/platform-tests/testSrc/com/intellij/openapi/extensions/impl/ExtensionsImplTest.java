@@ -1,17 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorTestKt;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
@@ -70,14 +71,14 @@ public class ExtensionsImplTest {
         removed[0] = true;
       }
     }, false, null);
-    point.registerExtension(123, LoadingOrder.ANY);
+    point.registerExtension(123);
     extensionsArea.unregisterExtensionPoint(EXTENSION_POINT_NAME_1);
     assertThat(extensionsArea.extensionPoints.size()).withFailMessage("Extension point should be removed").isEqualTo(numEP);
     assertThat(removed[0]).withFailMessage("Extension point disposed").isTrue();
   }
 
   @Test
-  public void testExtensionsNamespaces() throws IOException, JDOMException {
+  public void testExtensionsNamespaces() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
     extensionsArea.registerExtensionPoint("plugin.ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS, false);
     registerExtension(extensionsArea, "plugin", "<plugin:ep1 xmlns:plugin=\"plugin\" order=\"LAST\"><text>3</text></plugin:ep1>");
@@ -92,7 +93,7 @@ public class ExtensionsImplTest {
   }
 
   @Test
-  public void testExtensionsWithOrdering() throws IOException, JDOMException {
+  public void testExtensionsWithOrdering() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
     extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS, false);
     registerExtension(extensionsArea, "", "<extension point=\"ep1\" order=\"LAST\"><text>3</text></extension>");
@@ -107,7 +108,7 @@ public class ExtensionsImplTest {
   }
 
   @Test
-  public void testExtensionsWithOrderingUpdate() throws IOException, JDOMException {
+  public void testExtensionsWithOrderingUpdate() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
     extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS, false);
     registerExtension(extensionsArea, "", "<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>");

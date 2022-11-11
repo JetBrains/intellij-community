@@ -3,6 +3,7 @@
 package org.jetbrains.plugins.github
 
 import com.intellij.CommonBundle
+import git4idea.remote.hosting.findKnownRepositories
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -107,8 +108,8 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
 
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
       val possibleRemotes = gitRepository
-        ?.let(project.service<GHProjectRepositoriesManager>()::findKnownRepositories)
-        ?.map { it.gitRemoteUrlCoordinates.url }.orEmpty()
+        ?.let(project.service<GHHostedRepositoriesManager>()::findKnownRepositories)
+        ?.map { it.remote.url }.orEmpty()
       if (possibleRemotes.isNotEmpty()) {
         val existingRemotesDialog = GithubExistingRemotesDialog(project, possibleRemotes)
         DialogManager.show(existingRemotesDialog)

@@ -12,7 +12,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
@@ -38,7 +38,7 @@ internal class GithubLoginPanel(
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
 
-  var footer: LayoutBuilder.() -> Unit
+  var footer: Panel.() -> Unit
     get() = tokenUi.footer
     set(value) {
       tokenUi.footer = value

@@ -23,11 +23,12 @@ private val LOG = Logger.getInstance(FormatterStarter::class.java)
  * A launcher class for command-line formatter.
  */
 internal class FormatterStarter : ApplicationStarter {
-  val messageOutput = StdIoMessageOutput
+  private val messageOutput = StdIoMessageOutput
 
-  override fun getCommandName() = "format"
+  override val commandName: String
+    get() = "format"
 
-  override fun main(args: Array<String>) {
+  override fun main(args: List<String>) {
     messageOutput.info("$appInfo Formatter\n")
     LOG.info(args.joinToString(",", prefix = "Attributes: "))
 
@@ -62,7 +63,7 @@ internal class FormatterStarter : ApplicationStarter {
 
 }
 
-fun createFormatter(args: Array<String>, messageOutput: MessageOutput = StdIoMessageOutput) =
+fun createFormatter(args: List<String>, messageOutput: MessageOutput = StdIoMessageOutput) =
   CodeStyleProcessorBuilder(messageOutput)
     .apply {
       if (args.size < 2) throw ShowUsageException()
@@ -124,16 +125,15 @@ Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset chars
   path<n>        A path to a file or a directory.  
 """
 
-fun readSettings(settingsFile: File): CodeStyleSettings? =
-  VfsUtil.findFileByIoFile(settingsFile, true)
+fun readSettings(settingsFile: File): CodeStyleSettings? {
+  return VfsUtil.findFileByIoFile(settingsFile, true)
     ?.let {
       it.refresh(false, false)
       CodeStyleSettingsLoader().loadSettings(it)
     }
+}
 
-private fun readSettings(settingsPath: String): CodeStyleSettings? =
-  readSettings(File(settingsPath))
-
+private fun readSettings(settingsPath: String): CodeStyleSettings? = readSettings(File(settingsPath))
 
 private val appInfo: String =
   (ApplicationInfoEx.getInstanceEx() as ApplicationInfoImpl)

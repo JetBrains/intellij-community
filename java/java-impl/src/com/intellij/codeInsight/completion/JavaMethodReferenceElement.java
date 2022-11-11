@@ -56,7 +56,7 @@ class JavaMethodReferenceElement extends LookupElement implements TypedLookupIte
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY));
     super.renderElement(presentation);
   }

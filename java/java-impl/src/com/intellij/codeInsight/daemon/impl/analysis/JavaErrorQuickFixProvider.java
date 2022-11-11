@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.ConvertRecordToClassFix;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +18,7 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
   public void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo info) {
     PsiElement parent = errorElement.getParent();
     String description = errorElement.getErrorDescription();
-    if (description.equals(JavaPsiBundle.message("expected.semicolon"))) {
+    if (parent instanceof PsiStatement && description.equals(JavaPsiBundle.message("expected.semicolon"))) {
       QuickFixAction.registerQuickFixAction(info, new InsertMissingTokenFix(";"));
       HighlightFixUtil.registerFixesForExpressionStatement(info, parent);
     }

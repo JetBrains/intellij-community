@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.Disposable
@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang.RandomStringUtils
 import org.junit.*
 import org.junit.Assert.assertTrue
@@ -28,7 +29,7 @@ import java.io.File
 class JpsProjectLoadingListenerTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Rule
   @JvmField
@@ -62,7 +63,9 @@ class JpsProjectLoadingListenerTest {
       }
     })
 
-    loadProject(projectData.projectDir)
+    runBlocking {
+      loadProject(projectData.projectDir)
+    }
 
     waitAndAssert(1_000, "Listener isn't called") {
       listenerCalled
@@ -73,7 +76,7 @@ class JpsProjectLoadingListenerTest {
   fun `test listener right after project is loaded`() {
     val projectData = prepareProject()
 
-    val project = loadProject(projectData.projectDir)
+    val project = runBlocking { loadProject(projectData.projectDir) }
     waitAndAssert(1_000, "Project is not loaded") {
       (JpsProjectLoadingManager.getInstance(project) as JpsProjectLoadingManagerImpl).isProjectLoaded()
     }
@@ -100,7 +103,7 @@ class JpsProjectLoadingListenerTest {
     return projectData
   }
 
-  private fun loadProject(projectDir: File): Project {
+  private suspend fun loadProject(projectDir: File): Project {
     val project = PlatformTestUtil.loadAndOpenProject(projectDir.toPath(), disposableRule.disposable)
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)

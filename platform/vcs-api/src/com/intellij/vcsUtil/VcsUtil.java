@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
@@ -41,7 +42,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 @ApiStatus.NonExtendable
@@ -475,6 +477,85 @@ public class VcsUtil {
     return file.getName() + " (" + FileUtil.getLocationRelativeToUserHome(file.getParent()) + ")";
   }
 
+  @NlsSafe
+  @NotNull
+  public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
+    VirtualFile projectDir = project.getBaseDir();
+
+    String repositoryPath = root.getPresentableUrl();
+    if (projectDir != null) {
+      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
+      if (relativePath != null) {
+        repositoryPath = relativePath;
+      }
+    }
+
+    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
+  }
+
+  @NotNull
+  public static @NlsSafe String getPresentablePath(@Nullable Project project,
+                                                   @NotNull VirtualFile file,
+                                                   boolean useRelativeRootPaths,
+                                                   boolean acceptEmptyPath) {
+    return getPresentablePath(project, getFilePath(file), useRelativeRootPaths, acceptEmptyPath);
+  }
+
+  @NotNull
+  public static @NlsSafe String getPresentablePath(@Nullable Project project,
+                                                   @NotNull FilePath filePath,
+                                                   boolean useRelativeRootPaths,
+                                                   boolean acceptEmptyPath) {
+    String projectDir = project != null ? project.getBasePath() : null;
+    if (projectDir != null) {
+      if (useRelativeRootPaths) {
+        String relativePath = getRootRelativePath(project, projectDir, filePath, acceptEmptyPath);
+        if (relativePath != null) return toSystemDependentName(relativePath);
+      }
+
+      String path = filePath.getPath();
+      String relativePath = getRelativePathIfSuccessor(projectDir, path);
+      if (relativePath != null) {
+        return toSystemDependentName(VcsBundle.message("label.relative.project.path.presentation", relativePath));
+      }
+    }
+
+    return FileUtil.getLocationRelativeToUserHome(toSystemDependentName(filePath.getPath()));
+  }
+
+  @Nullable
+  @SystemIndependent
+  private static String getRootRelativePath(@NotNull Project project,
+                                            @NotNull String projectBaseDir,
+                                            @NotNull FilePath filePath,
+                                            boolean acceptEmptyPath) {
+    String path = filePath.getPath();
+
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    VirtualFile root = vcsManager.getVcsRootFor(filePath);
+    if (root == null) return null;
+
+    String rootPath = root.getPath();
+
+    VcsRoot[] roots = vcsManager.getAllVcsRoots();
+    if (roots.length == 1) {
+      if (rootPath.equals(path)) return acceptEmptyPath ? "" : root.getName();
+      return getRelativePathIfSuccessor(rootPath, path);
+    }
+
+    if (projectBaseDir.equals(path)) {
+      return root.getName();
+    }
+    String relativePath = getRelativePathIfSuccessor(projectBaseDir, path);
+    if (relativePath == null) return null;
+    return projectBaseDir.equals(rootPath) ? root.getName() + '/' + relativePath : relativePath;
+  }
+
+  @Nullable
+  private static String getRelativePathIfSuccessor(@NotNull String ancestor, @NotNull String path) {
+    return FileUtil.isAncestor(ancestor, path, true) ? FileUtil.getRelativePath(ancestor, path, '/') : null;
+  }
+
   @NotNull
   public static <T> Map<VcsRoot, List<T>> groupByRoots(@NotNull Project project,
                                                        @NotNull Collection<? extends T> items,
@@ -559,11 +640,11 @@ public class VcsUtil {
 
   @NotNull
   public static Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
-    return IgnoredFileContentProvider
-      .IGNORE_FILE_CONTENT_PROVIDER
-      .extensions(project)
-      .map(IgnoredFileContentProvider::getFileName)
-      .collect(Collectors.toSet());
+    Set<String> set = new HashSet<>();
+    for (IgnoredFileContentProvider provider : IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.getExtensionList(project)) {
+      set.add(provider.getFileName());
+    }
+    return set;
   }
 
   @Nls

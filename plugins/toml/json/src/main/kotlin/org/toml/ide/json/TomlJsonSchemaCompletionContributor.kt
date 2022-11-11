@@ -16,6 +16,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
 import com.intellij.util.Consumer
 import com.intellij.util.ThreeState
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
@@ -169,7 +171,7 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
         private fun getIconForType(type: JsonSchemaType?) = when (type) {
             JsonSchemaType._object -> AllIcons.Json.Object
             JsonSchemaType._array -> AllIcons.Json.Array
-            else -> AllIcons.Nodes.Property
+            else -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Property)
         }
     }
 

@@ -7,9 +7,17 @@ import com.intellij.util.xmlb.annotations.Attribute
 
 @State(name = "ProjectId", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))], reportStatistic = false)
 internal class ProjectIdManager : SimplePersistentStateComponent<ProjectIdState>(ProjectIdState()) {
+
   companion object {
-    fun getInstance(project: Project) = project.service<ProjectIdManager>()
+
+    fun getInstance(project: Project): ProjectIdManager = project.service()
   }
+
+  var id: String?
+    get() = state.id
+    set(value) {
+      state.id = value
+    }
 }
 
 internal class ProjectIdState : BaseState() {

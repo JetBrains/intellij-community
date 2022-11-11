@@ -1,4 +1,4 @@
-// "Add tag @throws java.lang.Exception" "true"
+// "Add tag @throws java.lang.Exception" "true-preview"
 public class a {
 /**<caret>
 */

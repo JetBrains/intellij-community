@@ -37,21 +37,21 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
   private volatile String myCachedName;
 
-  public PsiClassImpl(final PsiClassStub stub) {
+  public PsiClassImpl(PsiClassStub<?> stub) {
     this(stub, JavaStubElementTypes.CLASS);
   }
 
-  protected PsiClassImpl(final PsiClassStub stub, final IStubElementType type) {
+  protected PsiClassImpl(PsiClassStub<?> stub, IStubElementType<?,?> type) {
     super(stub, type);
     addTrace(null);
   }
 
-  public PsiClassImpl(final ASTNode node) {
+  public PsiClassImpl(ASTNode node) {
     super(node);
     addTrace(null);
   }
 
-  private void addTrace(@Nullable PsiClassStub stub) {
+  private void addTrace(@Nullable PsiClassStub<?> stub) {
     if (ourTraceStubAstBinding) {
       String creationTrace = "Creation thread: " + Thread.currentThread() + "\n" + DebugUtil.currentStackTrace();
       if (stub != null) {
@@ -91,8 +91,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       return this;
     }
     return CachedValuesManager.getCachedValue(this, () -> {
-      final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
-      final PsiClass result = helper != null ? helper.getOriginalClass(this) : this;
+      JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
+      PsiClass result = helper != null ? helper.getOriginalClass(this) : this;
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
@@ -110,7 +110,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiElement getScope() {
-    final PsiClassStub stub = getStub();
+    PsiClassStub<?> stub = getStub();
     if (stub != null) {
       return stub.getParentStub().getPsi();
     }
@@ -132,7 +132,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   public String getName() {
     String name = myCachedName;
     if (name != null) return name;
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub == null) {
       PsiIdentifier identifier = getNameIdentifier();
       name = identifier == null ? null : identifier.getText();
@@ -146,7 +146,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public String getQualifiedName() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getQualifiedName();
     }
@@ -171,8 +171,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    final PsiModifierList modlist = getModifierList();
-    return modlist != null && modlist.hasModifierProperty(name);
+    PsiModifierList modList = getModifierList();
+    return modList != null && modList.hasModifierProperty(name);
   }
 
   @Override
@@ -223,9 +223,9 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Override
   @Nullable
   public PsiClass getContainingClass() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
-      StubElement parent = stub.getParentStub();
+      StubElement<?> parent = stub.getParentStub();
       return parent instanceof PsiClassStub ? ((PsiClassStub<?>)parent).getPsi() : null;
     }
 
@@ -417,7 +417,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public boolean isInterface() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isInterface();
     }
@@ -428,7 +428,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public boolean isAnnotationType() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isAnnotationType();
     }
@@ -438,23 +438,23 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public boolean isEnum() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isEnum();
     }
 
-    final ASTNode keyword = getNode().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
+    ASTNode keyword = getNode().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
     return keyword != null && keyword.getElementType() == JavaTokenType.ENUM_KEYWORD;
   }
 
   @Override
   public boolean isRecord() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isRecord();
     }
 
-    final ASTNode keyword = getNode().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
+    ASTNode keyword = getNode().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
     return keyword != null && keyword.getElementType() == JavaTokenType.RECORD_KEYWORD;
   }
 
@@ -504,7 +504,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   private boolean isRenameFileOnRenaming() {
-    final PsiElement parent = getParent();
+    PsiElement parent = getParent();
     if (parent instanceof PsiFile) {
       PsiFile file = (PsiFile)parent;
       String fileName = file.getName();
@@ -534,12 +534,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
-  public Icon getElementIcon(final int flags) {
+  public Icon getElementIcon(int flags) {
     return PsiClassImplUtil.getClassIcon(flags, this);
   }
 
   @Override
-  public boolean isEquivalentTo(final PsiElement another) {
+  public boolean isEquivalentTo(PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
   }
 

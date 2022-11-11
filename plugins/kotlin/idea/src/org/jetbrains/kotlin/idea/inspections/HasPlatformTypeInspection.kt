@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.intentions.isFlexibleRecursive
 import org.jetbrains.kotlin.idea.quickfix.getAddExclExclCallFix

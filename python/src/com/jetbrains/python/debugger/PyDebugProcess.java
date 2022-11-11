@@ -14,10 +14,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -541,6 +538,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myWatchesReturnValues;
     }
@@ -813,7 +815,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     synchronized (myFrameCacheObject) {
       //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
       if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
-        XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
+        XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), ProcessDebugger.GROUP_TYPE.DEFAULT);
         // Could be null when the current function is called for a thread that is already dead.
         // In this case a new element shouldn't be added to myStackFrameCache
         if (values == null) {
@@ -824,6 +826,21 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       showFailedTestInfoIfNecessary(frame);
     }
     return applyNewValue(getFrameFromCache(frame), frame.getThreadFrameId());
+  }
+
+  @Override
+  @NotNull
+  public  XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    XValueChildrenList values =  myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), groupType);
+    if (values != null) {
+      PyDebugValue.getAsyncValues(frame, this, values);
+    }
+    else {
+      values = XValueChildrenList.EMPTY;
+    }
+
+    return values;
   }
 
   private void showFailedTestInfoIfNecessary(@NotNull PyStackFrame frame) throws PyDebuggerException {

@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -146,7 +147,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
     final ArrayList<PsiExpression> result = new ArrayList<>();
     for (final PsiElement element : scopeElements) {
       element.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        @Override public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           if (!expression.isQualified() && expression.isReferenceTo(variable)) {
             result.add(expression);

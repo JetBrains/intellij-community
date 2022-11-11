@@ -14,7 +14,7 @@ class ExtensionTest {
   @Test
   fun `access by extension`() {
     val builder = createEmptyBuilder()
-    builder.addEntity(AttachedEntity(MySource, "xyz") {
+    builder.addEntity(AttachedEntity("xyz", MySource) {
       ref = MainEntity("123", MySource)
     })
     val child: AttachedEntity = builder.toSnapshot().entities(MainEntity::class.java).single().child!!
@@ -26,7 +26,7 @@ class ExtensionTest {
 
   @Test
   fun `access by extension without builder`() {
-    val entity = AttachedEntity(MySource, "xyz") {
+    val entity = AttachedEntity("xyz", MySource) {
       ref = MainEntity("123", MySource)
     }
 
@@ -40,7 +40,7 @@ class ExtensionTest {
   fun `access by extension opposite`() {
     val builder = createEmptyBuilder()
     builder.addEntity(MainEntity("123", MySource) {
-      this.child = AttachedEntity(MySource, "xyz")
+      this.child = AttachedEntity("xyz", MySource)
     })
     val child: AttachedEntity = builder.toSnapshot().entities(MainEntity::class.java).single().child!!
     assertEquals("xyz", child.data)
@@ -53,7 +53,7 @@ class ExtensionTest {
   fun `access by extension opposite in builder`() {
     val builder = createEmptyBuilder()
     val entity = MainEntity("123", MySource) {
-      this.child = AttachedEntity(MySource, "xyz")
+      this.child = AttachedEntity("xyz", MySource)
     }
     builder.addEntity(entity)
     assertEquals("xyz", entity.child!!.data)
@@ -63,10 +63,10 @@ class ExtensionTest {
   fun `access by extension opposite in modification`() {
     val builder = createEmptyBuilder()
     val entity = MainEntity("123", MySource) {
-      this.child = AttachedEntity(MySource, "xyz")
+      this.child = AttachedEntity("xyz", MySource)
     }
     builder.addEntity(entity)
-    val anotherChild = AttachedEntity(MySource, "abc")
+    val anotherChild = AttachedEntity("abc", MySource)
 
     builder.modifyEntity(entity) {
       assertEquals("xyz", this.child!!.data)
@@ -80,7 +80,7 @@ class ExtensionTest {
   @Test
   fun `access by extension opposite without builder`() {
     val entity = MainEntity("123", MySource) {
-      this.child = AttachedEntity(MySource, "xyz")
+      this.child = AttachedEntity("xyz", MySource)
     }
 
     assertEquals("123", entity.x)

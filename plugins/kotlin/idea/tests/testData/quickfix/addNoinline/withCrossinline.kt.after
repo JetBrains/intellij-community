@@ -1,0 +1,5 @@
+// "Add 'noinline' to parameter 'lambda'" "true"
+// WITH_STDLIB
+inline fun inlineFun(noinline lambda: () -> Unit) {
+    lambda.toString()
+}

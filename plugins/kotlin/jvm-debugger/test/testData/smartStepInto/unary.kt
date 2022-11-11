@@ -7,3 +7,4 @@ fun foo() {
     <caret>+A() || -A()
 }
 // EXISTS: unaryPlus(), unaryMinus()
+// IGNORE_K2

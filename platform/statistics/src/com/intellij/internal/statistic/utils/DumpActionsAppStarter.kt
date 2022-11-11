@@ -8,9 +8,8 @@ import java.io.File
 import kotlin.system.exitProcess
 
 internal class DumpActionsAppStarter : ApplicationStarter {
-  override fun getCommandName(): String {
-    return "dumpActions"
-  }
+  override val commandName: String
+    get() = "dumpActions"
 
   override fun main(args: List<String>) {
     val outputFile = args.getOrNull(1)!!
@@ -93,14 +92,12 @@ internal class DumpActionsAppStarter : ApplicationStarter {
     }
   }
 
-  data class ActionDescription(val id: String, val name: String, val description: String)
+  private data class ActionDescription(val id: String, val name: String, val description: String)
 
-  private fun appendName(action: AnAction,
-                         parentMenuPath: String?): String {
+  private fun appendName(action: AnAction, parentMenuPath: String?): String {
     val templatePresentation = action.templatePresentation
     if (action is ActionGroup && !action.isPopup) return parentMenuPath ?: ""
     val text = if (templatePresentation.text.isNullOrBlank()) "?" else templatePresentation.text
     return if (parentMenuPath.isNullOrEmpty()) text else "$parentMenuPath | $text"
   }
-
 }

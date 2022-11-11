@@ -44,7 +44,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         final PsiElement body = expression.getBody();
         final PsiExpression psiExpression = isCodeBlockRedundant(body);
         if (psiExpression != null) {

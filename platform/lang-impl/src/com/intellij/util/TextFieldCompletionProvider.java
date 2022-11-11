@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author sergey.evdokimov
  */
-public abstract class TextFieldCompletionProvider implements TextCompletionProvider {
+public abstract class TextFieldCompletionProvider implements TextCompletionProvider, PossiblyDumbAware {
   protected boolean myCaseInsensitivity;
 
   protected TextFieldCompletionProvider() {

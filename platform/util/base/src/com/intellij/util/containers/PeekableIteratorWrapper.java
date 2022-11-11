@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Consider using {@link com.google.common.collect.Iterators#peekingIterator(Iterator)} instead.
+ */
 public class PeekableIteratorWrapper<T> implements PeekableIterator<T> {
   @NotNull private final Iterator<? extends T> myIterator;
   private T myValue = null;

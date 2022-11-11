@@ -83,7 +83,7 @@ public final class ChangeListChooserPanel extends JPanel {
       @Override
       public void init(@Nullable LocalChangeList initial) {
         super.init(initial);
-        myDescriptionTextArea.addFocusListener(new FocusAdapter() {
+        descriptionTextArea.addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
             super.focusLost(e);
@@ -95,7 +95,7 @@ public final class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
-      protected void nameChangedImpl(Project project, LocalChangeList initial) {
+      protected void nameChangedImpl(@Nullable LocalChangeList initial) {
         nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? VcsBundle.message("new.changelist.empty.name.error") : null);
       }
     };
@@ -155,7 +155,7 @@ public final class ChangeListChooserPanel extends JPanel {
 
   public void updateEnabled() {
     if (myProject != null) {
-      myListPanel.nameChangedImpl(myProject, null);
+      myListPanel.nameChangedImpl(null);
     }
   }
 

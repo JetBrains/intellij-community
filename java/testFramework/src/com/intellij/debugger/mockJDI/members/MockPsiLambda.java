@@ -4,10 +4,13 @@ import com.intellij.debugger.mockJDI.MockLocalVariable;
 import com.intellij.debugger.mockJDI.MockMirror;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.intellij.debugger.mockJDI.types.MockType;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,18 +39,12 @@ public class MockPsiLambda extends MockMirror implements Method {
   @Override
   public List<String> argumentTypeNames() {
     // Captured values are not yet supported in mock
-    return StreamEx.of(myPsiLambdaExpression.getParameterList().getParameters())
-      .map(PsiParameter::getType)
-      .map(PsiType::getCanonicalText)
-      .toList();
+    return ContainerUtil.map(myPsiLambdaExpression.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText());
   }
 
   @Override
   public List<Type> argumentTypes() {
-    return StreamEx.of(myPsiLambdaExpression.getParameterList().getParameters())
-      .map(PsiParameter::getType)
-      .<Type>map(t -> MockType.createType(myVirtualMachine, t))
-      .toList();
+    return ContainerUtil.map(myPsiLambdaExpression.getParameterList().getParameters(), parameter -> MockType.createType(myVirtualMachine, parameter.getType()));
   }
 
   @Override
@@ -127,9 +124,7 @@ public class MockPsiLambda extends MockMirror implements Method {
 
   @Override
   public List<LocalVariable> arguments() {
-    return StreamEx.of(myPsiLambdaExpression.getParameterList().getParameters())
-      .<LocalVariable>map(p -> new MockLocalVariable(myVirtualMachine, p))
-      .toList();
+    return ContainerUtil.map(myPsiLambdaExpression.getParameterList().getParameters(), p -> new MockLocalVariable(myVirtualMachine, p));
   }
 
   @Override

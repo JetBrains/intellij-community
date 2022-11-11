@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions.styling;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -40,40 +40,46 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
   @NotNull
   protected abstract Function<Integer, Integer> getLevelFunction();
 
-  protected abstract boolean isEnabledForCaret(@NotNull PsiFile psiFile, @NotNull Caret caret);
+  protected abstract boolean isEnabledForCaret(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd);
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    final Editor editor = MarkdownActionUtil.findMarkdownTextEditor(e);
-    final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+  public void update(@NotNull AnActionEvent event) {
+    final var editor = MarkdownActionUtil.findMarkdownEditor(event);
+    final var psiFile = event.getData(CommonDataKeys.PSI_FILE);
     if (editor == null || psiFile == null || !psiFile.isValid()) {
       return;
     }
-
-    for (Caret caret : ContainerUtil.reverse(editor.getCaretModel().getAllCarets())) {
-      if (!isEnabledForCaret(psiFile, caret)) {
-        e.getPresentation().setEnabled(false);
+    final var carets = SelectionUtil.obtainCaretSnapshots(this, event);
+    if (carets == null) {
+      event.getPresentation().setEnabled(false);
+      return;
+    }
+    for (final var caret: carets) {
+      if (!isEnabledForCaret(psiFile, caret.getSelectionStart(), caret.getSelectionEnd())) {
+        event.getPresentation().setEnabled(false);
         return;
       }
     }
-    e.getPresentation().setEnabled(true);
+    event.getPresentation().setEnabled(true);
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final Editor editor = MarkdownActionUtil.findMarkdownTextEditor(e);
-    final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-    if (editor == null || psiFile == null) {
-      return;
-    }
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
-    WriteCommandAction.runWriteCommandAction(psiFile.getProject(), null, null, () -> {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final var editor = MarkdownActionUtil.findRequiredMarkdownEditor(event);
+    final var psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
+    final var commandName = getTemplatePresentation().getText();
+    WriteCommandAction.runWriteCommandAction(psiFile.getProject(), commandName, null, () -> {
       if (!psiFile.isValid()) {
         return;
       }
 
       for (Caret caret : ContainerUtil.reverse(editor.getCaretModel().getAllCarets())) {
-        PsiElement parent = Objects.requireNonNull(findParent(psiFile, caret));
+        PsiElement parent = Objects.requireNonNull(findParent(psiFile, caret.getSelectionStart(), caret.getSelectionEnd()));
         MarkdownHeader header = PsiTreeUtil.getParentOfType(parent, MarkdownHeader.class, false);
 
         if (header != null && header.isValid()) {
@@ -87,8 +93,8 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
   }
 
   @Nullable
-  protected static PsiElement findParent(@NotNull PsiFile psiFile, @NotNull Caret caret) {
-    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
+  protected static PsiElement findParent(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
+    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, selectionStart, selectionEnd);
     PsiElement first = elements.getFirst();
     PsiElement second = elements.getSecond();
     if (MarkdownPsiUtil.WhiteSpaces.isNewLine(first)) {

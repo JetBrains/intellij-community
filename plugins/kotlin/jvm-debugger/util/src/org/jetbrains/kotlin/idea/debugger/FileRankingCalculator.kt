@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger
 
@@ -11,12 +11,14 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
+import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.LOW
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MAJOR
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MINOR
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.NORMAL
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.ZERO
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinFileSelector
+import org.jetbrains.kotlin.idea.debugger.base.util.safeArguments
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -31,10 +33,10 @@ object FileRankingCalculatorForIde : FileRankingCalculator() {
     override fun analyze(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL)
 }
 
-abstract class FileRankingCalculator(private val checkClassFqName: Boolean = true) {
+abstract class FileRankingCalculator(private val checkClassFqName: Boolean = true) : KotlinFileSelector {
     abstract fun analyze(element: KtElement): BindingContext
 
-    fun findMostAppropriateSource(files: Collection<KtFile>, location: Location): KtFile {
+    override fun chooseMostApplicableFile(files: List<KtFile>, location: Location): KtFile {
         val fileWithRankings: Map<KtFile, Int> = rankFiles(files, location)
         val fileWithMaxScore = fileWithRankings.maxByOrNull { it.value }!!
         return fileWithMaxScore.key

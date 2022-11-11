@@ -6,8 +6,8 @@ package org.jetbrains.kotlin.test
 
 import com.intellij.testFramework.TestDataFile
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.jps.build.withSystemProperty
 import org.jetbrains.kotlin.test.util.KtTestUtil
@@ -32,8 +32,8 @@ object KotlinTestUtils {
 
     @JvmStatic
     fun runTest(test: DoTest, testCase: TestCase, @TestDataFile testDataFile: String) {
-        KotlinArtifacts.instance.kotlincDirectory // to initialize dist
-        withSystemProperty("jps.testData.js-ir-runtime", AdditionalKotlinArtifacts.jsIrRuntimeDir.absolutePath) {
+        KotlinPluginLayout.kotlinc // to initialize dist
+        withSystemProperty("jps.testData.js-ir-runtime", TestKotlinArtifacts.jsIrRuntimeDir.absolutePath) {
             KotlinTestUtils.runTest(test, testCase, testDataFile)
         }
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,9 +34,9 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
   public FileChangedNotificationProvider() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
 
-    connection.subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
+    connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
       @Override
-      public void onFrameActivated() {
+      public void applicationActivated(@NotNull IdeFrame ideFrame) {
         if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
           return;
         }
@@ -105,7 +107,7 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
 
   @NotNull
   private static EditorNotificationPanel createPanel(@NotNull final VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
+    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info);
     panel.setText(IdeBundle.message("file.changed.externally.message"));
     panel.createActionLabel(IdeBundle.message("file.changed.externally.reload"), () -> {
       if (!project.isDisposed()) {

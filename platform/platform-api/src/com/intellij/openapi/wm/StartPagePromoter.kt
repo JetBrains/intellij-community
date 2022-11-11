@@ -12,5 +12,5 @@ interface StartPagePromoter {
     val START_PAGE_PROMOTER_EP = ExtensionPointName<StartPagePromoter>("com.intellij.startPagePromoter")
   }
 
-  fun getPromotionForInitialState(): JPanel?
+  fun getPromotion(isEmptyState: Boolean): JPanel?
 }

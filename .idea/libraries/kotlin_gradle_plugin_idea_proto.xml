@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="kotlin-gradle-plugin-idea-proto" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:1.7.20-dev-547" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.7.20-dev-547/kotlin-gradle-plugin-idea-proto-1.7.20-dev-547.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

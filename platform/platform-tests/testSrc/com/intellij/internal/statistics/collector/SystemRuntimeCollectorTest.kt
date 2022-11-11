@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.collector
 
 import com.intellij.internal.statistic.collectors.fus.os.SystemRuntimeCollector
@@ -8,9 +8,10 @@ import org.junit.Test
 
 class SystemRuntimeCollectorTest : BareTestFixtureTestCase() {
   @Test fun smoke() {
-    val metrics = SystemRuntimeCollector().metrics.asSequence().map { it.eventId to it.data.build() }.toList()
-    fun metric(list: List<Pair<String, Map<String, Any>>>, id: String) =
-      list.find { it.first == id }?.second ?: throw AssertionError("No '${id}' in ${list.map { it.first }}")
+    val metrics = SystemRuntimeCollector().getMetrics().map { it.eventId to it.data.build() }
+    fun metric(list: List<Pair<String, Map<String, Any>>>, id: String): Map<String, Any> {
+      return list.find { it.first == id }?.second ?: throw AssertionError("No '${id}' in ${list.map { it.first }}")
+    }
 
     val cores = metric(metrics, "cores")
     assertThat(cores["value"]).isIn(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)

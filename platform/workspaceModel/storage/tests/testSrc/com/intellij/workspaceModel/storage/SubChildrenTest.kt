@@ -13,18 +13,18 @@ class SubChildrenTest {
   fun `parent with child`() {
     val entity = ParentSubEntity("ParentData", MySource) {
       child = ChildSubEntity(MySource) {
-        child = ChildSubSubEntity(MySource, "ChildData")
+        child = ChildSubSubEntity("ChildData", MySource)
       }
     }
 
-    assertEquals("ChildData", entity.child.child.childData)
+    assertEquals("ChildData", entity.child?.child?.childData)
   }
 
   @Test
   fun `parent with child in builder`() {
     val entity = ParentSubEntity("ParentData", MySource) {
       child = ChildSubEntity(MySource) {
-        child = ChildSubSubEntity(MySource, "ChildData")
+        child = ChildSubSubEntity("ChildData", MySource)
       }
     }
 
@@ -32,14 +32,14 @@ class SubChildrenTest {
     builder.addEntity(entity)
 
     val parentEntity = builder.entities(ParentSubEntity::class.java).single()
-    assertEquals("ChildData", parentEntity.child.child.childData)
+    assertEquals("ChildData", parentEntity.child?.child?.childData)
   }
 
   @Test
   fun `parent with child in builder and accessing`() {
     val entity = ParentSubEntity("ParentData", MySource) {
       child = ChildSubEntity(MySource) {
-        child = ChildSubSubEntity(MySource, "ChildData")
+        child = ChildSubSubEntity("ChildData", MySource)
       }
     }
 
@@ -47,14 +47,14 @@ class SubChildrenTest {
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
-    assertEquals("ChildData", entity.child.child.childData)
+    assertEquals("ChildData", entity.child?.child?.childData)
   }
 
   @Test
   fun `get parent from child`() {
     val entity = ParentSubEntity("ParentData", MySource) {
       child = ChildSubEntity(MySource) {
-        child = ChildSubSubEntity(MySource, "ChildData")
+        child = ChildSubSubEntity("ChildData", MySource)
       }
     }
 

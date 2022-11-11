@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,22 +28,36 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     TerminalView terminalView = TerminalView.getInstance(project);
     terminalView.initToolWindow((ToolWindowEx)toolWindow);
     TerminalCommandHandlerOptions options = new TerminalCommandHandlerOptions(project);
-    toolWindow.setAdditionalGearActions(
-      new DefaultActionGroup(new DumbAwareToggleAction(TerminalBundle.message("settings.terminal.smart.command.handling")) {
-        @Override
-        public boolean isSelected(@NotNull AnActionEvent e) {
-          return options.getEnabled();
-        }
-
-        @Override
-        public void setSelected(@NotNull AnActionEvent e, boolean state) {
-          options.setEnabled(state);
-        }
-      }));
+    toolWindow.setAdditionalGearActions(new DefaultActionGroup(new SmartCommandExecutionToggleAction(options)));
 
     TerminalArrangementManager terminalArrangementManager = TerminalArrangementManager.getInstance(project);
     terminalView.restoreTabs(terminalArrangementManager.getArrangementState());
     // allow to save tabs after the tabs are restored
     terminalArrangementManager.setToolWindow(toolWindow);
+  }
+
+  private static class SmartCommandExecutionToggleAction extends DumbAwareToggleAction {
+    private final TerminalCommandHandlerOptions myOptions;
+
+    private SmartCommandExecutionToggleAction(TerminalCommandHandlerOptions options) {
+      //noinspection DialogTitleCapitalization
+      super(TerminalBundle.message("settings.terminal.smart.command.handling"));
+      myOptions = options;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myOptions.getEnabled();
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myOptions.setEnabled(state);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 }

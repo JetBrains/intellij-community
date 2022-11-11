@@ -10,8 +10,6 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -81,17 +79,6 @@ public final class UnusedSymbolUtil {
     return EntryPointsManager.getInstance(project).isImplicitWrite(element);
   }
 
-  /**
-   * @deprecated pass inspection's shortName to provide correct inspection description
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
-                                                     @NotNull @NlsContexts.DetailedDescription String message,
-                                                     @NotNull final HighlightInfoType highlightInfoType) {
-    return createUnusedSymbolInfo(element, message, highlightInfoType, null);
-  }
-
   @Nullable
   public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
                                                      @NotNull @NlsContexts.DetailedDescription String message,
@@ -99,7 +86,7 @@ public final class UnusedSymbolUtil {
                                                      @Nullable String shortName) {
     String tooltip;
     if (shortName != null) {
-      tooltip = DaemonTooltipsUtil.getWrappedTooltip(message, shortName, "(" + KeymapUtil.getShortcutsText(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION).getShortcuts()) + ")", true);
+      tooltip = DaemonTooltipsUtil.getWrappedTooltip(message, shortName, true);
     }
     else {
       tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));

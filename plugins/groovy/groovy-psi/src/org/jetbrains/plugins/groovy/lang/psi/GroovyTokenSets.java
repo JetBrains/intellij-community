@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.tree.TokenSet;
@@ -18,7 +18,7 @@ public interface GroovyTokenSets {
     KW_DEF, KW_VAR, KW_DEFAULT, KW_DO, KW_ELSE,
     KW_ENUM, KW_EXTENDS, KW_FALSE, KW_FINALLY,
     KW_FOR, /*goto,*/ KW_IF, KW_IMPLEMENTS,
-    KW_IMPORT, KW_IN, KW_INSTANCEOF, KW_INTERFACE,
+    KW_IMPORT, KW_IN, T_NOT_IN, KW_INSTANCEOF, T_NOT_INSTANCEOF, KW_INTERFACE,
     KW_NEW, KW_NULL, KW_PACKAGE, KW_RETURN,
     KW_SUPER, KW_SWITCH, KW_THIS, KW_THROW,
     KW_THROWS, KW_TRAIT, KW_TRUE, KW_TRY,
@@ -70,7 +70,8 @@ public interface GroovyTokenSets {
     OPERATOR_ASSIGNMENTS
   );
 
-  TokenSet REFERENCE_DOTS = create(T_DOT, T_SAFE_DOT, T_SPREAD_DOT);
+  TokenSet REFERENCE_DOTS = create(T_DOT, T_SAFE_DOT, T_SAFE_CHAIN_DOT, T_SPREAD_DOT);
   TokenSet METHOD_REFERENCE_DOTS = create(T_METHOD_CLOSURE, T_METHOD_REFERENCE);
+  TokenSet SAFE_DOTS = create(T_SAFE_DOT, T_SAFE_CHAIN_DOT);
   TokenSet DOTS = orSet(REFERENCE_DOTS, METHOD_REFERENCE_DOTS);
 }

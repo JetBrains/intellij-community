@@ -18,6 +18,7 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.packageDependencies.DependencyUISettings;
@@ -35,6 +36,10 @@ public class ShowModuleGroupsAction extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS;
+  }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

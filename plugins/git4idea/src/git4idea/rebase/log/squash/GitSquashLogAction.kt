@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.squash
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,13 +10,13 @@ import git4idea.rebase.log.*
 
 internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
   override fun update(e: AnActionEvent, commitEditingData: MultipleCommitEditingData) {
-    if (commitEditingData.selectedCommitList.size < 2) {
+    if (commitEditingData.selection.size < 2) {
       e.presentation.isEnabledAndVisible = false
     }
   }
 
   override fun actionPerformedAfterChecks(commitEditingData: MultipleCommitEditingData) {
-    val selectedCommitDetails = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selectedCommitList)
+    val selectedCommitDetails = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selection)
     val dialog = GitNewCommitMessageActionDialog(
       commitEditingData,
       originMessage = selectedCommitDetails.joinToString("\n".repeat(3)) { it.fullMessage },

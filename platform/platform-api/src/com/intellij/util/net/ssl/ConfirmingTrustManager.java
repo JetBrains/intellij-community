@@ -32,8 +32,6 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -108,7 +106,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         Arrays.stream(x509TrustManager.getAcceptedIssuers())
         .map(certificate -> certificate.getSubjectX500Principal().toString())
         .sorted()
-        .collect(Collectors.toList());
+        .toList();
       LOG.debug("Accepted trusted certificate roots from the system: \n" + StringUtil.join(acceptedRoots, "\n"));
 
       return x509TrustManager;
@@ -258,7 +256,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         acceptLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
       LOG.info(acceptLogMessage);
-      accepted = CertificateManager.showAcceptDialog(() -> {
+      accepted = CertificateManager.Companion.showAcceptDialog(() -> {
         // TODO may be another kind of warning, if default trust store is missing
         return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, parameters.myCertificateDetails);
       });

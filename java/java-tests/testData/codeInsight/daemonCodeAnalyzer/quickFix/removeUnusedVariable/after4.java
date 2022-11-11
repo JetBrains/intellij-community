@@ -1,4 +1,4 @@
-// "Remove field 'i'" "true"
+// "Remove field 'i'" "true-preview"
 import java.io.*;
 
 class a {

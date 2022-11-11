@@ -2,9 +2,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +18,15 @@ public class LightTypeParameterBuilder extends LightPsiClassBuilder implements P
     myIndex = index;
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTypeParameter(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   @Nullable
   @Override
   public PsiTypeParameterListOwner getOwner() {

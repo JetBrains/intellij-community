@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.refactoring.replaceWithCopyWithResolveCheck
@@ -25,6 +25,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return lambdaExpressionVisitor(fun(lambdaExpression: KtLambdaExpression) {
@@ -33,7 +35,7 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
             val parameters = functionLiteral.valueParameters
             val singleParameter = parameters.singleOrNull()
             if (singleParameter?.typeReference != null) return
-            if (parameters.isNotEmpty() && singleParameter?.isSingleUnderscore != true && singleParameter?.name != "it") {
+            if (parameters.isNotEmpty() && singleParameter?.name != "it") {
                 return
             }
 
@@ -68,7 +70,7 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
                     functionLiteral,
                     TextRange((singleParameter?.startOffset ?: arrow.startOffset) - startOffset, arrow.endOffset - startOffset),
                     KotlinBundle.message("redundant.lambda.arrow"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                     isOnTheFly,
                     DeleteFix()
                 )

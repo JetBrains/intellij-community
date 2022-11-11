@@ -144,7 +144,7 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
   @Override
   public Object getData(@NotNull @NonNls final String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId)) {
-      return myChanges.toArray(new Change[0]);
+      return myChanges.toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (VcsDataKeys.VCS.is(dataId)) {
       AbstractVcs vcs = myChangeList.getVcs();

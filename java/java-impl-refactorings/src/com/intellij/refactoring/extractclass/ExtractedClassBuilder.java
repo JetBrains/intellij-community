@@ -387,7 +387,7 @@ class ExtractedClassBuilder {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       final JavaResolveResult resolveResult = expression.advancedResolve(true);
       final boolean staticImported = resolveResult.getCurrentFileResolveScope() instanceof PsiImportStaticStatement;
       final PsiElement qualifier = expression.getQualifier();
@@ -441,7 +441,7 @@ class ExtractedClassBuilder {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       PsiExpression lhs = expression.getLExpression();
       final PsiExpression rhs = expression.getRExpression();
 
@@ -484,7 +484,7 @@ class ExtractedClassBuilder {
 
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       PsiExpression operand = expression.getOperand();
       final IElementType tokenType = expression.getOperationSign().getTokenType();
       if (isBackpointerReference(operand) && (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS))) {
@@ -527,14 +527,14 @@ class ExtractedClassBuilder {
 
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       out.append(backPointerName);
     }
 
 
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       final PsiReferenceExpression expression = call.getMethodExpression();
       final JavaResolveResult resolveResult = expression.advancedResolve(false);
       final PsiElement qualifier = expression.getQualifier();
@@ -567,7 +567,7 @@ class ExtractedClassBuilder {
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       final String referenceText = reference.getCanonicalText();
       out.append(referenceText);
     }

@@ -29,7 +29,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         // Avoid method resolve if no argument is a candidate for obvious non-null warning
         // (checking this is easier than resolving and calls without arguments are excluded at all)

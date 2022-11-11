@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,16 +14,13 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarWidgetFactory {
-  @NotNull
   private final Project myProject;
-  @NotNull
-  private final StatusBarWidgetProvider myProvider;
+  @SuppressWarnings("deprecation") private final StatusBarWidgetProvider myProvider;
 
   private boolean widgetWasCreated;
-  @Nullable
-  private StatusBarWidget myWidget;
+  private @Nullable StatusBarWidget myWidget;
 
-  public StatusBarWidgetProviderToFactoryAdapter(@NotNull Project project, @NotNull StatusBarWidgetProvider provider) {
+  public StatusBarWidgetProviderToFactoryAdapter(@NotNull Project project, @SuppressWarnings("deprecation") @NotNull StatusBarWidgetProvider provider) {
     myProject = project;
     myProvider = provider;
   }
@@ -35,7 +31,6 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
     return widget != null ? widget.ID() : myProvider.getClass().getName();
   }
 
-  @Nls
   @Override
   public @NotNull String getDisplayName() {
     StatusBarWidget widget = getWidget();
@@ -56,10 +51,7 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   @Override
   public boolean isAvailable(@NotNull Project project) {
     IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
-    if (frame == null || !myProvider.isCompatibleWith(frame)) {
-      return false;
-    }
-    return getWidget() != null;
+    return frame != null && myProvider.isCompatibleWith(frame) && getWidget() != null;
   }
 
   @Override
@@ -77,13 +69,11 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
     return Objects.requireNonNull(getWidget());
   }
 
-  @Nullable
-  private StatusBarWidget getWidget() {
+  private @Nullable StatusBarWidget getWidget() {
     if (!widgetWasCreated) {
       myWidget = myProvider.getWidget(myProject);
       widgetWasCreated = true;
     }
-
     return myWidget;
   }
 

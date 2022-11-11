@@ -83,7 +83,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public Element writeTextWithImports(TextWithImports text) {
     Element element = new Element("TextWithImports");
 
@@ -93,7 +92,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public TextWithImports readTextWithImports(Element element) {
     LOG.assertTrue("TextWithImports".equals(element.getName()));
 
@@ -227,8 +225,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public static void logError(Throwable e) {
-    if (e instanceof VMDisconnectedException) {
-      throw (VMDisconnectedException)e;
+    if (e instanceof VMDisconnectedException || e instanceof ProcessCanceledException) {
+      throw (RuntimeException)e;
     }
     LOG.error(e);
   }

@@ -43,7 +43,7 @@ public class NonSerializableObjectBoundToHttpSessionInspection
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression methodCallExpression) {
+      @NotNull PsiMethodCallExpression methodCallExpression) {
       super.visitMethodCallExpression(methodCallExpression);
       if (!MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
                                                 "javax.servlet.http.HttpSession", PsiType.VOID,

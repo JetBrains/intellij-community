@@ -645,6 +645,7 @@ interface UastApiTestBase : UastPluginSelection {
         })
         TestCase.assertEquals(
             """
+                <init>() -> typeArguments: [PsiType:T]
                 getGenericSuperclass() -> typeArguments: []
                 getActualTypeArguments() -> typeArguments: []
                 first() -> typeArguments: []

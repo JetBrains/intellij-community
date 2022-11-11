@@ -746,6 +746,11 @@ final class DocRenderer implements CustomFoldRegionRenderer {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       String text = myPane == null ? null : myPane.getSelectedText();
       if (!StringUtil.isEmpty(text)) {

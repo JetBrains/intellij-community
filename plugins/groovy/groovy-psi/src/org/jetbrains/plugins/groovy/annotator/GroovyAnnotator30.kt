@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator
 
@@ -9,7 +9,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.annotator.intentions.AddParenthesisToLambdaParameterAction
+import org.jetbrains.plugins.groovy.annotator.intentions.AddParenthesesToLambdaParameterIntention
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
@@ -60,7 +60,7 @@ class GroovyAnnotator30(private val holder: AnnotationHolder) : GroovyElementVis
     }
 
     holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("illegal.single.argument.lambda")).range(parameterList)
-      .withFix(AddParenthesisToLambdaParameterAction(lambda))
+      .withFix(AddParenthesesToLambdaParameterIntention(lambda))
       .create()
   }
 }

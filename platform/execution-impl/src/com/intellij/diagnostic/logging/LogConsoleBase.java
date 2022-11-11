@@ -174,7 +174,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         public void actionPerformed(@NotNull final AnActionEvent e) {
           var console = ComponentUtil.getParentOfType(ConsoleWithFloatingToolbar.class, getConsoleNotNull().getComponent());
           if (console != null) {
-            console.myFloatingToolbar.getVisibilityController().scheduleShow();
+            console.myFloatingToolbar.scheduleShow();
           }
           getTextFilterComponent().requestFocusInWindow();
         }
@@ -301,10 +301,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
       @Override
       public void mouseMoved(@NotNull Component component, int x, int y) {
-        myFloatingToolbar.getVisibilityController().scheduleShow();
+        myFloatingToolbar.scheduleShow();
         myAlarm.cancelAllRequests();
         if (myFloatingToolbar.getMousePosition() == null && !UIUtil.isFocusAncestor(myFloatingToolbar)) {
-          myAlarm.addRequest(() -> myFloatingToolbar.getVisibilityController().scheduleHide(), 1400);
+          myAlarm.addRequest(() -> myFloatingToolbar.scheduleHide(), 1400);
         }
       }
 
@@ -332,6 +332,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return Toggleable.isSelected(e.getPresentation());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

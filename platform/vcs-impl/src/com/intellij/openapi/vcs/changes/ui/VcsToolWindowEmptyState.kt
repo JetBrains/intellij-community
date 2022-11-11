@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
@@ -111,10 +112,14 @@ private fun createDataContext(project: Project): DataContext {
 
 internal fun hideIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
   fun updateIdLabel() {
-    val hideIdLabel = if (toolWindow.contentManager.isEmpty) null else "true"
+    val hideIdLabel = when {
+      toolWindow.contentManager.contentCount == 1 && ExperimentalUI.isNewUI() -> null
+      toolWindow.contentManager.isEmpty -> null
+      else -> "true"
+    }
     if (toolWindow.component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL) != hideIdLabel) {
       toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideIdLabel)
-      updateContentUi(toolWindow.contentManager)
+      updateContentUi(toolWindow.contentManager, toolWindow.project)
     }
   }
 
@@ -130,8 +135,24 @@ internal fun hideIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
   updateIdLabel()
 }
 
-private fun updateContentUi(contentManager: ContentManager) {
+private fun updateContentUi(contentManager: ContentManager, project: Project) {
   if (contentManager is ContentManagerImpl) {
     (contentManager.ui as? ToolWindowContentUi)?.update()
+  }
+
+  updateCommitTabName(contentManager, project)
+}
+
+private fun updateCommitTabName(contentManager: ContentManager, project: Project) {
+  val singleContent = contentManager.contents.singleOrNull()
+
+  if (ExperimentalUI.isNewUI() && singleContent != null && singleContent.tabName == ChangesViewContentManager.LOCAL_CHANGES) {
+    singleContent.displayName = null
+  }
+  else {
+    contentManager.contents.filter { it.tabName == ChangesViewContentManager.LOCAL_CHANGES }.forEach {
+      val displayName = it.getUserData(CHANGES_VIEW_EXTENSION)?.getDisplayName(project)
+      it.displayName = displayName
+    }
   }
 }

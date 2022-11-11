@@ -6,8 +6,7 @@ internal class C1(
     constructor(
         x: Int,
         y: Int
-    ) : this(x, x + y, 0) {
-    }
+    ) : this(x, x + y, 0)
 }
 
 internal class C2(

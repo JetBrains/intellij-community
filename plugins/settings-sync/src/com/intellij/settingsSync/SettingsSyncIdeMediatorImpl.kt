@@ -20,17 +20,21 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.IconLoader
+import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.ui.JBColor
 import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import com.intellij.util.ui.StartupUiUtil
 import java.io.InputStream
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.io.path.pathString
+import kotlin.random.Random
 
 internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,
@@ -54,27 +58,26 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   override fun applyToIde(snapshot: SettingsSnapshot) {
-    // todo race between this code and SettingsSyncStreamProvider.write which can write other user settings at the same time
-
     // 1. update SettingsSyncSettings first to apply changes in categories
     val settingsSyncFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncSettings.FILE_SPEC}" }
     if (settingsSyncFileState != null) {
-      updateSettings(listOf(settingsSyncFileState))
+      writeStatesToAppConfig(listOf(settingsSyncFileState))
     }
 
-    // 2. update plugins
-    val pluginsFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncPluginManager.FILE_SPEC}" }
-    if (pluginsFileState != null) {
-      val pluginManager = SettingsSyncPluginManager.getInstance()
-      pluginManager.doWithNoUpdateFromIde {
-        updateSettings(listOf(pluginsFileState))
-        pluginManager.pushChangesToIde()
+    if (SystemProperties.getBooleanProperty("settings.sync.test.fail.on.settings.apply", false)) {
+      if (Random.nextBoolean()) {
+        throw IllegalStateException("Applying settings failed")
       }
     }
 
+    // 2. update plugins
+    if (snapshot.plugins != null) {
+      SettingsSyncPluginManager.getInstance().pushChangesToIde(snapshot.plugins)
+    }
+
     // 3. after that update the rest of changed settings
-    val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState && it != pluginsFileState }
-    updateSettings(regularFileStates)
+    val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
+    writeStatesToAppConfig(regularFileStates)
 
     invokeLater { updateUI() }
   }
@@ -87,10 +90,16 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     componentStore.storageManager.removeStreamProvider(this::class.java)
   }
 
-  override fun collectFilesToExportFromSettings(appConfigPath: Path): () -> Collection<Path> {
-    return {
-      getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
-    }
+  override fun getInitialSnapshot(appConfigPath: Path): SettingsSnapshot {
+    val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
+                                                     withExportable = false)
+    val filesToExport = getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
+
+    val fileStates = collectFileStatesFromFiles(filesToExport, appConfigPath)
+    LOG.debug("Collected files for the following fileSpecs: $fileStates")
+    val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIde()
+    LOG.debug("Collected following plugin state: $pluginsState")
+    return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState)
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
@@ -100,11 +109,14 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       rootConfig.resolve(file).write(content, 0, size)
     }
 
-    if (!isSyncEnabled(fileSpec, roamingType)) {
+    val syncEnabled = isSyncEnabled(fileSpec, roamingType)
+    LOG.debug("Sync is ${if (syncEnabled) "enabled" else "disabled"} for $fileSpec ($file)")
+    if (!syncEnabled) {
       return
     }
 
-    val snapshot = SettingsSnapshot(setOf(FileState.Modified(file, content, size)))
+    val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
+                                    setOf(FileState.Modified(file, content, size)), plugins = null)
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
@@ -152,6 +164,10 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
+    if (roamingType == RoamingType.DISABLED) {
+      return false
+    }
+
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     val file = rootConfig.resolve(adjustedSpec)
     if (!file.exists()) {
@@ -163,7 +179,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       deleteOrLogError(file)
     }
     if (deleted) {
-      val snapshot = SettingsSnapshot(setOf(FileState.Deleted(adjustedSpec)))
+      val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
+                                      setOf(FileState.Deleted(adjustedSpec)), plugins = null)
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
     }
     return deleted
@@ -191,7 +208,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
   }
 
-  private fun updateSettings(fileStates: Collection<FileState>) {
+  private fun writeStatesToAppConfig(fileStates: Collection<FileState>) {
     val changedFileSpecs = ArrayList<String>()
     val deletedFileSpecs = ArrayList<String>()
     for (fileState in fileStates) {

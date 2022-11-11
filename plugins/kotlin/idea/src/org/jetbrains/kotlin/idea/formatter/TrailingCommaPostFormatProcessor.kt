@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -12,6 +12,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.utils.trailingCommaAllowedInModule
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.visitor.TrailingCommaVisitor
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper.findInvalidCommas
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper.lineBreakIsMissing
@@ -20,7 +23,6 @@ import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.idea.formatter.trailingComma.addTrailingCommaIsAllowedFor
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespace
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer

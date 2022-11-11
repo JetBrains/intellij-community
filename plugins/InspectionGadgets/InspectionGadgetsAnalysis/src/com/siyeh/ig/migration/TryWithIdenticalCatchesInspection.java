@@ -79,7 +79,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
   private class TryWithIdenticalCatchesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTryStatement(PsiTryStatement statement) {
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
 
       final CatchSectionWrapper[] sections = CatchSectionWrapper.createWrappers(statement);

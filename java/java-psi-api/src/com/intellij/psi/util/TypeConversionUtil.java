@@ -393,14 +393,14 @@ public final class TypeConversionUtil {
 
     sealedClass.getContainingFile().accept(new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitJavaFile(@NotNull PsiJavaFile file) {
         for (PsiClass psiClass : file.getClasses()) {
           visitClass(psiClass);
         }
       }
 
       @Override
-      public void visitClass(PsiClass psiClass) {
+      public void visitClass(@NotNull PsiClass psiClass) {
         for (PsiClass inner : psiClass.getInnerClasses()) {
           visitClass(inner);
         }

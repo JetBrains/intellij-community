@@ -2,11 +2,13 @@
 package com.intellij.ide.commander;
 
 import com.intellij.diff.actions.CompareFilesAction;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.TwoPaneIdeView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
@@ -29,6 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
@@ -264,6 +267,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoBack());
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     ActionUtil.copyFrom(backAction, IdeActions.ACTION_GOTO_BACK);
     group.add(backAction);
@@ -278,6 +286,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoForward());
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     ActionUtil.copyFrom(forwardAction, IdeActions.ACTION_GOTO_FORWARD);
     group.add(forwardAction);
@@ -289,7 +302,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   private CommanderPanel createPanel() {
-    final CommanderPanel panel = new CommanderPanel(project, true, false);
+    final CommanderPanel panel = new CommanderPluginPanel(project, true, false);
 
     panel.getList().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
 
@@ -537,5 +550,52 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   public void selectElement(PsiElement element, boolean selectInActivePanel) {
     CommanderPanel panel = selectInActivePanel ? getActivePanel() : getInactivePanel();
     panel.getBuilder().selectElement(element, PsiUtilCore.getVirtualFile(element));
+  }
+
+  private static class CommanderPluginPanel extends CommanderPanel {
+    @NotNull
+    private final CopyPasteDelegator myCopyPasteDelegator;
+
+    public CommanderPluginPanel(Project project, boolean enablePopupMenu, boolean enableSearchHighlighting) {
+      super(project, enableSearchHighlighting);
+      myCopyPasteDelegator = new CopyPasteDelegator(project, myList);
+
+      myList.addMouseListener(new PopupHandler() {
+        @Override
+        public void invokePopup(final Component comp, final int x, final int y) {
+          CommanderPluginPanel.this.invokePopup(comp, x, y);
+        }
+      });
+    }
+
+    private void invokePopup(final Component c, final int x, final int y) {
+      if (myBuilder == null) return;
+
+      if (myList.getSelectedIndices().length <= 1) {
+        final int popupIndex = myList.locationToIndex(new Point(x, y));
+        if (popupIndex >= 0) {
+          myList.setSelectedIndex(popupIndex);
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
+        }
+      }
+
+      final ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_COMMANDER_POPUP);
+      final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMMANDER_POPUP, group);
+      popupMenu.getComponent().show(c, x, y);
+    }
+
+    @Override
+    public Object getDataImpl(String dataId) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return myCopyPasteDelegator.getCopyProvider();
+      }
+      if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
+        return myCopyPasteDelegator.getCutProvider();
+      }
+      if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
+        return myCopyPasteDelegator.getPasteProvider();
+      }
+      return super.getDataImpl(dataId);
+    }
   }
 }

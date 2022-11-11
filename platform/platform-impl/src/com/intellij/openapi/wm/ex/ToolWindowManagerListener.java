@@ -41,8 +41,6 @@ public interface ToolWindowManagerListener extends EventListener {
     stateChanged(toolWindowManager);
   }
 
-  default void resized(@NotNull ToolWindowManager toolWindowManager) { }
-
   /**
    * Invoked when tool window is shown.
    *
@@ -70,6 +68,6 @@ public interface ToolWindowManagerListener extends EventListener {
   enum ToolWindowManagerEventType {
     ActivateToolWindow, HideToolWindow, RegisterToolWindow, SetContentUiType, SetLayout, SetShowStripeButton,
     SetSideTool, SetSideToolAndAnchor, SetToolWindowAnchor, SetToolWindowAutoHide, SetToolWindowType, SetVisibleOnLargeStripe,
-    ShowToolWindow, UnregisterToolWindow, ToolWindowAvailable, ToolWindowUnavailable
+    ShowToolWindow, UnregisterToolWindow, ToolWindowAvailable, ToolWindowUnavailable, Resized
   }
 }

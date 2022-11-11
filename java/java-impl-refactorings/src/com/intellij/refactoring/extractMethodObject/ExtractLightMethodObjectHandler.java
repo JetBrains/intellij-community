@@ -190,13 +190,13 @@ public final class ExtractLightMethodObjectHandler {
         }
 
         @Override
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
           super.visitMethod(method);
           makePublic(method);
         }
 
         @Override
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
           super.visitField(field);
           makePublic(field);
         }
@@ -279,7 +279,7 @@ public final class ExtractLightMethodObjectHandler {
     PsiMethodCallExpression[] result = new PsiMethodCallExpression[1];
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         if (method.equals(expression.resolveMethod())) {
           if (result[0] != null) {
             LOG.error("To many generated method invocations found");

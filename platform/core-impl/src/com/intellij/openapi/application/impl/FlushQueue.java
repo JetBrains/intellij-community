@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.*;
@@ -19,17 +18,12 @@ import javax.swing.*;
 
 final class FlushQueue {
   private static final Logger LOG = Logger.getInstance(FlushQueue.class);
-  private final Object LOCK = ObjectUtils.sentinel("FlushQueue");
-
-  private ObjectList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //protected by LOCK
-  private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //protected by LOCK
-
-  FlushQueue() {
-  }
+  private ObjectList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //guarded by getQueueLock()
+  private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    synchronized (LOCK) {
+    synchronized (getQueueLock()) {
       FLUSHER_SCHEDULED = false;
     }
 
@@ -41,7 +35,7 @@ final class FlushQueue {
       }
       runNextEvent(info);
       if (System.currentTimeMillis() - startTime > 5) {
-        synchronized (LOCK) {
+        synchronized (getQueueLock()) {
           requestFlush();
         }
         break;
@@ -49,10 +43,14 @@ final class FlushQueue {
     }
   }
 
+  private Object getQueueLock() {
+    return myQueue;
+  }
+
   void push(@NotNull ModalityState modalityState,
             @NotNull Condition<?> expired,
             @NotNull Runnable runnable) {
-    synchronized (LOCK) {
+    synchronized (getQueueLock()) {
       RunnableInfo info = new RunnableInfo(runnable, modalityState, expired);
       myQueue.enqueue(info);
       requestFlush();
@@ -62,7 +60,7 @@ final class FlushQueue {
   @TestOnly
   @NotNull
   Object getQueue() {
-    synchronized (LOCK) {
+    synchronized (getQueueLock()) {
       // used by leak hunter as root, so we must not copy it here to another list
       // to avoid walking over obsolete queue
       return myQueue;
@@ -78,14 +76,14 @@ final class FlushQueue {
 
   @Override
   public String toString() {
-    synchronized (LOCK) {
+    synchronized (getQueueLock()) {
       return "LaterInvocator.FlushQueue size=" + myQueue.size() + "; FLUSHER_SCHEDULED=" + FLUSHER_SCHEDULED;
     }
   }
 
   @Nullable
   private RunnableInfo pollNextEvent() {
-    synchronized (LOCK) {
+    synchronized (getQueueLock()) {
       ModalityState currentModality = LaterInvocator.getCurrentModalityState();
 
       RunnableInfo info;
@@ -135,7 +133,7 @@ final class FlushQueue {
 
   void reincludeSkippedItems() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    synchronized (LOCK) {
+    synchronized (getQueueLock()) {
       int size = mySkippedItems.size();
       if (size != 0) {
         myQueue.bulkEnqueueFirst(mySkippedItems);
@@ -153,16 +151,16 @@ final class FlushQueue {
 
   void purgeExpiredItems() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    synchronized (LOCK) {
+    synchronized (getQueueLock()) {
       reincludeSkippedItems();
       myQueue.removeAll(info -> info.expired.value(null));
       requestFlush();
     }
   }
 
-  private boolean FLUSHER_SCHEDULED; // guarded by LOCK
+  private boolean FLUSHER_SCHEDULED; // guarded by getQueueLock()
 
-  // must be run under LOCK
+  // must be run under getQueueLock()
   private void requestFlush() {
     boolean shouldSchedule = !FLUSHER_SCHEDULED && !myQueue.isEmpty();
     if (shouldSchedule) {

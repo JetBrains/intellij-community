@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
@@ -59,7 +60,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
 
     @Override
-    public void visitCodeBlock(PsiCodeBlock block) {
+    public void visitCodeBlock(@NotNull PsiCodeBlock block) {
       PsiExpressionStatement statement = PsiTreeUtil.getChildOfType(block, PsiExpressionStatement.class);
       while (statement != null) {
         PsiExpression expression = statement.getExpression();
@@ -79,7 +80,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if(SET_OF.test(call)) {
         findDuplicates(call.getArgumentList().getExpressions(), JavaBundle.message("inspection.overwritten.key.set.message"));
       }
@@ -255,6 +256,13 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       if (file == null) return;
       int offset = element.getTextRange().getStartOffset();
       PsiNavigationSupport.getInstance().createNavigatable(project, file.getVirtualFile(), offset).navigate(true);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      NavigatablePsiElement element = tryCast(myPointer.getElement(), NavigatablePsiElement.class);
+      if (element == null) return IntentionPreviewInfo.EMPTY;
+      return IntentionPreviewInfo.navigate(element);
     }
   }
 }

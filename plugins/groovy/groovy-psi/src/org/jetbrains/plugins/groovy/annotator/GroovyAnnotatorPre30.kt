@@ -10,10 +10,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
 import org.jetbrains.plugins.groovy.GroovyBundle.message
-import org.jetbrains.plugins.groovy.annotator.intentions.ConvertLambdaToClosureAction
+import org.jetbrains.plugins.groovy.annotator.intentions.ConvertLambdaToClosureIntention
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
@@ -126,10 +127,15 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
 
   override fun visitReferenceExpression(expression: GrReferenceExpression) {
     super.visitReferenceExpression(expression)
+    highlightIncorrectDot(expression, T_METHOD_REFERENCE, T_METHOD_CLOSURE)
+    highlightIncorrectDot(expression, T_SAFE_CHAIN_DOT, T_SAFE_DOT)
+  }
+
+  private fun highlightIncorrectDot(expression: GrReferenceExpression, wrongDot: IElementType, correctDot: IElementType) {
     val dot = expression.dotToken ?: return
     val tokenType = dot.node.elementType
-    if (tokenType === T_METHOD_REFERENCE) {
-      val fix = ReplaceDotFix(tokenType, T_METHOD_CLOSURE)
+    if (tokenType == wrongDot) {
+      val fix = ReplaceDotFix(tokenType, correctDot)
       val message = message("operator.is.not.supported.in", tokenType)
       val descriptor = InspectionManager.getInstance(expression.project).createProblemDescriptor(
         dot, dot, message,
@@ -149,7 +155,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitLambdaExpression(expression: GrLambdaExpression) {
     super.visitLambdaExpression(expression)
     holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.lambda")).range(expression.arrow)
-      .withFix(ConvertLambdaToClosureAction(expression))
+      .withFix(ConvertLambdaToClosureIntention(expression))
       .create()
   }
 

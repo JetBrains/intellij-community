@@ -64,7 +64,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
   class AccessToNonThreadSafeStaticFieldFromInstanceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (expression.getQualifierExpression() != null) {
         return;

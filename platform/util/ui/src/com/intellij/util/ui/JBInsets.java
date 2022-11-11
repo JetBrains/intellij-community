@@ -58,10 +58,7 @@ public class JBInsets extends Insets {
   public static @NotNull JBInsets create(@NotNull Insets insets) {
     if (insets instanceof JBInsets) {
       JBInsets copy = new JBInsets(0, 0, 0, 0);
-      copy.top = insets.top;
-      copy.left = insets.left;
-      copy.bottom = insets.bottom;
-      copy.right = insets.right;
+      copyInsets(copy, insets);
       return copy;
     }
      return new JBInsets(insets.top, insets.left, insets.bottom, insets.right);
@@ -82,10 +79,7 @@ public class JBInsets extends Insets {
   public static final class JBInsetsUIResource extends JBInsets implements UIResource {
     public JBInsetsUIResource(JBInsets insets) {
       super(0, 0, 0, 0);
-      top = insets.top;
-      left = insets.left;
-      bottom = insets.bottom;
-      right = insets.right;
+      JBInsets.copyInsets(this, insets);
     }
   }
 
@@ -135,5 +129,23 @@ public class JBInsets extends Insets {
       rectangle.width -= insets.left + insets.right;
       rectangle.height -= insets.top + insets.bottom;
     }
+  }
+
+  public static @NotNull JBInsets addInsets(@NotNull Insets @NotNull ... insets) {
+    JBInsets result = emptyInsets();
+    for (Insets inset : insets) {
+      result.top += inset.top;
+      result.left += inset.left;
+      result.bottom += inset.bottom;
+      result.right += inset.right;
+    }
+    return result;
+  }
+
+  private static void copyInsets(@NotNull Insets dest, @NotNull Insets src) {
+    dest.top = src.top;
+    dest.left = src.left;
+    dest.bottom = src.bottom;
+    dest.right = src.right;
   }
 }

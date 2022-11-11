@@ -9,12 +9,12 @@ public interface PsiAnnotationOwner {
   /**
    * Returns the list of annotations syntactically contained in the element.
    *
-   * @return the list of annotations.
+   * @return the array of annotations.
    */
   PsiAnnotation @NotNull [] getAnnotations();
 
   /**
-   * @return the list of annotations which are applicable to this owner
+   * @return the array of annotations which are applicable to this owner
    *         (e.g. type annotations on method belong to its type element, not the method).
    */
   PsiAnnotation @NotNull [] getApplicableAnnotations();

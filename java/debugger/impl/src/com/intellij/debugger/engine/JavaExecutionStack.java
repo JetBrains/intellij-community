@@ -407,7 +407,6 @@ public class JavaExecutionStack extends XExecutionStack {
     ThreadGroupReferenceProxyImpl gr = thread.threadGroupProxy();
     final String grname = (gr != null) ? gr.name() : null;
     final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(thread.status());
-    //noinspection HardCodedStringLiteral
     if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
       return JavaDebuggerBundle.message("label.thread.node.in.group", name, thread.uniqueID(), threadStatusText, grname);
     }

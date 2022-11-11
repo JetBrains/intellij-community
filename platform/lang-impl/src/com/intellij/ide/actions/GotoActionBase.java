@@ -290,6 +290,11 @@ public abstract class GotoActionBase extends AnAction {
         e.getPresentation().setEnabled(historyEnabled());
       }
 
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
       void setText(@NotNull List<String> strings) {
         String text = strings.get(myHistoryIndex);
         if (Objects.equals(text, editor.getText())) {//don't rebuild popup list, it blinks

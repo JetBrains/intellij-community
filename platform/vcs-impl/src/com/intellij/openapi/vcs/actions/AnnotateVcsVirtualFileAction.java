@@ -17,10 +17,8 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -39,14 +37,13 @@ import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Objects;
 
 public class AnnotateVcsVirtualFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateVcsVirtualFileAction.class);
@@ -61,7 +58,7 @@ public class AnnotateVcsVirtualFileAction {
     VirtualFile file = selectedFiles[0];
     if (file.isDirectory() || file.getFileType().isBinary()) return false;
 
-    if (getEditors(project, file, e.getDataContext()).isEmpty()) return false;
+    if (VcsAnnotateUtil.getEditorFor(file, e.getDataContext()) == null) return false;
 
     AnnotationData data = extractData(project, file);
     if (data == null) return false;
@@ -78,24 +75,20 @@ public class AnnotateVcsVirtualFileAction {
   }
 
   private static boolean isAnnotated(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
-    List<Editor> editors = getEditors(project, file, e.getDataContext());
-    return ContainerUtil.exists(editors, editor -> AnnotateToggleAction.hasVcsAnnotations(editor));
+    Editor editor = VcsAnnotateUtil.getEditorFor(file, e.getDataContext());
+    return editor != null && AnnotateToggleAction.hasVcsAnnotations(editor);
   }
 
   private static void perform(AnActionEvent e, boolean selected) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
-    List<Editor> editors = getEditors(project, file, e.getDataContext());
+    Editor editor = Objects.requireNonNull(VcsAnnotateUtil.getEditorFor(file, e.getDataContext()));
 
     if (!selected) {
-      for (Editor editor : editors) {
-        AnnotateToggleAction.closeVcsAnnotations(editor);
-      }
+      AnnotateToggleAction.closeVcsAnnotations(editor);
     }
     else {
-      final Editor editor = editors.get(0);
       doAnnotate(project, editor, file);
     }
   }
@@ -140,7 +133,8 @@ public class AnnotateVcsVirtualFileAction {
       public void onSuccess() {
         if (!exceptionRef.isNull()) {
           LOG.warn(exceptionRef.get());
-          AbstractVcsHelper.getInstance(project).showErrors(Collections.singletonList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
+          AbstractVcsHelper.getInstance(project)
+            .showErrors(Collections.singletonList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
         }
 
         if (!fileAnnotationRef.isNull()) {
@@ -185,24 +179,14 @@ public class AnnotateVcsVirtualFileAction {
     return vcs != null ? new AnnotationData(vcs, filePath, revisionNumber) : null;
   }
 
-  @NotNull
-  private static List<Editor> getEditors(@NotNull Project project, @NotNull VirtualFile file, @NotNull DataContext context) {
-    Editor editor = context.getData(CommonDataKeys.EDITOR);
-    if (editor instanceof EditorEx && file.equals(((EditorEx)editor).getVirtualFile())) {
-      return Collections.singletonList(editor);
-    }
-
-    return VcsAnnotateUtil.getEditors(project, file);
-  }
-
   private static class AnnotationData {
     @NotNull public final AbstractVcs vcs;
     @NotNull public final FilePath filePath;
     @NotNull public final VcsRevisionNumber revisionNumber;
 
     AnnotationData(@NotNull AbstractVcs vcs,
-                          @NotNull FilePath filePath,
-                          @NotNull VcsRevisionNumber revisionNumber) {
+                   @NotNull FilePath filePath,
+                   @NotNull VcsRevisionNumber revisionNumber) {
       this.vcs = vcs;
       this.filePath = filePath;
       this.revisionNumber = revisionNumber;

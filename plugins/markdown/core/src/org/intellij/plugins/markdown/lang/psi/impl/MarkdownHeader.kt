@@ -7,13 +7,17 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.util.children
+import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType
@@ -21,6 +25,11 @@ import org.intellij.plugins.markdown.structureView.MarkdownStructureColors
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/**
+ * Corresponds to both ATX and SETEXT headers.
+ *
+ * Use [contentElement] to agnostically obtain a content element for current header.
+ */
 @Suppress("DEPRECATION")
 class MarkdownHeader: MarkdownHeaderImpl {
   constructor(node: ASTNode): super(node)
@@ -39,13 +48,20 @@ class MarkdownHeader: MarkdownHeaderImpl {
    * Exception: multiple headers with same text won't be adjusted with it's occurence number.
    */
   val anchorText: String?
-    get() = buildAnchorText()
+    get() = obtainAnchorText(this)
+
+  val contentElement: MarkdownHeaderContent?
+    get() = childrenOfType(MarkdownTokenTypeSets.HEADER_CONTENT).filterIsInstance<MarkdownHeaderContent>().firstOrNull()
 
   override fun accept(visitor: PsiElementVisitor) {
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitHeader(this)
       else -> super.accept(visitor)
     }
+  }
+
+  override fun getReferences(): Array<PsiReference?> {
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this)
   }
 
   override fun getPresentation(): ItemPresentation {
@@ -121,11 +137,13 @@ class MarkdownHeader: MarkdownHeaderImpl {
     }
   }
 
-  private fun buildAnchorText(): String? {
+  private fun buildAnchorText(includeStartingHash: Boolean = false): String? {
     val contentHolder = findContentHolder() ?: return null
     val children = contentHolder.children().filter { !it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
     val text = buildString {
-      append("#")
+      if (includeStartingHash) {
+        append("#")
+      }
       var count = 0
       for (child in children) {
         if (count >= 1) {
@@ -139,7 +157,8 @@ class MarkdownHeader: MarkdownHeaderImpl {
         count += 1
       }
     }
-    return text.lowercase().replace(garbageRegex, "").replace(" ", "-")
+    val replaced = text.lowercase().replace(garbageRegex, "").replace(additionalSymbolsRegex, "")
+    return replaced.replace(" ", "-")
   }
 
   private fun StringBuilder.processInlineLink(element: MarkdownInlineLink) {
@@ -154,6 +173,13 @@ class MarkdownHeader: MarkdownHeaderImpl {
   }
 
   companion object {
-    private val garbageRegex = Regex("[^#\\w\\- ]")
+    internal val garbageRegex = Regex("[^\\w\\- ]")
+    internal val additionalSymbolsRegex = Regex("[^-_a-z0-9\\s]")
+
+    fun obtainAnchorText(header: MarkdownHeader): String? {
+      return CachedValuesManager.getCachedValue(header) {
+        CachedValueProvider.Result.create(header.buildAnchorText(false), PsiModificationTracker.MODIFICATION_COUNT)
+      }
+    }
   }
 }

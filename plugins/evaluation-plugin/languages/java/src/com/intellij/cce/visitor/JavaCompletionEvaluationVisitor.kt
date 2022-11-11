@@ -46,9 +46,9 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
     }
   }
 
-  override fun visitPackageStatement(statement: PsiPackageStatement?) = Unit
-  override fun visitImportStatement(statement: PsiImportStatement?) = Unit
-  override fun visitImportStaticStatement(statement: PsiImportStaticStatement?) = Unit
+  override fun visitPackageStatement(statement: PsiPackageStatement) = Unit
+  override fun visitImportStatement(statement: PsiImportStatement) = Unit
+  override fun visitImportStaticStatement(statement: PsiImportStaticStatement) = Unit
   override fun visitComment(comment: PsiComment) = Unit
 
   private fun createTokenProperties(reference: PsiJavaCodeReferenceElement): TokenProperties {

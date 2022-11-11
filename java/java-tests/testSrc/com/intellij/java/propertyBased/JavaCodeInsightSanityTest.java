@@ -71,7 +71,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject());
+    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE);
   }
 
   public void testPreserveComments() {

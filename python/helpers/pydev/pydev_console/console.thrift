@@ -155,7 +155,7 @@ service PythonConsoleBackendService {
   /**
    * Return Frame
    */
-  GetFrameResponse getFrame() throws (1: PythonUnhandledException unhandledException),
+  GetFrameResponse getFrame(1: i32 type) throws (1: PythonUnhandledException unhandledException),
 
   /**
    * Parameter is a full path in a variables tree from the top-level parent to the debug value.

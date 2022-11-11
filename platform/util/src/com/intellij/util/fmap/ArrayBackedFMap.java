@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
+final class ArrayBackedFMap<K, V> implements FMap<K, V> {
 
   static final int ARRAY_THRESHOLD = 8;
 

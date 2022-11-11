@@ -1,7 +1,8 @@
 <component name="libraryTable">
-  <library name="studio-proto">
+  <library name="studio-proto" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:studio-proto:221.0.9.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../bazel-bin/tools/base/bazel/studio-proto.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio-proto/221.0.9.0/studio-proto-221.0.9.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

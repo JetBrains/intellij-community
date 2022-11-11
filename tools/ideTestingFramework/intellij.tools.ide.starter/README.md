@@ -1,6 +1,5 @@
 ### Starter for IntelliJ IDEA based IDE's
 
-
 #### Overview
 
 Starter helps you write tests/code, that will start IntelliJ-based IDE from installer in external process.
@@ -14,7 +13,6 @@ Aside from that, you may find useful functionality as below:
 * reporting of artifacts to CI (optional)
 * run a test with a profiler (not yet included)
 
-
 #### Supported products
 
 * IDEA
@@ -25,7 +23,6 @@ Aside from that, you may find useful functionality as below:
 * PyCharm
 * RubyMine
 * Android Studio
-
 
 ##### How to setup
 
@@ -48,6 +45,7 @@ OR
 `maven { url = "https://www.jetbrains.com/intellij-repository/nightly" }`
 
 But don't forget to change accordingly version of the packages as such:
+
 * nightly -> LATEST-TRUNK-SNAPSHOT
 * snapshots -> LATEST-EAP-SNAPSHOT
 * releases -> semver package version
@@ -80,8 +78,6 @@ compileTestKotlin {
 
 ```
 
-
-
 ##### Run with JUnit4
 
 [Example of simple test, that will download IntelliJ IDEA and start import of gradle project](https://github.com/JetBrains/intellij-ide-starter/tree/master/testSrc/com/intellij/ide/starter/tests/examples/junit4)
@@ -92,10 +88,10 @@ You should create appropriate classes in your tests for JUnit4StarterRule, IdeaC
 
 [Example of simple test, that will download IntelliJ IDEA and start import of gradle project](https://github.com/JetBrains/intellij-ide-starter/tree/master/testSrc/com/intellij/ide/starter/tests/examples/junit5)
 
-
 ##### Available commands from plugins
 
 Dependency `performance-testing-commands`
+
 - waitForSmartMode()
 - flushIndexes()
 - setupProjectSdk(sdkName: String, sdkType: String, sdkPath: String)
@@ -132,9 +128,11 @@ Dependency `performance-testing-commands`
 - ... **TBD**
 
 Dependency `performance-testing-maven-commands`
+
 - importMavenProject()
 
 Dependency `performance-testing-gradle-commands`
+
 - importGradleProject()
 
 #### What behaviour might be extended / modified
@@ -146,6 +144,7 @@ For example, you might write your own implementation of CIServer and provide it 
 NOTE: Be sure to use the same version of Kodein, that is used in `build.gradle` for starter project.
 
 E.g:
+
 ```
 di = DI {
       extend(di)

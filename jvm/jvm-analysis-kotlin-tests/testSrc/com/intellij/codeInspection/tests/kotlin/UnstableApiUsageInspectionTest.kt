@@ -16,7 +16,7 @@ import java.io.File
 @TestDataPath("\$CONTENT_ROOT/testData/codeInspection/unstableApiUsage/experimental")
 class UnstableApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
 
-  private val inspection = UnstableApiUsageInspection()
+  private val inspection = lazy { UnstableApiUsageInspection() }
 
   override fun getBasePath() = "${KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage/experimental"
 
@@ -28,7 +28,7 @@ class UnstableApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(inspection)
+    myFixture.enableInspections(inspection.value)
     // otherwise assertion in PsiFileImpl ("Access to tree elements not allowed") will not pass
     (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter(VirtualFileFilter.NONE)
     configureAnnotatedFiles()
@@ -50,12 +50,12 @@ class UnstableApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test java unstable api usages`() {
-    inspection.myIgnoreInsideImports = false
+    inspection.value.myIgnoreInsideImports = false
     myFixture.testHighlighting("UnstableElementsTest.java")
   }
 
   fun `test java do not report unstable api usages inside import statements`() {
-    inspection.myIgnoreInsideImports = true
+    inspection.value.myIgnoreInsideImports = true
     myFixture.testHighlighting("UnstableElementsIgnoreImportsTest.java")
   }
 
@@ -68,12 +68,12 @@ class UnstableApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test kotlin unstable api usages`() {
-    inspection.myIgnoreInsideImports = false
+    inspection.value.myIgnoreInsideImports = false
     myFixture.testHighlighting("UnstableElementsTest.kt")
   }
 
   fun `test kotlin do not report unstable api usages inside import statements`() {
-    inspection.myIgnoreInsideImports = true
+    inspection.value.myIgnoreInsideImports = true
     myFixture.testHighlighting("UnstableElementsIgnoreImportsTest.kt")
   }
 }
@@ -81,7 +81,7 @@ class UnstableApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
 @TestDataPath("\$CONTENT_ROOT/testData/codeInspection/unstableApiUsage/scheduledForRemoval")
 class ScheduledForRemovalApiUsageTest: JavaCodeInsightFixtureTestCase() {
 
-  private val inspection = UnstableApiUsageInspection()
+  private val inspection = lazy { UnstableApiUsageInspection() }
 
   override fun getBasePath() = "${KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage/scheduledForRemoval"
 
@@ -94,7 +94,7 @@ class ScheduledForRemovalApiUsageTest: JavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     // otherwise assertion in PsiFileImpl ("Access to tree elements not allowed") will not pass
-    myFixture.enableInspections(inspection)
+    myFixture.enableInspections(inspection.value)
     (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter(VirtualFileFilter.NONE)
     configureAnnotatedFiles()
   }
@@ -115,12 +115,12 @@ class ScheduledForRemovalApiUsageTest: JavaCodeInsightFixtureTestCase() {
   }
 
   fun testKotlinInspection() {
-    inspection.myIgnoreInsideImports = false
+    inspection.value.myIgnoreInsideImports = false
     myFixture.testHighlighting("ScheduledForRemovalElementsTest.kt")
   }
 
   fun testJavaInspection() {
-    inspection.myIgnoreInsideImports = false
+    inspection.value.myIgnoreInsideImports = false
     myFixture.testHighlighting(true, false, false, "ScheduledForRemovalElementsTest.java")
   }
 }

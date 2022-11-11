@@ -4,16 +4,28 @@ fun simpleRange(x: Int) = when {
     <warning descr="Condition 'x > 15' is always false">x > 15</warning> -> 15
     else -> 0
 }
+@OptIn(ExperimentalStdlibApi::class)
 fun inRange(obj : Int) {
+    when (obj) {
+        in 0..<10 -> {}
+        10 -> {}
+        <warning descr="'when' branch is never reachable">9</warning> -> {}
+    }
     when (obj) {
         in 0 until 10 -> {}
         10 -> {}
         <warning descr="'when' branch is never reachable">9</warning> -> {}
     }
     when (obj) {
+        in 0..<10 -> {}
+        !in 0..9 -> {}
+        <warning descr="'when' branch is never reachable">20</warning> -> {}
+        else -> {}
+    }
+    when (obj) {
         in 0 until 10 -> {}
-        <warning descr="'when' branch is always reachable">!in 0..9</warning> -> {}
-        20 -> {}
+        !in 0..9 -> {}
+        <warning descr="'when' branch is never reachable">20</warning> -> {}
         else -> {}
     }
     if (obj > 0) {
@@ -125,3 +137,33 @@ fun throwBranch(x: Int) {
 }
 class X {}
 class Y {}
+fun test3(i: Int): Int {
+    val r = when (i) {
+        0 -> "0"
+        1 -> "1"
+        else -> error(0)
+    }
+
+    val l = when (i) {
+        0 -> "0"
+        1 -> "1"
+        <warning descr="'when' branch is never reachable">2</warning> -> "2"
+        else -> error(0)
+    }
+
+    val l1 = when (i) {
+        0 -> "0"
+        1, <warning descr="'when' branch is never reachable">2</warning> -> "1"
+        <warning descr="'when' branch is never reachable">3</warning>, <warning descr="'when' branch is never reachable">4</warning>, <warning descr="'when' branch is never reachable">5</warning> -> "2"
+        else -> error(0)
+    }
+
+    val l2 = when(1) {
+        <warning descr="'when' branch is never reachable">0</warning> -> "0"
+        1 -> "1"
+        <warning descr="'when' branch is never reachable">2</warning> -> "2"
+        else -> "3"
+    }
+
+    return (r + l + l1 + l2).length
+}

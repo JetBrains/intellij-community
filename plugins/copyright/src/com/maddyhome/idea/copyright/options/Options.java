@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- */
 public class Options implements Cloneable {
   public LanguageOptions getOptions(String fileTypeName) {
     LanguageOptions res = options.get(fileTypeName);

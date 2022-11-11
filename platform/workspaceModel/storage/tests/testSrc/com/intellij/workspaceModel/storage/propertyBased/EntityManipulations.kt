@@ -506,7 +506,7 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>> modifyBoolea
   return modifyNotNullProperty(property, Generator.booleans(), env)
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> addOrRemoveInList(property: KMutableProperty1<A, List<T>>,
+private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> addOrRemoveInList(property: KMutableProperty1<A, MutableList<T>>,
                                                                                          takeFrom: Generator<T>,
                                                                                          env: ImperativeCommand.Environment): A.() -> Unit {
   return {
@@ -521,7 +521,7 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> addOrRemo
     }
     else {
       val newElement = env.generateValue(takeFrom, "Adding new element to ${property.name}: %s")
-      property.set(this, value + newElement)
+      value.add(newElement)
     }
   }
 }

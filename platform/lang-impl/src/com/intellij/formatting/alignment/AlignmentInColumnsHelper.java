@@ -137,7 +137,6 @@ public class AlignmentInColumnsHelper {
    *
    * @param baseNode                     base node to use
    * @param config                       current processing config
-   * @param blankLinesToBeKeptOnReformat
    * @return previous node to the given base node that has that same type and is adjacent to it if possible;
    *         {@code null} otherwise
    */
@@ -204,12 +203,11 @@ public class AlignmentInColumnsHelper {
   }
 
   /**
-   * Shorthand for calling {@link #findPreviousNode(AlignmentInColumnsConfig, ASTNode, NodeProcessor)} with the type of
-   * the given node as a target type.
+   * Shorthand for calling {@link #findPreviousNode(AlignmentInColumnsConfig, ASTNode, IElementType, boolean, boolean, NodeProcessor)}
+   * with the type of the given node as a target type.
    *
    * @param config    configuration to use
    * @param from      start node to use
-   * @param processor
    * @return true if the processor has returned true for one of the processed nodes, false otherwise
    */
   private static boolean findPreviousNode(AlignmentInColumnsConfig config, ASTNode from, NodeProcessor processor) {

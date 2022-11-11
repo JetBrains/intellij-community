@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val fnType : suspend () -> Unit = {}
 
 val fnFnType: () -> suspend () -> Unit = {  -> {}}

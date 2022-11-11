@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +30,7 @@ import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
@@ -274,7 +274,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   /**
    * Executes the needed command
    *
-   * @param command
    * @return a Pair with (null, more) or (error, false)
    */
   protected Pair<String, Boolean> exec(final ConsoleCodeFragment command) throws PythonUnhandledException {
@@ -555,18 +554,32 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Nullable
   @Override
   public XValueChildrenList loadFrame(@Nullable XStackFrame contextFrame) throws PyDebuggerException {
+    return loadFrame(() -> {
+      List<DebugValue> frame = getPythonConsoleBackendClient().getFrame(ProcessDebugger.GROUP_TYPE.DEFAULT.ordinal());
+      return parseVars(frame, null, this);
+    });
+  }
+
+  @Override
+  public XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+    return loadFrame(() -> {
+      List<DebugValue> frame = getPythonConsoleBackendClient().getFrame(groupType.ordinal());
+      XValueChildrenList values = parseVars(frame, null, this);
+      PyDebugValue.getAsyncValues(null, this, values);
+      return values;
+    });
+
+  }
+
+  private <T> XValueChildrenList loadFrame(Callable<T> task) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      return executeBackgroundTask(
-        () -> {
-          List<DebugValue> frame = getPythonConsoleBackendClient().getFrame();
-          return parseVars(frame, null, this);
-        },
+      return (XValueChildrenList) executeBackgroundTask(
+        task,
         true,
         createRuntimeMessage(PyBundle.message("console.getting.frame.variables")),
         "Error in loadFrame():"
       );
-    }
-    else {
+    } else {
       return new XValueChildrenList();
     }
   }
@@ -747,7 +760,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    *
    * @param localPort port for pydevd to connect to.
    * @param dbgOpts   additional debugger options (that are normally passed via command line) to apply
-   * @param extraEnvs
    * @throws Exception if connection fails
    */
   public void connectToDebugger(int localPort,
@@ -848,7 +860,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
     @Override
     public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) {
-      if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+      if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
         // notify the CommandQueue service that the command has been completed without exceptions
         // and it must be removed from the queue
         // or clear queue if exception occurred

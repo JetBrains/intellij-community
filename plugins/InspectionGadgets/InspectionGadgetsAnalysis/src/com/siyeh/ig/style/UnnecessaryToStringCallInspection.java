@@ -109,7 +109,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
   private class UnnecessaryToStringCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (!isRedundantToString(call)) return;
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiElement referenceNameElement = methodExpression.getReferenceNameElement();

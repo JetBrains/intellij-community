@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.core.copied
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.psi.BuilderByPattern
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression

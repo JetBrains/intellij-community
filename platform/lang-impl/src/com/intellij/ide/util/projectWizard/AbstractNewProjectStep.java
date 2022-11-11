@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
@@ -22,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -35,6 +37,7 @@ import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.util.PairConsumer;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
@@ -65,7 +69,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     super(Presentation.NULL_STRING, true);
     myCustomization = customization;
     updateActions();
-    EP_NAME.addChangeListener(() -> updateActions(), null);
+    EP_NAME.addChangeListener(this::updateActions, null);
   }
 
   @Override
@@ -102,26 +106,22 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     addAll(myCustomization.getActions(projectGenerators, callback));
   }
 
-  protected void addProjectSpecificAction(@NotNull final ProjectSpecificAction projectSpecificAction) {
+  protected void addProjectSpecificAction(final @NotNull ProjectSpecificAction projectSpecificAction) {
     addAll(projectSpecificAction.getChildren(null));
   }
 
-  protected static abstract class Customization<T> {
-    @NotNull
-    protected ProjectSpecificAction createProjectSpecificAction(@NotNull final AbstractCallback<T> callback) {
+  protected abstract static class Customization<T> {
+    protected @NotNull ProjectSpecificAction createProjectSpecificAction(final @NotNull AbstractCallback<T> callback) {
       DirectoryProjectGenerator<T> emptyProjectGenerator = createEmptyProjectGenerator();
       return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
     }
 
-    @NotNull
-    protected abstract AbstractCallback<T> createCallback();
+    protected abstract @NotNull AbstractCallback<T> createCallback();
 
-    @NotNull
-    protected abstract DirectoryProjectGenerator<T> createEmptyProjectGenerator();
+    protected abstract @NotNull DirectoryProjectGenerator<T> createEmptyProjectGenerator();
 
-    @NotNull
-    protected abstract ProjectSettingsStepBase<T> createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator<T> projectGenerator,
-                                                                                    @NotNull AbstractCallback<T> callback);
+    protected abstract @NotNull ProjectSettingsStepBase<T> createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator<T> projectGenerator,
+                                                                                             @NotNull AbstractCallback<T> callback);
 
     protected @NotNull List<DirectoryProjectGenerator<?>> getProjectGenerators() {
       return EP_NAME.getExtensionList();
@@ -188,15 +188,30 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
                                               @NotNull String locationString,
                                               @Nullable DirectoryProjectGenerator<T> generator,
                                               @NotNull T settings) {
-    OpenProjectTask options = OpenProjectTask.build()
-      .withProjectToClose(projectToClose)
-      .asNewProject().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh()
-      .withBeforeOpenCallback(project -> { project.putUserData(CREATED_KEY, true); return true; });
-    return doGenerateProject(projectToClose, locationString, generator, settings, options);
+    OpenProjectTask options = createOpenProjectOptions(projectToClose, null);
+    return doGenerateProject(locationString, generator, settings, options);
   }
 
-  public static <T> Project doGenerateProject(@Nullable Project projectToClose,
-                                              @NotNull String locationString,
+  protected static @NotNull OpenProjectTask createOpenProjectOptions(@Nullable Project projectToClose,
+                                                                     @Nullable Consumer<UserDataHolder> extraUserData) {
+    return OpenProjectTaskKt.OpenProjectTask(builder -> {
+      builder.setProjectToClose(projectToClose);
+      builder.setNewProject(true);
+      builder.setRunConfigurators(true);
+      builder.setProjectCreatedWithWizard(true);
+      builder.setRefreshVfsNeeded(false);
+      builder.withBeforeOpenCallback(project -> {
+        if (extraUserData != null) {
+          extraUserData.accept(project);
+        }
+        project.putUserData(CREATED_KEY, true);
+        return true;
+      });
+      return Unit.INSTANCE;
+    });
+  }
+
+  public static <T> Project doGenerateProject(@NotNull String locationString,
                                               @Nullable DirectoryProjectGenerator<T> generator,
                                               @NotNull T settings,
                                               @NotNull OpenProjectTask options) {
@@ -207,7 +222,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     catch (IOException e) {
       LOG.warn(e);
       String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.toString());
-      Messages.showErrorDialog(projectToClose, message, ActionsBundle.message("action.NewDirectoryProject.title"));
+      Messages.showErrorDialog(options.getProjectToClose(), message, ActionsBundle.message("action.NewDirectoryProject.title"));
       return null;
     }
 
@@ -224,9 +239,9 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       String message = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.text", location.toString());
       String yesText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.create.new");
       String noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
-      int result = Messages.showYesNoDialog(projectToClose, message, title, yesText, noText, Messages.getQuestionIcon());
+      int result = Messages.showYesNoDialog(options.getProjectToClose(), message, title, yesText, noText, Messages.getQuestionIcon());
       if (result == Messages.NO) {
-        return PlatformProjectOpenProcessor.doOpenProject(location, new OpenProjectTask());
+        return PlatformProjectOpenProcessor.doOpenProject(location, OpenProjectTask.build());
       }
     }
 

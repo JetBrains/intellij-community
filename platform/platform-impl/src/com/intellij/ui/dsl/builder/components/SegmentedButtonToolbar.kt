@@ -76,7 +76,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
       g2.paint = getSegmentedButtonBorderPaint(this, true)
       for (component in components) {
-        if ((component as? SegmentedButton)?.isSelected == true) {
+        if ((component as? DeprecatedSegmentedButton)?.isSelected == true) {
           val r = component.bounds
           JBInsets.addTo(r, JBUI.insets(DarculaUIUtil.LW.unscaled.toInt()))
           paintBorder(g2, r)
@@ -93,7 +93,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
                                    place: String,
                                    presentation: Presentation,
                                    minimumSize: Dimension): ActionButton {
-    val result = SegmentedButton(action, presentation, place, minimumSize, spacingConfiguration)
+    val result = DeprecatedSegmentedButton(action, presentation, place, minimumSize, spacingConfiguration)
     result.isEnabled = isEnabled
     return result
   }
@@ -109,7 +109,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
   @ApiStatus.Internal
   internal fun getSelectedOption(): Any? {
     val selectedButton = getSelectedButton()
-    return if (selectedButton == null) null else (selectedButton.action as? SegmentedButtonAction<*>)?.option
+    return if (selectedButton == null) null else (selectedButton.action as? DeprecatedSegmentedButtonAction<*>)?.option
   }
 
   private fun moveSelection(step: Int) {
@@ -121,14 +121,14 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     val selectedIndex = components.indexOf(selectedButton)
     val newSelectedIndex = if (selectedIndex < 0) 0 else (selectedIndex + step).coerceIn(0, components.size - 1)
     if (selectedIndex != newSelectedIndex) {
-      (components.getOrNull(selectedIndex) as? SegmentedButton)?.isSelected = false
-      (components[newSelectedIndex] as? SegmentedButton)?.click()
+      (components.getOrNull(selectedIndex) as? DeprecatedSegmentedButton)?.isSelected = false
+      (components[newSelectedIndex] as? DeprecatedSegmentedButton)?.click()
     }
   }
 
-  private fun getSelectedButton(): SegmentedButton? {
+  private fun getSelectedButton(): DeprecatedSegmentedButton? {
     for (component in components) {
-      if ((component as? SegmentedButton)?.isSelected == true) {
+      if ((component as? DeprecatedSegmentedButton)?.isSelected == true) {
         return component
       }
     }
@@ -137,10 +137,11 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
 }
 
 @ApiStatus.Experimental
-internal class SegmentedButtonAction<T>(val option: T,
-                                        private val property: ObservableMutableProperty<T>,
-                                        @NlsActions.ActionText optionText: String,
-                                        @NlsActions.ActionDescription optionDescription: String? = null)
+@Deprecated("Use Row.segmentedButton")
+internal class DeprecatedSegmentedButtonAction<T>(val option: T,
+                                                  private val property: ObservableMutableProperty<T>,
+                                                  @NlsActions.ActionText optionText: String,
+                                                  @NlsActions.ActionDescription optionDescription: String? = null)
   : ToggleAction(optionText, optionDescription, null), DumbAware {
 
   override fun isSelected(e: AnActionEvent): Boolean {
@@ -152,12 +153,17 @@ internal class SegmentedButtonAction<T>(val option: T,
       property.set(option)
     }
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
-private class SegmentedButton(
+@Deprecated("Use Row.segmentedButton")
+private class DeprecatedSegmentedButton(
   action: AnAction,
   presentation: Presentation,
-  place: String?,
+  place: String,
   minimumSize: Dimension,
   private val spacingConfiguration: SpacingConfiguration
 ) : ActionButtonWithText(action, presentation, place, minimumSize) {

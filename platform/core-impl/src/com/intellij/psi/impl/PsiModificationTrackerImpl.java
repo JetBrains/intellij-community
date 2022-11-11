@@ -152,7 +152,6 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
   }
 
   // used by Kotlin
-  @SuppressWarnings("WeakerAccess")
   @ApiStatus.Experimental
   public void incLanguageModificationCount(@Nullable Language language) {
     if (language == null) return;

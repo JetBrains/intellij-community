@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.training.ift
 
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -73,5 +73,27 @@ class KotlinLearningCourse : LearningCourseBase(KotlinLanguage.INSTANCE.id) {
                 KotlinFileStructureLesson(),
             )
         }
+    )
+
+    override fun getLessonIdToTipsMap(): Map<String, List<String>> = mapOf(
+        // Essential
+        "context.actions" to listOf("ContextActions"),
+        "Actions" to listOf("find_action", "GoToAction"),
+        "Search everywhere" to listOf("SearchEverywhere", "GoToClass", "search_everywhere_general"),
+        "Basic completion" to listOf("CodeCompletion"),
+
+        // EditorBasics
+        "Select" to listOf("smart_selection", "CtrlW"),
+        "Comment line" to listOf("CommentCode"),
+        "Duplicate" to listOf("CtrlD", "DeleteLine"),
+        "Move" to listOf("MoveUpDown"),
+        "Surround and unwrap" to listOf("SurroundWith"),
+
+        // CodeCompletion
+        "Basic completion" to listOf("CodeCompletion"),
+
+        // Navigation
+        "Search everywhere" to listOf("SearchEverywhere", "GoToClass", "search_everywhere_general"),
+        "File structure" to listOf("FileStructurePopup"),
     )
 }

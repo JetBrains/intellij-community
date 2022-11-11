@@ -6,3 +6,4 @@ class Foo {
         var <caret>foo = 1
     }
 }
+// FIR_COMPARISON

@@ -138,6 +138,11 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void update(@NotNull final AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         final int idx = (myWorkingCopiesList == null) ? -1 : myWorkingCopiesList.getSelectedIndex();

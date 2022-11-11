@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
-import com.intellij.application.options.RegistryManager
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.Nls
@@ -16,12 +16,8 @@ interface RunToolbarProcess {
     const val ACTIVE_STATE_BUTTONS_COUNT = 3
 
     @JvmStatic
-    val isAvailable: Boolean
-      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar")
-
-    @JvmStatic
     val isSettingsAvailable: Boolean
-      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.is.settings.available") && isAvailable
+      get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.is.settings.available")
 
     val logNeeded: Boolean
       get() = RegistryManager.getInstance().`is`("ide.widget.toolbar.logging")

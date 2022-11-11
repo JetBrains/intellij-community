@@ -9,11 +9,13 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.EventListener;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -56,5 +58,11 @@ public final class FileTypeIndex {
       }
     }
     return true;
+  }
+
+  public static final Topic<IndexChangeListener> INDEX_CHANGE_TOPIC =
+    new Topic<>(IndexChangeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+  public interface IndexChangeListener extends EventListener {
+    void changedForFileType(@NotNull FileType fileType);
   }
 }

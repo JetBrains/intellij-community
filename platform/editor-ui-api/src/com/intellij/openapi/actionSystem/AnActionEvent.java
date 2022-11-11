@@ -60,6 +60,7 @@ public class AnActionEvent implements PlaceProvider {
                        @JdkConstants.InputEventMask int modifiers,
                        boolean isContextMenuAction,
                        boolean isActionToolbar) {
+    presentation.assertNotTemplatePresentation();
     myInputEvent = inputEvent;
     myActionManager = actionManager;
     myDataContext = dataContext;

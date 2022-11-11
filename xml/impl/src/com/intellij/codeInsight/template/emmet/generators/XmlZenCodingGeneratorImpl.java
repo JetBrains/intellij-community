@@ -119,7 +119,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     root.accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlTag(final XmlTag tag) {
+      public void visitXmlTag(final @NotNull XmlTag tag) {
         if (!isTagClosed(tag)) {
           tagToClose.add(pointerManager.createSmartPsiElementPointer(tag));
         }

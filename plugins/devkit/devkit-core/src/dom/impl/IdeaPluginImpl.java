@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
@@ -24,7 +26,7 @@ public abstract class IdeaPluginImpl implements IdeaPlugin {
   });
 
   @Override
-  public String getPluginId() {
+  public @Nullable @NlsSafe String getPluginId() {
     return myPluginId.getValue();
   }
 

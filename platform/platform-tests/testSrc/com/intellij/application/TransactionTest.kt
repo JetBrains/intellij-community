@@ -46,10 +46,17 @@ class TransactionTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-    log.clear()
-    LaterInvocator.leaveAllModals()
-    super.tearDown()
+    try {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+      log.clear()
+      LaterInvocator.leaveAllModals()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   @Test

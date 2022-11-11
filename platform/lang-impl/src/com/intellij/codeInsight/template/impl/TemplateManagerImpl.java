@@ -59,13 +59,6 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
-
-    TemplateContextType.EP_NAME.addChangeListener(
-      () -> {
-        for (TemplateContextType type : getAllContextTypes()) {
-          type.clearCachedBaseContextType();
-        }
-      }, this);
   }
 
   @Override
@@ -160,7 +153,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }
     Runnable r = () -> {
       if (selectionString != null) {
-        ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.deleteSelectedText(editor));
+        templateState.performWrite(() -> EditorModificationUtilEx.deleteSelectedText(editor));
       }
       else {
         editor.getSelectionModel().removeSelection();

@@ -12,6 +12,9 @@ data class JsonFileProviderIndexStatistics(
   val providerName: String = "",
   val totalNumberOfIndexedFiles: Int = 0,
   val totalNumberOfFilesFullyIndexedByExtensions: Int = 0,
+  /**
+   * It's actually total processing time. Was not renamed due to external usage.
+   */
   val totalIndexingVisibleTime: JsonDuration = JsonDuration(0),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(0),
   val numberOfTooLargeForIndexingFiles: Int = 0,
@@ -31,7 +34,7 @@ data class JsonFileProviderIndexStatistics(
   data class JsonSlowIndexedFile(
     val fileName: String = "",
     val processingTime: JsonDuration = JsonDuration(0),
-    val indexingTime: JsonDuration = JsonDuration(0),
+    val evaluationOfIndexValueChangerTime: JsonDuration = JsonDuration(0),
     val contentLoadingTime: JsonDuration = JsonDuration(0)
   )
 

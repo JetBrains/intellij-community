@@ -90,6 +90,7 @@ interface TargetEnvironmentRequest {
    */
   @Deprecated("Use uploadVolumes")
   val defaultVolume: Volume
+    get() = throw UnsupportedOperationException()
 
   /**
    * @return new, separate, upload-only volume at some unspecified remote location
@@ -107,10 +108,14 @@ interface TargetEnvironmentRequest {
    */
   @Deprecated("Use uploadVolumes")
   fun createUploadRoot(remoteRootPath: String?,
-                       temporary: Boolean): Volume
+                       temporary: Boolean): Volume {
+    throw UnsupportedOperationException()
+  }
 
   @Deprecated("Use downloadVolumes")
-  fun createDownloadRoot(remoteRootPath: String?): DownloadableVolume
+  fun createDownloadRoot(remoteRootPath: String?): DownloadableVolume {
+    throw UnsupportedOperationException()
+  }
 
   /**
    * Creates the requirement to open a port on the target environment.
@@ -122,17 +127,21 @@ interface TargetEnvironmentRequest {
    * that corresponds to the targetPort on target machine.
    */
   @Deprecated("Use targetPortBindings")
-  fun bindTargetPort(targetPort: Int): TargetValue<Int>
+  fun bindTargetPort(targetPort: Int): TargetValue<Int> {
+    throw UnsupportedOperationException()
+  }
 
   /**
    * Creates the requirement to make a service listening on the provided port
    * on the local machine available for the process in the target environment.
    * <p>
    * The returned value contains the host and the port, which the target
-   * process should connect to to access the local service.
+   * process should connect to, to access the local service.
    */
   @Deprecated("Use localPortBindings")
-  fun bindLocalPort(localPort: Int): TargetValue<HostPort>
+  fun bindLocalPort(localPort: Int): TargetValue<HostPort> {
+    throw UnsupportedOperationException()
+  }
 
   @Deprecated("Use TargetEnvironment.UploadVolume")
   interface Volume {

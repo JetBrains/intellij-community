@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -38,14 +38,20 @@ public class UnnecessaryNonCapturingGroupInspection extends LocalInspectionTool 
         return;
       }
       final PsiElement parent = group.getParent();
-      final RegExpAtom atom = getSingleAtom(group.getPattern());
+      final RegExpPattern pattern = group.getPattern();
+      final RegExpAtom atom = getSingleAtom(pattern);
       if (atom != null) {
         if (!(parent instanceof RegExpClosure) || !(atom instanceof RegExpClosure)) {
           registerProblem(group);
         }
       }
       else if (parent instanceof RegExpBranch) {
-        if (hasOneBranch(group.getPattern())) {
+        final RegExpBranch[] branches = pattern.getBranches();
+        if (branches.length == 1) {
+          if (branches[0].getAtoms().length == 0) {
+            // don't warn on empty group because those already get an empty group warning
+            return;
+          }
           registerProblem(group);
         }
         else {
@@ -62,10 +68,6 @@ public class UnnecessaryNonCapturingGroupInspection extends LocalInspectionTool 
                                RegExpBundle.message("inspection.warning.unnecessary.non.capturing.group", group.getText()),
                                new UnnecessaryNonCapturingGroupFix());
     }
-  }
-
-  private static boolean hasOneBranch(RegExpPattern pattern) {
-    return pattern != null && pattern.getBranches().length == 1;
   }
 
   private static RegExpAtom getSingleAtom(RegExpPattern pattern) {

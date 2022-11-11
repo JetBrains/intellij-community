@@ -1,23 +1,39 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
+@file:Suppress("UnusedReceiverParameter") // Used to namespace the functions
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.VersionNameComparator
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
+import org.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 import kotlin.math.sign
 
 /**
- * Determines the upgrade candidate version, if any exists in the [availableVersions] list, for [currentVersion].
- * The main difference from the [highestSensibleVersionByNameOrNull] is that this makes sure whatever candidate
- * it returns, if any, is "higher" than the [currentVersion], not only that it is the one with the highest version
- * name in the list.
+ * Determines the upgrade candidate version, if any exists in the [availableVersions] list, for [currentVersion]. The main difference from the
+ * [highestSensibleVersionByNameOrNull] is that this makes sure whatever candidate it returns, if any, is "higher" than the [currentVersion], not only
+ * that it is the one with the highest version name in the list.
  *
- * If the current version is not a [NormalizedPackageVersion.Semantic], then the function returns the highest
- * semantic version in the [availableVersions] list, if any.
+ * If the current version is not a [NormalizedPackageVersion.Semantic], then the function returns the highest semantic version in the
+ * [availableVersions] list, if any.
  *
- * If the current version is a [NormalizedPackageVersion.Semantic], then the function first tries to find a
- * candidate with the same non-semantic suffix (which may be null/empty). If there is no candidate with the
- * same suffix, it picks one without suffix. If there's no candidate without suffix, then it returns the one
- * with the highest version name (and thus, the highest suffix).
+ * If the current version is a [NormalizedPackageVersion.Semantic], then the function first tries to find a candidate with the same non-semantic
+ * suffix (which may be null/empty). If there is no candidate with the same suffix, it picks one without suffix. If there's no candidate without
+ * suffix, then it returns the one with the highest version name (and thus, the highest suffix).
  *
  * If there's no candidate which satisfies the criteria, the function returns `null`.
  *

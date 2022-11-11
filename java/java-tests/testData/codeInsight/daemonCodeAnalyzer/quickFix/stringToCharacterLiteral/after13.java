@@ -1,4 +1,4 @@
-// "Change "\\" to '\\' (to char literal)" "true"
+// "Change "\\" to '\\' (to char literal)" "true-preview"
 class A {
   void m(char x) {}
 

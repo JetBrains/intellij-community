@@ -19,7 +19,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -98,7 +97,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
         RedundantCollectionOperationHandler handler = HANDLERS.mapFirst(call);
@@ -114,10 +113,6 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
 
     void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call);
-
-    default boolean canPreview() {
-      return true;
-    }
 
     @NotNull
     default String getReplacement() {
@@ -282,11 +277,6 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       else {
         myReplacementMethod = "Arrays.copyOfRange()";
       }
-    }
-
-    @Override
-    public boolean canPreview() {
-      return false; // stores smart pointers
     }
 
     @Override
@@ -628,6 +618,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   }
 
   private static class RedundantCollectionOperationFix implements LocalQuickFix {
+    @SafeFieldForPreview
     private final RedundantCollectionOperationHandler myHandler;
 
     RedundantCollectionOperationFix(RedundantCollectionOperationHandler handler) {
@@ -644,11 +635,6 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     @Override
     public String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.redundant.collection.operation.fix.family.name");
-    }
-
-    @Override
-    public @Nullable LocalQuickFix getFileModifierForPreview(@NotNull PsiFile target) {
-      return myHandler.canPreview() ? this : null;
     }
 
     @Override

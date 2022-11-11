@@ -190,10 +190,7 @@ public class PyOverrideTest extends PyTestCase {
       final String importFilePath = String.format("override/%s_import.py", testName);
       final String resultFilePath = String.format("override/%s_after.py", testName);
 
-      List<PyFile> pyFiles = Arrays.stream(
-          myFixture.configureByFiles(initialFilePath, importFilePath))
-        .map(PyFile.class::cast)
-        .collect(Collectors.toList());
+      List<PyFile> pyFiles = ContainerUtil.map(myFixture.configureByFiles(initialFilePath, importFilePath), PyFile.class::cast);
 
       PyFunction toOverride = pyFiles.get(1).getTopLevelClasses().get(orderOfClassToOverride).getMethods()[0];
       PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(0),

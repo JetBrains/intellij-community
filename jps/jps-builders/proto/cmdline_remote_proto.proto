@@ -83,6 +83,9 @@ message Message {
       required string server_url = 4;
       required int64 decompression_speed = 5;
       required int64 deletion_speed = 6;
+      required bool force_download = 7;
+      required bool disable_download = 8;
+      required int32 max_download_duration = 9;
     }
 
     required Type type = 1;

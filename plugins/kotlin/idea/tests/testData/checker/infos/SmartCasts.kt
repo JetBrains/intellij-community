@@ -1,5 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
-
 <info descr="null" tooltip="null">open</info> class A() {
   fun foo() {
       if (this is B) {
@@ -152,10 +150,10 @@ fun getStringLength(obj : Any) : Char? {
   return <info descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String">obj</info>.get(0) // no cast to kotlin.String is needed
 }
 
-fun toInt(i: Int?): Int = if (i != null) <info descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int">i</info> else 0
+fun toInt(i: Int?): Int = if (i != null) <info>i</info> else 0
 fun illegalWhenBody(a: Any): Int = when(a) {
-    is Int -> <info descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int">a</info>
-    is String -> <error descr="[TYPE_MISMATCH] Type mismatch: inferred type is Any but Int was expected">a</error>
+    is Int -> <info>a</info>
+    is String -> <error>a</error>
     else -> 1
 }
 fun illegalWhenBlock(a: Any): Int {
@@ -264,7 +262,7 @@ fun foo(aa: Any): Int {
 
 fun inForLoop(x: Any?) {
     if (x is Array<*>) {
-        for (i in <info descr="Smart cast to kotlin.Array<*>" tooltip="Smart cast to kotlin.Array<*>">x</info>) {}
+        for (i in <info>x</info>) {}
     }
     for (i in <error descr="[ITERATOR_MISSING] For-loop range must have an 'iterator()' method">x</error>) {}
 }

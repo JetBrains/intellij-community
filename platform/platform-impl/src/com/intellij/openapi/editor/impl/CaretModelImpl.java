@@ -304,10 +304,8 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     Runnable iteration = () -> {
       try {
         List<Caret> sortedCarets = getAllCarets();
-        if (reverseOrder) {
-          Collections.reverse(sortedCarets);
-        }
-        for (Caret caret : sortedCarets) {
+        Iterable<Caret> caretIterable = reverseOrder ? ContainerUtil.iterateBackward(sortedCarets) : sortedCarets;
+        for (Caret caret : caretIterable) {
           myCurrentCaret.set((CaretImpl)caret);
           action.perform(caret);
         }
@@ -579,7 +577,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void onAdded(@NotNull Inlay inlay) {
+  public void onAdded(@NotNull Inlay<?> inlay) {
     if (myEditor.getDocument().isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
     Inlay.Placement placement = inlay.getPlacement();
     if (placement == Inlay.Placement.INLINE) {
@@ -594,7 +592,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void onRemoved(@NotNull Inlay inlay) {
+  public void onRemoved(@NotNull Inlay<?> inlay) {
     if (myEditor.getDocument().isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
     Inlay.Placement placement = inlay.getPlacement();
     if (myEditor.getDocument().isInEventsHandling()) {
@@ -614,7 +612,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+  public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
     if (myEditor.getDocument().isInBulkUpdate() ||
         myEditor.getInlayModel().isInBatchMode() ||
         (changeFlags & (InlayModel.ChangeFlags.WIDTH_CHANGED | InlayModel.ChangeFlags.HEIGHT_CHANGED)) == 0) {

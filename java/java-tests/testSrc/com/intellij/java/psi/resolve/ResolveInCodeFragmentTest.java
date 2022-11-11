@@ -9,6 +9,7 @@ import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightResolveTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
@@ -27,7 +28,7 @@ public class ResolveInCodeFragmentTest extends LightResolveTestCase {
 
     PsiExpression expr = (PsiExpression) fileContent[0];
     expr.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         assertEquals(iRef.resolve(),
                      expression.resolve());
       }

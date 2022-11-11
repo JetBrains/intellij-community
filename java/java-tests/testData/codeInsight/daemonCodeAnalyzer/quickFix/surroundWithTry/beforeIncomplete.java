@@ -1,4 +1,4 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "true-preview"
 class C {
     native boolean foo() throws Exception;
     

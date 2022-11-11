@@ -2,17 +2,19 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +22,23 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   public CreateClassFromUsageFix(PsiJavaCodeReferenceElement refElement, CreateClassKind kind) {
     super(kind, refElement);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiJavaCodeReferenceElement element = getRefElement();
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    element = PsiTreeUtil.findSameElementInCopy(element, file);
+    String superClassName = getSuperClassName(element);
+    PsiClass aClass = myKind.create(JavaPsiFacade.getElementFactory(project), element.getReferenceName());
+    if (StringUtil.isNotEmpty(superClassName) &&
+        (myKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
+        (myKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
+      CreateFromUsageUtils.setupSuperClassReference(aClass, superClassName);
+    }
+    CreateFromUsageBaseFix.setupGenericParameters(aClass, element);
+    CodeStyleManager.getInstance(project).reformat(aClass);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", aClass.getText());
   }
 
   @Override

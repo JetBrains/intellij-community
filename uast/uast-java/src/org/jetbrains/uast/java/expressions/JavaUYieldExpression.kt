@@ -21,6 +21,6 @@ class JavaUYieldExpression(
     get() = null
 
   override val jumpTarget: UElement? by lz {
-    sourcePsi.findEnclosingExpression().takeIf { sourcePsi !== it }?.let { JavaConverter.convertExpression(it, null) }
+    sourcePsi.findEnclosingExpression().takeIf { sourcePsi !== it }?.let { JavaConverter.convertExpression(it, null, UExpression::class.java) }
   }
 }

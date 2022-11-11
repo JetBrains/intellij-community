@@ -155,7 +155,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     InlineMethodProcessor.addInaccessibleMemberConflicts(myClass, usages, collector, result);
     myClass.accept(new JavaRecursiveElementVisitor(){
       @Override
-      public void visitParameter(PsiParameter parameter) {
+      public void visitParameter(@NotNull PsiParameter parameter) {
         super.visitParameter(parameter);
         if (!myClass.isEquivalentTo(PsiUtil.resolveClassInType(parameter.getType()))) return;
 
@@ -179,14 +179,14 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         super.visitNewExpression(expression);
         if (!myClass.isEquivalentTo(PsiUtil.resolveClassInType(expression.getType()))) return;
         result.putValue(expression, JavaRefactoringBundle.message("inline.to.anonymous.no.ctor.calls"));
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();

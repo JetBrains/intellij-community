@@ -59,6 +59,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Resizable Rows", createResizableRows())
     result.addTab("Others", OthersPanel().panel)
     result.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
+    result.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
 
     return result
   }

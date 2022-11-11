@@ -383,7 +383,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
               new CustomLiveTemplateLookupElement(this, template.getKey(), template.getKey(), template.getDescription(),
                                                   !LiveTemplateCompletionContributor.shouldShowAllTemplates(), true) {
                 @Override
-                public void renderElement(LookupElementPresentation presentation) {
+                public void renderElement(@NotNull LookupElementPresentation presentation) {
                   super.renderElement(presentation);
                   presentation.setTailText("\t Emmet abbreviation", true);
                 }

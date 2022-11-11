@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmMultifileClass
 @file:JvmName("Promises")
 package org.jetbrains.concurrency
@@ -18,8 +18,8 @@ import kotlin.coroutines.resumeWithException
  * Whenever the resulting future is cancelled, this promise is cancelled as well
  * (provided that the promise is also an instance of [Future]).
  */
-fun <T> Promise<T>.asCompletableFuture(): CompletableFuture<T> =
-  when {
+fun <T> Promise<T>.asCompletableFuture(): CompletableFuture<T> {
+  return when {
     this is AsyncPromise<T> -> this.f
     this is Future<*> && isDone -> // Fast path if already completed
       try {
@@ -37,6 +37,7 @@ fun <T> Promise<T>.asCompletableFuture(): CompletableFuture<T> =
       }
     }
   }
+}
 
 // Mostly reflects asDeferred/await implementations from 'kotlinx.coroutines.future'.
 
@@ -52,22 +53,23 @@ fun <T> Promise<T>.asCompletableFuture(): CompletableFuture<T> =
 fun <T> Promise<T>.asDeferred(): Deferred<T> = asDeferredInternal()
 
 @Suppress("DeferredIsResult")
-internal fun <T> Promise<T>.asDeferredInternal(): Deferred<T> =
-  CompletableDeferred<T>().also { deferred ->
-    if (this is Future<*> && isDone) { // Fast path if already completed
-      try {
-        deferred.complete(this.getResultOrThrowError())
-      }
-      catch (e: Throwable) {
-        deferred.completeExceptionally(e)
-      }
+internal fun <T> Promise<T>.asDeferredInternal(): Deferred<T> {
+  val deferred = CompletableDeferred<T>()
+  if (this is Future<*> && isDone) { // Fast path if already completed
+    try {
+      deferred.complete(this.getResultOrThrowError())
     }
-    else {
-      onSuccess { deferred.complete(it) }
-      onError { deferred.completeExceptionally(it) }
-      if (this is Future<*>) deferred.invokeOnCompletion { this.cancel(false) }
+    catch (e: Throwable) {
+      deferred.completeExceptionally(e)
     }
   }
+  else {
+    onSuccess { deferred.complete(it) }
+    onError { deferred.completeExceptionally(it) }
+    if (this is Future<*>) deferred.invokeOnCompletion { this.cancel(false) }
+  }
+  return deferred
+}
 
 /**
  * Awaits for completion of the promise without blocking a thread.
@@ -81,8 +83,9 @@ internal fun <T> Promise<T>.asDeferredInternal(): Deferred<T> =
  * If cancelling the given promise is undesired, `promise.asDeferred().await()` should be used instead.
  */
 suspend fun <T> Promise<T>.await(): T = awaitInternal()
-internal suspend fun <T> Promise<T>.awaitInternal(): T =
-  if (this is Future<*> && isDone) { // Fast path if already completed
+
+internal suspend fun <T> Promise<T>.awaitInternal(): T {
+  return if (this is Future<*> && isDone) { // Fast path if already completed
     this.getResultOrThrowError()
   }
   else { // slow path -- suspend
@@ -92,13 +95,14 @@ internal suspend fun <T> Promise<T>.awaitInternal(): T =
       if (this is Future<*>) cont.invokeOnCancellation { this.cancel(false) }
     }
   }
+}
 
-@Throws(Throwable::class)
-private fun <T> Future<*>.getResultOrThrowError(): T =
-  try {
+private fun <T> Future<*>.getResultOrThrowError(): T {
+  return try {
     @Suppress("UNCHECKED_CAST")
     get() as T
   }
   catch (e: ExecutionException) {
     throw e.cause ?: e // unwrap original cause from ExecutionException
   }
+}

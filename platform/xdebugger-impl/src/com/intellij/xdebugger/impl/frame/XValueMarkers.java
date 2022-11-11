@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.xdebugger.frame.XValue;
@@ -12,9 +12,6 @@ import org.jetbrains.concurrency.Promises;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public final class XValueMarkers<V extends XValue, M> {
   private final XValueMarkerProvider<V, M> myProvider;
@@ -50,17 +47,7 @@ public final class XValueMarkers<V extends XValue, M> {
     return myProvider.canMark(valueClass.cast(value));
   }
 
-  @Deprecated
-  public void markValue(@NotNull XValue value, @NotNull ValueMarkup markup) {
-    try {
-      markValueAsync(value, markup).blockingGet(5, TimeUnit.SECONDS);
-    }
-    catch (TimeoutException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Promise<Object> markValueAsync(@NotNull XValue value, @NotNull ValueMarkup markup) {
+  public Promise<Object> markValue(@NotNull XValue value, @NotNull ValueMarkup markup) {
     synchronized (myMarkers) {
       // remove the existing label if any
       myMarkers.entrySet().stream()
@@ -77,17 +64,7 @@ public final class XValueMarkers<V extends XValue, M> {
     });
   }
 
-  @Deprecated
-  public void unmarkValue(@NotNull XValue value) {
-    try {
-      unmarkValueAsync(value).blockingGet(5, TimeUnit.SECONDS);
-    }
-    catch (TimeoutException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Promise<Object> unmarkValueAsync(@NotNull XValue value) {
+  public Promise<Object> unmarkValue(@NotNull XValue value) {
     //noinspection unchecked
     final V v = (V)value;
     M m = myProvider.getMarker(v);

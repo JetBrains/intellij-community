@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.NonNls;
 
-// "Annotate variable 'a' as @NonNls" "true"
+// "Annotate variable 'a' as '@NonNls'" "true-preview"
 class Foo {
   public boolean doTest() {
     @NonNls String a;

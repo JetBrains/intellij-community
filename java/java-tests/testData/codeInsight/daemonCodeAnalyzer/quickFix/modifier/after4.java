@@ -1,4 +1,4 @@
-// "Make 'a' abstract" "true"
+// "Make 'a' abstract" "true-preview"
 import java.io.*;
 
 abstract class <caret>a {

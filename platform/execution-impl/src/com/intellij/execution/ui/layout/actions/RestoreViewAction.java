@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.ui.content.Content;
@@ -31,6 +32,11 @@ public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayo
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     myLayoutSettings.setSelected(state);
   }
@@ -38,7 +44,7 @@ public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayo
   @Override
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setText(myLayoutSettings.getDisplayName());
+    e.getPresentation().setText(myLayoutSettings.getDisplayName(), false);
     e.getPresentation().setEnabled(myLayoutSettings.isEnabled());
   }
 

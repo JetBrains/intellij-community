@@ -14,8 +14,10 @@ import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.ExecutionException
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -76,6 +78,8 @@ class MavenSyncConsole(private val myProject: Project) {
           MavenProjectsManager.getInstance(it).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
         }
       }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
     started = true
     finished = false
@@ -228,15 +232,23 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   private fun MavenProjectProblem.getFilePosition(): FilePosition {
-    val (line, columns) = getPosition() ?: (-1 to -1)
-    return FilePosition(File(path), line, columns)
+    val (line, column) = getPositionFromDescription() ?: getPositionFromPath() ?: (-1 to -1)
+    val pathWithoutPosition = path.substringBeforeLast(":${line + 1}:$column")
+    return FilePosition(File(pathWithoutPosition), line, column)
   }
 
-  private fun MavenProjectProblem.getPosition(): Pair<Int, Int>? {
-    val description = description ?: return null
+  private fun MavenProjectProblem.getPositionFromDescription(): Pair<Int, Int>? {
+    return getPosition(description, Regex("@(\\d+):(\\d+)"))
+  }
+
+  private fun MavenProjectProblem.getPositionFromPath(): Pair<Int, Int>? {
+    return getPosition(path, Regex(":(\\d+):(\\d+)"))
+  }
+
+  private fun MavenProjectProblem.getPosition(source: String?, pattern: Regex): Pair<Int, Int>? {
+    if (source == null) return null
     if (type == MavenProjectProblem.ProblemType.STRUCTURE) {
-      val pattern = Regex("@(\\d+):(\\d+)")
-      val matchResults = pattern.findAll(description)
+      val matchResults = pattern.findAll(source)
       val matchResult = matchResults.lastOrNull() ?: return null
       val (_, line, offset) = matchResult.groupValues
       return line.toInt() - 1 to offset.toInt()
@@ -250,7 +262,14 @@ class MavenSyncConsole(private val myProject: Project) {
     if (started && !finished) {
       MavenLog.LOG.warn(e)
       hasErrors = true
-      mySyncView.onEvent(mySyncId, createMessageEvent(e))
+      val buildIssueException = ExceptionUtil.findCause(e, BuildIssueException::class.java)
+      if (buildIssueException != null) {
+        addBuildIssue(buildIssueException.buildIssue, MessageEvent.Kind.ERROR)
+      }
+      else {
+        mySyncView.onEvent(mySyncId, createMessageEvent(e))
+      }
+
     }
     else {
       this.startImport(progressListener, MavenImportSpec.EXPLICIT_IMPORT)
@@ -282,7 +301,7 @@ class MavenSyncConsole(private val myProject: Project) {
       return ExceptionUtil.getThrowableText(e)
     }
 
-    if(!e.localizedMessage.isNullOrEmpty()) return e.localizedMessage
+    if (!e.localizedMessage.isNullOrEmpty()) return e.localizedMessage
     return if (StringUtil.isEmpty(e.message)) SyncBundle.message("build.event.title.error") else e.message!!
   }
 
@@ -322,7 +341,9 @@ class MavenSyncConsole(private val myProject: Project) {
           override fun getNavigatable(project: Project): Navigatable? = null
         }, MessageEvent.Kind.ERROR))
       }
-    } catch (ignore: Exception){}
+    }
+    catch (ignore: Exception) {
+    }
 
   }
 
@@ -458,7 +479,7 @@ class MavenSyncConsole(private val myProject: Project) {
       }
     }
     catch (e: Exception) {
-      completeTask(mySyncId, taskName, FailureResultImpl(e))
+      MavenProjectsManager.getInstance(myProject).showServerException(e)
       throw e
     }
     finally {

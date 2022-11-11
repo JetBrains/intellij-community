@@ -8,20 +8,19 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayAt
 
-class OpenApplicationFeedbackShower : AppLifecycleListener {
-
+internal class OpenApplicationFeedbackShower : AppLifecycleListener {
   companion object {
-    val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 8, 26)
-    const val MAX_NUMBER_NOTIFICATION_SHOWED = 1
+    private val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 8, 26)
+    private const val MAX_NUMBER_NOTIFICATION_SHOWED = 1
 
-    fun showNotification(project: Project?, forTest: Boolean) {
+    internal fun showNotification(project: Project?, forTest: Boolean) {
       val notification = KotlinRejectersFeedbackNotification()
       notification.addAction(
         NotificationAction.createSimpleExpiring(CommonFeedbackBundle.message("notification.request.feedback.action.respond.text")) {
@@ -50,7 +49,7 @@ class OpenApplicationFeedbackShower : AppLifecycleListener {
         LAST_DATE_COLLECT_FEEDBACK >= Clock.System.todayAt(TimeZone.currentSystemDefault()) &&
         !IdleFeedbackTypeResolver.isFeedbackNotificationDisabled &&
         kotlinRejectersInfoState.numberNotificationShowed < MAX_NUMBER_NOTIFICATION_SHOWED) {
-      val project = ProjectManagerEx.getInstance().openProjects.firstOrNull()
+      val project = ProjectManager.getInstance().openProjects.firstOrNull()
       kotlinRejectersInfoState.numberNotificationShowed += 1
       showNotification(project, false)
     }

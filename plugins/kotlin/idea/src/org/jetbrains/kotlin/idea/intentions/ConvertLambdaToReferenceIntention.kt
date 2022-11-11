@@ -7,22 +7,24 @@ import org.jetbrains.kotlin.builtins.*
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -79,6 +81,9 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             else -> return false
         }
         val context = callableExpression.safeAnalyzeNonSourceRootCode()
+
+        if (explicitReceiver is KtSuperExpression || explicitReceiver?.isReferenceToPackage(context) == true) return false
+
         val calleeDescriptor =
             calleeReferenceExpression.getResolvedCall(context)?.resultingDescriptor as? CallableMemberDescriptor ?: return false
 
@@ -105,34 +110,13 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             if (dispatchReceiverParameter != null && extensionReceiverParameter != null) return false
             dispatchReceiverParameter != null || extensionReceiverParameter != null
         }
-        val explicitReceiverDescriptor = (explicitReceiver as? KtNameReferenceExpression)?.let { context[REFERENCE_TARGET, it] }
-
-        if (!descriptorHasReceiver &&
-            explicitReceiver != null &&
-            explicitReceiverDescriptor !is JavaClassDescriptor &&
-            calleeDescriptor !is ClassConstructorDescriptor
-        ) return false
         val noBoundReferences = !languageVersionSettings.supportsFeature(LanguageFeature.BoundCallableReferences)
         if (noBoundReferences && descriptorHasReceiver && explicitReceiver == null) return false
 
         val callableArgumentsCount = (callableExpression as? KtCallExpression)?.valueArguments?.size ?: 0
-        val enableFunctionReferenceWithDefaultValueAsOtherType =
-            languageVersionSettings.supportsFeature(LanguageFeature.FunctionReferenceWithDefaultValueAsOtherType)
-        if (enableFunctionReferenceWithDefaultValueAsOtherType) {
-            if (calleeDescriptor.valueParameters.size != callableArgumentsCount &&
-                (lambdaExpression.parentValueArgument() == null || calleeDescriptor.valueParameters.none { it.declaresDefaultValue() })
-            ) return false
-        } else {
-            if (calleeDescriptor.valueParameters.size != callableArgumentsCount) return false
-            val lambdaMustReturnUnit =
-                if (lambdaParameterType?.isFunctionType == true) lambdaParameterType.getReturnTypeFromFunctionType().isUnit() else false
-            if (lambdaMustReturnUnit) {
-                calleeDescriptor.returnType.let {
-                    // If Unit required, no references to non-Unit callables
-                    if (it == null || !it.isUnit()) return false
-                }
-            }
-        }
+        if (calleeDescriptor.valueParameters.size != callableArgumentsCount &&
+            (lambdaExpression.parentValueArgument() == null || calleeDescriptor.valueParameters.none { it.declaresDefaultValue() })
+        ) return false
 
         if (!lambdaExpression.isArgument() && calleeDescriptor is FunctionDescriptor && calleeDescriptor.overloadedFunctions().size > 1) {
             val property = lambdaExpression.getStrictParentOfType<KtProperty>()
@@ -147,6 +131,8 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                 it.getResolvedCall(context)?.resultingDescriptor in lambdaValueParameterDescriptors
             }
         ) return false
+
+        val explicitReceiverDescriptor = (explicitReceiver as? KtNameReferenceExpression)?.let { context[REFERENCE_TARGET, it] }
         val lambdaParameterAsExplicitReceiver = when (noBoundReferences) {
             true -> explicitReceiver != null
             false -> explicitReceiverDescriptor != null && explicitReceiverDescriptor == lambdaValueParameterDescriptors.firstOrNull()
@@ -169,7 +155,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             if (lambdaValueParameterDescriptors.size < explicitReceiverShift + callableExpression.valueArguments.size) return false
             val resolvedCall = callableExpression.getResolvedCall(context) ?: return false
             resolvedCall.valueArguments.entries.forEach { (valueParameter, resolvedArgument) ->
-                if (resolvedArgument is DefaultValueArgument && enableFunctionReferenceWithDefaultValueAsOtherType) return@forEach
+                if (resolvedArgument is DefaultValueArgument) return@forEach
                 val argument = resolvedArgument.arguments.singleOrNull() ?: return false
                 if (resolvedArgument is VarargValueArgument && argument.getSpreadElement() == null) return false
                 val argumentExpression = argument.getArgumentExpression() as? KtNameReferenceExpression ?: return false
@@ -178,6 +164,12 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             }
         }
         return true
+    }
+
+    private fun KtExpression.isReferenceToPackage(context: BindingContext): Boolean {
+        val selectorOrThis = (this as? KtQualifiedExpression)?.selectorExpression ?: this
+        val descriptors = selectorOrThis.mainReference?.resolveToDescriptors(context) ?: return false
+        return descriptors.any { it is PackageViewDescriptor }
     }
 
     override fun isApplicableTo(element: KtLambdaExpression): Boolean {

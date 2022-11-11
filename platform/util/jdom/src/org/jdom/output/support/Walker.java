@@ -109,7 +109,7 @@ public interface Walker {
   boolean isAllWhitespace();
 
   /**
-   * Behaves similarly to to a regular Iterator
+   * Behaves similarly to a regular Iterator
    *
    * @return true if there is more content to be processed
    */

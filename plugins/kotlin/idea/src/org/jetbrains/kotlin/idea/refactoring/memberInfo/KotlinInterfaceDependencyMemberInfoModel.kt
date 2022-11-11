@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.refactoring.classMembers.DependencyMemberInfoModel
 import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.classMembers.MemberInfoModel
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.utils.ifEmpty

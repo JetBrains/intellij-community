@@ -18,10 +18,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -250,6 +247,16 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     @Override
+    public boolean isDumbAware() {
+      return true;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public final void update(@NotNull AnActionEvent event) {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       boolean available = proxy != null && available(proxy);
@@ -389,6 +396,11 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       });
 
       getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.TOOLBAR);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

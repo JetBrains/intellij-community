@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -51,8 +51,7 @@ public class CompilerPaths {
   /**
    * @return a directory under IDEA "system" directory where all files related to compiler subsystem are stored (such as compiler caches or generated files)
    */
-  @NotNull
-  public static File getCompilerSystemDirectory(@NotNull Project project) {
+  public static @NotNull File getCompilerSystemDirectory(@NotNull Project project) {
     return ProjectUtil.getProjectCachePath(project, "compiler").toFile();
   }
 
@@ -61,8 +60,7 @@ public class CompilerPaths {
    * @return a directory to which the sources (or test sources depending on the second parameter) should be compiled.
    * Null is returned if output directory is not specified or is not valid
    */
-  @Nullable
-  public static VirtualFile getModuleOutputDirectory(@NotNull Module module, boolean forTestClasses) {
+  public static @Nullable VirtualFile getModuleOutputDirectory(@NotNull Module module, boolean forTestClasses) {
     final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
     if (compilerModuleExtension == null) {
       return null;
@@ -94,8 +92,7 @@ public class CompilerPaths {
    * The same as {@link #getModuleOutputDirectory} but returns String.
    * The method still returns a non-null value if the output path is specified in Settings but does not exist on disk.
    */
-  @Nullable
-  public static String getModuleOutputPath(final Module module, boolean forTestClasses) {
+  public static @Nullable String getModuleOutputPath(Module module, boolean forTestClasses) {
     final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
     if (extension == null) {
       return null;
@@ -125,8 +122,7 @@ public class CompilerPaths {
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
-  @Nullable
-  public static String getAnnotationProcessorsGenerationPath(Module module, boolean forTests) {
+  public static @Nullable String getAnnotationProcessorsGenerationPath(Module module, boolean forTests) {
     final AnnotationProcessingConfiguration config = CompilerConfiguration.getInstance(module.getProject()).getAnnotationProcessingConfiguration(module);
     final String sourceDirName = config.getGeneratedSourcesDirectoryName(forTests);
     if (config.isOutputRelativeToContentRoot()) {

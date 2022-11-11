@@ -5,7 +5,7 @@ import com.intellij.openapi.util.TextRange
 
 sealed class CodeVisionState(val isReady: Boolean, val result: List<Pair<TextRange, CodeVisionEntry>>) {
   companion object{
-    val READY_EMPTY = Ready(emptyList())
+    val READY_EMPTY: Ready = Ready(emptyList())
   }
   class Ready(lenses: List<Pair<TextRange, CodeVisionEntry>>) : CodeVisionState(true, lenses)
   object NotReady : CodeVisionState(false, emptyList())

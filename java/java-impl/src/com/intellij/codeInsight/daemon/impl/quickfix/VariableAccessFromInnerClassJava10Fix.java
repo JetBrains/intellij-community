@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -45,6 +46,11 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     myContext = context;
   }
 
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new VariableAccessFromInnerClassJava10Fix(PsiTreeUtil.findSameElementInCopy(myContext, target));
+  }
+
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
@@ -83,8 +89,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     if (variable == null) return;
     final String variableText = getFieldText(variable);
 
-    PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myContext, PsiLambdaExpression.class);
-    if (lambdaExpression == null) return;
     DeclarationInfo declarationInfo = DeclarationInfo.findExistingAnonymousClass(variable);
 
     if (declarationInfo != null) {
@@ -228,7 +232,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     List<PsiReferenceExpression> references = new SmartList<>();
     outerCodeBlock.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (ExpressionUtils.isReferenceTo(expression, variable)) {
           references.add(expression);

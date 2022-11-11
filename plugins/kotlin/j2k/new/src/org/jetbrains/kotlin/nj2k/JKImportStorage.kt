@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.psi.CommonClassNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
@@ -61,7 +61,7 @@ class JKImportStorage(languageSettings: LanguageVersionSettings) {
         fun isImportNeededForCall(qualifiedExpression: KtQualifiedExpression): Boolean {
             val shortName = qualifiedExpression.getCalleeExpressionIfAny()?.text ?: return true
             if (shortName !in SHORT_NAMES) return true
-            val fqName = qualifiedExpression.selectorExpression?.mainReference?.resolve()?.getKotlinFqName() ?: return true
+            val fqName = qualifiedExpression.selectorExpression?.mainReference?.resolve()?.kotlinFqName ?: return true
             return fqName !in JAVA_TYPE_WRAPPERS_WHICH_HAVE_CONFLICTS_WITH_KOTLIN_ONES
         }
     }

@@ -4,6 +4,8 @@ package com.intellij.codeInspection.varScopeCanBeNarrowed;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
@@ -28,6 +30,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +53,11 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     final Set<PsiField> candidates = new LinkedHashSet<>();
     for (PsiField field : fields) {
       if (!field.isPhysical() || AnnotationUtil.isAnnotated(field, excludeAnnos, 0)) {
+        continue;
+      }
+      if (field.hasModifierProperty(PsiModifier.VOLATILE)) {
+        // Assume that fields marked as volatile can be modified concurrently
+        // (e.g. if the only method where they are changed is called from several threads)
         continue;
       }
       if (field.hasModifierProperty(PsiModifier.PRIVATE) && !(field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL))) {
@@ -88,7 +96,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
           final LocalQuickFix quickFix = SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
             InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
             QuickFixBundle.message("fix.add.special.annotation.family"),
-            EXCLUDE_ANNOS, qualifiedName, field);
+            JavaBundle.message("special.annotations.annotations.list"), EXCLUDE_ANNOS, qualifiedName
+          );
           fixes.add(quickFix);
           return true;
         });
@@ -118,7 +127,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   private static void removeFieldsReferencedFromInitializers(PsiElement aClass, PsiElement root, Set<PsiField> candidates) {
     root.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
 
         if (method.isConstructor()) {
           final PsiCodeBlock body = method.getBody();
@@ -143,24 +152,24 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       @Override
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
         //do not go inside class initializer
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         // do not go inside lambda
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         excludeFieldCandidate(expression);
 
         super.visitReferenceExpression(expression);
       }
 
       @Override
-      public void visitDocTagValue(PsiDocTagValue value) {
+      public void visitDocTagValue(@NotNull PsiDocTagValue value) {
         excludeFieldCandidate(value.getReference());
         super.visitDocTagValue(value);
       }
@@ -190,7 +199,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         super.visitMethod(method);
 
         final PsiCodeBlock body = method.getBody();
@@ -200,7 +209,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
         final PsiElement body = expression.getBody();
         if (body != null) {
@@ -209,7 +218,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       @Override
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
         super.visitClassInitializer(initializer);
         checkCodeBlock(initializer.getBody(), candidates, usedFields, ignoreFieldsUsedInMultipleMethods, ignored);
       }
@@ -362,7 +371,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         super.visitClass(aClass);
         doCheckClass(aClass, holder, EXCLUDE_ANNOS, IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS);
       }
@@ -389,12 +398,10 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     private @IntentionName String determineName(@Nullable PsiElement block) {
       if (block instanceof PsiClassInitializer) return JavaBundle.message("inspection.field.can.be.local.quickfix.initializer");
-
       if (block instanceof PsiMethod) {
         if (((PsiMethod)block).isConstructor()) return JavaBundle.message("inspection.field.can.be.local.quickfix.constructor");
         return JavaBundle.message("inspection.field.can.be.local.quickfix.one.method", ((PsiMethod)block).getName());
       }
-
       return getFamilyName();
     }
 
@@ -402,29 +409,6 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     @Override
     public String getName() {
       return myName;
-    }
-
-    @NotNull
-    @Override
-    protected List<PsiElement> moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
-      final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<>();
-      final List<PsiElement> newDeclarations = new ArrayList<>();
-      final PsiClass containingClass = variable.getContainingClass();
-      if (containingClass == null) return newDeclarations;
-      final PsiClass scope = findVariableScope(containingClass);
-      if (!groupByCodeBlocks(ReferencesSearch.search(variable, new LocalSearchScope(scope)).findAll(), refs)) return newDeclarations;
-
-      PsiElement declaration;
-      for (Collection<PsiReference> psiReferences : refs.values()) {
-        declaration = super.moveDeclaration(project, variable, psiReferences, false);
-        if (declaration != null) newDeclarations.add(declaration);
-      }
-
-      if (!newDeclarations.isEmpty()) {
-        final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
-        deleteSourceVariable(project, variable, lastDeclaration);
-      }
-      return newDeclarations;
     }
 
     @Override
@@ -437,10 +421,43 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     @Override
     protected String suggestLocalName(@NotNull Project project, @NotNull PsiField field, @NotNull PsiCodeBlock scope) {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-
       final String propertyName = styleManager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
       final String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
       return CommonJavaRefactoringUtil.suggestUniqueVariableName(localName, scope, field);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      applyFix(project, previewDescriptor);
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    @NotNull
+    @Override
+    protected List<PsiElement> moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
+      final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<>();
+      final List<PsiElement> newDeclarations = new ArrayList<>();
+      final PsiClass containingClass = variable.getContainingClass();
+      if (containingClass == null) return newDeclarations;
+      final PsiClass scope = findVariableScope(containingClass);
+      if (!groupByCodeBlocks(ReferencesSearch.search(variable,  new LocalSearchScope(scope)).findAll(), refs)) return newDeclarations;
+      PsiElement declaration;
+      for (Collection<PsiReference> psiReferences : refs.values()) {
+        declaration = IntentionPreviewUtils.writeAndCompute(() -> copyVariableToMethodBody(variable, psiReferences));
+        if (declaration != null) newDeclarations.add(declaration);
+      }
+      if (!newDeclarations.isEmpty()) {
+        final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
+        IntentionPreviewUtils.write(() -> deleteField(variable, lastDeclaration));
+      }
+      return newDeclarations;
+    }
+
+    private static void deleteField(@NotNull PsiField variable, PsiElement newDeclaration) {
+      CommentTracker tracker = new CommentTracker();
+      variable.normalizeDeclaration();
+      tracker.delete(variable);
+      tracker.insertCommentsBefore(newDeclaration);
     }
   }
 }

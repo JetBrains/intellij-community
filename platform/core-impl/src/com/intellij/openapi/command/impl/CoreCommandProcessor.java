@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
@@ -366,14 +366,39 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       CommandLog.LOG.debug("runUndoTransparentAction: " + action + ", in command = " + (myCurrentCommand != null) +
                            ", in transparent action = " + isUndoTransparentActionInProgress());
     }
-    if (myUndoTransparentCount++ == 0) eventPublisher.undoTransparentActionStarted();
+    if (myUndoTransparentCount++ == 0) {
+      eventPublisher.undoTransparentActionStarted();
+    }
     try {
       action.run();
     }
     finally {
-      if (myUndoTransparentCount == 1) eventPublisher.beforeUndoTransparentActionFinished();
-      if (--myUndoTransparentCount == 0) eventPublisher.undoTransparentActionFinished();
+      if (myUndoTransparentCount == 1) {
+        eventPublisher.beforeUndoTransparentActionFinished();
+      }
+      if (--myUndoTransparentCount == 0) {
+        eventPublisher.undoTransparentActionFinished();
+      }
     }
+  }
+
+  @Override
+  public final AutoCloseable withUndoTransparentAction() {
+    if (CommandLog.LOG.isDebugEnabled()) {
+      CommandLog.LOG.debug("withUndoTransparentAction in command = " + (myCurrentCommand != null) +
+                           ", in transparent action = " + isUndoTransparentActionInProgress());
+    }
+    if (myUndoTransparentCount++ == 0) {
+      eventPublisher.undoTransparentActionStarted();
+    }
+    return () -> {
+      if (myUndoTransparentCount == 1) {
+        eventPublisher.beforeUndoTransparentActionFinished();
+      }
+      if (--myUndoTransparentCount == 0) {
+        eventPublisher.undoTransparentActionFinished();
+      }
+    };
   }
 
   @Override

@@ -1007,7 +1007,7 @@ private val INDENT_RULES = arrayOf(
 
     strategy("Indent for parts")
         .within(PROPERTY, FUN, DESTRUCTURING_DECLARATION, SECONDARY_CONSTRUCTOR)
-        .notForType(BLOCK, FUN_KEYWORD, VAL_KEYWORD, VAR_KEYWORD, CONSTRUCTOR_KEYWORD, RPAR, EOL_COMMENT)
+        .notForType(BLOCK, FUN_KEYWORD, VAL_KEYWORD, VAR_KEYWORD, CONSTRUCTOR_KEYWORD, RPAR, EOL_COMMENT, CONTEXT_RECEIVER_LIST, MODIFIER_LIST)
         .set(Indent.getContinuationWithoutFirstIndent()),
 
     strategy("Chained calls")
@@ -1027,7 +1027,7 @@ private val INDENT_RULES = arrayOf(
     strategy("Indices")
         .within(INDICES)
         .notForType(RBRACKET)
-        .set(Indent.getContinuationIndent(false)),
+        .continuationIf(KotlinCodeStyleSettings::CONTINUATION_INDENT_IN_ARGUMENT_LISTS),
 
     strategy("Binary expressions")
         .within(BINARY_EXPRESSIONS)

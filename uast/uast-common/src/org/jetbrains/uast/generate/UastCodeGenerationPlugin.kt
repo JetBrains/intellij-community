@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
-import kotlin.streams.asSequence
 
 /**
  * Extensions which provides code generation support for generating UAST expressions.
@@ -22,7 +21,7 @@ interface UastCodeGenerationPlugin {
     private val extensionPointName = ExtensionPointName<UastCodeGenerationPlugin>("org.jetbrains.uast.generate.uastCodeGenerationPlugin")
 
     @JvmStatic
-    fun byLanguage(language: Language) = extensionPointName.extensions().asSequence().firstOrNull { it.language == language }
+    fun byLanguage(language: Language) = extensionPointName.extensionList.asSequence().firstOrNull { it.language == language }
   }
 
   /**
@@ -55,10 +54,40 @@ interface UastCodeGenerationPlugin {
    * Replaces fully-qualified class names in the contents of the specified element with
    * non-qualified names and adds import statements as necessary.
    *
+   * Example:
+   * ```
+   * com.jetbrains.uast.generate.UastCodeGenerationPlugin.byLanguage(...)
+   * ```
+   * Becomes:
+   * ```
+   * import com.jetbrains.uast.generate.UastCodeGenerationPlugin
+   *
+   * UastCodeGenerationPlugin.byLanguage(...)
+   * ```
+   *
    * @param reference the element to shorten references in.
-   * @return the element in the PSI tree after the shorten references operation corresponding to the original element.
+   * @return the element after the shorten references operation corresponding to the original element.
    */
   fun shortenReference(reference: UReferenceExpression): UReferenceExpression?
+
+  /**
+   * Import the qualifier of the specified element as an on demand import (star import).
+   *
+   * Example:
+   * ```
+   * UastCodeGenerationPlugin.byLanguage(...)
+   * ```
+   * Becomes:
+   * ```
+   * import com.jetbrains.uast.generate.UastCodeGenerationPlugin.*
+   *
+   * byLanguage(...)
+   * ```
+   *
+   * @param reference the qualified element to import
+   * @return the selector part of the qualified reference after importing
+   */
+  fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression?
 }
 
 /**
@@ -150,6 +179,9 @@ fun UReferenceExpression.bindToElement(element: PsiElement): PsiElement? =
 
 fun UReferenceExpression.shortenReference(): UReferenceExpression? =
   UastCodeGenerationPlugin.byLanguage(this.lang)?.shortenReference(this)
+
+fun UQualifiedReferenceExpression.importMemberOnDemand(): UExpression? =
+  UastCodeGenerationPlugin.byLanguage(this.lang)?.importMemberOnDemand(this)
 
 @ApiStatus.Experimental
 inline fun <reified T : UElement> T.refreshed() = sourcePsi?.also {

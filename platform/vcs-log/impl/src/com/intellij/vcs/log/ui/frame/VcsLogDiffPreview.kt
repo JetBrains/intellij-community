@@ -110,13 +110,13 @@ abstract class EditorDiffPreview(protected val project: Project,
 
   override fun openPreview(requestFocus: Boolean): Boolean {
     val currentFocusOwner = IdeFocusManager.getInstance(project).focusOwner
-    val escapeHandler = Runnable {
+    registerEscapeHandler(file = previewFile, handler = Runnable {
       closePreview()
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
-      toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(currentFocusOwner, true) }, false)
-    }
-
-    registerEscapeHandler(previewFile, escapeHandler)
+      if (currentFocusOwner != null) {
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+        toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(currentFocusOwner, true) }, false)
+      }
+    })
     openPreview(project, previewFile, requestFocus)
     return true
   }

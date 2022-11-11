@@ -3,10 +3,8 @@ package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,8 +28,6 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
   private final boolean myIgnoreMethodsOfDeprecated;
   private final boolean myIgnoreInSameOutermostClass;
   private final boolean myForRemoval;
-  private final boolean myIgnoreApiDeclaredInThisProject;
-  private final ProblemHighlightType myHighlightType;
 
   public DeprecatedApiUsageProcessor(@NotNull ProblemsHolder holder,
                                      boolean ignoreInsideDeprecated,
@@ -39,8 +35,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                      boolean ignoreImportStatements,
                                      boolean ignoreMethodsOfDeprecated,
                                      boolean ignoreInSameOutermostClass,
-                                     boolean forRemoval,
-                                     boolean ignoreApiDeclaredInThisProject, @Nullable HighlightSeverity severity) {
+                                     boolean forRemoval) {
     myHolder = holder;
     myIgnoreInsideDeprecated = ignoreInsideDeprecated;
     myIgnoreAbstractDeprecatedOverrides = ignoreAbstractDeprecatedOverrides;
@@ -48,10 +43,6 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
     myIgnoreMethodsOfDeprecated = ignoreMethodsOfDeprecated;
     myIgnoreInSameOutermostClass = ignoreInSameOutermostClass;
     myForRemoval = forRemoval;
-    myIgnoreApiDeclaredInThisProject = ignoreApiDeclaredInThisProject;
-    myHighlightType = forRemoval && severity == HighlightSeverity.ERROR
-                      ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL
-                      : ProblemHighlightType.LIKE_DEPRECATED;
   }
 
   @Override
@@ -74,7 +65,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
 
   private void checkTargetDeprecated(@NotNull PsiElement elementToHighlight, @NotNull PsiModifierListOwner target) {
     checkDeprecated(target, elementToHighlight, null, myIgnoreInsideDeprecated, myIgnoreImportStatements,
-                    myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myIgnoreApiDeclaredInThisProject, myHighlightType);
+                    myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval);
   }
 
   @Override
@@ -98,7 +89,8 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                                      ? "marked.for.removal.default.constructor"
                                                      : "deprecated.default.constructor",
                                                    instantiatedClass.getQualifiedName());
-      myHolder.registerProblem(elementToHighlight, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+
+      myHolder.registerProblem(elementToHighlight, description);
     }
   }
 
@@ -116,13 +108,9 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
     }
 
     if (overriddenMethod.isDeprecated() && myForRemoval == isForRemovalAttributeSet(overriddenMethod)) {
-      ProblemHighlightType highlightType = myHighlightType;
-      if (myIgnoreApiDeclaredInThisProject && myForRemoval && overriddenMethod.getManager().isInProject(overriddenMethod)) {
-        highlightType = ProblemHighlightType.LIKE_DEPRECATED;
-      }
       String description = JavaErrorBundle.message(myForRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
                                                    getPresentableName(aClass));
-      myHolder.registerProblem(methodNameElement, getDescription(description, highlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL, highlightType), highlightType);
+      myHolder.registerProblem(methodNameElement, description);
     }
   }
 

@@ -38,7 +38,6 @@ public abstract class EditorActionTestCase extends LightJavaCodeInsightTestCase 
    * @param fileName name of the file. Mostly used to create proper instance of the PsiFile
    * @param textBefore text with markers before action
    * @param textAfter expected text with markers after action
-   * @throws IOException
    */
   protected void doTextTest(String fileName, String textBefore, String textAfter) throws IOException {
     doTextTest(fileName, textBefore, textAfter, false);
@@ -51,7 +50,6 @@ public abstract class EditorActionTestCase extends LightJavaCodeInsightTestCase 
    * @param textBefore  text with markers before action
    * @param textAfter  expected text with markers after action
    * @param ignoreTrailingSpaces  true if trailing spaces should be ignored.
-   * @throws IOException
    */
   protected void doTextTest(String fileName, String textBefore, String textAfter, boolean ignoreTrailingSpaces) throws IOException {
     configureFromFileText(fileName, textBefore);
@@ -65,7 +63,6 @@ public abstract class EditorActionTestCase extends LightJavaCodeInsightTestCase 
    * Same as doTextTest but texts are retrieved from the data files.
    * @param filePathBefore source file's relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param filePathAfter expected file's relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @throws Exception
    */
   protected void doFileTest(String filePathBefore, String filePathAfter) throws Exception {
     doFileTest(filePathBefore, filePathAfter, false);
@@ -76,7 +73,6 @@ public abstract class EditorActionTestCase extends LightJavaCodeInsightTestCase 
    * @param filePathBefore source file's relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param filePathAfter expected file's relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param ignoreTrailingSpaces  true if trailing spaces should be ignored.
-   * @throws Exception
    */
   protected void doFileTest(String filePathBefore, String filePathAfter, boolean ignoreTrailingSpaces) {
     configureByFile(filePathBefore);

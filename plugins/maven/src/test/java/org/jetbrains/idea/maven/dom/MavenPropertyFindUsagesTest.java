@@ -111,7 +111,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     createProjectSubDir("res");
 
     importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
+                  "<artifactId>module1</artifactId>" +
                   "<version>1</version>" +
                   "<name>${user.home}</name>" +
 
@@ -141,7 +141,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                      "<description>${version}</description>");
 
     assertHighlighted(myProjectPom,
-                      new HighlightInfo(findTag("project.name"), "project.version"),
-                      new HighlightInfo(findTag("project.description"), "version"));
+                      new HighlightPointer(findTag("project.name"), "project.version"),
+                      new HighlightPointer(findTag("project.description"), "version"));
   }
 }

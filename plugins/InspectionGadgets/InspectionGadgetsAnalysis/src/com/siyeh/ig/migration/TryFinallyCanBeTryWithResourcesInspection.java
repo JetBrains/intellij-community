@@ -221,7 +221,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   private static class TryFinallyCanBeTryWithResourcesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTryStatement(PsiTryStatement tryStatement) {
+    public void visitTryStatement(@NotNull PsiTryStatement tryStatement) {
       super.visitTryStatement(tryStatement);
       if (Context.from(tryStatement) == null) return;
       registerStatementError(tryStatement);

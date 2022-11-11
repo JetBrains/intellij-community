@@ -254,7 +254,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
 
   /**
-   * @deprecated, use getChooserTitle(PsiElement, String, int, boolean) instead
+   * @deprecated use getChooserTitle(PsiElement, String, int, boolean) instead
    */
   @Deprecated(forRemoval = true)
   @NotNull

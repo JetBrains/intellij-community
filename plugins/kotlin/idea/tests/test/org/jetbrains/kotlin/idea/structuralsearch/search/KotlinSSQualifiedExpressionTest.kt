@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSQualifiedExpressionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSQualifiedExpressionTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "qualifiedExpression"
 
     fun testDotRegular() { doTest("'_.'_", """

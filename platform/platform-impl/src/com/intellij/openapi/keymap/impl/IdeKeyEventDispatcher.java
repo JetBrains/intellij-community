@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventWatcher;
@@ -71,9 +71,6 @@ import java.util.function.Function;
 
 /**
  * This class is automaton with finite number of state.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class IdeKeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
@@ -739,21 +736,15 @@ public final class IdeKeyEventDispatcher {
     }
     ContainerUtil.removeDuplicates(actionNames);
     if (actionNames.isEmpty()) {
-      return getUnavailableMessage(IdeBundle.message("dumb.balloon.this.action"), false);
+      return IdeBundle.message("dumb.balloon.this.action.is.not.available.during.indexing");
     }
     else if (actionNames.size() == 1) {
-      return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
+      return IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", actionNames.get(0));
     }
     else {
       @NlsSafe String join = String.join(", ", actionNames);
-      return getUnavailableMessage(IdeBundle.message("dumb.balloon.none.of.the.following.actions"), true) +
-             ": " + join;
+      return IdeBundle.message("dumb.balloon.none.of.the.following.actions.are.available.during.indexing.0", join);
     }
-  }
-
-  public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
-    return plural ? IdeBundle.message("dumb.balloon.0.are.not.available.while.indexing", action) :
-           IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", action);
   }
 
   /**

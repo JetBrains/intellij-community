@@ -87,9 +87,7 @@ class A {
         int limit = 5;
         useSplit(s.split("\\s+", limit));
         useSplit(s.split("\\s+", (limit + 5)));
-        /* TODO
         s.matches("\\w+");
-        */
         s.trim();
         s.concat(" another");
 

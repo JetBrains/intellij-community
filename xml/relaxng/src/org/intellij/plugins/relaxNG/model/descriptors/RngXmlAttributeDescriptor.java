@@ -16,9 +16,11 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
+import com.intellij.lang.html.HtmlCompatibleFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.html.HtmlEnumeratedValueReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -76,7 +78,10 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   private final Set<Locator> myDeclarations = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
   private final QName myName;
 
-  RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor, DAttributePattern pattern, Map<String, String> values, boolean optional) {
+  RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor,
+                            DAttributePattern pattern,
+                            Map<String, String> values,
+                            boolean optional) {
     this(elementDescriptor, getName(pattern), values, optional, pattern.getLocation());
   }
 
@@ -85,7 +90,11 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
     return iterator.hasNext() ? iterator.next() : UNKNOWN;
   }
 
-  private RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor, QName name, Map<String, String> values, boolean optional, Locator... locations) {
+  private RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor,
+                                    QName name,
+                                    Map<String, String> values,
+                                    boolean optional,
+                                    Locator... locations) {
     myElementDescriptor = elementDescriptor;
     myValues = values;
     myOptional = optional;
@@ -143,11 +152,13 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
       if (myValues.get(null) != null) {
         copy = new HashMap<>(myValues);
         copy.remove(null);
-      } else {
+      }
+      else {
         copy = myValues;
       }
       return ArrayUtilRt.toStringArray(copy.keySet());
-    } else {
+    }
+    else {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
   }
@@ -175,7 +186,8 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
       if (prefix != null) {
         if (prefix.length() == 0) {
           return myName.getLocalPart();
-        } else {
+        }
+        else {
           return prefix + ":" + myName.getLocalPart();
         }
       }
@@ -228,15 +240,29 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
 
   @Override
   public PsiReference[] getValueReferences(final XmlElement element, @NotNull String text) {
-    return new PsiReference[] { new XmlEnumeratedValueReference(element, this) {
-      @Nullable
-      @Override
-      public PsiElement resolve() {
-        if (isTokenDatatype(getValue())) {
-          return getElement();
+    if (element.getContainingFile() instanceof HtmlCompatibleFile) {
+      return new PsiReference[]{new HtmlEnumeratedValueReference(element, this, null) {
+        @Nullable
+        @Override
+        public PsiElement resolve() {
+          if (isTokenDatatype(getValue())) {
+            return getElement();
+          }
+          return super.resolve();
         }
-        return super.resolve();
-      }
-    }};
+      }};
+    }
+    else {
+      return new PsiReference[]{new XmlEnumeratedValueReference(element, this) {
+        @Nullable
+        @Override
+        public PsiElement resolve() {
+          if (isTokenDatatype(getValue())) {
+            return getElement();
+          }
+          return super.resolve();
+        }
+      }};
+    }
   }
 }

@@ -45,7 +45,7 @@ public class TemplateInvocationInspection extends XsltInspection {
         final XsltElementFactory xsltElementFactory = XsltElementFactory.getInstance();
         return new XmlElementVisitor() {
             @Override
-            public void visitXmlTag(XmlTag tag) {
+            public void visitXmlTag(@NotNull XmlTag tag) {
               if (XsltSupport.isTemplateCall(tag)) {
                   final XsltCallTemplate call = xsltElementFactory.wrapElement(tag, XsltCallTemplate.class);
                     checkTemplateInvocation(call, holder, isOnTheFly);

@@ -169,8 +169,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
             assertEquals("""
                 @kotlin.jvm.JvmStatic
                 public final fun foo() : void {
-                }, @kotlin.jvm.JvmStatic
-                public static final fun foo() : void {
+                }, public static final fun foo() : void {
                 }
             """.trimIndent(), alternatives.joinToString(transform = UElement::asRenderString).replace("\r", ""))
         }

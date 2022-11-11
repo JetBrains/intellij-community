@@ -4,6 +4,8 @@ package com.intellij.openapi.wm
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
+const val WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID = "root"
+
 interface WindowInfo {
   val id: String?
 
@@ -38,4 +40,15 @@ interface WindowInfo {
   val isShowStripeButton: Boolean
 
   val contentUiType: ToolWindowContentUiType
+
+  /**
+   * The identifier of the `ToolWindowPane` that this tool window info belongs to
+   *
+   * The `WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID` identifier is used for the main frame. A null value should be considered the same as
+   * thi default value
+   */
+  val toolWindowPaneId: String?
 }
+
+val WindowInfo.safeToolWindowPaneId: String
+  get() = toolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID

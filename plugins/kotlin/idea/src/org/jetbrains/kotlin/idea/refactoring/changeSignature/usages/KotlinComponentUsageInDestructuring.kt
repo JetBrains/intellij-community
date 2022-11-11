@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator.Target
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -32,7 +32,11 @@ class KotlinComponentUsageInDestructuring(element: KtDestructuringDeclarationEnt
         val newDestructuring = KtPsiFactory(element).buildDestructuringDeclaration {
             val lastIndex = newParameterInfos.indexOfLast { it.oldIndex in currentEntries.indices }
             val nameValidator = CollectingNameValidator(
-                filter = NewDeclarationNameValidator(declaration.parent.parent, null, Target.VARIABLES)
+                filter = Fe10KotlinNewDeclarationNameValidator(
+                    declaration.parent.parent,
+                    null,
+                    KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
+                )
             )
 
             appendFixedText("val (")
@@ -46,7 +50,7 @@ class KotlinComponentUsageInDestructuring(element: KtDestructuringDeclarationEnt
                 if (oldIndex >= 0 && oldIndex < currentEntries.size) {
                     appendChildRange(PsiChildRange.singleElement(currentEntries[oldIndex]))
                 } else {
-                    appendFixedText(KotlinNameSuggester.suggestNameByName(paramInfo.name, nameValidator))
+                    appendFixedText(Fe10KotlinNameSuggester.suggestNameByName(paramInfo.name, nameValidator))
                 }
             }
             appendFixedText(")")

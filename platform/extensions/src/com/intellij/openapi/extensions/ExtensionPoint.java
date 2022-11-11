@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,40 +10,30 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
  */
-public interface ExtensionPoint<@NotNull T> {
+public interface ExtensionPoint<T extends @NotNull Object> {
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
    */
   @Deprecated
-  default void registerExtension(@NotNull T extension) {
-    registerExtension(extension, LoadingOrder.ANY);
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, LoadingOrder, Disposable)}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
+  void registerExtension(T extension);
 
   @TestOnly
-  void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable);
+  void registerExtension(T extension, @NotNull Disposable parentDisposable);
 
   @TestOnly
-  void registerExtension(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable);
+  void registerExtension(T extension, @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable);
 
   /**
    * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
    * to register extension as first or to completely replace existing extensions in tests.
    */
   @TestOnly
-  void registerExtension(@NotNull T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable);
+  void registerExtension(T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable);
 
   /**
    * Prefer to use {@link #getExtensionList()}.
@@ -60,37 +49,10 @@ public interface ExtensionPoint<@NotNull T> {
   int size();
 
   /**
-   * @deprecated Use another solution, because this method instantiates all extensions.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  default @Nullable T getExtension() {
-    // method is deprecated and not used, ignore not efficient implementation
-    return ContainerUtil.getFirstItem(getExtensionList());
-  }
-
-  /**
-   * @deprecated Use another solution, because this method instantiates all extensions.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  default boolean hasExtension(@NotNull T extension) {
-    // method is deprecated and used only by one external plugin, ignore not efficient implementation
-    return ContainerUtil.containsIdentity(getExtensionList(), extension);
-  }
-
-  /**
    * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
    */
   @Deprecated
-  void unregisterExtension(@NotNull T extension);
-
-  /**
-   * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  void unregisterExtensions(@NotNull Predicate<? super T> extension);
+  void unregisterExtension(T extension);
 
   /**
    * Unregisters an extension of the specified type.
@@ -124,9 +86,6 @@ public interface ExtensionPoint<@NotNull T> {
 
   @ApiStatus.Internal
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
-
-  @NotNull
-  String getClassName();
 
   /**
    * @return true if the EP allows adding/removing extensions at runtime

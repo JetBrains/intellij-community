@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch
 
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 class ScratchAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenciesProvider() {
 
     override fun getRelatedModules(file: VirtualFile, project: Project): List<Module> {
-        if (!file.isKotlinScratch) return emptyList()
+        if (!file.isKotlinScratch && !file.isKotlinWorksheet) return emptyList()
 
         val scratchModule = ScriptRelatedModuleNameFile[project, file]?.let {
             ModuleManager.getInstance(project).findModuleByName(it)
@@ -33,7 +33,7 @@ class ScratchAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenci
     }
 
     override fun getRelatedLibraries(file: VirtualFile, project: Project): List<Library> {
-        if (!file.isKotlinScratch) return emptyList()
+        if (!file.isKotlinScratch && !file.isKotlinWorksheet) return emptyList()
 
         val result = linkedSetOf<Library>()
         getRelatedModules(file, project).forEach {

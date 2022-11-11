@@ -44,9 +44,9 @@ class CmdLabel(@NlsSafe cmd: String,
 
     val borderShape: Path2D = Path2D.Float(Path2D.WIND_EVEN_ODD)
 
-    borderShape.append(Rectangle2D.Float(0f, bw.toFloat() + 1, width.toFloat(), height - (bw.toFloat() + 1) * 2), false)
-    borderShape.append(Rectangle2D.Float(lw * border.left, bw + lw + 1,
-                                         width.toFloat() - lw * border.right, height - (bw + lw + 1) * 2), false)
+    borderShape.append(Rectangle2D.Float(0f, bw.toFloat(), width.toFloat(), height - (bw.toFloat()) * 2), false)
+    borderShape.append(Rectangle2D.Float(lw * border.left, bw + lw,
+                                         width.toFloat() - lw * border.right, height - (bw + lw) * 2), false)
 
     val g2 = g as Graphics2D
 

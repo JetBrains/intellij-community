@@ -49,7 +49,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
   private static class IfStatementMissingBreakInLoopVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       PsiStatement body = statement.getBody();
       if (body == null) return;
       PsiParameter parameter = statement.getIterationParameter();
@@ -61,7 +61,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       PsiStatement body = statement.getBody();
       if (body == null) return;
       Set<PsiVariable> nonFinalVariables = new HashSet<>();
@@ -76,12 +76,12 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       visitLoopStatement(statement);
     }
 
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       visitLoopStatement(statement);
     }
 

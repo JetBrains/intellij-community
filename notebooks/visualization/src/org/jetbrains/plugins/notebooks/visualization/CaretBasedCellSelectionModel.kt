@@ -58,15 +58,8 @@ class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSel
 }
 
 private fun Document.getSelectionLines(caret: Caret): IntRange {
-  val selectionStart = caret.selectionStart
   val selectionEnd = caret.selectionEnd
   val lastLine = getLineNumber(selectionEnd)
-
-  // See: DS-3659 Context menu action "Delete cell" deletes wrong cell
-  if (caret.offset < selectionStart || caret.offset > selectionEnd) {
-    val caretLine = getLineNumber(caret.offset)
-    return IntRange(caretLine, caretLine)
-  }
 
   if (caret.offset < selectionEnd && getLineStartOffset(lastLine) == selectionEnd) {
     // for example, after triple click on line1

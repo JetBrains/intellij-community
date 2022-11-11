@@ -16,10 +16,10 @@
 
 package com.intellij.vcs.log.graph.utils
 
-import com.intellij.util.containers.IntStack
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import it.unimi.dsi.fastutil.ints.IntArrayList
 
 object Dfs {
   object NextNode {
@@ -28,28 +28,28 @@ object Dfs {
   }
 }
 
-private fun walk(start: Int, stack: IntStack, nextNodeFun: (Int) -> Int) {
+private fun walk(start: Int, stack: IntArrayList, nextNodeFun: (Int) -> Int) {
   stack.push(start)
 
-  while (!stack.empty()) {
-    val nextNode = nextNodeFun(stack.peek())
+  while (!stack.isEmpty) {
+    val nextNode = nextNodeFun(stack.topInt())
     if (nextNode == Dfs.NextNode.EXIT) return
     if (nextNode != Dfs.NextNode.NODE_NOT_FOUND) {
       stack.push(nextNode)
     }
     else {
-      stack.pop()
+      stack.popInt()
     }
   }
   stack.clear()
 }
 
 fun walk(start: Int, nextNodeFun: (Int) -> Int) {
-  walk(start, IntStack(), nextNodeFun)
+  walk(start, IntArrayList(), nextNodeFun)
 }
 
 class DfsWalk(private val startNodes: Collection<Int>, private val graph: LiteLinearGraph, private val visited: Flags) {
-  private val stack = IntStack()
+  private val stack = IntArrayList()
 
   constructor(startNodes: Collection<Int>, linearGraph: LinearGraph) :
     this(startNodes, LinearGraphUtils.asLiteLinearGraph(linearGraph), BitSetFlags(linearGraph.nodesCount()))

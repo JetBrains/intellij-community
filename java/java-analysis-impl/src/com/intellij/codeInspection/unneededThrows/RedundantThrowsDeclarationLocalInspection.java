@@ -22,6 +22,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -127,7 +128,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
           final PsiClassType exceptionType = throwRefType.myType;
 
           final String description = JavaErrorBundle.message("exception.is.never.thrown", JavaHighlightUtil.formatType(exceptionType));
-          final RedundantThrowsQuickFix fix = new RedundantThrowsQuickFix(exceptionType.getCanonicalText(), method.getName());
+          final RedundantThrowsQuickFix fix = new RedundantThrowsQuickFix(exceptionType.getCanonicalText(), PsiFormatUtil.formatSimple(method));
           myHolder.registerProblem(reference, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
         });
     }
@@ -232,8 +233,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       private static boolean isParentInThrowsListPresent(@NotNull final PsiClass clazz,
                                                          @NotNull final List<PsiClassType> throwsList) {
         final PsiClassType type = PsiTypesUtil.getClassType(clazz);
-        return throwsList.stream()
-          .anyMatch(e -> e.isAssignableFrom(type));
+        return ContainerUtil.exists(throwsList, e -> e.isAssignableFrom(type));
       }
 
       /**
@@ -241,7 +241,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        *
        * @param throwsList throws list of a method
        * @param currentRef the currently eliminated throws declaration in the throws list
-       * @return the set of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
+       * @return the list of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
        */
       private static List<PsiClassType> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
                                                                     @NotNull final PsiJavaCodeReferenceElement currentRef) {
@@ -313,7 +313,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
       final Set<PsiClassType> unhandled = RedundantThrowsGraphAnnotator.getUnhandledExceptions(body, method, containingClass);
 
-      return unhandled.stream().anyMatch(myType::isAssignableFrom);
+      return ContainerUtil.exists(unhandled, myType::isAssignableFrom);
     }
 
     @Contract(pure = true)
@@ -376,7 +376,6 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
   /**
    * See {@link #checkInconsistency(PsiReferenceList, String)}
-   * @param throwsList
    */
   private static void checkInconsistency(@NotNull PsiReferenceList throwsList) {
     checkInconsistency(throwsList, null);

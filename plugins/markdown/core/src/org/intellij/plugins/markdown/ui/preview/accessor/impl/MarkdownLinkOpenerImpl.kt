@@ -23,12 +23,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.isLocalHost
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.lang.references.MarkdownAnchorReference
+import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.settings.DocumentLinksSafeState
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
@@ -161,7 +162,12 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       }
       val point = obtainHeadersPopupPosition(project) ?: return false
       val headers = runReadAction {
-        MarkdownAnchorReference.getPsiHeaders(project, anchor, PsiManager.getInstance(project).findFile(targetFile))
+        val file = PsiManager.getInstance(project).findFile(targetFile)
+        val scope = when (file) {
+          null -> GlobalSearchScope.EMPTY_SCOPE
+          else -> GlobalSearchScope.fileScope(file)
+        }
+        HeaderAnchorIndex.collectHeaders(project, scope, anchor)
       }
       invokeLater {
         when {

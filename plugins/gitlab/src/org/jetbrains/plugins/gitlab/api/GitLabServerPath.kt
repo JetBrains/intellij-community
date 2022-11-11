@@ -28,6 +28,8 @@ class GitLabServerPath : ServerPath {
   val gqlApiUri: URI
     get() = URI.create(uri).resolve("/api/graphql")
 
+  override fun toURI(): URI = URI.create(uri)
+
   @NlsSafe
   override fun toString() = uri
 

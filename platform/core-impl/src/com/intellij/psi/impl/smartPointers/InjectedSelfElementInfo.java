@@ -246,6 +246,9 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
       this.startAffixOffset = startAffixOffset;
       this.endAffixIndex = endAffixIndex;
       this.endAffixOffset = endAffixOffset;
+      assert startAffixIndex < 0 || endAffixIndex < 0 ||
+             startAffixOffset >= 0 && endAffixOffset >= 0 && (startAffixIndex < endAffixIndex || startAffixIndex == endAffixIndex && startAffixOffset <= endAffixOffset)
+        : "Invalid offsets passed: startAffixIndex = " + startAffixIndex + ";endAffixIndex = " + endAffixIndex + ";startAffixOffset = " + startAffixOffset + ";endAffixOffset = " + endAffixOffset;
     }
 
     @Nullable
@@ -253,11 +256,13 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
       if (startAffixIndex >= 0) {
         TextRange fragment = startAffixIndex < fragments.size() ? fragments.get(startAffixIndex) : null;
         if (fragment == null || startAffixOffset > fragment.getLength()) return null;
+        TextRange.assertProperRange(fragment);
         start = fragment.getStartOffset() + startAffixOffset;
       }
       if (endAffixIndex >= 0) {
         TextRange fragment = endAffixIndex < fragments.size() ? fragments.get(endAffixIndex) : null;
         if (fragment == null || endAffixOffset > fragment.getLength()) return null;
+        TextRange.assertProperRange(fragment);
         end = fragment.getStartOffset() + endAffixOffset;
       }
       return ProperTextRange.create(start, end);

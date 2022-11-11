@@ -1,12 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsException
@@ -77,6 +74,31 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
+  fun loadCommitsDataSynchronously(commits: Iterable<Int>,
+                                   indicator: ProgressIndicator,
+                                   consumer: Consumer<in T>) {
+    val toLoad = IntOpenHashSet()
+    for (id in commits) {
+      val details = getCommitDataIfAvailable(id)
+      if (details == null || details is LoadingDetails) {
+        toLoad.add(id)
+      }
+      else {
+        consumer.consume(details)
+      }
+    }
+    if (!toLoad.isEmpty()) {
+      indicator.checkCanceled()
+      doLoadCommitsData(toLoad) { details ->
+        saveInCache(details)
+        consumer.consume(details)
+      }
+      notifyLoaded()
+    }
+  }
+
+  @RequiresBackgroundThread
+  @Throws(VcsException::class)
   protected open fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in T>) {
     val hashesGroupedByRoot = commits.mapNotNull { storage.getCommitId(it) }
       .groupBy<CommitId, VirtualFile, @NlsSafe String>({ it.root }) { it.hash.asString() }
@@ -94,6 +116,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
   protected abstract fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<T>
 
   protected abstract fun saveInCache(commit: Int, details: T)
+  protected fun saveInCache(details: T) = saveInCache(storage.getCommitIndex(details.id, details.root), details)
 
   protected open fun cacheCommits(commits: IntOpenHashSet) = Unit
 
@@ -125,6 +148,26 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
       else {
         ProgressManager.getInstance().run(task)
       }
+    }
+
+    @RequiresBackgroundThread
+    @Throws(VcsException::class)
+    @JvmStatic
+    fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(commits: List<Int>): List<T> {
+      val commitToDetailsMap = Int2ObjectOpenHashMap<T>()
+      loadCommitsDataSynchronously(commits, ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()) { details ->
+        commitToDetailsMap[storage.getCommitIndex(details.id, details.root)] = details
+      }
+      return commits.mapNotNull { commitToDetailsMap[it] }
+    }
+
+    @RequiresBackgroundThread
+    @Throws(VcsException::class)
+    @JvmStatic
+    fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(hash: Hash, root: VirtualFile): T {
+      val commitDetailsList = getCommitDetails(listOf(storage.getCommitIndex(hash, root)))
+      return commitDetailsList.singleOrNull() ?: throw VcsException(VcsLogBundle.message("vcs.log.failed.loading.details",
+                                                                                         hash.asString(), root.name))
     }
   }
 }

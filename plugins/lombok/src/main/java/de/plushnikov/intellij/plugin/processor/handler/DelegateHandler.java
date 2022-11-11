@@ -247,12 +247,12 @@ public class DelegateHandler {
     }
 
     @Override
-    public void visitField(PsiField psiField) {
+    public void visitField(@NotNull PsiField psiField) {
       checkModifierListOwner(psiField);
     }
 
     @Override
-    public void visitMethod(PsiMethod psiMethod) {
+    public void visitMethod(@NotNull PsiMethod psiMethod) {
       checkModifierListOwner(psiMethod);
     }
 

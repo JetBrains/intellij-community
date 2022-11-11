@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -271,7 +272,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
 
     if (atCaret instanceof PsiWhiteSpace) return null;
-    if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText())) {
+    if (PsiUtil.isJavaToken(atCaret, JavaTokenType.RBRACE)) {
       atCaret = atCaret.getParent();
       boolean expressionEndingWithBrace = atCaret instanceof PsiAnonymousClass ||
                                           atCaret instanceof PsiArrayInitializerExpression ||

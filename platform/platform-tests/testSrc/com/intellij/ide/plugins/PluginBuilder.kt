@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -42,6 +42,7 @@ class PluginBuilder {
     private set
 
   private var implementationDetail = false
+  private var onDemand = false
   private var name: String? = null
   private var description: String? = null
   private var packagePrefix: String? = null
@@ -160,14 +161,21 @@ class PluginBuilder {
     return this
   }
 
+  fun onDemand() = also {
+    onDemand = true
+  }
+
   fun text(requireId: Boolean = true): String {
     return buildString {
       append("<idea-plugin")
       if (implementationDetail) {
-        append(""" implementation-detail="true"""")
+        append(""" $IMPLEMENTATION_DETAIL_ATTRIBUTE="true"""")
+      }
+      if (onDemand) {
+        append(""" $ON_DEMAND_ATTRIBUTE="true"""")
       }
       packagePrefix?.let {
-        append(""" package="$it"""")
+        append(""" $PACKAGE_ATTRIBUTE="$it"""")
       }
       append(">")
       if (requireId) {

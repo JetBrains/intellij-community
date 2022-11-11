@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.conversion.copy;
 
@@ -6,15 +6,12 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.KotlinBundle;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @ignatov
- */
 @SuppressWarnings("UnusedDeclaration")
 public class KotlinPasteFromJavaDialog extends DialogWrapper {
     private JPanel panel;
@@ -47,7 +44,7 @@ public class KotlinPasteFromJavaDialog extends DialogWrapper {
 
     @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
         setOKButtonText(CommonBundle.getYesButtonText());
         setCancelButtonText(CommonBundle.getNoButtonText());
         return new Action[] {getOKAction(), getCancelAction()};

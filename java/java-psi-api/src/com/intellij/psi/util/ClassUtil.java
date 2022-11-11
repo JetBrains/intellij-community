@@ -104,7 +104,7 @@ public final class ClassUtil {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (!jvmCompatible) {
           super.visitClass(aClass);
           if (aClass.getQualifiedName() == null) {
@@ -128,7 +128,7 @@ public final class ClassUtil {
       }
 
       @Override
-      public void visitTypeParameter(final PsiTypeParameter classParameter) {
+      public void visitTypeParameter(final @NotNull PsiTypeParameter classParameter) {
         if (!jvmCompatible) {
           super.visitTypeParameter(classParameter);
         }

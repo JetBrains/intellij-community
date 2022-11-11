@@ -80,7 +80,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
-    new TreeSpeedSearch(myTree, o -> {
+    new TreeSpeedSearch(myTree, true, o -> {
       final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       if (userObject instanceof Module) {
         return ((Module)userObject).getName();
@@ -89,7 +89,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         if (userObject == null) return "";
         return userObject.toString();
       }
-    }, true);
+    });
   }
 
   @Override

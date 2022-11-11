@@ -18,9 +18,6 @@ public interface GradleTaskResultListener {
 
   /**
    * Called right after successful execution of Gradle task, before returning to External System API
-   *
-   * @param id
-   * @param projectPath
    */
   void onSuccess(@NotNull ExternalSystemTaskId id, @NotNull String projectPath);
 }

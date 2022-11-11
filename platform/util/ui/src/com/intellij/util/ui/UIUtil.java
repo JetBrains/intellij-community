@@ -24,6 +24,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 import sun.font.FontUtilities;
 
@@ -34,9 +35,6 @@ import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
@@ -48,7 +46,6 @@ import javax.swing.text.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
@@ -73,10 +70,6 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
-  static {
-    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
-  }
-
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
   public static final @NlsSafe String BR = "<br/>";
   public static final @NlsSafe String HR = "<hr/>";
@@ -343,10 +336,8 @@ public final class UIUtil {
 
   private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
-  private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
-
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
-  private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+
   /**
    * Alt+click does copy text from tooltip or balloon to clipboard.
    * We collect this text from components recursively and this generic approach might 'grab' unexpected text fragments.
@@ -354,25 +345,6 @@ public final class UIUtil {
    * Note, main(root) components of BalloonImpl and AbstractPopup are already marked with this key
    */
   public static final Key<Boolean> TEXT_COPY_ROOT = Key.create("TEXT_COPY_ROOT");
-
-  private static final Action REDO_ACTION = new AbstractAction() {
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = ClientProperty.get(ObjectUtils.tryCast(e.getSource(), Component.class), UNDO_MANAGER);
-      if (manager != null && manager.canRedo()) {
-        manager.redo();
-      }
-    }
-  };
-  private static final Action UNDO_ACTION = new AbstractAction() {
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = ClientProperty.get(ObjectUtils.tryCast(e.getSource(), Component.class), UNDO_MANAGER);
-      if (manager != null && manager.canUndo()) {
-        manager.undo();
-      }
-    }
-  };
 
   private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", 0xa0bad5);
   private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
@@ -984,7 +956,7 @@ public final class UIUtil {
   }
 
   public static Color getLabelTextForeground() {
-    return UIManager.getColor("Label.textForeground");
+    return UIManager.getColor("Label.foreground");
   }
 
   public static Color getControlColor() {
@@ -1605,12 +1577,11 @@ public final class UIUtil {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    EdtInvocationManager.dispatchAllInvocationEvents();
+    EDT.dispatchAllInvocationEvents();
   }
 
-  public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
-    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
+  public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
+    StartupUiUtil.addAwtListener(listener, mask, parent);
   }
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
@@ -1713,7 +1684,7 @@ public final class UIUtil {
     if (SwingUtilities.isDescendingFrom(owner, component)) return true;
 
     while (component != null) {
-      if (hasFocus(component)) return true;
+      if (kindaHasFocus(component)) return true;
       component = component.getParent();
     }
     return false;
@@ -1761,6 +1732,15 @@ public final class UIUtil {
     return false;
   }
 
+  private static boolean kindaHasFocus(@NotNull Component component) {
+    if (GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
+
+    JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
+    return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
+  }
+
   /**
    * Checks if a component is focused in a more general sense than UI focuses,
    * sometimes useful to limit various activities by checking the focus of real UI,
@@ -1769,12 +1749,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean hasFocus(@NotNull Component component) {
-    if (GraphicsEnvironment.isHeadless() || component.hasFocus()) {
-      return true;
-    }
-
-    JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
-    return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
+    return kindaHasFocus(component) || component.hasFocus();
   }
 
   /**
@@ -1809,6 +1784,14 @@ public final class UIUtil {
   public static boolean isActionClick(@NotNull MouseEvent e, int effectiveType, boolean allowShift) {
     if (!allowShift && isCloseClick(e) || e.isPopupTrigger() || e.getID() != effectiveType) return false;
     return e.getButton() == MouseEvent.BUTTON1;
+  }
+
+  /**
+   * Provides all input event modifiers including deprecated, since they are still used in IntelliJ platform
+   */
+  @MagicConstant(flagsFromClass = InputEvent.class)
+  public static int getAllModifiers(@NotNull InputEvent event) {
+    return event.getModifiers() | event.getModifiersEx();
   }
 
   public static @NotNull Color getBgFillColor(@NotNull Component c) {
@@ -2190,7 +2173,7 @@ public final class UIUtil {
    * @param runnable a runnable to invoke
    */
   public static void invokeAndWaitIfNeeded(final @NotNull ThrowableRunnable<?> runnable) throws Throwable {
-    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       runnable.run();
     }
     else {
@@ -2205,10 +2188,6 @@ public final class UIUtil {
       });
       if (!ref.isNull()) throw ref.get();
     }
-  }
-
-  public static boolean isFocusProxy(@Nullable Component c) {
-    return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
   }
 
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
@@ -2530,12 +2509,6 @@ public final class UIUtil {
     c.putClientProperty(ROOT_PANE, new WeakReference<>(pane));
   }
 
-  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
-    if (c == null || !c.isShowing()) return true;
-
-    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
-  }
-
   public static boolean isDialogRootPane(JRootPane rootPane) {
     if (rootPane != null) {
       final Object isDialog = rootPane.getClientProperty("DIALOG_ROOT_PANE");
@@ -2790,57 +2763,13 @@ public final class UIUtil {
     return false;
   }
 
-  public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
-    UndoManager undoManager = ClientProperty.get(textComponent, UNDO_MANAGER);
-    if (undoManager != null) {
-      undoManager.discardAllEdits();
-    }
-  }
-
-  private static final DocumentListener SET_TEXT_CHECKER = new DocumentAdapter() {
-    @Override
-    protected void textChanged(@NotNull DocumentEvent e) {
-      Document document = e.getDocument();
-      if (document instanceof AbstractDocument) {
-        StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-        for (StackTraceElement element : stackTrace) {
-          if (!element.getClassName().equals(JTextComponent.class.getName()) || !element.getMethodName().equals("setText")) continue;
-          UndoableEditListener[] undoableEditListeners = ((AbstractDocument)document).getUndoableEditListeners();
-          for (final UndoableEditListener listener : undoableEditListeners) {
-            if (listener instanceof UndoManager) {
-              Runnable runnable = ((UndoManager)listener)::discardAllEdits;
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(runnable);
-              return;
-            }
-          }
-        }
-      }
-    }
-  };
-
-  public static void addUndoRedoActions(final @NotNull JTextComponent textComponent) {
-    if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
-      return;
-    }
-
-    UndoManager undoManager = new UndoManager();
-    textComponent.putClientProperty(UNDO_MANAGER, undoManager);
-    textComponent.getDocument().addUndoableEditListener(undoManager);
-    textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfoRt.isMac ? Event.META_MASK : Event.CTRL_MASK), "undoKeystroke");
-    textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfoRt.isMac
-                                                                           ? Event.META_MASK : Event.CTRL_MASK) | Event.SHIFT_MASK), "redoKeystroke");
-    textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
-  }
-
-  public static @Nullable UndoManager getUndoManager(Component component) {
-    if (component instanceof JTextComponent) {
-      Object o = ((JTextComponent)component).getClientProperty(UNDO_MANAGER);
-      if (o instanceof UndoManager) return (UndoManager)o;
-    }
-    return null;
+  /**
+   * Use {@link SwingUndoUtil#addUndoRedoActions(JTextComponent)}
+   * @param textComponent
+   */
+  @Deprecated
+  public static void addUndoRedoActions(@NotNull JTextComponent textComponent) {
+    SwingUndoUtil.addUndoRedoActions(textComponent);
   }
 
   public static void playSoundFromResource(@NotNull String resourceName) {

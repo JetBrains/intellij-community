@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
-val PARAMETER_NAME_HINTS_EP = ExtensionPointName.create<LanguageExtensionPoint<InlayParameterHintsProvider>>("com.intellij.codeInsight.parameterNameHints")
+val PARAMETER_NAME_HINTS_EP: ExtensionPointName<LanguageExtensionPoint<InlayParameterHintsProvider>> = ExtensionPointName.create<LanguageExtensionPoint<InlayParameterHintsProvider>>("com.intellij.codeInsight.parameterNameHints")
 
 object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvider>(PARAMETER_NAME_HINTS_EP)
 

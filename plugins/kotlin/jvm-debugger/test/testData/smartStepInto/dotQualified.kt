@@ -10,3 +10,4 @@ class A {
 fun f2() {}
 
 // EXISTS: f1(), f2()
+// IGNORE_K2

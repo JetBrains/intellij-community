@@ -203,7 +203,8 @@ public interface Editor extends UserDataHolder {
    * It's assumed that original position is associated with character immediately preceding given offset, so target logical position will
    * have {@link LogicalPosition#leansForward leansForward} value set to {@code false}.
    *
-   * @param offset the offset in the document.
+   * @param offset the offset in the document. Negative values are clamped to zero; values bigger than text length are clamped
+   *               to the text length
    * @return the corresponding logical position.
    */
   @NotNull LogicalPosition offsetToLogicalPosition(int offset);

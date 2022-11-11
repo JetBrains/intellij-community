@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -781,6 +781,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             @TestMetadata("addBraces.kt")
             public void testAddBraces() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/stringTemplates/addBraces.kt");
+            }
+
+            @TestMetadata("addBracesToPrevEntry.kt")
+            public void testAddBracesToPrevEntry() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/stringTemplates/addBracesToPrevEntry.kt");
             }
 
             @TestMetadata("blockEntry.kt")
@@ -1939,6 +1944,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/extensionFunction2.kt");
             }
 
+            @TestMetadata("functionReferenceOfCompanionObject.kt")
+            public void testFunctionReferenceOfCompanionObject() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/functionReferenceOfCompanionObject.kt");
+            }
+
             @TestMetadata("getOperator.kt")
             public void testGetOperator() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/getOperator.kt");
@@ -2002,6 +2012,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             @TestMetadata("let.kt")
             public void testLet() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/let.kt");
+            }
+
+            @TestMetadata("letWithFunctionReferenceOfCompanionObject.kt")
+            public void testLetWithFunctionReferenceOfCompanionObject() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/letWithFunctionReferenceOfCompanionObject.kt");
             }
 
             @TestMetadata("LocalCapturing.kt")

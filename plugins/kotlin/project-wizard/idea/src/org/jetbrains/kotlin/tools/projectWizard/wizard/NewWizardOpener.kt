@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.impl.NewProjectUtil
@@ -13,12 +12,12 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
-import org.jetbrains.kotlin.idea.projectWizard.WizardLoggingSession
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardLoggingSession
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-object NewWizardOpener {
+internal object NewWizardOpener {
     fun open(template: ProjectTemplate?) {
         val task = object : Task.Backgroundable(
             null,
@@ -31,17 +30,19 @@ object NewWizardOpener {
                 ProjectManager.getInstance().defaultProject
             }
 
-            override fun onFinished() = ApplicationManager.getApplication().invokeLater {
-                val step = wizard.currentStepObject as ProjectTypeStep
-                step.setSelectedTemplate(KotlinNewProjectWizardUIBundle.message("generator.title"), null)
-                val moduleBuilder =  wizard.projectBuilder.safeAs<NewProjectWizardModuleBuilder>()
-                if (template != null) {
-                    moduleBuilder?.selectProjectTemplate(template)
-                }
-                if (wizard.showAndGet()) {
-                    val project: Project? = NewProjectUtil.createFromWizard(wizard, null)
-                    moduleBuilder?.wizard?.context?.contextComponents?.get<WizardLoggingSession>()?.let { session ->
-                        WizardStatsService.logWizardOpenByHyperlink(session, project, template?.id)
+            override fun onFinished() {
+                ApplicationManager.getApplication().invokeLater {
+                    val step = wizard.currentStepObject as ProjectTypeStep
+                    step.setSelectedTemplate(KotlinNewProjectWizardUIBundle.message("generator.title"), null)
+                    val moduleBuilder =  wizard.projectBuilder.safeAs<NewProjectWizardModuleBuilder>()
+                    if (template != null) {
+                        moduleBuilder?.selectProjectTemplate(template)
+                    }
+                    if (wizard.showAndGet()) {
+                        val project: Project? = NewProjectUtil.createFromWizard(wizard, null)
+                        moduleBuilder?.wizard?.context?.contextComponents?.get<WizardLoggingSession>()?.let { session ->
+                            WizardStatsService.logWizardOpenByHyperlink(session, project, template?.id)
+                        }
                     }
                 }
             }

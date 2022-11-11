@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.build.SyncViewManager
@@ -17,9 +17,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
@@ -90,6 +92,20 @@ class MavenImportingManager(val project: Project) {
   }
 
   @RequiresEdt
+  fun resolveFolders(projects: Collection<MavenProject>): Promise<Collection<MavenProject>> {
+    val result = AsyncPromise<Collection<MavenProject>>()
+    runUnderIndicator(MavenProjectBundle.message("maven.updating.folders")) {
+      try {
+        MavenImportFlow().resolveFolders(projects, project, it)
+      }
+      catch (e: Throwable) {
+        result.setError(e)
+      }
+    }
+    return result
+  }
+
+  @RequiresEdt
   fun openProjectAndImport(importPaths: ImportPaths): MavenImportingResult {
     val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
     return openProjectAndImport(importPaths,
@@ -106,7 +122,7 @@ class MavenImportingManager(val project: Project) {
                            spec: MavenImportSpec): MavenImportingResult {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isImportingInProgress()) {
-      return MavenImportingResult(waitingPromise, null)
+      return MavenImportingResult(waitingPromise, null, null)
     }
     if (executor.isShutdown) {
       throw RuntimeException("Project is closing")
@@ -123,29 +139,32 @@ class MavenImportingManager(val project: Project) {
 
     setProjectSettings(initialImportContext)
 
-    ApplicationManager.getApplication().executeOnPooledThread {
-      ProgressManager.getInstance().run(object : Task.Backgroundable(project, MavenProjectBundle.message("maven.project.importing")) {
-        override fun run(indicator: ProgressIndicator) {
-          try {
-            val finishedContext = doImport(MavenProgressIndicator(project, indicator) { console }, initialImportContext, spec)
-            getWaitingPromise().setResult(finishedContext)
-          }
-          catch (e: Throwable) {
-            MavenLog.LOG.debug("import started at: ", initialImportContext.startImportStackTrace)
-            MavenLog.LOG.warn(e)
-            if (indicator.isCanceled) {
-              getWaitingPromise().setError("Cancelled")
-            }
-            else {
-              MavenLog.LOG.error(e)
-              getWaitingPromise().setError(e)
-            }
-          }
+    runUnderIndicator(MavenProjectBundle.message("maven.project.importing")) { indicator ->
+      try {
+        val finishedContext = doImport(indicator, initialImportContext, spec)
+        getWaitingPromise().setResult(finishedContext)
+      }
+      catch (e: Throwable) {
+        MavenLog.LOG.debug("import started at: ", initialImportContext.startImportStackTrace)
+        MavenLog.LOG.warn(e)
+        if (indicator.isCanceled) {
+          getWaitingPromise().setError("Cancelled")
         }
-      })
-
+        else {
+          MavenLog.LOG.error(e)
+          getWaitingPromise().setError(e)
+        }
+      }
+      finally {
+        Disposer.dispose(initialImportContext.importDisposable)
+      }
     }
-    return MavenImportingResult(getImportFinishPromise(), initialImportContext.dummyModule)
+
+    val vfsRefreshPromise = AsyncPromise<Any?>();
+    VirtualFileManager.getInstance().asyncRefresh {
+      vfsRefreshPromise.setResult(null)
+    }
+    return MavenImportingResult(getImportFinishPromise(), vfsRefreshPromise, initialImportContext.dummyModule)
   }
 
   private fun setProjectSettings(initialImportContext: MavenInitialImportContext) {
@@ -185,13 +204,14 @@ class MavenImportingManager(val project: Project) {
 
       if (readMavenFiles.wrapperData != null) {
         try {
-          readMavenFiles = flow.setupMavenWrapper(readMavenFiles, indicator)
+          readMavenFiles = flow.setupMavenWrapper(readMavenFiles)
           readMavenFiles.initialContext.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
         }
         catch (e: Throwable) {
           MavenLog.LOG.warn(e)
         }
       }
+      flow.updateProjectManager(readMavenFiles)
 
       val dependenciesContext = doTask(MavenProjectBundle.message("maven.resolving"), activity,
                                        MavenImportStats.ResolvingTask::class.java) {
@@ -216,7 +236,7 @@ class MavenImportingManager(val project: Project) {
                             MavenImportStats.ConfiguringProjectsTask::class.java) {
         currentContext?.indicator?.checkCanceled()
         flow.runPostImportTasks(importContext)
-        flow.updateProjectManager(readMavenFiles)
+        runLegacyListeners(readMavenFiles) { projectImportCompleted() }
         setProjectSettings(initialImport)
         MavenResolveResultProblemProcessor.notifyMavenProblems(project) // remove this, should be in appropriate phase
         return@doTask MavenImportFinishedContext(importContext)
@@ -254,22 +274,24 @@ class MavenImportingManager(val project: Project) {
 
   fun scheduleImportAll(spec: MavenImportSpec): MavenImportingResult {
     if (isRecursiveImportCalledFromMavenProjectsManagerWatcher()) {
-      return MavenImportingResult(getWaitingPromise(), null)
+      return MavenImportingResult(getWaitingPromise(), null, null)
     }
     ApplicationManager.getApplication().assertIsDispatchThread()
     val manager = MavenProjectsManager.getInstance(project)
     if (isImportingInProgress()) {
-      return MavenImportingResult(getWaitingPromise(), null)
+      return MavenImportingResult(getWaitingPromise(), null, null)
     }
     val settings = MavenWorkspaceSettingsComponent.getInstance(project)
-    return openProjectAndImport(FilesList(manager.projectsTree.managedFilesPaths.mapNotNull { LocalFileSystem.getInstance().findFileByPath(it)}), settings.settings.getImportingSettings(),
-                                settings.settings.getGeneralSettings(), spec)
+    return openProjectAndImport(
+      FilesList(manager.projectsTree.managedFilesPaths.mapNotNull { LocalFileSystem.getInstance().findFileByPath(it) }),
+      settings.settings.getImportingSettings(),
+      settings.settings.getGeneralSettings(), spec)
   }
 
 
   fun scheduleUpdate(filesToUpdate: List<VirtualFile>, filesToDelete: List<VirtualFile>, spec: MavenImportSpec): MavenImportingResult {
     if (isRecursiveImportCalledFromMavenProjectsManagerWatcher()) {
-      return MavenImportingResult(getWaitingPromise(), null)
+      return MavenImportingResult(getWaitingPromise(), null, null)
     }
 
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -301,9 +323,10 @@ class MavenImportingManager(val project: Project) {
       return init()
     }
     catch (e: Exception) {
-      if(!project.isDisposed) {
+      if (!project.isDisposed) {
         console.addException(e, project.getService(SyncViewManager::class.java))
-      } else {
+      }
+      else {
         MavenLog.LOG.warn(e)
       }
 
@@ -351,6 +374,17 @@ class MavenImportingManager(val project: Project) {
     data
   }
 
+  private fun runUnderIndicator(title: @NlsContexts.ProgressTitle String, action: (MavenProgressIndicator) -> Unit) {
+    executor.execute {
+      ProgressManager.getInstance()
+        .run(object : Task.Backgroundable(project, title) {
+          override fun run(indicator: ProgressIndicator) {
+            action(MavenProgressIndicator(project, indicator) { console })
+          }
+        })
+    }
+  }
+
 
   companion object {
     @JvmStatic
@@ -358,6 +392,9 @@ class MavenImportingManager(val project: Project) {
       return project.getService(MavenImportingManager::class.java)
     }
 
+    @JvmField
+    @Topic.ProjectLevel
+    val LEGACY_PROJECT_MANAGER_LISTENER = Topic.create("Maven Project Manager Listener bus", MavenProjectsManager.Listener::class.java)
 
   }
 }

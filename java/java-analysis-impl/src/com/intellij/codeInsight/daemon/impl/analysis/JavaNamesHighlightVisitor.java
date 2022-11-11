@@ -59,7 +59,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   }
 
   @Override
-  public void visitDocTagValue(PsiDocTagValue value) {
+  public void visitDocTagValue(@NotNull PsiDocTagValue value) {
     PsiReference reference = value.getReference();
     if (reference != null) {
       PsiElement element = reference.resolve();
@@ -78,7 +78,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
 
 
   @Override
-  public void visitIdentifier(PsiIdentifier identifier) {
+  public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
 
     PsiElement parent = identifier.getParent();
@@ -143,11 +143,11 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   }
 
   @Override
-  public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     doVisitReferenceElement(ref);
   }
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     doVisitReferenceElement(expression);
   }
 
@@ -218,7 +218,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   }
 
   @Override
-  public void visitNameValuePair(PsiNameValuePair pair) {
+  public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
     PsiIdentifier nameId = pair.getNameIdentifier();
     if (nameId != null) {
       myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId).create());
@@ -226,7 +226,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   }
 
   @Override
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     JavaResolveResult result;
     JavaResolveResult[] results;
     try {

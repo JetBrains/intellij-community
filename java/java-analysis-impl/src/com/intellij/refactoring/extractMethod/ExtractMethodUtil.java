@@ -67,7 +67,7 @@ public final class ExtractMethodUtil {
     assert body != null;
     final JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
 
-      @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      @Override public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiMethod target = expression.getCopyableUserData(RESOLVE_TARGET_KEY);
         if (target != null) {

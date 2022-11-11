@@ -57,7 +57,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       checkSwitchBlock(expression);
     }
 

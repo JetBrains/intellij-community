@@ -52,7 +52,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
   private static class CopyConstructorMissesFieldVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       if (!MethodUtils.isCopyConstructor(method)) {
         return;
       }

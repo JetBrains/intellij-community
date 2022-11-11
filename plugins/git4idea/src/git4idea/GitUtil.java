@@ -720,8 +720,6 @@ public final class GitUtil {
    * git diff --name-only [--cached]
    * @return true if there is anything in the unstaged/staging area, false if the unstaged/staging area is empty.
    * @param staged if true checks the staging area, if false checks unstaged files.
-   * @param project
-   * @param root
    */
   public static boolean hasLocalChanges(boolean staged, Project project, VirtualFile root) throws VcsException {
     GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);

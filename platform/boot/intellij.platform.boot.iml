@@ -7,6 +7,9 @@
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" />
   </component>
   <component name="copyright">
     <Base>

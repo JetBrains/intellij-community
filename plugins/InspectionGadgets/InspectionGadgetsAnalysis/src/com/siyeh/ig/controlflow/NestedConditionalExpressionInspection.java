@@ -39,7 +39,7 @@ public class NestedConditionalExpressionInspection extends BaseInspection {
   private static class NestedConditionalExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       if (ControlFlowUtils.isNestedElement(expression, PsiConditionalExpression.class)) {
         registerError(expression);

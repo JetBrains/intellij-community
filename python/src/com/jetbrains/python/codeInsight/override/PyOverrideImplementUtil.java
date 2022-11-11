@@ -345,9 +345,6 @@ public class PyOverrideImplementUtil {
   /**
    * Collect annotations from function parameters and return.
    *
-   * @param function
-   * @param typeEvalContext
-   * @return
    */
   @NotNull
   private static List<PyAnnotation> getAnnotations(@NotNull PyFunction function, @NotNull TypeEvalContext typeEvalContext) {

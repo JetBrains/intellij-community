@@ -92,7 +92,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
   private class UnnecessaryThisVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       super.visitThisExpression(expression);
       PsiElement parenthesizedThis = findBiggestParenthesizedExpr(expression);
       if (parenthesizedThis.getParent() instanceof PsiNewExpression) {

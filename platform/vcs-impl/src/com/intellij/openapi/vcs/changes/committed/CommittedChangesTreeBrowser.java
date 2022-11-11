@@ -58,8 +58,8 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.iterateFiles;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 
@@ -250,6 +250,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     return myGroupingStrategy;
   }
 
+  @NotNull
+  public Tree getChangesTree() {
+    return myChangesTree;
+  }
+
   private void updateBySelectionChange() {
     List<CommittedChangeList> selection = new ArrayList<>();
     final TreePath[] selectionPaths = myChangesTree.getSelectionPaths();
@@ -415,24 +420,24 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   @Override
   public Object getData(@NotNull String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId)) {
-      return collectChanges(getSelectedChangeLists(), false).toArray(new Change[0]);
+      return collectChanges(getSelectedChangeLists(), false).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
       return myChangesTree.getSelectionCount() > 0;
     }
     if (VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN.is(dataId)) {
-      return collectChanges(getSelectedChangeLists(), true).toArray(new Change[0]);
+      return collectChanges(getSelectedChangeLists(), true).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<CommittedChangeList> changeLists = getSelectedChangeLists();
       return !changeLists.isEmpty() ? changeLists.toArray(new CommittedChangeList[0]) : null;
     }
     if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.is(dataId)) {
-      return myDetailsView.getSelectedChanges().toArray(new Change[0]);
+      return myDetailsView.getSelectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      return getNavigatableArray(myProject, getFiles(changes.stream()));
+      return getNavigatableArray(myProject, iterateFiles(changes));
     }
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;

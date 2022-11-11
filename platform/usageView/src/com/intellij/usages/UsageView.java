@@ -3,9 +3,11 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +15,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public interface UsageView extends Disposable {
   /**
@@ -20,6 +23,7 @@ public interface UsageView extends Disposable {
    */
   DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
 
+  AtomicInteger COUNTER = new AtomicInteger();
   /**
    * Returns {@link Usage} which are selected in usage view
    */
@@ -110,6 +114,12 @@ public interface UsageView extends Disposable {
   void removeUsagesBulk(@NotNull Collection<? extends Usage> usages);
 
   default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener) {}
+
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  default int getId() {
+    return -1;
+  }
 
   @FunctionalInterface
   interface ExcludeListener {

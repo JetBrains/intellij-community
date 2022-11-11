@@ -139,7 +139,7 @@ public final class HgHistoryUtil {
 
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
     List<? extends HgRevisionNumber> parents = vcsRevisionNumber.getParents();
-    for (HgRevisionNumber parent : parents.stream().skip(1).collect(Collectors.toList())) {
+    for (HgRevisionNumber parent : parents.stream().skip(1).toList()) {
       reportedChanges.add(getChangesFromParent(project, root, vcsRevisionNumber, parent));
     }
 

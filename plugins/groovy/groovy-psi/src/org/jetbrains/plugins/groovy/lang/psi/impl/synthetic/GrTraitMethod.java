@@ -24,7 +24,7 @@ public class GrTraitMethod extends LightMethod implements PsiMirrorElement {
   public GrTraitMethod(@NotNull PsiClass containingClass,
                        @NotNull PsiMethod method,
                        @NotNull PsiSubstitutor substitutor) {
-    super(containingClass, method, substitutor);
+    super(containingClass.getManager(), method, containingClass, containingClass.getLanguage(), substitutor);
     setNavigationElement(method);
   }
 

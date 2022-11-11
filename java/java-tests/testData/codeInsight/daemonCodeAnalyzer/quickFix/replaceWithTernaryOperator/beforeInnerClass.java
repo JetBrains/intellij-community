@@ -1,4 +1,4 @@
-// "Replace with 'njc != null ?:'" "true"
+// "Replace with 'njc != null ?:'" "true-preview"
 public class JC {
   class Inner {}
 

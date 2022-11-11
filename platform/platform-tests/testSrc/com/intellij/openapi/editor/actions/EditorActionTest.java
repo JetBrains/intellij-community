@@ -5,6 +5,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
@@ -294,6 +295,15 @@ public class EditorActionTest extends AbstractEditorTest {
     initText("a" + SURROGATE_PAIR + "<caret>b");
     backspace();
     checkResultByText("a<caret>b");
+  }
+
+  public void testBackspaceInsideVirtualTab() {
+    initText("<caret>\ta");
+    getEditor().getSettings().setCaretInsideTabs(true);
+    right();
+    backspace();
+    checkResultByText("<caret>\ta");
+    assertEquals(new LogicalPosition(0, 1), getEditor().getCaretModel().getLogicalPosition());
   }
 
   public void testCaretMovementNearSurrogatePair() {

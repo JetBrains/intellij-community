@@ -1,4 +1,4 @@
-// "Adapt argument using 'toPath()'" "true"
+// "Adapt argument using 'toPath()'" "true-preview"
 import java.io.*;
 import java.nio.file.*;
 

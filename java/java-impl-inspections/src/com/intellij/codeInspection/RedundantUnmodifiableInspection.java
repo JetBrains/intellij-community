@@ -29,7 +29,7 @@ public class RedundantUnmodifiableInspection extends AbstractBaseJavaLocalInspec
     return new JavaElementVisitor() {
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (ExpressionUtils.isVoidContext(call)) return;
         if (COLLECTIONS_UNMODIFIABLE.test(call)) {
           PsiExpression arg = call.getArgumentList().getExpressions()[0];

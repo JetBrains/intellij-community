@@ -52,9 +52,17 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
             return node.getText();
         }
         final String s = getUnescapedText();
-        assert s.charAt(0) == '\\';
         boolean pcreBackReference = s.charAt(1) == 'g';
-        return pcreBackReference ? getPcreBackrefIndexNumberText(s.substring(2)) : s.substring(1);
+        boolean pcreNumberedGroup = s.startsWith("(?");
+        assert s.charAt(0) == '\\' || pcreNumberedGroup;
+        return pcreBackReference ? getPcreBackrefIndexNumberText(s.substring(2)) :
+               pcreNumberedGroup ? getPcreNumberedGroupIndexNumberText(s.substring(2)) :
+               s.substring(1);
+    }
+
+    @NotNull
+    private static String getPcreNumberedGroupIndexNumberText(String s) {
+      return trimEnd(s, ")");
     }
 
     @NotNull

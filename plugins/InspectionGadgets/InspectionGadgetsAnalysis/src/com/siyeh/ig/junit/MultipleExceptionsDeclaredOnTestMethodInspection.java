@@ -84,7 +84,7 @@ public class MultipleExceptionsDeclaredOnTestMethodInspection extends BaseInspec
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!TestUtils.isJUnitTestMethod(method)) {
         return;

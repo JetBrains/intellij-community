@@ -5,7 +5,10 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.ide.command.MarshallableCommand
-import com.intellij.ide.starter.models.*
+import com.intellij.ide.starter.models.IDEStartResult
+import com.intellij.ide.starter.models.TestCase
+import com.intellij.ide.starter.models.VMOptions
+import com.intellij.ide.starter.models.andThen
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.plugins.PluginConfigurator
 import com.intellij.ide.starter.profiler.ProfilerType
@@ -21,6 +24,7 @@ import org.kodein.di.newInstance
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.io.FileOutputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.TransformerFactory
@@ -61,12 +65,6 @@ data class IDETestContext(
   fun addLockFileForUITest(fileName: String): IDETestContext =
     addVMOptionsPatch {
       addSystemProperty("uiLockTempFile", paths.tempDir / fileName)
-    }
-
-  fun disableJcef(): IDETestContext =
-    addVMOptionsPatch {
-      // Disable JCEF (IDEA-243147). Otherwise, tests will fail with LOG.error
-      addSystemProperty("ide.browser.jcef.enabled", false)
     }
 
   fun disableLinuxNativeMenuForce(): IDETestContext =
@@ -160,6 +158,7 @@ data class IDETestContext(
       addSystemProperty("ide.plugins.per.project", true)
     }
 
+  // seems, doesn't work for Maven
   fun disableAutoImport(disabled: Boolean = true) = addVMOptionsPatch {
     addSystemProperty("external.system.auto.import.disabled", disabled)
   }
@@ -174,8 +173,12 @@ data class IDETestContext(
       .addSystemProperty("shared.indexes.download.auto.consent", enable)
   }
 
-  fun skipIndicesInitialization() = addVMOptionsPatch {
-    addSystemProperty("idea.skip.indices.initialization", true)
+  fun skipIndicesInitialization(value: Boolean = true) = addVMOptionsPatch {
+    addSystemProperty("idea.skip.indices.initialization", value)
+  }
+
+  fun doRefreshAfterJpsLibraryDownloaded(value: Boolean = true) = addVMOptionsPatch {
+    addSystemProperty("idea.do.refresh.after.jps.library.downloaded", value)
   }
 
   fun collectImportProjectPerfMetrics() = addVMOptionsPatch {
@@ -184,6 +187,10 @@ data class IDETestContext(
 
   fun collectOpenTelemetry() = addVMOptionsPatch {
     addSystemProperty("idea.diagnostic.opentelemetry.file", paths.logsDir.resolve(OPENTELEMETRY_FILE))
+  }
+
+  fun enableVerboseOpenTelemetry() = addVMOptionsPatch {
+    addSystemProperty("idea.diagnostic.opentelemetry.verbose", true)
   }
 
   fun enableWorkspaceModelVerboseLogs() = addVMOptionsPatch {
@@ -200,6 +207,14 @@ data class IDETestContext(
     //TODO: it would be better to allocate a new context instead of wiping the folder
     logOutput("Cleaning logs dir for $this at $paths")
     paths.logsDir.toFile().deleteRecursively()
+  }
+
+  fun wipeReportDir() = apply {
+    logOutput("Cleaning report dir for $this at $paths")
+    Files.walk(paths.reportsDir)
+      .filter { Files.isRegularFile(it) }
+      .map { it.toFile() }
+      .forEach { it.delete() }
   }
 
   fun wipeProjectsDir() = apply {
@@ -253,7 +268,7 @@ data class IDETestContext(
     return this
   }
 
-  fun internalMode() = addVMOptionsPatch { addSystemProperty("idea.is.internal", true) }
+  fun internalMode(value: Boolean = true) = addVMOptionsPatch { addSystemProperty("idea.is.internal", value) }
 
   fun prepareProjectCleanImport(): IDETestContext {
     return removeIdeaProjectDirectory().removeAllImlFilesInProject()
@@ -336,19 +351,19 @@ data class IDETestContext(
   ): IDEStartResult {
     val updatedContext = this.copy(testName = "${this.testName}/warmup")
     val result = updatedContext.runIDE(
-        patchVMOptions = {
-          val warmupReports = IDEStartupReports(paths.reportsDir)
+      patchVMOptions = {
+        this.run {
           if (storeClassReport) {
-            this.enableStartupPerformanceLog(warmupReports).enableClassLoadingReport(
-              paths.reportsDir / "class-report.txt").patchVMOptions()
+            this.enableClassLoadingReport(paths.reportsDir / "class-report.txt")
           }
           else {
             this
           }
-        },
-        commands = testCase.commands.plus(commands),
-        runTimeout = runTimeout
-      )
+        }.patchVMOptions()
+      },
+      commands = testCase.commands.plus(commands),
+      runTimeout = runTimeout
+    )
     updatedContext.publishArtifact(this.paths.reportsDir)
     return result
   }

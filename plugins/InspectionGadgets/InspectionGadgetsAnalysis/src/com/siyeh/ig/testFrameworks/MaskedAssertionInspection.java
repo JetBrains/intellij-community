@@ -34,7 +34,7 @@ public class MaskedAssertionInspection extends BaseInspection {
   private static class MaskedAssertionInspectionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTryStatement(PsiTryStatement statement) {
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
       PsiElement lastPsiElement = getLastPsiElementInsideTryBlock(statement);
       if (lastPsiElement instanceof PsiAssertStatement) {

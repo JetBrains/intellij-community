@@ -24,7 +24,7 @@ final class PropertiesWebReferenceContributor extends PsiReferenceContributor {
         if (!(element instanceof PropertyValueImpl)) return PsiReference.EMPTY_ARRAY;
         if (!element.textContains(':')) return PsiReference.EMPTY_ARRAY;
 
-        PropertyValueImpl propertyValue = ((PropertyValueImpl)element);
+        PropertyValueImpl propertyValue = (PropertyValueImpl)element;
         String textValue = propertyValue.getText();
 
         if (GlobalPathReferenceProvider.isWebReferenceUrl(textValue)) {

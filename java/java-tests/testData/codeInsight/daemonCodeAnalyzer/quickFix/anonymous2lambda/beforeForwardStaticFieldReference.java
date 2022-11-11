@@ -1,4 +1,4 @@
-// "Replace with lambda" "true"
+// "Replace with lambda" "true-preview"
 class HelloLambda {
   private final Runnable r = new Run<caret>nable() {
     @Override

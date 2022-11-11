@@ -325,7 +325,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void restoreSelection() {
     if (!shouldSelectAll()) {
       if (mySelectedRange != null) {
-        VariableInplaceRenamer.restoreSelection(myEditor, new TextRange(mySelectedRange.getStartOffset(), mySelectedRange.getEndOffset()));
+        VariableInplaceRenamer.restoreSelection(myEditor, mySelectedRange.getTextRange());
       }
       else {
         myEditor.getSelectionModel().removeSelection();

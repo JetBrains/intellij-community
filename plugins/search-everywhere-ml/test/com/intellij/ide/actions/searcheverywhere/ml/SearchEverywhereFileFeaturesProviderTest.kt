@@ -1,16 +1,18 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
+import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_BOOKMARK_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_DIRECTORY_DATA_KEY
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_FAVORITE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_EXACT_MATCH_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.RECENT_INDEX_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.TIME_SINCE_LAST_MODIFICATION_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_DAY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY
-import com.intellij.ide.favoritesTreeView.FavoritesManager
+import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.mock.MockPsiFile
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -45,19 +47,16 @@ internal class SearchEverywhereFileFeaturesProviderTest
   }
 
   fun testIsInFavorites() {
-    val addFileToFavorites = { file: PsiFileSystemItem ->
-      FavoritesManager.getInstance(project).also {
-        it.createNewList("xxx")
-        if (!it.addRoots("xxx", module, file.virtualFile)) {
-          fail("Failed to add the file to the favorites list")
-        }
+    val addFileToBookmarks = { file: PsiFileSystemItem ->
+      BookmarkManager.getInstance(project).also {
+        it.addFileBookmark(file.virtualFile, "xxx")
       }
     }
 
-    checkThatFeature(IS_FAVORITE_DATA_KEY.name)
+    checkThatFeature(IS_BOOKMARK_DATA_KEY.name)
       .ofElement(testFile)
       .changes(false, true)
-      .after { addFileToFavorites(it) }
+      .after { addFileToBookmarks(it) }
   }
 
   fun testIsOpened() {
@@ -181,6 +180,45 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .ofElement(file)
       .withCurrentTime(currentTime)
       .isEqualTo(expectedValues)
+  }
+
+  fun `test exact match is true when priority is exactly exact match degree`() {
+    checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
+      .ofElement(testFile)
+      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE)
+      .isEqualTo(true)
+  }
+
+  fun `test exact match is false when only slash is first character of query`() {
+    checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
+      .ofElement(testFile)
+      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
+      .withQuery("/${testFile.virtualFile.name}")
+      .isEqualTo(false)
+  }
+
+  fun `test exact match is true when query starts with slash`() {
+    checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
+      .ofElement(testFile)
+      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
+      .withQuery("/${testFile.virtualFile.parent.name}/${testFile.virtualFile.name}")
+      .isEqualTo(true)
+  }
+
+  fun `test exact match is true when last slash is not first character of query`() {
+    checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
+      .ofElement(testFile)
+      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
+      .withQuery("${testFile.virtualFile.parent.name.last()}/${testFile.virtualFile.name}")
+      .isEqualTo(true)
+  }
+
+  fun `test exact match is true when using backslash`() {
+    checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
+      .ofElement(testFile)
+      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
+      .withQuery("${testFile.virtualFile.parent.name.last()}\\${testFile.virtualFile.name}")
+      .isEqualTo(true)
   }
 
   private fun createFileWithModTimestamp(modificationTimestamp: Long): PsiFileSystemItem {

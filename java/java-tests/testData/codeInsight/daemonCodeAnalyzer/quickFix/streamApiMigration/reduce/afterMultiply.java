@@ -1,4 +1,4 @@
-// "Replace with reduce()" "true"
+// "Replace with reduce()" "true-preview"
 
 import java.util.*;
 

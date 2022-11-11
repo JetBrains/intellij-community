@@ -1,3 +1,3 @@
-// "Merge duplicate attributes" "true"
+// "Merge duplicate attributes" "true-preview"
 @SuppressWarnings({"a", "b", "c"})
 class Main { }

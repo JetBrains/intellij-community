@@ -307,19 +307,19 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       }
       element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
           // prevent going to local classes
         }
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression lambdaExpr) {
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression lambdaExpr) {
           final PsiElement body = lambdaExpr.getBody();
           if (body == null) return;
           findUnusedLocalVariablesInElement(body, descriptors);
         }
 
         @Override
-        public void visitLocalVariable(PsiLocalVariable variable) {
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
           super.visitLocalVariable(variable);
           if (!usedVariables.contains(variable) && variable.getInitializer() == null &&
               !SuppressionUtil.inspectionResultSuppressed(variable, UnusedDeclarationInspection.this)) {

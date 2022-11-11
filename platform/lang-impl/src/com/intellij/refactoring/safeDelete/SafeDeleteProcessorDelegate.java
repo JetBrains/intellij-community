@@ -93,7 +93,6 @@ public interface SafeDeleteProcessorDelegate {
    * Called during {@link BaseRefactoringProcessor#performRefactoring(UsageInfo[])} under write action
    * 
    * @param  element an element selected for deletion.
-   * @throws IncorrectOperationException
    */
   void prepareForDeletion(PsiElement element) throws IncorrectOperationException;
 

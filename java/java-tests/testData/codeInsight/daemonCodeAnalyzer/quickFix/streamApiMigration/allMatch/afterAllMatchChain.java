@@ -1,4 +1,4 @@
-// "Replace with allMatch()" "true"
+// "Replace with allMatch()" "true-preview"
 
 import java.util.List;
 

@@ -5,10 +5,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 
-private class ReprocessContentRootDataActivity : StartupActivity.Background {
-  override fun runActivity(project: Project) {
+private class ReprocessContentRootDataActivity : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }

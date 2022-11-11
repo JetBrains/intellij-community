@@ -49,10 +49,15 @@ class GradleNamedDomainCollectionContributor : NonCodeMembersContributor() {
       val method = GrLightMethodBuilder(manager, domainObjectName).apply {
         returnType = domainObjectType
         addParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
+        originInfo = NAMED_DOMAIN_DECLARATION
       }
       if (!processor.execute(method, state)) {
         return
       }
     }
+  }
+
+  companion object {
+    const val NAMED_DOMAIN_DECLARATION = "by NamedDomainCollection"
   }
 }

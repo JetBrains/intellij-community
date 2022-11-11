@@ -66,7 +66,7 @@ public class NonFinalFieldInEnumInspection extends BaseInspection {
   private class NonFinalFieldInEnumVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass == null || !containingClass.isEnum()) {

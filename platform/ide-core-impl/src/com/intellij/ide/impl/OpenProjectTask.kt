@@ -3,69 +3,83 @@ package com.intellij.ide.impl
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.projectImport.ProjectOpenedCallback
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
-                           val projectToClose: Project? = null,
-                           val isNewProject: Boolean = false,
-                           /** Ignored if [isNewProject] is set to false. */
-                           val useDefaultProjectAsTemplate: Boolean = isNewProject,
-                           /** When you just need to open an already created and prepared project; used e.g. by the "new project" action. */
-                           val project: Project? = null,
-                           val projectName: String? = null,
-                           /** Whether to show welcome screen if failed to open project. */
-                           val showWelcomeScreen: Boolean = true,
-                           val callback: ProjectOpenedCallback? = null,
-                           val frameManager: Any? = null,
-                           val line: Int = -1,
-                           val column: Int = -1,
-                           val isRefreshVfsNeeded: Boolean = true,
-                           /**
-                            *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
-                            *
-                            *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
-                            *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
-                            *  @see com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
-                            */
-                           val runConfigurators: Boolean = false,
-                           val runConversionBeforeOpen: Boolean = true,
-                           val projectWorkspaceId: String? = null,
-                           val isProjectCreatedWithWizard: Boolean = false,
-                           @TestOnly
-                           val preloadServices: Boolean = true,
-                           val beforeInit: ((Project) -> Unit)? = null,
-                           /** Ignored if project is explicitly set. */
-                           val beforeOpen: ((Project) -> Boolean)? = null,
-                           val preparedToOpen: ((Module) -> Unit)? = null) : UserDataHolder {
+data class OpenProjectTask internal constructor(val forceOpenInNewFrame: Boolean,
+                                                val projectToClose: Project?,
+                                                val isNewProject: Boolean = false,
+                                                /** Ignored if [isNewProject] is set to false. */
+                                                val useDefaultProjectAsTemplate: Boolean = isNewProject,
+                                                /** When you just need to open an already created and prepared project; used e.g. by the "new project" action. */
+                                                val project: Project?,
+                                                val projectName: String?,
+                                                /** Whether to show welcome screen if failed to open project. */
+                                                val showWelcomeScreen: Boolean,
+                                                val callback: ProjectOpenedCallback?,
+                                                val line: Int,
+                                                val column: Int,
+                                                val isRefreshVfsNeeded: Boolean,
+                                                /**
+                                                 *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
+                                                 *
+                                                 *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
+                                                 *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
+                                                 *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
+                                                 */
+                                                val runConfigurators: Boolean,
+                                                val runConversionBeforeOpen: Boolean,
+                                                val projectWorkspaceId: String?,
+                                                val isProjectCreatedWithWizard: Boolean,
+                                                @TestOnly
+                                                val preloadServices: Boolean,
+                                                val beforeInit: ((Project) -> Unit)?,
+                                                /** Ignored if project is explicitly set. */
+                                                val beforeOpen: (suspend (Project) -> Boolean)?,
+                                                val preparedToOpen: (suspend (Module) -> Unit)?,
+                                                val preventIprLookup: Boolean,
+                                                val processorChooser: ((List<Any>) -> Any)?,
+                                                val implOptions: Any?,
+                                                val showFrameAsap: Boolean) {
+  @Internal
+  constructor(forceOpenInNewFrame: Boolean = false,
+              projectToClose: Project? = null,
+              isNewProject: Boolean = false,
+              /** Ignored if [isNewProject] is set to false. */
+              useDefaultProjectAsTemplate: Boolean = isNewProject) : this(
+    forceOpenInNewFrame = forceOpenInNewFrame,
+    projectToClose = projectToClose,
+    isNewProject = isNewProject,
+    useDefaultProjectAsTemplate = useDefaultProjectAsTemplate,
 
-  private val userData = ConcurrentHashMap<Key<*>, Any>()
+    project = null,
+    projectName = null,
 
-  @Suppress("UNCHECKED_CAST")
-  override fun <T : Any?> getUserData(key: Key<T>): T? = userData[key] as T?
+    showWelcomeScreen = true,
+    callback = null,
+    line = -1,
+    column = -1,
+    isRefreshVfsNeeded = true,
 
-  override fun <T : Any?> putUserData(key: Key<T>, value: T?) { userData[key] = value as Any }
+    runConfigurators = false,
+    runConversionBeforeOpen = true,
+    projectWorkspaceId = null,
+    isProjectCreatedWithWizard = false,
 
-  fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean) = copy(forceOpenInNewFrame = forceOpenInNewFrame)
-  fun withProjectToClose(projectToClose: Project?) = copy(projectToClose = projectToClose)
-  fun asNewProject() = copy(isNewProject = true, useDefaultProjectAsTemplate = true)
-  fun withProject(project: Project?) = copy(project = project)
-  fun withProjectName(projectName: String?) = copy(projectName = projectName)
-  fun withRunConfigurators() = copy(runConfigurators = true)
-  fun withoutVfsRefresh() = copy(isRefreshVfsNeeded = false)
-  fun withCreatedByWizard() = copy(isProjectCreatedWithWizard = true)
+    preloadServices = true,
+    beforeInit = null,
 
-  @ApiStatus.Internal
-  fun withBeforeOpenCallback(callback: Predicate<Project>) = copy(beforeOpen = { callback.test(it) })
+    beforeOpen = null,
+    preventIprLookup = false,
+    preparedToOpen = null,
+    processorChooser = null,
 
-  @ApiStatus.Internal
-  fun withPreparedToOpenCallback(callback: Consumer<Module>) = copy(preparedToOpen = { callback.accept(it) })
+    implOptions = null,
+    showFrameAsap = false,
+  )
 
   companion object {
     @JvmStatic
@@ -74,12 +88,114 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
     @JvmStatic
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated("Use build(), withProjectToClose(), withForceOpenInNewFrame()", level = DeprecationLevel.ERROR)
-    fun withProjectToClose(projectToClose: Project?, forceOpenInNewFrame: Boolean): OpenProjectTask =
-      OpenProjectTask(projectToClose = projectToClose, forceOpenInNewFrame = forceOpenInNewFrame)
-
-    @JvmStatic
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @Deprecated("Use build(), withProject()", level = DeprecationLevel.ERROR)
-    fun withCreatedProject(project: Project?): OpenProjectTask = OpenProjectTask(project = project)
+    fun withProjectToClose(projectToClose: Project?, forceOpenInNewFrame: Boolean): OpenProjectTask {
+      return OpenProjectTask(projectToClose = projectToClose, forceOpenInNewFrame = forceOpenInNewFrame)
+    }
   }
+
+  fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean) = copy(forceOpenInNewFrame = forceOpenInNewFrame)
+  fun withProjectToClose(projectToClose: Project?) = copy(projectToClose = projectToClose)
+  fun asNewProject() = copy(isNewProject = true, useDefaultProjectAsTemplate = true)
+  fun withProject(project: Project?) = copy(project = project)
+  fun withProjectName(projectName: String?) = copy(projectName = projectName)
+  fun withRunConfigurators() = copy(runConfigurators = true)
+}
+
+class OpenProjectTaskBuilder internal constructor() {
+  var projectName: String? = null
+
+  var forceOpenInNewFrame: Boolean = false
+  @Internal
+  var showFrameAsap: Boolean = false
+
+  var isNewProject: Boolean = false
+  var useDefaultProjectAsTemplate: Boolean? = null
+
+  /**
+   *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
+   *
+   *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
+   *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
+   *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
+   */
+  var runConfigurators: Boolean = false
+  var preloadServices: Boolean = true
+
+  var isProjectCreatedWithWizard: Boolean = false
+  var runConversionBeforeOpen: Boolean = true
+  var preventIprLookup: Boolean = false
+
+  var projectToClose: Project? = null
+  var isRefreshVfsNeeded: Boolean = true
+
+  @Internal
+  var beforeOpen: (suspend (Project) -> Boolean)? = null
+  @Internal
+  var beforeInit: ((Project) -> Unit)? = null
+  var preparedToOpen: (suspend (Module) -> Unit)? = null
+  var callback: ProjectOpenedCallback? = null
+
+  var showWelcomeScreen: Boolean = true
+
+  var projectWorkspaceId: String? = null
+  var implOptions: Any? = null
+
+  var line: Int = -1
+  var column: Int = -1
+
+  /** Shim for Java clients */
+  fun withPreparedToOpen(callback: Consumer<Module>) {
+    preparedToOpen = { callback.accept(it) }
+  }
+
+  /**  Shim for Java clients  */
+  fun withBeforeOpenCallback(callback: Predicate<Project>) {
+    beforeOpen = { callback.test(it) }
+  }
+
+  @Internal
+  var processorChooser: ((List<Any>) -> Any)? = null
+
+  var project: Project? = null
+
+  internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+    builder()
+    return OpenProjectTask(
+      forceOpenInNewFrame = forceOpenInNewFrame,
+      showFrameAsap = showFrameAsap,
+      preloadServices = preloadServices,
+
+      projectToClose = projectToClose,
+      isRefreshVfsNeeded = isRefreshVfsNeeded,
+
+      projectName = projectName,
+      isNewProject = isNewProject,
+      useDefaultProjectAsTemplate = useDefaultProjectAsTemplate ?: isNewProject,
+      runConfigurators = runConfigurators,
+      isProjectCreatedWithWizard = isProjectCreatedWithWizard,
+      runConversionBeforeOpen = runConversionBeforeOpen,
+      showWelcomeScreen = showWelcomeScreen,
+
+      beforeOpen = beforeOpen,
+      beforeInit = beforeInit,
+      preparedToOpen = preparedToOpen,
+      callback = callback,
+
+      preventIprLookup = preventIprLookup,
+      processorChooser = processorChooser,
+
+      projectWorkspaceId = projectWorkspaceId,
+      implOptions = implOptions,
+
+      line = line,
+      column = column,
+
+      project = project,
+    )
+  }
+}
+
+@Internal
+fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+  return OpenProjectTaskBuilder().build(buildAction)
 }

@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
@@ -11,7 +10,7 @@ class MutableStorageTest {
   @Test
   fun `simple entity mutation test`() {
     val builder = MutableEntityStorage.create()
-    val sampleEntity = SampleEntity2("ParentData", MySource, true)
+    val sampleEntity = SampleEntity2("ParentData", true, MySource)
 
     builder.addEntity(sampleEntity)
     val simpleEntityFromStore = builder.entities(SampleEntity2::class.java).single()
@@ -49,7 +48,7 @@ class MutableStorageTest {
   @Test
   fun `check exception if request data from entity which was removed`() {
     val builder = MutableEntityStorage.create()
-    val sampleEntity = SampleEntity2("ParentData", MySource, false)
+    val sampleEntity = SampleEntity2("ParentData", false, MySource)
     builder.addEntity(sampleEntity)
     val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
     val entityFromStore = newBuilder.entities(SampleEntity2::class.java).single()
@@ -105,5 +104,20 @@ class MutableStorageTest {
     assertThrows<IllegalStateException> {
       parentEntityFromStore.children = listOf(ChildMultipleEntity("ChildTwoData", MySource))
     }
+  }
+
+  @Test
+  fun `change entity source in snapshot`() {
+    val builder = MutableEntityStorage.create()
+    builder.addEntity(SampleEntity2("data", true, MySource))
+    val snapshot = builder.toSnapshot()
+    val entity = snapshot.entities(SampleEntity2::class.java).single()
+    val builder2 = snapshot.toBuilder()
+    val builder3 = snapshot.toBuilder()
+    builder2.modifyEntity(entity) {
+      entitySource = AnotherSource
+    }
+    builder3.addDiff(builder2)
+    assertEquals(MySource, snapshot.entities(SampleEntity2::class.java).single().entitySource)
   }
 }

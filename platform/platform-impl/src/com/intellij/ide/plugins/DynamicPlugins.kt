@@ -2,10 +2,9 @@
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
-import com.intellij.application.options.RegistryManager
-import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
@@ -17,11 +16,12 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
-import com.intellij.ide.util.TipDialog
+import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.idea.IdeaLogger
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
@@ -46,6 +46,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -61,6 +62,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -455,9 +457,14 @@ object DynamicPlugins {
 
     try {
       if (options.save) {
-        saveDocumentsAndProjectsAndApp(true)
+        runInAutoSaveDisabledMode {
+          FileDocumentManager.getInstance().saveAllDocuments()
+          runBlockingUnderModalProgress {
+            saveProjectsAndApp(true)
+          }
+        }
       }
-      TipDialog.hideForProject(null)
+      TipAndTrickManager.getInstance().closeTipDialog()
 
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
       IdeEventQueue.getInstance().flushQueue()
@@ -893,7 +900,7 @@ private fun clearTemporaryLostComponent() {
     clearMethod.isAccessible = true
     loop@ for (frame in WindowManager.getInstance().allProjectFrames) {
       val window = when (frame) {
-        is ProjectFrameHelper -> frame.frame
+        is ProjectFrameHelper -> frame.frameOrNull
         is Window -> frame
         else -> continue@loop
       }
@@ -1036,15 +1043,10 @@ private fun optionalDependenciesOnPlugin(
 private fun loadModules(
   modules: Collection<IdeaPluginDescriptorImpl>,
   app: ApplicationImpl,
-  listenerCallbacks: MutableList<Runnable>,
+  listenerCallbacks: MutableList<in Runnable>,
 ) {
   fun registerComponents(componentManager: ComponentManager) {
-    (componentManager as ComponentManagerImpl).registerComponents(
-      modules = modules.asSequence(),
-      app = app,
-      precomputedExtensionModel = null,
-      listenerCallbacks = listenerCallbacks,
-    )
+    (componentManager as ComponentManagerImpl).registerComponents(modules.toList(), app, null, listenerCallbacks)
   }
 
   registerComponents(app)
@@ -1061,8 +1063,8 @@ private fun loadModules(
 
 private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
   FileChannel.open(Paths.get(hprofPath), StandardOpenOption.READ).use { channel ->
-    val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, progressIndicator ->
-      AnalyzeClassloaderReferencesGraph(analysisContext, pluginId.idString).analyze(progressIndicator)
+    val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, listProvider, progressIndicator ->
+      AnalyzeClassloaderReferencesGraph(analysisContext, listProvider, pluginId.idString).analyze(progressIndicator).mainReport.toString()
     }
     analysis.onlyStrongReferences = true
     analysis.includeClassesAsRoots = false

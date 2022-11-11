@@ -1,4 +1,4 @@
-// "Unwrap 'do-while' statement (may change semantics)" "true"
+// "Unwrap 'do-while' statement (may change semantics)" "true-preview"
 import org.jetbrains.annotations.Contract;
 
 class X {

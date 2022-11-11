@@ -322,8 +322,6 @@ public final class SvnUtil {
   /**
    * Gets working copy internal format. Works for 1.7 and 1.8.
    *
-   * @param path
-   * @return
    */
   @NotNull
   public static WorkingCopyFormat getFormat(final File path) {

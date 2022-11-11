@@ -52,7 +52,7 @@ public class NestedSwitchStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       if (ControlFlowUtils.isNestedElement(expression, PsiSwitchBlock.class)) {
         registerError(expression.getFirstChild(), expression);

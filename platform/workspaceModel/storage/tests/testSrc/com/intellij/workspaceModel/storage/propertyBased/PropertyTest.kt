@@ -7,9 +7,9 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.createBuilderFrom
 import com.intellij.workspaceModel.storage.entities.test.api.AnotherSource
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.RefsTable
 import com.intellij.workspaceModel.storage.impl.StorageIndexes
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
@@ -34,7 +34,6 @@ class PropertyTest {
     }
   }
 
-  @Ignore("Temporally disable")
   @Test
   fun testReplaceBySource() {
     PropertyChecker.checkScenarios {

@@ -163,6 +163,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
       }
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, commentTracker);
+      if (newExpression == null) return;
       PsiReplacementUtil.replaceExpression((PsiExpression)parent, newExpression, commentTracker);
     }
   }
@@ -175,7 +176,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
   private static class TrivialStringConcatenationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       if (!ExpressionUtils.hasStringType(expression)) {
         return;

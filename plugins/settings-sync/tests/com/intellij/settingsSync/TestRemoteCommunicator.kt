@@ -1,30 +1,12 @@
 package com.intellij.settingsSync
 
-import java.util.concurrent.CountDownLatch
+internal abstract class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
 
-internal class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
-  var offline: Boolean = false
-  var updateResult: UpdateResult? = null
-  var pushed: SettingsSnapshot? = null
-  var startPushLatch: CountDownLatch? = null
-  lateinit var pushedLatch: CountDownLatch
+  var latestPushedSnapshot: SettingsSnapshot? = null
+    protected set
 
-  override fun checkServerState(): ServerState {
-    return ServerState.UpdateNeeded
-  }
+  abstract fun prepareFileOnServer(snapshot: SettingsSnapshot)
 
-  override fun receiveUpdates(): UpdateResult {
-    return updateResult ?: UpdateResult.Error("Unexpectedly null update result")
-  }
+  abstract fun awaitForPush(): SettingsSnapshot?
 
-  override fun push(snapshot: SettingsSnapshot): SettingsSyncPushResult {
-    startPushLatch?.countDown()
-    if (offline) return SettingsSyncPushResult.Error("Offline")
-
-    pushed = snapshot
-    if (::pushedLatch.isInitialized) pushedLatch.countDown()
-    return SettingsSyncPushResult.Success
-  }
-
-  override fun delete() {}
 }

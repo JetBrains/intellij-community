@@ -234,14 +234,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     return baseDefaults.getColor(key);
   }
 
-  /**
-   * @deprecated Use {@link UITheme#parseValue(String, String, ClassLoader)}
-   */
-  @Deprecated(forRemoval = true)
-  protected Object parseValue(String key, @NotNull String value) {
-    return UITheme.parseValue(key, value, getClass().getClassLoader());
-  }
-
   @Override
   public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
     return NAME;
@@ -282,7 +274,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       log(e);
     }
 
-    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
     ideEventQueueInitialized(IdeEventQueue.getInstance());
   }
 

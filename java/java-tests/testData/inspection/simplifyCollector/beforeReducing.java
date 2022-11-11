@@ -1,4 +1,4 @@
-// "Use 'Collectors.toMap' collector" "true"
+// "Use 'Collectors.toMap()' collector" "true"
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;

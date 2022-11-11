@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -681,6 +682,10 @@ public class SwingHelper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Transferable content = new StringSelection(myUrl);
       CopyPasteManager.getInstance().setContents(content);
@@ -699,6 +704,11 @@ public class SwingHelper {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

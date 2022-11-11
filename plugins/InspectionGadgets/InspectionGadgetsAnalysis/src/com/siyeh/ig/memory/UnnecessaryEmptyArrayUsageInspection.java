@@ -35,7 +35,7 @@ public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection impleme
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         if (ConstructionUtils.isEmptyArrayInitializer(expression)) {
           PsiType type = expression.getType();
           if (type instanceof PsiArrayType) {
@@ -45,7 +45,7 @@ public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection impleme
               for (PsiField field : typeClass.getFields()) {
                 PsiModifierList modifiers = field.getModifierList();
                 if (modifiers != null
-                    && !typeClass.isEquivalentTo(PsiTreeUtil.findFirstParent(expression, (e) -> e instanceof PsiClass))
+                    && !typeClass.isEquivalentTo(PsiTreeUtil.findFirstParent(expression, e -> e instanceof PsiClass))
                     && modifiers.hasModifierProperty(PsiModifier.PUBLIC)
                     && field.getType().equals(type)
                     && CollectionUtils.isConstantEmptyArray(field)) {

@@ -77,7 +77,7 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
   private class EqualsBetweenInconvertibleTypesVisitor extends BaseEqualsVisitor {
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.EQEQ) && !tokenType.equals(JavaTokenType.NE)) {

@@ -119,7 +119,7 @@ internal fun moveComponentConfiguration(defaultProject: Project,
     }
   }
 
-  (defaultProject.picoContainer as ComponentManagerImpl).processAllImplementationClasses { aClass, _ ->
+  (defaultProject.actualComponentManager as ComponentManagerImpl).processAllImplementationClasses { aClass, _ ->
     processComponents(aClass)
   }
 

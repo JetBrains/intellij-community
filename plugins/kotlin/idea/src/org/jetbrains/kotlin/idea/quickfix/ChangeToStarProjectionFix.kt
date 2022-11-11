@@ -1,15 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.intentions.typeArguments
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
@@ -17,7 +23,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.isArrayOrNullableArray
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinQuickFixAction<KtTypeElement>(element) {
     override fun getFamilyName() = KotlinBundle.message("fix.change.to.star.projection.family")
@@ -42,8 +50,13 @@ class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinQuickFixAction<K
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val binaryExpr = diagnostic.psiElement.getNonStrictParentOfType<KtBinaryExpressionWithTypeRHS>()
-            val typeReference = binaryExpr?.right ?: diagnostic.psiElement.getNonStrictParentOfType<KtTypeReference>()
+            val psiElement = diagnostic.psiElement
+
+            // We don't suggest this quick-fix for array instance checks because there is ConvertToIsArrayOfCallFix
+            if (psiElement.parent is KtIsExpression && diagnostic.isArrayInstanceCheck() && psiElement.isOnJvm()) return null
+
+            val binaryExpr = psiElement.getNonStrictParentOfType<KtBinaryExpressionWithTypeRHS>()
+            val typeReference = binaryExpr?.right ?: psiElement.getNonStrictParentOfType()
             val typeElement = typeReference?.typeElement ?: return null
             if (typeElement is KtFunctionType) return null
 
@@ -81,13 +94,14 @@ class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinQuickFixAction<K
             return null
         }
 
+        private fun Diagnostic.isArrayInstanceCheck(): Boolean =
+            factory == Errors.CANNOT_CHECK_FOR_ERASED && Errors.CANNOT_CHECK_FOR_ERASED.cast(this).a.isArrayOrNullableArray()
+
+        private fun PsiElement.isOnJvm(): Boolean = safeAs<KtElement>()?.platform.isJvm()
+
         private fun KtSimpleNameExpression.isAsKeyword(): Boolean {
             val elementType = getReferencedNameElementType()
             return elementType == KtTokens.AS_KEYWORD || elementType == KtTokens.AS_SAFE
-        }
-
-        private fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {
-            return (this?.typeElement as? KtUserType)?.typeArguments.orEmpty()
         }
     }
 }

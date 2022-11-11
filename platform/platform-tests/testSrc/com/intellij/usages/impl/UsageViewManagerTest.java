@@ -34,7 +34,7 @@ public class UsageViewManagerTest {
     UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectRule.getProject(), findModel);
     UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectRule.getProject());
     ApplicationManager.getApplication().runReadAction(() -> {
-      SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target});
+      SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target}).get();
       assertThat(GlobalSearchScopesCore.directoryScope(projectRule.getProject(), dir, true)).isEqualTo(scope);
     });
   }
@@ -48,7 +48,7 @@ public class UsageViewManagerTest {
     findModel.setProjectScope(false);
     UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectRule.getProject(), findModel);
     UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectRule.getProject());
-    SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target});
+    SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target}).get();
     assertThat(module.getModuleContentScope()).isEqualTo(scope);
   }
 }

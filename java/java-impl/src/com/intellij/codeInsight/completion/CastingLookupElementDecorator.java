@@ -44,7 +44,7 @@ public final class CastingLookupElementDecorator extends LookupElementDecorator<
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     getDelegate().renderElement(presentation);
     final String castType = getItemText(presentation, getCastItem());
     presentation.setItemText("(" + castType + ")" + presentation.getItemText());

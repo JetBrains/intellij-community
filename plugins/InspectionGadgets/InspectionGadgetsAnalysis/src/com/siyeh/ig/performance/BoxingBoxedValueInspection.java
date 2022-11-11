@@ -98,7 +98,7 @@ public class BoxingBoxedValueInspection extends BaseInspection implements Cleanu
   private static class BoxingBoxedValueVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiType constructorType = expression.getType();
       if (constructorType == null) {
@@ -149,7 +149,7 @@ public class BoxingBoxedValueInspection extends BaseInspection implements Cleanu
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();

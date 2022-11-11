@@ -625,7 +625,9 @@
             </group>
             <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
             <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
-            <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true"/>
+            <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true">
+              <action id="StatusTextModeAction" class="com.intellij.openapi.wm.impl.status.StatusTextModeAction"/>
+            </group>
             <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
           </group>
         </group>
@@ -664,7 +666,6 @@
           <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
           <action id="EditorToggleShowGutterIcons" class="com.intellij.openapi.editor.actions.ToggleShowGutterIconsAction"/>
           <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
-          <action id="EditorToggleVisualFormattingLayer" class="com.intellij.formatting.visualLayer.ToggleVisualLayerAction"/>
           <separator/>
           <reference ref="EditorIncreaseFontSize"/>
           <reference ref="EditorDecreaseFontSize"/>
@@ -857,7 +858,8 @@
         <separator/>
         <group id="HelpDiagnosticTools" popup="true">
           <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"/>
-          <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction" internal="true"/>
+          <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction"/>
+          <action id="Performance.MemTester" class="com.intellij.ide.actions.MemTestAction"/>
           <separator/>
           <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
           <action id="CollectTroubleshootingInformation" class="com.intellij.ide.actions.CollectTroubleshootingInformationAction" internal="true"/>
@@ -907,7 +909,11 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
-    <group id="ExperimentalToolbarActions">
+    <group id="MainToolbarLeft" searchable="false">
+      <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
+    </group>
+    <group id="MainToolbarCenter" searchable="false"/>
+    <group id="MainToolbarRight" searchable="false">
       <reference ref="SearchEverywhere"/>
       <reference ref="SettingsEntryPoint"/>
     </group>
@@ -1176,6 +1182,7 @@
           <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
           <action id="TestTooltipsAction" internal="true" class="com.intellij.internal.TestTooltipsAction"/>
         </group>
+        <action id="TransferSettingsDemoAction" class="com.intellij.ide.customize.transferSettings.TransferSettingsDemoAction"/>
         <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction"/>
@@ -1215,6 +1222,7 @@
         <action id="RulerGuide" internal="true" class="com.intellij.internal.rulerguide.RulerGuideAction"/>
         <separator/>
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"/>
+        <action id="AddRandomNamesTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddRandomNamesTestProcessAction"/>
         <action id="AddManyTestProcesses" internal="true" class="com.intellij.openapi.wm.impl.status.AddManyTestProcesses"/>
         <action id="WriteActionUnderProgress" internal="true" class="com.intellij.internal.TestWriteActionUnderProgress"/>
         <action id="TestProgressWindow" internal="true" class="com.intellij.internal.TestProgressWindow"/>
@@ -1239,6 +1247,7 @@
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction"/>
+      <action id="TestIconMappings" internal="true" class="com.intellij.internal.TestIconMappingsAction"/>
       <action id="ShowNonRetinaImages" internal="true" class="com.intellij.internal.ShowNonRetinaImagesActions"/>
       <action id="ShowUpdateDialogAction" internal="true" class="com.intellij.internal.ShowUpdateInfoDialogAction"/>
       <action id="DataSharingOptions" class="com.intellij.ide.actions.DataSharingOptionsAction" internal="true"/>
@@ -1517,5 +1526,9 @@
     <action id="CheckSuggestedPlugins" class="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.CheckSuggestedPluginsAction"/>
 
     <action id="MainMenuButton.ShowMenu" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+
+    <group id="FindInFiles.Results.ContextMenu" searchable="false">
+      <reference id="CopyReferencePopupGroup"/>
+    </group>
   </actions>
 </idea-plugin>

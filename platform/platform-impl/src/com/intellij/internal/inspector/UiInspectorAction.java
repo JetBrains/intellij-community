@@ -10,11 +10,12 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.inspector.components.InspectorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 @IntellijInternalApi
-public class UiInspectorAction extends UiMouseAction implements LightEditCompatible, ActionPromoter {
-
+public final class UiInspectorAction extends UiMouseAction implements LightEditCompatible, ActionPromoter {
   private static final String ACTION_ID = "UiInspector";
   public static final String RENDERER_BOUNDS = "clicked renderer";
 
@@ -48,7 +48,7 @@ public class UiInspectorAction extends UiMouseAction implements LightEditCompati
   public static synchronized void initGlobalInspector() {
     if (!ourGlobalInstanceInitialized) {
       ourGlobalInstanceInitialized = true;
-      UIUtil.invokeLaterIfNeeded(() -> {
+      AppUIUtil.invokeOnEdt(() -> {
         new UiInspector(null);
       });
     }
@@ -85,11 +85,8 @@ public class UiInspectorAction extends UiMouseAction implements LightEditCompati
   }
 
   @Override
-  public @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
-    if (context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) instanceof EditorComponentImpl) {
-      return List.of(this);
-    }
-    return null;
+  public @NotNull List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+    return ContainerUtil.findAll(actions, o -> o != this);
   }
 
   private static void closeAllInspectorWindows() {

@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
+import com.intellij.execution.testframework.sm.vcs.RunTestsBeforeCheckinHandler.Companion.showFailedTests
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.*
@@ -30,6 +31,8 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -39,10 +42,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
-import com.intellij.openapi.vcs.checkin.BaseCommitCheck
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CommitProblem
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -51,10 +51,10 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
-import com.intellij.vcs.commit.isBackgroundCommitChecks
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.*
 import javax.swing.JComponent
+import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
 private val LOG = logger<RunTestsCheckinHandlerFactory>()
@@ -63,8 +63,9 @@ private val LOG = logger<RunTestsCheckinHandlerFactory>()
 class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyState> {
   class MyState {
     var enabled = false
-    var configuration : ConfigurationBean? = null
+    var configuration: ConfigurationBean? = null
   }
+
   var myState = MyState()
   override fun getState() = myState
 
@@ -75,11 +76,14 @@ class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyS
 
 class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-    return if (isBackgroundCommitChecks() && (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler)) RunTestsBeforeCheckinHandler(panel) else CheckinHandler.DUMMY
+    if (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler) {
+      return RunTestsBeforeCheckinHandler(panel)
+    }
+    return CheckinHandler.DUMMY
   }
 }
 
-class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitProblem {
+class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitProblemWithDetails {
   override val text: String
     get() {
       var str = ""
@@ -104,6 +108,10 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
       }
       return str
     }
+
+  override fun showDetails(project: Project, commitInfo: CommitInfo) {
+    showFailedTests(project, this)
+  }
 }
 
 data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val configuration: RunnerAndConfigurationSettings?, val configName: String?)
@@ -111,19 +119,19 @@ data class FailureDescription(val historyFileName: String, val failed: Int, val 
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
 
-class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : BaseCommitCheck<FailedTestCommitProblem>() {
+class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
   private val project: Project get() = commitPanel.project
   private val settings: TestsVcsConfiguration get() = project.getService(TestsVcsConfiguration::class.java)
 
   override fun isEnabled(): Boolean = settings.myState.enabled
 
-  override suspend fun doRunCheck(): FailedTestCommitProblem? {
+  override suspend fun runCheck(): FailedTestCommitProblem? {
     val configurationBean = settings.myState.configuration ?: return null
     val configurationSettings = RunManager.getInstance(project).findConfigurationByTypeAndName(configurationBean.configurationId, configurationBean.name)
     if (configurationSettings == null) {
       return createCommitProblem(listOf(FailureDescription("", 0, 0, configurationSettings, configurationBean.name)))
     }
-    progress(name = SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
+    coroutineContext.progressSink?.text(SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
 
     return withContext(Dispatchers.IO) {
       val problems = ArrayList<FailureDescription>()
@@ -152,6 +160,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     val executionTarget = ExecutionTargetManager.getInstance(project).findTarget(configurationSettings.configuration)
     val environment = environmentBuilder.target(executionTarget).build()
     environment.setHeadless()
+    val sink = coroutineContext.progressSink
     val formDescriptor = suspendCancellableCoroutine<TestResultsFormDescriptor?> { continuation ->
       val messageBus = project.messageBus
       messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
@@ -165,7 +174,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       })
       ProgramRunnerUtil.executeConfigurationAsync(environment, false, true) {
         if (it != null) {
-          onProcessStarted(it, continuation)
+          onProcessStarted(sink, it, continuation)
         }
       }
     } ?: return
@@ -182,7 +191,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     disposeConsole(formDescriptor.executionConsole)
   }
 
-  private fun onProcessStarted(descriptor: RunContentDescriptor, continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
+  private fun onProcessStarted(sink: ProgressSink?, descriptor: RunContentDescriptor, continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
     val handler = descriptor.processHandler
     if (handler != null) {
       val executionConsole = descriptor.console
@@ -193,9 +202,11 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       }
 
       handler.addProcessListener(processListener)
-      resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
-        override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = progress(details = test.getFullName())
-      })
+      if (sink != null) {
+        resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
+          override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = sink.details(test.getFullName())
+        })
+      }
 
       continuation.invokeOnCancellation {
         handler.removeProcessListener(processListener)
@@ -219,42 +230,44 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
 
   private suspend fun awaitSavingHistory(historyFileName: String) {
     withTimeout(timeMillis = 600000) {
-      while (getHistoryFile(historyFileName).second == null) {
+      while (getHistoryFile(project, historyFileName).second == null) {
         delay(timeMillis = 500)
       }
       DumbService.getInstance(project).waitForSmartMode()
     }
   }
 
-  override fun showDetails(problem: FailedTestCommitProblem) {
-    val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
-    for (p in problem.problems) {
-      if (p.historyFileName.isEmpty() && p.failed == 0 && p.ignored == 0) {
-        if (p.configuration != null) {
-          RunDialog.editConfiguration(project, p.configuration, ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", p.configuration.name))
-          continue
+  companion object {
+    internal fun showFailedTests(project: Project, problem: FailedTestCommitProblem) {
+      val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
+      for (p in problem.problems) {
+        if (p.historyFileName.isEmpty() && p.failed == 0 && p.ignored == 0) {
+          if (p.configuration != null) {
+            RunDialog.editConfiguration(project, p.configuration,
+                                        ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", p.configuration.name))
+            continue
+          }
+          if (p.configName != null) {
+            EditConfigurationsDialog(project).show()
+            continue
+          }
         }
-        if (p.configName != null) {
-          EditConfigurationsDialog(project).show()
-          continue
+        val (path, virtualFile) = getHistoryFile(project, p.historyFileName)
+        if (virtualFile != null) {
+          AbstractImportTestsAction.doImport(project, virtualFile, groupId)
         }
-      }
-      val (path, virtualFile) = getHistoryFile(p.historyFileName)
-      if (virtualFile != null) {
-        AbstractImportTestsAction.doImport(project, virtualFile, groupId)
-      }
-      else {
-        LOG.error("File not found: $path")
+        else {
+          LOG.error("File not found: $path")
+        }
       }
     }
-  }
 
-  private fun getHistoryFile(fileName: String): Pair<String, VirtualFile?> {
-    val path = "${TestStateStorage.getTestHistoryRoot(project).path}/$fileName.xml"
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
-    return Pair(path, virtualFile)
+    private fun getHistoryFile(project: Project, fileName: String): Pair<String, VirtualFile?> {
+      val path = "${TestStateStorage.getTestHistoryRoot(project).path}/$fileName.xml"
+      val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
+      return Pair(path, virtualFile)
+    }
   }
-
 
   @NlsContexts.DialogTitle
   private fun getInitialText(): String {

@@ -12,6 +12,10 @@ public final class Xx3UnencodedString {
     return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, 0);
   }
 
+  public static long hashUnencodedString(String input, long seed) {
+    return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, seed);
+  }
+
   public static long hashUnencodedStringRange(String input, int start, int end) {
     return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, start * 2, (end - start) * 2, 0);
   }

@@ -455,7 +455,6 @@ public class BreakpointManager {
 
     final int line;
     try {
-      //noinspection HardCodedStringLiteral
       line = Integer.parseInt(breakpointNode.getAttributeValue("line"));
     }
     catch (Exception e) {

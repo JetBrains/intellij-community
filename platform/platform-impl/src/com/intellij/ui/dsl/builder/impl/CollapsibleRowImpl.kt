@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -12,7 +12,9 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Font
 import javax.swing.border.EmptyBorder
 
 @ApiStatus.Internal
@@ -27,17 +29,16 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
 
   override var expanded by collapsibleTitledSeparator::expanded
 
-  override fun setText(@NlsContexts.Separator text: String) {
-    collapsibleTitledSeparator.text = text
+  override fun setTitle(title: String) {
+    collapsibleTitledSeparator.text = title
+  }
+
+  override fun setTitleFont(font: Font) {
+    collapsibleTitledSeparator.titleFont = font
   }
 
   override fun addExpandedListener(action: (Boolean) -> Unit) {
     collapsibleTitledSeparator.expandedProperty.afterChange { action(it) }
-  }
-
-  override fun applyToTitleComponent(task: (CollapsibleTitledSeparator) -> Unit): CollapsibleRowImpl {
-    task(collapsibleTitledSeparator)
-    return this
   }
 
   init {
@@ -70,13 +71,13 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
       row {
         cell(collapsibleTitledSeparator).horizontalAlign(HorizontalAlign.FILL)
       }
-      expandablePanel = panel {
-        init()
-      }
+      row {
+        expandablePanel = panel(init).verticalAlign(VerticalAlign.FILL)
+      }.resizableRow()
       collapsibleTitledSeparator.onAction {
         expandablePanel.visible(it)
       }
-    }
+    }.verticalAlign(VerticalAlign.FILL)
     applyUiSwitcher(expandablePanel as PanelImpl, CollapsibleRowUiSwitcher(this))
   }
 
@@ -86,6 +87,7 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
         when (cell) {
           is CellImpl<*> -> UiSwitcher.append(cell.viewComponent, uiSwitcher)
           is PanelImpl -> applyUiSwitcher(cell, uiSwitcher)
+          else -> {}
         }
       }
     }

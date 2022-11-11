@@ -42,7 +42,7 @@ private class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   override fun getIcon(): Icon {
-    return FeaturesTrainerIcons.Img.PluginIcon
+    return FeaturesTrainerIcons.PluginIcon
   }
 
   override fun getActionButtonName(): String {

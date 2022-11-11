@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -71,6 +71,11 @@ public class GenerateHashCodeAndEqualsActionTestGenerated extends AbstractGenera
     @TestMetadata("genericClassWithIsCheck.kt")
     public void testGenericClassWithIsCheck() throws Exception {
         runTest("testData/codeInsight/generate/equalsWithHashCode/genericClassWithIsCheck.kt");
+    }
+
+    @TestMetadata("inlineClass.kt")
+    public void testInlineClass() throws Exception {
+        runTest("testData/codeInsight/generate/equalsWithHashCode/inlineClass.kt");
     }
 
     @TestMetadata("interface.kt")
@@ -171,5 +176,10 @@ public class GenerateHashCodeAndEqualsActionTestGenerated extends AbstractGenera
     @TestMetadata("singleVarWithSuperClass.kt")
     public void testSingleVarWithSuperClass() throws Exception {
         runTest("testData/codeInsight/generate/equalsWithHashCode/singleVarWithSuperClass.kt");
+    }
+
+    @TestMetadata("valueClass.kt")
+    public void testValueClass() throws Exception {
+        runTest("testData/codeInsight/generate/equalsWithHashCode/valueClass.kt");
     }
 }

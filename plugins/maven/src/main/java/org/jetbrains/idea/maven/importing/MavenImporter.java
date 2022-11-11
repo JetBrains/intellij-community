@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,15 +22,14 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
 /**
  * Extension point for customization maven module import process.
- * Main import logic {@link MavenModuleImporter}.
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
 public abstract class MavenImporter {
   public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
 
@@ -42,10 +42,16 @@ public abstract class MavenImporter {
   }
 
   public static List<MavenImporter> getSuitableImporters(MavenProject p) {
+    return getSuitableImporters(p, false);
+  }
+
+  public static List<MavenImporter> getSuitableImporters(MavenProject p, boolean isWorkspaceImport) {
     List<MavenImporter> result = null;
     Set<ModuleType<?>> moduleTypes = null;
 
     for (MavenImporter importer : EXTENSION_POINT_NAME.getExtensions()) {
+      if (isWorkspaceImport && importer.isMigratedToConfigurator()) continue;
+
       if (importer.isApplicable(p)) {
         if (result == null) {
           result = new ArrayList<>();
@@ -87,6 +93,10 @@ public abstract class MavenImporter {
     return mavenProject.findPlugin(myPluginGroupID, myPluginArtifactID) != null;
   }
 
+  /**
+   * @deprecated use facets instead of module types
+   */
+  @Deprecated
   public @NotNull ModuleType<? extends ModuleBuilder> getModuleType() {
     return StdModuleTypes.JAVA;
   }
@@ -96,20 +106,18 @@ public abstract class MavenImporter {
 
   public void getSupportedDependencyTypes(Collection<String> result, SupportedRequestType type) { }
 
+  /**
+   * @deprecated this API is not supported anymore, and there is no replacement
+   */
+  @Deprecated
   public void getSupportedDependencyScopes(Collection<String> result) { }
 
+  /**
+   * @deprecated this API is not supported anymore, and there is no replacement
+   */
+  @Deprecated
   public @Nullable Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
     return null;
-  }
-
-  /** @deprecated use {@link #resolve(Project, MavenProject, NativeMavenProjectHolder, MavenEmbedderWrapper, ResolveContext)} */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public void resolve(Project project,
-                      MavenProject mavenProject,
-                      NativeMavenProjectHolder nativeMavenProject,
-                      MavenEmbedderWrapper embedder)
-    throws MavenProcessCanceledException {
   }
 
   public void resolve(Project project,
@@ -118,8 +126,14 @@ public abstract class MavenImporter {
                       MavenEmbedderWrapper embedder,
                       ResolveContext context)
     throws MavenProcessCanceledException {
-    resolve(project, mavenProject, nativeMavenProject, embedder);
   }
+
+  /**
+   * This is 'work in progress' API and must not be used directly until further notice
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public boolean isMigratedToConfigurator() { return false; }
 
   /**
    * Import pre process callback.
@@ -131,6 +145,8 @@ public abstract class MavenImporter {
 
   /**
    * Import process callback.
+   *
+   * @param postTasks is deprecated, use {@link org.jetbrains.idea.maven.project.MavenImportListener} instead
    */
   public void process(IdeModifiableModelsProvider modifiableModelsProvider,
                       Module module,
@@ -139,6 +155,7 @@ public abstract class MavenImporter {
                       MavenProject mavenProject,
                       MavenProjectChanges changes,
                       Map<MavenProject, String> mavenProjectToModuleName,
+                      @Deprecated // use {@link org.jetbrains.idea.maven.project.MavenImportListener} instead
                       List<MavenProjectsProcessorTask> postTasks) { }
 
   /**
@@ -156,27 +173,7 @@ public abstract class MavenImporter {
 
   @SuppressWarnings("BoundedWildcard")
   public void collectSourceRoots(MavenProject mavenProject, PairConsumer<String, JpsModuleSourceRootType<?>> result) {
-    List<String> sources = new ArrayList<>();
-    collectSourceFolders(mavenProject, sources);
-    for (String path : sources) {
-      result.consume(path, JavaSourceRootType.SOURCE);
-    }
-    List<String> testSources = new ArrayList<>();
-    collectTestFolders(mavenProject, testSources);
-    for (String path : testSources) {
-      result.consume(path, JavaSourceRootType.TEST_SOURCE);
-    }
   }
-
-  /** @deprecated override {@link #collectSourceRoots} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public void collectSourceFolders(MavenProject mavenProject, List<String> result) { }
-
-  /** @deprecated override {@link #collectSourceRoots} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public void collectTestFolders(MavenProject mavenProject, List<String> result) { }
 
   public void collectExcludedFolders(MavenProject mavenProject, List<String> result) { }
 

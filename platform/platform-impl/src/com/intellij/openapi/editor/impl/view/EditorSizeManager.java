@@ -51,7 +51,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   private int myWidthInPixels;
   private int myWidthDefiningLineNumber;
   private int myStartInvalidLine = Integer.MAX_VALUE;
-  private int myEndInvalidLine = 0;
+  private int myEndInvalidLine;
 
   private int myMaxLineWithExtensionWidth;
   private int myWidestLineWithExtension;
@@ -173,7 +173,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   }
 
   @Override
-  public void onAdded(@NotNull Inlay inlay) {
+  public void onAdded(@NotNull Inlay<?> inlay) {
     if (myDocument.isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
 
     if (inlay.getPlacement() == Inlay.Placement.INLINE || inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
@@ -185,7 +185,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   }
 
   @Override
-  public void onRemoved(@NotNull Inlay inlay) {
+  public void onRemoved(@NotNull Inlay<?> inlay) {
     if (myDocument.isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode()) return;
 
     if (inlay.getPlacement() == Inlay.Placement.INLINE || inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
@@ -197,7 +197,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+  public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
     if (myDocument.isInBulkUpdate() ||
         myEditor.getInlayModel().isInBatchMode() ||
         (changeFlags & InlayModel.ChangeFlags.WIDTH_CHANGED) == 0) {
@@ -385,7 +385,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   private void validateMaxLineWithExtension() {
     if (myMaxLineWithExtensionWidth > 0) {
-      boolean hasNoExtensions = myEditor.processLineExtensions(myWidestLineWithExtension, (info) -> false);
+      boolean hasNoExtensions = myEditor.processLineExtensions(myWidestLineWithExtension, __ -> false);
       if (hasNoExtensions) {
         myMaxLineWithExtensionWidth = 0;
       }

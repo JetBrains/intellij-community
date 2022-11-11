@@ -49,6 +49,7 @@ public final class PackageAnnotator {
   private final boolean myIgnoreEmptyPrivateConstructors;
   private final boolean myIgnoreImplicitConstructor;
   private final ProjectData myUnloadedClassesProjectData = new ProjectData();
+  private JavaCoverageRunner myRunner;
 
   public PackageAnnotator(CoverageSuitesBundle suite,
                           Project project,
@@ -62,6 +63,8 @@ public final class PackageAnnotator {
     myAnnotator = annotator;
     myIgnoreEmptyPrivateConstructors = ignoreEmptyPrivateConstructors;
     myIgnoreImplicitConstructor = ignoreImplicitConstructor;
+    IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
+    IDEACoverageRunner.setExcludeAnnotations(project, myUnloadedClassesProjectData);
   }
 
   public interface Annotator {
@@ -176,6 +179,10 @@ public final class PackageAnnotator {
     }
   }
 
+  public void setRunner(@Nullable JavaCoverageRunner runner) {
+    myRunner = runner;
+  }
+
   public static @NotNull File findRelativeFile(@NotNull String rootPackageVMName, File outputRoot) {
     outputRoot = rootPackageVMName.length() > 0 ? new File(outputRoot, FileUtil.toSystemDependentName(rootPackageVMName)) : outputRoot;
     return outputRoot;
@@ -268,8 +275,9 @@ public final class PackageAnnotator {
                                                                             final String className) {
     final PackageAnnotator.ClassCoverageInfo info = new PackageAnnotator.ClassCoverageInfo();
     ClassData classData = myProjectData.getClassData(className);
-    if (classData == null || classData.getLines() == null) {
-      classData = collectNonCoveredClassInfo(classFile, className, myUnloadedClassesProjectData);
+    final boolean classExists = classData != null && classData.getLines() != null;
+    if ((!classExists || !classData.isFullyAnalysed()) && (myRunner == null || myRunner.shouldProcessUnloadedClasses())) {
+      classData = collectNonCoveredClassInfo(classFile, className, classExists ? myProjectData : myUnloadedClassesProjectData);
     }
 
     if (classData != null && classData.getLines() != null) {

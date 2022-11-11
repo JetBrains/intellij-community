@@ -94,7 +94,7 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
     deleteEmptyLine(document, marker.getEndOffset());
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(marker.getStartOffset(), marker.getEndOffset()));
+    CodeStyleManager.getInstance(project).adjustLineIndent(file, marker.getTextRange());
     return Collections.emptyList();
   }
 

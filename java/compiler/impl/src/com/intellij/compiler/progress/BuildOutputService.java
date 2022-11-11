@@ -201,13 +201,18 @@ public class BuildOutputService implements BuildViewService {
         ExecutionBundle.messagePointer("rerun.configuration.action.name", escapeMnemonics(myContentName)),
         Presentation.NULL_STRING, AllIcons.Actions.Compile) {
         @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          restartWork.run();
+        }
+
+        @Override
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(!indicator.isRunning());
         }
 
         @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          restartWork.run();
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
       };
       restartActions.add(restartAction);
@@ -221,6 +226,11 @@ public class BuildOutputService implements BuildViewService {
       @Override
       public void update(@NotNull AnActionEvent event) {
         event.getPresentation().setEnabled(indicator.isRunning());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     restartActions.add(stopAction);

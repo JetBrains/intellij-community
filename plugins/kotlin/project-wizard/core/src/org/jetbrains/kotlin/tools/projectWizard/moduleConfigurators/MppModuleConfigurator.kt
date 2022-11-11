@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
@@ -21,7 +22,6 @@ object MppModuleConfigurator : ModuleConfigurator,
     ModuleConfiguratorWithTests,
     ModuleConfiguratorSettings() {
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> = buildList {
         addAll(super<ModuleConfiguratorWithTests>.getConfiguratorSettings())
     }
@@ -47,6 +47,7 @@ object MppModuleConfigurator : ModuleConfigurator,
         )
 
     // TODO remove when be removed in KMM wizard
+    @Suppress("unused")
     val generateTests by booleanSetting("Generate Tests", GenerationPhase.PROJECT_GENERATION) {
         defaultValue = value(false)
     }
@@ -56,7 +57,17 @@ object MppModuleConfigurator : ModuleConfigurator,
         module: Module,
         modulePath: Path,
     ): TaskResult<Unit> = compute {
-        GradlePlugin.gradleProperties.addValues("kotlin.mpp.enableGranularSourceSetsMetadata" to true)
-        GradlePlugin.gradleProperties.addValues("kotlin.native.enableDependencyPropagation" to false)
+        if (shouldApplyHmppGradleProperties(configurationData)) {
+            GradlePlugin.gradleProperties.addValues("kotlin.mpp.enableGranularSourceSetsMetadata" to true)
+            GradlePlugin.gradleProperties.addValues("kotlin.native.enableDependencyPropagation" to false)
+        }
     }
+
+    private fun shouldApplyHmppGradleProperties(configurationData: ModulesToIrConversionData): Boolean {
+        val kotlinVersionText = configurationData.kotlinVersion.version.text
+        val kotlinVersion = IdeKotlinVersion.opt(kotlinVersionText)?.kotlinVersion ?: return false
+        return kotlinVersion < HMPP_BY_DEFAULT_VERSION
+    }
+
+    private val HMPP_BY_DEFAULT_VERSION = KotlinVersion(1, 6, 20)
 }

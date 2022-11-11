@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -50,7 +51,7 @@ public class CreateVariableFix extends AbstractFix {
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.create.variable");
     }
 
@@ -106,5 +107,10 @@ public class CreateVariableFix extends AbstractFix {
     @Override
     protected boolean requiresEditor() {
         return true;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new CreateVariableFix(PsiTreeUtil.findSameElementInCopy(myReference, target));
     }
 }

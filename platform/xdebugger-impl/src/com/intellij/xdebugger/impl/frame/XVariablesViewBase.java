@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
@@ -188,8 +188,8 @@ public abstract class XVariablesViewBase extends XDebugView {
   }
 
   private static class MySelectionListener implements SelectionListener {
-    private static final Collection<String> SIDE_EFFECT_PRODUCERS = Arrays.asList("exec(", "++", "--", "=");
-    private static final Set<String> IGNORED_TEXTS = new HashSet<>(Arrays.asList("", ";", "()"));
+    private static final Collection<String> SIDE_EFFECT_PRODUCERS = List.of("exec(", "++", "--", "=");
+    private static final Set<String> IGNORED_TEXTS = Set.of("", ";", "()");
     private static final Alarm ALARM = new Alarm();
     private static final int EVALUATION_DELAY_MILLIS = 100;
 

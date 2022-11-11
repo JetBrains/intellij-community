@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -49,8 +49,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     // support external changes to jdk libraries (Endorsed Standards Override)
     final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
-
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (events.isEmpty()) {
@@ -92,7 +90,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
         if (fileName != null) {
           // avoid calling getFileType() because it will try to detect file type from content for unknown/text file types
           // consider only archive files that may contain libraries
-          if (!ArchiveFileType.INSTANCE.equals(myFileTypeManager.getFileTypeByFileName(fileName))) {
+          if (!ArchiveFileType.INSTANCE.equals(FileTypeManager.getInstance().getFileTypeByFileName(fileName))) {
             return affected;
           }
         }

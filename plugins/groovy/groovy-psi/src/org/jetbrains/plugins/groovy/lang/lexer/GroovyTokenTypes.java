@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
@@ -52,8 +52,6 @@ public interface GroovyTokenTypes {
   /* **************************************************************************************************
  *  Strings & regular expressions
  * ****************************************************************************************************/
-
-  @Deprecated(forRemoval = true) IElementType mSTRING_LITERAL = STRING_SQ;
 
   IElementType mGSTRING_BEGIN = GSTRING_BEGIN;
   IElementType mGSTRING_CONTENT = GSTRING_CONTENT;
@@ -127,6 +125,7 @@ public interface GroovyTokenTypes {
   IElementType mTRIPLE_DOT = T_ELLIPSIS;
   IElementType mSPREAD_DOT = T_SPREAD_DOT;
   IElementType mOPTIONAL_DOT = T_SAFE_DOT;
+  IElementType mOPTIONAL_CHAIN_DOT = T_SAFE_CHAIN_DOT;
   IElementType mMEMBER_POINTER = T_METHOD_CLOSURE;
   IElementType mREGEX_FIND = T_REGEX_FIND;
   IElementType mREGEX_MATCH = T_REGEX_MATCH;
@@ -174,6 +173,8 @@ public interface GroovyTokenTypes {
   IElementType kNATIVE = KW_NATIVE;
   IElementType kNEW = KW_NEW;
   IElementType kNON_SEALED = KW_NON_SEALED;
+  IElementType kNOT_IN = T_NOT_IN;
+  IElementType kNOT_INSTANCEOF = T_NOT_INSTANCEOF;
   IElementType kNULL = KW_NULL;
   IElementType kPACKAGE = KW_PACKAGE;
   IElementType kPERMITS = KW_PERMITS;

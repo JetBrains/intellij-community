@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -108,28 +109,40 @@ open class DraggablePane : JPanel() {
 
   init {
     isOpaque = false
-    //background = Color.RED
     preferredSize = JBDimension(7, 21)
     minimumSize = JBDimension(7, 21)
-
-    setListener(object : DragListener {
-      override fun dragStarted(locationOnScreen: Point) {
-        RunWidgetResizeController.getInstance().dragStarted(locationOnScreen)
-      }
-
-      override fun dragged(locationOnScreen: Point, offset: Dimension) {
-        RunWidgetResizeController.getInstance().dragged(locationOnScreen, offset)
-      }
-
-      override fun dragStopped(locationOnScreen: Point, offset: Dimension) {
-        RunWidgetResizeController.getInstance().dragStopped(locationOnScreen, offset)
-      }
-    })
-  }
+}
 
   interface DragListener {
     fun dragStarted(locationOnScreen: Point)
     fun dragged(locationOnScreen: Point, offset: Dimension)
     fun dragStopped(locationOnScreen: Point, offset: Dimension)
+  }
+}
+
+internal class RunWidgetResizePane: DraggablePane() {
+  private var resizeController: RunWidgetResizeController? = null
+
+  private val listener = object : DragListener {
+    override fun dragStarted(locationOnScreen: Point) {
+      resizeController?.dragStarted(locationOnScreen)
+    }
+
+    override fun dragged(locationOnScreen: Point, offset: Dimension) {
+      resizeController?.dragged(locationOnScreen, offset)
+    }
+
+    override fun dragStopped(locationOnScreen: Point, offset: Dimension) {
+      resizeController?.dragStopped(locationOnScreen, offset)
+    }
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+
+    CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))?.let {
+      resizeController = RunWidgetResizeController.getInstance(it)
+      setListener(listener)
+    }
   }
 }

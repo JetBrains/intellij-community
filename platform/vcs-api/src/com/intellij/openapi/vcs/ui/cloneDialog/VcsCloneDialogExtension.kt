@@ -39,7 +39,10 @@ interface VcsCloneDialogExtension {
   @Nls fun getTooltip(): String? = null
 
   @Deprecated(message = "Implement createMainComponent(Project, ModalityState)")
-  fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent
+  @JvmDefault
+  fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
+    throw AssertionError("Shouldn't be called, implement createMainComponent(Project, ModalityState)")
+  }
 
   /**
    * Builds [VcsCloneDialogExtensionComponent] that would be displayed on center of get-from-vcs dialog when extension is selected.

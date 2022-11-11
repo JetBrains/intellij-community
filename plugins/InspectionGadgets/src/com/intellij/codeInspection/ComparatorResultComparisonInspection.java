@@ -31,7 +31,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!COMPARE_METHOD.test(call)) return;
         checkComparison(call);
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());

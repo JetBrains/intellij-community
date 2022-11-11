@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import org.intellij.plugins.markdown.util.MarkdownPsiUtil;
+import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,7 +104,7 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
   @Override
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final ArrayList<StructureViewTreeElement> elements = new ArrayList<>();
-    MarkdownPsiUtil.processContainer(getElement(), element -> elements.add(new MarkdownStructureElement(element)), element -> {});
+    MarkdownPsiStructureUtil.processContainer(getElement(), element -> elements.add(new MarkdownStructureElement(element)));
     return elements;
   }
 

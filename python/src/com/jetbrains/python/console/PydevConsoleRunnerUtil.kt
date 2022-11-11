@@ -5,7 +5,10 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
+import com.intellij.execution.target.value.constant
+import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -118,12 +121,12 @@ fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<String>,
 }
 
 fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<Function<TargetEnvironment, String>>,
-                                        workingDirFunction: TargetEnvironmentFunction<String>?,
+                                        workingDir: String?,
                                         command: String): TargetEnvironmentFunction<String> {
-  if (workingDirFunction != null) {
-    pythonPath.add(workingDirFunction)
+  if (workingDir != null) {
+    pythonPath.add(constant(workingDir))
   }
-  val path = pythonPath.toLinkedSetFunction().andThenJoinToString(separator = ", ", transform = String::toStringLiteral)
+  val path = pythonPath.joinToStringFunction(separator = ", ", transform = String::toStringLiteral)
   return ReplaceSubstringFunction(command, PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path)
 }
 

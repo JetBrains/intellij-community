@@ -9,3 +9,4 @@ fun foo() {
 fun f1() = A()
 
 // EXISTS: plus(A), f1()
+// IGNORE_K2

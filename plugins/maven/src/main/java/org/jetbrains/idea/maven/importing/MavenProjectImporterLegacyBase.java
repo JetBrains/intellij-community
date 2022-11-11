@@ -24,13 +24,15 @@ import java.util.Map;
 
 public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporterBase {
   protected final ModuleModelProxy myModuleModel;
+  protected volatile Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
 
   public MavenProjectImporterLegacyBase(Project project,
                                         MavenProjectsTree projectsTree,
                                         MavenImportingSettings importingSettings,
                                         Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
                                         @NotNull IdeModifiableModelsProvider modelsProvider) {
-    super(project, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
+    super(project, projectsTree, importingSettings, modelsProvider);
+    myProjectsToImportWithChanges = projectsToImportWithChanges;
     myModuleModel = myModelsProvider.getModuleModelProxy();
   }
 

@@ -73,6 +73,7 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
 
   if (!ProgressManager.getInstance().hasProgressIndicator()) {
     UIUtil.invokeAndWaitIfNeeded(Runnable { ProgressManager.getInstance().run(task) })
+    //invokeAndWaitIfNeeded(ModalityState.defaultModalityState()) { ProgressManager.getInstance().run(task) }
   }
   else {
     task.run(ProgressManager.getInstance().progressIndicator)

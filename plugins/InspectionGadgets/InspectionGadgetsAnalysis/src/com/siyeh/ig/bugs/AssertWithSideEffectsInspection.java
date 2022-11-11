@@ -49,7 +49,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
   private static class AssertWithSideEffectsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       super.visitAssertStatement(statement);
       final PsiExpression condition = statement.getAssertCondition();
       if (condition == null) {
@@ -73,13 +73,13 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       sideEffectDescription = expression.getLExpression().getText() + " " + expression.getOperationSign().getText() + " ...";
       stopWalking();
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       sideEffectDescription = getCallSideEffectDescription(expression);
       if (sideEffectDescription != null) {
@@ -88,7 +88,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
       if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
         sideEffectDescription = expression.getText();
@@ -128,13 +128,13 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     private String mutatedField;
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       checkExpression(expression.getLExpression());
       super.visitAssignmentExpression(expression);
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
       if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
         checkExpression(expression.getOperand());

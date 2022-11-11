@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -1112,5 +1112,23 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     assertFalse(indicator.isRunning());
     indicator.start();
     assertTrue(indicator.isRunning());
+  }
+
+  public void testCheckCancelledEvenWithPCEDisabledDoesntThrowInNonCancellableSection() {
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+    ProgressManager.getInstance().runProcess(() -> {
+      ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
+      indicator.cancel();
+      assertThrows(ProcessCanceledException.class, () -> ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator));
+      Cancellation.computeInNonCancelableSection(() -> {
+        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
+        return null;
+      });
+      assertThrows(ProcessCanceledException.class, () -> ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator));
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
+      });
+      assertThrows(ProcessCanceledException.class, () -> ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator));
+    }, indicator);
   }
 }

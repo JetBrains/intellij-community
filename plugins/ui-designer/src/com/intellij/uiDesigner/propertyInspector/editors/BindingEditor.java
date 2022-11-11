@@ -31,10 +31,6 @@ import java.util.Objects;
 
 import static com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager.getInstance;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BindingEditor extends ComboBoxPropertyEditor<String> {
 
   public BindingEditor(final Project project) {

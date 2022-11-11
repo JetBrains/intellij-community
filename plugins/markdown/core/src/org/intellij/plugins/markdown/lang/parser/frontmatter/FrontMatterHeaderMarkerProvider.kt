@@ -20,8 +20,9 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
     if (position.offset != 0) {
       return emptyList()
     }
-    return when (isDelimiterLine(position.currentLine)) {
-      true -> listOf(FrontMatterHeaderBlock(position, stateInfo.currentConstraints, productionHolder))
+    val possibleDelimiter = position.currentLine
+    return when (isDelimiterLine(possibleDelimiter)) {
+      true -> listOf(FrontMatterHeaderBlock(position, stateInfo.currentConstraints, productionHolder, possibleDelimiter))
       else -> emptyList()
     }
   }
@@ -41,7 +42,15 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
     val FRONT_MATTER_HEADER_CONTENT = MarkdownElementType("FRONT_MATTER_HEADER_CONTENT", isToken = true)
 
     fun isDelimiterLine(line: String): Boolean {
+      return isYamlDelimiterLine(line) || isTomlDelimiterLine(line)
+    }
+
+    fun isYamlDelimiterLine(line: String): Boolean {
       return line.length >= 3 && line.all { it == '-' }
+    }
+
+    fun isTomlDelimiterLine(line: String): Boolean {
+      return line.length >= 3 && line.all { it == '+' }
     }
 
     @JvmStatic

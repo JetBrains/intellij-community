@@ -24,7 +24,7 @@ import javax.swing.JComponent
  * e.g. EPs can be updated when settings dialog is open: in this case we have to update the UI according to the changes.
  */
 @ApiStatus.Experimental
-internal class EpBasedConfigurableGroup(private val project: Project?, delegate: Supplier<ConfigurableGroup?>) : NoScroll, MutableConfigurableGroup, Weighted, SearchableConfigurable, Disposable {
+internal class EpBasedConfigurableGroup(private val project: Project?, delegate: Supplier<ConfigurableGroup>) : NoScroll, MutableConfigurableGroup, Weighted, SearchableConfigurable, Disposable {
   private val value = ClearableLazyValue.createAtomic(delegate)
   private val listeners = CopyOnWriteArrayList<MutableConfigurableGroup.Listener>()
   private val extendableConfigurableWrappers: MutableList<ConfigurableWrapper> = ArrayList()

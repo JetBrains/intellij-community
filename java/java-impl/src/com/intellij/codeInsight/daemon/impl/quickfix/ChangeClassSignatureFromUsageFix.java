@@ -3,10 +3,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.changeClassSignature.Existing;
 import com.intellij.refactoring.changeClassSignature.New;
@@ -54,6 +57,19 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
     setText(QuickFixBundle.message("change.class.signature.text", myClass.getName(), myParameterList.getText()));
 
     return true;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiReferenceParameterList parameterList = PsiTreeUtil.findSameElementInCopy(myParameterList, file);
+    PsiTypeParameter[] classTypeParameters = myClass.getTypeParameters();
+    List<TypeParameterInfoView> parameters = createTypeParameters(JavaCodeFragmentFactory.getInstance(project),
+                                                                  Arrays.asList(classTypeParameters),
+                                                                  Arrays.asList(parameterList.getTypeParameterElements()));
+    String className = "class " + myClass.getName();
+    String originClassDeclaration = className + (classTypeParameters.length == 0 ? "" : "<" + StringUtil.join(classTypeParameters, p -> p.getName(), ",") + ">");
+    String modifiedClassDeclaration = className + "<" + StringUtil.join(parameters, p -> p.getInfo().getName(classTypeParameters), ", ") + ">";
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, originClassDeclaration, modifiedClassDeclaration);
   }
 
   @Override

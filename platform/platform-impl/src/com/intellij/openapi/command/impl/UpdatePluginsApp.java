@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.idea.Main;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -9,6 +9,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jvnet.winp.Main;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,7 +37,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
 
   @Override
   public void main(@NotNull List<String> args) {
-    if (Boolean.getBoolean(Main.FORCE_PLUGIN_UPDATES)) {
+    if (Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
       log("Updates applied.");
       System.exit(0);
     }

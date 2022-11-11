@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions.styling;
 
-import com.intellij.openapi.editor.Caret;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
@@ -16,8 +15,8 @@ public class HeaderUpAction extends MarkdownHeaderAction {
   }
 
   @Override
-  protected boolean isEnabledForCaret(@NotNull PsiFile psiFile, @NotNull Caret caret) {
-    final var parent = findParent(psiFile, caret);
+  protected boolean isEnabledForCaret(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
+    final var parent = findParent(psiFile, selectionStart, selectionEnd);
     if (parent == null) {
       return false;
     }

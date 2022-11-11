@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="package-search-version-utils" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.packagesearch:pkgs-version-utils:1.0.1" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/pkgs-version-utils/1.0.1/pkgs-version-utils-1.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

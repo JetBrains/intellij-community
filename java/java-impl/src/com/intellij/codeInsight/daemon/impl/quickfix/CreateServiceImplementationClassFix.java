@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -38,6 +40,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
   private String mySuperClassName;
   private String myImplementationClassName;
   private String myModuleName;
+  private boolean myInterface;
 
   public CreateServiceImplementationClassFix(PsiJavaCodeReferenceElement referenceElement) {
     init(referenceElement);
@@ -56,6 +59,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
           if (interfaceReference != null) {
             PsiClass superClass = ObjectUtils.tryCast(interfaceReference.resolve(), PsiClass.class);
             if (superClass != null) {
+              myInterface = superClass.isInterface();
               mySuperClassName = superClass.getQualifiedName();
               if (mySuperClassName != null) {
                 myModuleName = Optional.of(referenceElement)
@@ -143,6 +147,16 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(method);
     }
     return psiImplClass;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    String superClassName = StringUtil.getShortName(mySuperClassName);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "",
+                                               "public class " + StringUtil.getShortName(myImplementationClassName) + " " +
+                                               (myInterface ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS) + " " + superClassName + " {\n" +
+                                               "  public static " + superClassName + " provider() { return null;}" +
+                                               "\n}");
   }
 
   @Nullable

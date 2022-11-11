@@ -25,13 +25,13 @@
     <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" />
     <orderEntry type="module-library">
       <library name="sa-jdwp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:sa-jdwp:1.21" />
+        <properties maven-id="org.jetbrains.intellij.deps:sa-jdwp:1.22" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.21/sa-jdwp-1.21.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.22/sa-jdwp-1.22.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.21/sa-jdwp-1.21-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.22/sa-jdwp-1.22-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

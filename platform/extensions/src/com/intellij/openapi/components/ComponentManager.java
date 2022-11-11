@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -50,17 +50,14 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @return {@code true} if there is a component with the specified interface class;
    * {@code false} otherwise
    */
-  default boolean hasComponent(@NotNull Class<?> interfaceClass) {
-    return getPicoContainer().getComponentAdapter(interfaceClass) != null;
-  }
+  boolean hasComponent(@NotNull Class<?> interfaceClass);
 
   /**
-   * @deprecated use <a href="https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html">extension points</a> instead
+   * @deprecated Use ComponentManager API
    */
   @Deprecated
-  <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass);
-
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @NotNull PicoContainer getPicoContainer();
 
   @ApiStatus.Internal
@@ -124,10 +121,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @Override
-  default @NotNull ExtensionsArea getExtensionArea() {
-    // default impl to keep backward compatibility
-    throw new AbstractMethodError();
-  }
+  @NotNull ExtensionsArea getExtensionArea();
 
   @ApiStatus.Internal
   default <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
@@ -154,17 +148,10 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
                                         @Nullable Map<String, String> attachments);
 
   @ApiStatus.Internal
-  <@NotNull T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
+  <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
 
   @ApiStatus.Internal
-  default @NotNull <@NotNull T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
-    try {
-      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor);
 
   @NotNull ActivityCategory getActivityCategory(boolean isExtension);
 

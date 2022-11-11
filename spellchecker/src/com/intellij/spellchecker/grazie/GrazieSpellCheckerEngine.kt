@@ -1,10 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.grazie
 
+import ai.grazie.nlp.langs.alphabet.Alphabet
+import ai.grazie.nlp.phonetics.metaphone.DoubleMetaphone
 import ai.grazie.spell.GrazieSpeller
 import ai.grazie.spell.GrazieSplittingSpeller
-import ai.grazie.spell.language.English
+import ai.grazie.spell.dictionary.RuleDictionary
+import ai.grazie.spell.dictionary.rule.IgnoreRuleDictionary
+import ai.grazie.spell.lists.hunspell.HunspellWordList
+import ai.grazie.spell.suggestion.filter.feature.RadiusSuggestionFilter
+import ai.grazie.spell.suggestion.ranker.*
 import ai.grazie.spell.utils.DictionaryResources
+import ai.grazie.utils.mpp.FromResourcesDataLoader
+import ai.grazie.utils.mpp.Resources
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -18,7 +26,7 @@ import com.intellij.spellchecker.grazie.async.WordListLoader
 import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import com.intellij.util.containers.SLRUCache
-import org.apache.lucene.analysis.hunspell.TimeoutPolicy
+import kotlinx.coroutines.runBlocking
 
 internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
   override fun getTransformation(): Transformation = Transformation()
@@ -29,17 +37,40 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
 
   private val mySpeller: GrazieAsyncSpeller = GrazieAsyncSpeller(project) {
     GrazieSplittingSpeller(
-      GrazieSpeller(
-        GrazieSpeller.UserConfig(
-          GrazieSpeller.UserConfig.Dictionary(
-            dictionary = ExtendedWordListWithFrequency(
-              DictionaryResources.getHunspellDict("/dictionary/en", TimeoutPolicy.NO_TIMEOUT) { ProgressManager.checkCanceled() },
-              adapter),
-            isAlien = { word -> English.isAlien(word) && adapter.isAlien(word) }
-          )
-        )
-      ),
+      GrazieSpeller(createSpellerConfig()),
       GrazieSplittingSpeller.UserConfig()
+    )
+  }
+
+  private fun createSpellerConfig(): GrazieSpeller.UserConfig {
+    val path = "/dictionary/en"
+    val wordList = ExtendedWordListWithFrequency(
+      HunspellWordList.create(
+        Resources.text("$path.aff"),
+        Resources.text("$path.dic"),
+        checkCanceled = { ProgressManager.checkCanceled() }
+      ),
+      adapter
+    )
+    val dictionary = GrazieSpeller.UserConfig.Dictionary(
+      dictionary = wordList,
+      rules = RuleDictionary.Aggregated(
+        IgnoreRuleDictionary.standard(tooShortLength = 2),
+        runBlocking { DictionaryResources.getReplacingRules("/rule/en", FromResourcesDataLoader) }
+      ),
+      isAlien = { !Alphabet.ENGLISH.matchAny(it) && adapter.isAlien(it) }
+    )
+    return GrazieSpeller.UserConfig(
+      dictionary,
+      model = GrazieSpeller.UserConfig.Model(
+        filter = RadiusSuggestionFilter(0.05),
+        ranker = LinearAggregatingSuggestionRanker(
+          JaroWinklerSuggestionRanker() to 0.43,
+          LevenshteinSuggestionRanker() to 0.20,
+          PhoneticSuggestionRanker(DoubleMetaphone()) to 0.11,
+          FrequencySuggestionRanker(wordList) to 0.23
+        )
+      )
     )
   }
 

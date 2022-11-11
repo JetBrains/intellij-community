@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
+import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 
 public class UnversionedViewDialog extends SpecificFilesViewDialog {
   private static final String TOOLBAR_GROUP = "Unversioned.Files.Dialog";

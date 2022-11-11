@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
@@ -44,7 +43,7 @@ data class GinqExpression(
   val groupBy: GinqGroupByFragment?,
   val orderBy: GinqOrderByFragment?,
   val limit: GinqLimitFragment?,
-  val select: GinqSelectFragment,
+  val select: GinqSelectFragment?,
 ) : GenericGinqExpression {
   fun getDataSourceFragments(): Iterable<GinqDataSourceFragment> = listOf(from) + joins
 
@@ -88,7 +87,7 @@ sealed interface GinqFilterFragment {
 
 data class GinqOnFragment(
   override val keyword: PsiElement,
-  override val filter: GrBinaryExpression,
+  override val filter: GrExpression,
 ) : GinqFilterFragment, GinqQueryFragment
 
 data class GinqWhereFragment(

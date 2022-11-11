@@ -15,9 +15,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import org.junit.Assert.assertEquals
-import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -26,7 +24,7 @@ import java.io.File
 class ElementsModificationTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Test
   fun `create library artifact`() {
@@ -347,10 +345,6 @@ class ElementsModificationTest {
 
   @Test
   fun `modification with dispose`() {
-
-    // Old artifacts implementation works incorrect in such case
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val project = projectModel.project
 
     val artifactManager = ArtifactManager.getInstance(project)

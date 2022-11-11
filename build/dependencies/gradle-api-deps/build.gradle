@@ -1,6 +1,9 @@
 import org.gradle.tooling.GradleConnector
 import org.gradle.util.GradleVersion
 
+import java.nio.file.Files
+import java.nio.file.Paths
+
 plugins {
   id "base"
   id "maven-publish"
@@ -11,6 +14,11 @@ def gradleApiArtifactId = 'gradle-api'
 def gradleApiImplDepArtifactId = 'gradle-api-impldep'
 def gradleWrapperArtifactId = 'gradle-wrapper'
 def gradleLauncherArtifactId = 'gradle-launcher'
+def dependenciesProperties = new Properties()
+Files.newInputStream(Paths.get(projectDir.toString()).resolve("../dependencies.properties")).withCloseable {
+  dependenciesProperties.load(it)
+}
+def gradleApiVersion = dependenciesProperties.getProperty("gradleApiVersion")
 
 def gradleApiBaseVersion = GradleVersion.version(gradleApiVersion).getBaseVersion().getVersion()
 def gradleWrapperFileName = "gradle-wrapper.jar"

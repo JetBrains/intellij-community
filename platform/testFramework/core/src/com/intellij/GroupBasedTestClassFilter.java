@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -54,7 +54,7 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
       Collection<String> groupFilters = filters.get(groupName);
       List<Pattern> includePatterns = groupFilters.stream()
         .filter(s -> !s.startsWith("-"))
-        .map(s -> TestClassesFilter.compilePattern(s))
+        .map(TestClassesFilter::compilePattern)
         .collect(Collectors.toList());
       List<Pattern> excludedPatterns = groupFilters.stream()
         .filter(s -> s.startsWith("-"))
@@ -62,6 +62,14 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
         .collect(Collectors.toList());
       myGroups.add(new Group(groupName, includePatterns, excludedPatterns));
     }
+  }
+
+  public List<Group> getGroups() {
+    return myGroups;
+  }
+
+  public Set<String> getGroupNames() {
+    return myGroupNames;
   }
 
   /**
@@ -103,7 +111,6 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
    * closed on caller side.
    *
    * @param reader         reader that points to the target test groups config
-   * @param testGroupNames
    * @return newly created {@link GroupBasedTestClassFilter} object with the data contained at the given reader
    * @see TestClassesFilter#matches(String, String)
    */
@@ -138,7 +145,6 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
    * returns {@code true} only if all registered patterns (for all test groups) don't match given test class name.
    *
    * @param className  target test class name to check
-   * @param moduleName
    * @return {@code true} if given test group name is defined (not {@code null}) and test class with given
    * name belongs to the test group with given name;
    * {@code true} if given group if undefined or equal to {@link #ALL_EXCLUDE_DEFINED} and given test
@@ -147,12 +153,17 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   @Override
   public boolean matches(String className, String moduleName) {
-    return myGroups.stream().filter(g -> myGroupNames.contains(g.name)).anyMatch(g -> g.matches(className)) ||
-           myMatchUnlisted && !ContainerUtil.exists(myGroups, g -> g.matches(className));
+    return myGroups.stream()
+             .filter(g -> myGroupNames.contains(g.name))
+             .anyMatch(g -> g.matches(className)) || myMatchUnlisted && !ContainerUtil.exists(myGroups, g -> g.matches(className));
   }
 
-  private static final class Group {
-    private final String name;
+  public static boolean containsAllExcludeDefinedGroup(Set<String> groupNames) {
+    return groupNames.isEmpty() || groupNames.contains(ALL_EXCLUDE_DEFINED);
+  }
+
+  public static final class Group {
+    public final String name;
     private final List<Pattern> included;
     private final List<Pattern> excluded;
 
@@ -162,7 +173,7 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
       this.included = included;
     }
 
-    private boolean matches(String className) {
+    public boolean matches(String className) {
       return !matchesAnyPattern(excluded, className) && matchesAnyPattern(included, className);
     }
   }

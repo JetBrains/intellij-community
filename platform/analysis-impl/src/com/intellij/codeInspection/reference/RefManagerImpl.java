@@ -8,6 +8,7 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -198,7 +199,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  public void fireBuildReferences(RefElement refElement) {
+  private void fireBuildReferences(RefElement refElement) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onReferencesBuild(refElement);
     }
@@ -427,9 +428,12 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void buildReferences(RefElement element) {
+    if (element.areReferencesBuilt()) return;
+    ((RefElementImpl)element).setReferencesBuilt(true);
     executeTask(() -> {
       element.initializeIfNeeded();
       element.buildReferences();
+      fireBuildReferences(element);
     });
   }
 
@@ -530,8 +534,9 @@ public class RefManagerImpl extends RefManager {
     ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
-      if (!Objects.equals(v1, v2)) {
-        return (v1==null?"":v1.getPath()).compareTo(v2==null?"":v2.getPath());
+      int v21 = VfsUtilCore.compareByPath(v1, v2);
+      if (v21 != 0) {
+        return v21;
       }
       Segment r1 = ObjectUtils.notNull(o1.getPointer().getRange(), TextRange.EMPTY_RANGE);
       Segment r2 = ObjectUtils.notNull(o2.getPointer().getRange(), TextRange.EMPTY_RANGE);
@@ -813,7 +818,8 @@ public class RefManagerImpl extends RefManager {
       if (!extension.belongsToScope(psiElement)) return false;
     }
     final Boolean inProject = ReadAction.compute(() -> psiElement.getManager().isInProject(psiElement));
-    return inProject.booleanValue() && (ignoreScope || getScope() == null || getScope().contains(psiElement));
+    return (inProject.booleanValue() || ScratchUtil.isScratch(containingFile.getVirtualFile())) &&
+           (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }
 
   @Override
@@ -827,6 +833,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public void removeRefElement(@NotNull RefElement refElement, @NotNull List<? super RefElement> deletedRefs) {
+    refElement.initializeIfNeeded();
     List<RefEntity> children = refElement.getChildren();
     RefElement[] refElements = children.toArray(new RefElement[0]);
     for (RefElement refChild : refElements) {

@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -52,6 +52,11 @@ public abstract class BackspaceHandlerTestGenerated extends AbstractBackspaceHan
         @TestMetadata("betweenOpenBraceAndParenthesis.kt")
         public void testBetweenOpenBraceAndParenthesis() throws Exception {
             runTest("testData/editor/backspaceHandler/betweenOpenBraceAndParenthesis.kt");
+        }
+
+        @TestMetadata("FileStart.kt")
+        public void testFileStart() throws Exception {
+            runTest("testData/editor/backspaceHandler/FileStart.kt");
         }
 
         @TestMetadata("rawStringDelete.kt")

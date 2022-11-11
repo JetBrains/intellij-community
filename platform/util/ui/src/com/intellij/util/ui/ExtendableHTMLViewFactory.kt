@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.html.HiDpiScalingImageView
@@ -26,10 +27,10 @@ import kotlin.math.max
 /**
  * Pluggable [HTMLFactory] which allows overriding and adding functionality to [HTMLFactory] without using inheritance
  */
-class ExtendableHTMLViewFactory
-internal constructor(private val extensions: List<(Element, View) -> View?>,
-                     private val base: ViewFactory = HTMLEditorKit().viewFactory)
-  : HTMLFactory() {
+class ExtendableHTMLViewFactory internal constructor(
+  private val extensions: List<(Element, View) -> View?>,
+  private val base: ViewFactory = HTMLEditorKit().viewFactory
+) : HTMLFactory() {
 
   internal constructor(vararg extensions: (Element, View) -> View?) : this(extensions.asList())
 
@@ -82,6 +83,14 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
     fun icons(existingIconsProvider: (key: String) -> Icon?): Extension = IconsExtension(existingIconsProvider)
 
     /**
+     * Render icons provided by [htmlChunk]
+     *
+     * Syntax is `<icon src='KEY'>`
+     */
+    @JvmStatic
+    fun icons(htmlChunk: HtmlChunk): Extension = IconsExtension { htmlChunk.findIcon(it) }
+
+    /**
      * Render icons from IJ icon classes
      *
      * Syntax is `<icon src='FQN_FOR_ICON'>`
@@ -98,7 +107,7 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
     val BASE64_IMAGES: Extension = Base64ImagesExtension()
 
     /**
-     * Wrap words that are too long, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
+     * Wrap words that are too long, for example: A_TEST_TABLE_SINGLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
      */
     @JvmField
     val WORD_WRAP: Extension = WordWrapExtension()
@@ -288,7 +297,7 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
         override fun modelToView(pos: Int, a: Shape, b: Bias): Shape? {
           val p0 = startOffset
           val p1 = endOffset
-          if (pos >= p0 && pos <= p1) {
+          if (pos in p0..p1) {
             val r = a.bounds
             if (pos == p1) {
               r.x += r.width
@@ -316,29 +325,28 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
         }
       }
     }
+  }
 
-    private class WordWrapExtension : Extension {
-      override fun invoke(elem: Element, defaultView: View): View? {
-        if (defaultView !is ParagraphView) return null
+  private class WordWrapExtension : Extension {
+    override fun invoke(elem: Element, defaultView: View): View? {
+      if (defaultView !is ParagraphView) return null
 
-        return object : ParagraphView(elem) {
-          override fun calculateMinorAxisRequirements(axis: Int, requirements: SizeRequirements?): SizeRequirements =
-            (requirements ?: SizeRequirements()).apply {
-              minimum = layoutPool.getMinimumSpan(axis).toInt()
-              preferred = max(minimum, layoutPool.getPreferredSpan(axis).toInt())
-              maximum = Int.MAX_VALUE
-              alignment = 0.5f
-            }
-        }
+      return object : ParagraphView(elem) {
+        override fun calculateMinorAxisRequirements(axis: Int, requirements: SizeRequirements?): SizeRequirements =
+          (requirements ?: SizeRequirements()).apply {
+            minimum = layoutPool.getMinimumSpan(axis).toInt()
+            preferred = max(minimum, layoutPool.getPreferredSpan(axis).toInt())
+            maximum = Int.MAX_VALUE
+            alignment = 0.5f
+          }
       }
     }
+  }
+}
 
-    private class HiDpiImagesExtension : Extension {
-
-      override fun invoke(elem: Element, defaultView: View): View? {
-        if (defaultView !is ImageView) return null
-        return HiDpiScalingImageView(elem)
-      }
-    }
+private class HiDpiImagesExtension : ExtendableHTMLViewFactory.Extension {
+  override fun invoke(elem: Element, defaultView: View): View? {
+    if (defaultView !is ImageView) return null
+    return HiDpiScalingImageView(elem)
   }
 }

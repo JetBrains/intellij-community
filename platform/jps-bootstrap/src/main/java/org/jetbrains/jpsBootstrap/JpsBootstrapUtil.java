@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jpsBootstrap;
 
 import jetbrains.buildServer.messages.serviceMessages.Message;
@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class JpsBootstrapUtil {
+public final class JpsBootstrapUtil {
   public static final String TEAMCITY_BUILD_PROPERTIES_FILE_ENV = "TEAMCITY_BUILD_PROPERTIES_FILE";
   public static final String TEAMCITY_CONFIGURATION_PROPERTIES_SYSTEM_PROPERTY = "teamcity.configuration.properties.file";
 

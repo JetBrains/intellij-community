@@ -4,6 +4,8 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBTextField
 import org.junit.Test
+import javax.swing.JLabel
+import javax.swing.SwingUtilities
 import javax.swing.text.AbstractDocument
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -31,6 +33,51 @@ class PlaceholderTest {
     }
 
     Disposer.dispose(placeholderTestData.disposable)
+  }
+
+
+  @Test
+  fun testEnableVisible() {
+    lateinit var placeholder: Placeholder
+    lateinit var row: Row
+    panel {
+      row = row {
+        placeholder = placeholder()
+      }
+    }
+
+    val label = JLabel("Enabled")
+    placeholder.component = label
+    assertTrue(label.isVisible)
+    assertTrue(label.isEnabled)
+
+    val disabledInvisibleLabel = JLabel("Disabled").apply {
+      isVisible = false
+      isEnabled = false
+    }
+
+    placeholder.component = disabledInvisibleLabel
+    assertFalse(disabledInvisibleLabel.isVisible)
+    assertFalse(disabledInvisibleLabel.isEnabled)
+
+    placeholder.component = label
+    assertTrue(label.isVisible)
+    assertTrue(label.isEnabled)
+
+    row.enabled(false)
+    row.visible(false)
+    assertFalse(label.isVisible)
+    assertFalse(label.isEnabled)
+
+    placeholder.visible(true)
+    placeholder.enabled(true)
+    assertFalse(label.isVisible)
+    assertFalse(label.isEnabled)
+
+    row.enabled(true)
+    row.visible(true)
+    assertTrue(label.isVisible)
+    assertTrue(label.isEnabled)
   }
 
   @Test

@@ -1,4 +1,4 @@
-// "Make 'f' public" "true"
+// "Make 'f()' public" "true"
 import java.io.*;
 
 class a {

@@ -1,0 +1,10 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.refactoring.rename">
+  <extensions defaultExtensionNs="com.intellij">
+
+    <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDefaultRenameHandlerVetoCondition"/>
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameUsageSearcher"/>
+    <rename.symbolRenameTargetFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameTargetProvider"/>
+
+  </extensions>
+</idea-plugin>

@@ -93,7 +93,7 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
 
   private static class SplitTryWithResourcesVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitKeyword(PsiKeyword keyword) {
+    public void visitKeyword(@NotNull PsiKeyword keyword) {
       super.visitKeyword(keyword);
       if (isOnTheFly() && keyword.getTokenType() == JavaTokenType.TRY_KEYWORD && isAcceptable(keyword)) {
         registerError(keyword);
@@ -101,7 +101,7 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
     }
 
     @Override
-    public void visitResourceList(PsiResourceList resourceList) {
+    public void visitResourceList(@NotNull PsiResourceList resourceList) {
       super.visitResourceList(resourceList);
       if (isAcceptable(resourceList)) {
         registerError(resourceList);

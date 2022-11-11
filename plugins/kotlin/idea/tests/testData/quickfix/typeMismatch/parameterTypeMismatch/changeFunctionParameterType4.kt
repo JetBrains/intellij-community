@@ -1,6 +1,5 @@
 // "Change parameter 'z' type of function 'foo' to '(Int) -> String'" "false"
 // ACTION: Convert to 'buildString' call
-// ACTION: Do not show return expression hints
 // ACTION: Introduce local variable
 // ACTION: To raw string literal
 

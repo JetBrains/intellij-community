@@ -5,12 +5,13 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.xxh3.Xx3UnencodedString
 
-internal class PackageIndexBuilder {
-  val classPackageHashSet = LongOpenHashSet()
-  val resourcePackageHashSet = LongOpenHashSet()
+class PackageIndexBuilder {
+  @JvmField
+  internal val classPackageHashSet = LongOpenHashSet()
+  @JvmField
+  internal val resourcePackageHashSet = LongOpenHashSet()
 
-  private val dirsToRegister = HashSet<String>()
-
+  private val dirsToRegister = LinkedHashSet<String>()
   private var wasWritten = false
 
   fun addFile(name: String) {

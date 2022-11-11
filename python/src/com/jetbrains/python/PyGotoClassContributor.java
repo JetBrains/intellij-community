@@ -51,7 +51,7 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
 
   @Nullable
   @Override
-  public String getQualifiedName(NavigationItem item) {
+  public String getQualifiedName(@NotNull NavigationItem item) {
     return null;
   }
 

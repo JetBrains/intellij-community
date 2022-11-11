@@ -8,20 +8,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
+import org.jetbrains.kotlin.idea.base.facet.externalSystemTestRunTasks
+import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.facet.externalSystemTestRunTasks
 import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataOrFail
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
-import org.jetbrains.kotlin.idea.project.isHMPPEnabled
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.util.GradleUtil
@@ -425,14 +426,10 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
     }
 
     fun assertNoDependencyInBuildClasses() {
-        val dependenciesInBuildDirectory = module.rootManager.orderEntries
-            .flatMap { orderEntry ->
-                orderEntry.getFiles(OrderRootType.SOURCES).toList().map { it.toIoFile() } +
-                        orderEntry.getFiles(OrderRootType.CLASSES).toList().map { it.toIoFile() } +
-                        orderEntry.getUrls(OrderRootType.CLASSES).toList().map { File(it) } +
-                        orderEntry.getUrls(OrderRootType.SOURCES).toList().map { File(it) }
-            }
-            .map { file -> file.systemIndependentPath }
+        val librariesOnly = OrderEnumerator.orderEntries(module).recursively().librariesOnly()
+        val rootUrls = librariesOnly.classes().urls + librariesOnly.sources().urls
+        val dependenciesInBuildDirectory = rootUrls
+            .map { url -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(url)) }
             .filter { path -> "/build/classes/" in path }
 
         if (dependenciesInBuildDirectory.isNotEmpty()) {

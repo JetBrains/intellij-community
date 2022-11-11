@@ -30,6 +30,7 @@ import com.intellij.util.graph.*
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
@@ -198,7 +199,10 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
   }
 
   override fun doOKAction() {
-    ModuleManager.getInstance(project).setUnloadedModules(unloadedModulesTree.getAllModules().map { it.name })
+    val unloadedModuleNames = unloadedModulesTree.getAllModules().map { it.name }
+    project.coroutineScope.launch {
+      ModuleManager.getInstance(project).setUnloadedModules(unloadedModuleNames)
+    }
     super.doOKAction()
   }
 }
@@ -212,7 +216,7 @@ private class ModuleDescriptionsTree(project: Project) {
   init {
     tree.isRootVisible = false
     tree.showsRootHandles = true
-    TreeSpeedSearch(tree, { treePath -> (treePath.lastPathComponent as? ModuleDescriptionTreeNode)?.text ?: "" }, true)
+    TreeSpeedSearch(tree, true) { treePath -> (treePath.lastPathComponent as? ModuleDescriptionTreeNode)?.text ?: "" }
     tree.cellRenderer = ModuleDescriptionTreeRenderer()
   }
 

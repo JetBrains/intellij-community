@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -91,6 +88,34 @@ class RunBlockingCancellableTest : CancellationTest() {
   }
 
   @Test
+  fun `with current job child failure`() {
+    currentJobTest {
+      testRunBlockingCancellableChildFailure()
+    }
+  }
+
+  @Test
+  fun `with indicator child failure`() {
+    indicatorTest {
+      testRunBlockingCancellableChildFailure()
+    }
+  }
+
+  private fun testRunBlockingCancellableChildFailure() {
+    testRunBlockingCancellableChildFailure(object : Throwable() {})
+    testRunBlockingCancellableChildFailure(ProcessCanceledException())
+  }
+
+  private inline fun <reified T : Throwable> testRunBlockingCancellableChildFailure(t: T) {
+    val thrown = assertThrows<T> {
+      runBlockingCancellable {
+        Job(parent = coroutineContext.job).completeExceptionally(t)
+      }
+    }
+    assertSame(t, thrown)
+  }
+
+  @Test
   fun `delegates reporting to current indicator`() {
     val indicator = object : EmptyProgressIndicator() {
 
@@ -115,12 +140,35 @@ class RunBlockingCancellableTest : CancellationTest() {
       runBlockingCancellable {
         progressSink?.text("Hello")
         progressSink?.details("World")
-        progressSink()?.fraction(0.42)
+        coroutineContext.progressSink?.fraction(0.42)
       }
     }
 
     assertEquals(indicator.myText, "Hello")
     assertEquals(indicator.myText2, "World")
     assertEquals(indicator.myFraction, 0.42)
+  }
+
+  @Test
+  fun `two neighbor calls the same thread restore context properly`(): Unit = timeoutRunBlocking {
+    launch {
+      blockingContext {
+        runBlockingCancellable {} // 2
+      }
+    }
+    blockingContext {
+      runBlockingCancellable { // 1
+        yield()
+        // Will pump the queue and run previously launched coroutine.
+        // That coroutine runs inner runBlockingCancellable which installs its own thread context.
+        // Then inner runBlockingCancellable pumps the same queue, and gets to this continuation.
+        // This continuation tries to restore its context.
+        // We get the following incorrect chain:
+        // set context 1
+        // -> set context 2
+        // -> reset context to whatever was before 1
+        // -> reset context to whatever was before 2 (i.e. 1)
+      }
+    }
   }
 }

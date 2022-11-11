@@ -13,7 +13,6 @@ abstract class Type<T : Obj, B : ObjBuilder<T>>(val base: Type<*, *>? = null) : 
 
 
     val ival: Class<T> get() = javaClass.enclosingClass as Class<T>
-    val ivar: Class<B> get() = ival.classes.single { it.simpleName == "Builder" } as Class<B>
 
     open val packageName: String
         get() = ival.packageName

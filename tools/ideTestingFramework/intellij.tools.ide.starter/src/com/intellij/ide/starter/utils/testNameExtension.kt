@@ -11,6 +11,7 @@ import kotlin.io.path.name
 fun String.hyphenateTestName(): String {
 
   fun hyphenateString(input: String) = input
+    .replace(Regex("( )+"), "-")
     .replace(" ", "-").trim()
     .replaceFirstChar { it.lowercase(Locale.getDefault()) }.toCharArray()
     .map {

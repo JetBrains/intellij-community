@@ -1,4 +1,4 @@
-// "Replace with bulk 'Files.readAttributes' call" "false"
+// "Replace with bulk 'Files.readAttributes()' call" "false"
 import java.io.*;
 
 class Foo {

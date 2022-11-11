@@ -18,10 +18,10 @@ import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldPropertyDescriptor
 import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus
-import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
-import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
+import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -224,7 +224,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
 
     private fun getMethodSignature(
         fragmentClass: ClassToLoad,
-    ): CompiledDataDescriptor.MethodSignature {
+    ): CompiledCodeFragmentData.MethodSignature {
         val parameters: MutableList<Type> = mutableListOf()
         var returnType: Type? = null
 
@@ -236,7 +236,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
                 signature: String?,
                 exceptions: Array<out String>?
             ): MethodVisitor? {
-                if (name?.startsWith(GENERATED_FUNCTION_NAME) == true) {
+                if (name != null && isEvaluationEntryPoint(name)) {
                     Type.getArgumentTypes(descriptor).forEach { parameters.add(it) }
                     returnType = Type.getReturnType(descriptor)
                 }
@@ -244,6 +244,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
             }
         }, SKIP_CODE)
 
-        return CompiledDataDescriptor.MethodSignature(parameters, returnType!!)
+        return CompiledCodeFragmentData.MethodSignature(parameters, returnType!!)
     }
 }
+

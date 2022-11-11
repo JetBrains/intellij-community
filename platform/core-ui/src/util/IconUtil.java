@@ -70,8 +70,10 @@ public final class IconUtil {
 
     double scale = 1.0f;
     if (image instanceof JBHiDPIScaledImage) {
-      scale = ((JBHiDPIScaledImage)image).getScale();
-      image = ((JBHiDPIScaledImage)image).getDelegate();
+      JBHiDPIScaledImage hdpi = ((JBHiDPIScaledImage)image);
+      scale = hdpi.getScale();
+      if (hdpi.getDelegate() != null)
+        image = hdpi.getDelegate();
     }
 
     BufferedImage bi = ImageUtil.toBufferedImage(Objects.requireNonNull(image));
@@ -220,7 +222,7 @@ public final class IconUtil {
 
   public static @NotNull Icon getEmptyIcon(boolean showVisibility) {
     com.intellij.ui.icons.RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(EmptyIcon.create(PlatformIcons.CLASS_ICON), 0);
+    baseIcon.setIcon(EmptyIcon.create(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)), 0);
     if (showVisibility) {
       baseIcon.setIcon(EmptyIcon.create(PlatformIcons.PUBLIC_ICON), 1);
     }

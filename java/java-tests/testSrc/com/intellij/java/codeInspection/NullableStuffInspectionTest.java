@@ -364,7 +364,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     String oldDefault = manager.getDefaultNotNull();
     try {
       manager.setDefaultNotNull("typeUse.NotNull");
-      doTestWithFix("Annotate as @NotNull");
+      doTestWithFix("Annotate as '@NotNull'");
     }
     finally {
       manager.setDefaultNotNull(oldDefault);
@@ -381,7 +381,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     String oldDefault = manager.getDefaultNotNull();
     try {
       manager.setDefaultNotNull("typeUse.NotNull");
-      doTestWithFix("Annotate as @NotNull");
+      doTestWithFix("Annotate as '@NotNull'");
     }
     finally {
       manager.setDefaultNotNull(oldDefault);

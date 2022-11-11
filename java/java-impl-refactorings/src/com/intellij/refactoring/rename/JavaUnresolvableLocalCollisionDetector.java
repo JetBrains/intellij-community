@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -117,18 +118,18 @@ public final class JavaUnresolvableLocalCollisionDetector {
       myCollidingNameVisitor = collidingNameVisitor;
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitElement(expression);
     }
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       if (myName.equals(field.getName())) {
         myCollidingNameVisitor.visitCollidingElement(field);
       }
     }
 
-    @Override public void visitVariable(PsiVariable variable) {
+    @Override public void visitVariable(@NotNull PsiVariable variable) {
       if (myName.equals(variable.getName())) {
         myCollidingNameVisitor.visitCollidingElement(variable);
       }

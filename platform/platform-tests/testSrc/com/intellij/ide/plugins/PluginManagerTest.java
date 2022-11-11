@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -134,6 +135,17 @@ public class PluginManagerTest {
   }
 
   @Test
+  public void compatibilityPlatform() {
+    assertEquals(SystemInfo.isWindows, checkCompatibility("com.intellij.platform.windows"));
+    assertEquals(SystemInfo.isMac, checkCompatibility("com.intellij.platform.mac"));
+    assertEquals(SystemInfo.isLinux, checkCompatibility("com.intellij.platform.linux"));
+    assertEquals(SystemInfo.isFreeBSD, checkCompatibility("com.intellij.platform.freebsd"));
+    assertEquals(SystemInfo.isSolaris, checkCompatibility("com.intellij.platform.solaris"));
+    assertEquals(SystemInfo.isUnix, checkCompatibility("com.intellij.platform.unix"));
+    assertEquals(SystemInfo.isXWindow, checkCompatibility("com.intellij.platform.xwindow"));
+  }
+
+  @Test
   public void convertExplicitBigNumberInUntilBuildToStar() {
     assertConvertsTo(null, null);
     assertConvertsTo("145", "145");
@@ -210,16 +222,14 @@ public class PluginManagerTest {
 
     Path configPath = tempDir.getRoot().toPath().resolve("config-link");
     IoTestUtil.createSymbolicLink(configPath, tempDir.newDirectory("config-target").toPath());
-    DisabledPluginsState.saveDisabledPlugins(configPath, "a");
+    DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate(configPath, "a");
     assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
   }
 
   private static void assertPluginPreInstalled(@NotNull PluginId expectedPluginId,
                                                IdeaPluginDescriptorImpl... descriptors) {
     PluginLoadingResult loadingResult = createPluginLoadingResult();
-    for (IdeaPluginDescriptorImpl descriptor : descriptors) {
-      loadingResult.add(descriptor, false);
-    }
+    loadingResult.addAll(Arrays.asList(descriptors), false, BuildNumber.fromString("2042.42"));
     assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId));
   }
 
@@ -227,7 +237,7 @@ public class PluginManagerTest {
     PluginManagerCore.getAndClearPluginLoadingErrors();
     PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
     StringBuilder text = new StringBuilder();
-    for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.pluginSet.getRawListOfEnabledModules()) {
+    for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.pluginSet.getEnabledModules()) {
       text.append(descriptor.isEnabled() ? "+ " : "  ").append(descriptor.getPluginId().getIdString());
       if (descriptor.moduleName != null) {
         text.append(" | ").append(descriptor.moduleName);
@@ -236,7 +246,7 @@ public class PluginManagerTest {
     }
     text.append("\n\n");
     for (HtmlChunk html : PluginManagerCore.getAndClearPluginLoadingErrors()) {
-      text.append(html.toString().replace("<br/>", "\n")).append('\n');
+      text.append(html.toString().replace("<br/>", "\n").replace("&#39;", "")).append('\n');
     }
     UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), text.toString());
   }
@@ -257,10 +267,25 @@ public class PluginManagerTest {
     IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
     expect(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes();
     expect(mock.getUntilBuild()).andReturn(untilBuild).anyTimes();
+    expect(mock.getDependencies()).andReturn(Collections.emptyList()).anyTimes();
     replay(mock);
 
     return PluginManagerCore.checkBuildNumberCompatibility(mock,
                                                            Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
+  }
+
+  private static boolean checkCompatibility(@NotNull String platformId) {
+    IdeaPluginDependency platformDependencyMock = EasyMock.niceMock(IdeaPluginDependency.class);
+    expect(platformDependencyMock.getPluginId()).andReturn(PluginId.getId(platformId));
+    replay(platformDependencyMock);
+
+    IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
+    expect(mock.getSinceBuild()).andReturn(null).anyTimes();
+    expect(mock.getUntilBuild()).andReturn(null).anyTimes();
+    expect(mock.getDependencies()).andReturn(Collections.singletonList(platformDependencyMock)).anyTimes();
+    replay(mock);
+
+    return PluginManagerCore.checkBuildNumberCompatibility(mock, BuildNumber.fromString("145")) == null;
   }
 
   private static void assertCompatible(@NotNull String ideVersion,
@@ -272,8 +297,12 @@ public class PluginManagerTest {
   private static PluginManagerState loadAndInitializeDescriptors(String testDataName, boolean isBundled)
     throws IOException, XMLStreamException {
     Path file = Path.of(getTestDataPath(), testDataName);
+    BuildNumber buildNumber = BuildNumber.fromString("2042.42");
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(Set.of(),
-                                                                                  createPluginLoadingResult(true),
+                                                                                  Set.of(),
+                                                                                  Set.of(),
+                                                                                  Map.of(),
+                                                                                  () -> buildNumber,
                                                                                   false,
                                                                                   false,
                                                                                   false,
@@ -350,6 +379,7 @@ public class PluginManagerTest {
       }
     }
 
+    List<IdeaPluginDescriptorImpl> list = new ArrayList<>();
     for (XmlElement element : root.children) {
       if (!element.name.equals("idea-plugin")) {
         continue;
@@ -376,12 +406,13 @@ public class PluginManagerTest {
                                                                                         parentContext,
                                                                                         pathResolver,
                                                                                         new LocalFsDataLoader(pluginPath));
-      parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
+      list.add(descriptor);
       descriptor.jarFiles = List.of();
     }
     parentContext.close();
-    parentContext.result.finishLoading();
-    return PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false, null);
+    PluginLoadingResult result = new PluginLoadingResult(false);
+    result.addAll(list, /* overrideUseIfCompatible = */ false, parentContext.productBuildNumber.invoke());
+    return PluginManagerCore.initializePlugins(parentContext, result, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false, null);
   }
 
   private static byte @NotNull [] elementAsBytes(XmlElement child) throws XMLStreamException {

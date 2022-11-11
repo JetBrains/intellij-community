@@ -1,4 +1,4 @@
-// "Create setter for 's'" "true"
+// "Create setter for 's'" "true-preview"
 public abstract class A {
     private String <caret>s;
 }

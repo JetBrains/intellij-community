@@ -1,4 +1,12 @@
-class A {
+@Suppress("deprecation", "unused", "SpellCheckingInspection")
+class A @Suppress("unused") constructor() {
+    @Suppress("unused")
     var b = 0
-    fun a(i: Int) {}
+
+    @Suppress("unused")
+    fun a(i: Int) {
+    }
+
+    @Suppress("HardCodedStringLiteral")
+    var s = "hello"
 }

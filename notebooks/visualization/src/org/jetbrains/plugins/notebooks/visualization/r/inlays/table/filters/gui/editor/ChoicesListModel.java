@@ -71,7 +71,6 @@ public class ChoicesListModel extends AbstractListModel
      * @param format the formatter to convert objects to strings, can be null
      * @param choicesComparator the comparator used to sort choices on the
      *   list model. Can be null to sort content alphabetically.
-     * @param stringComparator
      * @return  true if choices should be added again.
      */
     public boolean setStringContent(Format             format,

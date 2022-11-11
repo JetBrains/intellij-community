@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem
 
 import com.intellij.openapi.util.text.StringUtil
@@ -88,8 +88,8 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
                         }
                     }
                     val repositoriesToAdd = dependenciesOfModule.mapNotNull { dependency ->
-                        dependency.artifact.safeAs<MavenArtifact>()?.repository?.let(::RepositoryIR)
-                    }
+                        dependency.artifact.safeAs<MavenArtifact>()?.repositories?.map(::RepositoryIR)
+                    }.flatten()
                     buildFile.withIrs(repositoriesToAdd).asSuccess()
                 }
             }

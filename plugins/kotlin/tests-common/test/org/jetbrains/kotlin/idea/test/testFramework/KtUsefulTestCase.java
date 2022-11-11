@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
@@ -65,6 +65,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
+
+import static com.intellij.testFramework.common.Cleanup.cleanupSwingDataStructures;
 
 @SuppressWarnings("ALL")
 public abstract class KtUsefulTestCase extends TestCase {
@@ -261,15 +263,6 @@ public abstract class KtUsefulTestCase extends TestCase {
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
-    private static void cleanupSwingDataStructures() throws Exception {
-        Object manager = ReflectionUtil.getDeclaredMethod(Class.forName("javax.swing.KeyboardManager"), "getCurrentManager").invoke(null);
-        Map<?, ?> componentKeyStrokeMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "componentKeyStrokeMap");
-        componentKeyStrokeMap.clear();
-        Map<?, ?> containerMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "containerMap");
-        containerMap.clear();
-    }
-
     static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) {
         final CodeInsightSettings settings = CodeInsightSettings.getInstance();
         // don't use method references here to make stack trace reading easier
@@ -429,7 +422,7 @@ public abstract class KtUsefulTestCase extends TestCase {
         if (!shouldRunTest()) return;
 
         if (runInDispatchThread()) {
-            TestRunnerUtil.replaceIdeEventQueueSafely();
+            UITestUtil.replaceIdeEventQueueSafely();
             EdtTestUtil.runInEdtAndWait(this::defaultRunBare);
         }
         else {

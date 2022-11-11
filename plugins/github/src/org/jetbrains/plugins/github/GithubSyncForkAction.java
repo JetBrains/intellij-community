@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github;
 
+import git4idea.remote.hosting.GitHostingUrlUtil;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -25,6 +26,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
+import git4idea.remote.hosting.HostedGitRepositoriesManagerKt;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -45,6 +47,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -90,14 +93,15 @@ public class GithubSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GHProjectRepositoriesManager ghRepositoriesManager = project.getServiceIfCreated(GHProjectRepositoriesManager.class);
+    GHHostedRepositoriesManager ghRepositoriesManager = project.getServiceIfCreated(GHHostedRepositoriesManager.class);
     if (ghRepositoriesManager == null) {
       LOG.warn("Unable to get the GHProjectRepositoriesManager service");
       return;
     }
 
-    GHGitRepositoryMapping originMapping = ContainerUtil.find(ghRepositoriesManager.getKnownRepositories(), mapping ->
-      mapping.getGitRemoteUrlCoordinates().getRemote().getName().equals(ORIGIN_REMOTE_NAME));
+    Set<GHGitRepositoryMapping> repositories = HostedGitRepositoriesManagerKt.getKnownRepositories(ghRepositoriesManager);
+    GHGitRepositoryMapping originMapping = ContainerUtil.find(repositories, mapping ->
+      mapping.getRemote().getRemote().getName().equals(ORIGIN_REMOTE_NAME));
     if (originMapping == null) {
       GithubNotifications.showError(project,
                                     GithubNotificationIdsHolder.REBASE_REMOTE_ORIGIN_NOT_FOUND,
@@ -107,7 +111,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     }
 
     GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
-    GithubServerPath serverPath = originMapping.getGhRepositoryCoordinates().getServerPath();
+    GithubServerPath serverPath = originMapping.getRepository().getServerPath();
     GithubAccount githubAccount;
     List<GithubAccount> accounts = ContainerUtil.filter(authManager.getAccounts(), account -> serverPath.equals(account.getServer()));
     if (accounts.size() == 0) {
@@ -150,18 +154,19 @@ public class GithubSyncForkAction extends DumbAwareAction {
     }
 
     new SyncForkTask(project, executor, Git.getInstance(), githubAccount.getServer(),
-                     originMapping.getGitRemoteUrlCoordinates().getRepository(),
-                     originMapping.getGhRepositoryCoordinates().getRepositoryPath()).queue();
+                     originMapping.getRemote().getRepository(),
+                     originMapping.getRepository().getRepositoryPath()).queue();
   }
 
   private static boolean isEnabledAndVisible(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) return false;
 
-    GHProjectRepositoriesManager repositoriesManager = project.getServiceIfCreated(GHProjectRepositoriesManager.class);
+    GHHostedRepositoriesManager repositoriesManager = project.getServiceIfCreated(GHHostedRepositoriesManager.class);
     if (repositoriesManager == null) return false;
 
-    return !repositoriesManager.getKnownRepositories().isEmpty();
+    Set<GHGitRepositoryMapping> repositories = HostedGitRepositoriesManagerKt.getKnownRepositories(repositoriesManager);
+    return !repositories.isEmpty();
   }
 
   private static class SyncForkTask extends Task.Backgroundable {
@@ -283,7 +288,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     private GitRemote findRemote(@NotNull GHRepositoryPath repoPath) {
       return ContainerUtil.find(myRepository.getRemotes(), remote -> {
         String url = remote.getFirstUrl();
-        if (url == null || !myServer.matches(url)) return false;
+        if (url == null || !GitHostingUrlUtil.match(myServer.toURI(), url)) return false;
 
         GHRepositoryPath remotePath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
         return repoPath.equals(remotePath);

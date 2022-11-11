@@ -337,7 +337,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
 }
 
 
-fun compress(types: List<PsiType>?): PsiType? {
+internal fun compress(types: List<PsiType>?): PsiType? {
   types ?: return null
   return when {
     types.isEmpty() -> PsiType.NULL
@@ -346,10 +346,10 @@ fun compress(types: List<PsiType>?): PsiType? {
   }
 }
 
-fun allOuterTypeParameters(method: PsiMethod): List<PsiTypeParameter> =
+internal fun allOuterTypeParameters(method: PsiMethod): List<PsiTypeParameter> =
   method.typeParameters.asList() + (getContainingClasses(method.containingClass).flatMap { it.typeParameters.asList() })
 
-fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: GrMethod): PsiSubstitutor {
+internal fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: GrMethod): PsiSubstitutor {
   val virtualTypeParameters = allOuterTypeParameters(virtualMethod)
   val originalTypeParameters = allOuterTypeParameters(originalMethod)
   var substitutor = PsiSubstitutor.EMPTY
@@ -361,14 +361,14 @@ fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: Gr
 }
 
 
-fun PsiTypeParameter.upperBound(): PsiType =
+internal fun PsiTypeParameter.upperBound(): PsiType =
   when (extendsListTypes.size) {
     0 -> getJavaLangObject(this)
     1 -> extendsListTypes.single()
     else -> PsiIntersectionType.createIntersection(*extendsListTypes)
   }
 
-fun PsiElement.properResolve(): GroovyResolveResult? {
+internal fun PsiElement.properResolve(): GroovyResolveResult? {
   return when (this) {
     is GrAssignmentExpression -> (lValue as? GrReferenceExpression)?.lValueReference?.advancedResolve()
     is GrConstructorInvocation -> advancedResolve()

@@ -616,7 +616,7 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
    * Sorts this list using the supplied Comparator to compare elements.
    *
    * @param comp - the Comparator used to compare list elements. A null value indicates that the elements' natural ordering should be used
-   * @Since 2.0.6
+   * @since 2.0.6
    */
   @Override
   public void sort(Comparator<? super Content> comp) {
@@ -1241,7 +1241,7 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
      * Sorts this list using the supplied Comparator to compare elements.
      *
      * @param comp - the Comparator used to compare list elements. A null value indicates that the elements' natural ordering should be used
-     * @Since 2.0.6
+     * @since 2.0.6
      */
     //Not till Java8 @Override
     @Override

@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,12 +51,12 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void processChange(Change change, VcsKey vcsKey) {
+  public void processChange(@NotNull Change change, VcsKey vcsKey) {
     processChangeInList(change, (ChangeList)null, vcsKey);
   }
 
   @Override
-  public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     checkIfDisposed();
 
     LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null : changeList.getName()) +
@@ -84,7 +85,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, String changeListName, VcsKey vcsKey) {
     checkIfDisposed();
 
     LocalChangeList list = null;

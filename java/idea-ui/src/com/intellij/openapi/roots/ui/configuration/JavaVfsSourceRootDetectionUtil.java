@@ -30,7 +30,6 @@ public final class JavaVfsSourceRootDetectionUtil {
    * </ol>
    *
    * @param dir a directory to scan
-   * @param progressIndicator
    * @return a list of found source roots within directory. If no source roots are found, a empty list is returned.
    */
   @NotNull

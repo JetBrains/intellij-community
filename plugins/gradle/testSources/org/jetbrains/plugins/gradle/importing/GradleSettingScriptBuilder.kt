@@ -1,27 +1,45 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import java.util.*
 
-class GradleSettingScriptBuilder(projectName: String) {
+class GradleSettingScriptBuilder {
 
-  private val builder = StringJoiner("\n")
-    .add("rootProject.name = '$projectName'")
-    .add("")
+  private val lines = ArrayList<String>()
 
-  fun generate() = builder.toString()
+  private var projectName: String? = null
+
+  fun setProjectName(projectName: String) {
+    this.projectName = projectName
+  }
+
+  fun enableFeaturePreview(featureName: String) {
+    lines.add("enableFeaturePreview('$featureName')")
+  }
 
   fun include(name: String) = apply {
-    builder.add("include '$name'")
+    lines.add("include '$name'")
   }
 
   fun includeBuild(name: String) = apply {
-    builder.add("includeBuild '$name'")
+    lines.add("includeBuild '$name'")
   }
 
-  companion object {
-    @JvmStatic
-    fun settingsScript(projectName: String, configure: GradleSettingScriptBuilder.() -> Unit) =
-      GradleSettingScriptBuilder(projectName).apply(configure).generate()
+  fun raw(content: String) {
+    lines.addAll(content.split('\n'))
+  }
+
+  fun generate(): String {
+    val joiner = StringJoiner("\n")
+    if (projectName != null) {
+      joiner.add("rootProject.name = '$projectName'")
+    }
+    if (projectName != null && lines.isNotEmpty()) {
+      joiner.add("")
+    }
+    for (line in lines) {
+      joiner.add(line)
+    }
+    return joiner.toString()
   }
 }

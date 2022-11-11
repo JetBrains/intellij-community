@@ -78,7 +78,7 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
   }
 
   @Override
-  public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement expression) {
     if (!referencesStaticallyAccessible) {
       return;
     }
@@ -118,7 +118,7 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
   }
 
   @Override
-  public void visitNewExpression(PsiNewExpression expression) {
+  public void visitNewExpression(@NotNull PsiNewExpression expression) {
     if (!referencesStaticallyAccessible) {
       return;
     }
@@ -137,7 +137,7 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
   }
 
   @Override
-  public void visitTypeElement(PsiTypeElement typeElement) {
+  public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
     if (!referencesStaticallyAccessible) {
       return;
     }

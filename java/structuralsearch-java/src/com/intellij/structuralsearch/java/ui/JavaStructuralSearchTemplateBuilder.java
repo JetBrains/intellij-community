@@ -29,7 +29,7 @@ final class JavaStructuralSearchTemplateBuilder extends StructuralSearchTemplate
     JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
 
       @Override
-      public void visitIdentifier(PsiIdentifier identifier) {
+      public void visitIdentifier(@NotNull PsiIdentifier identifier) {
         PsiElement parent = identifier.getParent();
         if (parent instanceof PsiClass) {
           replaceElement(identifier, classCount, true, builder, shift.get());
@@ -46,7 +46,7 @@ final class JavaStructuralSearchTemplateBuilder extends StructuralSearchTemplate
       }
 
       @Override
-      public void visitReferenceList(PsiReferenceList list) {
+      public void visitReferenceList(@NotNull PsiReferenceList list) {
         PsiJavaCodeReferenceElement[] elements = list.getReferenceElements();
         for (PsiJavaCodeReferenceElement element : elements) {
           replaceElement(element.getReferenceNameElement(), classCount, false, builder, shift.get());

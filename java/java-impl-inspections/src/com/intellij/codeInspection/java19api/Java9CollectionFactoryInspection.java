@@ -85,7 +85,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
         if (model != null && model.isValid(SUGGEST_MAP_OF_ENTRIES)) {
           ProblemHighlightType type = model.myConstantContent || !IGNORE_NON_CONSTANT

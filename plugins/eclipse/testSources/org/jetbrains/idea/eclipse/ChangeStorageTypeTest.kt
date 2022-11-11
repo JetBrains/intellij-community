@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.module.ModuleManager
@@ -6,17 +6,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.io.copy
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.div
 
-@ExperimentalPathApi
+@TestApplication
 class ChangeStorageTypeTest {
   @JvmField
   @RegisterExtension
@@ -51,11 +50,4 @@ class ChangeStorageTypeTest {
     val module = ModuleManager.getInstance(project).modules.single()
     ClasspathStorage.setStorageType(ModuleRootManager.getInstance(module), storageId)
   }
-
-  companion object {
-    @JvmField
-    @RegisterExtension
-    val appRule = ApplicationExtension()
-  }
-
 }

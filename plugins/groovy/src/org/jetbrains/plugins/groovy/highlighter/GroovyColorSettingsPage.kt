@@ -5,8 +5,10 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
+import com.intellij.util.containers.map2Array
 import icons.JetgroovyIcons
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter.*
 import javax.swing.Icon
@@ -14,60 +16,68 @@ import javax.swing.Icon
 class GroovyColorSettingsPage : ColorSettingsPage {
 
   private companion object {
-    val attributes = mapOf(
-      "Annotations//Annotation attribute name" to ANNOTATION_ATTRIBUTE_NAME,
-      "Annotations//Annotation name" to ANNOTATION,
+    private operator fun Array<@PropertyKey(resourceBundle = "messages.GroovyBundle") String>
+      .plus(attributeKey: TextAttributesKey): () -> AttributesDescriptor {
+      return {
+        @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
+        AttributesDescriptor(this@plus.joinToString("//", transform = { GroovyBundle.message(it) }), attributeKey)
+      }
+    }
 
-      "Braces and Operators//Braces" to BRACES,
-      "Braces and Operators//Closure expression braces and arrow" to CLOSURE_ARROW_AND_BRACES,
-      "Braces and Operators//Lambda expression braces and arrow " to LAMBDA_ARROW_AND_BRACES,
-      "Braces and Operators//Brackets" to BRACKETS,
-      "Braces and Operators//Parentheses" to PARENTHESES,
-      "Braces and Operators//Operator sign" to OPERATION_SIGN,
+    val attributes: Array<() -> AttributesDescriptor> = arrayOf(
+      arrayOf("attribute.descriptor.annotations", "attribute.descriptor.annotation.attribute.name") + ANNOTATION_ATTRIBUTE_NAME,
+      arrayOf("attribute.descriptor.annotations", "attribute.descriptor.annotation.name") + ANNOTATION,
 
-      "Comments//Line comment" to LINE_COMMENT,
-      "Comments//Block comment" to BLOCK_COMMENT,
-      "Comments//Groovydoc//Text" to DOC_COMMENT_CONTENT,
-      "Comments//Groovydoc//Tag" to DOC_COMMENT_TAG,
+      arrayOf("attribute.descriptor.braces.and.operators", "attribute.descriptor.braces") + BRACES,
+      arrayOf("attribute.descriptor.braces.and.operators", "attribute.descriptor.closure.expression.braces.and.arrow") + CLOSURE_ARROW_AND_BRACES,
+      arrayOf("attribute.descriptor.braces.and.operators", "attribute.descriptor.lambda.expression.braces.and.arrow") + LAMBDA_ARROW_AND_BRACES,
+      arrayOf("attribute.descriptor.braces.and.operators", "attribute.descriptor.brackets") + BRACKETS,
+      arrayOf("attribute.descriptor.braces.and.operators", "attribute.descriptor.parentheses") + PARENTHESES,
+      arrayOf("attribute.descriptor.braces.and.operators", "attribute.descriptor.operator.sign") + OPERATION_SIGN,
 
-      "Classes and Interfaces//Class" to CLASS_REFERENCE,
-      "Classes and Interfaces//Abstract class" to ABSTRACT_CLASS_NAME,
-      "Classes and Interfaces//Anonymous class" to ANONYMOUS_CLASS_NAME,
-      "Classes and Interfaces//Interface" to INTERFACE_NAME,
-      "Classes and Interfaces//Trait" to TRAIT_NAME,
-      "Classes and Interfaces//Enum" to ENUM_NAME,
-      "Classes and Interfaces//Type parameter" to TYPE_PARAMETER,
+      arrayOf("attribute.descriptor.comments", "attribute.descriptor.line.comment") + LINE_COMMENT,
+      arrayOf("attribute.descriptor.comments", "attribute.descriptor.block.comment") + BLOCK_COMMENT,
+      arrayOf("attribute.descriptor.comments", "attribute.descriptor.groovydoc", "attribute.descriptor.groovydoc.text") + DOC_COMMENT_CONTENT,
+      arrayOf("attribute.descriptor.comments", "attribute.descriptor.groovydoc", "attribute.descriptor.groovydoc.tag") + DOC_COMMENT_TAG,
 
-      "Methods//Method declaration" to METHOD_DECLARATION,
-      "Methods//Constructor declaration" to CONSTRUCTOR_DECLARATION,
-      "Methods//Instance method call" to METHOD_CALL,
-      "Methods//Static method call" to STATIC_METHOD_ACCESS,
-      "Methods//Constructor call" to CONSTRUCTOR_CALL,
+      arrayOf("attribute.descriptor.classes.and.interfaces", "attribute.descriptor.class") + CLASS_REFERENCE,
+      arrayOf("attribute.descriptor.classes.and.interfaces", "attribute.descriptor.abstract.class") + ABSTRACT_CLASS_NAME,
+      arrayOf("attribute.descriptor.classes.and.interfaces", "attribute.descriptor.anonymous.class") + ANONYMOUS_CLASS_NAME,
+      arrayOf("attribute.descriptor.classes.and.interfaces", "attribute.descriptor.interface") + INTERFACE_NAME,
+      arrayOf("attribute.descriptor.classes.and.interfaces", "attribute.descriptor.trait") + TRAIT_NAME,
+      arrayOf("attribute.descriptor.classes.and.interfaces", "attribute.descriptor.enum") + ENUM_NAME,
+      arrayOf("attribute.descriptor.classes.and.interfaces", "attribute.descriptor.type.parameter") + TYPE_PARAMETER,
 
-      "Fields//Instance field" to INSTANCE_FIELD,
-      "Fields//Static field" to STATIC_FIELD,
+      arrayOf("attribute.descriptor.methods", "attribute.descriptor.method.declaration") + METHOD_DECLARATION,
+      arrayOf("attribute.descriptor.methods", "attribute.descriptor.constructor.declaration") + CONSTRUCTOR_DECLARATION,
+      arrayOf("attribute.descriptor.methods", "attribute.descriptor.instance.method.call") + METHOD_CALL,
+      arrayOf("attribute.descriptor.methods", "attribute.descriptor.static.method.call") + STATIC_METHOD_ACCESS,
+      arrayOf("attribute.descriptor.methods", "attribute.descriptor.constructor.call") + CONSTRUCTOR_CALL,
 
-      "Variables and Parameters//Local variable" to LOCAL_VARIABLE,
-      "Variables and Parameters//Reassigned local variable" to REASSIGNED_LOCAL_VARIABLE,
-      "Variables and Parameters//Parameter" to PARAMETER,
-      "Variables and Parameters//Reassigned parameter" to REASSIGNED_PARAMETER,
+      arrayOf("attribute.descriptor.fields", "attribute.descriptor.instance.field") + INSTANCE_FIELD,
+      arrayOf("attribute.descriptor.fields", "attribute.descriptor.static.field") + STATIC_FIELD,
 
-      "References//Instance property reference" to INSTANCE_PROPERTY_REFERENCE,
-      "References//Static property reference" to STATIC_PROPERTY_REFERENCE,
-      "References//Unresolved reference" to UNRESOLVED_ACCESS,
+      arrayOf("attribute.descriptor.variables.and.parameters", "attribute.descriptor.local.variable") + LOCAL_VARIABLE,
+      arrayOf("attribute.descriptor.variables.and.parameters", "attribute.descriptor.reassigned.local.variable") + REASSIGNED_LOCAL_VARIABLE,
+      arrayOf("attribute.descriptor.variables.and.parameters", "attribute.descriptor.parameter") + PARAMETER,
+      arrayOf("attribute.descriptor.variables.and.parameters", "attribute.descriptor.reassigned.parameter") + REASSIGNED_PARAMETER,
 
-      "Strings//String" to STRING,
-      "Strings//GString" to GSTRING,
-      "Strings//Valid string escape" to VALID_STRING_ESCAPE,
-      "Strings//Invalid string escape" to INVALID_STRING_ESCAPE,
+      arrayOf("attribute.descriptor.references", "attribute.descriptor.instance.property.reference") + INSTANCE_PROPERTY_REFERENCE,
+      arrayOf("attribute.descriptor.references", "attribute.descriptor.static.property.reference") + STATIC_PROPERTY_REFERENCE,
+      arrayOf("attribute.descriptor.references", "attribute.descriptor.unresolved.reference") + UNRESOLVED_ACCESS,
 
-      "Keyword" to KEYWORD,
-      "Number" to NUMBER,
-      "Bad character" to BAD_CHARACTER,
-      "List/map to object conversion" to LITERAL_CONVERSION,
-      "Map key/Named argument" to MAP_KEY,
-      "Label" to LABEL
-    ).map { AttributesDescriptor(it.key, it.value) }.toTypedArray()
+      arrayOf("attribute.descriptor.strings", "attribute.descriptor.string") + STRING,
+      arrayOf("attribute.descriptor.strings", "attribute.descriptor.gstring") + GSTRING,
+      arrayOf("attribute.descriptor.strings", "attribute.descriptor.valid.string.escape") + VALID_STRING_ESCAPE,
+      arrayOf("attribute.descriptor.strings", "attribute.descriptor.invalid.string.escape") + INVALID_STRING_ESCAPE,
+
+      arrayOf("attribute.descriptor.keyword") + KEYWORD,
+      arrayOf("attribute.descriptor.number") + NUMBER,
+      arrayOf("attribute.descriptor.bad.character") + BAD_CHARACTER,
+      arrayOf("attribute.descriptor.list.map.to.object.conversion") + LITERAL_CONVERSION,
+      arrayOf("attribute.descriptor.map.key.named.argument") + MAP_KEY,
+      arrayOf("attribute.descriptor.label") + LABEL
+      )
 
     val additionalTags = mapOf(
       "annotation" to ANNOTATION,
@@ -119,7 +129,7 @@ class GroovyColorSettingsPage : ColorSettingsPage {
 
   override fun getIcon(): Icon = JetgroovyIcons.Groovy.Groovy_16x16
 
-  override fun getAttributeDescriptors(): Array<AttributesDescriptor> = attributes
+  override fun getAttributeDescriptors(): Array<AttributesDescriptor> = attributes.map2Array { it() }
 
   override fun getColorDescriptors(): Array<out ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY
 

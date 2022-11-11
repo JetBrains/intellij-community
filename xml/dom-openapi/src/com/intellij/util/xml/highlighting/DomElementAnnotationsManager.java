@@ -40,7 +40,6 @@ public abstract class DomElementAnnotationsManager {
    *
    * @param element file element being checked
    * @param inspection inspection to run on the given file element
-   * @param onTheFly
    * @return collected DOM problem descriptors
    */
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
 import com.intellij.openapi.actionSystem.*
@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager.LOCAL_BRANCH
@@ -14,8 +15,8 @@ import git4idea.repo.GitRepository
 
 internal class GitCheckoutActionGroup : GitSingleCommitActionGroup(GitBundle.message("git.log.action.checkout.group"), false) {
 
-  override fun getChildren(e: AnActionEvent, project: Project, log: VcsLog, repository: GitRepository, commit: CommitId): Array<AnAction> {
-    val refNames = getRefNames(e, log, repository)
+  override fun getChildren(e: AnActionEvent, project: Project, repository: GitRepository, commit: CommitId): Array<AnAction> {
+    val refNames = getRefNames(e, repository)
     val actions = ArrayList<AnAction>()
     for (refName in refNames) {
       actions.add(GitCheckoutAction(project, repository, refName, refName))
@@ -42,12 +43,11 @@ internal class GitCheckoutActionGroup : GitSingleCommitActionGroup(GitBundle.mes
     return EmptyAction.wrap(checkoutRevision).also { it.templatePresentation.text = checkoutRevisionText }
   }
 
-  private fun getRefNames(e: AnActionEvent, log: VcsLog, repository: GitRepository): List<String> {
+  private fun getRefNames(e: AnActionEvent, repository: GitRepository): List<String> {
     val refs = e.getData(VcsLogDataKeys.VCS_LOG_REFS) ?: emptyList()
     val localBranches = refs.filterTo(mutableListOf()) { it.type == LOCAL_BRANCH }
-    val provider = log.logProviders[repository.root]
-    if (provider != null) {
-      ContainerUtil.sort<VcsRef>(localBranches, provider.referenceManager.labelsOrderComparator)
+    e.getData(VcsLogInternalDataKeys.LOG_DATA)?.logProviders?.get(repository.root)?.let { provider ->
+      ContainerUtil.sort(localBranches, provider.referenceManager.labelsOrderComparator)
     }
     val refNames = localBranches.map { it.name }
     val currentBranchName = repository.currentBranchName ?: return refNames

@@ -77,6 +77,9 @@ public final class ColorSettingsUtil {
        new Pair<>(CodeInsightColors.RUNTIME_ERROR, OptionsBundle.message("options.java.attribute.descriptor.runtime"))
     ));
 
+    attributes.add(new Pair<>(TextAttributesKey.find("REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES"), 
+                              OptionsBundle.message("options.language.defaults.reassigned.local.variable")));
+
     for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
         final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();

@@ -30,13 +30,13 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ObjectUtils;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.util.Collections;
 
 public class GlobalUndoTest extends UndoTestCase implements TestDialog {
@@ -497,7 +497,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertEquals("doc", getDocumentText(f));
     redo(editor);
     assertEquals("external", getDocumentText(f));
-    ObjectUtils.reachabilityFence(doc);
+    Reference.reachabilityFence(doc);
   }
 
   public void testCanUndoAfterFileWasDeletedAndWhenCreatedExternally() throws IOException {
@@ -549,7 +549,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     assertGlobalUndoNotAvailable();
     assertUndoNotAvailable(getEditor(f));
-    ObjectUtils.reachabilityFence(d);
+    Reference.reachabilityFence(d);
   }
 
   public void testGlobalUndoIsAvailableWhenFileChangedExternallyWithForceFlag() {

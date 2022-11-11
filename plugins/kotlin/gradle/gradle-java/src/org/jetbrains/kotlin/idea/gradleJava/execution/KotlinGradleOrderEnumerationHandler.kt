@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.execution
 
@@ -8,18 +8,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getExternalPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModel
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.util.PathUtilRt
-import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.caches.project.isMPPModule
-import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinOutputPathsData
 import org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler
-import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 open class KotlinGradleOrderEnumerationHandler(module: Module) : GradleOrderEnumeratorHandler(module) {
@@ -53,7 +48,7 @@ open class KotlinGradleOrderEnumerationHandler(module: Module) : GradleOrderEnum
             return true
         }
 
-        val module = rootModel.module.takeIf { it.isNewMPPModule } ?: return false
+        val module = rootModel.module.takeIf { it.isNewMultiPlatformModule } ?: return false
         val projectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return false
         val externalProjectInfo = getExternalProjectInfo(module.project, GradleConstants.SYSTEM_ID, projectPath) ?: return false
         val moduleData = GradleProjectResolverUtil.findModule(externalProjectInfo.externalProjectStructure, projectPath) ?: return false
@@ -100,7 +95,7 @@ open class KotlinGradleOrderEnumerationHandler(module: Module) : GradleOrderEnum
 
     open class Factory : GradleOrderEnumeratorHandler.FactoryImpl() {
         override fun isApplicable(module: Module): Boolean {
-            return module.isMPPModule
+            return module.isMultiPlatformModule
         }
 
         override fun createHandler(module: Module) = KotlinGradleOrderEnumerationHandler(module)

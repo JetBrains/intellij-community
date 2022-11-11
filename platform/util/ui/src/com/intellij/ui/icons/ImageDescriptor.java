@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons;
 
+import com.intellij.ui.svg.SvgCacheMapper;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
@@ -22,6 +24,12 @@ public final class ImageDescriptor {
     this.scale = scale;
     this.isSvg = isSvg;
     this.isDark = isDark;
+  }
+
+  @ApiStatus.Internal
+  @Contract(" -> new")
+  public @NotNull SvgCacheMapper getSvgMapper() {
+    return new SvgCacheMapper(scale, isDark);
   }
 
   public @NotNull String getPath() {

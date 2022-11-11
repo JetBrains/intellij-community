@@ -42,7 +42,7 @@ public class SuspiciousArrayCastInspection extends BaseInspection {
   private static class SuspiciousArrayCastVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       final PsiTypeElement typeElement = expression.getCastType();
       if (typeElement == null) {

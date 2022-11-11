@@ -31,19 +31,15 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 public abstract class JavaCodeContextType extends TemplateContextType {
 
-  protected JavaCodeContextType(@NotNull @NonNls String id,
-                                @NotNull @Nls String presentableName,
-                                @Nullable Class<? extends TemplateContextType> baseContextType) {
-    super(id, presentableName, baseContextType);
+  protected JavaCodeContextType(@NotNull @Nls String presentableName) {
+    super(presentableName);
   }
 
   @Override
@@ -89,7 +85,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   
   public static class Generic extends JavaCodeContextType {
     public Generic() {
-      super("JAVA_CODE", JavaLanguage.INSTANCE.getDisplayName(), EverywhereContextType.class);
+      super(JavaLanguage.INSTANCE.getDisplayName());
     }
 
     @Override
@@ -100,7 +96,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   public static class ConsumerFunction extends JavaCodeContextType {
     protected ConsumerFunction() {
-      super("JAVA_CONSUMER", JavaBundle.message("live.template.context.consumer.function"), Generic.class);
+      super(JavaBundle.message("live.template.context.consumer.function"));
     }
 
     @Override
@@ -118,7 +114,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   public static class Statement extends JavaCodeContextType {
     public Statement() {
-      super("JAVA_STATEMENT", JavaBundle.message("live.template.context.statement"), Generic.class);
+      super(JavaBundle.message("live.template.context.statement"));
     }
 
     @Override
@@ -145,7 +141,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   public static class ElsePlace extends JavaCodeContextType {
     public ElsePlace() {
-      super("JAVA_ELSE_PLACE", JavaBundle.message("live.template.context.else"), Generic.class);
+      super(JavaBundle.message("live.template.context.else"));
     }
 
     @Override
@@ -166,7 +162,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   public static class Expression extends JavaCodeContextType {
     public Expression() {
-      super("JAVA_EXPRESSION", JavaBundle.message("live.template.context.expression"), Generic.class);
+      super(JavaBundle.message("live.template.context.expression"));
     }
 
     @Override
@@ -214,7 +210,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   public static class Declaration extends JavaCodeContextType {
     public Declaration() {
-      super("JAVA_DECLARATION", JavaBundle.message("live.template.context.declaration"), Generic.class);
+      super(JavaBundle.message("live.template.context.declaration"));
     }
 
     @Override
@@ -228,6 +224,4 @@ public abstract class JavaCodeContextType extends TemplateContextType {
              PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null;
     }
   }
-
-
 }

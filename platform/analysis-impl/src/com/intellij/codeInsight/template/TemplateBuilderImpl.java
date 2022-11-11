@@ -220,8 +220,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
         LOG.error("file: " + myFile +
                   " container: " + myContainerElement +
                   " markers: " + StringUtil.join(myElements, rangeMarker -> {
-                    final String docString =
-                      myDocument.getText(new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+                    final String docString = myDocument.getText(rangeMarker.getTextRange());
                     return "[[" + docString + "]" + rangeMarker.getStartOffset() + ", " + rangeMarker.getEndOffset() + "]";
                   }, ", "));
       }

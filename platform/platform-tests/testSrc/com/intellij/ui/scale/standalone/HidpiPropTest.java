@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale.standalone;
 
 import com.intellij.idea.StartupUtil;
@@ -25,7 +25,7 @@ public class HidpiPropTest {
     TestScaleHelper.assumeHeadful();
 
     System.setProperty(HIDPI_PROP, "false");
-    StartupUtil.test_checkHiDPISettings();
+    StartupUtil.checkHiDPISettings();
 
     Graphics2D g = TestScaleHelper.createGraphics(2);
 

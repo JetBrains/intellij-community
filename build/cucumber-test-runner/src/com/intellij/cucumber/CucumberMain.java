@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cucumber;
 
 import com.intellij.TestCaseLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.testFramework.UITestUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EdtInvocationManager;
 import cucumber.runtime.Runtime;
@@ -68,7 +68,7 @@ public final class CucumberMain {
     final Ref<Runtime> runtimeRef = new Ref<>();
 
     try {
-      TestRunnerUtil.replaceIdeEventQueueSafely();
+      UITestUtil.replaceIdeEventQueueSafely();
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
         try {
           RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList<>(Arrays.asList(argv)));

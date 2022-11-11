@@ -419,16 +419,18 @@ private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<Psi
 /**
  * See [https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order].
  */
-private fun resolvedElementPriority(element: PsiElement, module: Module?) = when {
-  isNamespacePackage(element) -> Priority.NAMESPACE_PACKAGE
-  isUserFile(element, module) -> if (PyiUtil.isPyiFileOfPackage(element)) Priority.USER_STUB else Priority.USER_CODE
-  isInStubPackage(element) -> Priority.STUB_PACKAGE
-  isInTypeShed(element) -> Priority.TYPESHED
-  isInSkeletons(element) -> Priority.SKELETON
-  PyiUtil.isPyiFileOfPackage(element) -> Priority.PROVIDED_STUB
-  isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
-  isInProvidedSdk(element) -> Priority.THIRD_PARTY_SDK
-  else -> Priority.OTHER
+private fun resolvedElementPriority(element: PsiElement, module: Module?): Priority {
+  return when {
+    isNamespacePackage(element) -> Priority.NAMESPACE_PACKAGE
+    isUserFile(element, module) -> if (PyiUtil.isPyiFileOfPackage(element)) Priority.USER_STUB else Priority.USER_CODE
+    isInStubPackage(element) -> Priority.STUB_PACKAGE
+    isInTypeShed(element) -> Priority.TYPESHED
+    isInSkeletons(element) -> Priority.SKELETON
+    PyiUtil.isPyiFileOfPackage(element) -> Priority.PROVIDED_STUB
+    isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
+    isInProvidedSdk(element) -> Priority.THIRD_PARTY_SDK
+    else -> Priority.OTHER
+  }
 }
 
 fun isInSkeletons(element: PsiElement): Boolean {
@@ -438,15 +440,17 @@ fun isInSkeletons(element: PsiElement): Boolean {
 }
 
 private fun isInProvidedSdk(element: PsiElement): Boolean =
-  PyThirdPartySdkDetector.EP_NAME.extensions().anyMatch { it.isInThirdPartySdk(element) }
+  PyThirdPartySdkDetector.EP_NAME.extensionList.any { it.isInThirdPartySdk(element) }
 
-private fun isUserFile(element: PsiElement, module: Module?) =
-  module != null &&
-  element is PsiFileSystemItem &&
-  element.virtualFile.let { it != null && ModuleUtilCore.moduleContainsFile(module, it, false) }
+private fun isUserFile(element: PsiElement, module: Module?): Boolean {
+  return module != null &&
+         element is PsiFileSystemItem &&
+         element.virtualFile.let { it != null && ModuleUtilCore.moduleContainsFile(module, it, false) }
+}
 
-private fun isInTypeShed(element: PsiElement) =
-  PyiUtil.isPyiFileOfPackage(element) && (element as? PsiFileSystemItem)?.virtualFile.let { it != null && PyTypeShed.isInside(it) }
+private fun isInTypeShed(element: PsiElement): Boolean {
+  return PyiUtil.isPyiFileOfPackage(element) && (element as? PsiFileSystemItem)?.virtualFile.let { it != null && PyTypeShed.isInside(it) }
+}
 
 /**
  * See [https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order].

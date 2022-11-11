@@ -14,6 +14,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.codeStyle.CodeStyleScheme
+import com.intellij.psi.codeStyle.CodeStyleSchemes
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
 @Service(Service.Level.PROJECT)
 @State(name = "ReaderModeSettings", storages = [
@@ -78,6 +82,12 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
   private var myState = State()
 
   class State : BaseState() {
+    class SchemeState : BaseState() {
+      var name by string(CodeStyleScheme.DEFAULT_SCHEME_NAME)
+      var isProjectLevel by property(false)
+    }
+    var visualFormattingLayerScheme by property(SchemeState())
+    @get:ReportValue var useVisualFormattingLayer by property(false)
     @get:ReportValue var showLigatures by property(EditorColorsManager.getInstance().globalScheme.fontPreferences.useLigatures())
     @get:ReportValue var increaseLineSpacing by property(false)
     @get:ReportValue var showRenderedDocs by property(true)
@@ -87,6 +97,29 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
     var mode: ReaderMode = ReaderMode.LIBRARIES_AND_READ_ONLY
   }
+
+  fun getVisualFormattingLayerCodeStyleSettings(project: Project?): CodeStyleSettings {
+    val codeStyleSchemes = CodeStyleSchemes.getInstance()
+    return if (visualFormattingLayerScheme.name == CodeStyleScheme.PROJECT_SCHEME_NAME
+               && visualFormattingLayerScheme.isProjectLevel) {
+      CodeStyleSettingsManager.getInstance(project).mainProjectCodeStyle
+    }
+    else {
+      visualFormattingLayerScheme.name?.let { codeStyleSchemes.findSchemeByName(it)?.codeStyleSettings }
+    } ?: codeStyleSchemes.defaultScheme.codeStyleSettings
+  }
+
+  var visualFormattingLayerScheme: State.SchemeState
+    get() = state.visualFormattingLayerScheme
+    set(value) {
+      state.visualFormattingLayerScheme = value
+    }
+
+  var useVisualFormattingLayer: Boolean
+    get() = state.useVisualFormattingLayer
+    set(value) {
+      state.useVisualFormattingLayer = value
+    }
 
   var showLigatures: Boolean
     get() = state.showLigatures

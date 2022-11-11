@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.fir.shortenRefs
 
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.AbstractImportsTest
-import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.test.utils.IgnoreTests
 abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
     override val captureExceptions: Boolean = false
 
+    override fun isFirPlugin(): Boolean = true
+
     override fun doTest(file: KtFile): String? {
         val selectionModel = myFixture.editor.selectionModel
         if (!selectionModel.hasSelection()) error("No selection in input file")
@@ -20,7 +22,7 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
         val selection = runReadAction { TextRange(selectionModel.selectionStart, selectionModel.selectionEnd) }
 
         val shortenings = executeOnPooledThreadInReadAction {
-            analyse(file) {
+            analyze(file) {
                 collectPossibleReferenceShortenings(file, selection)
             }
         }

@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
@@ -23,6 +24,17 @@ public final class BlockUtils {
    */
   public static PsiStatement addBefore(PsiStatement anchor, PsiStatement... newStatements) {
     if (newStatements.length == 0) throw new IllegalArgumentException();
+    if (anchor instanceof PsiBlockStatement) {
+      PsiCodeBlock codeBlock = ((PsiBlockStatement)anchor).getCodeBlock();
+      PsiJavaToken brace = codeBlock.getLBrace();
+      if (brace != null) {
+        PsiElement result = brace;
+        for (PsiStatement statement : newStatements) {
+          result = codeBlock.addAfter(statement, result);
+        }
+        return (PsiStatement)result;
+      }
+    }
     PsiStatement oldStatement = anchor;
     PsiElement parent = oldStatement.getParent();
     while (parent instanceof PsiLabeledStatement) {
@@ -212,10 +224,11 @@ public final class BlockUtils {
     PsiJavaToken rBrace = codeBlock.getRBrace();
     if (lBrace == null || rBrace == null) return null;
 
-    final PsiElement[] children = codeBlock.getChildren();
+    final PsiElement first = PsiTreeUtil.skipWhitespacesForward(lBrace);
     PsiElement added = null;
-    if (children.length > 2) {
-      added = statement.getParent().addRangeBefore(children[1], children[children.length - 2], statement);
+    if (first != rBrace) {
+      assert first != null;
+      added = statement.getParent().addRangeBefore(first, rBrace.getPrevSibling(), statement);
       final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(statement.getManager());
       codeStyleManager.reformat(added);
     }

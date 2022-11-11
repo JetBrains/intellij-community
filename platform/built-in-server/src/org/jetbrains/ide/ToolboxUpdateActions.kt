@@ -3,6 +3,7 @@ package org.jetbrains.ide
 
 import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
@@ -104,6 +105,8 @@ internal class ToolboxUpdateAction(
       e.presentation.isEnabledAndVisible = false
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
 
 interface UpdateActionsListener: EventListener {

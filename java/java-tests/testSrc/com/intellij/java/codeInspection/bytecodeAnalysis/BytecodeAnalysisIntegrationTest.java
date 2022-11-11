@@ -321,7 +321,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     }
 
     @Override
-    public void visitPackage(PsiPackage aPackage) {
+    public void visitPackage(@NotNull PsiPackage aPackage) {
       if (!"org.intellij.lang.annotations".equals(aPackage.getQualifiedName())) {
         for (PsiPackage subPackage : aPackage.getSubPackages(myScope)) {
           visitPackage(subPackage);

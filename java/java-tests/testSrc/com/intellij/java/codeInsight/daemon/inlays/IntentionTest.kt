@@ -1,30 +1,25 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.java.codeInsight.completion.CompletionHintsTest
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
-class BlackListMethodIntentionTest : LightJavaCodeInsightFixtureTestCase() {
+class ExcludeListMethodIntentionTest : LightJavaCodeInsightFixtureTestCase() {
 
-  private var isParamHintsEnabledBefore = false
   private val default = ParameterNameHintsSettings()
-  
-  override fun setUp() {
-    super.setUp()
-
-    val settings = EditorSettingsExternalizable.getInstance()
-    isParamHintsEnabledBefore = settings.isShowParameterNameHints
-    settings.isShowParameterNameHints = true
-  }
 
   override fun tearDown() {
-    EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
-    ParameterNameHintsSettings.getInstance().loadState(default.state)
-
-    super.tearDown()
+    try {
+      ParameterNameHintsSettings.getInstance().loadState(default.state)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
   
   fun `test add to blacklist by alt enter`() {

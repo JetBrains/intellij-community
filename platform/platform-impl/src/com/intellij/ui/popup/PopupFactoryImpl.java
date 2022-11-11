@@ -47,6 +47,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -132,7 +133,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                Runnable onYes,
                                                Runnable onNo,
                                                int defaultOptionIndex) {
-    final BaseListPopupStep<String> step = new BaseListPopupStep<>(title, yesText, noText) {
+    BaseListPopupStep<String> step = new BaseListPopupStep<>(title, yesText, noText) {
       boolean myRunYes;
       @Override
       public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
@@ -212,7 +213,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,
-                               @NotNull ListPopupStep step,
+                               @NotNull ListPopupStep<?> step,
                                @Nullable Runnable disposeCallback,
                                @NotNull DataContext dataContext,
                                int maxRowCount) {
@@ -236,6 +237,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       });
     }
 
+    @NotNull
     protected static ListPopupStep<ActionItem> createStep(@PopupTitle @Nullable String title,
                                                           @NotNull ActionGroup actionGroup,
                                                           @NotNull DataContext dataContext,
@@ -384,7 +386,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   public @NotNull ListPopup createListPopup(@NotNull Project project,
                                             @NotNull ListPopupStep step,
-                                            @NotNull Function<ListCellRenderer, ListCellRenderer> cellRendererProducer) {
+                                            @NotNull Function<? super ListCellRenderer, ? extends ListCellRenderer> cellRendererProducer) {
     return new ListPopupImpl(project, step) {
       @Override
       protected ListCellRenderer<?> getListElementRenderer() {
@@ -419,7 +421,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
       JFrame frame = project == null ? null : WindowManager.getInstance().getFrame(project);
       focusOwner = frame == null ? null : frame.getRootPane();
       if (focusOwner == null) {
-        throw new IllegalArgumentException("focusOwner cannot be null");
+        throw new IllegalArgumentException("focusOwner cannot be null:\n" +
+                                           "  contextComponent: " + component + "\n" +
+                                           "  project: " + project + "\n" +
+                                           "  frame: " + frame);
       }
     }
 
@@ -440,7 +445,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     Point popupMenuPoint = null;
     final Rectangle visibleRect = component.getVisibleRect();
     if (component instanceof JList) { // JList
-      JList list = (JList)component;
+      JList<?> list = (JList<?>)component;
       int firstVisibleIndex = list.getFirstVisibleIndex();
       int lastVisibleIndex = list.getLastVisibleIndex();
       int[] selectedIndices = list.getSelectedIndices();
@@ -620,6 +625,44 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return createHtmlTextBalloonBuilder(htmlContent, messageType.getDefaultIcon(), messageType.getPopupBackground(), listener);
   }
 
+  public static class InlineActionItem implements AnActionHolder {
+    private final AnAction myAction;
+    private Icon myIcon;
+    private Icon mySelectedIcon;
+    private final int myMaxIconWidth;
+    private final int myMaxIconHeight;
+
+    public InlineActionItem(AnAction action, int maxIconWidth, int maxIconHeight) {
+      myAction = action;
+      myMaxIconWidth = maxIconWidth;
+      myMaxIconHeight = maxIconHeight;
+    }
+
+    public void updateFromPresentation(@NotNull Presentation presentation, @NotNull String actionPlace) {
+      Couple<Icon> icons = ActionStepBuilder.calcRawIcons(myAction, presentation, false);
+      Icon icon = icons.first;
+      Icon selectedIcon = icons.second;
+
+      if (myMaxIconWidth != -1 && myMaxIconHeight != -1) {
+        if (icon != null) icon = new SizedIcon(icon, myMaxIconWidth, myMaxIconHeight);
+        if (selectedIcon != null) selectedIcon = new SizedIcon(selectedIcon, myMaxIconWidth, myMaxIconHeight);
+      }
+
+      if (icon == null) icon = selectedIcon != null ? selectedIcon : EmptyIcon.create(myMaxIconWidth, myMaxIconHeight);
+      myIcon = icon;
+      mySelectedIcon = selectedIcon;
+    }
+
+    @Override
+    public @NotNull AnAction getAction() {
+      return myAction;
+    }
+
+    public Icon getIcon(boolean selected) {
+      return selected && mySelectedIcon != null ? mySelectedIcon : myIcon;
+    }
+  }
+
 
   public static class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
     private final AnAction myAction;
@@ -644,6 +687,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final boolean myPrependWithSeparator;
     private final @NlsContexts.Separator String mySeparatorText;
 
+    @NotNull private final List<InlineActionItem> myInlineActions;
+
     ActionItem(@NotNull AnAction action,
                @Nullable Character mnemonicChar,
                boolean mnemonicsEnabled,
@@ -652,6 +697,19 @@ public class PopupFactoryImpl extends JBPopupFactory {
                int maxIconHeight,
                boolean prependWithSeparator,
                @NlsContexts.Separator String separatorText) {
+      this(action, mnemonicChar, mnemonicsEnabled, honorActionMnemonics, maxIconWidth, maxIconHeight, prependWithSeparator, separatorText,
+           Collections.emptyList());
+    }
+
+    ActionItem(@NotNull AnAction action,
+               @Nullable Character mnemonicChar,
+               boolean mnemonicsEnabled,
+               boolean honorActionMnemonics,
+               int maxIconWidth,
+               int maxIconHeight,
+               boolean prependWithSeparator,
+               @NlsContexts.Separator String separatorText,
+               @NotNull List<InlineActionItem> inlineActions) {
       myAction = action;
       myMnemonicChar = mnemonicChar;
       myMnemonicsEnabled = mnemonicsEnabled;
@@ -660,6 +718,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myMaxIconHeight = maxIconHeight;
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
+      myInlineActions = inlineActions;
 
       // Make sure com.intellij.dvcs.ui.BranchActionGroupPopup.MoreAction.updateActionText is long dead before removing
       myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
@@ -681,9 +740,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myMaxIconHeight = -1;
       myPrependWithSeparator = false;
       mySeparatorText = null;
+      myInlineActions = Collections.emptyList();
     }
 
-    public void updateFromPresentation(@NotNull Presentation presentation, @NotNull String actionPlace) {
+    public @NotNull List<InlineActionItem> getInlineActions() {
+      return myInlineActions;
+    }
+
+    void updateFromPresentation(@NotNull Presentation presentation, @NotNull String actionPlace) {
       String text = presentation.getText();
       if (text != null && !myMnemonicsEnabled && myHonorActionMnemonics) {
         text = TextWithMnemonic.fromPlainText(text, (char)myAction.getTemplatePresentation().getMnemonic()).toString();
@@ -750,9 +814,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public boolean isPerformGroup() { return myIsPerformGroup; }
 
-    public boolean isSubstepSuppressed() { return myIsSubstepSuppressed; }
+    boolean isSubstepSuppressed() { return myIsSubstepSuppressed; }
 
-    public boolean isKeepPopupOpen() { return myIsKeepPopupOpen; }
+    boolean isKeepPopupOpen() { return myIsKeepPopupOpen; }
 
     public @NlsContexts.DetailedDescription String getDescription() {
       return myDescription == null ? myTooltip : myDescription;

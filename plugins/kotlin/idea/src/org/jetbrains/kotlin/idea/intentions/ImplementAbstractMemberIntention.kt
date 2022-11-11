@@ -27,9 +27,10 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.GenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
@@ -119,11 +120,11 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         val substitution = getTypeSubstitution(superClassDescriptor.defaultType, subClassDescriptor.defaultType).orEmpty()
         val descriptorToImplement = superMemberDescriptor.substitute(substitution) as CallableMemberDescriptor
         val chooserObject = OverrideMemberChooserObject.create(
-            member.project,
-            descriptorToImplement,
-            descriptorToImplement,
-            BodyType.FROM_TEMPLATE,
-            preferConstructorParameters
+          member.project,
+          descriptorToImplement,
+          descriptorToImplement,
+          BodyType.FromTemplate,
+          preferConstructorParameters
         )
         GenerateMembersHandler.generateMembers(editor, targetClass, listOf(chooserObject), false)
     }

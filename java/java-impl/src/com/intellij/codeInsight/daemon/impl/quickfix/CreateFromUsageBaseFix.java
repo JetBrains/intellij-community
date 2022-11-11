@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -116,6 +117,13 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     TextRange range = element.getTextRange();
     LOG.assertTrue(range != null, element.getClass());
     int textOffset = range.getStartOffset();
+    if (IntentionPreviewUtils.isPreviewElement(targetFile)) {
+      Editor editor = IntentionPreviewUtils.getPreviewEditor();
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(textOffset);
+      }
+      return editor;
+    }
     VirtualFile file = targetFile.getVirtualFile();
     if (file == null) {
       file = PsiUtilCore.getVirtualFile(element);
@@ -409,15 +417,16 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       }
     }
     int idx = 0;
+    PsiTypeParameterList typeParameterList = Objects.requireNonNull(targetClass.getTypeParameterList());
     for (PsiType type : ref.getTypeParameters()) {
       final PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass instanceof PsiTypeParameter) {
-        targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(psiClass.getName(), null));
+        typeParameterList.add(factory.createTypeParameterFromText(psiClass.getName(), null));
       } else {
         while (true) {
           final @NonNls String paramName = idx > 0 ? "T" + idx : "T";
           if (typeParamNames.add(paramName)) {
-            targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(paramName, null));
+            typeParameterList.add(factory.createTypeParameterFromText(paramName, null));
             break;
           }
           idx++;

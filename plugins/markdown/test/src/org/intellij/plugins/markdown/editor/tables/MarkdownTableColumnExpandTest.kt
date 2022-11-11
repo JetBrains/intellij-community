@@ -2,8 +2,19 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.RegistryKeyRule
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
+  @get:Rule
+  val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
+
+  @Test
   fun `test right after cell content`() {
     // language=Markdown
     doTest(
@@ -20,6 +31,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test between spaces on the right side`() {
     // language=Markdown
     doTest(
@@ -36,6 +48,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test just before right pipe`() {
     // language=Markdown
     doTest(
@@ -52,6 +65,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test in separator`() {
     doTest(
       """
@@ -68,6 +82,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test in separator with colon`() {
     doTest(
       """
@@ -84,6 +99,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test with right alignment`() {
     // language=Markdown
     val before = """
@@ -100,6 +116,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after)
   }
 
+  @Test
   fun `test typing with right alignment`() {
     // language=Markdown
     val before = """
@@ -116,6 +133,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, string = "some")
   }
 
+  @Test
   fun `test typing with right alignment and spaces`() {
     // language=Markdown
     val before = """
@@ -132,6 +150,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, string = "some content")
   }
 
+  @Test
   fun `test typing with left alignment`() {
     // language=Markdown
     val before = """
@@ -148,6 +167,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, string = "some")
   }
 
+  @Test
   fun `test typing with left alignment and spaces`() {
     // language=Markdown
     val before = """
@@ -164,6 +184,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, string = "some content")
   }
 
+  @Test
   fun `test typing with center alignment`() {
     // language=Markdown
     val before = """
@@ -180,6 +201,7 @@ class MarkdownTableColumnExpandTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, string = "some")
   }
 
+  @Test
   fun `test typing with center alignment and ends with space`() {
     // language=Markdown
     val before = """

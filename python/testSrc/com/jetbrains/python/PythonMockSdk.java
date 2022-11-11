@@ -101,7 +101,6 @@ public final class PythonMockSdk {
       return PyNames.PYTHON_SDK_ID_NAME;
     }
 
-    @Nullable
     @Override
     public @NotNull String getVersionString(@NotNull Sdk sdk) {
       return toVersionString(myLevel);

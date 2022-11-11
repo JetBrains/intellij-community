@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.ComboBox
@@ -23,10 +22,6 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: MutableProperty<T?>): Cell<C> {
               { component, value -> component.setSelectedItem(value) },
               prop)
 }
-
-@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: GraphProperty<T>) = bindItem(property)
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(property: ObservableMutableProperty<T>): Cell<C> {
   installValidationRequestor(property)

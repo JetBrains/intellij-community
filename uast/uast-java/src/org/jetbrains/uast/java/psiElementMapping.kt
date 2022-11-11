@@ -21,18 +21,24 @@ internal fun canConvert(psiCls: Class<out PsiElement>, targets: Array<out Class<
   if (!checkCanConvert) return true
 
   if (targets.size == 1) {
-    // checking the most popular cases before looking up in hashtable
-    when (targets.single()) {
-      UElement::class.java -> return uElementClassSet.contains(psiCls)
-      UInjectionHost::class.java -> return uInjectionHostClassSet.contains(psiCls)
-      UCallExpression::class.java -> return uCallClassSet.contains(psiCls)
-    }
+    val target = targets.single()
+    return canConvert(psiCls, target)
   }
 
   return targets.any { getPossibleSourceTypes(it).contains(psiCls) }
 }
 
-internal fun getPossibleSourceTypes(uastType: Class<out UElement>) =
+internal fun canConvert(psiCls: Class<out PsiElement>, target: Class<out UElement>): Boolean {
+  // checking the most popular cases before looking up in hashtable
+  when (target) {
+    UElement::class.java -> return uElementClassSet.contains(psiCls)
+    UInjectionHost::class.java -> return uInjectionHostClassSet.contains(psiCls)
+    UCallExpression::class.java -> return uCallClassSet.contains(psiCls)
+  }
+  return getPossibleSourceTypes(target).contains(psiCls)
+}
+
+internal fun getPossibleSourceTypes(uastType: Class<out UElement>): ClassSet<PsiElement> =
   possibleSourceTypes[uastType] ?: emptyClassSet()
 
 /**
@@ -42,7 +48,7 @@ internal fun getPossibleSourceTypes(uastType: Class<out UElement>) =
  */
 @Suppress("DEPRECATION")
 private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
-  UAnchorOwner::class.java to classSetOf<PsiElement>(
+  UAnchorOwner::class.java to classSetOf(
     PsiAnnotation::class.java,
     PsiAnnotationMethod::class.java,
     PsiAnonymousClass::class.java,
@@ -639,6 +645,6 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
   )
 )
 
-private val uElementClassSet = possibleSourceTypes.getValue(UElement::class.java)
-private val uInjectionHostClassSet = possibleSourceTypes.getValue(UInjectionHost::class.java)
-private val uCallClassSet = possibleSourceTypes.getValue(UCallExpression::class.java)
+private val uElementClassSet: ClassSet<PsiElement> = possibleSourceTypes.getValue(UElement::class.java)
+private val uInjectionHostClassSet: ClassSet<PsiElement> = possibleSourceTypes.getValue(UInjectionHost::class.java)
+private val uCallClassSet: ClassSet<PsiElement> = possibleSourceTypes.getValue(UCallExpression::class.java)

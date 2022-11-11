@@ -21,3 +21,5 @@ inline fun g(a: Int) {
     //Breakpoint!
     println()
 }
+
+// IGNORE_K2

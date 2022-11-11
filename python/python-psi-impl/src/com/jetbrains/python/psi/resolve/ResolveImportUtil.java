@@ -251,7 +251,6 @@ public final class ResolveImportUtil {
    * @param containingFile  where we're in.
    * @param fileOnly        if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @param checkForPackage if true, directories are returned only if they contain __init__.py
-   * @param withoutStubs
    * @param withoutForeign  if {@code true} do not use {@link PyReferenceResolveProvider} instances for resolving
    * @return the element the referencedName resolves to
    */

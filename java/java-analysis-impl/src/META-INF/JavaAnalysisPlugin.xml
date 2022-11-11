@@ -67,6 +67,7 @@
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
                     serviceImplementation="com.intellij.psi.impl.file.impl.JavaFileManagerImpl"/>
+    <java.elementFinder implementation="com.intellij.psi.impl.PackagePrefixElementFinder"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.JavaChangeLocalityDetector"/>
     <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider" order="first,after default"/>
     <applicationService serviceInterface="com.intellij.codeInspection.BatchSuppressManager"
@@ -191,7 +192,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deprecation.RedundantScheduledForRemovalAnnotationInspection"
                      key="inspection.name.redundant.scheduled.for.removal.annotation" bundle="messages.JavaAnalysisBundle"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="removal" shortName="MarkedForRemoval"
+    <localInspection groupPath="Java" language="UAST"  suppressId="removal" shortName="MarkedForRemoval"
                      key="inspection.marked.for.removal.display.name" bundle="messages.AnalysisBundle"
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="ERROR" implementationClass="com.intellij.codeInspection.deprecation.MarkedForRemovalInspection"/>

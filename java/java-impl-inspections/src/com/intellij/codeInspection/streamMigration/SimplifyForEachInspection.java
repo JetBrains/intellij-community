@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.*;
@@ -53,7 +54,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         SimplifyForEachContext context = SimplifyForEachContext.from(call);
         if (context == null) return;
         boolean opCountChanged = context.myTerminalBlock.getOperationCount() > 1;
@@ -233,9 +234,9 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   public static class ForEachNonFinalFix extends PsiElementBaseIntentionAction implements HighPriorityAction {
-    private final PsiElement myContext;
+    private final @Nullable PsiElement myContext;
 
-    public ForEachNonFinalFix(PsiElement context) {
+    public ForEachNonFinalFix(@Nullable PsiElement context) {
       SimplifyForEachContext simplifyContext = findMigration(context);
       if (simplifyContext == null) {
         myContext = null;
@@ -246,7 +247,12 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       }
     }
 
-    private static SimplifyForEachContext findMigration(PsiElement context) {
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new ForEachNonFinalFix(PsiTreeUtil.findSameElementInCopy(myContext, target));
+    }
+
+    private static SimplifyForEachContext findMigration(@Nullable PsiElement context) {
       if (!(context instanceof PsiReferenceExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)context)) return null;
       PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
       if (lambda == null) return null;

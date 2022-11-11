@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
 import com.intellij.codeInsight.AttachSourcesProvider;
@@ -46,25 +32,22 @@ import java.util.List;
  * @author Sergey Evdokimov
  */
 public abstract class AbstractAttachSourceProvider implements AttachSourcesProvider {
+
   private static final Logger LOG = Logger.getInstance(AbstractAttachSourceProvider.class);
 
-  @Nullable
-  protected static VirtualFile getJarByPsiFile(@Nullable PsiFile psiFile) {
-    if (psiFile != null) {
-      VirtualFile entry = psiFile.getVirtualFile();
-      if (entry != null) {
-        VirtualFileSystem fs = entry.getFileSystem();
-        if (fs instanceof JarFileSystem) {
-          return ((JarFileSystem)fs).getLocalByEntry(entry);
-        }
+  protected static @Nullable VirtualFile getJarByPsiFile(@NotNull PsiFile psiFile) {
+    VirtualFile entry = psiFile.getVirtualFile();
+    if (entry != null) {
+      VirtualFileSystem fs = entry.getFileSystem();
+      if (fs instanceof JarFileSystem) {
+        return ((JarFileSystem)fs).getLocalByEntry(entry);
       }
     }
 
     return null;
   }
 
-  @Nullable
-  protected static Library getLibraryFromOrderEntriesList(List<? extends LibraryOrderEntry> orderEntries) {
+  protected static @Nullable Library getLibraryFromOrderEntriesList(@NotNull List<? extends LibraryOrderEntry> orderEntries) {
     if (orderEntries.isEmpty()) return null;
 
     Library library = orderEntries.get(0).getLibrary();
@@ -111,7 +94,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
     }
 
     @Override
-    public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
+    public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
       ActionCallback callback = new ActionCallback();
@@ -151,11 +134,11 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
     protected abstract void storeFile(byte[] content);
 
     @Override
-    public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
+    public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
       final ActionCallback callback = new ActionCallback();
       Task task = new Task.Backgroundable(myProject, JavaUiBundle.message("progress.title.downloading.sources"), true) {
         @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
+        public void run(final @NotNull ProgressIndicator indicator) {
           final byte[] bytes;
           try {
             LOG.info("Downloading sources JAR: " + myUrl);

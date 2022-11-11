@@ -102,8 +102,6 @@ abstract class SurroundAndUnwrapLesson
     }
   }
 
-  override val suitableTips = listOf("SurroundWith")
-
   override val helpLinks: Map<String, String> = mapOf(
     Pair(LessonsBundle.message("surround.and.unwrap.help.surround.code.fragments"),
          LessonUtil.getHelpLink("surrounding-blocks-of-code-with-language-constructs.html")),

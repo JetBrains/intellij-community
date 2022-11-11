@@ -75,6 +75,11 @@ public class WelcomeScreenActionsUtil {
       UIUtil.setEnabled(myButton, e.getPresentation().isEnabled(), true);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     public static ToolbarTextButtonWrapper wrapAsTextButton(@NotNull AnAction action) {
       return new ToolbarTextButtonWrapper(Collections.singletonList(action));
     }
@@ -155,6 +160,11 @@ public class WelcomeScreenActionsUtil {
       myIconButton.setSelectedIcon(e.getPresentation().getSelectedIcon());
       myLabel.setText(e.getPresentation().getText());
       UIUtil.setEnabled(myPanel, e.getPresentation().isEnabled(), true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     public static @NotNull LargeIconWithTextWrapper wrapAsBigIconWithText(AnAction action) {

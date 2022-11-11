@@ -4,6 +4,7 @@ package com.intellij.util.indexing.diagnostic
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.streams.asSequence
 
@@ -81,11 +83,6 @@ class IndexDiagnosticDumper : Disposable {
       }
 
     @JvmStatic
-    private val indexingDiagnosticsSizeLimitOfFilesInMBPerProject: Int
-      get() =
-        SystemProperties.getIntProperty("intellij.indexes.diagnostics.size.limit.of.files.MB.per.project", 10)
-
-    @JvmStatic
     val shouldDumpPathsOfIndexedFiles: Boolean
       get() =
         SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
@@ -111,9 +108,6 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     @TestOnly
     var shouldDumpInUnitTestMode: Boolean = false
-
-    private val isIntegrationTest: Boolean
-      get() = SystemProperties.getBooleanProperty("idea.is.integration.test", false)
 
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
@@ -257,15 +251,16 @@ class IndexDiagnosticDumper : Disposable {
   private fun deleteOutdatedDiagnostics(existingDiagnostics: List<ExistingDiagnostic>): List<ExistingDiagnostic> {
     val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }
 
-    var sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMBPerProject * 1000000.toLong()
+    var sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()
     val numberLimit: Int
-    if (isIntegrationTest) {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
       numberLimit = existingDiagnostics.size
-    } else if (sizeLimit > 0) {
+    }
+    else if (sizeLimit > 0) {
       var number = 0
       for (diagnostic in existingDiagnostics) {
-        sizeLimit -= diagnostic.jsonFile.toFile().length()
-        sizeLimit -= diagnostic.htmlFile.toFile().length()
+        sizeLimit -= max(0, diagnostic.jsonFile.sizeOrNull())
+        sizeLimit -= max(0, diagnostic.htmlFile.sizeOrNull())
         if (sizeLimit <= 0) {
           break
         }

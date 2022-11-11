@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -420,6 +421,11 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
       else {
         e.getPresentation().setEnabled(getSelectedObject() instanceof Artifact);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

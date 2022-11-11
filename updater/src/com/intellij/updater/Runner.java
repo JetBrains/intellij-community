@@ -112,6 +112,9 @@ public class Runner {
     String jarFile = includeJar ? getArgument(args, "jar") : null;
     jarFile = includeJar && jarFile == null ? resolveJarFile() : jarFile;
 
+    LOG.info("args: " + Arrays.toString(args));
+    LOG.info(".jar: " + jarFile);
+
     if (args.length >= 6 && "create".equals(args[0])) {
       String oldVersionDesc = args[1];
       String newVersionDesc = args[2];
@@ -121,7 +124,6 @@ public class Runner {
 
       checkCaseSensitivity(newFolder);
 
-      LOG.info("args: " + Arrays.toString(args));
       LOG.info("case-sensitive: " + ourCaseSensitiveFs);
 
       boolean binary = hasArgument(args, "zip_as_binary");
@@ -194,7 +196,6 @@ public class Runner {
 
       checkCaseSensitivity(destDirectory.toString());
 
-      LOG.info("args: " + Arrays.toString(args));
       LOG.info("destination: " + destPath + " (" + destDirectory + "), case-sensitive: " + ourCaseSensitiveFs);
 
       UpdaterUI ui;
@@ -230,6 +231,7 @@ public class Runner {
     }
     else {
       printUsage();
+      System.exit(1);
     }
   }
 
@@ -403,7 +405,7 @@ public class Runner {
         ui.setProgressIndeterminate();
         try (ZipFile zipFile = new ZipFile(patch);
              InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
-             OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile))) {
+             OutputStream out = new BufferedOutputStream(Files.newOutputStream(patchFile.toPath()))) {
           Utils.copyStream(in, out);
         }
 
@@ -503,7 +505,7 @@ public class Runner {
           patchFiles.add(patchFile);
           try (ZipFile zipFile = new ZipFile(patches[i]);
                InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
-               OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile))) {
+               OutputStream out = new BufferedOutputStream(Files.newOutputStream(patchFile.toPath()))) {
             Utils.copyStream(in, out);
           }
           ui.checkCancelled();
@@ -656,7 +658,7 @@ public class Runner {
     String path = url.getPath();
 
     int start = path.indexOf("file:/");
-    int end = path.indexOf("!/");
+    int end = path.lastIndexOf("!/");
     if (start == -1 || end == -1) throw new IllegalArgumentException("Unknown protocol: " + url);
 
     String jarFileUrl = path.substring(start, end);

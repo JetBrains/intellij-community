@@ -16,10 +16,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
   private static final Logger LOG = Logger.getInstance(QuickFixManagerImpl.class);
 

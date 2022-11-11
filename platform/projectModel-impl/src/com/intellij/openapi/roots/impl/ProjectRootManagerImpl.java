@@ -49,7 +49,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   private final OrderRootsCache myRootsCache;
 
-  protected boolean myStartupActivityPerformed;
   private boolean myStateLoaded;
 
   @ApiStatus.Internal
@@ -415,6 +414,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
+  @Deprecated
   @Override
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
     if (myProject.isDisposed()) {
@@ -448,6 +448,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     finally {
       myRootsChanged.rootsChanged(changes);
     }
+  }
+
+  @Override
+  public @NotNull AutoCloseable withRootsChange(@NotNull RootsChangeRescanningInfo changes) {
+    myRootsChanged.beforeRootsChanged();
+    return () -> myRootsChanged.rootsChanged(changes);
   }
 
   protected boolean isFiringEvent;

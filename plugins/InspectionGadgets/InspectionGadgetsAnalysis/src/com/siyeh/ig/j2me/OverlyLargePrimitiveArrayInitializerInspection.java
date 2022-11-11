@@ -64,7 +64,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
 
     @Override
     public void visitArrayInitializerExpression(
-      PsiArrayInitializerExpression expression) {
+      @NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
       final PsiType type = expression.getType();
       if (type == null) {

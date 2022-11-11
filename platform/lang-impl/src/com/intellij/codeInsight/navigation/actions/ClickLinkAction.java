@@ -4,6 +4,7 @@ package com.intellij.codeInsight.navigation.actions;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -39,5 +40,10 @@ public class ClickLinkAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     HyperlinkInfo link = getLink(e.getData(CommonDataKeys.EDITOR), e.getProject());
     e.getPresentation().setEnabledAndVisible(link != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

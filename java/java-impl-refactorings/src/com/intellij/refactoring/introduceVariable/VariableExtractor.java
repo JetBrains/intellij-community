@@ -59,12 +59,12 @@ final class VariableExtractor {
   private final @NotNull FieldConflictsResolver myFieldConflictsResolver;
   private final @Nullable LogicalPosition myPosition;
 
-  private VariableExtractor(final @NotNull Project project,
-                            final @NotNull PsiExpression expression,
-                            final @Nullable Editor editor,
-                            final @NotNull PsiElement anchorStatement,
-                            final PsiExpression @NotNull [] occurrences,
-                            final @NotNull IntroduceVariableSettings settings) {
+  VariableExtractor(final @NotNull Project project,
+                    final @NotNull PsiExpression expression,
+                    final @Nullable Editor editor,
+                    final @NotNull PsiElement anchorStatement,
+                    final PsiExpression @NotNull [] occurrences,
+                    final @NotNull IntroduceVariableSettings settings) {
     myProject = project;
     myExpression = expression;
     myEditor = editor;
@@ -80,8 +80,10 @@ final class VariableExtractor {
   }
 
   @NotNull
-  private SmartPsiElementPointer<PsiVariable> extractVariable() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+  SmartPsiElementPointer<PsiVariable> extractVariable() {
+    if (myExpression.getUserData(IntroduceVariableOnPreviewHandler.INTENTION_PREVIEW_INTRODUCER) == null) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
+    }
     final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
     if (myAnchor == myExpression) {
       myAnchor = newExpr;
@@ -230,7 +232,7 @@ final class VariableExtractor {
         final int[] usedFirstVar = new int[]{-1};
         initializer.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             final int i = ArrayUtilRt.find(declaredElements, expression.resolve());
             if (i > -1) {
               usedFirstVar[0] = Math.max(i, usedFirstVar[0]);

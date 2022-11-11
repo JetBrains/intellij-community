@@ -1,4 +1,4 @@
-// "Collapse into loop" "true"
+// "Collapse into loop" "true-preview"
 class X {
     void test() {
         // 1

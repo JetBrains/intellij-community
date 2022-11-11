@@ -71,7 +71,7 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
   }
 
   private void setupLegacyManager() {
-    ProjectServiceContainerCustomizer.getEp().maskAll(Collections.singletonList(project -> {
+    ProjectServiceContainerCustomizer.Companion.getEp().maskAll(Collections.singletonList(project -> {
       try {
         LegacyCodeStyleSettingsManager legacyCodeStyleSettingsManager = new LegacyCodeStyleSettingsManager();
         Element element = JDOMUtil.load(new File(getTestDataPath() + getTestName(true) + ".xml"));

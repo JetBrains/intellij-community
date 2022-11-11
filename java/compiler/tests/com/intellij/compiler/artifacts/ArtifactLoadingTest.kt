@@ -28,7 +28,7 @@ import java.io.File
 class ArtifactLoadingTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Rule
   @JvmField

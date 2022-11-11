@@ -3,9 +3,9 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.util.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
-import com.intellij.util.lang.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -166,8 +166,7 @@ private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
   }
 
   val pluginId = descriptor.pluginId
-  if (PluginManagerCore.CORE_ID == pluginId || PluginManagerCore.JAVA_PLUGIN_ID == pluginId ||
-      PluginManagerCore.hasModuleDependencies(descriptor)) {
+  if (PluginManagerCore.CORE_ID == pluginId || PluginManagerCore.JAVA_PLUGIN_ID == pluginId || hasModuleDependencies(descriptor)) {
     return null
   }
 

@@ -27,6 +27,10 @@ public class InspectionMain implements ApplicationStarter {
       try {
         myApplication = InspectionApplicationFactory.getApplication("qodana", args.subList(2, args.size()));
       }
+      catch (InspectionApplicationException e) {
+        System.err.println(e.getMessage());
+        System.exit(1);
+      }
       catch (Exception e) {
         e.printStackTrace(); // workaround for IDEA-289086
         System.exit(1);
@@ -111,7 +115,7 @@ public class InspectionMain implements ApplicationStarter {
   }
 
   @Override
-  public void main(String @NotNull [] args) {
+  public void main(@NotNull List<String> args) {
     myApplication.startup();
   }
 

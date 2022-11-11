@@ -71,7 +71,7 @@ class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
 
         runInEdtAndWait {
             runWriteAction {
-                disableNewKotlinCompilerAvailableNotification(KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion)
+                disableNewKotlinCompilerAvailableNotification(KotlinPluginLayout.standaloneCompilerVersion.kotlinVersion)
             }
         }
 

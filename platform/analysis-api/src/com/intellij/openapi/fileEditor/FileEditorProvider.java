@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  * @see DumbAware
  */
 public interface FileEditorProvider {

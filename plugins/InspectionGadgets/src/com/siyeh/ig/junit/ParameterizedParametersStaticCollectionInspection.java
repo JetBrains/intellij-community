@@ -103,7 +103,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (!TestUtils.isParameterizedTest(aClass)) {
           return;
         }

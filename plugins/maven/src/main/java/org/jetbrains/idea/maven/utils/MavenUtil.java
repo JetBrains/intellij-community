@@ -19,6 +19,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -898,8 +899,8 @@ public class MavenUtil {
     }
   }
 
-  @Nullable
-  public static VirtualFile getRepositoryFile(@NotNull Project project,
+  @NotNull
+  public static File getRepositoryFile(@NotNull Project project,
                                               @NotNull MavenId id,
                                               @NotNull String extension,
                                               @Nullable String classifier) {
@@ -907,10 +908,10 @@ public class MavenUtil {
       return null;
     }
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository(), extension, classifier);
-    return LocalFileSystem.getInstance().findFileByIoFile(file);
+    return makeLocalRepositoryFile(id, projectsManager.getLocalRepository(), extension, classifier);
   }
 
+  @NotNull
   private static File makeLocalRepositoryFile(MavenId id,
                                               File localRepository,
                                               @NotNull String extension,
@@ -1607,6 +1608,9 @@ public class MavenUtil {
     return repositories;
   }
 
+  public static boolean isMavenizedModule(@NotNull Module m) {
+    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
+  }
   public static boolean isLinearImportEnabled() {
     return Registry.is("maven.linear.import");
   }

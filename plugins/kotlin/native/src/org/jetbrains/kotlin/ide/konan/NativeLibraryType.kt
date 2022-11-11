@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.ide.konan
 
@@ -8,12 +8,13 @@ import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.klib.isKlibLibraryRootForPlatform
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import javax.swing.Icon
 import javax.swing.JComponent
 
-object NativeLibraryType : LibraryType<DummyLibraryProperties>(NativeLibraryKind) {
+object NativeLibraryType : LibraryType<DummyLibraryProperties>(KotlinNativeLibraryKind) {
     override fun createPropertiesEditor(editorComponent: LibraryEditorComponent<DummyLibraryProperties>): Nothing? = null
     override fun getCreateActionName(): Nothing? = null
     override fun createNewLibrary(parentComponent: JComponent, contextDirectory: VirtualFile?, project: Project): Nothing? = null

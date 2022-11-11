@@ -605,7 +605,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       myMethodSignature = methodSignature;
     }
 
-    @Override public void visitClass(PsiClass aClass) {
+    @Override public void visitClass(@NotNull PsiClass aClass) {
       if (myCompiledMethod == null) {
         if (getClassReferences(aClass, SourcePosition.createFromElement(aClass)).anyMatch(referenceType -> referenceType.name().equals(myClassName))) {
           myCompiledClass = aClass;
@@ -615,7 +615,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
-    @Override public void visitMethod(PsiMethod method) {
+    @Override public void visitMethod(@NotNull PsiMethod method) {
       if (myCompiledMethod == null) {
         try {
           PsiClass containingClass = method.getContainingClass();

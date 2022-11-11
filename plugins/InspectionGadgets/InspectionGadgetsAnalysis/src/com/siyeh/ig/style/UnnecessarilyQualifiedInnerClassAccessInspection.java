@@ -96,13 +96,13 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       return false;
     }
     final JavaResolveResult result = results[0];
-    return result.isAccessible() && target.equals(result.getElement());
+    return result.isAccessible() && target.isEquivalentTo(result.getElement());
   }
 
   private class UnnecessarilyQualifiedInnerClassAccessVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement qualifier = reference.getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
@@ -157,7 +157,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
   }

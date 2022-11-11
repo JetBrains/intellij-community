@@ -39,6 +39,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +61,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public final class IdeEventQueue extends EventQueue {
   private static final ExtensionPointName<EventDispatcher> DISPATCHERS_EP =
@@ -73,10 +73,6 @@ public final class IdeEventQueue extends EventQueue {
 
   // IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue
   private static final class Logs {
-    static {
-      LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
-    }
-
     private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
     private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
   }
@@ -497,6 +493,7 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
     finally {
+      Thread.interrupted();
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
       }
@@ -685,7 +682,7 @@ public final class IdeEventQueue extends EventQueue {
         return null;
       }
       if (myWinMetaPressed) {
-        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | ke.getModifiersEx() | Event.META_MASK,
+        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), UIUtil.getAllModifiers(ke) | Event.META_MASK,
                             ke.getKeyCode(),
                             ke.getKeyChar(), ke.getKeyLocation());
       }
@@ -693,7 +690,7 @@ public final class IdeEventQueue extends EventQueue {
 
     if (myWinMetaPressed && e instanceof MouseEvent && ((MouseEvent)e).getButton() != 0) {
       MouseEvent me = (MouseEvent)e;
-      return new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers() | me.getModifiersEx() | Event.META_MASK,
+      return new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), UIUtil.getAllModifiers(me)  | Event.META_MASK,
                             me.getX(), me.getY(),
                             me.getClickCount(), me.isPopupTrigger(), me.getButton());
     }
@@ -865,7 +862,7 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
 
-    for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionList()) {
+    for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionsIfPointIsRegistered()) {
       if (eachDispatcher.dispatch(e)) {
         return true;
       }
@@ -952,7 +949,7 @@ public final class IdeEventQueue extends EventQueue {
 
   public void pumpEventsForHierarchy(@NotNull Component modalComponent,
                                      @NotNull Future<?> exitCondition,
-                                     @NotNull Predicate<? super AWTEvent> isCancelEvent) {
+                                     @NotNull Consumer<? super AWTEvent> eventConsumer) {
     assert EventQueue.isDispatchThread();
     if (Logs.LOG.isDebugEnabled()) {
       Logs.LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
@@ -964,9 +961,7 @@ public final class IdeEventQueue extends EventQueue {
         if (!consumed) {
           dispatchEvent(event);
         }
-        if (isCancelEvent.test(event)) {
-          break;
-        }
+        eventConsumer.accept(event);
       }
       catch (Throwable e) {
         Logs.LOG.error(e);
@@ -978,7 +973,8 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   // return true if consumed
-  private static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
+  @ApiStatus.Internal
+  public static boolean consumeUnrelatedEvent(@NotNull Component modalComponent, @NotNull AWTEvent event) {
     boolean consumed = false;
     if (event instanceof InputEvent) {
       Object s = event.getSource();

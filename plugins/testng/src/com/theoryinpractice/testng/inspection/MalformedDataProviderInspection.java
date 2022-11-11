@@ -29,7 +29,7 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
   public PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
+      public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         if (TestNGUtil.TEST_ANNOTATION_FQN.equals(annotation.getQualifiedName())) {
           final PsiAnnotationMemberValue provider = annotation.findDeclaredAttributeValue("dataProvider");
           if (provider != null && !TestNGUtil.isDisabled(annotation)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.core.CoreBundle;
@@ -32,9 +32,9 @@ import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +58,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public VirtualFile getVirtualFile() {
+  public @NotNull VirtualFile getVirtualFile() {
     return myFile;
   }
 
@@ -74,26 +73,22 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return Language.ANY;
   }
 
   @Override
-  @NotNull
-  public PsiManager getManager() {
+  public @NotNull PsiManager getManager() {
     return myManager;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myFile.getName();
   }
 
   @Override
-  @NotNull
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
 
     try {
@@ -290,8 +285,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException {
     checkCreateSubdirectory(name);
 
     try {
@@ -315,8 +309,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public PsiFile createFile(@NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiFile createFile(@NotNull String name) throws IncorrectOperationException {
     checkCreateFile(name);
 
     try {
@@ -331,8 +324,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException {
+  public @NotNull PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException {
     checkCreateFile(newName);
 
     final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(originalFile);
@@ -369,8 +361,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
-  @NotNull
-  private PsiFile findCopy(VirtualFile copyVFile, VirtualFile vFile) {
+  private @NotNull PsiFile findCopy(VirtualFile copyVFile, VirtualFile vFile) {
     final PsiFile copyPsi = myManager.findFile(copyVFile);
     if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);
     return copyPsi;
@@ -532,7 +523,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   protected Icon getElementIcon(int flags) {
-    return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
+    return IconManager.getInstance().tooltipOnlyIfComposite(IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder));
   }
 
   @Override

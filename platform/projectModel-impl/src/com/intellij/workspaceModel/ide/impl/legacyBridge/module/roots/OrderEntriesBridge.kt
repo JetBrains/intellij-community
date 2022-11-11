@@ -186,10 +186,6 @@ internal abstract class SdkOrderEntryBaseBridge(
   override fun getRootFiles(type: OrderRootType): Array<VirtualFile> = rootProvider?.getFiles(type) ?: VirtualFile.EMPTY_ARRAY
 
   override fun getRootUrls(type: OrderRootType): Array<String> = rootProvider?.getUrls(type) ?: ArrayUtil.EMPTY_STRING_ARRAY
-
-  override fun getFiles(type: OrderRootType) = getRootFiles(type)
-
-  override fun getUrls(rootType: OrderRootType) = getRootUrls(rootType)
 }
 
 internal class LibraryOrderEntryBridge(
@@ -205,7 +201,7 @@ internal class LibraryOrderEntryBridge(
 
   @Nls
   private fun getPresentableNameForUnnamedLibrary(): String {
-    val url = getUrls(OrderRootType.CLASSES).firstOrNull()
+    val url = getRootUrls(OrderRootType.CLASSES).firstOrNull()
     return if (url != null) PathUtil.toPresentableUrl(url) else ProjectModelBundle.message("empty.library.title")
   }
 
@@ -244,10 +240,6 @@ internal class LibraryOrderEntryBridge(
   override fun getRootFiles(type: OrderRootType): Array<VirtualFile> = rootProvider?.getFiles(type) ?: VirtualFile.EMPTY_ARRAY
 
   override fun getRootUrls(type: OrderRootType): Array<String> = rootProvider?.getUrls(type) ?: ArrayUtil.EMPTY_STRING_ARRAY
-
-  override fun getFiles(type: OrderRootType) = getRootFiles(type)
-
-  override fun getUrls(rootType: OrderRootType) = getRootUrls(rootType)
 
   override fun isValid(): Boolean = library != null
 

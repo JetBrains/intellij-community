@@ -1,4 +1,4 @@
-// "Replace '@Override' with '{@code @Override}'" "true"
+// "Replace '@Override' with '{@code @Override}'" "true-preview"
 
 class Foo {
 

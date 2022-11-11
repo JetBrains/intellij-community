@@ -1,22 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ExceptionUtilRt;
-import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InvocationEvent;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -31,76 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class EdtInvocationManager {
   private static final AtomicReference<EdtInvocationManager> ourInstance = new AtomicReference<>();
 
-  private static MethodHandle dispatchEventMethod;
-
-  /**
-   * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
-   * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
-   * @see UIUtil#pump()
-   */
-  @TestOnly
-  public static void dispatchAllInvocationEvents() {
-    assert getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: " + getEventQueueThread();
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-
-    MethodHandle dispatchEventMethod = EdtInvocationManager.dispatchEventMethod;
-    if (dispatchEventMethod == null) {
-      try {
-        Method method = EventQueue.class.getDeclaredMethod("dispatchEvent", AWTEvent.class);
-        method.setAccessible(true);
-        dispatchEventMethod = MethodHandles.lookup().unreflect(method);
-      }
-      catch (NoSuchMethodException | IllegalAccessException e) {
-        throw new RuntimeException();
-      }
-
-      EdtInvocationManager.dispatchEventMethod = dispatchEventMethod;
-    }
-    boolean threadsDumped = false;
-    for (int i = 1; ; i++) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      try {
-        event = eventQueue.getNextEvent();
-        if (event instanceof InvocationEvent) {
-          dispatchEventMethod.bindTo(eventQueue).invoke(event);
-        }
-      }
-      catch (Throwable e) {
-        ExceptionUtilRt.rethrowUnchecked(e);
-        throw new RuntimeException(e);
-      }
-
-      if (i % 10000 == 0) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("Suspiciously many (" + i + ") AWT events, last dispatched " + event);
-        if (!threadsDumped) {
-          threadsDumped = true;
-          // todo temporary hack to diagnose hanging builds
-          try {
-            Object application = ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication").invoke(null);
-            System.err.println("Application="+ application + "\n" + ThreadDumper.dumpThreadsToString());
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
-    }
-  }
-
-  private static @NotNull Thread getEventQueueThread() {
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    try {
-      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
-      //noinspection ConstantConditions
-      return (Thread)method.invoke(eventQueue);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   /**
    * Please use Application.invokeLater() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
    * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings. For those, use GuiUtils, application.invoke* or TransactionGuard methods.<p/>
@@ -108,16 +29,22 @@ public abstract class EdtInvocationManager {
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager edtInvocationManager = getInstance();
-    if (edtInvocationManager.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       runnable.run();
     }
     else {
-      edtInvocationManager.invokeLater(runnable);
+      getInstance().invokeLater(runnable);
     }
   }
 
-  public abstract boolean isEventDispatchThread();
+  /**
+   * @deprecated Use {@link EDT#isCurrentThreadEdt()}
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated
+  public final boolean isEventDispatchThread() {
+    return EventQueue.isDispatchThread();
+  }
 
   public abstract void invokeLater(@NotNull Runnable task);
 
@@ -139,11 +66,6 @@ public abstract class EdtInvocationManager {
     return ourInstance.getAndSet(edtInvocationManager);
   }
 
-  @ApiStatus.Internal
-  public static void restoreEdtInvocationManager(@NotNull EdtInvocationManager current, @Nullable EdtInvocationManager old) {
-    ourInstance.compareAndSet(current, old);
-  }
-
   /**
    * Please use Application.invokeAndWait() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
    * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
@@ -154,13 +76,12 @@ public abstract class EdtInvocationManager {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager manager = getInstance();
-    if (manager.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       runnable.run();
     }
     else {
       try {
-        manager.invokeAndWait(runnable);
+        getInstance().invokeAndWait(runnable);
       }
       catch (Exception e) {
         Logger.getInstance(EdtInvocationManager.class).error(e);
@@ -172,11 +93,6 @@ public abstract class EdtInvocationManager {
    * The default {@link EdtInvocationManager} implementation that uses {@link EventQueue}.
    */
   public static class SwingEdtInvocationManager extends EdtInvocationManager {
-    @Override
-    public boolean isEventDispatchThread() {
-      return EventQueue.isDispatchThread();
-    }
-
     @Override
     public void invokeLater(@NotNull Runnable task) {
       EventQueue.invokeLater(task);

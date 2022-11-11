@@ -3,30 +3,38 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.workspaceModel.storage.entities.test.api.*
+import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.EntityLink
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class ParentChildReferenceTest {
+  
+  companion object {
+    private val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentEntity::class.java, ChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    private val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentMultipleEntity::class.java, ChildMultipleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+  }
+  
   @Test
   fun `check parent and child both set at field while they are not in the store case one`() {
     val parentEntity = ParentEntity("ParentData", MySource) {
       child = ChildEntity("ChildData", MySource)
     }
     parentEntity as ParentEntityImpl.Builder
-    assertNotNull(parentEntity._child)
+    assertNotNull(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)])
 
-    val childEntity = parentEntity._child
+    val childEntity = parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]
     childEntity as ChildEntityImpl.Builder
-    assertNotNull(childEntity._parentEntity)
+    assertNotNull(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
 
-    assertSame(childEntity._parentEntity, parentEntity)
+    assertSame(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)], parentEntity)
     assertSame(childEntity.parentEntity, parentEntity)
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(parentEntity)
 
-    assertNull(parentEntity._child)
-    assertNull(childEntity._parentEntity)
+    assertNull(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)])
+    assertNull(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
 
     val childEntityFromStore = builder.entities(ChildEntity::class.java).single()
     assertTrue(parentEntity.child is ChildEntityImpl)
@@ -43,20 +51,20 @@ class ParentChildReferenceTest {
       parentEntity = ParentEntity("ParentData", MySource)
     }
     childEntity as ChildEntityImpl.Builder
-    assertNotNull(childEntity._parentEntity)
-    val parentEntity = childEntity._parentEntity
+    assertNotNull(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
+    val parentEntity = childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)]
 
     parentEntity as ParentEntityImpl.Builder
-    assertNotNull(parentEntity._child)
+    assertNotNull(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)])
 
-    assertSame(parentEntity._child, childEntity)
+    assertSame(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)], childEntity)
     assertSame(parentEntity.child, childEntity)
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(childEntity)
 
-    assertNull(parentEntity._child)
-    assertNull(childEntity._parentEntity)
+    assertNull(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)])
+    assertNull(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
 
     val childEntityFromStore = builder.entities(ChildEntity::class.java).single()
     assertTrue(parentEntity.child is ChildEntityImpl)
@@ -76,21 +84,21 @@ class ParentChildReferenceTest {
     }
 
     childEntity as ChildEntityImpl.Builder
-    assertNotNull(childEntity._parentEntity)
+    assertNotNull(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
 
     parentEntity as ParentEntityImpl.Builder
-    assertNotNull(parentEntity._child)
+    assertNotNull(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)])
 
-    assertSame(parentEntity._child, childEntity)
-    assertSame(childEntity._parentEntity, parentEntity)
+    assertSame(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)], childEntity)
+    assertSame(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)], parentEntity)
     assertSame(parentEntity.child, childEntity)
     assertSame(childEntity.parentEntity, parentEntity)
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(childEntity)
 
-    assertNull(parentEntity._child)
-    assertNull(childEntity._parentEntity)
+    assertNull(parentEntity.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)])
+    assertNull(childEntity.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
 
     val childEntityFromStore = builder.entities(ChildEntity::class.java).single()
     assertTrue(parentEntity.child is ChildEntityImpl)
@@ -110,23 +118,23 @@ class ParentChildReferenceTest {
       )
     }
     parentEntity as ParentMultipleEntityImpl.Builder
-    val children = parentEntity._children
+    val children = parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity>?
     assertNotNull(children)
     assertEquals(2, children.size)
 
     children.forEach { child ->
       child as ChildMultipleEntityImpl.Builder
-      assertEquals(child.parentEntity, child._parentEntity)
-      assertEquals(parentEntity, child._parentEntity)
+      assertEquals(child.parentEntity, child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
+      assertEquals(parentEntity, child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
     }
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(parentEntity)
 
-    assertEmpty(parentEntity._children)
+    assertEmpty((parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity>?)!!)
     children.forEach { child ->
       child as ChildMultipleEntityImpl.Builder
-      assertNull(child._parentEntity)
+      assertNull(child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
     }
 
     val childrenFromStore = builder.entities(ChildMultipleEntity::class.java).toList()
@@ -149,12 +157,12 @@ class ParentChildReferenceTest {
     }
 
     childEntity as ChildMultipleEntityImpl.Builder
-    assertNotNull(childEntity._parentEntity)
-    assertSame(childEntity.parentEntity, childEntity._parentEntity)
+    assertNotNull(childEntity.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
+    assertSame(childEntity.parentEntity, childEntity.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
 
-    val parentEntity = childEntity._parentEntity
+    val parentEntity = childEntity.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)]
     parentEntity as ParentMultipleEntityImpl.Builder
-    val children = parentEntity._children
+    val children = parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity>?
     assertNotNull(children)
     assertEquals(1, children.size)
     assertSame(childEntity, children[0])
@@ -162,8 +170,8 @@ class ParentChildReferenceTest {
     val builder = MutableEntityStorage.create()
     builder.addEntity(childEntity)
 
-    assertEmpty(parentEntity._children)
-    assertNull(childEntity._parentEntity)
+    assertEmpty((parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity>?)!!)
+    assertNull(childEntity.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
 
     val childEntityFromStore = builder.entities(ChildMultipleEntity::class.java).single()
     childEntityFromStore as ChildMultipleEntityImpl.Builder
@@ -185,7 +193,7 @@ class ParentChildReferenceTest {
       this.parentEntity = parentEntity
     }
 
-    var children = parentEntity._children
+    var children = parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity>?
     assertNotNull(children)
     assertEquals(1, children.size)
     assertSame(firstChild, children[0])
@@ -194,15 +202,15 @@ class ParentChildReferenceTest {
       this.parentEntity = parentEntity
     }
 
-    children = parentEntity._children
+    children = parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity>?
     assertNotNull(children)
-    assertSame(parentEntity.children, parentEntity._children)
+    assertSame(parentEntity.children, parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity>?)
     assertEquals(2, children.size)
 
     children.forEach { child ->
       child as ChildMultipleEntityImpl.Builder
-      assertEquals(child.parentEntity, child._parentEntity)
-      assertEquals(parentEntity, child._parentEntity)
+      assertEquals(child.parentEntity, child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
+      assertEquals(parentEntity, child.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)])
       assertTrue(firstChild === child || secondChild === child)
     }
   }
@@ -220,8 +228,8 @@ class ParentChildReferenceTest {
 
     builder.addEntity(parentEntity)
 
-    assertEmpty(parentEntity._children)
-    assertNull(firstChild._parentEntity)
+    assertEmpty((parentEntity.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ChildMultipleEntity>?)!!)
+    assertNull(firstChild.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)])
 
     val childEntityFromStore = builder.entities(ChildMultipleEntity::class.java).single()
     childEntityFromStore as ChildMultipleEntityImpl.Builder

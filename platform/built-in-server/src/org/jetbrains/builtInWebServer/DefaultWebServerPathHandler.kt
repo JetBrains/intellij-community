@@ -27,7 +27,7 @@ private val WEB_SERVER_FILE_HANDLER_EP_NAME = ExtensionPointName<WebServerFileHa
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
-                       project: Project,
+                       project: Project?,
                        request: FullHttpRequest,
                        context: ChannelHandlerContext,
                        projectName: String,
@@ -37,6 +37,11 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
 
     val isSignedRequest = request.isSignedRequest()
     val extraHeaders = validateToken(request, channel, isSignedRequest) ?: return true
+    // Check project validity after token validation to avoid info disclosure
+    if (project == null) {
+      HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
+      return true
+    }
 
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)

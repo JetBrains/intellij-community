@@ -20,8 +20,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
-
 
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
   private final CachedValue<Boolean> myHidden = new CachedValueImpl<>(
@@ -124,7 +124,17 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   }
 
   private boolean calcHidden() {
-    for(Language l: Language.getRegisteredLanguages()) {
+    List<Language> languages = new ArrayList<>(Language.getRegisteredLanguages());
+    languages.sort((o1, o2) -> {
+      // Java supports most of refactorings,
+      // so it is faster to just check it first without loading all language extensions
+      if ("JAVA".equals(o1.getID())) return -1;
+      if ("JAVA".equals(o2.getID())) return 1;
+
+      return o1.getID().compareTo(o2.getID());
+    });
+
+    for (Language l: languages) {
       if (isAvailableForLanguage(l)) {
         return false;
       }

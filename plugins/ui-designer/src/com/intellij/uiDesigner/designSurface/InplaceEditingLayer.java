@@ -24,10 +24,6 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class InplaceEditingLayer extends JComponent{
   private static final Logger LOG = Logger.getInstance(InplaceEditingLayer.class);
 

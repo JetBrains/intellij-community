@@ -31,7 +31,7 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!COMPARE_METHODS.test(call)) return;
         PsiBinaryExpression binOp = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiBinaryExpression.class);
         if (binOp == null) return;

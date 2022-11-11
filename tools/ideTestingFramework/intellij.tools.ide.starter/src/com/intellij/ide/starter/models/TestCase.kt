@@ -16,13 +16,10 @@ data class TestCase(
 
   fun withCommands(commands: Iterable<MarshallableCommand> = this.commands): TestCase = copy(commands = commands.toList())
 
-  /** Project in this case will be reused between tests */
-  fun markNotReusable(): TestCase = markReusable(false)
-
   /** On each test run the project will be unpacked again.
    * This guarantees that there is not side effects from previous test runs
    **/
-  fun markReusable(isReusable: Boolean = true) = copy(projectInfo = (projectInfo as ProjectInfo).copy(isReusable = isReusable))
+  fun markNotReusable(): TestCase = copy(projectInfo = (projectInfo as ProjectInfo).copy(isReusable = false))
 
   /**
    * [buildNumber] - EAP build number to download

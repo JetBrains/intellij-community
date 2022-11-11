@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
-import com.intellij.collaboration.ui.codereview.InlineIconButton
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -19,7 +19,7 @@ import com.intellij.util.ui.WrapLayout
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModel
-import org.jetbrains.plugins.github.util.CollectionDelta
+import com.intellij.collaboration.util.CollectionDelta
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture

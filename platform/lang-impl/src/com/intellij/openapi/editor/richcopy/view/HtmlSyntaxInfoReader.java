@@ -68,12 +68,12 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
   }
 
   protected void appendCloseTags() {
-    myResultBuffer.append("</pre></body></html>");
+    myResultBuffer.append("</pre></div></body></html>");
   }
 
   protected void appendStartTags() {
     myResultBuffer.append("<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"></head><body>")
-                  .append("<pre style=\"background-color:");
+                  .append("<div style=\"background-color:");
     appendColor(myResultBuffer, myDefaultBackground);
     myResultBuffer.append(";color:");
     appendColor(myResultBuffer, myDefaultForeground);
@@ -91,6 +91,7 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
     // this is the correction factor
     if (SystemInfo.isMac) fontSize *= 0.75f;
     myResultBuffer.append(String.format("font-size:%.1fpt;\">", fontSize));
+    myResultBuffer.append("<pre>");
   }
 
   protected void appendFontFamilyRule(@NotNull StringBuilder styleBuffer, int fontFamilyId) {

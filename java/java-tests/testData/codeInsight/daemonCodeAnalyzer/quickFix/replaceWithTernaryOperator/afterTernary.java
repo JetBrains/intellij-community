@@ -1,4 +1,4 @@
-// "Replace with '(b ? foo(1) : foo(2)) != null ?:'" "true"
+// "Replace with '(b ? foo(1) : foo(2)) != null ?:'" "true-preview"
 class A {
   void bar(String s) {}
 

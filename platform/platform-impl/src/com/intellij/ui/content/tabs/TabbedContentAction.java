@@ -61,6 +61,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super.update(e);
       e.getPresentation().setEnabled(myManager.getIndexOfContent(myContent) >= 0);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   @SuppressWarnings("ComponentNotRegistered")
@@ -137,6 +142,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(myManager.getContentCount() > 1 && myManager.canCloseAllContents());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   public static final class MyNextTabAction extends TabbedContentAction {
@@ -154,6 +164,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getNextContentActionName());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   public static class MyPreviousTabAction extends TabbedContentAction {
@@ -170,6 +185,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getPreviousContentActionName());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -200,6 +220,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
                                    action -> e.getPresentation().setIcon(action.getTemplatePresentation().getIcon()));
       e.getPresentation().setEnabledAndVisible(myManager.getContents().length > 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   @ApiStatus.Experimental
@@ -219,6 +244,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
       e.getPresentation().setEnabledAndVisible(decorator != null && decorator.canUnsplit());
       e.getPresentation().setText(ActionsBundle.actionText("Unsplit"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

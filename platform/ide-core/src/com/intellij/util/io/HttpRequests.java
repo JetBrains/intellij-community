@@ -543,11 +543,15 @@ public final class HttpRequests {
       if (!builder.myUseProxy) {
         connection = new URL(url).openConnection(Proxy.NO_PROXY);
       }
-      else if (ApplicationManager.getApplication() == null) {
-        connection = new URL(url).openConnection();
-      }
       else {
-        connection = IdeUiService.getInstance().openHttpConnection(url);
+        Application app = ApplicationManager.getApplication();
+        IdeUiService uiService = app != null ? app.getServiceIfCreated(IdeUiService.class) : null;
+        if (uiService != null) {
+          connection = uiService.openHttpConnection(url);
+        }
+        else {
+          connection = new URL(url).openConnection();
+        }
       }
 
       if (connection instanceof HttpsURLConnection) {

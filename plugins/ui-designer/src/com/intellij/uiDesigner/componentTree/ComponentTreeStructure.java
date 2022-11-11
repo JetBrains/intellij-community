@@ -17,10 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ComponentTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance(ComponentPtr.class);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.patterns.*;
@@ -77,8 +77,8 @@ public class GroovyPatterns extends PsiJavaPatterns {
     return new GroovyElementPattern.Capture<>(new InitialPatternCondition<>(GrLiteralImpl.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        if (!(o instanceof GrLiteralImpl)) return false;
-        return ((GrLiteralImpl)o).isStringLiteral();
+        if (!(o instanceof GrLiteral)) return false;
+        return ((GrLiteral)o).isString();
       }
     });
   }

@@ -143,7 +143,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements 
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitDocTag(PsiDocTag tag) {
+    public void visitDocTag(@NotNull PsiDocTag tag) {
       super.visitDocTag(tag);
       @NonNls final String name = tag.getName();
       if ("link".equals(name) || "linkplain".equals(name)) {

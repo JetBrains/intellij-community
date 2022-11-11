@@ -55,7 +55,7 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAnonymousClass(PsiAnonymousClass aClass) {
+      public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true, reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiMethod method = aClass.getMethods()[0];

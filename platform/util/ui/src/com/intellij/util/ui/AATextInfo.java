@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.util.ObjectUtils;
@@ -14,7 +14,7 @@ import java.awt.*;
  * <pre>
  * {@code SwingUtilities2.AA_TEXT_PROPERTY_KEY -> SwingUtilities2.AATextInfo}
  * </pre>
- * was split into the pair (see <a href="https://bugs.openjdk.java.net/browse/JDK-6302464">JDK-6302464</a>):
+ * was split into the pair (see <a href="https://bugs.openjdk.org/browse/JDK-6302464">JDK-6302464</a>):
  * <pre>
  * {@code RenderingHints.KEY_TEXT_ANTIALIASING -> Object}
  * {@code RenderingHints.KEY_TEXT_LCD_CONTRAST -> Integer}

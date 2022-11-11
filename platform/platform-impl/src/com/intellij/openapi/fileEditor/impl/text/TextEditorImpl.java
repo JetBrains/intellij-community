@@ -33,9 +33,6 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   private static final Logger LOG = Logger.getInstance(TextEditorImpl.class);
 

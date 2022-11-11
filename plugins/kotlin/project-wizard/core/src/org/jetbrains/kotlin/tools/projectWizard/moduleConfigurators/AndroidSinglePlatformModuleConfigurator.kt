@@ -45,12 +45,11 @@ object AndroidSinglePlatformModuleConfigurator :
 
 
     override fun createRootBuildFileIrs(configurationData: ModulesToIrConversionData): List<BuildSystemIR> = irsList {
-        listOf(
+        (listOf(
             DefaultRepository.GRADLE_PLUGIN_PORTAL,
             DefaultRepository.JCENTER,
             DefaultRepository.GOOGLE,
-            configurationData.kotlinVersion.repository
-        ).forEach { repository ->
+        ) + configurationData.kotlinVersion.repositories).forEach { repository ->
             +BuildScriptRepositoryIR(RepositoryIR(repository))
         }
 

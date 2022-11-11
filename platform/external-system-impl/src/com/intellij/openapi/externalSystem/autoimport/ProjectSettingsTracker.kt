@@ -6,6 +6,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.*
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalInvalidate
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalModify
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
@@ -68,13 +71,13 @@ class ProjectSettingsTracker(
    * @param isReloadJustFinished see [adjustCrc] for details
    */
   private fun updateSettingsFilesStatus(
+    operationName: String,
     newCRC: Map<String, Long>,
     isReloadJustFinished: Boolean = false,
-    debugName: String? = null
   ): SettingsFilesStatus {
     return settingsFilesStatus.updateAndGet {
       SettingsFilesStatus(it.oldCRC, newCRC)
-        .adjustCrc(isReloadJustFinished, debugName)
+        .adjustCrc(operationName, isReloadJustFinished)
     }
   }
 
@@ -84,7 +87,7 @@ class ProjectSettingsTracker(
    *
    * @see ExternalSystemProjectAware.isIgnoredSettingsFileEvent
    */
-  private fun SettingsFilesStatus.adjustCrc(isReloadJustFinished: Boolean, debugName: String?): SettingsFilesStatus {
+  private fun SettingsFilesStatus.adjustCrc(operationName: String, isReloadJustFinished: Boolean): SettingsFilesStatus {
     val modificationType = getModificationType()
     val isReloadInProgress = !applyChangesOperation.isOperationCompleted()
     val reloadStatus = when {
@@ -113,7 +116,7 @@ class ProjectSettingsTracker(
     }
     val status = SettingsFilesStatus(oldCRC, newCRC)
     LOG.debug(
-      (if (debugName != null) "[$debugName] " else "") +
+      "[$operationName] " +
       "ReloadStatus=$reloadStatus, " +
       "ModificationType=$modificationType, " +
       "Updated=${status.updated}, " +
@@ -135,24 +138,18 @@ class ProjectSettingsTracker(
   }
 
   fun refreshChanges() {
-    val operationStamp = currentTime()
-    submitSettingsFilesRefresh { settingsPaths ->
-      submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-        val settingsFilesStatus = updateSettingsFilesStatus(
-          newCRC = newSettingsFilesCRC,
-          debugName = "refreshChanges"
-        )
-        when (settingsFilesStatus.hasChanges()) {
-          true -> projectStatus.markDirty(operationStamp, EXTERNAL)
-          else -> projectStatus.markReverted(operationStamp)
-        }
-        projectTracker.scheduleChangeProcessing()
-      }
+    submitSettingsFilesStatusUpdate(
+      operationName = "refreshChanges",
+      isRefreshVfs = true,
+      syncEvent = ::Revert,
+      changeEvent = ::externalInvalidate
+    ) {
+      projectTracker.scheduleChangeProcessing()
     }
   }
 
-  private fun submitSettingsFilesCollection(invalidateCache: Boolean = false, callback: (Set<String>) -> Unit) {
-    if (invalidateCache) {
+  private fun submitSettingsFilesCollection(isInvalidateCache: Boolean = false, callback: (Set<String>) -> Unit) {
+    if (isInvalidateCache) {
       settingsAsyncSupplier.invalidate()
     }
     settingsAsyncSupplier.supply(callback, parentDisposable)
@@ -162,7 +159,7 @@ class ProjectSettingsTracker(
     EdtAsyncSupplier.invokeOnEdt(projectTracker::isAsyncChangesProcessing, {
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
-      submitSettingsFilesCollection(invalidateCache = true) { settingsPaths ->
+      submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
         val localFileSystem = LocalFileSystem.getInstance()
         val settingsFiles = settingsPaths.map { Path.of(it) }
         localFileSystem.refreshNioFiles(settingsFiles, projectTracker.isAsyncChangesProcessing, false) {
@@ -172,12 +169,55 @@ class ProjectSettingsTracker(
     }, parentDisposable)
   }
 
-  private fun submitSettingsFilesCRCCalculation(settingsPaths: Set<String>, vararg equality: Any, callback: (Map<String, Long>) -> Unit) {
-    ReadAsyncSupplier.Builder { calculateSettingsFilesCRC(settingsPaths) }
+  private fun submitSettingsFilesCRCCalculation(
+    operationName: String,
+    settingsPaths: Set<String>,
+    isMergeSameCalls: Boolean = false,
+    callback: (Map<String, Long>) -> Unit
+  ) {
+    val builder = ReadAsyncSupplier.Builder { calculateSettingsFilesCRC(settingsPaths) }
       .shouldKeepTasksAsynchronous { projectTracker.isAsyncChangesProcessing }
-      .coalesceBy(*equality)
-      .build(backgroundExecutor)
+    if (isMergeSameCalls) {
+      builder.coalesceBy(this, operationName)
+    }
+    builder.build(backgroundExecutor)
       .supply(callback, parentDisposable)
+  }
+
+  private fun submitSettingsFilesCollection(
+    isRefreshVfs: Boolean = false,
+    isInvalidateCache: Boolean = false,
+    callback: (Set<String>) -> Unit
+  ) {
+    if (isRefreshVfs) {
+      submitSettingsFilesRefresh(callback)
+    }
+    else {
+      submitSettingsFilesCollection(isInvalidateCache, callback)
+    }
+  }
+
+  private fun submitSettingsFilesStatusUpdate(
+    operationName: String,
+    isMergeSameCalls: Boolean = false,
+    isReloadJustFinished: Boolean = false,
+    isInvalidateCache: Boolean = false,
+    isRefreshVfs: Boolean = false,
+    syncEvent: (Long) -> ProjectStatus.ProjectEvent,
+    changeEvent: ((Long) -> ProjectStatus.ProjectEvent)?,
+    callback: () -> Unit
+  ) {
+    submitSettingsFilesCollection(isRefreshVfs, isInvalidateCache) { settingsPaths ->
+      val operationStamp = currentTime()
+      submitSettingsFilesCRCCalculation(operationName, settingsPaths, isMergeSameCalls) { newSettingsFilesCRC ->
+        val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, isReloadJustFinished)
+        val event = if (settingsFilesStatus.hasChanges()) changeEvent else syncEvent
+        if (event != null) {
+          projectStatus.update(event(operationStamp))
+        }
+        callback()
+      }
+    }
   }
 
   fun beforeApplyChanges(listener: () -> Unit) = applyChangesOperation.beforeOperation(listener)
@@ -236,37 +276,25 @@ class ProjectSettingsTracker(
     }
 
     override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
-      val operationStamp = currentTime()
-      submitSettingsFilesRefresh { settingsPaths ->
-        submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-          val settingsFilesStatus = updateSettingsFilesStatus(
-            newCRC = newSettingsFilesCRC,
-            isReloadJustFinished = true,
-            debugName = "onProjectReloadFinish"
-          )
-          when (settingsFilesStatus.hasChanges()) {
-            true -> projectStatus.markDirty(operationStamp, EXTERNAL)
-            else -> projectStatus.markSynchronized(operationStamp)
-          }
-          applyChangesOperation.finishTask()
-        }
+      submitSettingsFilesStatusUpdate(
+        operationName = "onProjectReloadFinish",
+        isRefreshVfs = true,
+        isReloadJustFinished = true,
+        syncEvent = ::Synchronize,
+        changeEvent = ::externalInvalidate
+      ) {
+        applyChangesOperation.finishTask()
       }
     }
 
     override fun onSettingsFilesListChange() {
-      val operationStamp = currentTime()
-      submitSettingsFilesCollection (invalidateCache = true) { settingsPaths ->
-        submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-          val settingsFilesStatus = updateSettingsFilesStatus(
-            newCRC = newSettingsFilesCRC,
-            debugName = "onSettingsFilesListChange"
-          )
-          when (settingsFilesStatus.hasChanges()) {
-            true -> projectStatus.markModified(operationStamp, EXTERNAL)
-            else -> projectStatus.markReverted(operationStamp)
-          }
-          projectTracker.scheduleChangeProcessing()
-        }
+      submitSettingsFilesStatusUpdate(
+        operationName = "onSettingsFilesListChange",
+        isInvalidateCache = true,
+        syncEvent = ::Revert,
+        changeEvent = ::externalModify,
+      ) {
+        projectTracker.scheduleChangeProcessing()
       }
     }
   }
@@ -279,18 +307,13 @@ class ProjectSettingsTracker(
     }
 
     override fun apply() {
-      val operationStamp = currentTime()
-      submitSettingsFilesCollection { settingsPaths ->
-        submitSettingsFilesCRCCalculation(settingsPaths, this, "apply") { newSettingsFilesCRC ->
-          val settingsFilesStatus = updateSettingsFilesStatus(
-            newCRC = newSettingsFilesCRC,
-            debugName = "ProjectSettingsListener.apply"
-          )
-          if (!settingsFilesStatus.hasChanges()) {
-            projectStatus.markReverted(operationStamp)
-          }
-          projectTracker.scheduleChangeProcessing()
-        }
+      submitSettingsFilesStatusUpdate(
+        operationName = "ProjectSettingsListener.apply",
+        isMergeSameCalls = true,
+        syncEvent = ::Revert,
+        changeEvent = null
+      ) {
+        projectTracker.scheduleChangeProcessing()
       }
     }
 

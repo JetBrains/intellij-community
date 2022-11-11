@@ -45,7 +45,7 @@ public class SerialAnnotationUsedOnWrongMemberInspection extends BaseInspection 
   private static class SerialAnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (!CommonClassNames.JAVA_IO_SERIAL.equals(annotation.getQualifiedName())) return;
 

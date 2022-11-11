@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -19,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import groovy.lang.Script;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +101,7 @@ public final class ReplacementBuilder {
             @Override
             public void visitElement(@NotNull PsiElement element) {
               final String text = element.getText();
-              if (StructuralSearchUtil.isTypedVariable(text)) {
+              if (MatchUtil.isTypedVariable(text)) {
                 final Collection<ParameterInfo> infos = findParameterization(Replacer.stripTypedVariableDecoration(text));
                 for (ParameterInfo info : infos) {
                   if (info.getElement() == null) {
@@ -162,9 +163,15 @@ public final class ReplacementBuilder {
     if (scriptSupport == null) {
       final String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
       final List<String> variableNames = ContainerUtil.map(options.getVariableDefinitions(), o -> o.getName());
-      scriptSupport =
-        new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames, options.getMatchOptions());
-      replacementVarsMap.put(info.getName(), scriptSupport);
+      final String name = info.getName();
+      final String scriptText = StringUtil.unquoteString(constraint);
+      try {
+        final Script script = ScriptSupport.buildScript(name, scriptText, options.getMatchOptions());
+        scriptSupport = new ScriptSupport(myProject, script, name, variableNames);
+        replacementVarsMap.put(info.getName(), scriptSupport);
+      } catch (MalformedPatternException e) {
+        return null;
+      }
     }
     return scriptSupport.evaluate(match, null);
   }
@@ -176,7 +183,7 @@ public final class ReplacementBuilder {
   public ParameterInfo findParameterization(PsiElement element) {
     if (element == null) return null;
     final String text = element.getText();
-    if (!StructuralSearchUtil.isTypedVariable(text)) return null;
+    if (!MatchUtil.isTypedVariable(text)) return null;
     return ContainerUtil.find(findParameterization(Replacer.stripTypedVariableDecoration(text)), info -> info.getElement() == element);
   }
 }

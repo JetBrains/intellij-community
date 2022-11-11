@@ -1,16 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
+
+import java.util.List;
 
 /**
  * @author ven
@@ -22,6 +26,23 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
   public CreateFieldFromUsageFix(GrReferenceExpression refExpression, @NotNull String referenceName) {
     super(refExpression);
     myReferenceName = referenceName;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    final List<PsiClass> classes = getTargetClasses();
+    if (classes.size() == 0) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiClass targetClass = classes.get(0);
+    final CreateFieldFix fix = new CreateFieldFix(targetClass);
+    PsiField representation =
+      fix.getFieldRepresentation(targetClass.getProject(), generateModifiers(targetClass), myReferenceName, getRefExpr(), true);
+    PsiElement parent = representation == null ? null : representation.getParent();
+    if (parent == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, "", parent.getText());
   }
 
   private String[] generateModifiers(@NotNull PsiClass targetClass) {

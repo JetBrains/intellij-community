@@ -10,10 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class SelectionWatcher {
   private final MyPropertyChangeListener myChangeListener;
   private RadRootContainer myRootContainer;

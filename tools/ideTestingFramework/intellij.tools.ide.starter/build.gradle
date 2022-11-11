@@ -45,11 +45,11 @@ dependencies {
   implementation "commons-logging:commons-logging:1.2"
   implementation "com.jetbrains.qodana:qodana-sarif:0.1.99"
 
-  implementation('com.jetbrains.intellij.platform:lang-impl:222-SNAPSHOT') {
+  implementation('com.jetbrains.intellij.platform:lang-impl:LATEST-TRUNK-SNAPSHOT') {
     exclude group: 'org.jetbrains.kotlinx'
   }
 
-  implementation('com.jetbrains.intellij.platform:ide-impl:222-SNAPSHOT') {
+  implementation('com.jetbrains.intellij.platform:ide-impl:LATEST-TRUNK-SNAPSHOT') {
     exclude group: 'org.jetbrains.kotlinx'
     exclude group: 'com.jetbrains.intellij.remoteDev'
   }

@@ -15,8 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,7 +39,7 @@ public class ProjectViewDirectoryHelper {
   protected static final Logger LOG = Logger.getInstance(ProjectViewDirectoryHelper.class);
 
   private final Project myProject;
-  private final DirectoryIndex myIndex;
+  private final ProjectFileIndex myFileIndex;
 
   public static ProjectViewDirectoryHelper getInstance(@NotNull Project project) {
     return project.getService(ProjectViewDirectoryHelper.class);
@@ -49,7 +47,7 @@ public class ProjectViewDirectoryHelper {
 
   public ProjectViewDirectoryHelper(Project project) {
     myProject = project;
-    myIndex = DirectoryIndex.getInstance(project);
+    myFileIndex = ProjectFileIndex.getInstance(project);
   }
 
   public Project getProject() {
@@ -245,7 +243,7 @@ public class ProjectViewDirectoryHelper {
 
     for (VirtualFile root : prm.getContentRoots()) {
       VirtualFile parent = root.getParent();
-      if (!isFileUnderContentRoot(myIndex, parent)) {
+      if (!isFileUnderContentRoot(parent)) {
         topLevelContentRoots.add(root);
       }
     }
@@ -255,7 +253,7 @@ public class ProjectViewDirectoryHelper {
         VirtualFile root = pointer.getFile();
         if (root != null) {
           VirtualFile parent = root.getParent();
-          if (!isFileUnderContentRoot(myIndex, parent)) {
+          if (!isFileUnderContentRoot(parent)) {
             topLevelContentRoots.add(root);
           }
         }
@@ -270,10 +268,9 @@ public class ProjectViewDirectoryHelper {
       if (!shouldBeShown(root, settings)) return false;
       VirtualFile parent = root.getParent();
       if (parent == null) return true;
-      DirectoryInfo info = myIndex.getInfoForFile(parent);
-      if (!module.equals(info.getModule())) return true;
+      if (!module.equals(myFileIndex.getModuleForFile(parent, false))) return true;
       //show inner content root separately only if it won't be shown under outer content root
-      return info.isExcluded(parent) && !shouldShowExcludedFiles(settings);
+      return myFileIndex.isExcluded(parent) && !shouldShowExcludedFiles(settings);
     });
   }
 
@@ -286,8 +283,8 @@ public class ProjectViewDirectoryHelper {
   }
 
 
-  private static boolean isFileUnderContentRoot(@NotNull DirectoryIndex index, @Nullable VirtualFile file) {
-    return file != null && file.isValid() && index.getInfoForFile(file).getContentRoot() != null;
+  private boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
+    return file != null && file.isValid() && myFileIndex.getContentRootForFile(file, false) != null;
   }
 
   private PsiElement @NotNull [] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {
@@ -328,10 +325,9 @@ public class ProjectViewDirectoryHelper {
 
   private boolean shouldBeShown(@NotNull VirtualFile dir, ViewSettings settings) {
     if (!dir.isValid()) return false;
-    DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
-    return directoryInfo.isInProject(dir)
-           ? shouldShowExcludedFiles(settings) || !ProjectUtil.isProjectOrWorkspaceFile(dir)
-           : shouldShowExcludedFiles(settings) && directoryInfo.isExcluded(dir);
+    return shouldShowExcludedFiles(settings)
+           ? myFileIndex.isInProjectOrExcluded(dir)
+           : myFileIndex.isInProject(dir) && !ProjectUtil.isProjectOrWorkspaceFile(dir);
   }
 
   private static boolean shouldShowExcludedFiles(ViewSettings settings) {

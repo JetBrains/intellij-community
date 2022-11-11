@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface LocatableEventRequestor extends Requestor {
   /**
-   * @returns true if request was hit by the event, false otherwise
+   * @return true if request was hit by the event, false otherwise
    */ 
   boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException;
 

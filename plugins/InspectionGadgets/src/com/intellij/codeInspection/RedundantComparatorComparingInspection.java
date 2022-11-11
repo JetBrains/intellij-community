@@ -64,7 +64,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (THEN_COMPARING_COMPARATOR.test(call)) {
           checkThenComparing(call);
         }

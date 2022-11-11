@@ -1,4 +1,4 @@
-// "Remove local variable 'n'" "true"
+// "Remove local variable 'n'" "true-preview"
 class C {
   void foo(Object o) {
     if (o instanceof Integer) {

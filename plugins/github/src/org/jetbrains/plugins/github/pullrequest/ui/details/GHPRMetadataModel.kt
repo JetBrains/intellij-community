@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
-import org.jetbrains.plugins.github.util.CollectionDelta
+import com.intellij.collaboration.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
 interface GHPRMetadataModel {

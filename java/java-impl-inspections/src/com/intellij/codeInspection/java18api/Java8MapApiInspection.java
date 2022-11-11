@@ -79,7 +79,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression expression) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
         MapCheckCondition condition = fromConditional(expression, myTreatGetNullAsContainsKey);
         if(condition == null || condition.hasVariable()) return;
         PsiExpression existsBranch = condition.getExistsBranch(expression.getThenExpression(), expression.getElseExpression());
@@ -88,7 +88,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
       }
 
       @Override
-      public void visitIfStatement(PsiIfStatement statement) {
+      public void visitIfStatement(@NotNull PsiIfStatement statement) {
         MapCheckCondition condition = fromConditional(statement, myTreatGetNullAsContainsKey);
         if(condition == null) return;
         PsiStatement existsBranch = ControlFlowUtils.stripBraces(condition.getExistsBranch(statement.getThenBranch(), statement.getElseBranch()));
@@ -107,7 +107,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
       }
 
       @Override
-      public void visitForeachStatement(PsiForeachStatement statement) {
+      public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         if (!mySuggestMapReplaceAll) return;
         MapLoopCondition condition = MapLoopCondition.create(statement);
         if (condition == null) return;

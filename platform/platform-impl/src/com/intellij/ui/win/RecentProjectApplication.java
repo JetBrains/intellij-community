@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 final class RecentProjectApplication extends ApplicationStarterBase {
   RecentProjectApplication() {
@@ -30,8 +29,8 @@ final class RecentProjectApplication extends ApplicationStarterBase {
 
   @NotNull
   @Override
-  protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
-    ProjectManagerEx.getInstanceEx().openProject(Paths.get(args.get(1)).normalize(), new OpenProjectTask());
+  protected CompletableFuture<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
+    ProjectManagerEx.getInstanceEx().openProject(Paths.get(args.get(1)).normalize(), OpenProjectTask.build());
     return CompletableFuture.completedFuture(CliResult.OK);
   }
 }

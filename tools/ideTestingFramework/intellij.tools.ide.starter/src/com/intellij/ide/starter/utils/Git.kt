@@ -1,7 +1,7 @@
 package com.intellij.ide.starter.utils
 
-import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.ProcessExecutor
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect
+import com.intellij.ide.starter.process.exec.ProcessExecutor
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths

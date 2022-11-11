@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
 
@@ -46,19 +46,26 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   public static void updateAvailability(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
+    Presentation presentation = e.getPresentation();
+    String place = e.getPlace();
+
     if (e.getData(ChangesListView.DATA_KEY) == null) {
-      e.getPresentation().setEnabled(false);
+      presentation.setEnabled(false);
       return;
     }
 
     JBIterable<Change> changes = JBIterable.of(e.getData(VcsDataKeys.CHANGES));
     JBIterable<FilePath> unversionedFiles = JBIterable.from(e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
 
-    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(project != null && (changes.isNotEmpty() || unversionedFiles.isNotEmpty()));
+    if (ActionPlaces.MAIN_MENU.equals(place)) {
+      presentation.setEnabled(project != null && (changes.isNotEmpty() || unversionedFiles.isNotEmpty()));
     }
     else {
-      e.getPresentation().setEnabled(project != null && canShowDiff(project, changes, unversionedFiles));
+      presentation.setEnabled(project != null && canShowDiff(project, changes, unversionedFiles));
+    }
+
+    if (ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(place)) {
+      presentation.setVisible(!ExperimentalUI.isNewUI());
     }
   }
 
@@ -166,7 +173,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     if (unversioned.size() == 1 && changes.isEmpty()) { // show all unversioned changes
       FilePath selectedFile = unversioned.get(0);
-      List<FilePath> allUnversioned = changesView.getUnversionedFiles().collect(Collectors.toList());
+      List<FilePath> allUnversioned = changesView.getUnversionedFiles().toList();
       int selectedIndex = allUnversioned.indexOf(selectedFile);
       return createUnversionedProducers(project, allUnversioned, selectedIndex);
     }

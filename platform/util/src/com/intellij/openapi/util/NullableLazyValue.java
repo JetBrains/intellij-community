@@ -6,6 +6,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
+/**
+ * Non-thread safe version of nullable lazy value.
+ * Please use it only in one case: if the value is never shared / calculated between different threads.
+ * Since the state has two non-volatile fields side effects because of using this class between threads are not avoidable
+ * (e.g. NPE in please there it isn't possible at all).
+ *
+ * @see #atomicLazyNullable(Supplier)
+ * @see AtomicNullableLazyValue
+ * @see NotNullLazyValue
+ */
 public abstract class NullableLazyValue<T> {
   private boolean myComputed;
   private @Nullable T myValue;

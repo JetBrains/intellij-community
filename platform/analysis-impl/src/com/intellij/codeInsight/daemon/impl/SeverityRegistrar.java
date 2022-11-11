@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -138,6 +139,10 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return null;
   }
 
+  public @Nullable TextAttributes getCustomSeverityTextAttributes(@NotNull TextAttributesKey key) {
+    final SeverityBasedTextAttributes attributes = myMap.get(key.getExternalName());
+    return attributes != null ? attributes.getAttributes() : null;
+  }
 
   public void readExternal(@NotNull Element element) {
     myMap.clear();

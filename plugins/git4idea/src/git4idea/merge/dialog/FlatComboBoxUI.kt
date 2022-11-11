@@ -33,7 +33,7 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
                               var outerInsets: Insets = JBInsets.create(DarculaUIUtil.BW.get(), DarculaUIUtil.BW.get()),
                               @NlsContexts.StatusText private val popupEmptyText: String = StatusText.getDefaultEmptyText(),
                               private val popupComponentProvider: ((JComponent) -> JComponent)? = null)
-  : DarculaComboBoxUI(0f, Insets(1, 0, 1, 0), false) {
+  : DarculaComboBoxUI(0f, Insets(0, 0, 0, 0), false) {
 
   override fun paintArrow(g2: Graphics2D, btn: JButton) {
     g2.color = JBUI.CurrentTheme.Arrow.foregroundColor(comboBox.isEnabled)

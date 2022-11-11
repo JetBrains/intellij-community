@@ -231,6 +231,11 @@ final class AssociationsEditor {
       e.getPresentation().setEnabled(getListSelection() instanceof PsiFile);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     private Object getListSelection() {
       return myList.getSelectedValue();
     }

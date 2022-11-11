@@ -51,7 +51,7 @@ class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationP
 }
 
 private fun createOutdatedVersionPanel(changeList: CommittedChangeList, change: Change, fileEditor: FileEditor): EditorNotificationPanel =
-  EditorNotificationPanel(fileEditor).apply {
+  EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info).apply {
     createActionLabel(message("outdated.version.show.diff.action"), "Compare.LastVersion")
     createActionLabel(message("outdated.version.update.project.action"), "Vcs.UpdateProject")
     text = getOutdatedVersionText(changeList, change)

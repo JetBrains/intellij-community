@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
@@ -10,18 +10,19 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMapper
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -117,6 +118,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
             runReadAction {
                 val importDirectives = targetFile.importDirectives
                 importDirectives.forEachIndexed { index, value ->
+                    ProgressManager.checkCanceled()
                     ProgressManager.getInstance().progressIndicator?.fraction = 1.0 * index / importDirectives.size
                     tryConvertKotlinImport(value)
                 }
@@ -139,6 +141,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
             }
 
             fun tryResolveReference(reference: PsiQualifiedReference): Boolean {
+                ProgressManager.checkCanceled()
                 if (runReadAction { reference.resolve() } != null) return true
                 val referenceName = runReadAction { reference.referenceName } ?: return false
                 if (referenceName in failedToResolveReferenceNames) return false
@@ -148,7 +151,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
                     shortNameCache.getClassesByName(referenceName, scope)
                         .mapNotNull { psiClass ->
                             val containingFile = psiClass.containingFile
-                            if (ProjectRootsUtil.isInProjectOrLibraryContent(containingFile)) {
+                            if (RootKindFilter.everything.matches(containingFile)) {
                                 psiClass to psiClass.getJavaMemberDescriptor() as? ClassDescriptor
                             } else null
                         }.filter { canBeImported(it.second) }
@@ -178,12 +181,12 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
                             shortNameCache.getFieldsByName(referenceName, scope).asList())
                         .asSequence()
                         .map { it as PsiMember }
-                        .filter { it.getNullableModuleInfo() != null }
+                        .filter { it.moduleInfoOrNull != null }
                         .map { it to it.getJavaMemberDescriptor(resolutionFacade) as? DeclarationDescriptorWithVisibility }
                         .filter { canBeImported(it.second) }
                         .toList()
                 }
-
+                ProgressManager.checkCanceled()
                 members.singleOrNull()?.let { (psiMember, _) ->
                     performWriteAction {
                         addImport(
@@ -226,6 +229,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
             }
         }
 
+        ProgressManager.checkCanceled()
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             task, KotlinBundle.message("copy.text.resolving.references"), true, project
         )

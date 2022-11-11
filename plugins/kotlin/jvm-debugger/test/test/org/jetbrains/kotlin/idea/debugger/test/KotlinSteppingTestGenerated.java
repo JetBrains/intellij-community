@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -428,6 +428,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
                 runTest("testData/stepping/stepOver/asIterableInFor.kt");
             }
 
+            @TestMetadata("breakpointOnMultilineLambda.kt")
+            public void testBreakpointOnMultilineLambda() throws Exception {
+                runTest("testData/stepping/stepOver/breakpointOnMultilineLambda.kt");
+            }
+
             @TestMetadata("ifCapturedVariableKt9118.kt")
             public void testIfCapturedVariableKt9118() throws Exception {
                 runTest("testData/stepping/stepOver/ifCapturedVariableKt9118.kt");
@@ -501,11 +506,6 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             @TestMetadata("inlineInObject.kt")
             public void testInlineInObject() throws Exception {
                 runTest("testData/stepping/stepOver/inlineInObject.kt");
-            }
-
-            @TestMetadata("kt14296.kt")
-            public void testKt14296() throws Exception {
-                runTest("testData/stepping/stepOver/kt14296.kt");
             }
 
             @TestMetadata("kt14869.kt")
@@ -1370,6 +1370,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoInterfaceImpl.kt");
         }
 
+        @TestMetadata("smartStepIntoLambdaWithparametersDestructuring.kt")
+        public void testSmartStepIntoLambdaWithparametersDestructuring() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLambdaWithparametersDestructuring.kt");
+        }
+
         @TestMetadata("smartStepIntoLambdasOnManyLines.kt")
         public void testSmartStepIntoLambdasOnManyLines() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoLambdasOnManyLines.kt");
@@ -1413,6 +1418,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("smartStepIntoSubClass.kt")
         public void testSmartStepIntoSubClass() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoSubClass.kt");
+        }
+
+        @TestMetadata("smartStepIntoSuspendLambda.kt")
+        public void testSmartStepIntoSuspendLambda() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSuspendLambda.kt");
         }
 
         @TestMetadata("smartStepIntoToLambdaParameter.kt")

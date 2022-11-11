@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -113,6 +113,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/JavaFQName.kt");
     }
 
+    @TestMetadata("LambdaReturnType.kt")
+    public void testLambdaReturnType() throws Exception {
+        runTest("testData/codeInsight/hints/types/LambdaReturnType.kt");
+    }
+
     @TestMetadata("LocalVariable.kt")
     public void testLocalVariable() throws Exception {
         runTest("testData/codeInsight/hints/types/LocalVariable.kt");
@@ -186,5 +191,10 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     @TestMetadata("UnitLocalVariable3.kt")
     public void testUnitLocalVariable3() throws Exception {
         runTest("testData/codeInsight/hints/types/UnitLocalVariable3.kt");
+    }
+
+    @TestMetadata("When.kt")
+    public void testWhen() throws Exception {
+        runTest("testData/codeInsight/hints/types/When.kt");
     }
 }

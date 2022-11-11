@@ -1,4 +1,4 @@
-// "Remove 'Exception' from 'doIt' throws list" "false"
+// "Remove 'Exception' from 'doIt()' throws list" "false"
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;

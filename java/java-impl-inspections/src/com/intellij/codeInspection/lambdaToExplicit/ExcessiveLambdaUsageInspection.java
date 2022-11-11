@@ -32,7 +32,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
         PsiElement parent = lambda.getParent();
         if (!(parent instanceof PsiExpressionList)) return;
         PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);

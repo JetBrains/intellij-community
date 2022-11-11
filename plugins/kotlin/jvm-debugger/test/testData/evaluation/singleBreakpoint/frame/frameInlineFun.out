@@ -8,8 +8,8 @@ InlineStackFrame inlineFun (frameInlineFun.kt:14)
     JavaValue[local] this (@A): frameInlineFun.A = frameInlineFun.A@hashCode
         JavaValue[field] prop: int = 1 (frameInlineFun.kt:17)
     JavaValue[local] element: double = 1.0 (frameInlineFun.kt:12)
-KotlinStackFrameWithProvidedVariables (frameInlineFun.kt:5)
-    JavaValue[local] args: java.lang.String[] = []
+KotlinStackFrame (frameInlineFun.kt:5)
+    JavaValue[local] args: java.lang.String[] = [...]
     JavaValue[local] element: int = 1 (frameInlineFun.kt:12)
 Disconnected from the target VM
 

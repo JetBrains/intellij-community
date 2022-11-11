@@ -48,7 +48,7 @@ public class RenameVariableFix extends AbstractFix {
     }
 
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XPathBundle.message("intention.family.name.rename.variable");
   }
 

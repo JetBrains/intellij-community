@@ -76,7 +76,6 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
         addReference(parameter, parameter.getPsiElement(), element, false, true, null);
       }
     }
-    getRefManager().fireBuildReferences(this);
   }
 
   @Override

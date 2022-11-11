@@ -50,7 +50,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
 
   protected ResizeToolWindowAction(@NotNull ToolWindow toolWindow, @NonNls String originalAction, JComponent component) {
     myToolWindow = toolWindow;
-    new ShadowAction(this, ActionManager.getInstance().getAction(originalAction), component, toolWindow.getDisposable());
+    new ShadowAction(this, originalAction, component, toolWindow.getDisposable());
   }
 
   @Override

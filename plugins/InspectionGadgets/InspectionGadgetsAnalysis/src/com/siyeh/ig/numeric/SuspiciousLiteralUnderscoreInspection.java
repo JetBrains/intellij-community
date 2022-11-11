@@ -28,7 +28,7 @@ public class SuspiciousLiteralUnderscoreInspection extends BaseInspection {
   private static class SuspiciousLiteralUnderscoreVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (!PsiType.SHORT.equals(type) && !PsiType.INT.equals(type) && !PsiType.LONG.equals(type) &&
@@ -79,7 +79,7 @@ public class SuspiciousLiteralUnderscoreInspection extends BaseInspection {
       }
       if (dot > 0 ? digit > 3 : digit != 3) {
         final int offset = length - digit;
-        final boolean completeFractional = (offset == dot + 1);
+        final boolean completeFractional = offset == dot + 1;
         if (!completeFractional) {
           registerErrorAtOffset(expression, offset, digit);
         }

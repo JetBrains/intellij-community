@@ -1,0 +1,14 @@
+<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="https://kotlinlang.org" allow-bundled-update="true">
+  <id>org.jetbrains.kotlin</id>
+  <name>Kotlin</name>
+  <category>Languages</category>
+  <description>Kotlin K2 plugin.xml which should be in a test dependency of K2 tests</description>
+  <version>@snapshot@</version>
+  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+
+  <xi:include href="k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
+</idea-plugin>

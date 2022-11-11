@@ -18,10 +18,7 @@ package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,6 +38,11 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
     presentation.setEnabledAndVisible(e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) != null);
     String description = IdeBundle.message("action.description.create.new.module.group");
     presentation.setDescription(description);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

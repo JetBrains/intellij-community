@@ -3,16 +3,19 @@ package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
-import org.junit.AssumptionViolatedException
+import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -36,38 +39,49 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
   options.buildStepsToSkip.addAll(listOf(
     BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,
     BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
-    BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP,
+    BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP,
     BuildOptions.WIN_SIGN_STEP,
     BuildOptions.MAC_SIGN_STEP,
   ))
-  options.buildDmgWithBundledJre = false
-  options.buildDmgWithoutBundledJre = false
+  options.buildMacArtifactsWithRuntime = false
+  options.buildMacArtifactsWithoutRuntime = false
   options.buildUnixSnaps = false
-  options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
+  options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
   options.useCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false
 }
 
-fun createBuildContext(
+suspend fun createBuildContext(
   homePath: Path, productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  communityHomePath: BuildDependenciesCommunityRoot,
   skipDependencySetup: Boolean = false,
-  communityHomePath: Path = homePath.resolve("community"),
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
   val options = BuildOptions()
   customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(communityHomePath, homePath, productProperties, buildTools, options)
+  return BuildContextImpl.createContext(communityHome = communityHomePath,
+                                        projectHome = homePath,
+                                        productProperties = productProperties,
+                                        proprietaryBuildTools = buildTools,
+                                        options = options)
+}
+
+// don't expose BuildDependenciesCommunityRoot
+fun runTestBuild(homePath: Path,
+                 productProperties: ProductProperties,
+                 buildTools: ProprietaryBuildTools) {
+  runTestBuild(homePath, productProperties, buildTools, traceSpanName = null)
 }
 
 fun runTestBuild(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-  communityHomePath: Path = homePath.resolve("community"),
+  communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
   traceSpanName: String? = null,
-  onFinish: (context: BuildContext) -> Unit = {},
+  onFinish: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
   val buildArtifactsReproducibilityTest = BuildArtifactsReproducibilityTest()
@@ -95,22 +109,24 @@ private fun testBuild(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
-  communityHomePath: Path,
+  communityHomePath: BuildDependenciesCommunityRoot,
   traceSpanName: String?,
-  onFinish: (context: BuildContext) -> Unit,
+  onFinish: suspend (context: BuildContext) -> Unit,
   buildOptionsCustomizer: (BuildOptions) -> Unit,
 ) {
-  val buildContext = createBuildContext(
-    homePath = homePath,
-    productProperties = productProperties,
-    buildTools = buildTools,
-    skipDependencySetup = false,
-    communityHomePath = communityHomePath,
-    buildOptionsCustomizer = buildOptionsCustomizer,
-  )
+  val context = runBlocking(Dispatchers.Default) {
+    createBuildContext(
+      homePath = homePath,
+      productProperties = productProperties,
+      buildTools = buildTools,
+      skipDependencySetup = false,
+      communityHomePath = communityHomePath,
+      buildOptionsCustomizer = buildOptionsCustomizer,
+    )
+  }
 
   runTestBuild(
-    buildContext = buildContext,
+    buildContext = context,
     traceSpanName = traceSpanName,
     onFinish = onFinish,
   )
@@ -120,7 +136,7 @@ private fun testBuild(
 fun runTestBuild(
   buildContext: BuildContext,
   traceSpanName: String? = null,
-  onFinish: (context: BuildContext) -> Unit = {},
+  onFinish: suspend (context: BuildContext) -> Unit = {},
 ) {
   initializeTracer
 
@@ -137,11 +153,13 @@ fun runTestBuild(
     span.setAttribute("outDir", outDir.toString())
     val messages = buildContext.messages as BuildMessagesImpl
     try {
-      BuildTasks.create(buildContext).runTestBuild()
-      onFinish(buildContext)
+      runBlocking(Dispatchers.Default) {
+        BuildTasks.create(buildContext).runTestBuild()
+        onFinish(buildContext)
+      }
     }
     catch (e: Throwable) {
-      if (e !is FileComparisonFailure) {
+      if (e !is FileComparisonData) {
         span.recordException(e)
       }
       span.setStatus(StatusCode.ERROR)
@@ -150,7 +168,7 @@ fun runTestBuild(
 
       if (ExceptionUtil.causedBy(e, HttpConnectTimeoutException::class.java)) {
         //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
-        throw AssumptionViolatedException("failed to load data for build scripts", e)
+        throw TestAbortedException("failed to load data for build scripts", e)
       }
       else {
         throw e
@@ -187,7 +205,7 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
   try {
     val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
     Files.createDirectories(targetFile.parent)
-    Files.copy(messages.debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(messages.debugLogFile!!, targetFile, StandardCopyOption.REPLACE_EXISTING)
     messages.info("Debug log copied to $targetFile")
   }
   catch (e: Throwable) {

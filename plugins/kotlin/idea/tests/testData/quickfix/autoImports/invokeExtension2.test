@@ -1,6 +1,7 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'A.invoke'" "true"
 // ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
+/* IGNORE_FIR */
 
 package b
 
@@ -14,8 +15,9 @@ fun main() {
 
 
 // FILE: second.kt
-// "Import" "true"
+// "Import extension function 'A.invoke'" "true"
 // ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
+/* IGNORE_FIR */
 
 package a
 
@@ -25,8 +27,9 @@ operator fun A.invoke() = 42
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'A.invoke'" "true"
 // ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
+/* IGNORE_FIR */
 
 package b
 
@@ -38,5 +41,3 @@ fun main() {
     <caret>a()
 }
 //-----------------------
-
-

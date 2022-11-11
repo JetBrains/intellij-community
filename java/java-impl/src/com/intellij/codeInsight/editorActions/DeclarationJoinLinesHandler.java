@@ -55,11 +55,9 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     if (decl.getDeclaredElements().length > 1) return -1;
 
     //second line.
-    if (!(elementAtNextLineStart instanceof PsiJavaToken)) return -1;
-    PsiJavaToken firstNextLineToken = (PsiJavaToken)elementAtNextLineStart;
-    if (firstNextLineToken.getTokenType() != JavaTokenType.IDENTIFIER) return -1;
-    if (!(firstNextLineToken.getParent() instanceof PsiReferenceExpression)) return -1;
-    PsiReferenceExpression ref = (PsiReferenceExpression)firstNextLineToken.getParent();
+    if (!PsiUtil.isJavaToken(elementAtNextLineStart, JavaTokenType.IDENTIFIER)) return -1;
+    if (!(elementAtNextLineStart.getParent() instanceof PsiReferenceExpression)) return -1;
+    PsiReferenceExpression ref = (PsiReferenceExpression)elementAtNextLineStart.getParent();
     PsiElement refResolved = ref.resolve();
 
     PsiManager psiManager = ref.getManager();

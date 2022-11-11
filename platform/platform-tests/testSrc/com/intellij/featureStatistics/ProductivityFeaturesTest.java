@@ -3,13 +3,10 @@ package com.intellij.featureStatistics;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.TipAndTrickBean;
-import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.jdom.Element;
-
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class ProductivityFeaturesTest extends LightPlatformTestCase {
   private ProductivityFeaturesRegistry myRegistry;
@@ -70,27 +67,6 @@ public class ProductivityFeaturesTest extends LightPlatformTestCase {
     myTracker.triggerFeatureShown(TestProductivityFeatureProvider.tipId);
     final FeatureDescriptor featureDescriptor = myRegistry.getFeatureDescriptor(TestProductivityFeatureProvider.tipId);
     assertEquals(1, featureDescriptor.getShownCount());
-  }
-
-  public void testTipShown(){
-    FeatureDescriptor featureDescriptor = myRegistry.getFeatureDescriptor(TestProductivityFeatureProvider.tipId);
-    TipAndTrickBean tip = TipAndTrickBean.findByFileName(featureDescriptor.getTipFileName());
-    assertThat(tip).isNotNull();
-
-    TipUIUtil.Browser browser = TipUIUtil.createBrowser();
-    TipUIUtil.openTipInBrowser(TipUIUtil.getTip(featureDescriptor), browser);
-    //if (Registry.is("ide.javafx.tips")) {
-    //  assertEquals("<html><body>Test Tip</body></html>", browser.getText());
-    //}
-    //else
-    assertEquals("<html>\n" +
-                 "  <head>\n" +
-                 "    \n" +
-                 "  </head>\n" +
-                 "  <body>\n" +
-                 "    Test Tip\n" +
-                 "  </body>\n" +
-                 "</html>", browser.getText().trim());
   }
 
   public void testStatistics(){

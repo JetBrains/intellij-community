@@ -37,9 +37,6 @@ import java.util.List;
 
 import static com.intellij.util.ui.FocusUtil.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class ThreeComponentsSplitter extends JPanel implements Disposable {
   private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
   private boolean isLookAndFeelUpdated = false;

@@ -1,4 +1,4 @@
-// "Create inner class 'MyRunnable'" "true"
+// "Create inner class 'MyRunnable'" "true-preview"
 public class Test {
   void bar(Class<? extends Runnable> c) {
   }

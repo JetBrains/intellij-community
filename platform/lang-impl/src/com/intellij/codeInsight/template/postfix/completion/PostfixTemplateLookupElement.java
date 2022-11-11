@@ -43,7 +43,7 @@ public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElemen
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
     presentation.setTypeText(myTemplate.getExample());
     presentation.setTypeGrayed(true);

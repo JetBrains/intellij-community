@@ -32,8 +32,6 @@ public class PsiClassCategory implements PsiEnhancerCategory {
   /**
    * Adds property `methods' into PsiClass
    *
-   * @param clazz
-   * @return
    */
   public static Collection<PsiMethod> getMethods(PsiClass clazz) {
     return Arrays.asList(clazz.getAllMethods());

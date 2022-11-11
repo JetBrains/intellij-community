@@ -318,7 +318,6 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   /**
-   * @param usages
    * @return Map from elements to UsageHolders
    */
   private static HashMap<PsiElement,UsageHolder> sortUsages(UsageInfo @NotNull [] usages) {

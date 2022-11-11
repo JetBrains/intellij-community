@@ -18,7 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Actual serialized data of a decorator call.
@@ -98,7 +101,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     final QualifiedName qualifiedName = stub.getQualifiedName();
     if (qualifiedName != null) {
       sink.occurrence(PyDecoratorStubIndex.KEY, qualifiedName.toString());
-      PyCustomDecoratorIndexer.EP_NAME.extensions().forEach(extension -> {
+      PyCustomDecoratorIndexer.EP_NAME.getExtensionList().forEach(extension -> {
         String keyForStub = extension.getKeyForStub(stub);
         if (keyForStub != null) {
           sink.occurrence(extension.getKey(), keyForStub);

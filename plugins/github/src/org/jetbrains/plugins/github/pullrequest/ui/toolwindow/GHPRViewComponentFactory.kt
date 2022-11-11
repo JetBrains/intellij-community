@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -26,9 +25,6 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
-import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.Processor
-import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -46,9 +42,9 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys.PULL_REQUEST_FILES
-import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -62,7 +58,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.getResultFlow
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import javax.swing.JComponent
 import javax.swing.JList
@@ -111,7 +106,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
 
-  private val diffRequestProducer: DiffRequestChainProducer =
+  private val diffRequestProducer: GHPRDiffRequestChainProducer =
     object : GHPRDiffRequestChainProducer(project,
                                           dataProvider, dataContext.avatarIconsProvider,
                                           dataContext.repositoryDataService,
@@ -191,7 +186,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
           break
         }
       }
-      GHUIUtil.focusPanel(list)
+      CollaborationToolsUIUtil.focusPanel(list)
     }
 
     private fun findCommitsList(parent: JComponent): JList<VcsCommitMetadata>? {
@@ -214,7 +209,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         tabs.select(it, false)
       }
       val tree = UIUtil.findComponentOfType(filesComponent, ChangesTree::class.java) ?: return
-      GHUIUtil.focusPanel(tree)
+      CollaborationToolsUIUtil.focusPanel(tree)
 
       if (oid == null || !changesLoadingModel.resultAvailable) {
         tree.selectFile(VcsUtil.getFilePath(filePath, false))
@@ -388,38 +383,17 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     emptyTextText: String,
     getCustomData: ChangesTree.(String) -> Any? = { null }
   ): JComponent {
-    val editorDiffPreview = object : DiffPreview {
-      override fun updateDiffAction(event: AnActionEvent) {
-        GHPRShowDiffActionProvider.updateAvailability(event)
-      }
+    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
 
-      override fun openPreview(requestFocus: Boolean): Boolean {
-        viewController.openPullRequestDiff(dataProvider.id, requestFocus)
-        return true
-      }
-
-      override fun closePreview() {
-      }
-    }
-
-    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText).also {
-      it.doubleClickHandler = Processor { e ->
-        if (EditSourceOnDoubleClickHandler.isToggleEvent(it, e)) return@Processor false
-        editorDiffPreview.performDiffAction()
-        true
-      }
-      it.enterKeyHandler = Processor {
-        editorDiffPreview.performDiffAction()
-        true
-      }
-    }
+    val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider,
+                                                          dataContext.filesManager)
 
     reloadChangesAction.registerCustomShortcutSet(tree, null)
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 
     DataManager.registerDataProvider(parentPanel) { dataId ->
       when {
-        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> editorDiffPreview
+        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreviewController.activePreview
         tree.isShowing -> tree.getCustomData(dataId) ?: tree.getData(dataId)
         else -> null
       }
@@ -460,9 +434,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 }
 
 private fun ChangesTree.getPullRequestFiles(): Iterable<FilePath> =
-  JBIterable.create {
-    VcsTreeModelData.selected(this)
-      .userObjectsStream(Change::class.java)
-      .map { ChangesUtil.getFilePath(it) }
-      .iterator()
-  }
+  VcsTreeModelData.selected(this)
+    .iterateUserObjects(Change::class.java)
+    .map { ChangesUtil.getFilePath(it) }

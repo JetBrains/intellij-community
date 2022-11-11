@@ -109,7 +109,7 @@ public class DoubleNegationInspection extends BaseInspection implements CleanupL
   private static class DoubleNegationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       if (!isUnaryNegation(expression)) {
         return;
@@ -129,7 +129,7 @@ public class DoubleNegationInspection extends BaseInspection implements CleanupL
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       if (!isBinaryNegation(expression)) {
         return;

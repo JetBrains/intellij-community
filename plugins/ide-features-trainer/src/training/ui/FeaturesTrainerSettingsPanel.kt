@@ -5,7 +5,9 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
@@ -13,34 +15,31 @@ import training.statistic.StatisticBase
 import training.util.SHOW_NEW_LESSONS_NOTIFICATION
 import training.util.getActionById
 import training.util.resetPrimaryLanguage
-import javax.swing.DefaultComboBoxModel
 
 private class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.message("learn.options.panel.name"), null) {
   override fun createPanel(): DialogPanel = panel {
     val languagesExtensions = LangManager.getInstance().supportedLanguagesExtensions.sortedBy { it.language }
     if (languagesExtensions.isNotEmpty()) {
-      row {
-        label(LearnBundle.message("learn.option.main.language"))
+      row(LearnBundle.message("learn.option.main.language")) {
         val options = languagesExtensions.mapNotNull { Language.findLanguageByID(it.language) }
-          .map { LanguageOption(it) }.toTypedArray()
-        comboBox<LanguageOption>(DefaultComboBoxModel(options), {
-          val languageName = LangManager.getInstance().state.languageName
-          options.find { it.id == languageName } ?: options[0]
-        }, { language -> resetPrimaryLanguage(languagesExtensions.first { it.language == language?.id }.instance) }
-        )
+          .map { LanguageOption(it) }
+        comboBox(options)
+          .bindItem({
+                      val languageId = LangManager.getInstance().getLanguageId()
+                      options.find { it.id == languageId } ?: options[0]
+                    }, { language -> language?.let { resetPrimaryLanguage(it.id) } })
       }
     }
     row {
-      buttonFromAction(LearnBundle.message("learn.option.reset.progress"), "settings",
-                       getActionById("ResetLearningProgressAction"))
+      button(LearnBundle.message("learn.option.reset.progress"), getActionById("ResetLearningProgressAction"), "settings")
     }
     row {
-      checkBox(LearnBundle.message("settings.checkbox.show.notifications.new.lessons"), {
-        PropertiesComponent.getInstance().getBoolean(SHOW_NEW_LESSONS_NOTIFICATION, true)
-      }, {
-        StatisticBase.logShowNewLessonsNotificationState(-1, CourseManager.instance.previousOpenedVersion, it)
-        PropertiesComponent.getInstance().setValue(SHOW_NEW_LESSONS_NOTIFICATION, it, true)
-      })
+      checkBox(LearnBundle.message("settings.checkbox.show.notifications.new.lessons"))
+        .bindSelected({ PropertiesComponent.getInstance().getBoolean(SHOW_NEW_LESSONS_NOTIFICATION, true) },
+                      {
+                        StatisticBase.logShowNewLessonsNotificationState(-1, CourseManager.instance.previousOpenedVersion, it)
+                        PropertiesComponent.getInstance().setValue(SHOW_NEW_LESSONS_NOTIFICATION, it, true)
+                      })
     }
   }
 

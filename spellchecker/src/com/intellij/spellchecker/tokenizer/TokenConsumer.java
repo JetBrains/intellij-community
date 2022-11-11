@@ -22,7 +22,6 @@ public abstract class TokenConsumer {
    * @param useRename    whether rename quick fix should be suggested instead of "change to"
    * @param offset       offset inside element that serves as an anchor point for {@code rangeToCheck}
    * @param rangeToCheck range text value corresponds to
-   * @param splitter
    */
   public abstract void consumeToken(PsiElement element,
                                     String text,

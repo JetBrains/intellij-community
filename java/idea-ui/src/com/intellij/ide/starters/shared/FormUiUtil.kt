@@ -4,13 +4,15 @@ package com.intellij.ide.starters.shared
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.*
+import com.intellij.ui.CheckboxTreeBase
+import com.intellij.ui.CheckedTreeNode
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.util.ui.JBInsets
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.GridBagConstraints
 import java.awt.event.ActionEvent
@@ -25,7 +27,8 @@ import javax.swing.event.DocumentEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
 
-internal fun gridConstraint(col: Int, row: Int): GridBagConstraints {
+@ApiStatus.Internal
+fun gridConstraint(col: Int, row: Int): GridBagConstraints {
   return GridBagConstraints().apply {
     fill = GridBagConstraints.BOTH
     gridx = col
@@ -171,7 +174,8 @@ private fun getWarningsMessage(warnings: MutableList<ValidationInfo>): String {
   return message.toString()
 }
 
-internal fun walkCheckedTree(root: CheckedTreeNode?, visitor: (CheckedTreeNode) -> Unit) {
+@ApiStatus.Internal
+fun walkCheckedTree(root: CheckedTreeNode?, visitor: (CheckedTreeNode) -> Unit) {
   if (root == null) return
 
   fun walkTreeNode(root: TreeNode, visitor: (CheckedTreeNode) -> Unit) {
@@ -187,7 +191,8 @@ internal fun walkCheckedTree(root: CheckedTreeNode?, visitor: (CheckedTreeNode) 
   walkTreeNode(root, visitor)
 }
 
-internal fun enableEnterKeyHandling(list: CheckboxTreeBase) {
+@ApiStatus.Internal
+fun enableEnterKeyHandling(list: CheckboxTreeBase) {
   list.inputMap.put(KeyStroke.getKeyStroke("ENTER"), "pick-node")
   list.actionMap.put("pick-node", object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent?) {

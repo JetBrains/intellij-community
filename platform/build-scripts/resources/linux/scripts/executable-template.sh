@@ -151,5 +151,5 @@ exec "$JAVA_BIN" \
   "-Djb.vmOptionsFile=${USER_VM_OPTIONS_FILE:-${VM_OPTIONS_FILE}}" \
   ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \
-  com.intellij.idea.Main \
+  __main_class_name__ \
   "$@"

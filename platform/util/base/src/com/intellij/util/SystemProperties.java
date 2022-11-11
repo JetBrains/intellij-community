@@ -77,13 +77,6 @@ public final class SystemProperties {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@link Boolean#getBoolean(String)} or {@link #getBooleanProperty(String, boolean)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static boolean is(String key) {
-    return getBooleanProperty(key, false);
-  }
-
   /** @deprecated please use {@link System#lineSeparator()} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval

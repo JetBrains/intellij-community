@@ -86,7 +86,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
   private class UnnecessaryFinalOnLocalVariableOrParameterVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
       super.visitDeclarationStatement(statement);
       if (!reportLocalVariables) {
         return;
@@ -118,7 +118,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!reportParameters) {
         return;
@@ -143,7 +143,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
     }
 
     @Override
-    public void visitTryStatement(PsiTryStatement statement) {
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
       final PsiResourceList resourceList = statement.getResourceList();
       if (resourceList != null && reportLocalVariables) {
@@ -176,7 +176,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
       if (onlyWarnOnAbstractMethods || !reportParameters) {
         return;

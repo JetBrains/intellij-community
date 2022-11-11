@@ -518,8 +518,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public String toString() {
-    return getName();
+  public @NotNull @NonNls String toString() {
+    return String.format("PluginNode{id=%s, name='%s'}", id, name);
   }
 
   private static class PluginNodeDependency implements IdeaPluginDependency {

@@ -174,7 +174,6 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
    * {@code always_true_condition} explanation.
    *
    * @param instruction instruction which
-   * @param bridgeStates
    */
   void addBridge(Instruction instruction, List<TrackingDfaMemoryState> bridgeStates) {
     Map<DfaVariableValue, Change> changeMap = null;

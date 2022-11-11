@@ -35,7 +35,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression ternary) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression ternary) {
         TernaryNullCheck ternaryNullCheck = TernaryNullCheck.from(ternary);
         if (ternaryNullCheck == null) return;
         PsiVariable variable = ternaryNullCheck.myVariable;

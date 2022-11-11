@@ -25,5 +25,6 @@ fun foo(x: X) {
     val (a4, b4) = A::class.java.newInstance()
 }
 
-// FIR_IGNORE
+// FIR_COMPARISON
 // FIR_COMPARISON_WITH_DISABLED_COMPONENTS
+// IGNORE_FIR_LOG

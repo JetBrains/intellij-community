@@ -62,7 +62,7 @@ class SingleAbstractTest {
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
-    assertEquals("ChildData1", entity.child.commonData)
+    assertEquals("ChildData1", entity.child?.commonData)
   }
 
   @Test

@@ -87,7 +87,7 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
   }
 
   @Override
-  public void visitClass(PsiClass aClass) {
+  public void visitClass(@NotNull PsiClass aClass) {
     if (!recurseIntoClasses || assigned) {
       return;
     }

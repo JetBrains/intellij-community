@@ -29,7 +29,7 @@ class CodeVisionPopupWrapper(
 
   var popup: AbstractPopup? = null
   var ltd: LifetimeDefinition? = null
-  var processing = false
+  var processing: Boolean = false
 
   init {
     escPressedSource().advise(mainLTD) {

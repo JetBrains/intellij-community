@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -6,6 +6,7 @@ import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
@@ -86,7 +87,7 @@ public class SuspendManagerImpl implements SuspendManager {
       @Override
       protected void resumeImpl() {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Start resuming eventSet " + set.toString() + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
+          LOG.debug("Start resuming eventSet " + set + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
         }
         myDebugProcess.logThreads();
         DebuggerUtilsAsync.resume(set);
@@ -113,7 +114,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
     myDebugProcess.logThreads();
     popContext(context);
-    context.resume();
+    context.resume(true);
     myDebugProcess.clearCashes(context.getSuspendPolicy());
   }
 
@@ -121,6 +122,7 @@ public class SuspendManagerImpl implements SuspendManager {
   public void popFrame(SuspendContextImpl suspendContext) {
     boolean paused = hasPausedContext(suspendContext);
     popContext(suspendContext);
+    suspendContext.resume(false); // just set resumed flag for correct commands cancellation
     SuspendContextImpl newSuspendContext = pushSuspendContext(suspendContext.getSuspendPolicy(), 0);
     newSuspendContext.setThread(suspendContext.getThread().getThreadReference());
     notifyPaused(newSuspendContext, paused);
@@ -170,7 +172,7 @@ public class SuspendManagerImpl implements SuspendManager {
       suspended = true;
     }
     else {
-      suspended = myEventContexts.stream().anyMatch(suspendContext -> suspendContext.suspends(thread));
+      suspended = ContainerUtil.exists(myEventContexts, suspendContext -> suspendContext.suspends(thread));
     }
 
     //bug in JDI : newly created thread may be resumed even when suspendPolicy == SUSPEND_ALL

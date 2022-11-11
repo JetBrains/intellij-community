@@ -13,15 +13,3 @@ abstract class SimplePersistentStateComponent<T : BaseState>(initialState: T) : 
     this.state = state
   }
 }
-
-@org.jetbrains.annotations.ApiStatus.Experimental
-abstract class SerializablePersistentStateComponent<T>(initialState: T) : PersistentStateComponentWithModificationTracker<T> {
-  @Volatile
-  private var state: T = initialState
-
-  final override fun getState() = state
-
-  override fun loadState(state: T) {
-    this.state = state
-  }
-}

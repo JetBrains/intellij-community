@@ -47,6 +47,10 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testBoxedType() {
+    doTest();
+  }
+
   public void testNotAvailable() {
     doTestNotAvailable();
   }
@@ -67,7 +71,9 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
     withJava7(this::doTestNotAvailable);
   }
 
-  public void testNotFailingOnBadEscapes() { withJava7(this::doTest); }
+  public void testNotFailingOnBadEscapes() { withJava7(this::doTestNotAvailable); }
+
+  public void testNotAvailableOnLiteral() { doTestNotAvailable(); }
 
   private void withJava7(Runnable runnable) {
     final LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());

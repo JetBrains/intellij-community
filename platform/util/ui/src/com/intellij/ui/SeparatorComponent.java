@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -63,25 +64,37 @@ public class SeparatorComponent extends JComponent {
     if (myColor == null) return;
 
     g.setColor(myColor);
-    if (myOrientation != SeparatorOrientation.VERTICAL) {
-      g.drawLine(myHGap, myVGap, getWidth() - myHGap - 1, myVGap);
+    if (myOrientation == SeparatorOrientation.HORIZONTAL) {
+      int length = getWidth() - myHGap * 2;
+      if (myShadow != null) length--;
+      paintHorizontalLine(g, myHGap, myVGap, length);
       if (myShadow != null) {
         g.setColor(myShadow);
-        g.drawLine(myHGap + 1, myVGap + 1, getWidth() - myHGap, myVGap + 1);
-      }
-    } else {
-      g.drawLine(myHGap, myVGap, myHGap, getHeight() - myVGap - 1);
-      if (myShadow != null) {
-        g.setColor(myShadow);
-        g.drawLine(myHGap + 1, myVGap + 1, myHGap + 1, getHeight() - myVGap);
+        paintHorizontalLine(g, myHGap + 1, myVGap + 1, length);
       }
     }
+    else {
+      int length = getHeight() - myVGap * 2;
+      if (myShadow != null) length--;
+      paintVerticalLine(g, myHGap, myVGap, length);
+      if (myShadow != null) {
+        g.setColor(myShadow);
+        paintVerticalLine(g, myHGap + 1, myVGap + 1, length);
+      }
+    }
+  }
 
+  private static void paintHorizontalLine(Graphics g, int x, int y, int length) {
+    LinePainter2D.paint((Graphics2D)g, x, y, x + length, y, LinePainter2D.StrokeType.CENTERED, 1.);
+  }
+
+  private static void paintVerticalLine(Graphics g, int x, int y, int length) {
+    LinePainter2D.paint((Graphics2D)g, x, y, x, y + length, LinePainter2D.StrokeType.CENTERED, 1.);
   }
 
   @Override
   public Dimension getPreferredSize() {
-    if (myOrientation != SeparatorOrientation.VERTICAL) {
+    if (myOrientation == SeparatorOrientation.HORIZONTAL) {
       return new Dimension(0, myVGap * 2 + 1);
     }
     else {

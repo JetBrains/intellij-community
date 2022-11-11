@@ -100,7 +100,7 @@ public class AddImportAction implements QuestionAction {
         }
 
         @Override
-        public PopupStep onChosen(PsiClass selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(PsiClass selectedValue, boolean finalChoice) {
           if (selectedValue == null) {
             return FINAL_CHOICE;
           }
@@ -131,8 +131,8 @@ public class AddImportAction implements QuestionAction {
           return aValue.getIcon(0);
         }
       };
-    JBPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, (superRenderer) -> {
-      GroupedItemsListRenderer baseRenderer = (GroupedItemsListRenderer)superRenderer;
+    JBPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, superRenderer -> {
+      GroupedItemsListRenderer<Object> baseRenderer = (GroupedItemsListRenderer<Object>)superRenderer;
       ListCellRenderer<Object> psiRenderer = new DefaultPsiElementCellRenderer();
       return (list, value, index, isSelected, cellHasFocus) -> {
         baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -158,7 +158,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   @Nullable
-  public static PopupStep getExcludesStep(@NotNull Project project, @Nullable String qname) {
+  public static PopupStep<?> getExcludesStep(@NotNull Project project, @Nullable String qname) {
     if (qname == null) return PopupStep.FINAL_CHOICE;
 
     List<String> toExclude = getAllExcludableStrings(qname);
@@ -171,7 +171,7 @@ public class AddImportAction implements QuestionAction {
       }
 
       @Override
-      public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
         if (finalChoice && selectedValue != null) {
           excludeFromImport(project, selectedValue);
         }
@@ -207,7 +207,7 @@ public class AddImportAction implements QuestionAction {
 
   private void addImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
-      if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
+      if (!ref.getElement().isValid() || !targetClass.isValid()) {
         return;
       }
 

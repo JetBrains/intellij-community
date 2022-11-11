@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -39,12 +38,10 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView, final boolean testMode) {
     super(consoleView, new PythonConsoleView(project, PyBundle.message("python.console"), sdk, testMode));
 
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
-      if (consoleView instanceof ConsoleViewImpl) {
-        var console = this.getPydevConsoleView();
-        var action = new ShowCommandQueueAction(console);
-        ((ConsoleViewImpl)consoleView).addCustomConsoleAction(action);
-      }
+    if (consoleView instanceof ConsoleViewImpl) {
+      var console = this.getPydevConsoleView();
+      var action = new ShowCommandQueueAction(console);
+      ((ConsoleViewImpl)consoleView).addCustomConsoleAction(action);
     }
 
     enableConsole(!PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault());

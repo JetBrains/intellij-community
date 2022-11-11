@@ -51,7 +51,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+      public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
         PsiExpressionList argumentList = aClass.getArgumentList();
         if (AnonymousCanBeLambdaInspection.isLambdaForm(aClass, Collections.emptySet()) &&

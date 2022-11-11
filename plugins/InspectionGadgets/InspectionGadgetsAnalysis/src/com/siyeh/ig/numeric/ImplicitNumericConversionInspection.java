@@ -255,61 +255,61 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
   private class ImplicitNumericConversionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+    public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression expression) {
       super.visitArrayAccessExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       super.visitParenthesizedExpression(expression);
       checkExpression(expression);
     }

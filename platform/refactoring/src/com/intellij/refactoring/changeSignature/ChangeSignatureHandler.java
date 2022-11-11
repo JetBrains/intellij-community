@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,12 +15,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Medvedev
  */
 public interface ChangeSignatureHandler extends RefactoringActionHandler {
-  /**
-   * @deprecated inline this field for proper localization
-   */
-  @Deprecated(forRemoval = true)
-  String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
-
   @Nullable
   default PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());

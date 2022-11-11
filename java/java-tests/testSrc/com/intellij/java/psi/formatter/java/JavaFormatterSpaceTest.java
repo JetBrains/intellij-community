@@ -892,4 +892,83 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "return o instanceof Rec(int i)r",
       "return o instanceof Rec(int i) r");
   }
+
+  public void testDeconstructionPatternSpacing() {
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R  ( int x , String y  , char [ ] chs, List < A > list) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R(int x, String y, char[] chs, List<A> list) -> {\n" +
+      "    }\n" +
+      "}");
+  }
+
+  public void testDeconstructionPatternSpacingBeforeComma() {
+    getSettings().SPACE_BEFORE_COMMA = true;
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R  (int x,String y,char [ ] chs,List < A > list) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R(int x , String y , char[] chs , List<A> list) -> {\n" +
+      "    }\n" +
+      "}");
+  }
+
+  public void testDeconstructionPatternSpacingWithin() {
+    getJavaSettings().SPACE_WITHIN_DECONSTRUCTION_LIST = true;
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R(int x,String y) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R( int x, String y ) -> {\n" +
+      "    }\n" +
+      "}");
+  }
+
+  public void testDeconstructionPatternSpacingBefore() {
+    getJavaSettings().SPACE_BEFORE_DECONSTRUCTION_LIST = true;
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R(int x,String y) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R (int x, String y) -> {\n" +
+      "    }\n" +
+      "}");
+  }
+
+  public void testDeconstructionPatternNewLineAfterLpar() {
+    getJavaSettings().NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN = true;
+    getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R(int x, String y) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R(\n" +
+      "            int x,\n" +
+      "            String y\n" +
+      "    ) -> {\n" +
+      "    }\n" +
+      "}");
+  }
+
+  public void testDeconstructionPatternNewLineBeforeRpar() {
+    getJavaSettings().RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN = true;
+    getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doMethodTest(
+      "switch (a) {\n" +
+      " case R(int x, String y) -> {}\n" +
+      "}",
+      "switch (a) {\n" +
+      "    case R(\n" +
+      "            int x,\n" +
+      "            String y\n" +
+      "    ) -> {\n" +
+      "    }\n" +
+      "}");
+  }
 }

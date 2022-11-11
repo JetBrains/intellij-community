@@ -3,9 +3,11 @@ package com.intellij.execution.codeInspection
 
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.debugger.DebuggerManagerEx
+import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -104,7 +106,7 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
   }
 
   private open class RunActionFix(
-    executorId: String, @FileModifier.SafeFieldForPreview private val configuration: RunnerAndConfigurationSettings
+    executorId: String, @FileModifier.SafeFieldForPreview protected val configuration: RunnerAndConfigurationSettings
   ) : LocalQuickFix, Iconable {
     @FileModifier.SafeFieldForPreview
     private val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: throw IllegalStateException(
@@ -119,6 +121,10 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     }
 
     override fun getIcon(flags: Int): Icon = executor.icon
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      return IntentionPreviewInfo.Html(ExecutionBundle.message("test.failed.line.run.preview", configuration.name))
+    }
   }
 
   private class DebugActionFix(
@@ -132,6 +138,10 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
         }
       }
       super.applyFix(project, descriptor)
+    }
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      return IntentionPreviewInfo.Html(ExecutionBundle.message("test.failed.line.debug.preview", configuration.name))
     }
   }
 }

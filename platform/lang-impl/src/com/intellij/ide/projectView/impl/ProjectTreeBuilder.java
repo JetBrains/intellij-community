@@ -34,8 +34,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
-/** @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead. */
-@Deprecated(forRemoval = true)
 public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   public ProjectTreeBuilder(@NotNull Project project,
                             @NotNull JTree tree,

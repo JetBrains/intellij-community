@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -25,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,6 +34,11 @@ import java.util.Set;
 public class QualifyThisArgumentFix extends QualifyThisOrSuperArgumentFix{
   public QualifyThisArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
     super(expression, psiClass);
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new QualifyThisArgumentFix(PsiTreeUtil.findSameElementInCopy(myExpression, target), myPsiClass);
   }
 
   @Override

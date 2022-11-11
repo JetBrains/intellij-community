@@ -1,4 +1,4 @@
-// "Create local variable 'foo'" "true"
+// "Create local variable 'foo'" "true-preview"
 class Foo {
     {
         f<caret>oo = (s, s1) -> {};

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JsonContextType extends FileTypeBasedContextType {
   protected JsonContextType() {
-    super("JSON", JsonBundle.message("json.template.context.type"), JsonFileType.INSTANCE);
+    super(JsonBundle.message("json.template.context.type"), JsonFileType.INSTANCE);
   }
 
   @Override

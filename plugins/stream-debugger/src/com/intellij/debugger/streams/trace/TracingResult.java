@@ -10,9 +10,6 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface TracingResult {
-  /**
-   * Returns null if and only if stream call has 'void' as return type (foreach termination call)
-   */
   @NotNull
   TraceElement getResult();
 

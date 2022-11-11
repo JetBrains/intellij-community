@@ -29,8 +29,8 @@ interface InlaySettingsProvider {
   }
 
   object EP {
-    val EXTENSION_POINT_NAME =
-      ExtensionPointName.create<InlaySettingsProvider>("com.intellij.config.inlaySettingsProvider")
+    val EXTENSION_POINT_NAME: ExtensionPointName<InlaySettingsProvider> =
+      ExtensionPointName.create("com.intellij.config.inlaySettingsProvider")
 
     fun getExtensions(): Array<out InlaySettingsProvider> {
       return EXTENSION_POINT_NAME.extensions

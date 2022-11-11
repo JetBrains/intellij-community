@@ -181,7 +181,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
         assert relevantRange.containsOffset(startOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(0) = "+startOffsetInHost+" while its relevantRange="+relevantRange;
         int endOffsetInHost = textEscaper.getOffsetInHost(charsDecodedSuccessfully, info.registeredRangeInsideHost);
         assert relevantRange.containsOffset(endOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(" + charsDecodedSuccessfully +
-                                                                 ") = "+startOffsetInHost+" while its relevantRange="+relevantRange;
+                                                                 ") = "+endOffsetInHost+" while its relevantRange="+relevantRange;
         ProperTextRange successfulHostRange = new ProperTextRange(startOffsetInHost, endOffsetInHost);
         relevantRange = relevantRange.intersection(successfulHostRange);
       }
@@ -832,7 +832,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
             prevHostEndOffset = shredEndOffset;
           }
           ProperTextRange rangeInHost = new ProperTextRange(start, end);
-          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum, iterator.getTextAttributes(),
+          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum,
                                                             iterator.getTextAttributesKeys()));
         }
         range = spilled;

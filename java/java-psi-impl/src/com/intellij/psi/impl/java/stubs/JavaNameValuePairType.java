@@ -42,7 +42,7 @@ public final class JavaNameValuePairType extends JavaStubElementType<PsiNameValu
 
   @NotNull
   @Override
-  public PsiNameValuePairStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PsiNameValuePairStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     String name = null;
     String value = null;
     List<LighterASTNode> children = tree.getChildren(node);

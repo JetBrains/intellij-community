@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.gradle.execution
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.createBuildFile
-import org.jetbrains.plugins.gradle.importing.createSettingsFile
-import org.jetbrains.plugins.gradle.importing.importProject
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
 
 class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {

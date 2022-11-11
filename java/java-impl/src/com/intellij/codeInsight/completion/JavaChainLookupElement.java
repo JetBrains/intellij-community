@@ -81,7 +81,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
     final LookupElementPresentation qualifierPresentation = new LookupElementPresentation();
     myQualifier.renderElement(qualifierPresentation);

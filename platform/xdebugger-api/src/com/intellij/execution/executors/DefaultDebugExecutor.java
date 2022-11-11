@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.executors;
 
 import com.intellij.execution.Executor;
@@ -35,6 +35,11 @@ public class DefaultDebugExecutor extends Executor {
   @NotNull
   public Icon getIcon() {
     return AllIcons.Actions.StartDebugger;
+  }
+
+  @Override
+  public @NotNull Icon getRerunIcon() {
+    return AllIcons.Actions.RestartDebugger;
   }
 
   @Override

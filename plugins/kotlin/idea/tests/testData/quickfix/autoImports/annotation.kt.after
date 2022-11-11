@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.TestOnly
 
-// "Import" "true"
+// "Import class 'TestOnly'" "true"
 
 @TestOnly
 fun foo() {}

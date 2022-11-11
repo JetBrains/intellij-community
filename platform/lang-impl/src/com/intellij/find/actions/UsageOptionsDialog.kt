@@ -40,7 +40,7 @@ internal class UsageOptionsDialog<O>(
   private var myFindUsages: Boolean = allOptions.options.isUsages
   private var myScope: SearchScope = allOptions.options.searchScope
   private var myTextSearch: Boolean? = allOptions.textSearch
-  private val myOptionEditor: OptionEditor<O>? = allOptions.customOptions?.let { OptionEditorProvider.forOptions(it) }
+  private val myOptionEditor: OptionEditor<O & Any>? = allOptions.customOptions?.let { OptionEditorProvider.forOptions(it) }
 
   @Suppress("UNCHECKED_CAST")
   private fun customResult(): O = myOptionEditor?.result() as O

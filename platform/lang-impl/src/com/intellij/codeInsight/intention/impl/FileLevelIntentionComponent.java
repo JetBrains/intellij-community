@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
@@ -17,6 +18,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
@@ -39,7 +41,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
                                      @Nullable List<? extends Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      @NotNull final PsiFile psiFile,
                                      @NotNull final Editor editor, @NlsContexts.Tooltip @Nullable String tooltip) {
-    super(getColor(psiFile.getProject(), severity));
+    super(getColor(psiFile.getProject(), severity), getStatus(psiFile.getProject(), severity));
     Project project = psiFile.getProject();
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
@@ -66,28 +68,35 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     if (intentions != null && !intentions.isEmpty()) {
-      myGearLabel.setIcon(AllIcons.General.GearPlain);
 
-      SmartPsiElementPointer<PsiFile> filePointer = SmartPointerManager.createPointer(psiFile);
-      new ClickListener() {
-        @Override
-        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-          PsiFile psiFile = filePointer.getElement();
-          if (psiFile == null) return true;
-          CachedIntentions cachedIntentions = new CachedIntentions(project, psiFile, editor);
-          IntentionListStep step = new IntentionListStep(null, editor, psiFile, project, cachedIntentions);
-          HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
-          IntentionActionWithTextCaching actionWithTextCaching = cachedIntentions.wrapAction(descriptor, psiFile, psiFile, editor);
-          if (step.hasSubstep(actionWithTextCaching)) {
-            step = step.getSubStep(actionWithTextCaching, null);
+      IntentionAction intentionAction = intentions.get(0).getFirst().getAction();
+      if (!(intentionAction instanceof UserDataHolder) ||
+          !Boolean.FALSE.equals(((UserDataHolder)intentionAction).getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
+        // do not show gear icon if this intention action is explicitly marked with `SHOW_INTENTION_OPTIONS_KEY = false`
+
+        myGearLabel.setIcon(AllIcons.General.GearPlain);
+
+        SmartPsiElementPointer<PsiFile> filePointer = SmartPointerManager.createPointer(psiFile);
+        new ClickListener() {
+          @Override
+          public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+            PsiFile psiFile = filePointer.getElement();
+            if (psiFile == null) return true;
+            CachedIntentions cachedIntentions = new CachedIntentions(project, psiFile, editor);
+            IntentionListStep step = new IntentionListStep(null, editor, psiFile, project, cachedIntentions);
+            HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
+            IntentionActionWithTextCaching actionWithTextCaching = cachedIntentions.wrapAction(descriptor, psiFile, psiFile, editor);
+            if (step.hasSubstep(actionWithTextCaching)) {
+              step = step.getSubStep(actionWithTextCaching, null);
+            }
+            ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+            Dimension dimension = popup.getContent().getPreferredSize();
+            Point at = new Point(-dimension.width + myGearLabel.getWidth(), FileLevelIntentionComponent.this.getHeight());
+            popup.show(new RelativePoint(e.getComponent(), at));
+            return true;
           }
-          ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-          Dimension dimension = popup.getContent().getPreferredSize();
-          Point at = new Point(-dimension.width + myGearLabel.getWidth(), FileLevelIntentionComponent.this.getHeight());
-          popup.show(new RelativePoint(e.getComponent(), at));
-          return true;
-        }
-      }.installOn(myGearLabel);
+        }.installOn(myGearLabel);
+      }
     }
   }
 
@@ -102,5 +111,17 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     return LightColors.GREEN;
+  }
+
+  private static @NotNull Status getStatus(@NotNull Project project, @NotNull HighlightSeverity severity) {
+    if (SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.ERROR) >= 0) {
+      return Status.Error;
+    }
+
+    if (SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.WARNING) >= 0) {
+      return Status.Warning;
+    }
+
+    return Status.Success;
   }
 }

@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.jlanguage
 
+import ai.grazie.nlp.langs.LanguageISO
 import com.intellij.grazie.GrazieDynamic
-import com.intellij.grazie.detector.model.LanguageISO
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.RemoteLangDescriptor
 import com.intellij.openapi.util.NlsSafe
@@ -72,7 +72,7 @@ enum class Lang(val displayName: String, val className: String, val remote: Remo
 
   fun isEnglish() = iso == LanguageISO.EN
 
-  fun equalsTo(language: com.intellij.grazie.detector.model.Language) = iso == language.iso
+  fun equalsTo(language: ai.grazie.nlp.langs.Language) = iso == language.iso
 
   override fun toString() = displayName
 }

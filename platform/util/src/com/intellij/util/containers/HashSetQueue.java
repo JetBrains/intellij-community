@@ -10,19 +10,20 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 
 /**
- * Unbounded non-thread-safe {@link Queue} with fast add/remove/contains.<br>
+ * Unbounded non-thread-safe {@link Queue} with fast {@link #add}/{@link #remove(Object)}/{@link #contains}.<br>
  * Differs from the conventional {@link Queue} by:<ul>
  * <li>The new method {@link #find(T)} which finds the queue element equivalent to its argument in hashmap-like O(1) avg. time</li>
- * <li>The {@link #contains(Object)} method is O(1)</li>
- * <li>The {@link #remove(Object)} method is O(1)</li>
- * <li>Null elements are NOT permitted</li>
+ * <li>The new {@link #contains(Object)} method which is hashmap-like O(1)</li>
+ * <li>The new {@link #remove(Object)} method which is hashmap-like O(1)</li>
+ * <li>Null elements NOT permitted</li>
  * </ul>
  * Differs from the conventional {@link java.util.LinkedHashSet} by additional queue flavor:<ul>
- * <li>The distinguished "first added" and "last added" elements (stored in {@link #TOMB} field in its {@link QueueEntry#prev} and {@link QueueEntry#next} fields correspondingly)</li>
+ * <li>The distinguished "first added" (available via {@link #peek()}/{@link #poll()}) and "last added" elements.
+ * (They are stored in {@link #TOMB} field in its {@link QueueEntry#prev} and {@link QueueEntry#next} fields correspondingly)</li>
  * <li>Ability to iterate these elements in the modification order by {@link PositionalIterator}</li>
  * <li>Ability to modify these elements in the queue fashion by {@link #offer(Object)}, {@link #poll()}
  * </ul>
- * Implementation is backed by {@link ObjectOpenHashSet} containing double-linked QueueEntry nodes holding elements themselves.
+ * The implementation is backed by {@link ObjectOpenHashSet} containing double-linked QueueEntry nodes holding elements themselves.
  */
 public final class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
   private final ObjectOpenHashSet<QueueEntry<T>> set = new ObjectOpenHashSet<>();

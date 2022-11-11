@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.projectPropertyBased
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.propertyBased.ActionOnFile
 import com.intellij.testFramework.propertyBased.RehighlightAllEditors
 import org.jetbrains.jetCheck.ImperativeCommand
-import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
+import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 
 class InvokeHighlightFile(file: PsiFile): ActionOnFile(file) {
     override fun performCommand(env: ImperativeCommand.Environment) {

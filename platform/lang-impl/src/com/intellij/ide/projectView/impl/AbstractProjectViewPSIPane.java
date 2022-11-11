@@ -246,7 +246,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     return ActionCallback.DONE;
   }
 
-  @Deprecated(forRemoval = true)
   @NotNull
   public ActionCallback beforeSelect() {
     // actually, getInitialized().doWhenDone() should be called by builder internally
@@ -256,7 +255,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     return builder.getInitialized();
   }
 
-  @Deprecated(forRemoval = true)
   protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel treeModel) {
     return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
       @Override

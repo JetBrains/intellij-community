@@ -73,7 +73,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    *
    * @see #getSuperClassTypes(TypeEvalContext) for the full list of super classes.
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
-   * @param context
    */
   PyClass @NotNull [] getSuperClasses(@Nullable  TypeEvalContext context);
 
@@ -162,7 +161,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * Finds a property with the specified name in the class or one of its ancestors.
    *
    * @param name      of the property
-   * @param inherited
    * @param context   type eval (null to use loose context, but you better provide one)
    * @return descriptor of property accessors, or null if such property does not exist.
    */
@@ -232,7 +230,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
   PyClass findNestedClass(String name, boolean inherited);
 
   /**
-   * @param context
    * @return true if the class is new-style and descends from 'object'.
    */
   boolean isNewStyleClass(TypeEvalContext context);
@@ -257,7 +254,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
   Property findPropertyByCallable(PyCallable callable);
 
   /**
-   * @param parent
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */
   boolean isSubclass(PyClass parent, @Nullable  TypeEvalContext context);

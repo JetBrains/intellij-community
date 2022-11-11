@@ -396,7 +396,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       if (!myReached) {
         appendName(variable);
@@ -404,7 +404,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -429,7 +429,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitCodeBlock(PsiCodeBlock block) {
+    public void visitCodeBlock(@NotNull PsiCodeBlock block) {
       if (shouldVisit(block)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -442,7 +442,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -455,7 +455,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -478,7 +478,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitCatchSection(PsiCatchSection section) {
+    public void visitCatchSection(@NotNull PsiCatchSection section) {
       if (shouldVisit(section)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -492,7 +492,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitResourceList(PsiResourceList resourceList) {
+    public void visitResourceList(@NotNull PsiResourceList resourceList) {
       if (shouldVisit(resourceList)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -505,7 +505,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // skip local and anonymous classes
     }
   }

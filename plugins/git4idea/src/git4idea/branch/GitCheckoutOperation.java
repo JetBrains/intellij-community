@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
@@ -27,6 +28,8 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -91,13 +94,16 @@ class GitCheckoutOperation extends GitBranchOperation {
       IS_NEW_BRANCH.with(myNewBranch != null)
     ));
     Ref<Boolean> finishedSuccessfullyRef = Ref.create(false);
-    try {
+    Span span = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("checkout").startSpan()
+      .setAttribute("branch", myNewBranch != null ? myNewBranch : "null");
+    try (Scope ignored = span.makeCurrent()) {
       finishedSuccessfullyRef.set(doExecute(checkoutActivity));
     }
     finally {
-      checkoutActivity.finished(() -> List.of(
-        FINISHED_SUCCESSFULLY.with(finishedSuccessfullyRef.get())
-      ));
+      checkoutActivity.finished(() -> {
+        span.end();
+        return List.of(FINISHED_SUCCESSFULLY.with(finishedSuccessfullyRef.get()));
+      });
     }
   }
 

@@ -89,8 +89,6 @@ class UISettingsState : BaseState() {
   var navigationBarLocation by enum(NavBarLocation.BOTTOM)
   @get:OptionTag("SHOW_NAVIGATION_BAR_MEMBERS")
   var showMembersInNavigationBar by property(true)
-  @get:OptionTag("SELECTED_TABS_LAYOUT_INFO_ID")
-  var selectedTabsLayoutInfoId by string(null)
   @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR")
   var scrollTabLayoutInEditor by property(true)
   @get:OptionTag("HIDE_TABS_IF_NEED")

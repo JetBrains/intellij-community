@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search.filters
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile
 
-class KotlinSSTypeFilterTest : KotlinSSResourceInspectionTest() {
+class KotlinSSTypeFilterTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "typeFilter"
 
     fun testShortNameTypeFilter() { doTest("val '_x:[exprtype(Int)]", """

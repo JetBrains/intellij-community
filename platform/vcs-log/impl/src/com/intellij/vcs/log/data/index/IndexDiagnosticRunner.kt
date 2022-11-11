@@ -5,12 +5,12 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Consumer
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.HashingStrategy
+import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.CommitDetailsGetter
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogStorage
@@ -33,6 +33,7 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
     Disposer.register(parent, this)
   }
 
+  @RequiresBackgroundThread
   private fun runDiagnostic(rootsToCheck: Collection<VirtualFile>) {
     val dataGetter = index.dataGetter ?: return
 
@@ -46,17 +47,19 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
     checkedRoots.addAll(uncheckedRoots)
 
     val commits = dataPack.getFirstCommits(storage, uncheckedRoots)
-    commitDetailsGetter.loadCommitsData(commits, Consumer { commitDetails ->
-      BackgroundTaskUtil.executeOnPooledThread(this) {
-        val diffReport = dataGetter.getDiffFor(commits, commitDetails)
-        if (diffReport.isNotBlank()) {
-          val exception = RuntimeException("Index is corrupted")
-          thisLogger().error(exception.message, exception, Attachment("VcsLogIndexDiagnosticReport.txt", diffReport))
-          index.markCorrupted()
-          errorHandler.handleError(VcsLogErrorHandler.Source.Index, exception)
-        }
+    try {
+      val commitDetails = commitDetailsGetter.getCommitDetails(commits)
+      val diffReport = dataGetter.getDiffFor(commits, commitDetails)
+      if (diffReport.isNotBlank()) {
+        val exception = RuntimeException("Index is corrupted")
+        thisLogger().error(exception.message, exception, Attachment("VcsLogIndexDiagnosticReport.txt", diffReport))
+        index.markCorrupted()
+        errorHandler.handleError(VcsLogErrorHandler.Source.Index, exception)
       }
-    }, thisLogger()::error, EmptyProgressIndicator())
+    }
+    catch (e: VcsException) {
+      thisLogger().error(e)
+    }
   }
 
   fun onDataPackChange() {

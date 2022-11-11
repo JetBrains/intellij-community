@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -32,6 +32,7 @@ class RawPluginDescriptor {
   @JvmField internal var isUseIdeaClassLoader = false
   @JvmField internal var isBundledUpdateAllowed = false
   @JvmField internal var implementationDetail = false
+  @ApiStatus.Experimental @JvmField internal var onDemand = false
   @JvmField internal var isRestartRequired = false
   @JvmField internal var isLicenseOptional = false
 

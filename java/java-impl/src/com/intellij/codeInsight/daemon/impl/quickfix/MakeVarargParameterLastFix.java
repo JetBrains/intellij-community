@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -23,18 +25,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class MakeVarargParameterLastFix implements IntentionAction {
+public class MakeVarargParameterLastFix implements IntentionActionWithFixAllOption {
+  private final @NotNull PsiParameter myParameter;
+
   public MakeVarargParameterLastFix(@NotNull PsiParameter parameter) {
     myParameter = parameter;
   }
 
-  private final PsiParameter myParameter;
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new MakeVarargParameterLastFix(PsiTreeUtil.findSameElementInCopy(myParameter, target));
+  }
 
   @Override
   @NotNull
@@ -56,7 +65,7 @@ public class MakeVarargParameterLastFix implements IntentionAction {
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myParameter;
+    return myParameter.getContainingFile();
   }
 
   @Override

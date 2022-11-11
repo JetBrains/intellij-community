@@ -7,7 +7,7 @@ import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.usages.UsageInfoToUsageConverter
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
 import org.jetbrains.kotlin.idea.findUsages.similarity.KotlinUsageSimilarityFeaturesProvider
-import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -49,6 +49,10 @@ class KotlinGroupUsagesBySimilarityTest : AbstractFindUsagesTest() {
     }
 
     fun testFilter() {
+        doTest()
+    }
+
+    fun testImport() {
         doTest()
     }
 

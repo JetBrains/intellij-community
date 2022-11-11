@@ -115,12 +115,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   public void testModificationWithoutModification() {
     InspectionProfileImpl profile = createProfile();
-    profile.getAllTools();
+    assertNotEmpty(profile.getAllTools());
     assertTrue(profile.wasInitialized());
-    assertNotEmpty(profile.myTools.keySet());
     profile.modifyProfile(m -> {});
     assertTrue(profile.wasInitialized());
-    assertNotEmpty(profile.myTools.keySet());
+    assertNotEmpty(profile.getAllTools());
   }
 
   public void testSameNameSharedProfile() {
@@ -769,7 +768,19 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                         "  <inspection_tool class=\"JUnitMalformedMember\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"JUnitMalformedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "</profile>");
+  }
+
+  public void testTestInProductSourceInspections() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"TestCaseInProductCode\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"TestMethodInProductCode\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "</profile>");
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"TestInProductSource\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
                          "</profile>");
   }
 

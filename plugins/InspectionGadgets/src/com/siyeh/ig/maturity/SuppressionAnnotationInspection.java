@@ -15,11 +15,13 @@
  */
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
@@ -127,6 +129,11 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     }
 
     @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return new IntentionPreviewInfo.Html(HtmlChunk.text(InspectionGadgetsBundle.message("allow.suppressions.preview.text")));
+    }
+
+    @Override
     public boolean startInWriteAction() {
       return false;
     }
@@ -176,7 +183,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       final PsiJavaCodeReferenceElement reference = annotation.getNameReferenceElement();
       if (reference == null) {

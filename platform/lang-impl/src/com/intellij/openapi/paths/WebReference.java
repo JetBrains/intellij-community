@@ -47,6 +47,10 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
     myUrl = url;
   }
 
+  public boolean isHttpRequestTarget() {
+    return true;
+  }
+
   @Override
   public PsiElement resolve() {
     return new MyFakePsiElement();

@@ -64,17 +64,21 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
     doReadAndImport();
-
     assertModules("project2");
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(p2.getPath()));
     doReadAndImport();
-
     assertModules("project1");
+
+    setIgnoredFilesPathForNextImport(Collections.emptyList());
+    doReadAndImport();
+    assertModules("project1", "project2");
   }
 
   @Test
   public void testDoNotAskTwiceToRemoveIgnoredModule() {
+    if (!supportsKeepingModulesFromPreviousImport()) return;
+
     AtomicInteger counter = configConfirmationForNoAnswer();
 
     VirtualFile p1 = createModulePom("project1",

@@ -57,7 +57,7 @@ public class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
 
   private static class OneLineLambda2CodeBlockVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression lambdaExpression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression lambdaExpression) {
       super.visitLambdaExpression(lambdaExpression);
       if (lambdaExpression.getBody() instanceof PsiExpression) {
         registerError(lambdaExpression);

@@ -3,36 +3,40 @@ package org.jetbrains.uast.test.java
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.toUElement
 import org.junit.Test
+import java.util.*
 
-class JavaUastPerformanceTest : LightJavaCodeInsightFixtureTestCase() {
-
-  class EachPsiToUastWalker : PsiElementVisitor() {
-    var totalCount = 0
-    var identityChecksum = 0
-    override fun visitElement(element: PsiElement) {
-      val uElement = element.toUElement()
-      if (uElement != null) {
-        totalCount++
-        identityChecksum = 31 * identityChecksum + System.identityHashCode(uElement)
-      }
-
-      when (uElement) {
-        is UQualifiedReferenceExpression -> uElement.receiver // force lazy evaluation
-      }
-
-      element.acceptChildren(this)
-    }
+class JavaUastPerformanceTest : AbstractJavaUastTest() {
+  override fun check(testName: String, file: UFile) {
   }
 
   @Test
   fun testVeryLongQualifiedReferenceExpression() {
-    val expectedUElementsCount = 4019
+    class EachPsiToUastWalker : PsiElementVisitor() {
+      var totalCount = 0
+      var identityChecksum = 0
+      override fun visitElement(element: PsiElement) {
+        val uElement = element.toUElement()
+        if (uElement != null) {
+          totalCount++
+          identityChecksum = 31 * identityChecksum + System.identityHashCode(uElement)
+        }
+
+        when (uElement) {
+          is UQualifiedReferenceExpression -> uElement.receiver // force lazy evaluation
+        }
+
+        element.acceptChildren(this)
+      }
+    }
     val clazz = myFixture.addClass("""
       class MyClass {
           String foo(){
@@ -42,14 +46,32 @@ class JavaUastPerformanceTest : LightJavaCodeInsightFixtureTestCase() {
           }
       }
     """.trimIndent())
-    EachPsiToUastWalker().apply {
-      PlatformTestUtil.startPerformanceTest("convert each element to uast first time", 2000) {
-        clazz.accept(this)
-        TestCase.assertEquals(expectedUElementsCount, totalCount)
-      }.attempts(1).assertTiming()
-    }
-
+    PlatformTestUtil.startPerformanceTest("convert each element to uast first time", 1000) {
+      val walker = EachPsiToUastWalker()
+      clazz.accept(walker)
+      TestCase.assertEquals(4019, walker.totalCount)
+    }.attempts(1).assertTiming()
   }
 
-
+  @Test
+  fun testConvertAllElementsWithNaiveToUElement() {
+    myFixture.configureByFile("Performance/Thinlet.java")
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 13_000, object : ThrowableRunnable<Throwable?> {
+      var hash = 0
+      override fun run() {
+        for (i in 0..99) {
+          file.accept(object : PsiRecursiveElementWalkingVisitor() {
+            override fun visitElement(element: PsiElement) {
+              hash += Objects.hashCode(element.toUElement())
+              super.visitElement(element)
+            }
+          })
+        }
+        assertTrue(hash != 0)
+      }
+    })
+      .setup { PsiManager.getInstance(project).dropPsiCaches() }
+      .warmupIterations(1)
+      .assertTiming()
+  }
 }

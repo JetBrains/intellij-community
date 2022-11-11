@@ -500,7 +500,7 @@ private class AlertDialog(project: Project?,
     return null
   }
 
-  override fun doCancelAction() = close(-1)
+  override fun doCancelAction() = close(-1, false)
 
   override fun createHelpButton(insets: Insets): JButton {
     val helpButton = super.createHelpButton(insets)

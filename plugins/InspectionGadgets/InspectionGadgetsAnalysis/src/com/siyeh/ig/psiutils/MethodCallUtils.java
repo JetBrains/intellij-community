@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.HardcodedMethodConstants;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -413,7 +412,7 @@ public final class MethodCallUtils {
       return false;
     }
     PsiMethod method = (PsiMethod)scope;
-    final Set<PsiMethod> checked = new THashSet<>();
+    final Set<PsiMethod> checked = new HashSet<>();
 
     while (true) {
       ProgressManager.checkCanceled();
@@ -499,6 +498,23 @@ public final class MethodCallUtils {
     return -1;
   }
 
+  /**
+   * @param call method call
+   * @param parameter parameter of called method
+   * @return an expression in the call argument list that corresponds to a given parameter; null if there's no correspondence
+   */
+  public static @Nullable PsiExpression getArgumentForParameter(@NotNull PsiCall call, @NotNull PsiParameter parameter) {
+    PsiMethod scope = tryCast(parameter.getDeclarationScope(), PsiMethod.class);
+    if (scope == null) return null;
+    int index = scope.getParameterList().getParameterIndex(parameter);
+    PsiExpressionList argList = call.getArgumentList();
+    if (argList == null) return null;
+    PsiExpression[] args = argList.getExpressions();
+    if (index >= args.length) return null;
+    if (parameter.isVarArgs() && !isVarArgCall(call)) return null;
+    return args[index];
+  }
+
   private static class SuperCallVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiMethod myMethod;
@@ -516,7 +532,7 @@ public final class MethodCallUtils {
     }
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       final PsiExpression condition = statement.getCondition();
       final Object result = ExpressionUtils.computeConstantExpression(condition);
       if (result != null && result.equals(Boolean.FALSE)) {
@@ -537,7 +553,7 @@ public final class MethodCallUtils {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (mySuperCallFound) {
         return;
       }

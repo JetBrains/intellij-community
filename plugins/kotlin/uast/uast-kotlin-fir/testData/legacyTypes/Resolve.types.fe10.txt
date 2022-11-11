@@ -95,13 +95,13 @@ UFile (package = ) [public final class ResolveKt {...]
                         UIdentifier (Identifier (setValue)) [UIdentifier (Identifier (setValue))]
                         USimpleNameReferenceExpression (identifier = setValue, resolvesTo = null) [setValue] : PsiType:String
                         ULiteralExpression (value = "123") ["123"] : PsiType:String
-                UDeclarationsExpression [var intRange: kotlin.ranges.LongRange = 0 .. 3]
-                    ULocalVariable (name = intRange) [var intRange: kotlin.ranges.LongRange = 0 .. 3]
+                UDeclarationsExpression [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3]
+                    ULocalVariable (name = intRange) [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3]
                         UBinaryExpression (operator = ..) [0 .. 3] : PsiType:LongRange
                             ULiteralExpression (value = 0) [0] : PsiType:long
                             ULiteralExpression (value = 3) [3] : PsiType:long
                 UQualifiedReferenceExpression [intRange.contains(2 as int)] : PsiType:boolean
-                    USimpleNameReferenceExpression (identifier = intRange) [intRange] : PsiType:LongRange
+                    USimpleNameReferenceExpression (identifier = intRange) [intRange] : PsiType:ClosedRange<Long>
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [contains(2 as int)] : PsiType:boolean
                         UIdentifier (Identifier (contains)) [UIdentifier (Identifier (contains))]
                         USimpleNameReferenceExpression (identifier = contains, resolvesTo = null) [contains] : PsiType:boolean

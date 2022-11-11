@@ -3,10 +3,6 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class LwHSpacer extends LwAtomicComponent {
   LwHSpacer() {
     super("com.intellij.uiDesigner.core.Spacer");

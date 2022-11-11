@@ -27,7 +27,6 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.inspect" exported="" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="commons-cli" level="project" />
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
@@ -38,5 +37,6 @@
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

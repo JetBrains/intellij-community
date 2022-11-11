@@ -1,9 +1,9 @@
 package com.intellij.ide.starter.ide
 
 import com.intellij.ide.starter.di.di
-import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.ProcessExecutor
 import com.intellij.ide.starter.path.GlobalPaths
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect
+import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.ide.starter.utils.catchAll

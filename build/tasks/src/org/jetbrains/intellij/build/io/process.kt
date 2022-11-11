@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicReference
  */
 fun runJava(mainClass: String,
             args: Iterable<String>,
-            jvmArgs: Iterable<String>,
-            classPath: Iterable<String>,
+            jvmArgs: List<String> = emptyList(),
+            classPath: List<String>,
             javaExe: Path,
             logger: Logger = System.getLogger(mainClass),
             timeoutMillis: Long = Timeout.DEFAULT,
@@ -52,7 +52,7 @@ fun runJava(mainClass: String,
 
         fun javaRunFailed(reason: String) {
           Span.current().setAttribute("classPath", classPathStringBuilder.substring("-classpath".length))
-          val message = "$reason\nCannot execute $mainClass (args=$args, vmOptions=$jvmArgsWithJson)"
+          val message = "$reason\nCannot execute $mainClass (pid=${process.pid()} args=$args, vmOptions=$jvmArgsWithJson)"
           span.setStatus(StatusCode.ERROR, message)
           onError?.invoke()
           throw RuntimeException(message)
@@ -87,29 +87,30 @@ fun runJava(mainClass: String,
     }
 }
 
-internal fun runJavaWithOutputToFile(mainClass: String,
-                                     args: Iterable<String>,
-                                     jvmArgs: Iterable<String>,
-                                     classPath: Iterable<String>,
-                                     javaExe: Path,
-                                     timeoutMillis: Long = Timeout.DEFAULT,
-                                     outputFile: Path,
-                                     workingDir: Path? = null) {
+fun runJavaWithOutputToFile(mainClass: String,
+                            args: List<String>,
+                            jvmArgs: List<String>,
+                            classPath: List<String>,
+                            javaExe: Path,
+                            timeoutMillis: Long = Timeout.DEFAULT,
+                            outputFile: Path,
+                            workingDir: Path? = null) {
   Files.createDirectories(outputFile.parent)
 
   val timeout = Timeout(timeoutMillis)
   val classpathFile = Files.createTempFile("classpath-", ".txt")
   tracer.spanBuilder("runJava")
     .setAttribute("mainClass", mainClass)
-    .setAttribute(AttributeKey.stringArrayKey("args"), args.toList())
-    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs.toList())
+    .setAttribute(AttributeKey.stringArrayKey("args"), args)
+    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs)
     .setAttribute("outputFile", outputFile.toString())
     .setAttribute("workingDir", workingDir?.toString() ?: "")
     .setAttribute("timeoutMillis", timeoutMillis)
     .use { span ->
       try {
         createClassPathFile(classPath, classpathFile)
-        val processArgs = createProcessArgs(javaExe = javaExe, jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass, args = args)
+        val processArgs = createProcessArgs(javaExe = javaExe, jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass,
+                                            args = args)
         span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
         val process = ProcessBuilder(processArgs)
           .directory(workingDir?.toFile())
@@ -117,23 +118,25 @@ internal fun runJavaWithOutputToFile(mainClass: String,
           .redirectOutput(outputFile.toFile())
           .start()
 
-        fun javaRunFailed(reason: String) {
-          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (published to TeamCity build artifacts) (args=$args, vmOptions=$jvmArgs): $reason"
+        fun javaRunFailed(exception: (String) -> Exception = ::RuntimeException) {
+          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (published to TeamCity build artifacts), exitCode=${process.exitValue()}, pid=${process.pid()}, args=$args, vmOptions=$jvmArgs"
           span.setStatus(StatusCode.ERROR, message)
           if (Files.exists(outputFile)) {
             span.setAttribute("processOutput", Files.readString(outputFile))
           }
-          throw RuntimeException(message)
+          throw exception(message)
         }
 
         if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
           process.destroyForcibly().waitFor()
-          javaRunFailed("$timeout timeout")
+          javaRunFailed { message ->
+            ProcessRunTimedOut("$message: $timeout timeout")
+          }
         }
 
         val exitCode = process.exitValue()
         if (exitCode != 0) {
-          javaRunFailed("exitCode=${process.exitValue()}")
+          javaRunFailed()
         }
       }
       finally {
@@ -159,7 +162,7 @@ private fun createProcessArgs(javaExe: Path,
   return processArgs
 }
 
-private fun createClassPathFile(classPath: Iterable<String>, classpathFile: Path): StringBuilder {
+private fun createClassPathFile(classPath: List<String>, classpathFile: Path): StringBuilder {
   val classPathStringBuilder = StringBuilder()
   classPathStringBuilder.append("-classpath").append('\n')
   for (s in classPath) {
@@ -194,18 +197,21 @@ fun runProcess(args: List<String>,
         .also { builder -> additionalEnvVariables.entries.forEach { (k, v) -> builder.environment()[k] = v } }
         .let { if (logger == null) it.inheritIO() else it }
         .start()
+      val pid = process.pid()
       val errorReader = logger?.let { readErrorOutput(process, timeout, it) }
       try {
-        if (logger != null) readOutputAndBlock(process, timeout, logger)
+        if (logger != null) {
+          readOutputAndBlock(process, timeout, logger)
+        }
 
         if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
           process.destroyForcibly().waitFor()
-          throw ProcessRunTimedOut("Cannot execute $args: $timeout timeout")
+          throw ProcessRunTimedOut("Cannot execute [$pid] $args: $timeout timeout")
         }
 
         val exitCode = process.exitValue()
         if (exitCode != 0) {
-          throw RuntimeException("Cannot execute $args (exitCode=$exitCode)")
+          throw RuntimeException("Cannot execute [$pid] $args (exitCode=$exitCode)")
         }
       }
       finally {
@@ -272,7 +278,7 @@ Android Studio: b/243687086 */  logger.warn(message)
           }
         }
       } else {
-        logger.info(it)
+        logger.info("[${process.pid()}] $it")
       }
     }
   }.join()
@@ -280,7 +286,7 @@ Android Studio: b/243687086 */  logger.warn(message)
 
 private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger): CompletableFuture<Void> {
   return runAsync {
-    consume(process.errorStream, process, timeout, logger::warn)
+    consume(process.errorStream, process, timeout)  { logger.warn("[${process.pid()}] $it") }
   }
 }
 
@@ -340,7 +346,7 @@ private fun appendArg(value: String, builder: StringBuilder) {
   }
 }
 
-internal class ProcessRunTimedOut(message: String) : RuntimeException(message)
+class ProcessRunTimedOut(message: String) : RuntimeException(message)
 
 internal class Timeout(private val millis: Long) {
   companion object {

@@ -4,7 +4,6 @@ package com.intellij.application.options.editor
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.documentation.render.DocRenderManager
-import com.intellij.formatting.visualLayer.VisualFormattingLayerService
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
@@ -44,7 +43,6 @@ private val myCbShowIntentionBulbCheckBox             get() = CheckboxDescriptor
 private val myCodeLensCheckBox                        get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance()::showEditorToolTip)
 private val myRenderedDocCheckBox                     get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.rendered.doc.comments"), PropertyBinding(model::isDocCommentRenderingEnabled, model::setDocCommentRenderingEnabled))
 private val myUseEditorFontInInlays                   get() = CheckboxDescriptor(ApplicationBundle.message("use.editor.font.for.inlays"), PropertyBinding(model::isUseEditorFontInInlays, model::setUseEditorFontInInlays))
-private val myCdShowVisualFormattingLayer             get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.visual.formatting.layer"), UISettings.getInstance()::showVisualFormattingLayer)
 // @formatter:on
 
 internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
@@ -116,21 +114,6 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       row {
         checkBox(myUseEditorFontInInlays)
       }
-
-      VisualFormattingLayerService.getInstance()
-        .takeIf { it.enabledByRegistry }
-        ?.let { service ->
-          row {
-            checkBox(myCdShowVisualFormattingLayer)
-              .bindSelected({service.enabledGlobally}, {service.enabledGlobally = it})
-          }
-          indent {
-            row(IdeBundle.message("combobox.label.visual.formatting.layer.scheme")) {
-              comboBox(service.getSchemes())
-                .bindItem(service::scheme.toNullableProperty())
-            }
-          }
-        }
 
       for (configurable in configurables) {
         appendDslConfigurable(configurable)

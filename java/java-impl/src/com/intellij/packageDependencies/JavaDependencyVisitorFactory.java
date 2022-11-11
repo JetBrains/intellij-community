@@ -37,7 +37,7 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
@@ -54,20 +54,20 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) { }
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) { }
 
     @Override
-    public void visitDocComment(PsiDocComment comment) { }
+    public void visitDocComment(@NotNull PsiDocComment comment) { }
 
     @Override
-    public void visitImportStatement(PsiImportStatement statement) {
+    public void visitImportStatement(@NotNull PsiImportStatement statement) {
       if (!myOptions.skipImports()) {
         visitElement(statement);
       }
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
 
       PsiMethod psiMethod = expression.resolveMethod();

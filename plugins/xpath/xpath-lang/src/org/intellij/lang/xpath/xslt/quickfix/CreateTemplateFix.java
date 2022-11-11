@@ -20,7 +20,9 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
@@ -31,11 +33,9 @@ public class CreateTemplateFix implements LocalQuickFix {
   private static final String DUMMY_NS = "urn:x__dummy__";
   private static final String DUMMY_TAG = "<dummy xmlns='" + DUMMY_NS + "' />";
 
-  private final XmlTag myTag;
   private final String myName;
 
-  public CreateTemplateFix(XmlTag tag, String name) {
-    myTag = tag;
+  public CreateTemplateFix(String name) {
     myName = name;
   }
 
@@ -53,6 +53,7 @@ public class CreateTemplateFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    XmlTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlTag.class);
     final XmlTag tag = XsltCodeInsightUtil.getTemplateTag(myTag, false);
     if (tag == null) {
       return;
@@ -79,14 +80,12 @@ public class CreateTemplateFix implements LocalQuickFix {
 
     // TODO ensure we have line breaks before the new <xsl:template> and between its opening and closing tags
 
+    VirtualFile file = myTag.getContainingFile().getVirtualFile();
+    if (file == null) return;
     XmlTag newTemplateTag = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(templateTag);
 
-    Navigatable openFileDescriptor = PsiNavigationSupport.getInstance().createNavigatable(project,
-                                                                                          myTag.getContainingFile()
-                                                                                               .getVirtualFile(),
-                                                                                          newTemplateTag
-                                                                                            .getTextRange()
-                                                                                            .getStartOffset());
+    Navigatable openFileDescriptor =
+      PsiNavigationSupport.getInstance().createNavigatable(project, file, newTemplateTag.getTextRange().getStartOffset());
     openFileDescriptor.navigate(true);
   }
 }

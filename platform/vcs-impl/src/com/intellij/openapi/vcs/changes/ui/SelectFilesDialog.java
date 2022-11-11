@@ -26,17 +26,6 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @NotNull private final VirtualFileList myFileList;
   private final boolean myDeletableFiles;
 
-  @Deprecated(forRemoval = true)
-  protected SelectFilesDialog(Project project,
-                              @NotNull List<? extends VirtualFile> files,
-                              @Nullable @NlsContexts.Label String prompt,
-                              @Nullable VcsShowConfirmationOption confirmationOption,
-                              boolean selectableFiles,
-                              boolean showDoNotAskOption,
-                              boolean deletableFiles) {
-    this(project, files, prompt, showDoNotAskOption ? confirmationOption : null, selectableFiles, deletableFiles);
-  }
-
   protected SelectFilesDialog(Project project,
                               @NotNull List<? extends VirtualFile> files,
                               @Nullable @NlsContexts.Label String prompt,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.asJava
 
@@ -14,7 +14,7 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.elements.KtLightPsiArrayInitializerMemberValue
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
@@ -29,7 +29,7 @@ import org.junit.runner.RunWith
 class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinJdkAndLibraryProjectDescriptor(KotlinArtifacts.instance.kotlinStdlib)
+        KotlinJdkAndLibraryProjectDescriptor(TestKotlinArtifacts.kotlinStdlib)
 
     fun testIsHiddenByDeprecated() {
         myFixture.configureByText(
@@ -924,7 +924,7 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
         WriteAction.run<Throwable> {
             val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
             val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false)
-            facet.configureFacet(version, null, modelsProvider, emptySet())
+            facet.configureFacet(version, null, modelsProvider)
             modelsProvider.commit()
         }
     }

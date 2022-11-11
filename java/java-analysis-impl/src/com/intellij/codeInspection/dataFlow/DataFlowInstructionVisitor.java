@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResult;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
@@ -51,8 +50,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
-  private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
-  private final Map<DfaAnchor, ConstantResult> myConstantExpressions = new HashMap<>();
+  private final Map<ContractFailureProblem, Boolean> myFailingCalls = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
@@ -65,6 +63,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
   private final Set<DfaAnchor> myPotentiallyRedundantInstanceOf = new HashSet<>();
+  private final Map<DfaAnchor, ThreeState> myConstantInstanceOf = new HashMap<>();
   private final boolean myStrictMode;
 
   private static final CallMatcher USELESS_SAME_ARGUMENTS = CallMatcher.anyOf(
@@ -174,15 +173,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     return myOfNullableCalls;
   }
 
-  Map<PsiExpression, ConstantResult> getConstantExpressions() {
-    return EntryStream.of(myConstantExpressions).selectKeys(JavaExpressionAnchor.class)
-      .mapKeys(JavaExpressionAnchor::getExpression).toMap();
-  }
-
-  Map<DfaAnchor, ConstantResult> getConstantExpressionChunks() {
-    return myConstantExpressions;
-  }
-
   Map<PsiCaseLabelElement, ThreeState> getSwitchLabelsReachability() {
     return mySwitchLabelsReachability;
   }
@@ -209,7 +199,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   }
 
   StreamEx<PsiCallExpression> alwaysFailingCalls() {
-    return StreamEx.ofKeys(myFailingCalls, v -> v);
+    return StreamEx.ofKeys(myFailingCalls, v -> v).map(ContractFailureProblem::getAnchor).select(PsiCallExpression.class).distinct();
   }
 
   boolean isAlwaysReturnsNotNull(Instruction[] instructions) {
@@ -218,7 +208,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   }
   
   StreamEx<DfaAnchor> redundantInstanceOfs() {
-    return StreamEx.of(myPotentiallyRedundantInstanceOf).filter(anchor -> myConstantExpressions.get(anchor) == ConstantResult.UNKNOWN);
+    return StreamEx.of(myPotentiallyRedundantInstanceOf).filter(anchor -> myConstantInstanceOf.get(anchor) == ThreeState.UNSURE);
   }
 
   @Override
@@ -242,15 +232,22 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     }
     if (anchor instanceof JavaSwitchLabelTakenAnchor) {
       DfType type = state.getDfType(value);
-      mySwitchLabelsReachability.merge(((JavaSwitchLabelTakenAnchor)anchor).getLabelElement(),
-                                       type.equals(DfTypes.TRUE) ? ThreeState.YES :
-                                       type.equals(DfTypes.FALSE) ? ThreeState.NO : ThreeState.UNSURE, ThreeState::merge);
+      mySwitchLabelsReachability.merge(((JavaSwitchLabelTakenAnchor)anchor).getLabelElement(), fromDfType(type), ThreeState::merge);
       return;
     }
-    if (myPotentiallyRedundantInstanceOf.contains(anchor) && isUsefulInstanceof(args, value, state)) {
-      myPotentiallyRedundantInstanceOf.remove(anchor);
+    if (myPotentiallyRedundantInstanceOf.contains(anchor)) {
+      if (isUsefulInstanceof(args, value, state)) {
+        myPotentiallyRedundantInstanceOf.remove(anchor);
+      } else {
+        myConstantInstanceOf.merge(anchor, fromDfType(state.getDfType(value)), ThreeState::merge);
+      }
     }
-    myConstantExpressions.compute(anchor, (c, curState) -> ConstantResult.mergeValue(curState, state, value));
+  }
+
+  @NotNull
+  private static ThreeState fromDfType(DfType type) {
+    return type.equals(DfTypes.TRUE) ? ThreeState.YES :
+           type.equals(DfTypes.FALSE) ? ThreeState.NO : ThreeState.UNSURE;
   }
 
   private static boolean isUsefulInstanceof(@NotNull DfaValue @NotNull [] args,
@@ -359,11 +356,12 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
                                Pair.create(((ArrayStoreProblem)problem).getFromType(), ((ArrayStoreProblem)problem).getToType()));
     }
     else if (problem instanceof ContractFailureProblem) {
-      PsiCallExpression call = tryCast(((ContractFailureProblem)problem).getAnchor(), PsiCallExpression.class);
+      ContractFailureProblem contractFailure = (ContractFailureProblem)problem;
+      PsiCallExpression call = tryCast(contractFailure.getAnchor(), PsiCallExpression.class);
       if (call != null) {
-        Boolean isFailing = myFailingCalls.get(call);
+        Boolean isFailing = myFailingCalls.get(problem);
         if (isFailing != null || !hasTrivialFailContract(call)) {
-          myFailingCalls.put(call, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
+          myFailingCalls.put(contractFailure, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
         }
       }
     }
@@ -435,24 +433,14 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     }
   }
 
-  static class ArgResultEquality {
-    final boolean argsEqual;
-    final boolean firstArgEqualToResult;
-    final boolean secondArgEqualToResult;
-
-    ArgResultEquality(boolean argsEqual, boolean firstArgEqualToResult, boolean secondArgEqualToResult) {
-      this.argsEqual = argsEqual;
-      this.firstArgEqualToResult = firstArgEqualToResult;
-      this.secondArgEqualToResult = secondArgEqualToResult;
-    }
-
+  record ArgResultEquality(boolean argsEqual, boolean firstArgEqualToResult, boolean secondArgEqualToResult) {
     ArgResultEquality merge(ArgResultEquality other) {
-      return new ArgResultEquality(argsEqual && other.argsEqual, firstArgEqualToResult && other.firstArgEqualToResult,
-                                   secondArgEqualToResult && other.secondArgEqualToResult);
-    }
+        return new ArgResultEquality(argsEqual && other.argsEqual, firstArgEqualToResult && other.firstArgEqualToResult,
+                                     secondArgEqualToResult && other.secondArgEqualToResult);
+      }
 
-    boolean hasEquality() {
-      return argsEqual || firstArgEqualToResult || secondArgEqualToResult;
+      boolean hasEquality() {
+        return argsEqual || firstArgEqualToResult || secondArgEqualToResult;
+      }
     }
-  }
 }

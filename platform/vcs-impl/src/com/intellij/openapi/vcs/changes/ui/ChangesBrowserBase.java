@@ -5,6 +5,7 @@ import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -129,6 +130,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     }
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
+    DiffUtil.recursiveRegisterShortcutSet(myToolBarGroup, this, null);
   }
 
   @NotNull
@@ -238,6 +240,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   public void addToolbarAction(@NotNull AnAction action) {
     myToolBarGroup.add(action);
+    action.registerCustomShortcutSet(this, null);
   }
 
   public void addToolbarSeparator() {

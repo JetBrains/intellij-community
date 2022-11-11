@@ -155,7 +155,7 @@ internal class GitConflictsPanel(
   private inner class MainPanel : JPanel(BorderLayout()), DataProvider {
     override fun getData(dataId: String): Any? {
       if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
-        return ChangesUtil.getNavigatableArray(project, getSelectedConflicts().mapNotNull { it.filePath.virtualFile }.stream())
+        return ChangesUtil.getNavigatableArray(project, getSelectedConflicts().mapNotNull { it.filePath.virtualFile })
       }
       return null
     }

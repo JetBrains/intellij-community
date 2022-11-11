@@ -1,23 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
@@ -36,7 +39,10 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
-import org.jetbrains.kotlin.resolve.descriptorUtil.*
+import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -54,6 +60,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * any names. For these redundant markers, the inspection proposes a quick fix to remove the marker
  * or the entire unnecessary `@OptIn` annotation if it contains a single marker.
  */
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
 
     /**
@@ -100,7 +108,7 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
             val resolutionFacade = annotationEntry.getResolutionFacade()
             val annotationContext = annotationEntry.analyze(resolutionFacade)
             val annotationFqName = annotationContext[BindingContext.ANNOTATION, annotationEntry]?.fqName
-            if (annotationFqName !in OptInNames.USE_EXPERIMENTAL_FQ_NAMES) return@annotationEntryVisitor
+            if (annotationFqName !in OPT_IN_FQ_NAMES) return@annotationEntryVisitor
 
             val resolvedMarkers = mutableListOf<ResolvedMarker>()
             for (arg in annotationEntryArguments) {
@@ -123,7 +131,6 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
                 holder.registerProblem(
                     annotationEntry,
                     KotlinBundle.message("inspection.unnecessary.opt_in.redundant.annotation"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     RemoveAnnotationEntry()
                 )
             } else {
@@ -137,7 +144,6 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
                                     "inspection.unnecessary.opt_in.redundant.marker",
                                     marker.fqName.shortName().render()
                                 ),
-                        ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                         RemoveAnnotationArgumentOrEntireEntry()
                     )
                 }
@@ -154,7 +160,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
     private val foundMarkers = mutableSetOf<FqName>()
 
     // A checker instance for setter call detection
-    private val readWriteAccessChecker = ReadWriteAccessChecker.getInstance()
+    private val readWriteAccessChecker = ReadWriteAccessChecker.getInstance(resolutionFacade.project)
 
     /**
      * Check if a specific experimental marker is not used in the scope of a specific `@OptIn` annotation.
@@ -230,7 +236,12 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
      * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
      */
     private fun KotlinType.collectMarkers(moduleApiVersion: ApiVersion) {
-        arguments.forEach { it.type.collectMarkers(moduleApiVersion) }
+        arguments.forEach {
+            if (!it.isStarProjection) {
+                it.type.collectMarkers(moduleApiVersion)
+            }
+        }
+
         val descriptor = this.constructor.declarationDescriptor ?: return
         descriptor.collectMarkers(moduleApiVersion)
     }

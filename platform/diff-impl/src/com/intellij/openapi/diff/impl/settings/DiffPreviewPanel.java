@@ -199,7 +199,7 @@ class DiffPreviewPanel implements PreviewPanel {
 
     FoldRegion region = getFoldRegion(side, line);
     if (region != null) {
-      myDispatcher.getMulticaster().selectionInPreviewChanged(DiffLineSeparatorRenderer.BACKGROUND.getExternalName());
+      myDispatcher.getMulticaster().selectionInPreviewChanged(DiffLineSeparatorRenderer.FOREGROUND.getExternalName());
     }
   }
 

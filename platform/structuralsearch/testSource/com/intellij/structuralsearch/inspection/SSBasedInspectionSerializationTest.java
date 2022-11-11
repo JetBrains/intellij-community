@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -9,7 +9,6 @@ import org.jdom.JDOMException;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author Bas Leijdekkers
@@ -942,7 +941,7 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
     final int last = configurations.size() - 1;
     inspection.removeConfiguration(configurations.get(last)); // change
     inspection.addConfiguration(configurations.get(last)); // revert
-    inspection.removeConfigurationsWithUuid(UUID.fromString("00000000-0000-0000-0000-000000000000")); // no change
+    inspection.removeConfigurationsWithUuid("00000000-0000-0000-0000-000000000000"); // no change
     assertEquals(NEW_SETTINGS, writeSettings(inspection));
   }
 

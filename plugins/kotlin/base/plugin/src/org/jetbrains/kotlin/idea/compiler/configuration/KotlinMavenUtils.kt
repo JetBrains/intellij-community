@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.JDOMUtil
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 import java.nio.file.Path
@@ -69,12 +69,12 @@ object KotlinMavenUtils {
      * Returns the single non-classified binary artifact with given coordinates, or `null` if the artifact file is not found.
      * This function works both in production and when the IntelliJ IDEA is run from sources (for instance, in tests).
      */
-    fun findArtifact(groupId: String, artifactId: String, version: String): Path? {
-        return KotlinMavenArtifactFinder.instance.findArtifact(groupId, artifactId, version)
+    fun findArtifact(groupId: String, artifactId: String, version: String, suffix: String = ".jar"): Path? {
+        return KotlinMavenArtifactFinder.instance.findArtifact(groupId, artifactId, version, suffix)
     }
 }
 
-private abstract class KotlinMavenArtifactFinder {
+internal abstract class KotlinMavenArtifactFinder {
     companion object {
         val instance: KotlinMavenArtifactFinder
             get() = when {
@@ -85,12 +85,12 @@ private abstract class KotlinMavenArtifactFinder {
 
     protected abstract val repositories: Sequence<Path>
 
-    fun findArtifact(groupId: String, artifactId: String, version: String): Path? {
+    fun findArtifact(groupId: String, artifactId: String, version: String, suffix: String): Path? {
         for (repository in repositories) {
             val artifact = repository.resolve(groupId.replace(".", "/"))
                 .resolve(artifactId)
                 .resolve(version)
-                .resolve("$artifactId-$version.jar")
+                .resolve("$artifactId-$version$suffix")
                 .takeIf { it.isRegularFile() }
 
             if (artifact != null) {

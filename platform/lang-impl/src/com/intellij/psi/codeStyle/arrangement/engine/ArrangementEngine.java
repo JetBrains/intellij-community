@@ -67,7 +67,6 @@ public final class ArrangementEngine {
    * Arranges given PSI root contents that belong to the given ranges.
    * <b>Note:</b> After arrangement editor foldings we'll be preserved.
    *
-   * @param editor
    * @param file   target PSI root
    * @param ranges target ranges to use within the given root
    */

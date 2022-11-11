@@ -135,7 +135,7 @@ final class UsedIconsListingAction extends AnAction {
         public boolean process(PsiFile file) {
           file.accept(new XmlRecursiveElementVisitor() {
             @Override
-            public void visitXmlTag(XmlTag tag) {
+            public void visitXmlTag(@NotNull XmlTag tag) {
               super.visitXmlTag(tag);
 
               String icon = tag.getAttributeValue("icon");

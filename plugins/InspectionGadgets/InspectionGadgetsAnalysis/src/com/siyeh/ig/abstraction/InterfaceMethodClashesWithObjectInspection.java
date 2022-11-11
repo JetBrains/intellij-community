@@ -50,7 +50,7 @@ public class InterfaceMethodClashesWithObjectInspection extends BaseInspection {
   private static class InterfaceClashesWithObjectClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!method.getParameterList().isEmpty()) {
         return;

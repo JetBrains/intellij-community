@@ -95,7 +95,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiType returnType = method.getReturnType();
       if (returnType == null || returnType.getArrayDimensions() == 0) {

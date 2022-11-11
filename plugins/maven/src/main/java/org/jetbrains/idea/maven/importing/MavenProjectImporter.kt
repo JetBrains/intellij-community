@@ -5,13 +5,15 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeLegacyImporter
-import org.jetbrains.idea.maven.importing.tree.workspace.MavenProjectTreeImporterToWorkspaceModel
-import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspaceModel
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
+import java.util.concurrent.atomic.AtomicInteger
 
+@ApiStatus.Internal
 interface MavenProjectImporter {
   fun importProject(): List<MavenProjectsProcessorTask>?
   fun createdModules(): List<Module>
@@ -33,9 +35,11 @@ interface MavenProjectImporter {
           val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)
           val startTime = System.currentTimeMillis()
           try {
+            importingInProgress.incrementAndGet()
             return importer.importProject()
           }
           finally {
+            importingInProgress.decrementAndGet()
             activity.finished()
             MavenLog.LOG.info(
               "[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
@@ -56,18 +60,12 @@ interface MavenProjectImporter {
                                modelsProvider: IdeModifiableModelsProvider,
                                importingSettings: MavenImportingSettings,
                                dummyModule: Module?): MavenProjectImporter {
-      if (isImportToWorkspaceModelEnabled()) {
-        if (isImportToTreeStructureEnabled(project)) {
-          return MavenProjectTreeImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges,
-                                                          importingSettings, modelsProvider, project)
-        }
-        else {
-          return MavenProjectImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges,
-                                                      importingSettings, modelsProvider, project)
-        }
+      if (isImportToWorkspaceModelEnabled(project)) {
+        return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
+                                        importingSettings, modelsProvider, project)
       }
 
-      if (isImportToTreeStructureEnabled(project)) {
+      if (isLegacyImportToTreeStructureEnabled(project)) {
         return MavenProjectTreeLegacyImporter(project, projectsTree, projectsToImportWithChanges,
                                               modelsProvider, importingSettings)
       }
@@ -77,13 +75,33 @@ interface MavenProjectImporter {
     }
 
     @JvmStatic
-    fun isImportToWorkspaceModelEnabled(): Boolean = Registry.`is`("maven.import.to.workspace.model")
+    fun tryUpdateTargetFolders(project: Project) {
+      if (isImportToWorkspaceModelEnabled(project)) {
+        WorkspaceProjectImporter.updateTargetFolders(project)
+      }
+      else {
+        MavenLegacyFoldersImporter.updateProjectFolders(/* project = */ project, /* updateTargetFoldersOnly = */ true)
+      }
+    }
+
+    private val importingInProgress = AtomicInteger()
 
     @JvmStatic
-    fun isImportToTreeStructureEnabled(project: Project?): Boolean {
-      if (project == null) return true
-      if (MavenProjectTreeLegacyImporter.isAlwaysUseTreeImport()) return true
-      return MavenProjectsManager.getInstance(project).importingSettings.isImportToTreeStructure
+    fun isImportingInProgress(): Boolean {
+      return importingInProgress.get() > 0
+    }
+
+    @JvmStatic
+    fun isImportToWorkspaceModelEnabled(project: Project?): Boolean {
+      if ("true" == System.getProperty("maven.import.to.workspace.model")) return true
+      if (project == null) return false
+      return MavenProjectsManager.getInstance(project).importingSettings.isWorkspaceImportEnabled
+    }
+
+    @JvmStatic
+    fun isLegacyImportToTreeStructureEnabled(project: Project?): Boolean {
+      if (isImportToWorkspaceModelEnabled(project)) return false
+      return "true" == System.getProperty("maven.import.use.tree.import")
     }
   }
 }

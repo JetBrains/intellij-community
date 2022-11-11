@@ -12,19 +12,19 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.inspections.findExistingEditor
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.JKMultipleFilesPostProcessingTarget
@@ -71,7 +71,7 @@ class JavaToKotlinInlineHandler : AbstractCrossLanguageInlineHandler() {
 
         val unwrappedElement = unwrapElement(unwrappedUsage, referenced)
         val replacementStrategy = referenced.findUsageReplacementStrategy(withValidation = false) ?: kotlin.run {
-            LOG.error("Can't find strategy for ${unwrappedElement::class} (${unwrappedElement.getKotlinFqName()}) => ${unwrappedElement.text}")
+            LOG.error("Can't find strategy for ${unwrappedElement::class} (${unwrappedElement.kotlinFqName}) => ${unwrappedElement.text}")
             return
         }
 

@@ -22,7 +22,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.FontUtil
 import com.intellij.util.Processor
-import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -63,7 +62,7 @@ class SavedPatchesTree(project: Project,
   }
 
   override fun rebuildTree() {
-    val wasEmpty = VcsTreeModelData.all(this).userObjectsStream().isEmpty()
+    val wasEmpty = VcsTreeModelData.all(this).iterateUserObjects().isEmpty
 
     val modelBuilder = TreeModelBuilder(project, groupingSupport.grouping)
     if (savedPatchesProviders.any { !it.isEmpty() }) {
@@ -71,7 +70,7 @@ class SavedPatchesTree(project: Project,
     }
     updateTreeModel(modelBuilder.build())
 
-    if (!VcsTreeModelData.all(this).userObjectsStream().isEmpty() && wasEmpty) {
+    if (!VcsTreeModelData.all(this).iterateUserObjects().isEmpty && wasEmpty) {
       expandDefaults()
     }
     if (selectionCount == 0) {
@@ -94,7 +93,9 @@ class SavedPatchesTree(project: Project,
   }
 
   internal fun selectedPatchObjects(): Stream<SavedPatchesProvider.PatchObject<*>> {
-    return VcsTreeModelData.selected(this).userObjectsStream(SavedPatchesProvider.PatchObject::class.java)
+    return VcsTreeModelData.selected(this)
+      .iterateUserObjects(SavedPatchesProvider.PatchObject::class.java)
+      .toStream()
   }
 
   override fun getToggleClickCount(): Int = 2
@@ -165,7 +166,7 @@ class SavedPatchesTree(project: Project,
   }
 
   private class MySpeedSearch(tree: JTree) :
-    TreeSpeedSearch(tree, ChangesBrowserNode.TO_TEXT_CONVERTER, true) {
+    TreeSpeedSearch(tree, true, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction()) {
     override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
       val isMatching = super.isMatchingElement(element, pattern)
       if (isMatching) return true

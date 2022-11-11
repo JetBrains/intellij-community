@@ -6,10 +6,10 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.SerializationRoundTripChecker
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.SerializationRoundTripChecker
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
-import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.assertTrue
 import org.junit.Before
@@ -22,7 +22,7 @@ import kotlin.system.measureTimeMillis
 class ImlSerializationTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
@@ -39,14 +39,14 @@ class ImlSerializationTest {
 
   @Test
   fun sizeCheck() {
-    val expectedSize = 23_000
+    val expectedSize = 19_000
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     val bytes = loadProjectAndCheck(projectDir)
 
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
-               23_000 == expectedSize && "v31" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
+               "v40" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
   }
 
   @Test
@@ -56,9 +56,15 @@ class ImlSerializationTest {
   }
 
   @Test
+  fun ultimateProject() {
+    val projectDir = File("/Users/Alex.Plate/Develop/Work/intellij")
+    loadProjectAndCheck(projectDir)
+  }
+
+  @Test
   fun externalIndexIsNotSerialized() {
     val builder = MutableEntityStorage.create()
-    val entity = SampleEntity2("Test", Source, true)
+    val entity = SampleEntity2("Test", true, Source)
     builder.addEntity(entity)
     val index = builder.getMutableExternalMapping<String>("test.my.index")
     index.addMapping(entity, "Hello")

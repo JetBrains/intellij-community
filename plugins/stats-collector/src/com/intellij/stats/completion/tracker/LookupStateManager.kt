@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.stats.completion.tracker
 
@@ -11,7 +11,7 @@ import com.intellij.stats.completion.LookupEntryInfo
 import com.intellij.stats.completion.LookupState
 import com.intellij.util.SlowOperations
 
-class LookupStateManager {
+class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
   private val elementToId = mutableMapOf<String, Int>()
   private val idToEntryInfo = mutableMapOf<Int, LookupEntryInfo>()
   private val lookupStringToHash = mutableMapOf<String, Int>()
@@ -101,7 +101,7 @@ class LookupStateManager {
         val id = item.idString()
         val factors = lookupStorage.getItemStorage(id).getLastUsedFactors()?.mapValues { it.value.toString() }
         if (factors != null) {
-          result[id] = factors
+          result.setFactors(id, factors)
         }
       }
     }
@@ -118,14 +118,27 @@ class LookupStateManager {
           additionalMap.forEach { features[it.key] = it.value.toString() }
           return@let features
         } ?: emptyMap()
-        result[item.idString()] = relevanceMap
+        result.setFactors(item.idString(), relevanceMap)
       }
     }
 
     return result
   }
 
+  private fun MutableMap<String, Map<String, String>>.setFactors(itemId: String, factors: Map<String, String>) {
+    if (shouldLogElementFeatures) {
+      this[itemId] = factors
+    } else {
+      this[itemId] = factors.filterKeys { it in REQUIRED_FACTORS }
+    }
+  }
+
   private fun getLookupStringHash(lookupString: String): Int {
     return lookupStringToHash.computeIfAbsent(lookupString) { lookupStringToHash.size }
+  }
+
+  companion object {
+    private val REQUIRED_FACTORS: Set<String> = setOf("ml_common_item_class", "position", "result_length", "ml_rank",
+      "kind", "ml_python_kind", "ml_php_element_element_type", "ml_scala_kind", "ml_clangd_kind", "kotlin.kind", "ml_js_kind")
   }
 }

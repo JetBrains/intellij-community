@@ -46,8 +46,30 @@ public class UnusedDeclarationKtTest20 extends AbstractUnusedDeclarationTest {
   public void testPrimaryConstructor() {
     doTest();
   }
+
+  public void testPrimaryConstructor2() {
+    myTool.getSharedLocalInspectionTool().PARAMETER = true;
+    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
+  }
   
   public void testReceiverParameter() {
+    myTool.getSharedLocalInspectionTool().PARAMETER = true;
+    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
+  }
+
+  public void testOperatorInWhen() {
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
+  }
+
+  public void testCallableParameter() {
+    myTool.getSharedLocalInspectionTool().PARAMETER = true;
+    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
+  }
+
+  public void testMainParameter() {
     myTool.getSharedLocalInspectionTool().PARAMETER = true;
     myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
     doTest("deadCode/" + getTestName(true), myToolWrapper);

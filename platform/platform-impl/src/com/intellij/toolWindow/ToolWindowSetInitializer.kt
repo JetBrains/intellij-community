@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.toolWindow
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -16,24 +17,19 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executor
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicReference
 
 @Suppress("SSBasedInspection")
@@ -46,44 +42,12 @@ private inline fun Logger.debug(project: Project, lazyMessage: (project: String)
   }
 }
 
-internal class InitToolWindowSetActivity : StartupActivity {
-  override fun runActivity(project: Project) {
-    val app = ApplicationManager.getApplication()
-    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
-      return
-    }
-
-    LOG.debug(project) { "schedule init (project=$it)" }
-    app.invokeLater(
-      {
-        LOG.debug(project) { "init (project=$it)" }
-
-        // frame helper is set as part of `ProjectFrameAllocator.projectLoaded`
-        // - project frame must be presented at the moment of start-up activity executing.
-        val frameHelper = WindowManagerEx.getInstanceEx().getFrameHelper(project)!!
-
-        val rootPane = frameHelper.rootPane!!
-
-        runActivity("north components updating") {
-          rootPane.updateNorthComponents()
-        }
-        runActivity("tool window pane creation") {
-          (ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl)?.init(frameHelper)
-        }
-        runActivity("toolbar updating") {
-          rootPane.initOrCreateToolbar(project)
-        }
-      },
-      project.disposed
-    )
-  }
-}
-
+// open for rider
 class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
   @Volatile
   private var isInitialized = false
 
-  private val initFuture: CompletableFuture<Ref<List<RegisterToolWindowTask>?>>
+  private val initFuture: Deferred<Ref<List<RegisterToolWindowTask>?>>
   private val pendingLayout = AtomicReference<DesktopLayout?>()
 
   private val pendingTasks = ConcurrentLinkedQueue<Runnable>()
@@ -91,17 +55,14 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   init {
     val app = ApplicationManager.getApplication()
     if (project.isDefault || app.isUnitTestMode || app.isHeadlessEnvironment) {
-      initFuture = CompletableFuture.completedFuture(Ref(null))
+      initFuture = CompletableDeferred(value = Ref())
     }
     else {
-      initFuture = CompletableFuture.supplyAsync(
-        {
-          Ref(runActivity("toolwindow init command creation") {
-            computeToolWindowBeans(project)
-          })
-        },
-        if (StartUpMeasurer.isEnabled()) ForkJoinPool.commonPool() else AppExecutorUtil.getAppExecutorService()
-      )
+      initFuture = project.coroutineScope.async {
+        Ref(runActivity("toolwindow init command creation") {
+          computeToolWindowBeans(project)
+        })
+      }
     }
   }
 
@@ -130,61 +91,48 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     else {
       pendingLayout.set(newLayout)
       app.invokeLater({
-        manager.setLayout(pendingLayout.getAndSet(null) ?: return@invokeLater)
-      }, project.disposed)
+                        manager.setLayout(pendingLayout.getAndSet(null) ?: return@invokeLater)
+                      }, project.disposed)
     }
   }
 
-  fun initUi(toolWindowPane: ToolWindowPane) {
-    initFuture
-      .thenAcceptAsync(
-        { ref ->
-          val tasks = ref.get()
-          LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
-
-          ref.set(null)
-          createAndLayoutToolWindows(manager, tasks ?: return@thenAcceptAsync, toolWindowPane)
-
-          while (true) {
-            (pendingTasks.poll() ?: break).run()
-          }
-        },
-        Executor { command ->
-          if (EDT.isCurrentThreadEdt()) {
-            LOG.debug(project) { project -> "initialization will be performed right in the current EDT task (project=$project)" }
-            command.run()
-          }
-          else {
-            LOG.debug(project) { project -> "initialization is scheduled in EDT (project=$project)" }
-            ApplicationManager.getApplication().invokeLater(command, project.disposed)
-          }
-        }
-      )
-      .whenComplete { _, error ->
-        LOG.debug(project) { "initialization completed (project=$it, error=${error?.message})" }
-        isInitialized = true
-        error?.let {
-          LOG.error(it)
+  suspend fun initUi(reopeningEditorsJob: Job) {
+    try {
+      val ref = initFuture.await()
+      val tasks = ref.get()
+      LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
+      ref.set(null)
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        createAndLayoutToolWindows(manager, tasks ?: return@withContext, reopeningEditorsJob)
+        while (true) {
+          (pendingTasks.poll() ?: break).run()
         }
       }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
+    finally {
+      LOG.debug(project) { "initialization completed (project=$it)" }
+      isInitialized = true
+    }
   }
 
   // must be executed in EDT
-  private fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl,
-                                         tasks: List<RegisterToolWindowTask>,
-                                         toolWindowPane: ToolWindowPane) {
-    @Suppress("TestOnlyProblems")
-    manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
+  private suspend fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl, tasks: List<RegisterToolWindowTask>, reopeningEditorsJob: Job) {
 
-    // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
-    // 1. read action is required to read facet list (might cause a deadlock)
-    // 2. delay between collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
-    val list = addExtraTasks(tasks, project)
-    runActivity("toolwindow creating") {
-      val entries = ArrayList<String>(list.size)
-      for (task in list) {
+    fun registerToolWindows(registerTasks: List<RegisterToolWindowTask>, shouldRegister: (String) -> Boolean): Boolean {
+      val entries = ArrayList<String>(registerTasks.size)
+      registerTasks.forEach { task ->
         try {
-          entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
+          val paneId = manager.getLayout().getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+          if (shouldRegister(paneId)) {
+            val toolWindowPane = manager.getToolWindowPane(paneId)
+            entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
+          }
         }
         catch (e: ProcessCanceledException) {
           throw e
@@ -194,15 +142,41 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
         }
       }
 
-      toolWindowPane.buttonManager.initMoreButton()
-
       project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries, manager)
-      toolWindowPane.buttonManager.revalidateNotEmptyStripes()
+
+      return entries.size == registerTasks.size
     }
-    toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable())
+
+    @Suppress("TestOnlyProblems")
+    manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
+
+    // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
+    // 1. read action is required to read facet list (might cause a deadlock)
+    // 2. delay between collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
+    val list = addExtraTasks(tasks, project)
+    val hasSecondaryFrameToolWindows = runActivity("toolwindow creating") {
+      // Register all tool windows for the default tool window pane. If there are any tool windows for other panes, we'll register them
+      // after the reopening editors job has created the panes
+      val registeredAll = registerToolWindows(list) { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+
+      manager.getToolWindowPanes().forEach {
+        it.buttonManager.initMoreButton()
+        it.buttonManager.revalidateNotEmptyStripes()
+        it.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(it.paneId))
+      }
+
+      return@runActivity !registeredAll
+    }
     service<ToolWindowManagerImpl.ToolWindowManagerAppLevelHelper>()
 
     registerEpListeners(manager)
+
+    if (hasSecondaryFrameToolWindows) {
+      reopeningEditorsJob.join()
+      runActivity("secondary frames toolwindow creation") {
+        registerToolWindows(list) { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+      }
+    }
   }
 }
 
@@ -262,7 +236,7 @@ private fun beanToTask(project: Project,
     canWorkInDumbMode = DumbService.isDumbAware(factory),
     shouldBeAvailable = factory.shouldBeAvailable(project),
     contentFactory = factory,
-    stripeTitle = getStripeTitleSupplier(bean.id, plugin),
+    stripeTitle = getStripeTitleSupplier(bean.id, project, plugin),
   )
   task.pluginDescriptor = bean.pluginDescriptor
   return task

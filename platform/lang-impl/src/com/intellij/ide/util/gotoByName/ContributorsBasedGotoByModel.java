@@ -252,7 +252,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
    * @param name a name
    * @param checkBoxState if {@code true}, non-project files are considered as well
    * @param pattern a pattern to use
-   * @return a list of navigation items from contributors for
+   * @return a array of navigation items from contributors for
    *  which {@link #acceptItem(NavigationItem)} returns {@code true}.
    */
   @Override

@@ -1,4 +1,4 @@
-// "Change variable 'i' type to 'int'" "true"
+// "Change variable 'i' type to 'int'" "true-preview"
 
 class Test {
   void foo(int num) {

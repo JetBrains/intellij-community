@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.featuresTrainer" />
+    <orderEntry type="module" module-name="intellij.python.featuresTrainer" />
   </component>
 </module>

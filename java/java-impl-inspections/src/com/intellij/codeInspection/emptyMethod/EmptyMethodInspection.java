@@ -124,7 +124,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
             fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
               QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
               QuickFixBundle.message("fix.add.special.annotation.family"),
-              EXCLUDE_ANNOS, qualifiedName, psi));
+              JavaBundle.message("special.annotations.annotations.list"), EXCLUDE_ANNOS, qualifiedName
+            ));
             return true;
           });
         }
@@ -310,6 +311,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static final class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix {
+    // QuickFix is registered for global inspection only; not displayed in the editor anyway
+    @SuppressWarnings("ActionIsNotPreviewFriendly")
     private final ProblemDescriptionsProcessor myProcessor;
     private final boolean myNeedToDeleteHierarchy;
 

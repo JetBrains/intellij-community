@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.assertTrue;
 
@@ -93,8 +95,8 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   }
 
   @Override
-  public @NotNull SdkTestFixture createSdkFixture() {
-    return new SdkTestFixtureImpl();
+  public @NotNull SdkTestFixture createSdkFixture(@NotNull SdkType sdkType, @NotNull Predicate<String> versionFilter) {
+    return new SdkTestFixtureImpl(sdkType, it -> versionFilter.test(it));
   }
 
   public static final class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {

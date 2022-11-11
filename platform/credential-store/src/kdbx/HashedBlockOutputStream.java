@@ -98,7 +98,6 @@ final class HashedBlockOutputStream extends OutputStream {
    * @param b      the byte array to write
    * @param offset offset in the byte array
    * @param length number of bytes to write
-   * @throws IOException
    */
   private void put(byte[] b, int offset, int length) throws IOException {
     if (isClosed) {
@@ -148,7 +147,6 @@ final class HashedBlockOutputStream extends OutputStream {
    * Write a 4 byte int value to the underlying stream in appropriate endian format
    *
    * @param value the value to write
-   * @throws IOException
    */
   private void writeInt(int value) throws IOException {
     int output = Integer.reverseBytes(value);

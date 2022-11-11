@@ -11,14 +11,14 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyseInModalWindow
+import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.refactoring.formatPsiClass
@@ -122,7 +122,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
             val overriddenDeclarationsAndRenders: Map<PsiElement, String>
         )
 
-        fun getClassDescription(overriddenElement: PsiElement, containingSymbol: KtSymbolWithKind?): String =
+        fun KtAnalysisSession.getClassDescription(overriddenElement: PsiElement, containingSymbol: KtSymbolWithKind?): String =
             when (overriddenElement) {
                 is KtNamedFunction, is KtProperty, is KtParameter -> (containingSymbol as? KtNamedSymbol)?.name?.asString() ?: "Unknown"  //TODO render symbols
                 is PsiMethod -> {
@@ -133,7 +133,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
             }.let { "    $it\n" }
 
 
-        val analyzeResult = analyseInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
+        val analyzeResult = analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
             (declaration.getSymbol() as? KtCallableSymbol)?.let { callableSymbol ->
                 callableSymbol.originalContainingClassForOverride?.let { containingClass ->
                     val overriddenSymbols = callableSymbol.getAllOverriddenSymbols()

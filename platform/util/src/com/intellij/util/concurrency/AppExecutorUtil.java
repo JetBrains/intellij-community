@@ -44,7 +44,11 @@ public final class AppExecutorUtil {
   /**
    * Returns {@link ScheduledExecutorService} which allows to {@link ScheduledExecutorService#schedule(Callable, long, TimeUnit)} tasks later
    * and execute them in parallel in the application pool (see {@link #getAppExecutorService()}) not more than at {@code maxThreads} at a time.
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human readable and use title capitalization
+   * The created pool doesn't keep queued but not yet executed delayed tasks on shutdown,
+   * which equivalent to having both {@code ExecuteExistingDelayedTasksAfterShutdownPolicy} and {@code ContinueExistingPeriodicTasksAfterShutdownPolicy} policies to false.
+   * See {@link java.util.concurrent.ScheduledThreadPoolExecutor#getExecuteExistingDelayedTasksAfterShutdownPolicy()} and {@link ScheduledThreadPoolExecutor#getContinueExistingPeriodicTasksAfterShutdownPolicy()} for details.
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
+   *
    */
   @NotNull
   public static ScheduledExecutorService createBoundedScheduledExecutorService(@NotNull @NonNls String name, int maxThreads) {
@@ -54,7 +58,7 @@ public final class AppExecutorUtil {
   /**
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the application pool
    *         (i.e., all tasks are run in the {@link #getAppExecutorService()} global thread pool).
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use title capitalization
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
    * @see #getAppExecutorService()
    */
   @NotNull
@@ -69,7 +73,7 @@ public final class AppExecutorUtil {
   }
 
   /**
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use title capitalization
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
    */
   @NotNull
@@ -77,7 +81,7 @@ public final class AppExecutorUtil {
     return new BoundedTaskExecutor(name, backendExecutor, maxThreads, true);
   }
   /**
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use title capitalization
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
    * which will shut down itself when {@code parentDisposable} gets disposed.
    */
@@ -92,7 +96,7 @@ public final class AppExecutorUtil {
   }
 
   /**
-   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use title capitalization
+   * @param name is used to generate thread name which will be shown in thread dumps, so it should be human-readable and use Title Capitalization
    * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}.
    * Tasks are prioritized according to {@code comparator}.
    */
@@ -111,6 +115,6 @@ public final class AppExecutorUtil {
 
   @ApiStatus.Internal
   public static boolean propagateContextOrCancellation() {
-    return LoadingState.APP_STARTED.isOccurred() && (Propagation.propagateThreadContext() || Propagation.propagateCancellation());
+    return LoadingState.APP_STARTED.isOccurred() && (Propagation.isPropagateThreadContext() || Propagation.isPropagateCancellation());
   }
 }

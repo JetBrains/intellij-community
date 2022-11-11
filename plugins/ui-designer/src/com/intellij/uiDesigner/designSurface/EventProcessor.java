@@ -21,10 +21,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class EventProcessor {
   private Cursor myCursor;
 

@@ -26,6 +26,9 @@ val saveProjectType: PatternCondition<GroovyMethodResult> = object : PatternCond
 
 val DELEGATED_TYPE: Key<Boolean> = Key.create("gradle.delegated.type")
 
+@JvmField
+val DECLARATION_ALTERNATIVES: Key<List<String>> = Key.create("gradle.declaration.alternatives")
+
 /**
  * @author Vladislav.Soroka
  */

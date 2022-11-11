@@ -153,16 +153,9 @@ open class LanguageToolChecker : TextChecker() {
     }
 
     private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
-      if (match.rule is GenericUnpairedBracketsRule) {
-        if (match.fromPos > 0 &&
-            (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
+      if (match.rule is GenericUnpairedBracketsRule && match.fromPos > 0) {
+        if (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\"")) {
           return true //https://github.com/languagetool-org/languagetool/issues/5269
-        }
-        if (text.startsWith("'", match.fromPos) && text.subSequence(match.fromPos + 1, text.length).contains("'")) {
-          return true // https://github.com/languagetool-org/languagetool/issues/7249
-        }
-        if (text.substring(match.fromPos, match.toPos) == "\"" && text.subSequence(0, match.fromPos).contains("\"")) {
-          return true // e.g. commented raise ValueError(f"a very long text so that the vicinity of the error doesn't seem like code")
         }
         if (couldBeOpenClosedRange(text, match.fromPos)) {
           return true
@@ -182,7 +175,6 @@ open class LanguageToolChecker : TextChecker() {
     }
 
     // https://github.com/languagetool-org/languagetool/issues/6566
-    @OptIn(ExperimentalStdlibApi::class)
     private fun couldBeOpenClosedRange(text: TextContent, index: Int): Boolean {
       val unpaired = text[index]
       return "([".contains(unpaired) && openClosedRangeStart.matchesAt(text, index) ||

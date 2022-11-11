@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -12,6 +12,7 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
 
   /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected VolatileNullableLazyValue() { }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable
 
@@ -24,13 +24,16 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInfoInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
@@ -62,6 +65,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
 import kotlin.math.min
+import org.jetbrains.kotlin.idea.util.ElementKind
 
 object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     val INTRODUCE_VARIABLE get() = KotlinBundle.message("introduce.variable")
@@ -564,17 +568,17 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
 
             physicalExpression.chooseApplicableComponentFunctionsForVariableDeclaration(replaceOccurrence, editor) { componentFunctions ->
-                val validator = NewDeclarationNameValidator(
+                val validator = Fe10KotlinNewDeclarationNameValidator(
                     commonContainer,
                     calculateAnchor(commonParent, commonContainer, allReplaces),
-                    NewDeclarationNameValidator.Target.VARIABLES
+                    KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                 )
 
                 val suggestedNames = if (componentFunctions.isNotEmpty()) {
                     val collectingValidator = CollectingNameValidator(filter = validator)
                     componentFunctions.map { suggestNamesForComponent(it, project, collectingValidator) }
                 } else {
-                    KotlinNameSuggester.suggestNamesByExpressionAndType(
+                    Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(
                         expression,
                         substringInfo?.type,
                         bindingContext,
@@ -815,7 +819,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         if (file !is KtFile) return
 
         try {
-            selectElement(editor, file, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) {
+            selectElement(editor, file, ElementKind.EXPRESSION) {
                 doRefactoring(project, editor, it as KtExpression?, false, null, null)
             }
         } catch (e: IntroduceRefactoringException) {

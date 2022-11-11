@@ -1062,7 +1062,6 @@ public final class ExpressionUtils {
    * Returns the expression itself (probably with stripped parentheses) or the corresponding value if the expression is a local variable
    * reference which is initialized and not used anywhere else
    *
-   * @param expression
    * @return a resolved expression or expression itself
    */
   @Contract("null -> null")
@@ -1117,7 +1116,7 @@ public final class ExpressionUtils {
     AtomicBoolean result = new AtomicBoolean(false);
     root.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         if (matcher.test(expression)) {
           result.set(true);
@@ -1126,7 +1125,7 @@ public final class ExpressionUtils {
       }
 
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression expression) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
         if (isMatchingChildAlwaysExecuted(expression.getCondition(), matcher) ||
             (isMatchingChildAlwaysExecuted(expression.getThenExpression(), matcher) &&
              isMatchingChildAlwaysExecuted(expression.getElseExpression(), matcher))) {
@@ -1136,7 +1135,7 @@ public final class ExpressionUtils {
       }
 
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         IElementType type = expression.getOperationTokenType();
         if (type.equals(JavaTokenType.OROR) || type.equals(JavaTokenType.ANDAND)) {
           PsiExpression firstOperand = ArrayUtil.getFirstElement(expression.getOperands());
@@ -1151,10 +1150,10 @@ public final class ExpressionUtils {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
     });
     return result.get();
   }
@@ -1195,8 +1194,8 @@ public final class ExpressionUtils {
     if (isZero(diff) && eq.expressionsAreEquivalent(to, from)) return true;
 
     if (to instanceof PsiPolyadicExpression && from instanceof PsiPolyadicExpression) {
-      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> polyadicDiff = getPolyadicDiff(((PsiPolyadicExpression)from),
-                                                                                                ((PsiPolyadicExpression)to));
+      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> polyadicDiff = getPolyadicDiff((PsiPolyadicExpression)from,
+                                                                                                (PsiPolyadicExpression)to);
       from = polyadicDiff.first;
       to = polyadicDiff.second;
     }
@@ -1217,7 +1216,7 @@ public final class ExpressionUtils {
     if (to instanceof PsiBinaryExpression && ((PsiBinaryExpression)to).getOperationTokenType().equals(JavaTokenType.PLUS)) {
       PsiExpression left = ((PsiBinaryExpression)to).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)to).getROperand();
-      if (right != null && (eq.expressionsAreEquivalent(left, from) && eq.expressionsAreEquivalent(right, diff)) ||
+      if (right != null && eq.expressionsAreEquivalent(left, from) && eq.expressionsAreEquivalent(right, diff) ||
           (eq.expressionsAreEquivalent(right, from) && eq.expressionsAreEquivalent(left, diff))) {
         return true;
       }

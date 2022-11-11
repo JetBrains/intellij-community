@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter.lineIndent
 
@@ -109,11 +109,19 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 }
             }
 
-            before.isAt(LeftParenthesis) && after.isAt(RightParenthesis) ->
+            after.isAt(RightParenthesis) ->
                 factory.createIndentCalculatorForParenthesis(before, currentPosition, after, offset, settings)?.let { return it }
+
+            after.isAt(Dot) || after.isAt(Quest) && after.after().isAt(Dot) ->
+                factory.createIndentCalculatorForDot(before, settings)?.let { return it }
         }
 
         findFunctionOrPropertyOrMultiDeclarationBefore(before)?.let {
+            val indent = if (after.similarToPropertyAccessorKeyword()) Indent.getNormalIndent() else Indent.getNoneIndent()
+            return factory.createIndentCalculator(indent, it.startOffset)
+        }
+
+        findContextReceiverListBefore(before)?.let {
             return factory.createIndentCalculator(Indent.getNoneIndent(), it.startOffset)
         }
 
@@ -132,14 +140,17 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
     private enum class KotlinElement : SemanticEditorPosition.SyntaxElement {
         TemplateEntryOpen,
         TemplateEntryClose,
+
         Arrow,
         WhenKeyword,
         WhileKeyword,
         RegularStringPart,
         KDoc,
         Identifier,
+
         OpenTypeBrace,
         CloseTypeBrace,
+
         FunctionKeyword,
         Dot,
         Quest,
@@ -147,6 +158,10 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         Eq,
 
         Val, Var,
+
+        OpenQuote, ClosingQuote,
+
+        Literal,
     }
 
     companion object {
@@ -159,6 +174,9 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
 
             KtTokens.LONG_TEMPLATE_ENTRY_START to TemplateEntryOpen,
             KtTokens.LONG_TEMPLATE_ENTRY_END to TemplateEntryClose,
+
+            KtTokens.OPEN_QUOTE to OpenQuote,
+            KtTokens.CLOSING_QUOTE to ClosingQuote,
 
             KtTokens.LBRACE to BlockOpeningBrace,
             KtTokens.RBRACE to BlockClosingBrace,
@@ -181,7 +199,14 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             KtTokens.FOR_KEYWORD to ForKeyword,
 
             KtTokens.REGULAR_STRING_PART to RegularStringPart,
+
             KtTokens.IDENTIFIER to Identifier,
+            KtTokens.GET_KEYWORD to Identifier,
+            KtTokens.SET_KEYWORD to Identifier,
+            KtTokens.CONSTRUCTOR_KEYWORD to Identifier,
+            KtTokens.CATCH_KEYWORD to Identifier,
+            KtTokens.CONTEXT_KEYWORD to Identifier,
+
             KtTokens.FUN_KEYWORD to FunctionKeyword,
             KtTokens.DOT to Dot,
             KtTokens.QUEST to Quest,
@@ -192,6 +217,10 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
 
             KtTokens.VAL_KEYWORD to Val,
             KtTokens.VAR_KEYWORD to Var,
+
+            KtTokens.INTEGER_LITERAL to Literal,
+            KtTokens.FLOAT_LITERAL to Literal,
+            KtTokens.CHARACTER_LITERAL to Literal,
         )
 
         private val CONTROL_FLOW_KEYWORDS: HashSet<SemanticEditorPosition.SyntaxElement> = hashSetOf(
@@ -210,6 +239,12 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             BlockComment,
         )
 
+        private val PARENTHESES: List<Pair<SemanticEditorPosition.SyntaxElement, SemanticEditorPosition.SyntaxElement>> = listOf(
+            LeftParenthesis to RightParenthesis,
+            BlockOpeningBrace to BlockClosingBrace,
+            ArrayOpeningBracket to ArrayClosingBracket,
+        )
+
         private fun IndentCalculatorFactory.createIndentCalculatorForBrace(
             before: SemanticEditorPosition,
             after: SemanticEditorPosition,
@@ -225,7 +260,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 return createIndentCalculator(defaultIndent, 0)
             }
 
-            if (after.after().afterOptionalMix(*WHITE_SPACE_OR_COMMENT_BIT_SET).isAt(Comma)) {
+            if (after.afterIgnoringWhiteSpaceOrComment().isAt(Comma)) {
                 return createIndentCalculator(createAlignMultilineIndent(leftBrace), leftBrace.startOffset)
             }
 
@@ -241,51 +276,177 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             return createIndentCalculator(defaultIndent, resultPosition.startOffset)
         }
 
+        private tailrec fun IndentCalculatorFactory.createIndentCalculatorForDot(
+            beforeDotPosition: SemanticEditorPosition,
+            settings: KotlinIndentationAdjuster,
+        ): IndentCalculator? {
+            // cases:
+            //   abc|.call()
+            //   abc()|.call()
+            //   abc[]|.call()
+            //   abc{}|.call()
+            val calleeOrReference = when {
+                beforeDotPosition.isAt(Literal) -> beforeDotPosition
+                beforeDotPosition.isAt(ClosingQuote) ->
+                    beforeDotPosition.before().findLeftParenthesisBackwardsSkippingNested(
+                        OpenQuote,
+                        ClosingQuote,
+                    )
+
+                else -> findCalleeOrReference(beforeDotPosition)
+            }
+
+            if (calleeOrReference?.isAtEnd != false) {
+                return null
+            }
+
+            val copyOfCalleeOrReference = calleeOrReference.copy()
+            // calleeOrReference is 'abc'
+            calleeOrReference.moveBefore()
+            if (!calleeOrReference.moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment() || calleeOrReference.isAtEnd) {
+                // TODO: line break after dot
+                // case: first call in a chain
+                return createIndentCalculator(settings.indentForChainedCalls, copyOfCalleeOrReference.startOffset)
+            }
+
+            // abc.abc|.call()
+            // -----------
+            // abc.abc
+            //   .abc|.call()
+            if (calleeOrReference.isAt(Dot)) {
+                val before = calleeOrReference.copyAnd(SemanticEditorPosition::moveBefore)
+                if (before.isAt(Quest)) {
+                    before.moveBefore()
+                }
+
+                if (!before.moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment()) {
+                    // case: non-first call in a chain
+                    return createIndentCalculator(
+                        Indent.getNoneIndent(),
+                        calleeOrReference.startOffset,
+                    )
+                }
+
+                // abc.abc
+                //   .abc.abc|.call()
+                return createIndentCalculatorForDot(before, settings)
+            }
+
+            // case: expression/statement before chain
+            // return abc|.call()
+            // -----------
+            // return abc
+            //     .call1()|.call2()
+            return when {
+                settings.alignMultilineParametersInCalls && calleeOrReference.isAt(LeftParenthesis) ->
+                    createIndentCalculatorWithCustomBaseIndent(
+                        settings.indentForChainedCalls,
+                        " ".repeat(copyOfCalleeOrReference.startOffset - calculateLineOffset(copyOfCalleeOrReference)),
+                    )
+
+                else -> createIndentCalculator(settings.indentForChainedCalls, calleeOrReference.startOffset)
+            }
+        }
+
         private fun IndentCalculatorFactory.createIndentCalculatorForParenthesis(
-            leftParenthesis: SemanticEditorPosition,
+            before: SemanticEditorPosition,
             currentPosition: SemanticEditorPosition,
             rightParenthesis: SemanticEditorPosition,
             offset: Int,
             settings: KotlinIndentationAdjuster,
         ): IndentCalculator? {
-            assert(leftParenthesis.isAt(LeftParenthesis))
             assert(rightParenthesis.isAt(RightParenthesis))
 
-            // case only for caret before [RightParenthesis]
-            if (!currentPosition.hasLineBreaksAfter(offset)) {
-                val indentForParentheses by lazy {
-                    if (settings.alignWhenMultilineFunctionParentheses) createAlignMultilineIndent(leftParenthesis) else Indent.getNoneIndent()
-                }
+            val leftParenthesis = currentPosition.findLeftParenthesisBackwardsSkippingNested(LeftParenthesis, RightParenthesis)
+            if (!leftParenthesis.isAt(LeftParenthesis)) return null
 
-                findFunctionKeywordBeforeIdentifier(leftParenthesis.beforeIgnoringWhiteSpaceOrComment())?.let {
-                    return createIndentCalculator(indentForParentheses, it.startOffset)
-                }
+            val hasLineBreaksAfter = currentPosition.hasLineBreaksAfter(offset)
+            fun createIndent(
+                isParameterList: Boolean,
+                baseLineOffset: Int,
+            ): IndentCalculator {
+                val indent = if (before.isAt(Comma) || hasLineBreaksAfter) {
+                    val firstElement = leftParenthesis.afterIgnoringWhiteSpaceOrComment()
+                    when {
+                        !firstElement.isAt(RightParenthesis) && (
+                                isParameterList && settings.alignMultilineParameters ||
+                                        !isParameterList && settings.alignMultilineParametersInCalls
+                                ) -> {
+                            return createIndentCalculator(createAlignMultilineIndent(firstElement), firstElement.startOffset)
+                        }
 
-                // NB: this covered [KtTokens.CONSTRUCTOR_KEYWORD], [KtTokens.SET_KEYWORD], [KtTokens.GET_KEYWORD], [KtTokens.INIT_KEYWORD] as well
-                if (isSimilarToFunctionInvocation(leftParenthesis)) {
-                    return createIndentCalculator(indentForParentheses, leftParenthesis.startOffset)
-                }
+                        isParameterList && settings.continuationIndentInParameterLists ||
+                                !isParameterList && settings.continuationIndentInArgumentLists -> Indent.getContinuationIndent()
 
-                if (isDestructuringDeclaration(leftParenthesis, rightParenthesis)) {
-                    return createIndentCalculator(Indent.getNoneIndent(), leftParenthesis.startOffset)
-                }
-
-                leftParenthesis.beforeIgnoringWhiteSpaceOrComment().let { keyword ->
-                    if (keyword.isControlFlowKeyword()) {
-                        return createIndentCalculator(Indent.getNoneIndent(), keyword.startOffset)
+                        else -> Indent.getNormalIndent()
                     }
+                } else {
+                    if (settings.alignWhenMultilineFunctionParentheses)
+                        createAlignMultilineIndent(leftParenthesis)
+                    else
+                        Indent.getNoneIndent()
                 }
 
-                val indentForBinaryExpression = if (settings.alignWhenMultilineBinaryExpression)
-                    createAlignMultilineIndent(leftParenthesis)
-                else
-                    Indent.getContinuationIndent()
-
-                return createIndentCalculator(indentForBinaryExpression, leftParenthesis.startOffset)
+                return createIndentCalculator(indent, baseLineOffset)
             }
 
+            findFunctionKeywordBeforeIdentifier(leftParenthesis.beforeIgnoringWhiteSpaceOrComment())?.let {
+                return createIndent(isParameterList = true, it.startOffset)
+            }
+
+            // NB: this covered [KtTokens.CONSTRUCTOR_KEYWORD], [KtTokens.SET_KEYWORD], [KtTokens.GET_KEYWORD], [KtTokens.INIT_KEYWORD] as well
+            if (isSimilarToFunctionInvocation(leftParenthesis)) {
+                return createIndent(isParameterList = false, leftParenthesis.startOffset)
+            }
+
+            if (isDestructuringDeclaration(leftParenthesis, rightParenthesis)) {
+                return createIndentCalculator(
+                    if (before.isAt(Comma) || hasLineBreaksAfter) Indent.getNormalIndent() else Indent.getNoneIndent(),
+                    leftParenthesis.startOffset
+                )
+            }
+
+            leftParenthesis.beforeIgnoringWhiteSpaceOrComment().let { keyword ->
+                val indent = when {
+                    keyword.isAt(IfKeyword) && !before.isAt(LeftParenthesis) ->
+                        if (settings.continuationIndentInIfCondition) Indent.getContinuationIndent() else Indent.getNormalIndent()
+
+                    keyword.isControlFlowKeyword() -> if (hasLineBreaksAfter) Indent.getNormalIndent() else Indent.getNoneIndent()
+                    else -> null
+                }
+
+                indent?.let { return createIndentCalculator(it, keyword.startOffset) }
+            }
+
+            return if (settings.alignWhenMultilineBinaryExpression && !hasLineBreaksAfter) {
+                val anchor = if (before.isAt(LeftParenthesis)) leftParenthesis else leftParenthesis.afterIgnoringWhiteSpaceOrComment()
+                createIndentCalculator(createAlignMultilineIndent(anchor), anchor.startOffset)
+            } else {
+                createIndentCalculator(Indent.getContinuationIndent(), leftParenthesis.startOffset)
+            }
+        }
+
+        /**
+         * ```
+         * context(A) <caret> fun x()
+         * ```
+         */
+        private fun findContextReceiverListBefore(before: SemanticEditorPosition): SemanticEditorPosition? {
+            if (!before.isAt(RightParenthesis)) return null
+
+            val probableContextReceiverKeyword = before.copy().apply {
+                moveBeforeParentheses(LeftParenthesis, RightParenthesis)
+            }
+
+            if (probableContextReceiverKeyword.isAt(Identifier)
+                && probableContextReceiverKeyword.after().isAt(LeftParenthesis)
+                && probableContextReceiverKeyword.textOfCurrentPosition() == KtTokens.CONTEXT_KEYWORD.value
+            ) {
+                return probableContextReceiverKeyword
+            }
             return null
         }
+
 
         /**
          * @param endOfDeclaration is position before '=' for expression body or '{' for block body
@@ -394,21 +555,53 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         }
 
         /**
-         * @param leftParenthesis is `(` or `[`
+         * @param leftParenthesis is `(`, `[` or `{`
          */
-        private fun isSimilarToFunctionInvocation(leftParenthesis: SemanticEditorPosition): Boolean = with(leftParenthesis.copy()) {
-            moveBefore()
+        private fun isSimilarToFunctionInvocation(leftParenthesis: SemanticEditorPosition): Boolean =
+            findCalleeOrReferenceBeforeLeftParenthesis(leftParenthesis) != null
 
-            if (!moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment() || isAtEnd) return false
+        /**
+         * @param position reference or left/right parentheses
+         */
+        private fun findCalleeOrReference(position: SemanticEditorPosition): SemanticEditorPosition? {
+            if (position.isAt(Identifier)) return position.copy()
 
-            // calls with types e.g. `test<Int>()`
-            if (isAt(CloseTypeBrace)) {
-                moveBeforeParentheses(OpenTypeBrace, CloseTypeBrace)
-                return moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment() && isIdentifier()
+            for ((left, right) in PARENTHESES) {
+                if (position.isAt(left)) {
+                    return findCalleeOrReferenceBeforeLeftParenthesis(position)
+                }
+
+                if (!position.isAt(right)) continue
+
+                val leftParenthesis = position.copyAnd {
+                    it.moveBeforeParentheses(left, right)
+                    it.moveAfter()
+                }
+
+                return moveToCalleeOrReferenceBeforeLeftParenthesisIfPossible(leftParenthesis)
             }
 
-            return isIdentifier() || isAtAnyOf(RightParenthesis, ArrayClosingBracket)
+            return null
         }
+
+        private fun findCalleeOrReferenceBeforeLeftParenthesis(leftParenthesis: SemanticEditorPosition): SemanticEditorPosition? =
+            leftParenthesis.copy().let(::moveToCalleeOrReferenceBeforeLeftParenthesisIfPossible)
+
+        private fun moveToCalleeOrReferenceBeforeLeftParenthesisIfPossible(leftParenthesis: SemanticEditorPosition): SemanticEditorPosition? =
+            with(leftParenthesis) {
+                val canBeWithTypeBraces = leftParenthesis.isAtAnyOf(LeftParenthesis, BlockOpeningBrace)
+                moveBefore()
+
+                if (!moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment() || isAtEnd) return null
+
+                // calls with types e.g. `test<Int>()`
+                if (isAt(CloseTypeBrace) && canBeWithTypeBraces) {
+                    moveBeforeParentheses(OpenTypeBrace, CloseTypeBrace)
+                    return this.takeIf { moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment() && isIdentifier() }
+                }
+
+                return this.takeIf { isIdentifier() || isAtAnyOf(RightParenthesis, ArrayClosingBracket) }
+            }
 
         private fun isDestructuringDeclaration(
             leftParenthesis: SemanticEditorPosition,
@@ -494,9 +687,13 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         }
 
         private fun createAlignMultilineIndent(position: SemanticEditorPosition): Indent {
-            val beforeLineStart = CharArrayUtil.shiftBackwardUntil(position.chars, position.startOffset, "\n") + 1
+            val beforeLineStart = calculateLineOffset(position)
             val beforeLineWithoutIndentStart = CharArrayUtil.shiftForward(position.chars, beforeLineStart, " \t")
             return Indent.getSpaceIndent(position.startOffset - beforeLineWithoutIndentStart)
+        }
+
+        private fun calculateLineOffset(position: SemanticEditorPosition): Int {
+            return CharArrayUtil.shiftBackwardUntil(position.chars, position.startOffset, "\n") + 1
         }
 
         private fun SemanticEditorPosition.isWhileInsideDoWhile(): Boolean {
@@ -510,10 +707,12 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                         if (--whileKeywordLevel == 0) return true
                         moveBefore()
                     }
+
                     isAt(WhileKeyword) -> {
                         ++whileKeywordLevel
                         moveBefore()
                     }
+
                     isAt(BlockClosingBrace) -> moveBeforeParentheses(BlockOpeningBrace, BlockClosingBrace)
                     else -> moveBefore()
                 }
@@ -535,6 +734,11 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             currElement in CONTROL_FLOW_KEYWORDS || isCatchKeyword() || isFinallyKeyword()
 
         private fun SemanticEditorPosition.similarToCatchKeyword(): Boolean = textOfCurrentPosition() == KtTokens.CATCH_KEYWORD.value
+
+        private fun SemanticEditorPosition.similarToPropertyAccessorKeyword(): Boolean =
+            isAt(Identifier) && textOfCurrentPosition().let { text ->
+                text == KtTokens.GET_KEYWORD.value || text == KtTokens.SET_KEYWORD.value
+            }
 
         private fun SemanticEditorPosition.isCatchKeyword(): Boolean = with(copy()) {
             // try-catch-*-catch
@@ -573,16 +777,25 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         private fun SemanticEditorPosition.moveBeforeWhileThisIsWhiteSpaceOrComment() =
             moveBeforeOptionalMix(*WHITE_SPACE_OR_COMMENT_BIT_SET)
 
+        private fun SemanticEditorPosition.moveAfterWhileThisIsWhiteSpaceOrComment() =
+            moveAfterOptionalMix(*WHITE_SPACE_OR_COMMENT_BIT_SET)
+
         private fun SemanticEditorPosition.moveBeforeIgnoringWhiteSpaceOrComment() {
             moveBefore()
             moveBeforeWhileThisIsWhiteSpaceOrComment()
         }
 
+        private fun SemanticEditorPosition.moveAfterIgnoringWhiteSpaceOrComment() {
+            moveAfter()
+            moveAfterWhileThisIsWhiteSpaceOrComment()
+        }
+
         private fun SemanticEditorPosition.beforeIgnoringWhiteSpaceOrComment() = copyAnd { it.moveBeforeIgnoringWhiteSpaceOrComment() }
+        private fun SemanticEditorPosition.afterIgnoringWhiteSpaceOrComment() = copyAnd { it.moveAfterIgnoringWhiteSpaceOrComment() }
         private fun SemanticEditorPosition.moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment(): Boolean {
             while (!isAtEnd) {
                 if (isAt(Whitespace) && isAtMultiline) return false
-                if (!isAt(BlockComment)) break
+                if (!isAtAnyOf(BlockComment, Whitespace)) break
                 moveBefore()
             }
 
@@ -626,3 +839,6 @@ private fun JavaLikeLangLineIndentProvider.IndentCalculatorFactory.createIndentC
 
 private fun SemanticEditorPosition.textOfCurrentPosition(): String =
     if (isAtEnd) "" else chars.subSequence(startOffset, after().startOffset).toString()
+
+private val KotlinIndentationAdjuster.indentForChainedCalls: Indent
+    get() = if (continuationIndentForChainedCalls) Indent.getContinuationIndent() else Indent.getNormalIndent()

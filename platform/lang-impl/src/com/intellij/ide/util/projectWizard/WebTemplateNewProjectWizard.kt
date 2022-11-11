@@ -17,7 +17,7 @@ abstract class WebTemplateNewProjectWizardBase : GeneratorNewProjectWizard {
 }
 
 class WebTemplateNewProjectWizard(val template: WebProjectTemplate<*>) : WebTemplateNewProjectWizardBase() {
-  override val id: String = template.javaClass.name
+  override val id: String = template.id
   override val name: String = StringUtil.capitalizeWords(template.name, true)
   override val icon: Icon = template.icon
 
@@ -26,8 +26,6 @@ class WebTemplateNewProjectWizard(val template: WebProjectTemplate<*>) : WebTemp
 }
 
 abstract class MultiWebTemplateNewProjectWizard(protected val templates: List<WebProjectTemplate<*>>) : WebTemplateNewProjectWizardBase() {
-  override val id: String = templates.joinToString { it.javaClass.name }
-
   override fun createTemplateStep(parent: NewProjectWizardBaseStep): NewProjectWizardStep {
     return object : AbstractNewProjectWizardMultiStepBase(parent) {
       override val label: String

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -223,10 +224,10 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 inType -> PsiType.LONG.equals(inType) || inType.equalsToText(CommonClassNames.JAVA_LANG_LONG),
                 outType -> PsiType.INT.equals(outType) || outType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)),
     new Wrapper("java.util.Collections.singleton({0})",
-                inType -> true,
+                Predicates.alwaysTrue(),
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE)),
     new Wrapper("java.util.Collections.singletonList({0})",
-                inType -> true,
+                Predicates.alwaysTrue(),
                 outType -> PsiTypesUtil.classNameEquals(outType, CommonClassNames.JAVA_UTIL_LIST)),
     new Wrapper("java.util.Arrays.stream({0})",
                 inType -> inType instanceof PsiArrayType,
@@ -239,18 +240,23 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
   }
 
   @SafeFieldForPreview
-  @Nullable private final PsiType myType;
+  private final @Nullable PsiType myType;
   @SafeFieldForPreview
-  @Nullable private final AbstractWrapper myWrapper;
+  private final @Nullable AbstractWrapper myWrapper;
+  private final @Nullable String myRole;
 
-  public WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    this(type, expression, ContainerUtil.find(WRAPPERS, w -> w.isApplicable(expression, expression.getType(), type)));
+  public WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression, @Nullable String role) {
+    this(type, expression, ContainerUtil.find(WRAPPERS, w -> w.isApplicable(expression, expression.getType(), type)), role);
   }
-  
-  private WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression, @Nullable AbstractWrapper wrapper) {
+
+  private WrapWithAdapterMethodCallFix(@Nullable PsiType type,
+                                       @NotNull PsiExpression expression,
+                                       @Nullable AbstractWrapper wrapper,
+                                       @Nullable String role) {
     super(expression);
     myType = type;
     myWrapper = wrapper;
+    myRole = role;
   }
 
   @Nls
@@ -261,7 +267,9 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     if (wrapperText == null) {
       return getFamilyName();
     }
-    return QuickFixBundle.message("wrap.with.adapter.text", wrapperText);
+    return myRole == null ?
+           QuickFixBundle.message("wrap.with.adapter.text", wrapperText) :
+           QuickFixBundle.message("wrap.with.adapter.text.role", wrapperText, myRole);
   }
 
   @Nls
@@ -277,7 +285,8 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return myType != null && myWrapper != null && myType.isValid() && BaseIntentionAction.canModify(startElement);
+    return myType != null && myWrapper != null && myType.isValid() && BaseIntentionAction.canModify(startElement) &&
+           getModifiedExpression(startElement) != null;
   }
 
   @Override

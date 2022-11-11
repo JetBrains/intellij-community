@@ -18,7 +18,6 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * Represents a group of actions.
  *
  * @see com.intellij.openapi.actionSystem.DefaultActionGroup
- * @see com.intellij.openapi.actionSystem.ComputableActionGroup
  * @see com.intellij.openapi.actionSystem.CheckedActionGroup
  * @see com.intellij.openapi.actionSystem.CompactActionGroup
  */

@@ -15,13 +15,19 @@
  */
 package com.intellij.diff.chains;
 
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,6 +94,18 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
       String title = myRequest.getTitle();
       if (title != null) return title;
       return DiffBundle.message("diff.files.generic.request.title");
+    }
+
+    @Override
+    public @Nullable FileType getContentType() {
+      ContentDiffRequest contentRequest = ObjectUtils.tryCast(myRequest, ContentDiffRequest.class);
+      if (contentRequest != null) {
+        return JBIterable.from(contentRequest.getContents())
+          .map(DiffContent::getContentType)
+          .filter(fileType -> fileType != null && fileType != UnknownFileType.INSTANCE)
+          .first();
+      }
+      return null;
     }
 
     @NotNull

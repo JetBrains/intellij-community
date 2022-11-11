@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.ui.IconManager
 import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -19,9 +20,10 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.AddMemberToSupertypeFix.MemberData
@@ -40,7 +42,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 
 abstract class AddMemberToSupertypeFix(element: KtCallableDeclaration, private val candidateMembers: List<MemberData>) :
-    KotlinQuickFixAction<KtCallableDeclaration>(element), LowPriorityAction {
+  KotlinQuickFixAction<KtCallableDeclaration>(element), LowPriorityAction {
 
     class MemberData(val signaturePreview: String, val sourceCode: String, val targetClass: KtClass)
 
@@ -184,7 +186,7 @@ class AddFunctionToSupertypeFix private constructor(element: KtNamedFunction, fu
     AddMemberToSupertypeFix(element, functions) {
 
     override val kind: String = "function"
-    override val icon: Icon = PlatformIcons.FUNCTION_ICON
+    override val icon: Icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function)
 
     companion object : AddMemberToSupertypeFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {

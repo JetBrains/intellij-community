@@ -90,7 +90,7 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
 
   fun appendTo(builder: StringBuilder) {
     consume(false)
-    builder.append(myChars, myStart, length)
+    builder.appendRange(myChars, myStart, myStart + length)
   }
 }
 

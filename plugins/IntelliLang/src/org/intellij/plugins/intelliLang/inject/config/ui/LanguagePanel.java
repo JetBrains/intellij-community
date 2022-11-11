@@ -94,10 +94,10 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
   }
 
   void updateHighlighters() {
-    final EditorImpl editor = ((EditorImpl)myPrefix.getEditor());
+    final EditorImpl editor = (EditorImpl)myPrefix.getEditor();
     if (editor == null) return;
 
-    final EditorImpl editor2 = ((EditorImpl)mySuffix.getEditor());
+    final EditorImpl editor2 = (EditorImpl)mySuffix.getEditor();
     assert editor2 != null;
 
     final Language language = InjectedLanguage.findLanguageById(getLanguage());

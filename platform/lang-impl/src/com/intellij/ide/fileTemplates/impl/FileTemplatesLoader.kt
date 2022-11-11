@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.objectTree.ThrowableInterner
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.project.stateStore
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ResourceUtil

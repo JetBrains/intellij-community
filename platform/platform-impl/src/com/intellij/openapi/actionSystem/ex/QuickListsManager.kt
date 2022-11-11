@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManager
@@ -35,7 +36,7 @@ class QuickListsManager {
         dataHolder.updateDigest(item)
         return item
       }
-    }, presentableName = IdeBundle.message("quick.lists.presentable.name"))
+    }, presentableName = IdeBundle.message("quick.lists.presentable.name"), settingsCategory = SettingsCategory.UI)
 
   init {
     EP_NAME.processWithPluginDescriptor(BiConsumer { provider, pluginDescriptor ->

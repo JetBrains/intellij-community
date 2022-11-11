@@ -16,10 +16,10 @@
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-public class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleElementImpl<D>> implements JpsSimpleElement<D> {
+public final class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleElementImpl<D>> implements JpsSimpleElement<D> {
   private D myData;
 
   public JpsSimpleElementImpl(D data) {

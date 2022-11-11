@@ -12,7 +12,8 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.kpm.idea.*
-import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.base.externalSystem.findAll
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.configuration.multiplatform.KotlinMultiplatformNativeDebugSuggester
 import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSetInMppBuildIssue
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
@@ -21,7 +22,6 @@ import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ContentRootsCreator
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.kotlin.tooling.core.Extras
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
@@ -40,7 +40,9 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
     override fun getModelProvider(): ProjectImportModelProvider? = IdeaKpmProjectProvider
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(
-        IdeaKpmProject::class.java, Extras::class.java, Unit::class.java
+        IdeaKpmProject::class.java,  // representative of kotlin-gradle-plugin-idea
+        Extras::class.java, // representative of kotlin-tooling-core
+        Unit::class.java // representative of kotlin-stdlib
     )
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
@@ -86,7 +88,7 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         }
 
         internal fun ProjectResolverContext.getIdeaKpmProject(gradleModule: IdeaModule): IdeaKpmProject? {
-            return this.getExtraProject(gradleModule, IdeaKpmProject::class.java)
+            return this.getExtraProject(gradleModule, IdeaKpmProjectContainer::class.java)?.instanceOrNull
         }
 
         private fun suggestNativeDebug(gradleModule: IdeaModule, resolverCtx: ProjectResolverContext) {

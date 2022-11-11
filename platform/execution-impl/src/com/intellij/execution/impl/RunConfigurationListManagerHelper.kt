@@ -84,6 +84,12 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
   }
 
+  fun updateConfigurationId(oldId: String, newId: String) {
+    if (customOrder.containsKey(oldId)) {
+      customOrder.put(newId, customOrder.removeInt(oldId))
+    }
+  }
+
   fun requestSort() {
     isSorted = false
     immutableSortedSettingsList = null

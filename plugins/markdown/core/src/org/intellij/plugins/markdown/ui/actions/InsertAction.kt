@@ -11,8 +11,13 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 
 internal class InsertAction: DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     val dataContext = event.dataContext
+    val insertGroup = requireNotNull(ActionUtil.getActionGroup("Markdown.InsertGroup"))
     val popup = JBPopupFactory.getInstance().createActionGroupPopup(
       MarkdownBundle.message("action.Markdown.Insert.text"),
       insertGroup,
@@ -28,14 +33,5 @@ internal class InsertAction: DumbAwareAction() {
     val editor = event.getData(PlatformDataKeys.EDITOR)
     val file = event.getData(PlatformDataKeys.PSI_FILE)
     event.presentation.isEnabledAndVisible = editor != null && file?.language?.isMarkdownLanguage() == true
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
-
-  companion object {
-    private val insertGroup
-      get() = requireNotNull(ActionUtil.getActionGroup("Markdown.InsertGroup"))
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.util.DiffLineSeparatorRenderer.SeparatorPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -15,7 +16,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -455,19 +459,18 @@ public final class DiffDrawUtil {
                                                                       int offset1,
                                                                       int offset2,
                                                                       @NotNull BooleanGetter condition) {
-    return createLineSeparatorHighlighter(editor, offset1, offset2, condition, null);
+    return createLineSeparatorHighlighter(editor, offset1, offset2, new SimpleSeparatorPresentation(condition));
   }
 
   @NotNull
   public static List<RangeHighlighter> createLineSeparatorHighlighter(@NotNull Editor editor,
                                                                       int offset1,
                                                                       int offset2,
-                                                                      @NotNull BooleanGetter condition,
-                                                                      @Nullable Computable<String> description) {
+                                                                      @NotNull SeparatorPresentation presentation) {
     RangeHighlighter marker = editor.getMarkupModel()
       .addRangeHighlighter(null, offset1, offset2, LINE_MARKER_LAYER, HighlighterTargetArea.LINES_IN_RANGE);
 
-    DiffLineSeparatorRenderer renderer = new DiffLineSeparatorRenderer(editor, condition, description);
+    DiffLineSeparatorRenderer renderer = new DiffLineSeparatorRenderer(editor, presentation);
     marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
     marker.setLineSeparatorRenderer(renderer);
     marker.setLineMarkerRenderer(renderer);
@@ -841,6 +844,33 @@ public final class DiffDrawUtil {
   public static class DiffLayeredRendererMarker implements CustomHighlighterRenderer {
     @Override
     public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
+    }
+  }
+
+  private static class SimpleSeparatorPresentation implements SeparatorPresentation {
+    private final @NotNull BooleanGetter myCondition;
+
+    SimpleSeparatorPresentation(@NotNull BooleanGetter condition) {
+      myCondition = condition;
+    }
+
+    @Override
+    public boolean isVisible() {
+      return myCondition.get();
+    }
+
+    @Override
+    public boolean isHovered() {
+      return false;
+    }
+
+    @Override
+    public @Nullable String getDescription() {
+      return null;
+    }
+
+    @Override
+    public void setExpanded(boolean value) {
     }
   }
 }

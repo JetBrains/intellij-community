@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jpsBootstrap;
 
 import com.google.common.base.StandardSystemProperty;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.util.Pair;
-import groovy.transform.CompileStatic;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader;
 import org.jetbrains.jps.model.JpsProject;
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
 
-public class ClassesFromCompileInc {
+public final class ClassesFromCompileInc {
   public final static String MANIFEST_JSON_URL_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_URL";
 
   public static void downloadProjectClasses(JpsProject project, BuildDependenciesCommunityRoot communityRoot, Collection<JpsModule> modules) throws IOException, InterruptedException {
@@ -93,7 +92,6 @@ public class ClassesFromCompileInc {
       .stream().collect(Collectors.toUnmodifiableMap(pair -> pair.getFirst(), pair -> pair.getSecond()));
   }
 
-  @CompileStatic
   private static final class CompilationPartsMetadata {
     @SerializedName("server-url")
     public String serverUrl;

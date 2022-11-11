@@ -16,7 +16,7 @@ public class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionT
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (aClass.isRecord()) {
           if (InspectionProjectProfileManager.isInformationLevel(getShortName(), aClass)) {
             PsiElement brace = aClass.getLBrace();

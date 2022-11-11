@@ -11,3 +11,5 @@ fun test() {
     val f = A.T::bar
     A.T().<caret>bar(1)
 }
+
+// FIR_COMPARISON

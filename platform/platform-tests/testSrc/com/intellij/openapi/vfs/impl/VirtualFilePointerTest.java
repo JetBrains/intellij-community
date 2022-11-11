@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
+import com.intellij.CacheSwitcher;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.mock.MockVirtualFile;
@@ -160,6 +161,39 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VfsTestUtil.deleteFile(getVirtualFile(fileToDelete));
     assertFalse(fileToDeletePointer.isValid());
     assertEquals("[before:true, after:false]", fileToDeleteListener.log.toString());
+  }
+
+  @Test
+  public void testSwitchingVfs() {
+    final var file = tempDir.newFile("myfile.txt");
+
+    // avoiding root resolve in tempDir
+    // otherwise there will be an exception on its remove using VirtualFile
+    final var pointer = myVirtualFilePointerManager.create(
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file),
+      disposable,
+      null
+    );
+
+    assertTrue(pointer.isValid());
+    assertNotNull(pointer.getFile());
+
+    CacheSwitcher.INSTANCE.switchIndexAndVfs(
+      null,
+      null,
+      "resetting vfs",
+      () -> {
+        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertUrlBasedPointers();
+
+        assertFalse(pointer.isValid());
+        assertNull(pointer.getFile());
+
+        return null;
+      }
+    );
+
+    assertTrue(pointer.isValid());
+    assertNotNull(pointer.getFile());
   }
 
   @Test

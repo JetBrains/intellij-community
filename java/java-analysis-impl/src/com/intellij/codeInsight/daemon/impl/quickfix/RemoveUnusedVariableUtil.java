@@ -41,6 +41,13 @@ public final class RemoveUnusedVariableUtil {
     return !writes.isEmpty();
   }
 
+  public static RemoveMode getModeForPreview(PsiExpression element, @Nullable PsiVariable variableToIgnore) {
+    List<PsiElement> sideEffects = new ArrayList<>();
+    boolean hasSideEffects = checkSideEffects(element, variableToIgnore, sideEffects);
+    if (!hasSideEffects || sideEffects.isEmpty()) return RemoveMode.DELETE_ALL;
+    return RemoveMode.MAKE_STATEMENT;
+  }
+
   public static PsiElement replaceElementWithExpression(PsiExpression expression,
                                                         PsiElementFactory factory,
                                                         PsiElement element) throws IncorrectOperationException {
@@ -121,7 +128,7 @@ public final class RemoveUnusedVariableUtil {
 
   static void collectReferences(@NotNull PsiElement context, final PsiVariable variable, final List<? super PsiElement> references) {
     context.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
         super.visitReferenceExpression(expression);
       }
@@ -132,7 +139,6 @@ public final class RemoveUnusedVariableUtil {
    * @param sideEffects if null, delete usages, otherwise collect side effects
    * @return true if there are at least one unrecoverable side effect found, false if no side effects,
    *         null if read usage found (may happen if interval between fix creation in invoke() call was long enough)
-   * @throws IncorrectOperationException
    */
   static Boolean processUsage(PsiElement element, PsiVariable variable, List<? super PsiElement> sideEffects, @NotNull RemoveMode deleteMode)
     throws IncorrectOperationException {

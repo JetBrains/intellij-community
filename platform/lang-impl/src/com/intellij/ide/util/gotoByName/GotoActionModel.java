@@ -202,7 +202,18 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @Nullable
     @Override
     public String toString() {
-      return getMatchingDegree() + " " + getValueText();
+      String presentation;
+      if (value instanceof OptionDescription) {
+        presentation = String.format("%s, %s, %s",
+                                     ((OptionDescription)value).getHit(),
+                                     ((OptionDescription)value).getOption(),
+                                     ((OptionDescription)value).getConfigurableId());
+      }
+      else {
+        presentation = value.toString();
+      }
+
+      return String.format("%d %s; %s; %s", getMatchingDegree(), getValueText(), presentation, value.getClass());
     }
 
     public int getMatchingDegree() {
@@ -743,7 +754,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
       boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
       IconCompOptionalCompPanel<SimpleColoredComponent>
-        panel = new IconCompOptionalCompPanel<SimpleColoredComponent>(nameComponent) {
+        panel = new IconCompOptionalCompPanel<>(nameComponent) {
         @Override
         public AccessibleContext getAccessibleContext() {
           return nameComponent.getAccessibleContext();

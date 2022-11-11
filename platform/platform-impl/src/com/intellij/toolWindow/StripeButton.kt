@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.RelativeFont
+import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
@@ -31,7 +32,6 @@ import javax.swing.*
 
 /**
  * @author Eugene Belyaev
- * @author Vladimir Kondratyev
  */
 class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl) : AnchoredButton(), DataProvider {
   /**
@@ -41,6 +41,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   private var mnemonic = 0
   private var pressedWhenSelected = false
   private var dragPane: JLayeredPane? = null
+  private var dragButton: StripeButtonManager? = null
   private var dragButtonImage: JLabel? = null
   private var pressedPoint: Point? = null
   private var lastStripe: AbstractDroppableStripe? = null
@@ -161,7 +162,8 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
         return
       }
       dragPane = findLayeredPane(e) ?: return
-      val image = ToolWindowDragHelper.createDragImage(this)
+      dragButton = (parent as Stripe).getButtonFor(toolWindow.id)
+      val image = ToolWindowDragHelper.createThumbnailDragImage(this)
       val dragButtonImage = object : JLabel(IconUtil.createImageIcon((image as Image))) {
         override fun toString() = "Image for: " + this@StripeButton
       }
@@ -177,7 +179,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       dragPane!!.add(dragButtonImage, JLayeredPane.POPUP_LAYER as Any)
       dragButtonImage.size = dragButtonImage.preferredSize
       isVisible = false
-      toolWindow.toolWindowManager.toolWindowPane!!.buttonManager.startDrag()
+      toolWindow.toolWindowManager.getToolWindowPane(toolWindow).buttonManager.startDrag()
       dragKeyEventDispatcher = DragKeyEventDispatcher()
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(dragKeyEventDispatcher)
     }
@@ -191,7 +193,8 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     }
     dragButtonImage!!.location = xy
     SwingUtilities.convertPointToScreen(xy, dragPane)
-    val stripe = toolWindow.toolWindowManager.toolWindowPane!!.getStripeFor(xy, parent as Stripe)
+    val devicePoint = DevicePoint(xy, dragPane!!)
+    val stripe = toolWindow.toolWindowManager.getToolWindowPane(toolWindow).getStripeFor(devicePoint, parent as Stripe)
     if (stripe == null) {
       if (lastStripe != null) {
         lastStripe!!.resetDrop()
@@ -201,7 +204,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       if (lastStripe != null && lastStripe !== stripe) {
         lastStripe!!.resetDrop()
       }
-      stripe.processDropButton(this, dragButtonImage!!, xy)
+      stripe.processDropButton(dragButton!!, dragButtonImage!!, devicePoint)
     }
     lastStripe = stripe
   }
@@ -300,7 +303,8 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     }
     dragPane!!.remove(dragButtonImage)
     dragButtonImage = null
-    toolWindow.toolWindowManager.toolWindowPane!!.buttonManager.stopDrag()
+    dragButton = null
+    toolWindow.toolWindowManager.getToolWindowPane(toolWindow).buttonManager.stopDrag()
     dragPane!!.repaint()
     isVisible = true
     if (lastStripe != null) {

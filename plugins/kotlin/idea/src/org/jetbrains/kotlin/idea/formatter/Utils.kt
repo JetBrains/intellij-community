@@ -2,31 +2,8 @@
 
 package org.jetbrains.kotlin.idea.formatter
 
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument as _commitAndUnblockDocument
 
-fun PsiFile.commitAndUnblockDocument(): Boolean {
-    val virtualFile = this.virtualFile ?: return false
-    val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return false
-    val documentManager = PsiDocumentManager.getInstance(project)
-    documentManager.doPostponedOperationsAndUnblockDocument(document)
-    documentManager.commitDocument(document)
-    return true
-}
-
-fun PsiFile.adjustLineIndent(startOffset: Int, endOffset: Int) {
-    if (!commitAndUnblockDocument()) return
-    CodeStyleManager.getInstance(project).adjustLineIndent(this, TextRange(startOffset, endOffset))
-}
-
-fun trailingCommaAllowedInModule(source: PsiElement): Boolean = source.module
-    ?.languageVersionSettings
-    ?.supportsFeature(LanguageFeature.TrailingCommas) == true
+@Deprecated("Deprected, please use `org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument` instead")
+fun PsiFile.commitAndUnblockDocument(): Boolean = _commitAndUnblockDocument()

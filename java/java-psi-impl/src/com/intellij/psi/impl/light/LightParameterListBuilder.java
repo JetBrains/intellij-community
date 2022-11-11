@@ -85,6 +85,9 @@ public class LightParameterListBuilder extends LightElement implements PsiParame
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitParameterList(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

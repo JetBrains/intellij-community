@@ -9,14 +9,15 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.references.fe10.Fe10SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.ScriptModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -73,7 +74,7 @@ class KotlinImportOptimizer : ImportOptimizer {
         // In that case we will get ISE: Attempt to modify PSI for non-committed Document!
         if (file.isDocumentUncommitted) return null
 
-        val moduleInfo = file.getNullableModuleInfo()
+        val moduleInfo = file.moduleInfoOrNull
         if (moduleInfo !is ModuleSourceInfo && moduleInfo !is ScriptModuleInfo) return null
 
         val oldImports = file.importDirectives
@@ -240,14 +241,14 @@ class KotlinImportOptimizer : ImportOptimizer {
             override fun resolve(bindingContext: BindingContext) = reference.resolveToDescriptors(bindingContext)
 
             override fun toString() = when (reference) {
-                is SyntheticPropertyAccessorReferenceDescriptorImpl -> {
+                is Fe10SyntheticPropertyAccessorReference -> {
                     reference.toString().replace(
-                        "SyntheticPropertyAccessorReferenceDescriptorImpl",
+                        "Fe10SyntheticPropertyAccessorReference",
                         if (reference.getter) "Getter" else "Setter"
                     )
                 }
 
-                else -> reference.toString().replace("DescriptorsImpl", "")
+                else -> reference.toString().replace("Fe10", "")
             }
         }
     }

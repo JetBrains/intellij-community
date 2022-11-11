@@ -37,6 +37,8 @@ public final class HintUtil {
   @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static final Color INFORMATION_COLOR = new JBColor(0xF7F7F7, 0x4B4D4D);
+  /** @deprecated use HINT_BORDER_COLOR_KEY */
+  @Deprecated(forRemoval = true)
   public static final Color INFORMATION_BORDER_COLOR = JBColor.namedColor("InformationHint.borderColor", new JBColor(0xE0E0E0, 0x5C5E61));
   /** @deprecated use getErrorColor() */
   @Deprecated(forRemoval = true)
@@ -46,6 +48,10 @@ public final class HintUtil {
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
   public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT", new JBColor(0xb5d0fb, 0x376c89));
   public static final ColorKey ERROR_COLOR_KEY = ColorKey.createColorKey("ERROR_HINT", ERROR_COLOR);
+  /**
+   * Border color for tooltips with {@link #INFORMATION_COLOR_KEY}, {@link #QUESTION_COLOR_KEY} and {@link #ERROR_COLOR_KEY}
+   */
+  public static final ColorKey HINT_BORDER_COLOR_KEY = ColorKey.createColorKey("HINT_BORDER", new JBColor(0xC9CCD6, 0x5A5D63));
 
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();
 
@@ -64,6 +70,10 @@ public final class HintUtil {
 
   public static @NotNull Color getErrorColor() {
     return notNull(getGlobalOrDefaultColor(ERROR_COLOR_KEY), ERROR_COLOR_KEY.getDefaultColor());
+  }
+
+  public static @NotNull Color getHintBorderColor() {
+    return notNull(getGlobalOrDefaultColor(HINT_BORDER_COLOR_KEY), HINT_BORDER_COLOR_KEY.getDefaultColor());
   }
 
   public static @NotNull Color getRecentLocationsSelectionColor(EditorColorsScheme colorsScheme) {
@@ -87,7 +97,7 @@ public final class HintUtil {
   public static @NotNull HintHint getInformationHint() {
     //noinspection UseJBColor
     return new HintHint()
-      .setBorderColor(INFORMATION_BORDER_COLOR)
+      .setBorderColor(getHintBorderColor())
       .setTextBg(getInformationColor())
       .setTextFg(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
       .setFont(getBoldFont())
@@ -95,10 +105,9 @@ public final class HintUtil {
   }
 
   public static CompoundBorder createHintBorder() {
-    //noinspection UseJBColor
     return BorderFactory.createCompoundBorder(
-      new ColoredSideBorder(Color.white, Color.white, Color.gray, Color.gray, 1),
-      BorderFactory.createEmptyBorder(2, 2, 2, 2)
+      JBUI.Borders.customLine(getHintBorderColor(), 1),
+      JBUI.Borders.empty(2)
     );
   }
 
@@ -114,6 +123,7 @@ public final class HintUtil {
   public static JComponent createQuestionLabel(@HintText String text, Icon icon) {
     Color bg = getQuestionColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
+      .setBorderColor(getHintBorderColor())
       .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
       .setAwtTooltip(true);
@@ -148,7 +158,12 @@ public final class HintUtil {
                                             @Nullable HyperlinkListener hyperlinkListener,
                                             @Nullable MouseListener mouseListener) {
     Color bg = getErrorColor();
-    HintHint hintHint = new HintHint().setTextBg(bg).setTextFg(JBColor.foreground()).setFont(getBoldFont()).setAwtTooltip(true);
+    HintHint hintHint = new HintHint()
+      .setBorderColor(getHintBorderColor())
+      .setTextBg(bg)
+      .setTextFg(JBColor.foreground())
+      .setFont(getBoldFont())
+      .setAwtTooltip(true);
     HintLabel label = createLabel(text, null, bg, hintHint);
     configureLabel(label, hyperlinkListener, mouseListener, null);
     return label;
@@ -234,6 +249,9 @@ public final class HintUtil {
     private SimpleColoredComponent myColored;
     private JLabel myIcon;
 
+    @Nullable
+    private HintHint hintHint;
+
     private HintLabel() {
       setLayout(new BorderLayout());
     }
@@ -261,6 +279,7 @@ public final class HintUtil {
 
     public void setText(@NotNull SimpleColoredComponent colored) {
       clearText();
+      hintHint = null;
 
       myColored = colored;
       add(myColored, BorderLayout.CENTER);
@@ -274,6 +293,7 @@ public final class HintUtil {
 
     public void setText(@NlsContexts.Tooltip String s, HintHint hintHint) {
       clearText();
+      this.hintHint = hintHint;
 
       if (s != null) {
         myPane = IdeTooltipManager.initPane(s, hintHint, null);
@@ -285,6 +305,11 @@ public final class HintUtil {
 
       revalidate();
       repaint();
+    }
+
+    @Nullable
+    public HintHint getHintHint() {
+      return hintHint;
     }
 
     private void clearText() {

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -20,12 +21,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class StubIndex {
-  private static class StubIndexHolder {
-    private static final StubIndex ourInstance = ApplicationManager.getApplication().getService(StubIndex.class);
-  }
+
+  private static StubIndex ourInstance = CachedSingletonsRegistry.markCachedField(StubIndex.class);
 
   public static StubIndex getInstance() {
-    return StubIndexHolder.ourInstance;
+    var instance = ourInstance;
+    if (instance == null) {
+      ourInstance = instance = ApplicationManager.getApplication().getService(StubIndex.class);
+    }
+    return instance;
   }
 
   /**

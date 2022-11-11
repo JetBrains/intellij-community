@@ -66,10 +66,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
       return true;
     }
     PsiComment comment = PsiTreeUtil.getParentOfType(position, PsiComment.class, false);
-    if (comment != null && !(comment instanceof PsiDocComment)) {
-      return true;
-    }
-    return false;
+    return comment != null && !(comment instanceof PsiDocComment);
   }
 
   public static void addAllClasses(@NotNull CompletionParameters parameters,
@@ -137,6 +134,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     }
 
     JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(insertedElement);
+    boolean patternContext = JavaPatternCompletionUtil.isPatternContext(psiFile, insertedElement);
 
     Processor<PsiClass> classProcessor = new Processor<>() {
       @Override
@@ -166,6 +164,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
 
               JavaConstructorCallElement.wrap(element, insertedElement).forEach(
                 e -> consumer.consume(highlighter.highlightIfNeeded(null, e, e.getObject())));
+              if (patternContext) {
+                JavaPatternCompletionUtil.addPatterns(consumer::consume, insertedElement, element.getObject());
+              }
             }
           }
         }

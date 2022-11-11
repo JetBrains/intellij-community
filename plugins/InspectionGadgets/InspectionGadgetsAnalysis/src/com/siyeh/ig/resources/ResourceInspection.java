@@ -236,7 +236,7 @@ public abstract class ResourceInspection extends BaseInspection {
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     statement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         result.set(Boolean.FALSE);
         stopWalking();
@@ -457,7 +457,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
       // check if resource is closed in a method like IOUtils.silentClose()
       super.visitReferenceExpression(referenceExpression);
       if (containsClose) {
@@ -512,10 +512,10 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
     @Override
-    public void visitClass(PsiClass aClass) {}
+    public void visitClass(@NotNull PsiClass aClass) {}
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
@@ -526,7 +526,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       final PsiExpression value = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
       if (!(value instanceof PsiReferenceExpression)) {
@@ -540,7 +540,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final PsiExpression rhs = PsiUtil.deparenthesizeExpression(expression.getRExpression());
       if (!(rhs instanceof PsiReferenceExpression)) {
@@ -563,7 +563,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       // Case: variable.close()
       if (!ignoreResourcesWithClose) {
@@ -579,7 +579,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!ignoreResourcesWithClose) {
         return;
@@ -592,7 +592,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression callExpression) {
+    public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
       if (!anyMethodMayClose) {
         return;
@@ -619,7 +619,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitResourceVariable(PsiResourceVariable variable) {
+    public void visitResourceVariable(@NotNull PsiResourceVariable variable) {
       super.visitResourceVariable(variable);
       if (ExpressionUtils.isReferenceTo(variable.getInitializer(), boundVariable)) {
         escaped = true;
@@ -627,7 +627,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitResourceExpression(PsiResourceExpression expression) {
+    public void visitResourceExpression(@NotNull PsiResourceExpression expression) {
       super.visitResourceExpression(expression);
       if (ExpressionUtils.isReferenceTo(expression.getExpression(), boundVariable)) {
         escaped = true;

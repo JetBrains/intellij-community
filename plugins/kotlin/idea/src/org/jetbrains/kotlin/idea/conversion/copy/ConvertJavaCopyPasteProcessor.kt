@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.refactoring.suggested.range
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -258,7 +258,7 @@ internal fun ElementAndTextList.convertCodeToKotlin(project: Project, targetModu
                 runReadAction { converter.elementsToKotlin(inputElements) }
             },
             JavaToKotlinAction.title,
-            false,
+            true,
             project
         )
 

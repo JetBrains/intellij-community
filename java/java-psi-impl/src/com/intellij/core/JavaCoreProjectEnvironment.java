@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
@@ -42,6 +43,7 @@ public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
     myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myProject));
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
+    myProject.registerService(JavaFileCodeStyleFacade.class, new CoreJavaFileCodeStyleFacade());
     myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
     myProject.registerService(ControlFlowFactory.class, new ControlFlowFactory(myProject));
 

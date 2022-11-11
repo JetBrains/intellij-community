@@ -7,16 +7,14 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
-import com.intellij.testFramework.junit5.EdtInterceptor;
+import com.intellij.testFramework.junit5.RunInEdt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith(EdtInterceptor.class)
-
+@RunInEdt
 public class JUnit5AcceptanceNoJupiterTest {
   protected JavaCodeInsightTestFixture myFixture;
 

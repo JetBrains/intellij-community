@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeS
 import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.parents
-import org.intellij.plugins.markdown.util.MarkdownPsiUtil
+import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.isTopLevel
 
 /**
  * Formatting block used by markdown plugin
@@ -61,7 +61,7 @@ internal open class MarkdownFormattingBlock(
 
   override fun getSubBlocks(): List<Block?> {
     //Non top-level codefences cannot be formatted correctly even with correct inject, so -- just ignore it
-    if (MarkdownCodeFenceUtils.isCodeFence(node) && !MarkdownPsiUtil.isTopLevel(node)) return EMPTY
+    if (MarkdownCodeFenceUtils.isCodeFence(node) && !node.isTopLevel()) return EMPTY
 
     return super.getSubBlocks()
   }

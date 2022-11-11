@@ -28,7 +28,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+      public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
         super.visitSwitchLabeledRuleStatement(statement);
 
         PsiStatement body = statement.getBody();

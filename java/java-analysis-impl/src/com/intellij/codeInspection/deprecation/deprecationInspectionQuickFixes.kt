@@ -15,14 +15,13 @@
  */
 package com.intellij.codeInspection.deprecation
 
-import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ObjectUtils
 import com.siyeh.InspectionGadgetsBundle
 import org.jetbrains.annotations.Nls
@@ -43,6 +42,7 @@ private fun generateQualifierText(expr: PsiReferenceExpression,
 }
 
 internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMethod: PsiMethod) : LocalQuickFixOnPsiElement(expr) {
+  @SafeFieldForPreview
   private val myReplacementMethodPointer =
     SmartPointerManager.getInstance(replacementMethod.project).createSmartPsiElementPointer(replacementMethod)
   private val myReplacementText =
@@ -68,16 +68,10 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
     val replaced = expr.replace(newMethodCall) as PsiMethodCallExpression
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced.methodExpression)
   }
-
-  override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
-    val method = myReplacementMethodPointer.element
-    val expr = startElement as PsiMethodCallExpression?
-    if (method == null || expr == null) return null
-    return ReplaceMethodCallFix(PsiTreeUtil.findSameElementInCopy(expr, target), method)
-  }
 }
 
 internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacementField: PsiField) : LocalQuickFixOnPsiElement(expr) {
+  @SafeFieldForPreview
   private val myReplacementMethodPointer =
     SmartPointerManager.getInstance(replacementField.project).createSmartPsiElementPointer(replacementField)
   private val myReplacementText =
@@ -100,5 +94,4 @@ internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacemen
     val replaced = expr.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(qualifierText + replacementField.name, expr))
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced)
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
@@ -12,11 +12,9 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 
 
@@ -37,7 +34,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final boolean myShowInspectTestSource;
   private final @NlsContexts.Separator String myScopeTitle;
   private final Project myProject;
-  private final ButtonGroup myGroup = new ButtonGroup();
+  private final ArrayList<JRadioButton> radioButtons = new ArrayList<>();
   private final JCheckBox myInspectTestSource = new JCheckBox();
   private final JCheckBox myAnalyzeInjectedCode = new JCheckBox();
   private final List<ModelScopeItemView> myViewItems;
@@ -108,24 +105,23 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myAnalyzeInjectedCode.setSelected(myOptions.ANALYZE_INJECTED_CODE);
     myAnalyzeInjectedCode.setVisible(false);
 
-    ArrayList<JRadioButton> buttons = new ArrayList<>();
     JPanel panel = new BaseAnalysisActionDialogUI().panel(myScopeTitle, myViewItems, myInspectTestSource,
-                                                          myAnalyzeInjectedCode, buttons, myDisposable,
+                                                          myAnalyzeInjectedCode, radioButtons, myDisposable,
                                                           getAdditionalActionSettings(myProject));
-    buttons.forEach(b -> myGroup.add(b));
 
     preselectButton();
-    new RadioUpDownListener(buttons.toArray(new JRadioButton[0]));
+    new RadioUpDownListener(radioButtons.toArray(new JRadioButton[0]));
 
     panel.setPreferredSize(panel.getMinimumSize());
     return panel;
   }
 
   public void setShowInspectInjectedCode(boolean showInspectInjectedCode) {
-    if (Registry.is("idea.batch.inspections.injected.psi.option") &&
-        SystemProperties.getBooleanProperty("idea.batch.inspections.inspect.injected.psi", true)) {
-      myAnalyzeInjectedCode.setVisible(showInspectInjectedCode);
-    }
+    myAnalyzeInjectedCode.setVisible(showInspectInjectedCode);
+  }
+  
+  public void setAnalyzeInjectedCode(boolean selected) {
+    myAnalyzeInjectedCode.setSelected(selected);
   }
 
   private void preselectButton() {
@@ -162,9 +158,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    final Enumeration<AbstractButton> enumeration = myGroup.getElements();
-    while (enumeration.hasMoreElements()) {
-      final AbstractButton button = enumeration.nextElement();
+    for (JRadioButton button : radioButtons) {
       if (button.isSelected()) {
         return button;
       }
@@ -242,10 +236,11 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
 
     if (myAnalyzeInjectedCode.isVisible()) {
+      boolean analyzeInjectedCode = isAnalyzeInjectedCode();
       if (myRememberScope) {
-        myOptions.ANALYZE_INJECTED_CODE = isAnalyzeInjectedCode();
+        myOptions.ANALYZE_INJECTED_CODE = analyzeInjectedCode;
       }
-      scope.setAnalyzeInjectedCode(isAnalyzeInjectedCode());
+      scope.setAnalyzeInjectedCode(analyzeInjectedCode);
     }
 
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());

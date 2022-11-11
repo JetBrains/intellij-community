@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.google.common.collect.ImmutableList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
@@ -553,7 +552,7 @@ private class RawJdkListImpl(
   private fun parseJson(predicate: JdkPredicate) : () -> List<JdkItem> {
     val result = runCatching {
       try {
-        ImmutableList.copyOf(JdkListParser.parseJdkList(json, predicate))
+        java.util.List.copyOf(JdkListParser.parseJdkList(json, predicate))
       }
       catch (t: Throwable) {
         throw RuntimeException("Failed to process the downloaded list of available JDKs from $feedUrl. ${t.message}", t)

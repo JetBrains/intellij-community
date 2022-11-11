@@ -27,10 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BorderProperty extends Property<RadContainer, BorderType> {
   @NonNls public static final String NAME = "border";
 

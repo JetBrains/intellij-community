@@ -193,7 +193,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
         if (methodBody != null) {
           methodBody.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitReturnStatement(final PsiReturnStatement statement) {
+            public void visitReturnStatement(final @NotNull PsiReturnStatement statement) {
               super.visitReturnStatement(statement);
               final PsiExpression returnValue = statement.getReturnValue();
               if (returnValue != null) {
@@ -202,9 +202,9 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
             }
 
             @Override
-            public void visitClass(PsiClass aClass) {}
+            public void visitClass(@NotNull PsiClass aClass) {}
             @Override
-            public void visitLambdaExpression(PsiLambdaExpression expression) {}
+            public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
           });
         }
 
@@ -227,7 +227,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
             final boolean[] found = new boolean[1];
             body.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
-              public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+              public void visitAssignmentExpression(final @NotNull PsiAssignmentExpression expression) {
                 super.visitAssignmentExpression(expression);
                 final PsiExpression lExpression = expression.getLExpression();
                 if (lExpression instanceof PsiReferenceExpression && myDelegateField.isEquivalentTo(((PsiReferenceExpression)lExpression).resolve())) {
@@ -348,12 +348,12 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {}
+    public void visitClass(@NotNull PsiClass aClass) {}
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
 
       final PsiExpression returnValue = statement.getReturnValue();

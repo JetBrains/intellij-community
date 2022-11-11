@@ -1,18 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * <p>Use it to create a collector which records IDE/project state or user/IDE internal actions.</p>
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
  */
 @ApiStatus.Internal
 public abstract class FeatureUsagesCollector {
+  @NonNls private static final Logger LOG = Logger.getInstance(FeatureUsagesCollector.class);
   @NonNls private static final String GROUP_ID_PATTERN = "([a-zA-Z]*\\.)*[a-zA-Z]*";
 
   public final boolean isValid() {
@@ -35,7 +38,19 @@ public abstract class FeatureUsagesCollector {
     if (invoker.getClass().getClassLoader() instanceof PluginAwareClassLoader) {
       return Collections.emptySet();
     }
-    return ep.extensions().filter(u -> u.isValid()).collect(Collectors.toSet());
+
+    Set<T> set = new HashSet<>();
+    for (T t : ep.getExtensionList()) {
+      if (t.isValid()) {
+        set.add(t);
+      }
+      else{
+        //RC: at least log !valid groups -- otherwise they are just silently excluded
+        LOG.info(t + " is !valid -> skipped from extension points list");
+        //TODO RC: Why not just throw exception from FeatureUsagesCollector ctor if it is !valid?
+      }
+    }
+    return set;
   }
 
   /**
@@ -47,7 +62,7 @@ public abstract class FeatureUsagesCollector {
   public String getGroupId() {
     EventLogGroup group = getGroup();
     if (group == null) {
-      throw new IllegalStateException("Please override either getGroupId() or getGroup()");
+      throw PluginException.createByClass("Please override either getGroupId() or getGroup() in " + getClass().getName(), null, getClass());
     }
     return group.getId();
   }

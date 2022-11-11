@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public abstract class RefreshQueue {
   public static RefreshQueue getInstance() {
@@ -51,7 +52,7 @@ public abstract class RefreshQueue {
   }
 
   @ApiStatus.Internal
-  public abstract void processSingleEvent(boolean async, @NotNull VFileEvent event);
+  public abstract void processEvents(boolean async, @NotNull List<? extends @NotNull VFileEvent> events);
 
   public abstract void cancelSession(long id);
 }

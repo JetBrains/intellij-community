@@ -32,7 +32,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!CLEANER_REGISTER.test(call)) return;
         PsiExpression[] expressions = call.getArgumentList().getExpressions();
         PsiExpression trackedObject = ExpressionUtils.resolveExpression(expressions[0]);

@@ -2,13 +2,13 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ChangesViewModifier
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 
 class EditedCommitChangesViewModifier(private val project: Project) : ChangesViewModifier {
   override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
-    val workflowHandler = ChangesViewManager.getInstanceEx(project).commitWorkflowHandler ?: return
+    val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler ?: return
     val editedCommit = workflowHandler.ui.editedCommit ?: return
 
     val commitNode = EditedCommitNode(editedCommit)

@@ -4,27 +4,11 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.contextModality
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
-import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
-
-internal class ModalityStateElement(
-  val modalityState: ModalityState,
-) : AbstractCoroutineContextElement(ModalityStateElement) {
-
-  companion object : CoroutineContext.Key<ModalityStateElement>
-}
-
-@VisibleForTesting
-@Internal
-fun CoroutineContext.contextModality(): ModalityState {
-  return this[ModalityStateElement]?.modalityState
-         ?: ModalityState.any()
-}
 
 @Internal
 suspend fun <X> withModalContext(
@@ -33,7 +17,7 @@ suspend fun <X> withModalContext(
   val originalDispatcher = requireNotNull(coroutineContext[ContinuationInterceptor])
   val contextModality = coroutineContext.contextModality()
   if (Dispatchers.EDT === originalDispatcher) {
-    if (contextModality == ModalityState.any()) {
+    if (contextModality == null || contextModality == ModalityState.any()) {
       // Force NON_MODAL, otherwise another modality could be entered concurrently.
       withContext(ModalityState.NON_MODAL.asContextElement()) {
         yield() // Force re-dispatch in the proper modality.
@@ -45,7 +29,12 @@ suspend fun <X> withModalContext(
     }
   }
   else {
-    val enterModalModality = if (contextModality == ModalityState.any()) ModalityState.NON_MODAL else contextModality
+    val enterModalModality = if (contextModality == null || contextModality == ModalityState.any()) {
+      ModalityState.NON_MODAL
+    }
+    else {
+      contextModality
+    }
     withContext(Dispatchers.EDT + enterModalModality.asContextElement()) {
       withModalContextEDT {
         withContext(originalDispatcher, action)

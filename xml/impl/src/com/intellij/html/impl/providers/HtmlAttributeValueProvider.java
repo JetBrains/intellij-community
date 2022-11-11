@@ -25,8 +25,6 @@ public class HtmlAttributeValueProvider {
 
   /**
    * Calculates attribute value. Used when it is impossible to get attribute value as text of PSI element
-   * @param tag
-   * @param attributeName
    * @return calculated value
    */
   @Nullable

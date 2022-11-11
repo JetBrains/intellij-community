@@ -5,26 +5,12 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Callable
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ForkJoinTask
-
-inline fun <T> createTask(spanBuilder: SpanBuilder, crossinline task: () -> T): ForkJoinTask<T> {
-  val context = Context.current()
-  return ForkJoinTask.adapt(Callable {
-    val thread = Thread.currentThread()
-    val span = spanBuilder
-      .setParent(context)
-      .setAttribute(SemanticAttributes.THREAD_NAME, thread.name)
-      .setAttribute(SemanticAttributes.THREAD_ID, thread.id)
-      .startSpan()
-    span.makeCurrent().use {
-      span.use {
-        task()
-      }
-    }
-  })
-}
 
 /**
  * Returns a new [ForkJoinTask] that performs the given function as its action within a trace, and returns
@@ -32,9 +18,9 @@ inline fun <T> createTask(spanBuilder: SpanBuilder, crossinline task: () -> T): 
  *
  * See [Span](https://opentelemetry.io/docs/reference/specification).
  */
-inline fun forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> Unit): ForkJoinTask<*> {
+inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> T): ForkJoinTask<T> {
   val context = Context.current()
-  return ForkJoinTask.adapt(Runnable {
+  return ForkJoinTask.adapt(Callable {
     val thread = Thread.currentThread()
     spanBuilder
       .setParent(context)
@@ -53,14 +39,25 @@ inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
   }
 }
 
+suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend (Span) -> T): T {
+  val span = startSpan()
+  return withContext(Context.current().with(span).asContextElement()) {
+    span.use {
+      operation(span)
+    }
+  }
+}
+
 inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
   return startSpan().use(operation)
 }
 
-@PublishedApi
-internal inline fun <T> Span.use(operation: (Span) -> T): T {
+inline fun <T> Span.use(operation: (Span) -> T): T {
   try {
     return operation(this)
+  }
+  catch (e: CancellationException) {
+    throw e
   }
   catch (e: Throwable) {
     recordException(e)

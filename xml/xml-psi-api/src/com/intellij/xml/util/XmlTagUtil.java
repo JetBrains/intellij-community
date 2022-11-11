@@ -36,7 +36,6 @@ public final class XmlTagUtil {
   /**
    * if text contains XML-sensitive characters (<,>), quote text with ![CDATA[ ... ]]
    *
-   * @param text
    * @return quoted text
    */
   public static String getCDATAQuote(String text) {

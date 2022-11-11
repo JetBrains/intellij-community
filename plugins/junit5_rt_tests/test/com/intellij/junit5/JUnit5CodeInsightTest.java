@@ -3,12 +3,11 @@ package com.intellij.junit5;
 
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
-import com.intellij.testFramework.junit5.EdtInterceptor;
+import com.intellij.testFramework.junit5.RunInEdt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 
-@ExtendWith(EdtInterceptor.class)
+@RunInEdt
 abstract class JUnit5CodeInsightTest {
   protected JavaCodeInsightTestFixture myFixture;
 

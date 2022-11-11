@@ -1,11 +1,9 @@
 package com.intellij.ide.starter.runner
 
+import com.intellij.ide.starter.Const
 import com.intellij.ide.starter.bus.EventState
 import com.intellij.ide.starter.bus.StarterBus
 import com.intellij.ide.starter.di.di
-import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.ExecTimeoutException
-import com.intellij.ide.starter.exec.ProcessExecutor
 import com.intellij.ide.starter.ide.CodeInjector
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.command.MarshallableCommand
@@ -14,6 +12,9 @@ import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.models.andThen
 import com.intellij.ide.starter.process.collectJavaThreadDump
 import com.intellij.ide.starter.process.destroyGradleDaemonProcessIfExists
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect
+import com.intellij.ide.starter.process.exec.ExecTimeoutException
+import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.process.getJavaProcessId
 import com.intellij.ide.starter.profiler.ProfilerInjector
 import com.intellij.ide.starter.profiler.ProfilerType
@@ -28,7 +29,10 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.listDirectoryEntries
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -45,7 +49,7 @@ data class IDERunContext(
   val commands: Iterable<MarshallableCommand> = listOf(),
   val codeBuilder: (CodeInjector.() -> Unit)? = null,
   val runTimeout: Duration = 10.minutes,
-  val dumpThreadInterval: Duration = 10.minutes,
+  val dumpThreadInterval: Duration = 5.minutes,
   val useStartupScript: Boolean = true,
   val closeHandlers: List<IDERunCloseContext.() -> Unit> = listOf(),
   val verboseOutput: Boolean = false,
@@ -61,6 +65,9 @@ data class IDERunContext(
       testContext.testName
     }
 
+  val jvmCrashLogDirectory by lazy { testContext.paths.logsDir.resolve("jvm-crash").createDirectories() }
+  val heapDumpOnOomDirectory by lazy { testContext.paths.logsDir.resolve("heap-dump").createDirectories() }
+
   fun verbose() = copy(verboseOutput = true)
 
   @Suppress("unused")
@@ -72,12 +79,12 @@ data class IDERunContext(
 
   fun addCompletionHandler(handler: IDERunCloseContext.() -> Unit) = this.copy(closeHandlers = closeHandlers + handler)
 
-  fun uploadProfileResultsToTeamCity(profilerSnapshotsDir: Path, artifactName: String) =
+  fun uploadProfilerResultsToCIServer(profilerSnapshotsDir: Path, artifactName: String) =
     this.addCompletionHandler {
       testContext.publishArtifact(source = profilerSnapshotsDir, artifactName = artifactName)
     }
 
-  fun installProfiler(): IDERunContext {
+  private fun installProfiler(): IDERunContext {
     return when (val profilerType = testContext.profilerType) {
       ProfilerType.ASYNC, ProfilerType.YOURKIT -> {
         val profiler = di.direct.instance<ProfilerInjector>(tag = profilerType)
@@ -91,7 +98,28 @@ data class IDERunContext(
     }
   }
 
-  // TODO: refactor this
+  private fun calculateVmOptions(): VMOptions = testContext.ide.originalVMOptions
+    .disableStartupDialogs()
+    .usingStartupFramework()
+    .setFatalErrorNotificationEnabled()
+    .setFlagIntegrationTests()
+    .takeScreenshotIfFailure(testContext.paths.logsDir)
+    .withJvmCrashLogDirectory(jvmCrashLogDirectory)
+    .withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
+    .let { if (Const.isClassFileVerificationEnabled) it.withClassFileVerification() else it }
+    .let { testContext.testCase.vmOptionsFix(it) }
+    .let { testContext.patchVMOptions(it) }
+    .patchVMOptions()
+    .let {
+      if (!useStartupScript) {
+        require(commands.count() > 0) { "script builder is not allowed when useStartupScript is disabled" }
+        it
+      }
+      else
+        it.installTestScript(testName = contextName, paths = testContext.paths, commands = commands)
+    }
+
+  // TODO: refactor this https://youtrack.jetbrains.com/issue/AT-18/Simplify-refactor-code-for-starting-IDE-in-IdeRunContext
   private fun prepareToRunIDE(): IDEStartResult {
     StarterBus.post(IdeLaunchEvent(EventState.BEFORE, this))
 
@@ -99,8 +127,7 @@ data class IDERunContext(
     val paths = testContext.paths
     val logsDir = paths.logsDir.createDirectories()
     paths.snapshotsDir.createDirectories()
-    val jvmCrashLogDirectory = logsDir.resolve("jvm-crash").createDirectories()
-    val heapDumpOnOomDirectory = logsDir.resolve("heap-dump").createDirectories()
+
     val disabledPlugins = paths.configDir.resolve("disabled_plugins.txt")
     if (disabledPlugins.toFile().exists()) {
       logOutput("The list of disabled plugins: " + disabledPlugins.toFile().readText())
@@ -109,7 +136,7 @@ data class IDERunContext(
     val stdout = if (verboseOutput) ExecOutputRedirect.ToStdOut("[ide-${contextName}-out]") else ExecOutputRedirect.ToString()
     val stderr = ExecOutputRedirect.ToStdOut("[ide-${contextName}-err]")
 
-    var successfulRun = true
+    var isRunSuccessful = true
     val host by lazy { di.direct.instance<CodeInjector>() }
 
     try {
@@ -118,25 +145,7 @@ data class IDERunContext(
         host.codeBuilder()
       }
 
-      val finalOptions = testContext.ide.originalVMOptions
-        .disableStartupDialogs()
-        .usingStartupFramework()
-        .setFatalErrorNotificationEnabled()
-        .setFlagIntegrationTests()
-        .takeScreenshotIfFailure(logsDir)
-        .withJvmCrashLogDirectory(jvmCrashLogDirectory)
-        .withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
-        .let { testContext.testCase.vmOptionsFix(it) }
-        .let { testContext.patchVMOptions(it) }
-        .patchVMOptions()
-        .let {
-          if (!useStartupScript) {
-            require(commands.count() > 0) { "script builder is not allowed when useStartupScript is disabled" }
-            it
-          }
-          else
-            it.installTestScript(contextName, paths, commands)
-        }
+      val finalOptions: VMOptions = calculateVmOptions()
 
       if (codeBuilder != null) {
         host.setup(testContext)
@@ -193,7 +202,7 @@ data class IDERunContext(
           stderrRedirect = stderr,
           onProcessCreated = { process, pid ->
             val javaProcessId by lazy { getJavaProcessId(jdkHome, startConfig.workDir, pid, process) }
-            val monitoringThreadDumpDir = logsDir.resolve("monitoring-Thread-Dumps").createDirectories()
+            val monitoringThreadDumpDir = logsDir.resolve("monitoring-thread-dumps").createDirectories()
 
             var cnt = 0
             while (process.isAlive) {
@@ -202,7 +211,6 @@ data class IDERunContext(
 
               val dumpFile = monitoringThreadDumpDir.resolve("threadDump-${++cnt}-${System.currentTimeMillis()}" + ".txt")
               logOutput("Dumping threads to $dumpFile")
-              logOutput(Runtime.getRuntime().getRuntimeInfo())
               catchAll { collectJavaThreadDump(jdkHome, startConfig.workDir, javaProcessId, dumpFile, false) }
             }
           },
@@ -247,7 +255,7 @@ data class IDERunContext(
       return IDEStartResult(runContext = this, executionTime = executionTime, vmOptionsDiff = vmOptionsDiff, logsDir = logsDir)
     }
     catch (t: Throwable) {
-      successfulRun = false
+      isRunSuccessful = false
       if (t is ExecTimeoutException && !expectedKill) {
         error("Timeout of IDE run $contextName for $runTimeout")
       }
@@ -271,6 +279,8 @@ data class IDERunContext(
     }
     finally {
 
+      collectJBRDiagnosticFilesIfExist(testContext)
+
       try {
         if (SystemInfo.isWindows) {
           destroyGradleDaemonProcessIfExists()
@@ -280,15 +290,15 @@ data class IDERunContext(
           dir.listDirectoryEntries().isEmpty()
         }.forEach { it.toFile().deleteRecursively() }
 
-        ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", contextName)
-        val (artifactPath, artifactName) = if (successfulRun) contextName to "logs" else "run/$contextName" to "crash"
-        testContext.publishArtifact(logsDir, artifactPath, formatArtifactName(artifactName, testContext.testName))
+        ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", this)
+        publishArtifacts(isRunSuccessful)
+
         if (codeBuilder != null) {
           host.tearDown(testContext)
         }
 
         val closeContext = object : IDERunCloseContext {
-          override val wasRunSuccessful: Boolean = successfulRun
+          override val wasRunSuccessful: Boolean = isRunSuccessful
         }
 
         closeHandlers.forEach {
@@ -307,9 +317,24 @@ data class IDERunContext(
     }
   }
 
+  private fun publishArtifacts(isRunSuccessful: Boolean) {
+    // publish artifacts to directory with a test in any case
+    testContext.publishArtifact(
+      source = testContext.paths.logsDir,
+      artifactPath = contextName,
+      artifactName = formatArtifactName("logs", testContext.testName)
+    )
+
+    if (!isRunSuccessful)
+      testContext.publishArtifact(
+        source = testContext.paths.logsDir,
+        artifactPath = "_crashes/$contextName",
+        artifactName = formatArtifactName("crash", testContext.testName)
+      )
+  }
+
   fun runIDE(): IDEStartResult {
-    return installProfiler()
-      .prepareToRunIDE()
+    return installProfiler().prepareToRunIDE()
   }
 
   private fun deleteSavedAppStateOnMac() {

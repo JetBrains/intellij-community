@@ -54,9 +54,6 @@ public final class TestsLocationProviderUtil {
   /**
    * Looks for files with given name which are close to given path
    * @param targetParentFolders folders path
-   * @param candidates
-   * @param minProximityThreshold
-   * @return
    */
   public static @NotNull List<VirtualFile> findFilesClosestToTarget(@NotNull final List<String> targetParentFolders,
                                                                     final @NotNull List<? extends FileInfo> candidates,

@@ -13,8 +13,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -26,8 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-
-import java.util.List;
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement;
 
@@ -727,8 +725,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testLiveTemplate() {
     final Template template = TemplateManager.getInstance(getProject()).createTemplate("foo", "zzz");
     template.addTextSegment("FooFactory.createFoo()");
-    final SmartCompletionContextType completionContextType =
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), SmartCompletionContextType.class);
+    SmartCompletionContextType completionContextType = TemplateContextTypes.getByClass(SmartCompletionContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(completionContextType, true);
     CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
     doTest();

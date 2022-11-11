@@ -199,7 +199,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
     VirtualFile toDir = createVirtualDirectoryForContentFile();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    Map<VirtualFile, EditorInfo> editorInfos = WriteAction.compute(() -> {
       try {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
@@ -209,23 +209,23 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
         // auxiliary files should be copied first
         VirtualFile[] reversed = ArrayUtil.reverseArray(vFiles);
-        Map<VirtualFile, EditorInfo> editorInfos;
+        Map<VirtualFile, EditorInfo> editorInfos1;
         if (rawProjectRoot != null) {
           FileUtil.copyDir(rawProjectRoot, toDir.toNioPath().toFile());
           File projectRoot = rawProjectRoot.getCanonicalFile();
           VirtualFile aNull = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot));
-          editorInfos = copyFilesFillingEditorInfos(aNull, toDir, ContainerUtil.map2Array(reversed, String.class, s -> {
+          editorInfos1 = copyFilesFillingEditorInfos(aNull, toDir, ContainerUtil.map2Array(reversed, String.class, s -> {
             return s.getPath().substring(projectRoot.getPath().length());
           }));
 
           toDir.refresh(false, true);
         }
         else {
-          editorInfos = new LinkedHashMap<>();
+          editorInfos1 = new LinkedHashMap<>();
           for (VirtualFile vFile : reversed) {
             VirtualFile parent = vFile.getParent();
             assert parent.isDirectory() : parent;
-            editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
+            editorInfos1.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
           }
         }
 
@@ -242,13 +242,17 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
           sourceRootAdded(toDir);
         }
 
-        openEditorsAndActivateLast(editorInfos);
+        return editorInfos1;
       }
       catch (IOException e) {
         LOG.error(e);
+        return null;
       }
     });
 
+    if (editorInfos != null) {
+      openEditorsAndActivateLast(editorInfos);
+    }
 
     return toDir;
   }
@@ -523,7 +527,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   }
 
   protected void deleteLine() {
-    LightPlatformCodeInsightTestCase.deleteLine(myEditor,getProject());
+    LightPlatformCodeInsightTestCase.deleteLine(myEditor, getProject());
   }
 
   protected void type(@NotNull String s) {

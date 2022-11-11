@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import org.intellij.lang.annotations.MagicConstant;
@@ -20,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.logging.Level;
-import java.util.stream.Stream;
 
 public final class VfsEventsMerger {
   private static final boolean DEBUG = FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE || Boolean.getBoolean("log.index.vfs.events");
@@ -109,9 +110,8 @@ public final class VfsEventsMerger {
     return myChangeInfos.size();
   }
 
-  @NotNull
-  public Stream<VirtualFile> getChangedFiles() {
-    return myChangeInfos.values().stream().map(ChangeInfo::getFile);
+  public @NotNull Iterator<VirtualFile> getChangedFiles() {
+    return ContainerUtil.mapIterator(myChangeInfos.values().iterator(), ChangeInfo::getFile);
   }
 
   private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos =

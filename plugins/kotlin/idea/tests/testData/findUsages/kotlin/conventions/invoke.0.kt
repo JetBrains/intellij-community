@@ -31,3 +31,4 @@ class C() : B(12) {
 }
 
 fun some(i: Int, s: String) {}
+// FIR_COMPARISON

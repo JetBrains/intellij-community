@@ -25,7 +25,6 @@ public abstract class TextMateService {
   /**
    * Create bundle object from given directory.
    *
-   * @param directory
    * @return bundle object or {@code null} if directory doesn't exist or bundle type can't be defined
    */
   @Nullable

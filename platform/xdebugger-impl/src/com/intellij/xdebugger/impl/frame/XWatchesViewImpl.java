@@ -570,7 +570,6 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     int minIndex = Integer.MAX_VALUE;
     List<XDebuggerTreeNode> toRemove = new ArrayList<>();
     for (XDebuggerTreeNode node : ordinaryWatches) {
-      @SuppressWarnings("SuspiciousMethodCalls")
       int index = children.indexOf(node);
       if (index != -1) {
         toRemove.add(node);

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
+import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
@@ -31,7 +32,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addDependency(scope, string(dependency), sourceSet)
 
   override fun addDependency(scope: String, dependency: Expression, sourceSet: String?) = apply {
-    val dependencyScope = if (sourceSet == null) scope else sourceSet + scope.capitalize()
+    val dependencyScope = if (sourceSet == null) scope else sourceSet + StringUtil.capitalize(scope)
     withDependency { call(dependencyScope, dependency) }
   }
 
@@ -124,12 +125,16 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun withKotlinMultiplatformPlugin() =
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
 
+  override fun withGroovyPlugin() =
+    withGroovyPlugin(groovyVersion)
+
   override fun withGroovyPlugin(version: String): BSB = apply {
     withPlugin("groovy")
     withMavenCentral()
     if (isSupportedGroovyApache(version)) {
       addImplementationDependency("org.apache.groovy:groovy:$version")
-    } else {
+    }
+    else {
       addImplementationDependency("org.codehaus.groovy:groovy-all:$version")
     }
   }

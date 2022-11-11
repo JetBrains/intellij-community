@@ -23,6 +23,7 @@ import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
@@ -274,13 +275,11 @@ public final class ActionMenu extends JBMenu {
 
     if (mySubElementSelector != null) {
       switch (e.getID()) {
-        case MouseEvent.MOUSE_PRESSED:
+        case MouseEvent.MOUSE_PRESSED -> {
           mySubElementSelector.ignoreNextSelectionRequest();
           shouldCancelIgnoringOfNextSelectionRequest = true;
-          break;
-        case MouseEvent.MOUSE_ENTERED:
-          mySubElementSelector.ignoreNextSelectionRequest(getDelay() * 2);
-          break;
+        }
+        case MouseEvent.MOUSE_ENTERED -> mySubElementSelector.ignoreNextSelectionRequest(getDelay() * 2);
       }
     }
 
@@ -455,7 +454,7 @@ public final class ActionMenu extends JBMenu {
         if (myEventToRedispatch != null) {
           IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
         }
-      }, 50, ModalityState.any(), this);
+      }, 50, this, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any());
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
       myStartMousePoint = info != null ? info.getLocation() : null;

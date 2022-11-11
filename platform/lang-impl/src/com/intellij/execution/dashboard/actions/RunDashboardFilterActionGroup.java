@@ -74,6 +74,11 @@ final class RunDashboardFilterActionGroup extends DefaultActionGroup implements 
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Project project = e.getProject();
       if (project == null) return;

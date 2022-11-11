@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class TemplateBase extends Template {
@@ -16,40 +19,57 @@ public abstract class TemplateBase extends Template {
   @Nullable private Throwable myBuildingTemplateTrace;
   private String myTemplateText;
 
-  private List<Segment> mySegments;
+  private final List<Segment> mySegments;
   private boolean toParseSegments = true;
+  private boolean myParsed = false;
 
+  protected TemplateBase(@NotNull String string) {
+    mySegments = Collections.synchronizedList(new SmartList<>());
+    myString = string;
+  }
+
+  public boolean isParsed() {
+    synchronized (mySegments) {
+      return myParsed;
+    }
+  }
+  
   public void parseSegments() {
-    if(!toParseSegments) {
-      return;
-    }
-    if(mySegments != null) {
+    if (!toParseSegments) {
       return;
     }
 
-    mySegments = new SmartList<>();
-    StringBuilder buffer = new StringBuilder(myString.length());
-    TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(myString);
+    String templateRawText = myString;
+    StringBuilder buffer;
+    synchronized (mySegments) {
+      if (myParsed) {
+        return;
+      }
 
-    while(true){
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null) break;
-      int start = lexer.getTokenStart();
-      int end = lexer.getTokenEnd();
-      String token = myString.substring(start, end);
-      if (tokenType == TemplateTokenType.VARIABLE){
-        String name = token.substring(1, token.length() - 1);
-        Segment segment = new Segment(name, buffer.length());
-        mySegments.add(segment);
+      buffer = new StringBuilder(templateRawText.length());
+      TemplateTextLexer lexer = new TemplateTextLexer();
+      lexer.start(templateRawText);
+
+      while (true) {
+        IElementType tokenType = lexer.getTokenType();
+        if (tokenType == null) break;
+        int start = lexer.getTokenStart();
+        int end = lexer.getTokenEnd();
+        String token = templateRawText.substring(start, end);
+        if (tokenType == TemplateTokenType.VARIABLE){
+          String name = token.substring(1, token.length() - 1);
+          Segment segment = new Segment(name, buffer.length());
+          mySegments.add(segment);
+        }
+        else if (tokenType == TemplateTokenType.ESCAPE_DOLLAR){
+          buffer.append("$");
+        }
+        else{
+          buffer.append(token);
+        }
+        lexer.advance();
       }
-      else if (tokenType == TemplateTokenType.ESCAPE_DOLLAR){
-        buffer.append("$");
-      }
-      else{
-        buffer.append(token);
-      }
-      lexer.advance();
+      myParsed = true;
     }
     myTemplateText = buffer.toString();
   }
@@ -58,8 +78,11 @@ public abstract class TemplateBase extends Template {
     return mySegments;
   }
 
-  protected void setSegments(List<Segment> segments) {
-    mySegments = segments;
+  protected void clearSegments() {
+    synchronized (mySegments) {
+      mySegments.clear();
+      myParsed = false;
+    }
   }
 
   protected boolean isToParseSegments() {
@@ -88,7 +111,7 @@ public abstract class TemplateBase extends Template {
    */
   public void setString(@NotNull String string) {
     myString = StringUtil.convertLineSeparators(string);
-    mySegments = null;
+    clearSegments();
     toParseSegments = true;
     myBuildingTemplateTrace = new Throwable();
   }
@@ -108,7 +131,7 @@ public abstract class TemplateBase extends Template {
     myTemplateText = templateText;
   }
 
-  protected void setBuildingTemplateTrace(Throwable buildingTemplateTrace) {
+  protected void setBuildingTemplateTrace(@Nullable Throwable buildingTemplateTrace) {
     myBuildingTemplateTrace = buildingTemplateTrace;
   }
 
@@ -119,10 +142,11 @@ public abstract class TemplateBase extends Template {
 
   int getVariableSegmentNumber(String variableName) {
     parseSegments();
-    for (int i = 0; i < mySegments.size(); i++) {
-      Segment segment = mySegments.get(i);
-      if (segment.name.equals(variableName)) {
-        return i;
+    synchronized (mySegments) {
+      for (int i = 0; i < mySegments.size(); i++) {
+        if (mySegments.get(i).name.equals(variableName)) {
+          return i;
+        }
       }
     }
     return -1;
@@ -158,6 +182,27 @@ public abstract class TemplateBase extends Template {
     return mySegments.size();
   }
 
+  public boolean isSelectionTemplate() {
+    parseSegments();
+    synchronized (mySegments) {
+      for (Segment v : mySegments) {
+        if (SELECTION.equals(v.name)) return true;
+      }
+    }
+    return ContainerUtil.exists(getVariables(),
+                                v -> containsSelection(v.getExpression()) || containsSelection(v.getDefaultValueExpression()));
+  }
+
+  private static boolean containsSelection(Expression expression) {
+    if (expression instanceof VariableNode) {
+      return SELECTION.equals(((VariableNode)expression).getName());
+    }
+    if (expression instanceof MacroCallNode) {
+      return ContainerUtil.exists(((MacroCallNode)expression).getParameters(), TemplateBase::containsSelection);
+    }
+    return false;
+  }
+  
   protected static final class Segment {
     @NotNull
     public final String name;

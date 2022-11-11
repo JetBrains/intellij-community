@@ -39,6 +39,7 @@ public class TestUtil {
   @NonNls public static final String PHP_VSC = "php_vsc";
   @NonNls public static final String SMARTY = "smarty";
   @NonNls public static final String TURTLE = "turtle";
+  @NonNls public static final String GIT = "git";
 
   public static File getBundleDirectory(String bundleName) {
     File bundleDirectory = new File(getCommunityHomePath() + "/plugins/textmate/testData/bundles", bundleName);

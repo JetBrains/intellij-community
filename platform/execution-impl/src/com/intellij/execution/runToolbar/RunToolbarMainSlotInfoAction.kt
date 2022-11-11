@@ -71,7 +71,7 @@ internal class RunToolbarMainSlotInfoAction : SegmentedCustomAction(),
 
   private class RunToolbarMainSlotInfo(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
     private val arrow = JLabel()
-    private val dragArea = DraggablePane()
+    private val dragArea = RunWidgetResizePane()
 
     private val processComponents = mutableListOf<ProcessesByType>()
     private val migLayout = MigLayout("fill, hidemode 3, ins 0, novisualpadding, ay center, flowx, gapx 0")
@@ -84,8 +84,11 @@ internal class RunToolbarMainSlotInfoAction : SegmentedCustomAction(),
         add(JPanel().apply {
           isOpaque = false
           add(arrow)
+
           val d = preferredSize
-          d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+          getProject()?.let {
+            d.width = RunWidgetWidthHelper.getInstance(it).arrow
+          }
 
           preferredSize = d
         })

@@ -129,8 +129,8 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
           ProgressManager.checkCanceled();
           holder.myCurrentAnnotator = annotator;
           annotator.annotate(element, holder);
-          // assume that annotator is done messing with just created annotations after its annotate() method completed
-          // and we can start applying them incrementally at last
+          // assume that annotator is done messing with just created annotations after its annotate() method completed,
+          // so we can start applying them incrementally at last
           // (but not sooner, thanks to awfully racey Annotation.setXXX() API)
           holder.queueToUpdateIncrementally();
         }

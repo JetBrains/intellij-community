@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
-import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.jvm.JvmLong
@@ -17,9 +17,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
-import com.intellij.psi.util.JavaElementKind
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -38,8 +39,14 @@ internal class CreateFieldAction(
   override fun getText(): String {
     val what = request.fieldName
     val where = getNameForClass(target, false)
-    val kind = if (constantField) JavaElementKind.CONSTANT else JavaElementKind.FIELD
-    return message("create.element.in.class", kind.`object`(), what, where)
+    val message = if (constantField) "intention.name.create.constant.field.in.class" else "intention.name.create.field.in.class"
+    return GroovyBundle.message(message, what, where)
+  }
+
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    val field = GroovyFieldRenderer(project, constantField, target, request).renderField()
+    val className = myTargetPointer.element?.name
+    return IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, className, "", field.text)
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
@@ -86,7 +93,7 @@ private class GroovyFieldRenderer(
     startTemplate(field)
   }
 
-  private fun renderField(): GrField {
+  fun renderField(): GrField {
     val elementFactory = GroovyPsiElementFactory.getInstance(project)
     val field = elementFactory.createField(request.fieldName, PsiType.INT)
 

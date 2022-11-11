@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents random access container of int-s, namely indexed input ids.
  */
-interface RandomAccessIntContainer {
+public interface RandomAccessIntContainer {
   Object clone();
   boolean add(int value);
   boolean remove(int value);

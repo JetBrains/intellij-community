@@ -30,7 +30,9 @@ public final class PythonTemplateRunner {
   }
 
   public static void runTemplateInSelectedEditor(@NotNull Project project, PsiElement anchor, @NotNull TemplateBuilder builder) {
-    final FileEditor editor = PythonUiService.getInstance().getSelectedEditor(project, anchor.getContainingFile().getVirtualFile());
+    VirtualFile virtualFile = anchor.getContainingFile().getVirtualFile();
+    if (virtualFile == null) return;
+    final FileEditor editor = PythonUiService.getInstance().getSelectedEditor(project, virtualFile);
     if (editor instanceof TextEditor) {
       builder.run(((TextEditor)editor).getEditor(), false);
     }

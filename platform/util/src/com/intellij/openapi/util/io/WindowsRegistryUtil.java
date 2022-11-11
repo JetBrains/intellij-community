@@ -12,8 +12,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /** @deprecated please use {@link com.sun.jna.platform.win32.Advapi32Util JNA} instead. */
 @Deprecated
@@ -47,13 +45,8 @@ public final class WindowsRegistryUtil {
         break;
       }
     }
-    while (true) {
-      if (blackList.indexOf(output.charAt(endPos)) != -1) {
-        endPos--;
-      }
-      else {
-        break;
-      }
+    while (blackList.indexOf(output.charAt(endPos)) != -1) {
+      endPos--;
     }
     return output.subSequence(startPos, endPos + 1).toString();
   }
@@ -72,22 +65,6 @@ public final class WindowsRegistryUtil {
         if (!section.contains("\\")) {
           result.add(section);
         }
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  public static List<String> readRegistryBranchValues(@NotNull String location) {
-    List<String> result = new ArrayList<>();
-    StringBuilder output = doReadBranch(location);
-    if (output != null) {
-      // there seem to be no way to get machine-readable list of value names.
-      // so we are trying to make pattern as precise as possible.
-      Pattern pattern = Pattern.compile("^\\s{4}(.+)\\s{4}REG_\\w+\\s{4}.+$", Pattern.MULTILINE);
-      Matcher m = pattern.matcher(output);
-      while(m.find()) {
-        result.add(m.group(1));
       }
     }
     return result;

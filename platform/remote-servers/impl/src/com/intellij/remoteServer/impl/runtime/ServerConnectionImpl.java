@@ -244,7 +244,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       .map(nextForProject -> nextForProject.findManager(deployment))
       .filter(Objects::nonNull)
       .map(DeploymentLogManagerImpl::getMainLoggingHandler)
-      .collect(Collectors.toList());
+      .toList();
 
     final Consumer<String> logConsumer = message -> {
       if (handlers.isEmpty()) {

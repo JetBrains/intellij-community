@@ -269,6 +269,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
+    testConsoleProperties.setIdBasedTestTree(isIdBasedTestTree());
 
     final BaseTestsOutputConsoleView testConsole =
       UIUtil.invokeAndWaitIfNeeded(() -> SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties));

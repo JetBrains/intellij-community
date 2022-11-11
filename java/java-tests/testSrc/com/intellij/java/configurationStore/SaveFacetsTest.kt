@@ -89,7 +89,7 @@ class SaveFacetsTest {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
         it.modifyEntity(moduleEntity) {
-          dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency)
+          dependencies = mutableListOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency)
         }
       }
     }

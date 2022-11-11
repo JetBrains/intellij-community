@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -50,7 +49,7 @@ public final class Disposer {
   }
 
   /**
-   * @return new {@link Disposable} instance with the given name which is visible in its {@link Disposable#toString()}.
+   * @return new {@link Disposable} instance with the given name which is visible in its {@link Object#toString()}.
    * Please be aware of increased memory consumption due to storing this name inside the object instance.
    */
   @NotNull
@@ -97,6 +96,32 @@ public final class Disposer {
     }
   }
 
+  /**
+   * @param debugName a name to render in this instance {@link Object#toString()}
+   * @return new {@link Disposable} instance which tracks its own invalidation
+   * <p>
+   * Please be aware of increased memory consumption due to storing the debug name
+   * and extra flag for tracking invalidation inside the object instance.
+   */
+  @Contract(pure = true, value = "_ -> new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull String debugName) {
+    return new NamedCheckedDisposable(debugName);
+  }
+
+  private static final class NamedCheckedDisposable extends CheckedDisposableImpl {
+
+    private final @NotNull String debugName;
+
+    NamedCheckedDisposable(@NotNull String debugName) {
+      this.debugName = debugName;
+    }
+
+    @Override
+    public String toString() {
+      return debugName + "{isDisposed=" + isDisposed + "}";
+    }
+  }
+
   @Contract(pure = true, value = "_,_->new")
   public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
     Disposable result = newDisposable(debugName);
@@ -115,8 +140,7 @@ public final class Disposer {
    *                                     if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
-    RuntimeException e = ourTree.register(parent, child);
-    if (e != null) throw e;
+    ourTree.register(parent, child);
   }
 
   /**
@@ -124,7 +148,7 @@ public final class Disposer {
    * @return whether the registration succeeded
    */
   public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
-    return ourTree.register(parent, child) == null;
+    return ourTree.tryRegister(parent, child);
   }
 
   /**
@@ -179,7 +203,7 @@ public final class Disposer {
    */
   @Deprecated
   public static boolean isDisposed(@NotNull Disposable disposable) {
-    return ourTree.getDisposalInfo(disposable) != null;
+    return ourTree.isDisposed(disposable);
   }
 
   /**
@@ -211,7 +235,7 @@ public final class Disposer {
    * {@code predicate} is used only for direct children.
    */
   @ApiStatus.Internal
-  public static void disposeChildren(@NotNull Disposable disposable, @Nullable Predicate<? super Disposable> predicate) {
+  public static void disposeChildren(@NotNull Disposable disposable, @NotNull Predicate<? super Disposable> predicate) {
     ourTree.executeAllChildren(disposable, predicate);
   }
 
@@ -220,14 +244,17 @@ public final class Disposer {
   }
 
   @NotNull
+  @ApiStatus.Internal
   public static ObjectTree getTree() {
     return ourTree;
   }
 
+  @ApiStatus.Internal
   public static void assertIsEmpty() {
     assertIsEmpty(false);
   }
 
+  @ApiStatus.Internal
   public static void assertIsEmpty(boolean throwError) {
     if (ourDebugMode) {
       ourTree.assertIsEmpty(throwError);
@@ -251,7 +278,7 @@ public final class Disposer {
   }
 
   public static Throwable getDisposalTrace(@NotNull Disposable disposable) {
-    return ObjectUtils.tryCast(getTree().getDisposalInfo(disposable), Throwable.class);
+    return getTree().getDisposalTrace(disposable);
   }
 
   /**

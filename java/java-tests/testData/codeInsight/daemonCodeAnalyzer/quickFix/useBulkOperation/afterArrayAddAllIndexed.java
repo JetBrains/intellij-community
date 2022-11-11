@@ -1,4 +1,4 @@
-// "Replace iteration with bulk 'Collection.addAll()' call" "true"
+// "Replace iteration with bulk 'Collection.addAll()' call" "true-preview"
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

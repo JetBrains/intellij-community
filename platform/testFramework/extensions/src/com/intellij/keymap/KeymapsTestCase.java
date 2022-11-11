@@ -3,7 +3,10 @@ package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   /**
@@ -35,7 +38,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                    "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
       {"alt DOWN",                 "MethodDown", "ShowContent", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction"},
-      {"alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "JupyterNotebookRunCellInsertBelowCommandModeAction"},
+      {"alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
       {"alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
       {"alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
       {"alt J",                    "SelectNextOccurrence", "JupyterNotebookMoveCellDownCommandModeAction"},
@@ -117,12 +120,11 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift alt F7",             "ForceStepInto", "StepIntoMyCode"},
       {"shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
       {"shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
-      {"shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff", "Console.TableResult.CompareCells"},
+      {"shift control D",          "Diff.ShowSettingsPopup", "Uml.ShowDiff", "Console.TableResult.CompareCells"},
       {"shift control ENTER",      "EditorCompleteStatement", "Console.Jpa.GenerateSql", "org.jetbrains.r.actions.RRunAction",
                                    "Terminal.SmartCommandExecution.Debug"},
       {"shift control F10",        "Console.Open", "RunClass", "RunTargetAction"},
       {"shift control F8",         "ViewBreakpoints", "EditBreakpoint"},
-      {"shift control G",          "ClassTemplateNavigation", "GoToClass"},
       {"shift control H",          "ChangesView.ShelveSilently", "MethodHierarchy"},
       {"shift control M",          "EditorMatchBrace", "RInsertPipeAction"},
       {"shift control MINUS",      "CollapseAllRegions", "NotebookSplitCellAction"},
@@ -143,6 +145,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt S",         "ShowProjectStructureSettings", "GoShareInPlaygroundAction"},
       {"shift ctrl alt RIGHT",     "MoveElementRight", "ResizeToolWindowRight"},
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
+      {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
@@ -178,7 +181,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift ctrl DOWN",          "MethodDown", "ShowContent"},
       {"shift meta C",             "CopyPaths", "DatabaseView.CopyDdlAction", "PoToggleSelection", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
-      {"shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindPrevious"},
       {"shift meta L",             "Jdbc.OpenConsole.New", "rspec.LetIntroduce"},
       {"shift meta M",             "ChangesView.Move", "RInsertPipeAction", "Vcs.MoveChangedLinesToChangelist"},
       {"shift meta R",             "PoBrowserRefresh", "ReplaceInPath"},
@@ -299,7 +301,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"alt F11",                  "ForceStepInto", "RunJsbtTask"},
       {"meta I",                   "DatabaseView.PropertiesAction", "IncrementalSearch", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
       {"F5",                       "Graph.RouteEdges", "PoBrowserRefresh", "Resume"},
-      {"meta F1",                  "ExternalJavaDoc", "ShowErrorDescription"},
       {"shift meta MINUS",         "Forward", "NotebookSplitCellAction"},
       {"F7",                       "CompileDirty", "NextDiff"},
       {"meta ENTER",               "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "Docker.RemoteServers.StartComposeService", "EditorStartNewLineBefore", "SplitChooser.Duplicate", "Terminal.SmartCommandExecution.Run", "ViewSource", "org.jetbrains.r.actions.RunSelection"},
@@ -363,7 +364,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift alt T",              "ShowPopupMenu", "tasks.switch"},
       {"shift control E",          "RecentLocations", "EditSource"},
       {"shift control F6",         "ChangeTypeSignature", "PreviousTab"},
-      {"shift control G",          "FindUsagesInFile", "ClassTemplateNavigation", "GoToClass"},
       {"shift control I",          "QuickImplementations", "XDebugger.Inspect"},
       {"shift control K",          "Vcs.Push", "FindPrevious"},
       {"shift control X",          "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
@@ -433,7 +433,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta alt DOWN",            "Console.TableResult.NextPage", "EditorDuplicateLines"},
       {"meta alt I",               "Inline", "RMarkdownNewChunk"},
       {"shift ctrl DOWN",          "EditorUnSelectWord", "ShowContent"},
-      {"shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindUsages"},
       {"shift meta K",             "Vcs.Push", "FindPrevious"},
       {"shift meta R",             "GotoFile", "PoBrowserRefresh"},
       {"shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog", "Markdown.Styling.CreateLink"},

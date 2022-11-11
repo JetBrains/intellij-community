@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
+import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.GridBag
@@ -35,9 +36,21 @@ private enum class ShowMode {
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = ideMenu
   private val mainMenuButton = MainMenuButton()
-  private var myToolbar : MainToolbar? = null
-  private val myToolbarPlaceholder = NonOpaquePanel()
+  private var toolbar : MainToolbar? = null
+  private val myToolbarPlaceholder = createToolbarPlaceholder()
   private val myHeaderContent = createHeaderContent()
+
+  private fun createToolbarPlaceholder(): NonOpaquePanel {
+    val sideSeparatorGap = JBUI.scale(4)
+    val sideSeparatorColor = JBColor.namedColor("MainToolbar.separatorColor", JBColor.gray)
+    val panel = NonOpaquePanel()
+    panel.border = JBUI.Borders.compound(
+      JBUI.Borders.emptyLeft(sideSeparatorGap),
+      JBUI.Borders.customLine(sideSeparatorColor, 0, 1, 0, 1),
+      JBUI.Borders.empty(0, sideSeparatorGap)
+    )
+    return panel
+  }
 
   private val contentResizeListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
@@ -56,13 +69,17 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
     add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
-    val buttonsView = buttonPanes.getView()
-    if (SystemInfo.isWindows) buttonsView.border = JBUI.Borders.emptyLeft(8)
+    val buttonsView = wrap(buttonPanes.getView())
     add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
 
     Disposer.register(this, mainMenuButton.menuShortcutHandler)
+  }
+
+  private fun wrap(comp: JComponent) = object : NonOpaquePanel(comp) {
+    override fun getPreferredSize(): Dimension = comp.preferredSize
+    override fun getMinimumSize(): Dimension = comp.preferredSize
   }
 
   override fun updateToolbar() {
@@ -72,14 +89,14 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     toolbar.init((frame as? IdeFrame)?.project)
     toolbar.isOpaque = false
     toolbar.addComponentListener(contentResizeListener)
-    myToolbar = toolbar
+    this.toolbar = toolbar
 
-    myToolbarPlaceholder.add(myToolbar)
+    myToolbarPlaceholder.add(this.toolbar)
     myToolbarPlaceholder.revalidate()
   }
 
   override fun removeToolbar() {
-    myToolbar?.removeComponentListener(contentResizeListener)
+    toolbar?.removeComponentListener(contentResizeListener)
     myToolbarPlaceholder.removeAll()
     myToolbarPlaceholder.revalidate()
   }
@@ -94,7 +111,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     super.uninstallListeners()
     mainMenuButton.menuShortcutHandler.unregisterShortcuts()
     myMenuBar.removeComponentListener(contentResizeListener)
-    myToolbar?.removeComponentListener(contentResizeListener)
+    toolbar?.removeComponentListener(contentResizeListener)
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
@@ -109,27 +126,24 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     }
   }
 
-  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
-    val result = super.getHitTestSpots().toMutableList()
-
-    when (mode) {
+  override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
+    return when (mode) {
       ShowMode.MENU -> {
-        result.add(Pair(getElementRect(myMenuBar) { rect ->
+        super.getHitTestSpots() + Pair(getElementRect(myMenuBar) { rect ->
           val state = frame.extendedState
           if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
             val topGap = (rect.height / 3).toFloat().roundToInt()
             rect.y += topGap
             rect.height -= topGap
           }
-        }, MENU_BAR))
+        }, MENU_BAR)
       }
       ShowMode.TOOLBAR -> {
-        result.add(Pair(getElementRect(mainMenuButton.button), MENU_BAR))
-        myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(Pair(getElementRect(it), MENU_BAR)) }
+        super.getHitTestSpots() +
+        Pair(getElementRect(mainMenuButton.button), MENU_BAR) +
+        (toolbar?.components?.asSequence()?.filter { it.isVisible }?.map { Pair(getElementRect(it), MENU_BAR) } ?: emptySequence())
       }
     }
-
-    return result
   }
 
   override fun getHeaderBackground(active: Boolean) = CustomFrameDecorations.mainToolbarBackground(active)
@@ -140,7 +154,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     return RelativeRectangle(comp, rect)
   }
 
-  fun createHeaderContent(): JPanel {
+  private fun createHeaderContent(): JPanel {
     val res = NonOpaquePanel(CardLayout())
     res.border = JBUI.Borders.empty()
 
@@ -152,7 +166,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(mainMenuButton.button, gb.next().insetLeft(JBUI.scale(20)))
-      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCellHorizontally().insetLeft(JBUI.scale(16)))
+      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCell())
     }
 
     res.add(ShowMode.MENU.name, menuPnl)

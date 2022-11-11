@@ -17,9 +17,9 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.replaceUsages
 import org.jetbrains.kotlin.idea.findUsages.ReferencesSearchScopeHelper
@@ -85,7 +85,7 @@ abstract class AbstractKotlinInlineNamedDeclarationProcessor<TDeclaration : KtNa
 
         if (shouldDeleteAfter) {
             for (superDeclaration in findSuperMethodsNoWrapping(declaration)) {
-                val fqName = superDeclaration.getKotlinFqName()?.asString() ?: KotlinBundle.message("fix.change.signature.error")
+              val fqName = superDeclaration.kotlinFqName?.asString() ?: KotlinBundle.message("fix.change.signature.error")
                 val message = KotlinBundle.message("text.inlined.0.overrides.0.1", kind, fqName)
                 conflicts.putValue(superDeclaration, message)
             }

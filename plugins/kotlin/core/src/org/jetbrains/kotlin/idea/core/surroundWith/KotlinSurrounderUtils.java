@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.core.surroundWith;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils;
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle;
 import org.jetbrains.kotlin.psi.KtBlockExpression;
 import org.jetbrains.kotlin.psi.KtExpression;
@@ -39,7 +41,18 @@ public class KotlinSurrounderUtils {
     }
 
     public static void showErrorHint(@NotNull Project project, @NotNull Editor editor, @NlsContexts.DialogMessage @NotNull String message) {
-        CodeInsightUtils.showErrorHint(project, editor, message, SURROUND_WITH(), null);
+        showErrorHint(project, editor, message, SURROUND_WITH(), null);
+    }
+
+    public static void showErrorHint(
+            @NotNull Project project,
+            @NotNull Editor editor,
+            @NlsContexts.DialogMessage @NotNull String message,
+            @NlsContexts.DialogTitle @NotNull String title,
+            @Nullable String helpId
+    ) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId);
     }
 
     public static boolean isUsedAsStatement(@NotNull KtExpression expression) {

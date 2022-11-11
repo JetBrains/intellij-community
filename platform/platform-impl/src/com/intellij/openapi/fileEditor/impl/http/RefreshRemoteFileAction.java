@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -35,6 +36,11 @@ public class RefreshRemoteFileAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     final RemoteFileState state = myFile.getFileInfo().getState();
     e.getPresentation().setEnabled(state == RemoteFileState.DOWNLOADED || state == RemoteFileState.ERROR_OCCURRED);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

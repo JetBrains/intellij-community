@@ -15,7 +15,16 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.Consumer;
 
+/**
+ * Interface that can be implemented by {@link AnAction} in vcs Annotations popup menu.
+ * The setter will be called when popup is shown, passing the clicked 'annotated line' (not to be confused with 'editor line').
+ *
+ * @deprecated Prefer using {@link com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup#getAnnotationLineNumber(DataContext)} instead.
+ */
+@Deprecated
 public interface UpToDateLineNumberListener extends Consumer<Integer> {
 }

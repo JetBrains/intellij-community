@@ -14,7 +14,7 @@ typeTokenOf -> UMethod (name = typeTokenOf)
 Type -> USimpleNameReferenceExpression (identifier = Type)
     base -> ULocalVariable (name = base)
     object -> UClass (name = null)
-    TypeBase -> UObjectLiteralExpression
+    TypeBase -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
     T -> USimpleNameReferenceExpression (identifier = T)
     superType -> ULocalVariable (name = superType)
     base -> USimpleNameReferenceExpression (identifier = base)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -128,7 +128,7 @@ public final class FileNestingBuilder {
   }
 
   /**
-   * Returns true if the rule applies to the file [as parent; as child] pair
+   * Returns [matching parent; matching child] pair
    */
   public static Couple<Boolean> checkMatchingAsParentOrChild(@NotNull final ProjectViewFileNestingService.NestingRule rule,
                                                              @NotNull final String fileName) {

@@ -22,9 +22,9 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingUtil
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.junit.Assert
 import java.io.File
@@ -105,11 +106,13 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         val outputDir = FileUtil.createTempDirectory(dirName, "")
 
-        val kotlinArtifacts = KotlinArtifacts.instance
         KotlinCompilerStandalone(
             listOf(baseDir),
             target = outputDir,
-            classpath = listOf(kotlinArtifacts.kotlinScriptRuntime, kotlinArtifacts.jetbrainsAnnotations)
+            classpath = listOf(
+                TestKotlinArtifacts.kotlinScriptRuntime,
+                TestKotlinArtifacts.jetbrainsAnnotations
+            )
         ).compile()
 
         PsiTestUtil.setCompilerOutputPath(myFixture.module, outputDir.path, false)
@@ -155,7 +158,10 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
             configureScratchByText(sourceFile.name, fileText)
         }
 
-        if (!KotlinHighlightingUtil.shouldHighlight(myFixture.file)) error("Highlighting for scratch file is switched off")
+        val containingFile = myFixture.file
+        if (containingFile !is KtFile || !containingFile.shouldHighlightFile()) {
+            error("Highlighting for scratch file is switched off")
+        }
 
         launchScratch()
         waitUntilScratchFinishes(isRepl)
@@ -196,7 +202,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
     }
 
     private fun getPreviewTextWithFoldings(): String {
-        val scratchFileEditor = getScratchEditorForSelectedFile(myManager, myFixture.file.virtualFile)
+        val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
             ?: error("Couldn't find scratch panel")
 
         val previewEditor = scratchFileEditor.previewEditor as TextEditor
@@ -224,7 +230,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
 
-        val scratchFileEditor = getScratchEditorForSelectedFile(myManager, myFixture.file.virtualFile)
+        val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
             ?: error("Couldn't find scratch file")
 
         configureOptions(scratchFileEditor, text, myFixture.module)
@@ -237,7 +243,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
 
-        val scratchFileEditor = getScratchEditorForSelectedFile(myManager, myFixture.file.virtualFile)
+        val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
             ?: error("Couldn't find scratch panel")
 
         // We want to check that correct module is selected automatically,
@@ -281,7 +287,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     protected fun stopReplProcess() {
         if (myFixture.file != null) {
-            val scratchFile = getScratchEditorForSelectedFile(myManager, myFixture.file.virtualFile)?.scratchFile
+            val scratchFile = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)?.scratchFile
                 ?: error("Couldn't find scratch panel")
             scratchFile.replScratchExecutor?.stopAndWait()
         }
@@ -334,10 +340,10 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         private val INSTANCE_WITH_KOTLIN_TEST = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
             arrayListOf(
-              KotlinArtifacts.instance.kotlinStdlib,
-              KotlinArtifacts.instance.kotlinTest
+              TestKotlinArtifacts.kotlinStdlib,
+              TestKotlinArtifacts.kotlinTest
             ),
-            arrayListOf(KotlinArtifacts.instance.kotlinStdlibSources)
+            arrayListOf(TestKotlinArtifacts.kotlinStdlibSources)
         ) {
             override fun getSdk() = PluginTestCaseBase.fullJdk()
         }
@@ -348,10 +354,10 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         private val INSTANCE_WITH_SCRIPT_RUNTIME = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
             arrayListOf(
-              KotlinArtifacts.instance.kotlinStdlib,
-              KotlinArtifacts.instance.kotlinScriptRuntime
+              TestKotlinArtifacts.kotlinStdlib,
+              TestKotlinArtifacts.kotlinScriptRuntime
             ),
-            arrayListOf(KotlinArtifacts.instance.kotlinStdlibSources)
+            arrayListOf(TestKotlinArtifacts.kotlinStdlibSources)
         ) {
             override fun getSdk() = PluginTestCaseBase.fullJdk()
         }

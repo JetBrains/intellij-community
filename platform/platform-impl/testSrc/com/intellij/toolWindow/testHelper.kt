@@ -4,25 +4,30 @@
 package com.intellij.toolWindow
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.RegisterToolWindowTask
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.WindowInfo
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.*
 import org.assertj.core.api.Assertions.assertThat
 import javax.swing.Icon
 
 fun testStripeButton(id: String, manager: ToolWindowManagerImpl, shouldBeVisible: Boolean) {
   val button = manager.getEntry(id)?.stripeButton
-   assertThat(button).isNotNull()
-   assertThat(button!!.getComponent().isVisible).isEqualTo(shouldBeVisible)
+  if (!shouldBeVisible && button == null) {
+    return
+  }
+
+  assertThat(button).isNotNull()
+  assertThat(button!!.getComponent().isVisible).isEqualTo(shouldBeVisible)
 }
 
 private fun init(project: Project,
                  isNewUi: Boolean,
                  taskProducer: ((Project) -> List<RegisterToolWindowTask>) = ::computeToolWindowBeans,
                  layoutCustomizer: ((DesktopLayout) -> Unit) = {}): ToolWindowManagerImpl {
-  val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager() else ToolWindowPaneOldButtonManager()
-  val manager = ToolWindowManagerImpl(project, isNewUi = isNewUi, explicitButtonManager = buttonManager, isEdtRequired = false)
+  val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+  val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager(paneId) else ToolWindowPaneOldButtonManager(paneId)
+  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false) {
+    override fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = buttonManager
+  }
 
   val toolWindowLayoutManager = ToolWindowDefaultLayoutManager(isNewUi = isNewUi)
   toolWindowLayoutManager.noStateLoaded()
@@ -71,8 +76,11 @@ object ToolWindowManagerTestHelper {
 }
 
 fun testDefaultLayout(isNewUi: Boolean, project: Project) {
-  val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager() else ToolWindowPaneOldButtonManager()
-  val manager = ToolWindowManagerImpl(project, isNewUi = isNewUi, explicitButtonManager = buttonManager, isEdtRequired = false)
+  val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+  val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager(paneId) else ToolWindowPaneOldButtonManager(paneId)
+  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false) {
+    override fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = buttonManager
+  }
 
   val toolWindowLayoutManager = ToolWindowDefaultLayoutManager(isNewUi = isNewUi)
   toolWindowLayoutManager.noStateLoaded()
@@ -118,10 +126,13 @@ fun testButtonLayout(isNewUi: Boolean, anchor: ToolWindowAnchor) {
       .map { it.id }
       .toList()
   ).isEqualTo(listOf("Version Control", "Problems View", "Terminal")
-                  .let { if (isNewUi && anchor == ToolWindowAnchor.BOTTOM) it.asReversed() else it })
+                .let { if (isNewUi && anchor == ToolWindowAnchor.BOTTOM) it.asReversed() else it })
 }
 
 private class TestStripeButtonManager(override val id: String, override val windowDescriptor: WindowInfo) : StripeButtonManager {
+  override val toolWindow: ToolWindowImpl
+    get() = TODO("Not implemented")
+
   override fun updateState(toolWindow: ToolWindowImpl) {
     TODO("not implemented")
   }
@@ -132,7 +143,7 @@ private class TestStripeButtonManager(override val id: String, override val wind
   override fun updateIcon(icon: Icon?) {
   }
 
-  override fun remove() {
+  override fun remove(anchor: ToolWindowAnchor, split: Boolean) {
   }
 
   override fun getComponent() = TODO("not implemented")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 
@@ -54,13 +54,13 @@ class KotlinPlugin(context: Context) : Plugin(context) {
         val version by property(
             // todo do not hardcode kind & repository
             WizardKotlinVersion(
-              Versions.KOTLIN,
-              KotlinVersionKind.M,
-              Repositories.KOTLIN_EAP_MAVEN_CENTRAL,
-              KotlinVersionProviderService.getBuildSystemPluginRepository(
-                  KotlinVersionKind.M,
-                  devRepository = Repositories.JETBRAINS_KOTLIN_DEV
-              )
+                Versions.KOTLIN,
+                KotlinVersionKind.M,
+                Repositories.KOTLIN_EAP_MAVEN_CENTRAL,
+                KotlinVersionProviderService.getBuildSystemPluginRepository(
+                    KotlinVersionKind.M,
+                    devRepositories = listOf(Repositories.JETBRAINS_KOTLIN_DEV)
+                )
             )
         )
 
@@ -136,7 +136,10 @@ class KotlinPlugin(context: Context) : Plugin(context) {
                 val pluginRepository = version.buildSystemPluginRepository(buildSystemType) ?: return@withAction UNIT_SUCCESS
                 BuildSystemPlugin.pluginRepositoreis.addValues(pluginRepository) andThen
                         updateBuildFiles { buildFile ->
-                            buildFile.withIrs(RepositoryIR(version.repository)).asSuccess()
+                            buildFile.withIrs(
+                                version.repositories
+                                    .map { RepositoryIR(it) }
+                            ).asSuccess()
                         }
             }
         }

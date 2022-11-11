@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -9,7 +9,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinJsGradleModuleConfigurator
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinWithGradleConfigurator
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import java.io.File

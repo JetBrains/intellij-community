@@ -214,7 +214,6 @@ public final class GitRebaseUtils {
    * Get rebase directory
    *
    *
-   * @param project
    * @param root the vcs root
    * @return the commit information or null if no commit information could be detected
    */
@@ -350,7 +349,6 @@ public final class GitRebaseUtils {
     /**
      * The constructor
      *
-     * @param revision
      * @param subject the commit subject
      */
     public CommitInfo(GitRevisionNumber revision, String subject) {

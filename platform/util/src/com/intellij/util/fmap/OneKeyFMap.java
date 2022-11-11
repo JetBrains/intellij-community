@@ -9,12 +9,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-final class OneKeyFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
+final class OneKeyFMap<K, V> implements FMap<K, V> {
 
   private final K myKey;
   private final V myValue;
 
-  OneKeyFMap(K key, V value) {
+  OneKeyFMap(@NotNull K key, @NotNull V value) {
     myKey = key;
     myValue = value;
   }

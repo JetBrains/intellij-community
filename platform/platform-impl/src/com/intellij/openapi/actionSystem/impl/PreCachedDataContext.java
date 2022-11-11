@@ -94,7 +94,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         DataKey<?>[] keys = DataKey.allKeys();
         myDataKeysCount = updateDataKeyIndices(keys);
-        myCachedData = cacheComponentsData(components, initial, myDataManager, keys);
+        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FORCE_ASSERT)) {
+          myCachedData = cacheComponentsData(components, initial, myDataManager, keys);
+        }
         ourInstances.add(this);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -166,9 +168,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         return getDataInner(id, !CommonDataKeys.PROJECT.is(id), true);
       });
       if (answer != null) {
+        map.put(dataId, answer);
         map.nullsByRules.clear(keyIndex);
         map.valueByRules.set(keyIndex);
-        map.put(dataId, answer);
+        reportValueProvidedByRules(dataId);
       }
       else {
         map.nullsByContextRules.set(keyIndex);
@@ -224,6 +227,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         map.put(dataId, answer);
         map.valueByRules.set(keyIndex);
+        reportValueProvidedByRules(dataId);
         break;
       }
     }
@@ -243,6 +247,13 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         LOG.warn(message);
       }
+    }
+  }
+
+  private static void reportValueProvidedByRules(@NotNull String dataId) {
+    if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
+    if ("History".equals(dataId) || "treeExpanderHideActions".equals(dataId)) {
+      LOG.error("'" + dataId + "' is provided by a rule"); // EA-648179
     }
   }
 

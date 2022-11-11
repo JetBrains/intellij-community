@@ -33,9 +33,4 @@ public class DefaultCompactActionGroup extends DefaultActionGroup implements Com
   public DefaultCompactActionGroup(@NlsActions.ActionText String shortName, boolean popup) {
     super(shortName, popup);
   }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return getClass() == DefaultCompactActionGroup.class ? ActionUpdateThread.BGT : super.getActionUpdateThread();
-  }
 }

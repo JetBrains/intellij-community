@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.hierarchy
 
@@ -14,14 +14,14 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.toFakeLightClass
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.project.platform
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -81,7 +81,7 @@ class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
         val editor = PlatformDataKeys.EDITOR.getData(dataContext)
         if (editor != null) {
             val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return null
-            if (!ProjectRootsUtil.isInProjectOrLibSource(file)) return null
+            if (!RootKindFilter.projectAndLibrarySources.matches(file)) return null
             val psiElement = getTargetByReference(project, editor, file.module) ?: getTargetByContainingElement(editor, file)
             if (psiElement is PsiNamedElement && psiElement.name == null) {
                 return null

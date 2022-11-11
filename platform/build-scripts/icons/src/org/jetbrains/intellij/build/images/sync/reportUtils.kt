@@ -45,13 +45,10 @@ internal fun findCommitsToSync(context: Context) {
   }
 }
 
-internal fun Map<Path, Collection<CommitInfo>>.commitMessage(): String {
-  return entries.joinToString("\n\n") { entry ->
-    entry.value.joinToString("\n") {
-      "'${it.subject}' from ${it.hash.substring(0..8)}"
-    } + " from ${getOriginUrl(entry.key)}"
+internal fun Map<Path, Collection<CommitInfo>>.commitMessage(): String =
+  values.flatten().joinToString(separator = "\n\n") {
+    it.subject + "\n" + "https://jetbrains.team/p/ij/repositories/IntelliJIcons/revision/${it.hash}"
   }
-}
 
 internal fun commitAndPush(context: Context) {
   if (context.iconsCommitsToSync.isEmpty()) {

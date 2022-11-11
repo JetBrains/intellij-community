@@ -42,6 +42,8 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     for (int i = 1; i < ins.size(); i++) {
       if (ins.get(i) != TypeDfaState.EMPTY_STATE) {
         result = TypeDfaState.merge(result, ins.get(i), myManager);
+      } else {
+        return TypeDfaState.EMPTY_STATE;
       }
     }
     return result;

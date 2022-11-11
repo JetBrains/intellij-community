@@ -1,4 +1,4 @@
-// "Cast 2nd argument to 'double'" "true"
+// "Cast 2nd argument to 'double'" "true-preview"
 class a {
     void test()  {}
     void test(int i)  {}

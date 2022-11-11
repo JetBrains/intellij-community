@@ -48,7 +48,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
 
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue xmlAttributeValue) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue) {
         super.visitXmlAttributeValue(xmlAttributeValue);
         final PsiElement valueParent = xmlAttributeValue.getParent();
         if (!(valueParent instanceof XmlAttribute)) return;

@@ -6,9 +6,7 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.toListIfNotMany
-import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import kotlin.streams.toList
 
 class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryProvider {
   override fun create(model: CombinedDiffModel): CombinedDiffComponentFactory = MyFactory(model)
@@ -19,18 +17,6 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
       model.init()
     }
 
-    val filePathComparator = ChangesComparator.getFilePathComparator(true)
-
-    override val requestsComparator: Comparator<CombinedDiffModel.RequestData> =
-      Comparator { r1, r2 ->
-        val id1 = r1.blockId
-        val id2 = r2.blockId
-        when {
-          id1 is CombinedPathBlockId && id2 is CombinedPathBlockId -> filePathComparator.compare(id1.path, id2.path)
-          else -> -1
-        }
-      }
-
     override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction()
     private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<PresentableChange>() {
 
@@ -38,7 +24,7 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
 
       override fun getChanges(): ListSelection<out PresentableChange> {
         val changes =
-          if (model is CombinedDiffPreviewModel) model.getAllChanges().toList()
+          if (model is CombinedDiffPreviewModel) model.iterateAllChanges().toList()
           else model.requests.values.filterIsInstance<PresentableChange>()
 
         val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
@@ -53,7 +39,7 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
 
       override fun canNavigate(): Boolean {
         if (model is CombinedDiffPreviewModel) {
-          val allChanges = toListIfNotMany(model.getAllChanges(), true)
+          val allChanges = toListIfNotMany(model.iterateAllChanges(), true)
           return allChanges == null || allChanges.size > 1
         }
 

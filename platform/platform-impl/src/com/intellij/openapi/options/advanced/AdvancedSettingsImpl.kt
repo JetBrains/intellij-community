@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.openapi.options.advanced
 
 import com.intellij.BundleBase
@@ -25,10 +27,10 @@ import java.util.*
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   private var pluginDescriptor: PluginDescriptor? = null
 
-  val enumKlass: Class<Enum<*>>? by lazy {
+  val enumKlass: Class<out Enum<*>>? by lazy {
     @Suppress("UNCHECKED_CAST")
     if (enumClass.isNotBlank())
-      (pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader).loadClass(enumClass) as Class<Enum<*>>
+      (pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader).loadClass(enumClass) as Class<out Enum<*>>
     else
       null
   }
@@ -224,7 +226,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   private var modificationCount = 0L
 
   init {
-    AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean?> {
+    AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean> {
       override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
         defaultValueCache.remove(extension.id)
       }

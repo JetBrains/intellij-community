@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.hunspell
 
 import ai.grazie.spell.lists.hunspell.HunspellWordList
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtil.findFileByIoFile
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.util.Consumer
-import org.apache.lucene.analysis.hunspell.TimeoutPolicy
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
@@ -40,11 +39,11 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
 
     val bundle = loadHunspellBundle(path)
     if (bundle !== null) {
-      bundle.dic.inputStream().use { dic ->
-        bundle.aff.inputStream().use { aff ->
-          this.dict = HunspellWordList(aff, dic, TimeoutPolicy.NO_TIMEOUT) { ProgressManager.checkCanceled() }
-        }
-      }
+      this.dict = HunspellWordList(
+        bundle.aff.path,
+        bundle.dic.path,
+        checkCanceled = { ProgressManager.checkCanceled() }
+      )
 
       val file = findFileByIoFile(bundle.dic, true)!!
       InputStreamReader(file.inputStream, file.charset).use { reader ->

@@ -1,0 +1,22 @@
+<problems>
+  <problem>
+    <file>test.kt</file>
+    <line>11</line>
+    <description>Local variable name &lt;code&gt;ctor_param&lt;/code&gt; should not contain underscores #loc</description>
+  </problem>
+  <problem>
+    <file>test.kt</file>
+    <line>14</line>
+    <description>Local variable name &lt;code&gt;fun_param&lt;/code&gt; should not contain underscores #loc</description>
+  </problem>
+  <problem>
+    <file>test.kt</file>
+    <line>15</line>
+    <description>Local variable name &lt;code&gt;local_val&lt;/code&gt; should not contain underscores #loc</description>
+  </problem>
+  <problem>
+    <file>test.kt</file>
+    <line>16</line>
+    <description>Local variable name &lt;code&gt;destructured_val&lt;/code&gt; should not contain underscores #loc</description>
+  </problem>
+</problems>

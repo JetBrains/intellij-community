@@ -68,7 +68,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
         this(container, false);
     }
 
-    private KotlinCodeStyleSettings(CodeStyleSettings container, boolean isTempForDeserialize) {
+    private KotlinCodeStyleSettings(@NotNull CodeStyleSettings container, boolean isTempForDeserialize) {
         super("JetCodeStyleSettings", container);
 
         this.isTempForDeserialize = isTempForDeserialize;
@@ -145,7 +145,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
 
     private static KotlinCodeStyleSettings readExternalToTemp(Element parentElement) {
         // Read to temp
-        KotlinCodeStyleSettings tempSettings = new KotlinCodeStyleSettings(null, true);
+        KotlinCodeStyleSettings tempSettings = new KotlinCodeStyleSettings(CodeStyleSettings.getDefaults(), true);
         tempSettings.readExternal(parentElement);
 
         return tempSettings;

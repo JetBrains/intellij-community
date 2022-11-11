@@ -31,6 +31,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URLConnection
+import java.net.UnknownHostException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -76,8 +77,9 @@ class MarketplaceRequests : PluginInfoProvider {
     fun loadLastCompatiblePluginDescriptors(
       pluginIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false
     ): List<PluginNode> {
-      return getLastCompatiblePluginUpdate(pluginIds, buildNumber)
+      return getLastCompatiblePluginUpdate(pluginIds, buildNumber, throwExceptions)
         .map { loadPluginDescriptor(it.pluginId, it, null) }
     }
 
@@ -88,6 +90,7 @@ class MarketplaceRequests : PluginInfoProvider {
     fun getLastCompatiblePluginUpdate(
       ids: Set<PluginId>,
       buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false
     ): List<IdeCompatibleUpdate> {
       try {
         if (ids.isEmpty()) {
@@ -95,14 +98,15 @@ class MarketplaceRequests : PluginInfoProvider {
         }
 
         val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
-        return HttpRequests
-          .post(Urls.newFromEncoded(compatibleUpdateUrl).toExternalForm(), HttpRequests.JSON_CONTENT_TYPE)
-          .productNameAsUserAgent()
-          .throwStatusCodeException(false)
-          .connect {
+        return HttpRequests.post(Urls.newFromEncoded(compatibleUpdateUrl).toExternalForm(), HttpRequests.JSON_CONTENT_TYPE).run {
+          productNameAsUserAgent()
+          throwStatusCodeException(throwExceptions)
+          connect {
             it.write(data)
             objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
           }
+        }
+
       }
       catch (e: Exception) {
         LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
@@ -254,13 +258,19 @@ class MarketplaceRequests : PluginInfoProvider {
   @JvmOverloads
   @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
-    return readOrUpdateFile(
-      Path.of(PathManager.getPluginTempPath(), FULL_PLUGINS_XML_IDS_FILENAME),
-      "${pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME",
-      indicator,
-      IdeBundle.message("progress.downloading.available.plugins"),
-      ::parseXmlIds,
-    )
+    try {
+      return readOrUpdateFile(
+        Path.of(PathManager.getPluginTempPath(), FULL_PLUGINS_XML_IDS_FILENAME),
+        "${pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME",
+        indicator,
+        IdeBundle.message("progress.downloading.available.plugins"),
+        ::parseXmlIds,
+      )
+    }
+    catch (e: UnknownHostException) {
+      LOG.infoOrDebug("Cannot get plugins from Marketplace", e)
+      return emptySet()
+    }
   }
 
   override fun loadPlugins(indicator: ProgressIndicator?): Future<Set<PluginId>> {
@@ -517,7 +527,7 @@ class MarketplaceRequests : PluginInfoProvider {
  */
 fun RequestBuilder.setHeadersViaTuner(): RequestBuilder {
   return ApplicationManager.getApplication()
-           ?.getService(PluginRepositoryAuthService::class.java)
+           ?.getServiceIfCreated(PluginRepositoryAuthService::class.java)
            ?.connectionTuner
            ?.let(::tuner)
          ?: this

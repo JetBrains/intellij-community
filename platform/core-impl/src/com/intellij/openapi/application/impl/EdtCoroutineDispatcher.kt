@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.Runnable
@@ -23,6 +24,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
     val state = context.contextModality()
+                ?: ModalityState.NON_MODAL // dispatch with NON_MODAL by default
     val runnable = if (state === ModalityState.any()) {
       block
     }

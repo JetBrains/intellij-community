@@ -22,4 +22,6 @@ public interface EntityIndexingService {
 
   @NotNull
   BuildableRootsChangeRescanningInfo createBuildableInfo();
+
+  boolean isFromWorkspaceOnly(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos);
 }

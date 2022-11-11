@@ -1,4 +1,4 @@
-// "Cast argument to 'String'" "true"
+// "Cast argument to 'String'" "true-preview"
 class a {
     void f(Long... l) {}
     void f(String s) {}

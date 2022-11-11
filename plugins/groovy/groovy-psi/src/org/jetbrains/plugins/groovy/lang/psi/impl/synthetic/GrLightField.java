@@ -1,12 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 
@@ -30,6 +35,7 @@ import java.util.Map;
 public class GrLightField extends GrLightVariable implements GrField {
 
   private PsiClass myContainingClass;
+  private Icon myIcon;
 
   public GrLightField(@NotNull PsiClass containingClass,
                       @NonNls String name,
@@ -110,6 +116,15 @@ public class GrLightField extends GrLightVariable implements GrField {
   }
 
   @Override
+  public Object computeConstantValue() {
+    PsiElement navigationElement = getNavigationElement();
+    if (navigationElement instanceof Property) {
+      return ((Property)navigationElement).getKey();
+    }
+    return super.computeConstantValue();
+  }
+
+  @Override
   public GrExpression getInitializerGroovy() {
     return null;
   }
@@ -174,5 +189,16 @@ public class GrLightField extends GrLightVariable implements GrField {
     GrLightField copy = new GrLightField(myContainingClass, getName(), getType(), getNavigationElement());
     copy.setCreatorKey(getCreatorKey());
     return copy;
+  }
+
+  public void setIcon(@NotNull Icon icon) {
+    myIcon = icon;
+  }
+
+  @Override
+  public Icon getElementIcon(int flags) {
+    Icon actualIcon = myIcon == null ? super.getElementIcon(flags) : myIcon;
+    RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(this, actualIcon, ElementPresentationUtil.getFlags(this, false));
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 }

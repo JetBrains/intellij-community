@@ -176,7 +176,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
             initialStates = Collections.singletonList(createMemoryState());
           }
           else {
-            initialStates = StreamEx.of(endOfInitializerStates).map(DfaMemoryState::createCopy).toList();
+            initialStates = ContainerUtil.map(endOfInitializerStates, DfaMemoryState::createCopy);
           }
           return analyzeBlockRecursively(ctorBody, initialStates, interceptor) == RunnerResult.OK;
         }

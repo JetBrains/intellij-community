@@ -147,7 +147,6 @@ public final class VariableAccessUtils {
    * Returns true if the specified variable is assigned in the specified context.
    * @param variable  the variable to check
    * @param context  the context to check for assignments
-   * @param recurseIntoClasses
    * @return true, if the specified variable was assigned in the specified context, false otherwise
    */
   public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context, boolean recurseIntoClasses) {
@@ -529,10 +528,10 @@ public final class VariableAccessUtils {
     statement.accept(new JavaRecursiveElementWalkingVisitor() {
 
       @Override
-      public void visitClass(final PsiClass aClass) {}
+      public void visitClass(final @NotNull PsiClass aClass) {}
 
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         variables.add(variable);
         super.visitVariable(variable);
       }
@@ -586,7 +585,7 @@ public final class VariableAccessUtils {
 
     @Override
     public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+      @NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement target = expression.resolve();
       if (!(target instanceof PsiVariable)) {

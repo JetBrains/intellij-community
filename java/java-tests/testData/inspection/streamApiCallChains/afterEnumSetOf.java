@@ -1,4 +1,4 @@
-// "Replace EnumSet.of().stream() with Stream.of()" "true"
+// "Replace EnumSet.of().stream() with Stream.of()" "true-preview"
 
 import java.util.EnumSet;
 import java.util.List;

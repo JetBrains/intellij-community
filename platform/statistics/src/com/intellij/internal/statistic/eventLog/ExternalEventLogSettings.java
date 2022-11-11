@@ -48,7 +48,6 @@ public interface ExternalEventLogSettings {
 
   /**
    * Provide extra headers to AP log upload requests. E.g. a shared secret to fence off data pollution
-   * @return
    */
   @NotNull Map<String, String> getExtraLogUploadHeaders();
 }

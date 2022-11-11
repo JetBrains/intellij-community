@@ -16,11 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Medvedev Max
@@ -35,6 +34,15 @@ public class LightJavaToken extends LightElement implements PsiJavaToken {
     myType = type;
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitJavaToken(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   @Override
   public boolean isValid() {
     return myElement.isValid();

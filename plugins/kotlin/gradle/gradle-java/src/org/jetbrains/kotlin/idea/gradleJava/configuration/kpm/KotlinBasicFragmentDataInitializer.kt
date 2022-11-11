@@ -8,10 +8,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.kpm.idea.*
+import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 @Order(ExternalSystemConstants.UNORDERED + 2)
@@ -43,7 +43,7 @@ class KotlinBasicFragmentDataInitializer : ModuleDataInitializer {
                     else -> platform
                 }
 
-                fragment.platforms.mapNotNullTo(platformDetails) { it.platformDetails }
+                platforms.addAll(fragment.platforms)
                 refinesFragmentIds.addAll(refinesFragmentsIds)
                 fragmentDependencies.addAll(fragment.dependencies)
                 languageSettings = fragment.languageSettings

@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import unittest
 
 import remote_sync
 import six
@@ -17,6 +18,7 @@ if six.PY2:
     from io import open
 
 
+@unittest.skipIf(os.name != 'posix', 'Test is written for **nix only')
 class RemoteSyncTest(HelpersTestCase):
     @property
     def test_data_root(self):

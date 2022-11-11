@@ -27,6 +27,7 @@ public final class ActionPanel extends NonOpaquePanel {
 
   private boolean myAutoHide;
   private boolean myActionsIsVisible = false;
+  private boolean myMarkModified = false;
 
   public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Consumer<? super MouseEvent> pass, Consumer<? super Boolean> hover) {
     myTabs = tabs;
@@ -79,7 +80,12 @@ public final class ActionPanel extends NonOpaquePanel {
     TabLabel label = myTabs.myInfo2Label.get(myInfo);
     boolean isHovered = label != null && label.isHovered();
     boolean isSelected = myTabs.getSelectedInfo() == myInfo;
-    if (ExperimentalUI.isNewUI() && myTabs instanceof JBEditorTabs && !isSelected && !isHovered && !myInfo.isPinned()) {
+    if (ExperimentalUI.isNewUI()
+        && myTabs instanceof JBEditorTabs
+        && !isSelected
+        && !isHovered
+        && !myMarkModified
+        && !myInfo.isPinned()) {
       return;
     }
     super.paint(g);
@@ -89,13 +95,20 @@ public final class ActionPanel extends NonOpaquePanel {
     if (getRootPane() == null) return false;
     boolean changed = false;
     boolean anyVisible = false;
+    boolean anyModified = false;
     for (ActionButton each : myButtons) {
       changed |= each.update();
       each.setMouseDeadZone(myTabs.getTabActionsMouseDeadzone());
       anyVisible |= each.getComponent().isVisible();
+
+      Boolean markModified = each.getPrevPresentation().getClientProperty(JBEditorTabs.MARK_MODIFIED_KEY);
+      if (markModified != null) {
+        anyModified |= markModified;
+      }
     }
 
     myActionsIsVisible = anyVisible;
+    myMarkModified = anyModified;
 
     return changed;
   }

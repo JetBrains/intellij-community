@@ -5,6 +5,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,14 +22,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * In VFS/Index/PersistentMap storages typically we use 8kb, 1mb and 10mb pages.
  */
 @ApiStatus.Internal
-final class DirectByteBufferAllocator {
+public final class DirectByteBufferAllocator {
   // Fixes IDEA-222358 Linux native memory leak. Please do not replace to BoundedTaskExecutor
   private static final ExecutorService ourAllocator =
     SystemInfoRt.isLinux && Boolean.parseBoolean(System.getProperty("idea.limit.paged.storage.allocators", "true"))
     ? ConcurrencyUtil.newSingleThreadExecutor("DirectBufferWrapper allocation thread")
     : null;
 
-  private static final boolean USE_POOLED_ALLOCATOR = Boolean.getBoolean("idea.index.use.pooled.page.allocator");
+  private static final boolean USE_POOLED_ALLOCATOR = SystemProperties.getBooleanProperty("idea.index.use.pooled.page.allocator", true);
 
   static <E extends Exception>  ByteBuffer allocate(ThrowableComputable<? extends ByteBuffer, E> computable) throws E {
     if (ourAllocator != null) {
@@ -73,15 +74,17 @@ final class DirectByteBufferAllocator {
     }
   }
 
+  public static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator();
+
   private DirectByteBufferAllocator(int sizeLimitInBytes) {
     mySizeLimitInBytes = sizeLimitInBytes;
   }
 
   DirectByteBufferAllocator() {
-    this(100 * PagedFileStorage.MB);
+    this(FilePageCache.ALLOCATOR_SIZE);
   }
 
-  @NotNull ByteBuffer allocate(int size) {
+  public @NotNull ByteBuffer allocate(int size) {
     if (USE_POOLED_ALLOCATOR) {
       Map.Entry<Integer, ArrayBlockingQueue<ByteBuffer>> buffers = myPool.ceilingEntry(size);
 
@@ -112,7 +115,7 @@ final class DirectByteBufferAllocator {
     return allocate(() -> ByteBuffer.allocateDirect(size));
   }
 
-  void release(@NotNull ByteBuffer buffer) {
+  public void release(@NotNull ByteBuffer buffer) {
     if (USE_POOLED_ALLOCATOR) {
       // mySize can be slightly more than limit due to race
       if (mySize.get() < mySizeLimitInBytes) {

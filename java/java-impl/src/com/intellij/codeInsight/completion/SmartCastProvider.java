@@ -160,7 +160,7 @@ final class SmartCastProvider {
     return AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<>(
       PsiTypeLookupItem.createLookupItem(type, parameters.getPosition())) {
       @Override
-      public void renderElement(LookupElementPresentation presentation) {
+      public void renderElement(@NotNull LookupElementPresentation presentation) {
         presentation.setItemText("(" + type.getPresentableText() + ")");
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (aClass != null) {

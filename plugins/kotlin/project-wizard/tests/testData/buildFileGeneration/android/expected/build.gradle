@@ -1,0 +1,28 @@
+buildscript {
+    repositories {
+        gradlePluginPortal()
+        jcenter()
+        google()
+        maven { url 'KOTLIN_BOOTSTRAP_REPO' }
+        maven { url 'KOTLIN_REPO' }
+        mavenLocal()
+    }
+    dependencies {
+        classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:KOTLIN_VERSION')
+        classpath('com.android.tools.build:gradle:7.0.4')
+    }
+}
+
+group = 'testGroupId'
+version = '1.0-SNAPSHOT'
+
+allprojects {
+    repositories {
+        mavenLocal()
+        google()
+        jcenter()
+        mavenCentral()
+        maven { url 'KOTLIN_BOOTSTRAP_REPO' }
+        maven { url 'KOTLIN_REPO' }
+    }
+}

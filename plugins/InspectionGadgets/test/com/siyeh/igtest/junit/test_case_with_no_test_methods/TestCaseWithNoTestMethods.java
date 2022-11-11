@@ -33,7 +33,7 @@ class MySuite {
   }
 }
 
-class <warning descr="Test class 'TestCaseWithInner' has no tests">TestCaseWithInner</warning> extends junit.framework.TestCase {
+<error descr="Class 'TestCaseWithInner' is public, should be declared in a file named 'TestCaseWithInner.java'">public class <warning descr="Test class 'TestCaseWithInner' has no tests">TestCaseWithInner</warning> extends junit.framework.TestCase</error> {
   public static class Inner extends junit.framework.TestCase {
     public void test1() {}
   }

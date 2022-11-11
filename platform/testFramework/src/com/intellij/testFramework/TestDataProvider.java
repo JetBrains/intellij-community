@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -74,11 +75,13 @@ public class TestDataProvider implements DataProvider {
         if (managerData != null) {
           return managerData;
         }
-        JComponent component = editor.getContentComponent();
-        if (component instanceof EditorComponentImpl) {
-          Object editorComponentData = ((EditorComponentImpl)component).getData(dataId);
-          if (editorComponentData != null) {
-            return editorComponentData;
+        if (!(editor instanceof ImaginaryEditor)) {
+          JComponent component = editor.getContentComponent();
+          if (component instanceof EditorComponentImpl) {
+            Object editorComponentData = ((EditorComponentImpl)component).getData(dataId);
+            if (editorComponentData != null) {
+              return editorComponentData;
+            }
           }
         }
       }

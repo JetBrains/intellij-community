@@ -1,12 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.util.reformatted
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.reformat
+import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
+import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
+import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -31,6 +34,11 @@ abstract class AbstractJoinListIntention<TList : KtElement, TElement : KtElement
         val document = editor?.document ?: return
         val elements = element.elements()
         val pointer = element.createSmartPointer()
+
+        for (element in elements) {
+            element.reformat()
+        }
+
         nextBreak(elements.last())?.let { document.deleteString(it.startOffset, it.endOffset) }
         elements.dropLast(1).asReversed().forEach { tElement ->
             nextBreak(tElement)?.let { document.replaceString(it.startOffset, it.endOffset, " ") }
@@ -41,7 +49,11 @@ abstract class AbstractJoinListIntention<TList : KtElement, TElement : KtElement
         val project = element.project
         val documentManager = PsiDocumentManager.getInstance(project)
         documentManager.commitDocument(document)
-        pointer.element?.reformatted()
+
+        val listElement = pointer.element as? KtElement
+        if (listElement != null && TrailingCommaContext.create(listElement).state == TrailingCommaState.REDUNDANT) {
+            TrailingCommaHelper.trailingCommaOrLastElement(listElement)?.delete()
+        }
     }
 
 }

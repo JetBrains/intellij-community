@@ -1,4 +1,4 @@
-// "Remove switch branch 'A'" "true"
+// "Remove switch branch 'A'" "true-preview"
 class X {
     enum X {A,B,C}
 

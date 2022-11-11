@@ -33,6 +33,9 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * For new inspections, please use {@link GroovyLocalInspectionTool}.
+ */
 public abstract class BaseInspection extends LocalInspectionTool {
 
   public @NotNull Set<String> explicitlyEnabledFileTypes = new HashSet<>();

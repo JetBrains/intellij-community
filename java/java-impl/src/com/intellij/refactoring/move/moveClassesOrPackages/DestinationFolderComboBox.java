@@ -231,6 +231,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   private void setComboboxModelInternal(final VirtualFile initialTargetDirectorySourceRoot,
                                         final VirtualFile oldSelection,
                                         final boolean forceIncludeAll) {
+    if (myProject.isDisposed()) return;
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     JComboBox<DirectoryChooser.ItemWrapper> comboBox = getComboBox();
     final ComboBoxModel<DirectoryChooser.ItemWrapper> model = comboBox.getModel();
@@ -287,6 +288,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         if (selection == NO_UPDATE_REQUIRED) return;
         updateErrorMessage(fileIndex, selection);
         items.sort((o1, o2) -> {
+          if (o1 == o2) return 0;
           if (o1 == NULL_WRAPPER) return -1;
           if (o2 == NULL_WRAPPER) return 1;
           return o1.getRelativeToProjectPath().compareToIgnoreCase(o2.getRelativeToProjectPath());

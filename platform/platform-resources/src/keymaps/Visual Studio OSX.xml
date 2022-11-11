@@ -11,10 +11,7 @@
   <action id="EditorDeleteLine">
     <keyboard-shortcut first-keystroke="meta shift L"/>
   </action>
-  <action id="ShowErrorDescription">
-    <keyboard-shortcut first-keystroke="meta F1"/>
-    <keyboard-shortcut first-keystroke="alt T"/>
-  </action>
+  <action id="ShowErrorDescription"/>
   <action id="StepInto">
     <keyboard-shortcut first-keystroke="meta F11"/>
     <keyboard-shortcut first-keystroke="F11"/>
@@ -148,6 +145,8 @@
     <keyboard-shortcut first-keystroke="meta F10"/>
   </action>
   <action id="QuickJavaDoc">
+    <keyboard-shortcut first-keystroke="meta K" second-keystroke="I"/>
+    <keyboard-shortcut first-keystroke="meta K" second-keystroke="meta I"/>
     <keyboard-shortcut first-keystroke="control shift F1"/>
   </action>
   <action id="ShowBookmarks">

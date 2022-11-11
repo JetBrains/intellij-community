@@ -6,12 +6,14 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter
 
-internal class BeanExtensionPoint<T>(name: String,
-                                     className: String,
-                                     pluginDescriptor: PluginDescriptor,
-                                     componentManager: ComponentManager,
-                                     dynamic: Boolean) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, null,
-                                                                               dynamic), ImplementationClassResolver {
+internal class BeanExtensionPoint<T : Any>(
+  name: String,
+  className: String,
+  pluginDescriptor: PluginDescriptor,
+  componentManager: ComponentManager,
+  dynamic: Boolean,
+) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, null, dynamic), ImplementationClassResolver {
+
   override fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter) = extensionClass
 
   override fun createAdapter(descriptor: ExtensionDescriptor,

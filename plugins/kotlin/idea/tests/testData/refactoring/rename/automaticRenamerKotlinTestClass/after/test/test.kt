@@ -7,10 +7,10 @@ class BarNew {
 
 }
 
-class FooBarBazTestCase : TestCase() {
+class FooBarBazTestCaseNew : TestCase() {
 
 }
 
-class BazBarFooTest {
+class BazBarFooTestNew {
     @Test fun testFoo() {}
 }

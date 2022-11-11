@@ -4,6 +4,7 @@ package com.intellij.usages.impl.rules;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -146,10 +147,16 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (!isValid()) return null;
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         return myFile;
       }
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId);
+      }
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getPsiFile();
       }

@@ -16,16 +16,20 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Pavel.Dolgov
@@ -38,11 +42,23 @@ public class ConvertCollectionToArrayFix implements IntentionAction {
   public ConvertCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
                                      @NotNull PsiExpression expressionToReplace,
                                      @NotNull PsiArrayType arrayType) {
+    this(collectionExpression, expressionToReplace,
+         TypeUtils.isJavaLangObject(arrayType.getComponentType()) ? "" : "new " + getArrayTypeText(arrayType.getComponentType()));
+  }
+
+  private ConvertCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
+                                      @NotNull PsiExpression expressionToReplace,
+                                      @NotNull String newArrayText) {
     myCollectionExpression = collectionExpression;
     myExpressionToReplace = expressionToReplace;
+    myNewArrayText = newArrayText;
+  }
 
-    PsiType componentType = arrayType.getComponentType();
-    myNewArrayText = componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? "" : "new " + getArrayTypeText(componentType);
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiExpression collection = PsiTreeUtil.findSameElementInCopy(myCollectionExpression, target);
+    PsiExpression expr = PsiTreeUtil.findSameElementInCopy(myExpressionToReplace, target);
+    return new ConvertCollectionToArrayFix(collection, expr, myNewArrayText);
   }
 
   @Nls

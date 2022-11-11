@@ -29,7 +29,7 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         final ProblemDescriptor descriptor = checkMethodCallCanBeSimplified(expression, holder.getManager(), isOnTheFly);
         if (descriptor != null) {
           holder.registerProblem(descriptor);
@@ -38,7 +38,7 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         final ProblemDescriptor descriptor = checkNewExpression(expression, holder.getManager(), isOnTheFly);
         if (descriptor != null) {
           holder.registerProblem(descriptor);

@@ -1,4 +1,4 @@
-// "Move initializer to constructor" "true"
+// "Move initializer to constructor" "true-preview"
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 public class XXX {

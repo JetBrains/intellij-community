@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.containers.hash.LongLinkedHashMap;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.system.CpuArch;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,23 +33,19 @@ final class FilePageCache {
   static final long MAX_PAGES_COUNT = 0xFFFF_FFFFL;
   private static final long FILE_INDEX_MASK = 0xFFFF_FFFF_0000_0000L;
 
-  private static final int LOWER_LIMIT;
-  private static final int UPPER_LIMIT;
-  static final int BUFFER_SIZE;
+  private static final int CACHE_SIZE;
+  static final int ALLOCATOR_SIZE;
+  static final int PAGE_SIZE;
 
   static {
     final int lower = 100;
     final int upper = CpuArch.is32Bit() ? 200 : 500;
 
-    BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * PagedFileStorage.MB;
-    final long max = maxDirectMemory() - 2L * BUFFER_SIZE;
-    LOWER_LIMIT = (int)Math.min(lower * PagedFileStorage.MB, max);
-    UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * PagedFileStorage.MB), max);
-
-    LOG.info("lower=" + (LOWER_LIMIT / PagedFileStorage.MB) +
-             "; upper=" + (UPPER_LIMIT / PagedFileStorage.MB) +
-             "; buffer=" + (BUFFER_SIZE / PagedFileStorage.MB) +
-             "; max=" + (max / PagedFileStorage.MB));
+    PAGE_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * PagedFileStorage.MB;
+    final long max = maxDirectMemory() - 2L * PAGE_SIZE;
+    int lowerLimit = (int)Math.min(lower * PagedFileStorage.MB, max);
+    CACHE_SIZE = (int)Math.min(Math.max(lowerLimit, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * PagedFileStorage.MB), max);
+    ALLOCATOR_SIZE = (int)Math.min(100 * PagedFileStorage.MB, Math.max(0, max - CACHE_SIZE - 300 * PagedFileStorage.MB));
   }
 
   void assertUnderSegmentAllocationLock() {
@@ -151,9 +149,9 @@ final class FilePageCache {
     }
   }
 
-  private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
+  private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = new Int2ObjectOpenHashMap<>();
 
-  private final LinkedHashMap<Long, DirectBufferWrapper> mySegments;
+  private final LongLinkedHashMap<DirectBufferWrapper> mySegments;
 
   private final ReentrantLock mySegmentsAccessLock = new ReentrantLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
   // todo avoid locking for access
@@ -176,16 +174,18 @@ final class FilePageCache {
   private long myDisposalMs;
 
   FilePageCache() {
-    mySizeLimit = UPPER_LIMIT;
-    mySegments = new LinkedHashMap<Long, DirectBufferWrapper>(10, 0.75f, true) {
+    mySizeLimit = CACHE_SIZE;
+
+    // super hot-spot, it's very essential to use specialized collection here
+    mySegments = new LongLinkedHashMap<DirectBufferWrapper>(10, 0.75f, true) {
       @Override
-      protected boolean removeEldestEntry(Map.Entry<Long, DirectBufferWrapper> eldest) {
+      protected boolean removeEldestEntry(LongLinkedHashMap.Entry<DirectBufferWrapper> eldest) {
         assert mySegmentsAccessLock.isHeldByCurrentThread();
         return mySize > mySizeLimit;
       }
 
       @Override
-      public DirectBufferWrapper put(Long key, @NotNull DirectBufferWrapper wrapper) {
+      public DirectBufferWrapper put(long key, @NotNull DirectBufferWrapper wrapper) {
         mySize += wrapper.getLength();
         DirectBufferWrapper oldShouldBeNull = super.put(key, wrapper);
         myMaxLoadedSize = Math.max(myMaxLoadedSize, mySize);
@@ -194,14 +194,14 @@ final class FilePageCache {
 
       @Nullable
       @Override
-      public DirectBufferWrapper remove(Object key) {
+      public DirectBufferWrapper remove(long key) {
         assert mySegmentsAccessLock.isHeldByCurrentThread();
         // this method can be called after removeEldestEntry
         DirectBufferWrapper wrapper = super.remove(key);
         if (wrapper != null) {
           //noinspection NonAtomicOperationOnVolatileField
           ++myMappingChangeCount;
-          mySegmentsToRemove.put((Long)key, wrapper);
+          mySegmentsToRemove.put(key, wrapper);
           mySize -= wrapper.getLength();
         }
         return wrapper;
@@ -209,17 +209,12 @@ final class FilePageCache {
     };
   }
 
-  int getMappingChangeCount() {
-    return myMappingChangeCount;
-  }
-
   long registerPagedFileStorage(@NotNull PagedFileStorage storage) {
     synchronized (myIndex2Storage) {
-      int registered = myIndex2Storage.size();
-      int value = registered << 16;
+      // assume that storages never closed (or closed but not so often)
+      int value = myIndex2Storage.size();
       while(myIndex2Storage.get(value) != null) {
-        ++registered;
-        value = registered << 16;
+        value++;
       }
       myIndex2Storage.put(value, storage);
       myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, myIndex2Storage.size());
@@ -230,10 +225,12 @@ final class FilePageCache {
   @NotNull("Seems accessed storage has been closed")
   private PagedFileStorage getRegisteredPagedFileStorageByIndex(long key) {
     int storageIndex = (int)((key & FILE_INDEX_MASK) >> 32);
-    return myIndex2Storage.get(storageIndex);
+    synchronized (myIndex2Storage) {
+      return myIndex2Storage.get(storageIndex);
+    }
   }
 
-  DirectBufferWrapper get(Long key, boolean read) throws IOException {
+  DirectBufferWrapper get(Long key, boolean read, boolean checkAccess) throws IOException {
     DirectBufferWrapper wrapper;
     try {         // fast path
       mySegmentsAccessLock.lock();
@@ -281,7 +278,7 @@ final class FilePageCache {
 
       long disposed = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
-      wrapper = createValue(key, read, fileStorage);
+      wrapper = createValue(key, read, fileStorage, checkAccess);
 
       if (IOStatistics.DEBUG) {
         long finished = System.currentTimeMillis();
@@ -351,13 +348,15 @@ final class FilePageCache {
   }
 
   @NotNull
-  private static DirectBufferWrapper createValue(Long key, boolean read, PagedFileStorage owner) throws IOException {
-    StorageLockContext context = owner.getStorageLockContext();
-    if (read) {
-      context.checkReadAccess();
-    }
-    else {
-      context.checkWriteAccess();
+  private static DirectBufferWrapper createValue(Long key, boolean read, PagedFileStorage owner, boolean checkAccess) throws IOException {
+    if (checkAccess) {
+      StorageLockContext context = owner.getStorageLockContext();
+      if (read) {
+        context.checkReadAccess();
+      }
+      else {
+        context.checkWriteAccess();
+      }
     }
     long off = (key & MAX_PAGES_COUNT) * owner.myPageSize;
 
@@ -371,7 +370,7 @@ final class FilePageCache {
     try {
       storageLockContext.checkReadAccess();
       Map<Long, DirectBufferWrapper> mineBuffers = new TreeMap<>();
-      for (Map.Entry<Long, DirectBufferWrapper> entry : mySegments.entrySet()) {
+      for (LongLinkedHashMap.Entry<DirectBufferWrapper> entry : mySegments.entrySet()) {
         if (entry.getValue().getFile() == storage) {
           mineBuffers.put(entry.getKey(), entry.getValue());
         }
@@ -456,6 +455,8 @@ final class FilePageCache {
   }
 
   void removeStorage(long index) {
-    myIndex2Storage.remove((int)(index >> 32));
+    synchronized (myIndex2Storage) {
+      myIndex2Storage.remove((int)(index >> 32));
+    }
   }
 }

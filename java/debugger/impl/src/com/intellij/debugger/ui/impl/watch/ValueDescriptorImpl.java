@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -32,7 +32,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.XValueNode;
@@ -47,7 +46,6 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -599,7 +597,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         }
         else {
           markName = e.getMarkName();
-          promise = markers.markValueAsync(value, new ValueMarkup(markName, new JBColor(0, 0), null));
+          promise = markers.markValue(value, new ValueMarkup(markName, new JBColor(0, 0), null));
         }
         res = promise.then(__ -> ReadAction.nonBlocking(() -> JavaPsiFacade.getElementFactory(myProject)
           .createExpressionFromText(markName + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
@@ -739,7 +737,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean canSetValue() {
-    return myValueReady && !myIsSynthetic && isLvalue();
+    return myValueReady && isLvalue();
   }
 
   public XValueModifier getModifier(JavaValue value) {
@@ -774,37 +772,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     super.clear();
     setValueLabel("");
     myIsExpandable = false;
-  }
-
-  @Override
-  @Nullable
-  public ValueMarkup getMarkup(final DebugProcess debugProcess) {
-    final Value value = getValue();
-    if (value instanceof ObjectReference) {
-      final ObjectReference objRef = (ObjectReference)value;
-      final Map<ObjectReference, ValueMarkup> map = getMarkupMap(debugProcess);
-      if (map != null) {
-        return map.get(objRef);
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public void setMarkup(final DebugProcess debugProcess, @Nullable final ValueMarkup markup) {
-    final Value value = getValue();
-    if (value instanceof ObjectReference) {
-      final Map<ObjectReference, ValueMarkup> map = getMarkupMap(debugProcess);
-      if (map != null) {
-        final ObjectReference objRef = (ObjectReference)value;
-        if (markup != null) {
-          map.put(objRef, markup);
-        }
-        else {
-          map.remove(objRef);
-        }
-      }
-    }
   }
 
   public boolean canMark() {

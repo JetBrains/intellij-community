@@ -93,7 +93,7 @@ public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
       private boolean referenceToLocalClass;
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         if (reference.getQualifier() != null) {
           return;

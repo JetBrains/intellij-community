@@ -255,8 +255,6 @@ public class Matcher {
    * Finds the matches of given pattern starting from given tree element.
    * @param source string for search
    * @return list of matches found
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
   public List<MatchResult> testFindMatches(String source,
                                            boolean fileContext,
@@ -286,8 +284,6 @@ public class Matcher {
   /**
    * Finds the matches of given pattern starting from given tree element.
    * @param sink match result destination
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
   public void testFindMatches(MatchResultSink sink) throws MalformedPatternException, UnsupportedPatternException {
     isTesting = true;
@@ -410,8 +406,6 @@ public class Matcher {
 
   /**
    * Tests if given element is matched by given pattern starting from target variable.
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
   @NotNull
   public List<MatchResult> matchByDownUp(PsiElement element) throws MalformedPatternException, UnsupportedPatternException {

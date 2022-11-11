@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ThisClassReceiver
  *   - inline functions called by the fragment (and transitively, inline
  *     functions called by those)
  *   - local objects captured by the fragment.
+ *   - local classes constructed by the fragment.
  */
 fun gatherProjectFilesDependedOnByFragment(fragment: KtCodeFragment, bindingContext: BindingContext): Set<KtFile> {
     val resolutionFacade = getResolutionFacadeForCodeFragment(fragment)
@@ -53,6 +55,9 @@ private fun analyzeCalls(
             } else if (descriptor.dispatchReceiverParameter?.visibility == DescriptorVisibilities.LOCAL) {
                 val thisReceiver = descriptor.dispatchReceiverParameter?.value as? ThisClassReceiver ?: return
                 val declaration = DescriptorToSourceUtils.getSourceFromDescriptor(thisReceiver.classDescriptor) ?: return
+                localFunctions.add(declaration.containingFile as? KtFile ?: return)
+            } else if ((descriptor as? ClassConstructorDescriptor)?.constructedClass?.visibility == DescriptorVisibilities.LOCAL) {
+                val declaration = DescriptorToSourceUtils.getSourceFromDescriptor((descriptor).constructedClass) ?: return
                 localFunctions.add(declaration.containingFile as? KtFile ?: return)
             } // TODO: Extension & Context receivers?
         }

@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.java.JavaBundle;
@@ -53,6 +54,19 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     }
     if (psiMethod == null) return;
     makeMethodHierarchyVoid(project, psiMethod);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiMethod.class);
+    if (method == null) return IntentionPreviewInfo.EMPTY;
+    PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+    if (returnTypeElement == null) return IntentionPreviewInfo.EMPTY;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiTypeElement typeElement = factory.createTypeElement(PsiType.VOID);
+    returnTypeElement.replace(typeElement);
+    replaceReturnStatements(method);
+    return IntentionPreviewInfo.DIFF;
   }
 
   @Override

@@ -88,9 +88,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     return new JPanel(); // not used
   }
 
-
-  @NotNull
-  protected @PopupAdvertisement String[] getInitialHints() {
+  protected @PopupAdvertisement String @NotNull [] getInitialHints() {
     String hint = getInitialHint();
     return hint != null ? new String[]{hint} : ArrayUtil.EMPTY_STRING_ARRAY;
   }

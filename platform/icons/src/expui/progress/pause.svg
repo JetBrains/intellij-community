@@ -1,0 +1,6 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle opacity="0.1" cx="8" cy="8" r="8" fill="#313547"/>
+<rect x="5.5" y="3.5" width="1" height="9" rx="0.5" fill="#818594"/>
+<rect x="9.5" y="3.5" width="1" height="9" rx="0.5" fill="#818594"/>
+</svg>

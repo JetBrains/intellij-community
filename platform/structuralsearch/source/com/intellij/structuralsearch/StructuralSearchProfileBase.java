@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.DuplocatorUtil;
-import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -110,10 +109,9 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return new MyMatchingVisitor(globalVisitor);
   }
 
-  @NotNull
   @Override
-  public NodeFilter getLexicalNodesFilter() {
-    return element -> DuplocatorUtil.isIgnoredNode(element);
+  public boolean isMatchNode(PsiElement element) {
+    return !DuplocatorUtil.isIgnoredNode(element);
   }
 
   private static boolean containsOnlyDelimiters(String s) {
@@ -280,7 +278,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       if (StringUtil.isQuotedString(value)) {
         if (mySubstitutionPatterns == null) {
           final String[] prefixes = myGlobalVisitor.getContext().getPattern().getTypedVarPrefixes();
-          mySubstitutionPatterns = StructuralSearchUtil.createPatterns(prefixes);
+          mySubstitutionPatterns = MatchUtil.createPatterns(prefixes);
         }
 
         for (Pattern substitutionPattern : mySubstitutionPatterns) {
@@ -408,7 +406,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
     private void visitLiteral(PsiElement literal) {
       final PsiElement l2 = myGlobalVisitor.getElement();
-      final MatchingHandler handler = (MatchingHandler)literal.getUserData(CompiledPattern.HANDLER_KEY);
+      final MatchingHandler handler = literal.getUserData(CompiledPattern.HANDLER_KEY);
 
       if (handler instanceof SubstitutionHandler) {
         int offset = 0;

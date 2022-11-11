@@ -145,7 +145,6 @@ class SideEffectHandlers {
   }
 
   /**
-   * @param method
    * @return a custom side-effect handler for given method; null if not found
    */
   static SideEffectHandler getHandler(PsiMethod method) {

@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -41,6 +41,21 @@ public class FirUastTypesTestGenerated extends AbstractFirUastTypesTest {
     @TestMetadata("classLiteral.kt")
     public void testClassLiteral() throws Exception {
         runTest("testData/type/classLiteral.kt");
+    }
+
+    @TestMetadata("nonNullCompanion.kt")
+    public void testNonNullCompanion() throws Exception {
+        runTest("testData/type/nonNullCompanion.kt");
+    }
+
+    @TestMetadata("nonNullablePair.kt")
+    public void testNonNullablePair() throws Exception {
+        runTest("testData/type/nonNullablePair.kt");
+    }
+
+    @TestMetadata("nullnessInVarargs.kt")
+    public void testNullnessInVarargs() throws Exception {
+        runTest("testData/type/nullnessInVarargs.kt");
     }
 
     @TestMetadata("objectLiteral.kt")

@@ -130,6 +130,15 @@ public class AntCompletionTest extends LightJavaCodeInsightTestCase {
     checkResultByFile("EntityCompletion-out.xml");
   }
 
+  public void testRestrictedTagCompletion() {
+    configureByFile("RestrictedTagCompletion.xml");
+    performNormalCompletion();
+    assertNotNull(getItems());
+    assertTrue(getItems().length > 0);
+    select();
+    checkResultByFile("RestrictedTagCompletion-out.xml");
+  }
+
   public void testTargetAttributesCompletion() {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");

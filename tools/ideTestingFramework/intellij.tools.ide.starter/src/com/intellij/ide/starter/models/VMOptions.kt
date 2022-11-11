@@ -87,7 +87,7 @@ data class VMOptions(
     return VMOptionsDiff(originalLines = this.data, actualLines = loadedOptions)
   }
 
-  fun writeJavaArgsFile(theFile: File) {
+  fun writeJavaArgsFile(theFile: Path) {
     writeJvmArgsFile(theFile, this.data)
   }
 
@@ -106,6 +106,16 @@ data class VMOptions(
     return this
       .addSystemProperty("idea.log.class.list.file", filePath)
       .addSystemProperty("idea.record.classpath.info", "true")
+  }
+
+  fun enableVmtraceClassLoadingReport(filePath: Path): VMOptions {
+    if (!VMTrace.isSupported) return this
+
+    val vmTraceFile = VMTrace.vmTraceFile
+
+    return this
+      .addSystemProperty("idea.log.vmtrace.file", filePath)
+      .addLine("-agentpath:${vmTraceFile.toAbsolutePath()}=${filePath.toAbsolutePath()}")
   }
 
   fun configureLoggers(
@@ -218,6 +228,10 @@ data class VMOptions(
 
   fun withXmx(sizeMb: Int) = this
     .addLine("-Xmx" + sizeMb + "m", "-Xmx")
+
+  fun withClassFileVerification() = this
+    .addLine("-XX:+UnlockDiagnosticVMOptions")
+    .addLine("-XX:+BytecodeVerificationLocal")
 
   fun withG1GC() = this
     .filterKeys { it == "-XX:+UseConcMarkSweepGC" }

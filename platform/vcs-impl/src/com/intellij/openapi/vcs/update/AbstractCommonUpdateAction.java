@@ -45,6 +45,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
@@ -438,7 +439,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       int allFilesCount = getUpdatedFilesCount();
       String additionalContent = nullize(updateSessions.stream().
         map(UpdateSession::getAdditionalNotificationContent).
-        filter(Objects::nonNull).
+        filter(nonNull()).
         collect(Collectors.joining(", ")));
 
       String title = someSessionWasCancelled

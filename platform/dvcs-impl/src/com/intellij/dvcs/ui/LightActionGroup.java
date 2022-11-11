@@ -26,6 +26,11 @@ public class LightActionGroup extends ActionGroup implements AlwaysVisibleAction
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myChildren.toArray(AnAction.EMPTY_ARRAY);
   }

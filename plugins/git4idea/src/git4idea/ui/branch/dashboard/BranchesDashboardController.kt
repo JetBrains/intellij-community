@@ -58,8 +58,14 @@ internal class BranchesDashboardController(private val project: Project,
 
   init {
     Disposer.register(ui, this)
-    project.messageBus.connect(this).subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, DvcsBranchManagerListener {
-      updateBranchesIsFavoriteState()
+    project.messageBus.connect(this).subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, object : DvcsBranchManagerListener {
+      override fun branchFavoriteSettingsChanged() {
+        updateBranchesIsFavoriteState()
+      }
+
+      override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {
+        toggleGrouping(key, state)
+      }
     })
     project.messageBus.connect(this)
       .subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {

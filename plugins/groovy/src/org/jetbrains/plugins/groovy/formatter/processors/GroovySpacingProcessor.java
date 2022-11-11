@@ -309,6 +309,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitIndexProperty(@NotNull GrIndexProperty expression) {
+    if (myType2 == GroovyTokenTypes.mQUESTION) createSpaceInCode(false);
     if (myType2 == GroovyElementTypes.ARGUMENTS) manageSpaceBeforeCallLParenth();
   }
 

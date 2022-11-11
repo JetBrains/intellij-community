@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve.dsl;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
+import org.jetbrains.plugins.gradle.service.resolve.GradleNamedDomainCollectionContributor;
 import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -43,6 +27,13 @@ public class GradleDslAnnotator implements Annotator {
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof GrReferenceExpression) {
       GrReferenceExpression referenceExpression = (GrReferenceExpression)element;
+
+      PsiElement resolved = referenceExpression.resolve();
+      if (resolved instanceof OriginInfoAwareElement &&
+          GradleNamedDomainCollectionContributor.NAMED_DOMAIN_DECLARATION.equals(((OriginInfoAwareElement)resolved).getOriginInfo())) {
+        highlightElement(holder, referenceExpression.getReferenceNameElement());
+      }
+
       final GrExpression qualifier = ResolveUtil.getSelfOrWithQualifier(referenceExpression);
       if (qualifier == null) return;
       if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return;
@@ -61,10 +52,14 @@ public class GradleDslAnnotator implements Annotator {
         if (canBeMethodOf(referenceExpression.getReferenceName(), containerClass)) return;
 
         PsiElement nameElement = referenceExpression.getReferenceNameElement();
-        if (nameElement != null) {
-          holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(nameElement).textAttributes(MAP_KEY).create();
-        }
+        highlightElement(holder, nameElement);
       }
+    }
+  }
+
+  private static void highlightElement(@NotNull AnnotationHolder holder, PsiElement nameElement) {
+    if (nameElement != null) {
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(nameElement).textAttributes(MAP_KEY).create();
     }
   }
 }

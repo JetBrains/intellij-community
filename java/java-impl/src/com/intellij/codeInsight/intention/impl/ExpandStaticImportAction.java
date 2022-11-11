@@ -77,7 +77,8 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
       staticImport.delete();
     }
     else {
-      if (ApplicationManager.getApplication().isUnitTestMode() || refExpr.getParent() instanceof PsiImportStaticStatement) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || refExpr.getParent() instanceof PsiImportStaticStatement ||
+          !file.isPhysical()) {
         replaceAllAndDeleteImport(expressionToExpand, refExpr, staticImport);
       }
       else {
@@ -87,7 +88,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
             @Override
             public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
               WriteCommandAction.writeCommandAction(project).withName(ExpandStaticImportAction.this.getText()).run(() -> {
-                if (selectedValue == REPLACE_THIS_OCCURRENCE) {
+                if (selectedValue.equals(REPLACE_THIS_OCCURRENCE)) {
                   expand(refExpr, staticImport);
                 }
                 else {

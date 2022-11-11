@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.project.DumbAware;
@@ -51,6 +52,11 @@ public class ToggleLineBreakpointAction extends XDebuggerActionBase implements D
 
     final boolean selected = hasLineBreakpoint(event);
     Toggleable.setSelected(event.getPresentation(), selected);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static boolean hasLineBreakpoint(@NotNull AnActionEvent e) {

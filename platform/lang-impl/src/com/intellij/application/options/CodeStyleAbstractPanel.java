@@ -73,6 +73,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<>();
 
   private final EditorEx myEditor;
+  @NotNull
   private final CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
   private long myLastDocumentModificationStamp;
@@ -207,7 +208,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   protected abstract int getRightMargin();
 
-  private void replaceText(final Project project, boolean collectChanges) {
+  private void replaceText(@NotNull Project project, boolean collectChanges) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         Document beforeReformat = null;
@@ -245,7 +246,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     });
   }
 
-  private void applySettingsToModel() {
+  protected void applySettingsToModel() {
     if (mySettings instanceof CodeStyleSchemesModel.ModelSettings && ((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
     try {
       if (myModel != null && myModel.isUiEventsEnabled()) {
@@ -266,7 +267,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    *                  by change start offset in ascending order
    */
   @Nullable
-  private Document collectChangesBeforeCurrentSettingsAppliance(Project project) {
+  private Document collectChangesBeforeCurrentSettingsAppliance(@NotNull Project project) {
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
     CodeStyle.doWithTemporarySettings(
@@ -294,11 +295,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return myDocumentBeforeChanges;
   }
 
-  protected void prepareForReformat(PsiFile psiFile) {
+  private void prepareForReformat(PsiFile psiFile) {
   }
 
+  @NotNull
   protected String getFileExt() {
-    return getFileTypeExtension(getFileType());
+    return getFileType().getDefaultExtension();
   }
 
   /**
@@ -306,7 +308,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * @see LanguageCodeStyleSettingsProvider#createFileFromText(Project, String)
    */
   @Deprecated(forRemoval = true)
-  protected PsiFile createFileFromText(Project project, String text) {
+  protected PsiFile createFileFromText(@NotNull Project project, @NotNull String text) {
     Language language = getDefaultLanguage();
     if (language != null) {
       LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
@@ -325,12 +327,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     );
   }
 
-  protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
+  @NotNull
+  protected PsiFile doReformat(final Project project, @NotNull PsiFile psiFile) {
     CodeStyleManager.getInstance(project).reformat(psiFile);
     return psiFile;
   }
 
-  private void highlightChanges(Document beforeReformat) {
+  private void highlightChanges(@NotNull Document beforeReformat) {
     myPreviewRangesToHighlight.clear();
     MarkupModel markupModel = myEditor.getMarkupModel();
     markupModel.removeAllHighlighters();
@@ -353,12 +356,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * @return                  {@code true} if given visual position belongs to the target visual rectangle;
    *                          {@code false} otherwise
    */
-  private static boolean isWithinBounds(VisualPosition targetPosition, VisualPosition startPosition, VisualPosition endPosition) {
+  private static boolean isWithinBounds(@NotNull VisualPosition targetPosition, @NotNull VisualPosition startPosition, VisualPosition endPosition) {
     return targetPosition.line >= startPosition.line && targetPosition.line <= endPosition.line
            && targetPosition.column >= startPosition.column && targetPosition.column <= endPosition.column;
   }
 
-  private void updatePreviewHighlighter(final EditorEx editor) {
+  private void updatePreviewHighlighter(@NotNull EditorEx editor) {
     EditorColorsScheme scheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);
     EditorHighlighter highlighter = createHighlighter(scheme);
@@ -371,7 +374,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   }
 
   @Nullable
-  protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
+  protected abstract EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme);
 
   @NotNull
   protected abstract FileType getFileType();
@@ -380,9 +383,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   @Nullable
   protected abstract String getPreviewText();
 
-  public abstract void apply(CodeStyleSettings settings) throws ConfigurationException;
+  public abstract void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException;
 
-  public final void reset(final CodeStyleSettings settings) {
+  public final void reset(@NotNull CodeStyleSettings settings) {
     myShouldUpdatePreview = false;
     try {
       resetImpl(settings);
@@ -408,13 +411,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
   }
 
-  protected abstract void resetImpl(final CodeStyleSettings settings);
+  protected abstract void resetImpl(@NotNull CodeStyleSettings settings);
 
   protected static void fillWrappingCombo(@NotNull JComboBox<CodeStyleSettings.WrapStyle> wrapCombo) {
     PresentableEnumUtil.fill(wrapCombo, CodeStyleSettings.WrapStyle.class);
   }
 
-  public static String readFromFile(@NotNull Class<?> resourceContainerClass, @NonNls @NotNull String fileName) {
+  public static @NotNull String readFromFile(@NotNull Class<?> resourceContainerClass, @NonNls @NotNull String fileName) {
     try (InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
          LineNumberReader lineNumberReader = stream == null ? null : new LineNumberReader(new InputStreamReader(stream,
                                                                                                                 StandardCharsets.UTF_8))) {
@@ -434,7 +437,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
   }
 
-  protected void installPreviewPanel(final JPanel previewPanel) {
+  protected void installPreviewPanel(@NotNull JPanel previewPanel) {
     previewPanel.setLayout(new BorderLayout());
     previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
     previewPanel.setBorder(new AbstractBorder() {
@@ -457,12 +460,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         return insets;
       }
     });
-  }
-
-  @NonNls
-  @NotNull
-  protected String getFileTypeExtension(@NotNull FileType fileType) {
-    return fileType.getDefaultExtension();
   }
 
   /**
@@ -598,7 +595,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     };
   }
 
-  public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
+  final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
     codeStyle.apply(mySettings, myDefaultLanguage);
     ((CodeStyleSchemesModel.ModelSettings) mySettings).doWithLockedSettings(()->resetImpl(mySettings));
     if (myModel != null) {
@@ -623,19 +620,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return myCurrentSettings;
   }
 
-@Nullable
+  @Nullable
   protected CodeStyleSettings getModelSettings() {
     CodeStyleSchemesModel model = myModel;
     return model != null ? model.getCloneSettings(model.getSelectedScheme()) : null;
   }
 
-  public void setupCopyFromMenu(JPopupMenu copyMenu) {
+  public void setupCopyFromMenu(@NotNull JPopupMenu copyMenu) {
     copyMenu.removeAll();
-  }
-
-  @Deprecated(forRemoval = true)
-  public boolean isCopyFromMenuAvailable() {
-    return false;
   }
 
   @Override

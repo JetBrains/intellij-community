@@ -3,6 +3,7 @@ package training.ui.views
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -204,7 +205,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
           langSupport.onboardingFeedbackData = null
         }
 
-        if (langSupport != null && isLearningProject(project, langSupport)) {
+        if (langSupport != null && isLearningProject(project, langSupport.primaryLanguage)) {
           CloseProjectWindowHelper().windowClosing(project)
         } else {
           LearningUiManager.resetModulesView()
@@ -223,14 +224,17 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun addMessage(@Language("HTML") text: String, properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
-    val messages = MessageFactory.convert(text)
-    MessageFactory.setLinksHandlers(messages)
-    addMessages(messages, properties)
+    val paragraphs = MessageFactory.convert(text)
+    val firstParagraph = paragraphs.first()
+    addMessages(firstParagraph, properties)
+    for (paragraph in paragraphs.subList(1, paragraphs.size)) {
+      addMessages(paragraph, properties.copy(useInternalParagraphStyle = true))
+    }
   }
 
-  fun addMessages(messageParts: List<MessagePart>,
+  fun addMessages(message: TextParagraph,
                   properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
-    val needToShow = lessonMessagePane.addMessage(messageParts, properties)
+    val needToShow = lessonMessagePane.addMessage(message, properties)
     adjustMessagesArea()
     if (properties.state != LessonMessagePane.MessageState.INACTIVE) {
       scrollToMessage(needToShow())
@@ -277,7 +281,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   private fun clearMessages() {
-    lessonMessagePane.clear()
+    lessonMessagePane.clearMessages()
   }
 
   private fun createButtonsPanel(): JPanel {

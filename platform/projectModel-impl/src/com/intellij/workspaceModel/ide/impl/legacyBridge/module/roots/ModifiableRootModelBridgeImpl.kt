@@ -32,17 +32,13 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ModifiableRootModelBridgeImpl(
@@ -98,7 +94,8 @@ internal class ModifiableRootModelBridgeImpl(
       savedModuleEntity = actualModuleEntity
       return actualModuleEntity
     }
-
+  // It's needed to track changed dependency to create new instance of Library if e.g dependency scope was changed
+  private val changedLibraryDependency = mutableSetOf<LibraryId>()
   private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this)
 
   /**
@@ -160,6 +157,10 @@ internal class ModifiableRootModelBridgeImpl(
       val copy = dependencies.toMutableList()
       copy[index] = newItem
       dependencies = copy
+    }
+
+    if (newItem is ModuleDependencyItem.Exportable.LibraryDependency && newItem.library.tableId is LibraryTableId.ModuleLibraryTableId) {
+      changedLibraryDependency.add(newItem.library)
     }
   }
 
@@ -322,7 +323,7 @@ internal class ModifiableRootModelBridgeImpl(
     mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(moduleEntity) {
-      dependencies = dependencies + dependency
+      dependencies.add(dependency)
     }
   }
 
@@ -332,7 +333,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(moduleEntity) {
-      this.dependencies = this.dependencies + dependencies
+      this.dependencies.addAll(dependencies)
     }
   }
 
@@ -350,8 +351,16 @@ internal class ModifiableRootModelBridgeImpl(
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(moduleEntity) {
-      dependencies = if (last) dependencies + dependency
-      else dependencies.subList(0, position) + dependency + dependencies.subList(position, dependencies.size)
+      if (last) {
+        dependencies.add(dependency)
+      }
+      else {
+        val result = mutableListOf<ModuleDependencyItem>()
+        result.addAll(dependencies.subList(0, position))
+        result.add(dependency)
+        result.addAll(dependencies.subList(position, dependencies.size))
+        dependencies = result
+      }
     }
     return newEntry
   }
@@ -426,7 +435,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(moduleEntity) {
-      dependencies = newEntities
+      dependencies = newEntities.toMutableList()
     }
   }
 
@@ -514,6 +523,7 @@ internal class ModifiableRootModelBridgeImpl(
       }
     }
 
+    moduleLibraryTable.restoreMappingsForUnchangedLibraries(changedLibraryDependency)
     disposeWithoutLibraries()
     return diff
   }

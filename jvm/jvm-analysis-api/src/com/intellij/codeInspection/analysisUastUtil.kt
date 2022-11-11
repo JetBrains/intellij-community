@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil
@@ -38,13 +37,3 @@ fun UClass.isLocal(): Boolean {
 }
 
 fun PsiType.isInheritorOf(baseClassName: String) = InheritanceUtil.isInheritor(this, baseClassName)
-
-fun ProblemsHolder.registerUProblem(element: UAnchorOwner, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
-  val anchor = element.uastAnchor?.sourcePsi ?: return
-  registerProblem(anchor, descriptionTemplate, *fixes)
-}
-
-fun ProblemsHolder.registerUProblem(element: UDeclaration, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
-  val anchor = element.uastAnchor?.sourcePsi ?: return
-  registerProblem(anchor, descriptionTemplate, *fixes)
-}

@@ -8,3 +8,4 @@ class A {
 }
 
 // EXISTS: get(Int)
+// IGNORE_K2

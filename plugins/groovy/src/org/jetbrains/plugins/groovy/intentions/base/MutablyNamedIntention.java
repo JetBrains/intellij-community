@@ -9,9 +9,10 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class MutablyNamedIntention extends Intention {
-  private @IntentionName String text = null;
+  private @IntentionName String text;
 
-  protected abstract @IntentionName String getTextForElement(PsiElement element);
+  @NotNull
+  protected abstract @IntentionName String getTextForElement(@NotNull PsiElement element);
 
   @Override
   @NotNull

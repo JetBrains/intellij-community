@@ -108,7 +108,7 @@ public class InspectionTree extends Tree {
       EditSourceOnEnterKeyHandler.install(this);
       TreeUtil.installActions(this);
       PopupHandler.installPopupMenu(this, IdeActions.INSPECTION_TOOL_WINDOW_TREE_POPUP, ActionPlaces.CODE_INSPECTION);
-      new TreeSpeedSearch(this, o -> InspectionsConfigTreeComparator.getDisplayTextToSort(o.getLastPathComponent().toString()));
+      new TreeSpeedSearch(this, false, o -> InspectionsConfigTreeComparator.getDisplayTextToSort(o.getLastPathComponent().toString()));
     }
 
     getModel().addTreeModelListener(new TreeModelAdapter() {

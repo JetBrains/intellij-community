@@ -2,6 +2,7 @@
 
 package com.intellij.unscramble;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -24,5 +25,10 @@ public class AnalyzeStacktraceAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

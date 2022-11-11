@@ -1,8 +1,7 @@
 // SET_TRUE: SMART_TABS
 // SET_TRUE: USE_TAB_CHARACTER
-// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER
 
 class A(
-		a: Int,
-		<caret>
+	a: Int,
+	<caret>
 )

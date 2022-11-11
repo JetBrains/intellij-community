@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column.util
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.table.JBTable
+import com.intellij.util.childScope
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.data.VcsCommitExternalStatus
 import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
@@ -55,16 +56,14 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
     providers.clear()
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   companion object {
-
     @OptIn(FlowPreview::class)
     private fun <T : VcsCommitExternalStatus> loadDataForVisibleRows(table: VcsLogGraphTable,
                                                                      column: VcsLogCustomColumn<T>,
                                                                      dataProvider: VcsCommitsDataLoader<T>) {
-
-      // `later()` is important here to ensure [VcsLogGraphTable] is already wrapped with scroll pane
-      val scope = CoroutineScope(AppUIExecutor.onUiThread().later().coroutineDispatchingContext())
+      // Dispatchers.EDT is not immediate -
+      // later invocation is important here to ensure [VcsLogGraphTable] is already wrapped with scroll pane
+      val scope = ApplicationManager.getApplication().coroutineScope.childScope(Dispatchers.EDT)
       Disposer.register(dataProvider) {
         scope.cancel()
       }

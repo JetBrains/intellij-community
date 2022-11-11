@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -10,16 +10,17 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.calls.KtApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
@@ -106,7 +107,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             ?: return null
 
         val callElement = argumentList.parent as? KtElement ?: return null
-        return analyse(callElement) {
+        return analyze(callElement) {
             // findElementForParameterInfo() is only called once before the UI is shown. updateParameterInfo() is called once before the UI
             // is shown, and is also called every time the cursor moves or the call arguments change (i.e., user types something) while the
             // UI is shown, hence the need to resolve the call again in updateParameterInfo() (e.g., argument mappings can change).
@@ -139,14 +140,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         context.setCurrentParameter(currentArgumentIndex)
 
         val callElement = argumentList.parent as? KtElement ?: return
-        analyse(callElement) {
+        analyze(callElement) {
             val (valueArguments, arguments) = when (callElement) {
                 is KtCallElement -> {
                     val valueArguments = callElement.valueArgumentList?.arguments
                     Pair(valueArguments, valueArguments?.map { it.getArgumentExpression() } ?: listOf())
                 }
                 is KtArrayAccessExpression -> Pair(null, callElement.indexExpressions)
-                else -> return@analyse
+                else -> return@analyze
             }
             val candidatesWithMapping = collectCallCandidates(callElement)
             val hasMultipleApplicableBestCandidates = candidatesWithMapping.count { it.isApplicableBestCandidate } > 1
@@ -264,9 +265,9 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             val returnType = parameter.returnType.takeUnless { it is KtClassErrorType } ?: parameter.symbol.returnType
             append(returnType.render(KtTypeRendererOptions.SHORT_NAMES))
 
-            if (parameter.symbol.hasDefaultValue) {
-                // TODO: append(" = " + defaultValue).
-                // HL API currently doesn't give actual default value.
+            parameter.symbol.defaultValue?.let { defaultValue ->
+                append(" = ")
+                append(KotlinParameterInfoBase.getDefaultValueStringRepresentation(defaultValue))
             }
         }
     }

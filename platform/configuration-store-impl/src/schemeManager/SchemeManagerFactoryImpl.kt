@@ -4,8 +4,10 @@ package com.intellij.configurationStore.schemeManager
 import com.intellij.configurationStore.*
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.Scheme
@@ -17,6 +19,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.throwIfNotEmpty
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -35,14 +39,17 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open fun getVirtualFileResolver(): VirtualFileResolver? = null
 
-  final override fun <T: Scheme, MutableT : T> create(directoryName: String,
-                                                    processor: SchemeProcessor<T, MutableT>,
-                                                    presentableName: String?,
-                                                    roamingType: RoamingType,
-                                                    schemeNameToFileName: SchemeNameToFileName,
-                                                    streamProvider: StreamProvider?,
-                                                    directoryPath: Path?,
-                                                    isAutoSave: Boolean): SchemeManager<T> {
+  final override fun <T: Scheme, MutableT : T> create(
+    directoryName: String,
+    processor: SchemeProcessor<T, MutableT>,
+    presentableName: String?,
+    roamingType: RoamingType,
+    schemeNameToFileName: SchemeNameToFileName,
+    streamProvider: StreamProvider?,
+    directoryPath: Path?,
+    isAutoSave: Boolean,
+    settingsCategory: SettingsCategory
+  ): SchemeManager<T> {
     val path = checkPath(directoryName)
     val fileChangeSubscriber = when {
       streamProvider != null && streamProvider.isApplicable(path, roamingType) -> null
@@ -56,7 +63,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     presentableName = presentableName,
                                     schemeNameToFileName = schemeNameToFileName,
                                     fileChangeSubscriber = fileChangeSubscriber,
-                                    virtualFileResolver = getVirtualFileResolver())
+                                    virtualFileResolver = getVirtualFileResolver(),
+                                    settingsCategory = settingsCategory)
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -91,7 +99,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   final override suspend fun save() {
     val errors = SmartList<Throwable>()
-    withEdtContext(componentManager) {
+    withContext(Dispatchers.EDT) {
       for (registeredManager in managers) {
         try {
           registeredManager.save(errors)

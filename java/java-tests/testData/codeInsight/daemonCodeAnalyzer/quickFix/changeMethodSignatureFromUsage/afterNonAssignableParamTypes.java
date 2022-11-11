@@ -1,4 +1,4 @@
-// "Add 'String' as 2nd parameter to method 'foo'" "true"
+// "Add 'String' as 2nd parameter to method 'foo'" "true-preview"
 public class S {
 
   void foo(A a, String s) {

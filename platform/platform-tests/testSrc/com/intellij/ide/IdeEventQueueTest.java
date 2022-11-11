@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,14 +20,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.InvocationEvent;
+import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStress() {
@@ -137,7 +139,8 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       try {
         UIUtil.dispatchAllInvocationEvents();
       }
-      catch (MyException e) {
+      catch (Throwable e) {
+        assertTrue(e.toString(), ExceptionUtil.causedBy(e, MyException.class));
         break;
       }
       assertFalse(t.timedOut());
@@ -161,7 +164,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   public void testEdtExecutorRunnableMustThrowImmediatelyInTests() {
-    EdtExecutorService.getInstance().execute(()->throwMyException(), ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> throwMyException(), ModalityState.NON_MODAL);
     checkMyExceptionThrownImmediately();
   }
 
@@ -185,46 +188,21 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       run.set(true);
       ExceptionUtil.rethrow(toThrow);
     });
-    AtomicReference<Throwable> error = new AtomicReference<>();
-    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
-      @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
-        assertNull(error.get());
-        error.set(t);
-        return false;
-      }
-    }, () -> {
+    Runnable runnable = () -> {
       IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
       ideEventQueue.executeInProductionModeEvenThoughWeAreInTests(() -> ideEventQueue.dispatchEvent(event));
-    });
-
+    };
+    
+    Throwable error;
+    if (expectedToBeLogged != null) {
+      error = LoggedErrorProcessor.executeAndReturnLoggedError(runnable);
+    }
+    else {
+      runnable.run();
+      error = null;
+    }
     assertTrue(run.get());
-    assertSame(expectedToBeLogged, error.get());
-  }
-
-  public void testPumpEventsForHierarchyMustExitOnIsCancelEventCondition() {
-    assert SwingUtilities.isEventDispatchThread();
-    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    CompletableFuture<Object> future = new CompletableFuture<>();
-    TestTimeOut cancelEventTime = TestTimeOut.setTimeout(2, TimeUnit.SECONDS);
-    JLabel component = new JLabel();
-    long start = System.currentTimeMillis();
-    ideEventQueue.pumpEventsForHierarchy(component, future, event -> {
-      if (cancelEventTime.isTimedOut()) {
-        ideEventQueue.postEvent(new TextEvent(component, -239){
-          @Override
-          public String paramString() {
-            return "my";
-          }
-        });
-      }
-      // post InvocationEvent to give getNextEvent work to do
-      SwingUtilities.invokeLater(EmptyRunnable.getInstance());
-      return "my".equals(event.paramString());
-    });
-    long elapsedMs = System.currentTimeMillis() - start;
-    // check that first, we did exit the pumpEventsForHierarchy and second, at the right moment
-    assertTrue(String.valueOf(elapsedMs), cancelEventTime.isTimedOut());
+    assertSame(expectedToBeLogged, error);
   }
 
   public void testPumpEventsForHierarchyMustExitOnIsFutureDoneCondition() {
@@ -240,7 +218,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       }
       // post InvocationEvent to give getNextEvent work to do
       SwingUtilities.invokeLater(EmptyRunnable.getInstance());
-      return false;
     });
     long elapsedMs = System.currentTimeMillis() - start;
     // check that first, we did exit the pumpEventsForHierarchy and second, at the right moment

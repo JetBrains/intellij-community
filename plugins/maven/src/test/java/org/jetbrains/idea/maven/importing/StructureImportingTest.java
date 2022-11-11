@@ -15,18 +15,16 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.module.LanguageLevelUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -62,6 +60,102 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
       assertTrue(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
     }
   }
+
+  @Test
+  public void testImportWithAlreadyExistingModules() throws IOException {
+    createModule("m1");
+    createModule("m2");
+    createModule("m3");
+
+    PsiTestUtil.addSourceRoot(getModule("m1"), createProjectSubFile("m1/user-sources"));
+    PsiTestUtil.addSourceRoot(getModule("m2"), createProjectSubFile("m2/user-sources"));
+    PsiTestUtil.addSourceRoot(getModule("m3"), createProjectSubFile("m3/user-sources"));
+
+    assertModules("m1", "m2", "m3");
+    assertSources("m1", "user-sources");
+    assertSources("m2", "user-sources");
+    assertSources("m3", "user-sources");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>");
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    createProjectSubDirs("m1/src/main/java",
+                         "m2/src/main/java",
+                         "m3/src/main/java");
+
+    importProject();
+    assertModules("project", "m1", "m2", "m3");
+
+    if (supportsLegacyKeepingFoldersFromPreviousImport()) {
+      assertSources("m1", "user-sources", "src/main/java");
+      assertSources("m2", "user-sources", "src/main/java");
+      assertSources("m3", "user-sources");
+    }
+    else {
+      assertSources("m1", "src/main/java");
+      assertSources("m2", "src/main/java");
+      assertSources("m3", "user-sources");
+    }
+  }
+
+  @Test
+  public void testMarkModulesAsMavenized() {
+    createModule("userModule");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "userModule");
+    assertMavenizedModule("project");
+    assertMavenizedModule("m1");
+    assertNotMavenizedModule("userModule");
+
+    configConfirmationForYesAnswer();
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m2", "userModule");
+    assertMavenizedModule("project");
+    assertMavenizedModule("m2");
+    assertNotMavenizedModule("userModule");
+  }
+
 
   @Test
   public void testModulesWithSlashesRegularAndBack() {
@@ -660,427 +754,29 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void testLanguageLevel() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <configuration>" +
-                  "        <source>1.4</source>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testLanguageLevelFromDefaultCompileExecutionConfiguration() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>default-compile</id>" +
-                  "             <configuration>" +
-                  "                <source>1.8</source>" +
-                  "             </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_8, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testLanguageLevel6() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <configuration>" +
-                  "        <source>1.6</source>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_6, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testLanguageLevelX() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <configuration>" +
-                  "        <source>99</source>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testLanguageLevelWhenCompilerPluginIsNotSpecified() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testLanguageLevelWhenConfigurationIsNotSpecified() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <configuration>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testLanguageLevelFromPluginManagementSection() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <pluginManagement>" +
-                  "    <plugins>" +
-                  "      <plugin>" +
-                  "        <groupId>org.apache.maven.plugins</groupId>" +
-                  "        <artifactId>maven-compiler-plugin</artifactId>" +
-                  "        <configuration>" +
-                  "          <source>1.4</source>" +
-                  "        </configuration>" +
-                  "      </plugin>" +
-                  "    </plugins>" +
-                  "  </pluginManagement>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testLanguageLevelFromParentPluginManagementSection() {
-    createModulePom("parent",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>parent</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
-
-                    "<build>" +
-                    "  <pluginManagement>" +
-                    "    <plugins>" +
-                    "      <plugin>" +
-                    "        <groupId>org.apache.maven.plugins</groupId>" +
-                    "        <artifactId>maven-compiler-plugin</artifactId>" +
-                    "        <configuration>" +
-                    "          <source>1.4</source>" +
-                    "        </configuration>" +
-                    "      </plugin>" +
-                    "    </plugins>" +
-                    "  </pluginManagement>" +
-                    "</build>");
+  public void testReleaseCompilerPropertyInPerSourceTypeModules() {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
-                  "<parent>" +
-                  "  <groupId>test</groupId>" +
-                  "  <artifactId>parent</artifactId>" +
-                  "  <version>1</version>" +
-                  "  <relativePath>parent/pom.xml</relativePath>" +
-                  "</parent>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testOverridingLanguageLevelFromPluginManagementSection() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <pluginManagement>" +
-                  "    <plugins>" +
-                  "      <plugin>" +
-                  "        <groupId>org.apache.maven.plugins</groupId>" +
-                  "        <artifactId>maven-compiler-plugin</artifactId>" +
-                  "        <configuration>" +
-                  "          <source>1.4</source>" +
-                  "        </configuration>" +
-                  "      </plugin>" +
-                  "    </plugins>" +
-                  "  </pluginManagement>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <configuration>" +
-                  "        <source>1.3</source>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_3, getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testPreviewLanguageLevelOneLine() {
-    doTestPreview("<compilerArgs>--enable-preview</compilerArgs>\n");
-  }
-
-  @Test
-  public void testPreviewLanguageLevelArg() {
-    doTestPreview("<compilerArgs><arg>--enable-preview</arg></compilerArgs>\n");
-  }
-
-  @Test
-  public void testPreviewLanguageLevelCompilerArg() {
-    doTestPreview("<compilerArgs><compilerArg>--enable-preview</compilerArg></compilerArgs>\n");
-  }
-
-  private void doTestPreview(String compilerArgs) {
-    int feature = LanguageLevel.HIGHEST.toJavaVersion().feature;
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>\n" +
-                  "      <groupId>org.apache.maven.plugins</groupId>\n" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>\n" +
-                  "      <version>3.8.0</version>\n" +
-                  "      <configuration>\n" +
-                  "          <release>" + feature + "</release>\n" +
-                  compilerArgs +
-                  "          <forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
-                  "      </configuration>\n" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1], getLanguageLevelForModule());
-  }
-
-  @Test
-  public void testInheritingLanguageLevelFromPluginManagementSection() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <pluginManagement>" +
-                  "    <plugins>" +
-                  "      <plugin>" +
-                  "        <groupId>org.apache.maven.plugins</groupId>" +
-                  "        <artifactId>maven-compiler-plugin</artifactId>" +
-                  "        <configuration>" +
-                  "          <source>1.4</source>" +
-                  "        </configuration>" +
-                  "      </plugin>" +
-                  "    </plugins>" +
-                  "  </pluginManagement>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <configuration>" +
-                  "          <target>1.5</target>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule());
-  }
-
-  private LanguageLevel getLanguageLevelForModule() {
-    return LanguageLevelUtil.getCustomLanguageLevel(getModule("project"));
-  }
-
-  @Test
-  public void testSettingTargetLevel() {
-    JavacConfiguration.getOptions(myProject, JavacConfiguration.class).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -Xms128m -target 1.5";
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
+                  "<properties>" +
+                  "  <maven.compiler.release>8</maven.compiler.release>" +
+                  "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
+                  "</properties>" +
+                  "" +
+                  " <build>\n" +
                   "  <plugins>" +
                   "    <plugin>" +
                   "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "        <configuration>" +
-                  "          <target>1.3</target>" +
-                  "        </configuration>" +
-                  "     </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertEquals("-Xmm500m -Xms128m", JavacConfiguration.getOptions(myProject, JavacConfiguration.class).ADDITIONAL_OPTIONS_STRING.trim());
-
-    Module module = getModule("project");
-
-    String targetLevel = CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(module);
-
-    assertEquals("1.3", targetLevel);
-  }
-
-  @Test
-  public void testSettingTargetLevelFromDefaultCompileExecutionConfiguration() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>default-compile</id>" +
-                  "             <configuration>" +
-                  "                <target>1.9</target>" +
-                  "             </configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
+                  "      <version>3.10.0</version>" +
                   "    </plugin>" +
                   "  </plugins>" +
-                  "</build>");
+                  "</build>"
+    );
 
-    assertModules("project");
-    Module module = getModule("project");
-    String targetLevel = CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(module);
-    assertEquals(LanguageLevel.JDK_1_9, LanguageLevel.parse(targetLevel));
-  }
-
-  @Test
-  public void testSettingTargetLevelFromParent() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>" +
-
-                     "<properties>" +
-                     "<maven.compiler.target>1.3</maven.compiler.target>" +
-                     "</properties>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<parent>" +
-                          "<groupId>test</groupId>" +
-                          "<artifactId>project</artifactId>" +
-                          "<version>1</version>" +
-                          "</parent>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<parent>" +
-                          "<groupId>test</groupId>" +
-                          "<artifactId>project</artifactId>" +
-                          "<version>1</version>" +
-                          "</parent>" +
-
-                          "<build>" +
-                          "  <plugins>" +
-                          "    <plugin>" +
-                          "      <artifactId>maven-compiler-plugin</artifactId>" +
-                          "        <configuration>" +
-                          "          <target>1.5</target>" +
-                          "        </configuration>" +
-                          "     </plugin>" +
-                          "  </plugins>" +
-                          "</build>");
-
-    importProject();
-
-    assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("project")));
-    assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
-    assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m2"))));
+    assertModules("project", "project.main", "project.test");
   }
 
   @Test
@@ -1286,6 +982,9 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
+    if(isNewImportingProcess){
+      PlatformTestUtil.waitForPromise(myImportingResult.getVfsRefreshPromise());
+    }
 
     assertNotNull(myProjectRoot.findChild("foo"));
   }

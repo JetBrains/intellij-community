@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories
 
 import com.intellij.ide.CopyProvider
@@ -34,57 +50,56 @@ internal class RepositoryTree(
         get() = (model as DefaultTreeModel).root as DefaultMutableTreeNode
 
     init {
-      setCellRenderer(RepositoryTreeItemRenderer())
-      selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
+        setCellRenderer(RepositoryTreeItemRenderer())
+        selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
-      rootVisible = false
-      isRootVisible = false
-      showsRootHandles = true
+        rootVisible = false
+        isRootVisible = false
+        showsRootHandles = true
 
-      @Suppress("MagicNumber") // Swing dimension constants
-      border = emptyBorder(left = 8)
-      emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.repositories.no.repositories.configured")
+        @Suppress("MagicNumber") // Swing dimension constants
+        border = emptyBorder(left = 8)
+        emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.repositories.no.repositories.configured")
 
-      addMouseListener(object : MouseAdapter() {
-        override fun mouseClicked(e: MouseEvent?) {
-          if (e != null && e.clickCount >= 1) {
-            val treePath = getPathForLocation(e.x, e.y) ?: return
-            val item = getRepositoryItemFrom(treePath)
-            if (item != null && item is RepositoryTreeItem.Module) {
-              openFile(item)
+        addMouseListener(object : MouseAdapter() {
+            override fun mouseClicked(e: MouseEvent?) {
+                if (e != null && e.clickCount >= 1) {
+                    val treePath = getPathForLocation(e.x, e.y) ?: return
+                    val item = getRepositoryItemFrom(treePath)
+                    if (item != null && item is RepositoryTreeItem.Module) {
+                        openFile(item)
+                    }
+                }
             }
-          }
-        }
-      })
+        })
 
-      addTreeSelectionListener {
-        val item = getRepositoryItemFrom(it.newLeadSelectionPath)
-        if (item != null && item is RepositoryTreeItem.Module) {
-          openFile(item)
-        }
-      }
-
-      addKeyListener(object : KeyAdapter() {
-        override fun keyPressed(e: KeyEvent?) {
-          if (e?.keyCode == KeyEvent.VK_ENTER) {
-            val item = getRepositoryItemFrom(selectionPath)
+        addTreeSelectionListener {
+            val item = getRepositoryItemFrom(it.newLeadSelectionPath)
             if (item != null && item is RepositoryTreeItem.Module) {
-              openFile(item)
+                openFile(item)
             }
-          }
         }
-      })
 
-      TreeUIHelper.getInstance().installTreeSpeedSearch(this)
+        addKeyListener(object : KeyAdapter() {
+            override fun keyPressed(e: KeyEvent?) {
+                if (e?.keyCode == KeyEvent.VK_ENTER) {
+                    val item = getRepositoryItemFrom(selectionPath)
+                    if (item != null && item is RepositoryTreeItem.Module) {
+                        openFile(item)
+                    }
+                }
+            }
+        })
 
-      TreeUtil.installActions(this)
+        TreeUIHelper.getInstance().installTreeSpeedSearch(this)
 
+        TreeUtil.installActions(this)
     }
 
     private fun openFile(repositoryModuleItem: RepositoryTreeItem.Module, focusEditor: Boolean = false) {
         if (!PackageSearchGeneralConfiguration.getInstance(project).autoScrollToSource) return
 
-        val file = repositoryModuleItem.usageInfo.projectModule.buildFile
+        val file = repositoryModuleItem.usageInfo.projectModule.buildFile ?: return
         FileEditorManager.getInstance(project).openFile(file, focusEditor, true)
     }
 

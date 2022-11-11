@@ -13,15 +13,15 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -37,13 +37,15 @@ internal abstract class ObsoleteCodeMigrationInspection : AbstractKotlinInspecti
     }
 
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
+        val reporters = problemReporters
+
         return simpleNameExpressionVisitor(fun(simpleNameExpression) {
             val versionIsSatisfied = simpleNameExpression.languageVersionSettings.languageVersion >= toVersion
             if (!versionIsSatisfied && !isUnitTestMode()) {
                 return
             }
 
-            for (reporter in problemReporters) {
+            for (reporter in reporters) {
                 if (reporter.report(holder, isOnTheFly, simpleNameExpression)) {
                     return
                 }

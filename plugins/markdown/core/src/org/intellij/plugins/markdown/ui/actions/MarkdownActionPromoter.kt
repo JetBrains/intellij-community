@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.ui.actions
 
 import com.intellij.openapi.actionSystem.*
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
 
 internal class MarkdownActionPromoter: ActionPromoter {
   companion object {
@@ -17,8 +17,10 @@ internal class MarkdownActionPromoter: ActionPromoter {
   }
 
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
-    if (context.getData(CommonDataKeys.PSI_FILE) !is MarkdownFile) return emptyList()
-
+    val file = context.getData(PlatformCoreDataKeys.FILE_EDITOR)?.file
+    if (file?.hasMarkdownType() == false) {
+      return emptyList()
+    }
     return actions.filter { ActionManager.getInstance().getId(it) in promotedActions }
   }
 }

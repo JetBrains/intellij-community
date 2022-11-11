@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -84,7 +84,7 @@ internal class ParameterNameExpression(
 
         // ensure there are no conflicts
         val validator = CollectingNameValidator(parameterNames)
-        return names.map { LookupElementBuilder.create(KotlinNameSuggester.suggestNameByName(it, validator)) }.toTypedArray()
+        return names.map { LookupElementBuilder.create(Fe10KotlinNameSuggester.suggestNameByName(it, validator)) }.toTypedArray()
     }
 }
 

@@ -267,8 +267,8 @@ final class ITNProxy {
         append(builder, "assignee.id", Integer.toString(messageObj.getAssigneeId()));
       }
       append(builder, "assignee.list.visible", Boolean.toString(messageObj.isAssigneeVisible()));
-      if (messageObj.getDevelopersTimestamp() != null) {
-        append(builder, "assignee.list.timestamp", Long.toString(messageObj.getDevelopersTimestamp()));
+      if (messageObj.getDevListTimestamp() != null) {
+        append(builder, "assignee.list.timestamp", Long.toString(messageObj.getDevListTimestamp()));
       }
     }
 
@@ -277,9 +277,8 @@ final class ITNProxy {
 
   private static void append(StringBuilder builder, String key, @Nullable String value) {
     if (value != null && !value.isEmpty()) {
-      String encoded = URLEncoder.encode(value, StandardCharsets.UTF_8);
       if (builder.length() > 0) builder.append('&');
-      builder.append(key).append('=').append(encoded);
+      builder.append(key).append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8));
     }
   }
 

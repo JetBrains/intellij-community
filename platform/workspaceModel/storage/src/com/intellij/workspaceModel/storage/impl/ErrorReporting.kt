@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
+import com.esotericsoftware.kryo.kryo5.io.Output
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.io.FileUtil
@@ -196,6 +197,53 @@ private fun serializeContentToFolder(contentFolder: Path,
     zipFile
   }
   else null
+}
+
+private fun EntityStorageSerializerImpl.serializeDiffLog(stream: OutputStream, log: ChangeLog) {
+  val output = Output(stream, KRYO_BUFFER_SIZE)
+  try {
+    val (kryo, _) = createKryo()
+
+    // Save version
+    output.writeString(serializerDataFormatVersion)
+    saveContributedVersions(kryo, output)
+
+    val entityDataSequence = log.values.mapNotNull {
+      when (it) {
+        is ChangeEntry.AddEntity -> it.entityData
+        is ChangeEntry.RemoveEntity -> null
+        is ChangeEntry.ReplaceEntity -> it.newData
+        is ChangeEntry.ChangeEntitySource -> it.newData
+        is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.newData
+      }
+    }.asSequence()
+
+    collectAndRegisterClasses(kryo, output, entityDataSequence)
+
+    kryo.writeClassAndObject(output, log)
+  }
+  finally {
+    flush(output)
+  }
+}
+
+private fun EntityStorageSerializerImpl.serializeClassToIntConverter(stream: OutputStream) {
+  val converterMap = ClassToIntConverter.INSTANCE.getMap().toMap()
+  val output = Output(stream, KRYO_BUFFER_SIZE)
+  try {
+    val (kryo, _) = createKryo()
+
+    // Save version
+    output.writeString(serializerDataFormatVersion)
+    saveContributedVersions(kryo, output)
+
+    val mapData = converterMap.map { (key, value) -> key.typeInfo to value }
+
+    kryo.writeClassAndObject(output, mapData)
+  }
+  finally {
+    flush(output)
+  }
 }
 
 internal fun reportConsistencyIssue(message: String,

@@ -12,11 +12,14 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.Container
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JEditorPane
+import javax.swing.JList
 import javax.swing.JPanel
 
 internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(BorderLayout(),
@@ -45,8 +48,14 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
     }
 
     private fun createHtmlPanel(htmlInfo: IntentionPreviewInfo.Html): JPanel {
+      val targetSize = IntentionPreviewPopupUpdateProcessor.MIN_WIDTH * UIUtil.getLabelFont().size.coerceAtMost(24) / 12
       val editor = object : JEditorPane() {
         var prefHeight: Int? = null
+
+        override fun repaint() {
+          scrollLists(this)
+          super.repaint()
+        }
 
         override fun getPreferredSize(): Dimension {
           if (prefHeight == null) {
@@ -55,15 +64,17 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
               prefHeight = pos.maxY.toInt() + 5
             }
           }
-          return Dimension(IntentionPreviewPopupUpdateProcessor.MIN_WIDTH, prefHeight ?: Integer.MAX_VALUE)
+          return Dimension(targetSize, prefHeight ?: Integer.MAX_VALUE)
         }
       }
 
+      val content = htmlInfo.content()
       editor.editorKit = HTMLEditorKitBuilder()
-        .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.icons { htmlInfo.icon(it) })
+        .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.icons(content),
+                                   ExtendableHTMLViewFactory.Extensions.WORD_WRAP)
         .build()
-      editor.text = htmlInfo.content().toString()
-      editor.size = Dimension(IntentionPreviewPopupUpdateProcessor.MIN_WIDTH, Integer.MAX_VALUE)
+      editor.text = content.toString()
+      editor.size = Dimension(targetSize, Integer.MAX_VALUE)
       return wrapToPanel(editor)
     }
   }
@@ -90,6 +101,16 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
       panel.add(component, BorderLayout.CENTER)
       panel.border = JBEmptyBorder(5)
       return panel
+    }
+
+    private fun scrollLists(container: Container) {
+      if (container is JList<*>) {
+        val index = container.selectedIndex
+        if (index != -1) {
+          container.ensureIndexIsVisible(index)
+        }
+      }
+      container.components.filterIsInstance<Container>().forEach { scrollLists(it) }
     }
   }
 }

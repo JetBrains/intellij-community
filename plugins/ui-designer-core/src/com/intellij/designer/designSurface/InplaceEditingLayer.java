@@ -31,8 +31,6 @@ import java.util.List;
 
 /**
  * @author Alexander Lobas
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public class InplaceEditingLayer extends JComponent {
   private static final Logger LOG = Logger.getInstance(InplaceEditingLayer.class);

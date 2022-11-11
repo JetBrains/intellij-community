@@ -10,7 +10,6 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentWithBrowseButton
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -23,7 +22,6 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.indexing.DumbModeAccessType
-import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.textCompletion.TextFieldWithCompletion
@@ -185,7 +183,7 @@ private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, 
       }
     }
 
-    override fun getQualifiedName(item: NavigationItem?): String? {
+    override fun getQualifiedName(item: NavigationItem): String? {
       return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<String?, RuntimeException> {
         super.getQualifiedName(item)
       }

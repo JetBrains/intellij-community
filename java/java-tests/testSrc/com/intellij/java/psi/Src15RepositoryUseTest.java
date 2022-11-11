@@ -270,7 +270,7 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
 
     assertEquals("public static final int A1 = 10;", fields[3].getText());
     enumClass.accept(new JavaRecursiveElementWalkingVisitor(){
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitExpression(expression);
       }
     });

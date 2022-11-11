@@ -130,7 +130,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
         }
 
         @Override
-        public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
           if (inScope && expression.getLExpression() instanceof PsiReferenceExpression) {
             final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression.getLExpression();
 

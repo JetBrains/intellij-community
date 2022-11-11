@@ -24,10 +24,6 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class WindowWatcher implements PropertyChangeListener {
   private static final Logger LOG = Logger.getInstance(WindowWatcher.class);
   private final Object myLock = new Object();

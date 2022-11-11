@@ -86,6 +86,10 @@ public final class FindUtil {
 
   public static void configureFindModel(boolean replace, @Nullable Editor editor, FindModel model, boolean firstSearch) {
     String selectedText = getSelectedText(editor);
+    configureFindModel(replace, model, firstSearch, selectedText);
+  }
+
+  public static void configureFindModel(boolean replace, FindModel model, boolean firstSearch, @Nullable String selectedText) {
     boolean multiline = selectedText != null && selectedText.contains("\n");
     String stringToFind = firstSearch || model.getStringToFind().contains("\n") ? "" : model.getStringToFind();
     boolean isSelectionUsed = false;

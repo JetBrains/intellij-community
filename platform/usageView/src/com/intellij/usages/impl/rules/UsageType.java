@@ -29,6 +29,7 @@ public final class UsageType {
   public static final UsageType CLASS_NEW_ARRAY = new UsageType(UsageViewBundle.messagePointer("usage.type.new.array"));
   public static final UsageType ANNOTATION = new UsageType(UsageViewBundle.messagePointer("usage.type.annotation"));
   public static final UsageType TYPE_PARAMETER = new UsageType(UsageViewBundle.messagePointer("usage.type.type.parameter"));
+  public static final UsageType PATTERN = new UsageType(UsageViewBundle.messagePointer("usage.type.type.parameter"));
 
   public static final UsageType READ = new UsageType(UsageViewBundle.messagePointer("usage.type.read"));
   public static final UsageType WRITE = new UsageType(UsageViewBundle.messagePointer("usage.type.write"));

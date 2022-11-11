@@ -442,29 +442,29 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     return ContainerUtil.map(result, PsiReference::getElement);
   }
 
-  protected void assertHighlighted(VirtualFile file, HighlightInfo... expected) {
+  protected void assertHighlighted(VirtualFile file, HighlightPointer... expected) {
     Editor editor = getEditor(file);
     HighlightUsagesHandler.invoke(myProject, editor, getTestPsiFile(file));
 
     RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
-    List<HighlightInfo> actual = new ArrayList<>();
+    List<HighlightPointer> actual = new ArrayList<>();
     for (RangeHighlighter each: highlighters) {
       if (!each.isValid()) continue;
       int offset = each.getStartOffset();
       PsiElement element = getTestPsiFile(file).findElementAt(offset);
       element = PsiTreeUtil.getParentOfType(element, XmlTag.class);
       String text = editor.getDocument().getText().substring(offset, each.getEndOffset());
-      actual.add(new HighlightInfo(element, text));
+      actual.add(new HighlightPointer(element, text));
     }
 
     assertUnorderedElementsAreEqual(actual, expected);
   }
 
-  protected static class HighlightInfo {
+  protected static class HighlightPointer {
     public PsiElement element;
     public String text;
 
-    public HighlightInfo(PsiElement element, String text) {
+    public HighlightPointer(PsiElement element, String text) {
       this.element = element;
       this.text = text;
     }
@@ -474,7 +474,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      HighlightInfo that = (HighlightInfo)o;
+      HighlightPointer that = (HighlightPointer)o;
 
       if (element != null ? !element.equals(that.element) : that.element != null) return false;
       if (text != null ? !text.equals(that.text) : that.text != null) return false;

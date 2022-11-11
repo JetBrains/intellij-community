@@ -24,6 +24,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -42,10 +43,14 @@ public class Parameterized extends org.junit.runners.Parameterized {
     FrameworkMethod parametersMethod = getParametersMethod();
     if (parametersMethod != null) {
       Parameters parameters = parametersMethod.getAnnotation(Parameters.class);
+      Class<?> runnersFactory = Class.forName("org.junit.runners.Parameterized$RunnersFactory");
+      Constructor<?> constructorRunnersFactory = runnersFactory.getDeclaredConstructor(Class.class);
+      constructorRunnersFactory.setAccessible(true);
+      Object runnersFactoryObj = constructorRunnersFactory.newInstance(klass);
       Method declaredMethod =
-        org.junit.runners.Parameterized.class.getDeclaredMethod("createRunnersForParameters", Iterable.class, String.class, ParametersRunnerFactory.class);
+        runnersFactory.getDeclaredMethod("createRunnersForParameters", Iterable.class, String.class, ParametersRunnerFactory.class);
       declaredMethod.setAccessible(true);
-      l = (List<Runner>)declaredMethod.invoke(this, allParameters(klass, parametersMethod), parameters.name(), BlockJUnit4ClassRunnerWithParametersFactory.class.newInstance());
+      l = (List<Runner>)declaredMethod.invoke(runnersFactoryObj, allParameters(klass, parametersMethod), parameters.name(), BlockJUnit4ClassRunnerWithParametersFactory.class.newInstance());
     }
   }
 

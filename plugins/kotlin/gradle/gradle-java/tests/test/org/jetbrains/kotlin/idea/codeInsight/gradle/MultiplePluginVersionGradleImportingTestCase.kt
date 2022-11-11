@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /**
  * This TestCase implements possibility to test import with different versions of gradle and different
@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_4_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_5_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_6_21
-import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase.KotlinPluginVersionParam.Companion.toKotlinGradlePluginVersionParam
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
@@ -34,12 +33,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         val name: String = version.toString()
     ) {
         override fun toString(): String = name
-
-        companion object {
-            fun KotlinToolingVersion.toKotlinGradlePluginVersionParam(
-                name: String = this.toString()
-            ) = KotlinPluginVersionParam(this, name)
-        }
     }
 
     @Rule
@@ -92,27 +85,31 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = kotlinAndGradleParametersName)
         fun data(): Collection<Array<Any>> {
-            return if (IS_UNDER_SAFE_PUSH) listOf(
-                /* Safe push tested with latest released versions */
-                arrayOf("7.3.3", V_1_6_21.toKotlinGradlePluginVersionParam())
-            ) else listOf(
-                /* Progressively updated Gradle and KGP versions */
-                arrayOf("6.8.3", V_1_4_32.toKotlinGradlePluginVersionParam()),
-                arrayOf("6.9.2", V_1_5_32.toKotlinGradlePluginVersionParam()),
-                arrayOf("7.3.3", V_1_6_21.toKotlinGradlePluginVersionParam()),
-                arrayOf(
-                    "7.4.2", KotlinGradlePluginVersions.latest.toKotlinGradlePluginVersionParam(
-                        "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
-                    )
-                )
+            val parameters = mutableListOf<Array<Any>>()
+
+            fun addVersions(
+                gradleVersion: String, kotlinVersion: KotlinToolingVersion, kotlinVersionName: String = kotlinVersion.toString()
+            ) = parameters.add(arrayOf(gradleVersion, KotlinPluginVersionParam(kotlinVersion, kotlinVersionName)))
+
+            if (!IS_UNDER_SAFE_PUSH) {
+                addVersions("6.8.3", V_1_4_32)
+                addVersions("6.9.2", V_1_5_32)
+                addVersions("7.3.3", V_1_6_21)
+            }
+
+            addVersions(
+                "7.4.2", KotlinGradlePluginVersions.latest,
+                "${KotlinGradlePluginVersions.latest.major}.${KotlinGradlePluginVersions.latest.minor}"
             )
+
+            return parameters
         }
     }
 
     val androidProperties: Map<String, String>
         get() = mapOf(
-            "android_gradle_plugin_version" to "7.0.4",
-            "compile_sdk_version" to "30",
+            "android_gradle_plugin_version" to "7.2.2",
+            "compile_sdk_version" to "31",
             "build_tools_version" to "28.0.3",
         )
 
@@ -134,7 +131,9 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     protected val disableHmppProperties: String
         get() = if (isHmppEnabledByDefault) "kotlin.mpp.hierarchicalStructureSupport=false" else ""
 
-    protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(useKts, gradleVersion)
+    protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(
+        useKts, GradleVersion.version(gradleVersion), kotlinPluginVersion
+    )
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
@@ -185,6 +184,15 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(versionRequirement: String): Boolean {
     return parseKotlinVersionRequirement(versionRequirement).matches(kotlinPluginVersion)
 }
+
+/**
+ * Since 1.8.0, because we no longer support 1.6 jvm target, we are going to merge
+ * kotlin-stdlib-jdk[7|8] into kotlin-stdlib. So we won't add the dependency to -jdk[7|8] by default.
+ * That was implemented in the kotlin/4441033134a383b718 commit
+ */
+fun MultiplePluginVersionGradleImportingTestCase.isStdlibJdk78AddedByDefault() =
+    kotlinPluginVersion < KotlinToolingVersion("1.8.0-dev-2380") &&
+            kotlinPluginVersion >= KotlinToolingVersion("1.5.0-M1")
 
 fun MultiplePluginVersionGradleImportingTestCase.gradleVersionMatches(version: String): Boolean {
     return VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true)

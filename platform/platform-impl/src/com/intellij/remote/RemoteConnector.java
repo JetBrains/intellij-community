@@ -30,7 +30,6 @@ public interface RemoteConnector {
   /**
    * Used to select different credentials. This method should be fast.
    *
-   * @return
    */
   @NonNls @NotNull Object getConnectorKey();
 }

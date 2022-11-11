@@ -17,3 +17,5 @@ val foo: Int
 fun main(args: Array<String>) {
     A().bar()
 }
+
+// IGNORE_K2_SMART_STEP_INTO

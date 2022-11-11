@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.find.FindManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -45,25 +46,33 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
   private static final String VAR_NAME = "reference";
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-
-    Pair<PsiFile, Editor> fileAndEditor = getFileAndEditor(e);
+  public void update(@NotNull AnActionEvent event) {
+    final var fileAndEditor = getFileAndEditor(event);
     if (fileAndEditor == null) {
       return;
     }
-
-    Caret caret = fileAndEditor.getSecond().getCaretModel().getCurrentCaret();
-    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(fileAndEditor.getFirst(), caret);
-
-    PsiElement parentLink =
-      MarkdownActionUtil.getCommonParentOfTypes(elements.getFirst(), elements.getSecond(), MarkdownTokenTypeSets.LINKS);
-
-    if (parentLink == null) {
-      e.getPresentation().setEnabled(false);
+    final var file = fileAndEditor.getFirst();
+    final var caret = SelectionUtil.obtainPrimaryCaretSnapshot(this, event);
+    if (caret == null) {
+      event.getPresentation().setEnabled(false);
       return;
     }
+    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(file, caret.getSelectionStart(), caret.getSelectionEnd());
+    final var parentLink = MarkdownActionUtil.getCommonParentOfTypes(
+      elements.getFirst(),
+      elements.getSecond(),
+      MarkdownTokenTypeSets.LINKS
+    );
+    if (parentLink == null) {
+      event.getPresentation().setEnabled(false);
+      return;
+    }
+    event.getPresentation().setEnabled(true);
+  }
 
-    e.getPresentation().setEnabled(true);
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -135,7 +144,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
 
   @Nullable
   private static Pair<PsiFile, Editor> getFileAndEditor(@NotNull AnActionEvent e) {
-    final Editor editor = MarkdownActionUtil.findMarkdownTextEditor(e);
+    final Editor editor = MarkdownActionUtil.findMarkdownEditor(e);
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (editor == null || psiFile == null || !psiFile.isValid()) {
       return null;

@@ -6,6 +6,7 @@ import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -68,7 +69,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
         CommonDataKeys.PROJECT.getData(it)?.messageBus?.syncPublisher(ProfileChangeAdapter.TOPIC)?.profileActivated(oldScheme, newScheme)
       }
     }
-  })
+  }, settingsCategory = SettingsCategory.CODE)
 
   protected val profilesAreInitialized by lazy {
     val app = ApplicationManager.getApplication()

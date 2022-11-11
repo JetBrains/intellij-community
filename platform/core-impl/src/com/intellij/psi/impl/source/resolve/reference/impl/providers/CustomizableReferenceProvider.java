@@ -38,7 +38,6 @@ public interface CustomizableReferenceProvider {
 
 
   final class CustomizationKey<T> {
-    
     private final String myOptionDescription;
 
     public CustomizationKey(@NonNls String optionDescription) {
@@ -57,7 +56,7 @@ public interface CustomizableReferenceProvider {
       return o != null && o.booleanValue();
     }
 
-    public void putValue(Map<CustomizationKey, Object> options, T value) {
+    public void putValue(@NotNull Map<CustomizationKey, Object> options, T value) {
       options.put(this, value);
     }
   }

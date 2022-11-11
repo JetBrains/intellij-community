@@ -32,7 +32,6 @@ public interface HgPromptHandler {
    * Checks you need to change the default behavior.
    *
    * @param message standard output message from Mercurial
-   * @return
    */
   boolean shouldHandle(@Nullable @NonNls String message);
 
@@ -41,8 +40,6 @@ public interface HgPromptHandler {
    *
    * @param message       standard output message from Mercurial
    * @param choices       possible choices
-   * @param defaultChoice
-   * @return
    */
   HgPromptChoice promptUser(@NotNull @NlsSafe String message,
                             final HgPromptChoice @NotNull [] choices,

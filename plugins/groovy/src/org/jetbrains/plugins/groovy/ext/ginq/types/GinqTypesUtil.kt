@@ -66,7 +66,7 @@ private fun getContainerType(macroCall: GrMethodCall?, isTop: Boolean, ginq: Gin
 private fun getComponentType(facade: JavaPsiFacade,
                              psiGinq: GrExpression,
                              ginq: GinqExpression): PsiType {
-  val singleProjection = ginq.select.projections.singleOrNull()?.takeIf { it.alias == null }
+  val singleProjection = ginq.select?.projections?.singleOrNull()?.takeIf { it.alias == null }
   val projectionPsiType = if (singleProjection != null) {
     singleProjection.aggregatedExpression.type ?: PsiType.NULL
   }

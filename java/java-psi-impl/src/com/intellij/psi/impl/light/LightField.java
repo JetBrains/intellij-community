@@ -25,6 +25,16 @@ public class LightField extends LightElement implements PsiField {
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitField(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
   public void setInitializer(@Nullable final PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not supported");
   }

@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.remote
 
+import ai.grazie.nlp.langs.LanguageISO
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
-import com.intellij.grazie.detector.model.LanguageISO
 import java.nio.file.Path
 
 enum class RemoteLangDescriptor(val langsClasses: List<String>, val size: String, val iso: LanguageISO) {

@@ -19,5 +19,5 @@ interface CompletionInvoker {
                          nodeProperties: TokenProperties,
                          offset: Int): Session
 
-  fun emulateCodeGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session
+  fun emulateCompletionGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session
 }

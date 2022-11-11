@@ -34,7 +34,7 @@ class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadd
     }
   }
 
-  private val settingsBtn = object : ActionButton(settingsAction, settingsAction.templatePresentation, ActionPlaces.POPUP, JBUI.size(22, 22)) {
+  private val settingsBtn = object : ActionButton(settingsAction, settingsAction.templatePresentation.clone(), ActionPlaces.POPUP, JBUI.size(22, 22)) {
     override fun performAction(e: MouseEvent?) {
       val event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, dataContext, false, true)
       ActionUtil.performDumbAwareWithCallbacks(myAction, event) { actionPerformed(event) }

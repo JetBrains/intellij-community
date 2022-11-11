@@ -138,7 +138,7 @@ public final class DuplicatesFinder {
   private void annotatePattern() {
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         final PsiElement element = reference.resolve();
         if (element instanceof PsiVariable) {
           final PsiVariable variable = (PsiVariable)element;
@@ -162,7 +162,7 @@ public final class DuplicatesFinder {
   private void deannotatePattern() {
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         if (expression.getUserData(PARAMETER) != null) {
           expression.putUserData(PARAMETER, null);
@@ -170,7 +170,7 @@ public final class DuplicatesFinder {
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         if (reference.getUserData(PARAMETER) != null) {
           reference.putUserData(PARAMETER, null);
         }

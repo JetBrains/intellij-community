@@ -34,6 +34,10 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testComplexStreamTypeMismatch() {
+    doTest()
+  }
+
   fun testJavaShebang() {
     val file = myFixture.configureByText("hello",
                                          """#!/path/to/java

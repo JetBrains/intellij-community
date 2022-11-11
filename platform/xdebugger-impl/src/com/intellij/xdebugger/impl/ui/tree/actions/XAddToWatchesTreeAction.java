@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -15,6 +16,11 @@ public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {
   @Override
   protected boolean isEnabled(@NotNull final XValueNodeImpl node, @NotNull AnActionEvent e) {
     return super.isEnabled(node, e) && DebuggerUIUtil.getWatchesView(e) != null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

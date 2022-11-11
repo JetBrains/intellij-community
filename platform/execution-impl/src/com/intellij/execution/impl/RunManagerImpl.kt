@@ -28,6 +28,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
@@ -73,7 +74,6 @@ interface RunConfigurationTemplateProvider {
   fun getRunConfigurationTemplate(factory: ConfigurationFactory, runManager: RunManagerImpl): RunnerAndConfigurationSettingsImpl?
 }
 
-// open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
 open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
@@ -85,7 +85,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     @JvmStatic
     fun getInstanceImpl(project: Project) = getInstance(project) as RunManagerImpl
 
-    @JvmStatic
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
       return environment.runnerAndConfigurationSettings?.let { canRunConfiguration(it, environment.executor) } ?: false
     }
@@ -445,6 +444,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           if (selectedConfigurationId == it) {
             selectedConfigurationId = newId
           }
+
+ //         listManager.updateConfigurationId(it, newId)
         }
       }
 
@@ -1039,12 +1040,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return idToType.value[typeId]?.let { getFactory(it, factoryId) }
            ?: UnknownConfigurationType.getInstance().also {
              if (checkUnknown && typeId != null) {
-               UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(
-                 CONFIGURATION_TYPE_FEATURE_ID,
-                 ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
-                 typeId,
-                 null
-               )
+               UnknownFeaturesCollector.getInstance(project)
+                 .registerUnknownFeature(UnknownFeature(
+                   CONFIGURATION_TYPE_FEATURE_ID,
+                   ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
+                   typeId,
+                 ))
              }
            }
   }

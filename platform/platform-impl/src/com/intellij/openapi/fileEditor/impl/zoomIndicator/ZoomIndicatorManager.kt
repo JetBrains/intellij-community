@@ -22,7 +22,10 @@ private const val POPUP_TIMEOUT_MS = 5000
 @Service(Service.Level.PROJECT)
 class ZoomIndicatorManager(project: Project) {
   companion object {
+    @JvmField
     val SUPPRESS_ZOOM_INDICATOR = Key.create<Boolean>("SUPPRESS_ZOOM_INDICATOR")
+    @JvmField
+    val SUPPRESS_ZOOM_INDICATOR_ONCE = Key.create<Boolean>("SUPPRESS_ZOOM_INDICATOR_ONCE")
     val isEnabled: Boolean
       get() = AdvancedSettings.getBoolean("editor.show.zoom.indicator")
   }

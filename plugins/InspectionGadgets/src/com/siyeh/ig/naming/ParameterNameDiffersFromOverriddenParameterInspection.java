@@ -89,7 +89,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList.isEmpty()) {

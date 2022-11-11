@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -22,6 +23,8 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PathKt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -40,8 +43,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 public final class MavenProjectsTree {
@@ -75,6 +78,7 @@ public final class MavenProjectsTree {
 
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
   private final Project myProject;
+
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
     @Override
@@ -162,8 +166,7 @@ public final class MavenProjectsTree {
 
   public void save(@NotNull Path file) throws IOException {
     synchronized (myStateLock) {
-      readLock();
-      try {
+      withReadLock(() -> {
         try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(PathKt.outputStream(file)))) {
           out.writeUTF(STORAGE_VERSION);
           writeCollection(out, myManagedFilesPaths);
@@ -173,10 +176,7 @@ public final class MavenProjectsTree {
           writeCollection(out, myExplicitProfiles.getDisabledProfiles());
           writeProjectsRecursively(out, myRootProjects);
         }
-      }
-      finally {
-        readUnlock();
-      }
+      });
     }
   }
 
@@ -536,26 +536,17 @@ public final class MavenProjectsTree {
 
     MavenProjectChanges changes = force ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
     if (isChanged) {
-      writeLock();
-      try {
+      withWriteLock(() -> {
         if (!isNew) {
           clearIDMaps(mavenProject);
         }
-      }
-      finally {
-        writeUnlock();
-      }
+      });
       MavenId oldParentId = mavenProject.getParentId();
-      changes = changes.mergedWith(mavenProject.read(generalSettings, explicitProfiles, reader, myProjectLocator));
-
-      writeLock();
-      try {
+      changes = MavenProjectChangesBuilder.merged(changes, mavenProject.read(generalSettings, explicitProfiles, reader, myProjectLocator));
+      withWriteLock(() -> {
         myVirtualFileToProjectMapping.put(mavenProject.getFile(), mavenProject);
         fillIDMaps(mavenProject);
-      }
-      finally {
-        writeUnlock();
-      }
+      });
 
       if (!Comparing.equal(oldParentId, mavenProject.getParentId())) {
         // ensure timestamp reflects actual parent's timestamp
@@ -766,8 +757,7 @@ public final class MavenProjectsTree {
       }
     }
 
-    writeLock();
-    try {
+    withWriteLock(() -> {
       if (aggregator != null) {
         removeModule(aggregator, project);
       }
@@ -779,11 +769,7 @@ public final class MavenProjectsTree {
       clearIDMaps(project);
       myAggregatorToModuleMapping.remove(project);
       myModuleToAggregatorMapping.remove(project);
-    }
-    finally {
-      writeUnlock();
-    }
-
+    });
     updateContext.deleted(project);
   }
 
@@ -800,18 +786,14 @@ public final class MavenProjectsTree {
   }
 
   private void connect(MavenProject newAggregator, MavenProject project) {
-    writeLock();
-    try {
+    withWriteLock(() -> {
       if (newAggregator != null) {
         addModule(newAggregator, project);
       }
       else {
         myRootProjects.add(project);
       }
-    }
-    finally {
-      writeUnlock();
-    }
+    });
   }
 
   private boolean reconnect(MavenProject newAggregator, MavenProject project) {
@@ -819,8 +801,7 @@ public final class MavenProjectsTree {
 
     if (prevAggregator == newAggregator) return false;
 
-    writeLock();
-    try {
+    withWriteLock(() -> {
       if (prevAggregator != null) {
         removeModule(prevAggregator, project);
       }
@@ -834,32 +815,17 @@ public final class MavenProjectsTree {
       else {
         myRootProjects.add(project);
       }
-    }
-    finally {
-      writeUnlock();
-    }
+    });
 
     return true;
   }
 
   public boolean hasProjects() {
-    readLock();
-    try {
-      return !myRootProjects.isEmpty();
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> !myRootProjects.isEmpty());
   }
 
   public List<MavenProject> getRootProjects() {
-    readLock();
-    try {
-      return new ArrayList<>(myRootProjects);
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> new ArrayList<>(myRootProjects));
   }
 
   private static void updateCrc(CRC32 crc, int x) {
@@ -904,8 +870,7 @@ public final class MavenProjectsTree {
   public int getFilterConfigCrc(@NotNull ProjectFileIndex fileIndex) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    readLock();
-    try {
+    return withReadLock(() -> {
       final CRC32 crc = new CRC32();
 
       MavenExplicitProfiles profiles = myExplicitProfiles;
@@ -989,10 +954,7 @@ public final class MavenProjectsTree {
       }
 
       return (int)crc.getValue();
-    }
-    finally {
-      readUnlock();
-    }
+    });
   }
 
   public List<VirtualFile> getRootProjectsFiles() {
@@ -1000,59 +962,31 @@ public final class MavenProjectsTree {
   }
 
   public List<MavenProject> getProjects() {
-    readLock();
-    try {
-      return new ArrayList<>(myVirtualFileToProjectMapping.values());
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> new ArrayList<>(myVirtualFileToProjectMapping.values()));
   }
 
   public List<MavenProject> getNonIgnoredProjects() {
-    readLock();
-    try {
+    return withReadLock(() -> {
       List<MavenProject> result = new ArrayList<>();
       for (MavenProject each : myVirtualFileToProjectMapping.values()) {
         if (!isIgnored(each)) result.add(each);
       }
       return result;
-    }
-    finally {
-      readUnlock();
-    }
+    });
   }
 
   public List<VirtualFile> getProjectsFiles() {
-    readLock();
-    try {
-      return new ArrayList<>(myVirtualFileToProjectMapping.keySet());
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> new ArrayList<>(myVirtualFileToProjectMapping.keySet()));
   }
 
   @Nullable
   public MavenProject findProject(VirtualFile f) {
-    readLock();
-    try {
-      return myVirtualFileToProjectMapping.get(f);
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> myVirtualFileToProjectMapping.get(f));
   }
 
   @Nullable
   public MavenProject findProject(MavenId id) {
-    readLock();
-    try {
-      return myMavenIdToProjectMapping.get(id);
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> myMavenIdToProjectMapping.get(id));
   }
 
   @Nullable
@@ -1061,43 +995,23 @@ public final class MavenProjectsTree {
   }
 
   public MavenProject findSingleProjectInReactor(MavenId id) {
-    readLock();
-    try {
-      List<MavenProject> list = myMavenIdToProjectMapping.values().stream().filter(
-        it -> StringUtil.equals(it.getMavenId().getArtifactId(), id.getArtifactId()) &&
-              StringUtil.equals(it.getMavenId().getGroupId(), id.getGroupId())
-      ).collect(Collectors.toList());
-      return list.size() == 1 ? list.get(0) : null;
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> StreamEx.ofValues(myMavenIdToProjectMapping)
+      .collect(MoreCollectors.onlyOne(it -> StringUtil.equals(it.getMavenId().getArtifactId(), id.getArtifactId()) &&
+                                            StringUtil.equals(it.getMavenId().getGroupId(), id.getGroupId())))
+      .orElse(null));
   }
 
   MavenWorkspaceMap getWorkspaceMap() {
-    readLock();
-    try {
-      return myWorkspaceMap.copy();
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> myWorkspaceMap.copy());
   }
 
   public MavenProject findAggregator(MavenProject project) {
-    readLock();
-    try {
-      return myModuleToAggregatorMapping.get(project);
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> myModuleToAggregatorMapping.get(project));
   }
 
   @NotNull
   public MavenProject findRootProject(@NotNull MavenProject project) {
-    readLock();
-    try {
+    return withReadLock(() -> {
       MavenProject rootProject = project;
       while (true) {
         MavenProject aggregator = myModuleToAggregatorMapping.get(rootProject);
@@ -1106,38 +1020,24 @@ public final class MavenProjectsTree {
         }
         rootProject = aggregator;
       }
-    }
-    finally {
-      readUnlock();
-    }
+    });
   }
 
   public boolean isRootProject(@NotNull MavenProject project) {
-    readLock();
-    try {
-      return myModuleToAggregatorMapping.get(project) == null;
-    }
-    finally {
-      readUnlock();
-    }
+    return withReadLock(() -> myModuleToAggregatorMapping.get(project) == null);
   }
 
   public List<MavenProject> getModules(MavenProject aggregator) {
-    readLock();
-    try {
+    return withReadLock(() -> {
       List<MavenProject> modules = myAggregatorToModuleMapping.get(aggregator);
       return modules == null
              ? Collections.emptyList()
              : new ArrayList<>(modules);
-    }
-    finally {
-      readUnlock();
-    }
+    });
   }
 
   private void addModule(MavenProject aggregator, MavenProject module) {
-    writeLock();
-    try {
+    withWriteLock(() -> {
       List<MavenProject> modules = myAggregatorToModuleMapping.get(aggregator);
       if (modules == null) {
         modules = new ArrayList<>();
@@ -1146,23 +1046,16 @@ public final class MavenProjectsTree {
       modules.add(module);
 
       myModuleToAggregatorMapping.put(module, aggregator);
-    }
-    finally {
-      writeUnlock();
-    }
+    });
   }
 
   private void removeModule(MavenProject aggregator, MavenProject module) {
-    writeLock();
-    try {
+    withWriteLock(() -> {
       List<MavenProject> modules = myAggregatorToModuleMapping.get(aggregator);
       if (modules == null) return;
       modules.remove(module);
       myModuleToAggregatorMapping.remove(module);
-    }
-    finally {
-      writeUnlock();
-    }
+    });
   }
 
   private MavenProject findParent(MavenProject project) {
@@ -1170,8 +1063,7 @@ public final class MavenProjectsTree {
   }
 
   public Collection<MavenProject> findInheritors(MavenProject project) {
-    readLock();
-    try {
+    return withReadLock(() -> {
       List<MavenProject> result = null;
       MavenId id = project.getMavenId();
 
@@ -1184,15 +1076,11 @@ public final class MavenProjectsTree {
       }
 
       return result == null ? Collections.emptyList() : result;
-    }
-    finally {
-      readUnlock();
-    }
+    });
   }
 
   public List<MavenProject> getDependentProjects(Collection<MavenProject> projects) {
-    readLock();
-    try {
+    return withReadLock(() -> {
       List<MavenProject> result = null;
 
       Set<MavenCoordinate> projectIds = new ObjectOpenCustomHashSet<>(projects.size(), new MavenCoordinateHashCodeStrategy());
@@ -1232,10 +1120,7 @@ public final class MavenProjectsTree {
       }
 
       return result == null ? Collections.emptyList() : result;
-    }
-    finally {
-      readUnlock();
-    }
+    });
   }
 
   public <Result> Result visit(Visitor<Result> visitor) {
@@ -1257,24 +1142,13 @@ public final class MavenProjectsTree {
     }
   }
 
-  private void writeLock() {
-    myStructureWriteLock.lock();
-  }
-
-  private void writeUnlock() {
-    myStructureWriteLock.unlock();
-  }
-
-  private void readLock() {
-    myStructureReadLock.lock();
-  }
-
-  private void readUnlock() {
-    myStructureReadLock.unlock();
-  }
-
   public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
     myListeners.add(l, disposable);
+  }
+
+  @ApiStatus.Internal
+  void addListenersFrom(MavenProjectsTree other) {
+    myListeners.addAll(other.myListeners);
   }
 
   void fireProfilesChanged() {
@@ -1324,9 +1198,11 @@ public final class MavenProjectsTree {
     public final Map<MavenProject, MavenProjectChanges> updatedProjectsWithChanges = new LinkedHashMap<>();
     public final Set<MavenProject> deletedProjects = new LinkedHashSet<>();
 
-    public void update(MavenProject project, MavenProjectChanges changes) {
+    public void update(MavenProject project, @NotNull MavenProjectChanges changes) {
       deletedProjects.remove(project);
-      updatedProjectsWithChanges.put(project, changes.mergedWith(updatedProjectsWithChanges.get(project)));//
+      updatedProjectsWithChanges.compute(project, (__, previousChanges) ->
+        previousChanges == null ? changes : MavenProjectChangesBuilder.merged(changes, previousChanges)
+      );
     }
 
     public void deleted(MavenProject project) {
@@ -1492,7 +1368,9 @@ public final class MavenProjectsTree {
     default void profilesChanged() {
     }
 
-    default void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
+    default void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored,
+                                             @NotNull List<MavenProject> unignored,
+                                             boolean fromImport) {
     }
 
     default void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
@@ -1532,6 +1410,77 @@ public final class MavenProjectsTree {
       return Objects.equals(o1.getArtifactId(), o2.getArtifactId())
              && Objects.equals(o1.getVersion(), o2.getVersion())
              && Objects.equals(o1.getGroupId(), o2.getGroupId());
+    }
+  }
+
+  public MavenProjectsTree getCopyForReimport() {
+    return withReadLock(() -> {
+      MavenProjectsTree result = new MavenProjectsTree(myProject);
+
+      result.myExplicitProfiles = myExplicitProfiles;
+      result.myRootProjects.addAll(myRootProjects);
+      result.myIgnoredFilesPaths.addAll(myIgnoredFilesPaths);
+      result.myIgnoredFilesPatterns.addAll(myIgnoredFilesPatterns);
+      deepCopyInto(myAggregatorToModuleMapping, result.myAggregatorToModuleMapping);
+      result.myIgnoredFilesPatternsCache = myIgnoredFilesPatternsCache;
+      result.myManagedFilesPaths.addAll(myManagedFilesPaths);
+      result.myMavenIdToProjectMapping.putAll(myMavenIdToProjectMapping);
+      result.myModuleToAggregatorMapping.putAll(myModuleToAggregatorMapping);
+      result.myVirtualFileToProjectMapping.putAll(myVirtualFileToProjectMapping);
+      result.myTimestamps.putAll(myTimestamps);
+      myWorkspaceMap.copyInto(result.myWorkspaceMap);
+      return result;
+    });
+  }
+
+  private static <K, V> Map<K, List<V>> deepCopyInto(Map<K, List<V>> from, Map<K, List<V>> to) {
+    return deepCopyInto(from, to, Function.identity());
+  }
+
+  private static <K, V> Map<K, List<V>> deepCopyInto(Map<K, List<V>> from, Map<K, List<V>> to, Function<V, V> copyFunc) {
+    for (Map.Entry<K, List<V>> entry : from.entrySet()) {
+      List<V> newVal = new ArrayList<>(entry.getValue().size());
+      for (V v : entry.getValue()) {
+        newVal.add(copyFunc.apply(v));
+      }
+      to.put(entry.getKey(), newVal);
+    }
+    return to;
+  }
+
+  private <T extends Throwable> void withReadLock(@NotNull ThrowableRunnable<T> runnable) throws T {
+    myStructureReadLock.lock();
+    try {
+      runnable.run();
+    }
+    finally {
+      myStructureReadLock.unlock();
+    }
+  }
+
+  @FunctionalInterface
+  private interface ThrowableCallable<T extends Throwable, V> {
+    V call() throws T;
+  }
+
+
+  private <T extends Throwable, V> V withReadLock(@NotNull ThrowableCallable<T, V> callable) throws T {
+    myStructureReadLock.lock();
+    try {
+      return callable.call();
+    }
+    finally {
+      myStructureReadLock.unlock();
+    }
+  }
+
+  private <T extends Throwable> void withWriteLock(@NotNull ThrowableRunnable<T> runnable) throws T {
+    myStructureWriteLock.lock();
+    try {
+      runnable.run();
+    }
+    finally {
+      myStructureWriteLock.unlock();
     }
   }
 }

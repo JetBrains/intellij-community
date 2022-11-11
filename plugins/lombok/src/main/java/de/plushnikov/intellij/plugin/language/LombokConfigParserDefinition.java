@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import de.plushnikov.intellij.plugin.language.parser.LombokConfigParser;
@@ -18,8 +17,10 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 import org.jetbrains.annotations.NotNull;
 
 public class LombokConfigParserDefinition implements ParserDefinition {
-  private static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
-  private static final TokenSet COMMENTS = TokenSet.create(LombokConfigTypes.COMMENT);
+
+  private static class LombokConfigParserTokenSets {
+    private static final TokenSet COMMENTS = TokenSet.create(LombokConfigTypes.COMMENT);
+  }
 
   private static final IFileElementType FILE = new IFileElementType(Language.findInstance(LombokConfigLanguage.class));
 
@@ -31,14 +32,8 @@ public class LombokConfigParserDefinition implements ParserDefinition {
 
   @Override
   @NotNull
-  public TokenSet getWhitespaceTokens() {
-    return WHITE_SPACES;
-  }
-
-  @Override
-  @NotNull
   public TokenSet getCommentTokens() {
-    return COMMENTS;
+    return LombokConfigParserTokenSets.COMMENTS;
   }
 
   @Override

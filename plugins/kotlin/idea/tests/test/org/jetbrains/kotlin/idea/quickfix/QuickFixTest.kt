@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -17,7 +17,7 @@ interface QuickFixTest {
                 @Suppress("UNCHECKED_CAST")
                 Class.forName(toolFqName) as Class<InspectionProfileEntry>
             } else {
-                val inspectionFile = findInspectionFile(File(beforeFileName).parentFile) ?: return emptyList()
+                val inspectionFile = findInspectionFile(File(beforeFileName).parentFile, inspectionFileName) ?: return emptyList()
                 val className = FileUtil.loadFile(inspectionFile).trim { it <= ' ' }
                 @Suppress("UNCHECKED_CAST") val inspectionClass = Class.forName(className) as Class<InspectionProfileEntry>
                 listOf(inspectionClass)
@@ -28,4 +28,7 @@ interface QuickFixTest {
 
         return InspectionTestUtil.instantiateTools(profiles)
     }
+
+    val inspectionFileName: String
+        get() = ".inspection"
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.RunManager.Companion.getInstance
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -22,11 +23,14 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider
+import org.jetbrains.kotlin.psi.KtFunction
 import org.junit.Assert
 
 class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
@@ -34,11 +38,16 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
 
     @Throws(Exception::class)
     override fun tearDown() {
-        val runManager = getInstance(project)
-        for (setting in tempSettings) {
-            runManager.removeConfiguration(setting)
+        try {
+            val runManager = getInstance(project)
+            for (setting in tempSettings) {
+                runManager.removeConfiguration(setting)
+            }
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
         }
-        super.tearDown()
     }
     
     override fun setUp() {
@@ -272,5 +281,24 @@ fun main(args: Array<String>) {}
         val fileDescriptor = descriptor as OpenFileDescriptor
         assertNotNull(fileDescriptor.file)
         assertEquals(49, fileDescriptor.offset)
+    }
+
+    fun `test unused beforeAll`() {
+        myFixture.addClass("package org.junit.jupiter.api; public @interface BeforeAll{}")
+        myFixture.addClass("package kotlin.jvm; public @interface JvmStatic{}")
+        myFixture.configureByText("Demo.kt", """
+import org.junit.jupiter.api.BeforeAll
+
+class DemoTest {
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setUpMock<caret>Server() {
+            println("Before")
+        }
+    }
+}""")
+        val ktFunction = PsiTreeUtil.getParentOfType(myFixture.elementAtCaret, KtFunction::class.java, false)
+        assertTrue(UnusedDeclarationInspection().isEntryPoint(ktFunction!!.toLightMethods()[0]))
     }
 }

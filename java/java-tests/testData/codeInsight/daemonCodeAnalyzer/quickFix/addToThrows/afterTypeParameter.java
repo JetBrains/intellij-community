@@ -1,4 +1,4 @@
-// "Add exception to method signature" "true"
+// "Add exception to method signature" "true-preview"
 class Test {
 
   interface I<E extends Exception> {

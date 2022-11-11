@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'State.getValue'" "true"
 // WITH_STDLIB
 // ERROR: Type 'TypeVariable(R)' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
 
@@ -11,3 +11,5 @@ fun test() {
         State("Inside run")
     }
 }
+
+/* IGNORE_FIR */

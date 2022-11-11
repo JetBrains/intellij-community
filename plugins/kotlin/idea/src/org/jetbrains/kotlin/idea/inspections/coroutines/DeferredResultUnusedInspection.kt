@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.coroutines
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.inspections.AbstractResultUnusedChecker
 import org.jetbrains.kotlin.name.FqName
@@ -47,6 +47,9 @@ class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false
     }
 
     companion object {
+        private const val COROUTINE_PACKAGE = "kotlinx.coroutines"
+        private const val COROUTINE_EXPERIMENTAL_PACKAGE = "kotlinx.coroutines.experimental"
+
         private val shortNames = setOf("async")
 
         private val fqNames: Set<FqName> = shortNames.mapTo(mutableSetOf()) { FqName("$COROUTINE_PACKAGE.$it") }

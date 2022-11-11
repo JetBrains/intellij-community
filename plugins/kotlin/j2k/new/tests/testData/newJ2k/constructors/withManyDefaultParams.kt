@@ -9,7 +9,7 @@ class Test {
     protected var f: Short = 0
     protected var g = 0.toChar()
 
-    constructor() {}
+    constructor()
     constructor(name: String?) {
         myName = foo(name)
     }

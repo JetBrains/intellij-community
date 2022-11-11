@@ -22,10 +22,7 @@ import kotlin.text.StringsKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.YAMLElementTypes;
-import org.jetbrains.yaml.YAMLFileType;
-import org.jetbrains.yaml.YAMLLanguage;
-import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.*;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
@@ -276,7 +273,7 @@ class YAMLFormattingContext {
       }
       return DIRECT_NORMAL_INDENT;
     }
-    else if (nodeType == YAMLElementTypes.FILE) {
+    else if (nodeType == YAMLParserDefinition.FILE) {
       return SAME_AS_PARENT_INDENT;
     }
     else if (YAMLElementTypes.SCALAR_VALUES.contains(nodeType)) {

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>data<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Box<!>(val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>v<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>)
 fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>consume<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>x<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>) {}
 

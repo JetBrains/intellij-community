@@ -50,7 +50,7 @@ object SourceRootPropertiesHelper {
              && javaResourceEntity.relativeOutputPath == properties.relativeOutputPath
     }
 
-    val customEntity = entity.asCustomSourceRoot()
+    val customEntity = entity.customSourceRootProperties
     if (customEntity == null) {
       return properties is JpsDummyElement
     }
@@ -87,7 +87,7 @@ object SourceRootPropertiesHelper {
       }
     }
     else {
-      val customEntity = entity.asCustomSourceRoot() ?: return
+      val customEntity = entity.customSourceRootProperties ?: return
       val serializer = findSerializer(actualSourceRootData.rootType as JpsModuleSourceRootType<JpsElement>)
                        ?: return
       val propertiesXml = savePropertiesToString(serializer, properties)
@@ -152,7 +152,7 @@ object SourceRootPropertiesHelper {
   internal fun loadCustomRootProperties(entity: SourceRootEntity, rootType: JpsModuleSourceRootType<out JpsElement>): JpsElement {
     val elementFactory = JpsElementFactory.getInstance()
 
-    val customSourceRoot = entity.asCustomSourceRoot()
+    val customSourceRoot = entity.customSourceRootProperties
     if (customSourceRoot == null || customSourceRoot.propertiesXmlTag.isEmpty()) return rootType.createDefaultProperties()
 
     val serializer = findSerializer(rootType)

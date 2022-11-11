@@ -17,7 +17,9 @@ import java.awt.*
 import javax.swing.JComponent
 import javax.swing.border.Border
 
-open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
+open class SegmentedActionToolbarComponent(place: String,
+                                           group: ActionGroup,
+                                           val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
     internal const val CONTROL_BAR_PROPERTY = "CONTROL_BAR_PROPERTY"
     internal const val CONTROL_BAR_FIRST = "CONTROL_BAR_PROPERTY_FIRST"
@@ -52,6 +54,8 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
   init {
     layoutPolicy = NOWRAP_LAYOUT_POLICY
+    setActionButtonBorder(JBUI.Borders.empty(0, 3))
+    setCustomButtonLook(segmentedButtonLook)
   }
 
   private var isActive = false
@@ -66,11 +70,10 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
-    if (!isActive) {
-      return super.createCustomComponent(action, presentation)
-    }
-
     var component = super.createCustomComponent(action, presentation)
+    if (!isActive) {
+      return component
+    }
 
     if (action is ComboBoxAction) {
       UIUtil.uiTraverser(component).filter(ComboBoxButton::class.java).firstOrNull()?.let {
@@ -78,35 +81,12 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
         component = it
       }
     }
-    else if (component is ActionButton) {
-      val actionButton = component as ActionButton
-      updateActionButtonLook(actionButton)
-    }
 
-    component.border = JBUI.Borders.empty()
+    if (component !is ActionButton) {
+      component.border = JBUI.Borders.empty()
+    }
 
     return component
-  }
-
-  override fun createToolbarButton(action: AnAction,
-                                   look: ActionButtonLook?,
-                                   place: String,
-                                   presentation: Presentation,
-                                   minimumSize: Dimension): ActionButton {
-    if (!isActive) {
-      return super.createToolbarButton(action, look, place, presentation, minimumSize)
-
-    }
-
-    val createToolbarButton = super.createToolbarButton(action, segmentedButtonLook, place, presentation, minimumSize)
-    updateActionButtonLook(createToolbarButton)
-
-    return createToolbarButton
-  }
-
-  private fun updateActionButtonLook(actionButton: ActionButton) {
-    actionButton.border = JBUI.Borders.empty(0, 3)
-    actionButton.setLook(segmentedButtonLook)
   }
 
   override fun fillToolBar(actions: List<AnAction>, layoutSecondaries: Boolean) {
@@ -150,7 +130,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   private fun paintActiveBorder(g: Graphics) {
-    if((isActive || paintBorderForSingleItem) && visibleActions != null) {
+    if ((isActive || paintBorderForSingleItem) && visibleActions != null) {
       SegmentedBarPainter.paintActionBarBorder(this, g)
     }
   }
@@ -182,7 +162,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   protected open fun logNeeded() = false
 
   protected fun forceUpdate() {
-    if(logNeeded()) LOG.info("RunToolbar MAIN SLOT forceUpdate")
+    if (logNeeded()) LOG.info("RunToolbar MAIN SLOT forceUpdate")
     visibleActions?.let {
       update(true, it)
 
@@ -197,6 +177,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   private var lastIds: List<String> = emptyList()
+  private var lastActions: List<AnAction> = emptyList()
 
   private fun update(forced: Boolean, newVisibleActions: List<AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
@@ -205,14 +186,18 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
 
     traceState(lastIds, filteredIds, ides)
+
+    isActive = newVisibleActions.size > 1
+
+    super.actionsUpdated(forced, if (filtered.size > 1) filtered else if(lastActions.isEmpty()) newVisibleActions else lastActions)
+
     lastIds = filteredIds
-    isActive = filtered.size > 1
-    super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
+    lastActions = filtered
     ApplicationManager.getApplication().messageBus.syncPublisher(ToolbarActionsUpdatedListener.TOPIC).actionsUpdated()
   }
 
   protected open fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {
-   // if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    // if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT new filtered: ${filteredIds}} visible: $ides RunToolbar")
   }
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {

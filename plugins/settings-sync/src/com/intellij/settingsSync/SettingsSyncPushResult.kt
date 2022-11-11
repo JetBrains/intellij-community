@@ -1,9 +1,11 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 
-internal sealed class SettingsSyncPushResult {
-  object Success : SettingsSyncPushResult() {
+@ApiStatus.Internal
+sealed class SettingsSyncPushResult {
+  class Success(val serverVersionId: String?) : SettingsSyncPushResult() {
     override fun toString(): String = "SUCCESS"
   }
 

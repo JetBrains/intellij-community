@@ -100,6 +100,13 @@ public interface Constants {
   // PREFERENCES
   @NonNls String HIGHLIGHTING_PAIRS_KEY = "highlightingPairs";
   @NonNls String SMART_TYPING_PAIRS_KEY = "smartTypingPairs";
+  @NonNls String INDENTATION_RULES = "indentationRules";
+
+  // INDENTATION PATTERNS
+  @NonNls String INCREASE_INDENT_PATTERN = "increaseIndentPattern";
+  @NonNls String DECREASE_INDENT_PATTERN = "decreaseIndentPattern";
+  @NonNls String INDENT_NEXT_LINE_PATTERN = "indentNextLinePattern";
+  @NonNls String UNINDENTED_LINE_PATTERN = "unIndentedLinePattern";
 
   // we should depend on intellij util classes as least as possible
   @SuppressWarnings("SSBasedInspection")

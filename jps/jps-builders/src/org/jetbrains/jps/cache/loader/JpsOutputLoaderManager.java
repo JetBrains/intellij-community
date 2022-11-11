@@ -41,12 +41,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
-import static org.jetbrains.jps.incremental.storage.ProjectStamps.FORCE_DOWNLOAD_PORTABLE_CACHES;
 
 public class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
   private static final String FS_STATE_FILE = "fs_state.dat";
-  private static final int DEFAULT_PROJECT_MODULES_COUNT = 2200;
+  // Downloading caches applicable only for the good internet connection
   private static final int PROJECT_MODULE_DOWNLOAD_SIZE_BYTES = 512_000;
   private static final int AVERAGE_CACHE_SIZE_BYTES = 512_000 * 1024;
   private static final int PROJECT_MODULE_SIZE_DISK_BYTES = 921_600;
@@ -58,9 +57,11 @@ public class JpsOutputLoaderManager {
   private final CanceledStatus myCanceledStatus;
   private final JpsServerClient myServerClient;
   private boolean isCacheDownloaded;
+  private final boolean isForceCachesDownload;
   private final String myBuildOutDir;
   private final String myProjectPath;
   private final String myCommitHash;
+  private final int myMaxDownloadDuration;
   private final int myCommitsCountBetweenCompilation;
   private final JpsNettyClient myNettyClient;
 
@@ -79,22 +80,28 @@ public class JpsOutputLoaderManager {
     myMetadataLoader = new JpsMetadataLoader(projectPath, myServerClient);
     myCommitHash = cacheDownloadSettings.getDownloadCommit();
     myCommitsCountBetweenCompilation = cacheDownloadSettings.getCommitsCountLatestBuild();
+    myMaxDownloadDuration = cacheDownloadSettings.getMaxDownloadDuration() * 60;
+    isForceCachesDownload = cacheDownloadSettings.getForceDownload();
     JpsServerAuthUtil.setRequestHeaders(cacheDownloadSettings.getAuthHeadersMap());
     JpsCacheLoadingSystemStats.setDeletionSpeed(cacheDownloadSettings.getDeletionSpeed());
     JpsCacheLoadingSystemStats.setDecompressionSpeed(cacheDownloadSettings.getDecompressionSpeed());
   }
 
   public void load(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
-                   @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
+                   @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes,
+                   @NotNull Runnable beforeDownload) {
     if (!canRunNewLoading()) return;
-    if (FORCE_DOWNLOAD_PORTABLE_CACHES || isDownloadQuickerThanLocalBuild(buildRunner, myCommitsCountBetweenCompilation, scopes)) {
+    if (isForceCachesDownload || isDownloadQuickerThanLocalBuild(buildRunner, myCommitsCountBetweenCompilation, scopes)) {
+      LOG.info("Before download task execution...");
+      beforeDownload.run();
       // Drop JPS metadata to force plugin for downloading all compilation outputs
       myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.fetching.cache.for.commit", myCommitHash));
       if (isForceUpdate) {
         myMetadataLoader.dropCurrentProjectMetadata();
         File outDir = new File(myBuildOutDir);
         if (outDir.exists()) {
-          myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.clean.output.directories"));
+          LOG.info("Start removing old caches before downloading");
+          myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.removing.old.caches"));
           FileUtil.delete(outDir);
         }
         LOG.info("Compilation output folder empty");
@@ -109,6 +116,7 @@ public class JpsOutputLoaderManager {
   }
 
   public void updateBuildStatistic(@NotNull ProjectDescriptor projectDescriptor) {
+    if (isForceCachesDownload) return;
     if (!hasRunningTask.get() && isCacheDownloaded) {
       BuildTargetsState targetsState = projectDescriptor.getTargetsState();
       myOriginalBuildStatistic.getBuildTargetTypeStatistic().forEach((buildTargetType, originalBuildTime) -> {
@@ -118,14 +126,17 @@ public class JpsOutputLoaderManager {
       Long originalBuildStatisticProjectRebuildTime = myOriginalBuildStatistic.getProjectRebuildTime();
       targetsState.setLastSuccessfulRebuildDuration(originalBuildStatisticProjectRebuildTime);
       LOG.info("Saving old project rebuild time " + originalBuildStatisticProjectRebuildTime);
-
     }
   }
 
-  public void saveLatestBuiltCommitId(@NotNull CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status) {
+  public static void saveLatestBuiltCommitId(@NotNull CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status,
+                                             @NotNull Channel channel,
+                                             @NotNull UUID sessionId) {
     if (status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED ||
-        status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.ERRORS ) return;
-    myNettyClient.saveLatestBuiltCommit();
+        status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.ERRORS   ||
+        status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UP_TO_DATE) return;
+    LOG.info("Saving latest project built commit");
+    JpsNettyClient.saveLatestBuiltCommit(channel, sessionId);
   }
 
   private boolean isDownloadQuickerThanLocalBuild(BuildRunner buildRunner, int commitsCountBetweenCompilation,
@@ -156,10 +167,15 @@ public class JpsOutputLoaderManager {
       LOG.info("Can't calculate approximate project build time");
       return false;
     }
-    return calculateApproximateDownloadTimeMs(systemOpsStatistic, projectModulesCount) < approximateBuildTime;
+    long approximateDownloadTime = calculateApproximateDownloadTimeMs(systemOpsStatistic, projectModulesCount);
+    if (approximateDownloadTime == 0) {
+      LOG.info("Can't calculate approximate download time");
+      return false;
+    }
+    return approximateDownloadTime < approximateBuildTime;
   }
 
-  private static long calculateApproximateDownloadTimeMs(SystemOpsStatistic systemOpsStatistic, int projectModulesCount) {
+  private long calculateApproximateDownloadTimeMs(SystemOpsStatistic systemOpsStatistic, int projectModulesCount) {
     double magicCoefficient = 1.3;
     long decompressionSpeed;
     if (JpsCacheLoadingSystemStats.getDecompressionSpeedBytesPesSec() > 0) {
@@ -186,6 +202,10 @@ public class JpsOutputLoaderManager {
              "Expected decompression time: " + expectedDecompressionTimeSec + "sec. " +
              "Expected size to delete: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected delete time: " + expectedDeleteTimeSec + "sec. " +
              "Total time of work: " + StringUtil.formatDuration(expectedTimeOfWorkMs));
+    if (expectedDownloadTimeSec >=  myMaxDownloadDuration) {
+      LOG.info("Downloading can consume more than 10 mins, connection speed is too small for caches usages");
+      return 0;
+    }
     return expectedTimeOfWorkMs;
   }
 
@@ -322,6 +342,7 @@ public class JpsOutputLoaderManager {
 
   private @Nullable Pair<Long, Integer> estimateProjectBuildTime(BuildRunner buildRunner,
                                        List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
+    ProjectDescriptor projectDescriptor = null;
     try {
       long startTime = System.currentTimeMillis();
       BuildFSState fsState = new BuildFSState(false);
@@ -335,12 +356,11 @@ public class JpsOutputLoaderManager {
         buildRunner.setForceCleanCaches(true);
         LOG.info("Storage files are absent");
       }
-      ProjectDescriptor projectDescriptor = buildRunner.load(MessageHandler.DEAF, dataStorageRoot, fsState);
+      projectDescriptor = buildRunner.load(MessageHandler.DEAF, dataStorageRoot, fsState);
       long contextInitializationTime = System.currentTimeMillis() - startTime;
       LOG.info("Time spend to context initialization: " + contextInitializationTime);
       CompileScope compilationScope = buildRunner.createCompilationScope(projectDescriptor, scopes);
-      long estimatedBuildTime = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, projectDescriptor.getTargetsState(),
-                                                                       compilationScope);
+      long estimatedBuildTime = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, t -> compilationScope.isAffected(t));
       BuildTargetsState targetsState = projectDescriptor.getTargetsState();
       if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(compilationScope)) {
         LOG.info("Project rebuild enabled, caches will not be download");
@@ -358,6 +378,9 @@ public class JpsOutputLoaderManager {
     }
     catch (Exception e) {
       LOG.warn("Exception at calculation approximate build time", e);
+    }
+    finally {
+      if (projectDescriptor != null) projectDescriptor.release();
     }
     return null;
   }

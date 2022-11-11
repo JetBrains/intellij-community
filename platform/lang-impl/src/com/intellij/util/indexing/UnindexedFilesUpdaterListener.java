@@ -5,6 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This listener is never invoked.
+ *
+ * @deprecated external plugins in most cases should use {@link com.intellij.openapi.project.DumbService.DumbModeListener}
+ */
+@Deprecated(forRemoval = true)
 public interface UnindexedFilesUpdaterListener {
   Topic<UnindexedFilesUpdaterListener> TOPIC = Topic.create("unindexed.files.updater.listener",
                                                             UnindexedFilesUpdaterListener.class);

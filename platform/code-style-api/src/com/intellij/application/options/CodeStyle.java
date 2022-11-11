@@ -513,7 +513,6 @@ public final class CodeStyle {
    *
    * @param editor The current editor.
    * @param offset The offset to find the language at.
-   * @return
    */
   public static CommonCodeStyleSettings getLocalLanguageSettings(Editor editor, int offset) {
     PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);

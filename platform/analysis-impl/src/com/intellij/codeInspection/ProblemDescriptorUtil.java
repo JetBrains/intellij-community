@@ -17,8 +17,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Verifier;
@@ -27,7 +25,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class ProblemDescriptorUtil {
   public static final int NONE = 0x00000000;
@@ -359,15 +360,18 @@ public final class ProblemDescriptorUtil {
   }
 
   public static ProblemDescriptor toProblemDescriptor(@NotNull PsiFile file, @NotNull HighlightInfo info) {
-    List<LocalQuickFix> quickFixes =
-      ContainerUtil.mapNotNull(ObjectUtils.notNull(info.quickFixActionRanges, Collections.emptyList()), p -> {
-        IntentionAction intention = p.first.getAction();
-        if (intention instanceof LocalQuickFix) return (LocalQuickFix)intention;
-        if (intention instanceof LocalQuickFixAsIntentionAdapter) {
-          return ((LocalQuickFixAsIntentionAdapter)intention).getFix();
-        }
-        return null;
-      });
+    List<LocalQuickFix> quickFixes = new ArrayList<>();
+    info.findRegisteredQuickFix((descriptor, range) -> {
+      IntentionAction intention = descriptor.getAction();
+      LocalQuickFix fix =
+        intention instanceof LocalQuickFix ? (LocalQuickFix)intention :
+        intention instanceof LocalQuickFixAsIntentionAdapter ?
+        ((LocalQuickFixAsIntentionAdapter)intention).getFix() : null;
+      if (fix != null) {
+        quickFixes.add(fix);
+      }
+      return null;
+    });
     return convertToDescriptor(file, info.getSeverity(), info.getStartOffset(), info.getEndOffset(), info.getDescription(), info.isAfterEndOfLine(), quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 }

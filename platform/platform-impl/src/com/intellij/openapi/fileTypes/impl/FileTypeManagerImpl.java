@@ -47,6 +47,7 @@ import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -87,17 +88,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   final FileTypeDetectionService myDetectionService;
   private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
-  FileTypeAssocTable<FileTypeWithDescriptor> myPatternsTable = new FileTypeAssocTable<>();
+  FileTypeAssocTable<FileTypeWithDescriptor> myPatternsTable = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
   private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet(DEFAULT_IGNORED);
   private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(myIgnoredPatterns);
 
-  private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
+  private final FileTypeAssocTable<FileType> myInitialAssociations = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new HashMap<>();
   private final Map<String, String> myUnresolvedHashBangs = new HashMap<>(); // hashbang string -> file type
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
   private final ConflictingFileTypeMappingTracker myConflictingMappingTracker = new ConflictingFileTypeMappingTracker(myRemovedMappingTracker);
   private final Map<String, FileTypeBean> myPendingFileTypes = new LinkedHashMap<>();
-  private final FileTypeAssocTable<FileTypeBean> myPendingAssociations = new FileTypeAssocTable<>();
+  private final FileTypeAssocTable<FileTypeBean> myPendingAssociations = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
   private final ReadWriteLock myPendingInitializationLock = new ReentrantReadWriteLock();
 
   // maps pluginId -> duplicates for this plugin
@@ -184,7 +185,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         });
       }
     };
-    mySchemeManager = SchemeManagerFactory.getInstance().create(FILE_SPEC, abstractTypesProcessor);
+    mySchemeManager = SchemeManagerFactory.getInstance().create(FILE_SPEC, abstractTypesProcessor, null, null, SettingsCategory.CODE);
 
     myDetectionService = new FileTypeDetectionService(this);
     Disposer.register(this, myDetectionService);
@@ -493,8 +494,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           fileType = (FileType)field.get(null);
         }
       }
-      catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-        LOG.error(new PluginException(e, pluginId));
+      catch (ProcessCanceledException | CancellationException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        // no need to wrap into PluginException - instantiateClass and loadClass both do this if needed
+        LOG.error(e);
         return null;
       }
 
@@ -762,7 +767,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (fixedType != null && fixedType.getFirst().equals(file)) {
       FileType fileType = fixedType.getSecond();
       if (toLog()) {
-        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName()+" in "+Thread.currentThread());
+        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in "+Thread.currentThread());
       }
       return fileType;
     }

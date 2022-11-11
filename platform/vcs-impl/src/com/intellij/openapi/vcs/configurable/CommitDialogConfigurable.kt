@@ -8,11 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable
-import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -41,24 +37,6 @@ class CommitDialogConfigurable(private val project: Project)
         checkBox(VcsBundle.message("checkbox.clear.initial.commit.message"))
           .bindSelected(settings::CLEAR_INITIAL_COMMIT_MESSAGE)
       }
-      row {
-        checkBox(VcsBundle.message("checkbox.force.non.empty.messages"))
-          .bindSelected(settings::FORCE_NON_EMPTY_COMMENT)
-      }
-      row {
-        checkBox(VcsBundle.message("settings.show.unversioned.files"))
-          .bindSelected(settings::SHOW_UNVERSIONED_FILES_WHILE_COMMIT)
-      }
-
-      row {
-        checkBox(VcsBundle.message("checkbox.changelist.move.offer"))
-          .bindSelected(settings::OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT)
-      }.enabledIf(changelistsEnabled)
-      row(VcsBundle.message("create.changelist.on.failed.commit")) {
-        comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-                 SimpleListCellRenderer.create("", VcsShowConfirmationOption::getConfirmationOptionText))
-          .bindItem(settings::MOVE_TO_FAILED_COMMIT_CHANGELIST)
-      }.enabledIf(changelistsEnabled)
 
       group(VcsBundle.message("settings.commit.message.inspections")) {
         row {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompileContext;
@@ -19,29 +19,12 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 
-/**
- * @author Jeka
- */
 public final class CompilerUtil {
   private static final Logger LOG = Logger.getInstance(CompilerUtil.class);
-
-  public static String quotePath(String path) {
-    if (path != null && path.indexOf(' ') != -1) {
-      path = path.replaceAll("\\\\", "\\\\\\\\");
-      path = '"' + path + '"';
-    }
-    return path;
-  }
 
   public static void refreshIOFiles(@NotNull final Collection<? extends File> files) {
     if (!files.isEmpty()) {
       LocalFileSystem.getInstance().refreshIoFiles(files);
-    }
-  }
-
-  public static void refreshIODirectories(@NotNull final Collection<? extends File> files) {
-    if (!files.isEmpty()) {
-      LocalFileSystem.getInstance().refreshIoFiles(files, false, true, null);
     }
   }
 
@@ -70,13 +53,6 @@ public final class CompilerUtil {
 
     if (!toRefresh.isEmpty()) {
       RefreshQueue.getInstance().refresh(false, false, null, toRefresh);
-    }
-  }
-
-  public static void refreshIOFile(final File file) {
-    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    if (vFile != null) {
-      vFile.refresh(false, false);
     }
   }
 

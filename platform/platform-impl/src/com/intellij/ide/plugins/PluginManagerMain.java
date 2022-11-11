@@ -7,7 +7,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
-import com.intellij.idea.Main;
+import com.intellij.idea.AppMode;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -329,7 +329,7 @@ public final class PluginManagerMain {
       return true;
     }
 
-    if (Main.isHeadless()) {
+    if (AppMode.isHeadless()) {
       // postponing the dialog till the next start
       PluginManagerCore.write3rdPartyPlugins(aliens);
       return true;

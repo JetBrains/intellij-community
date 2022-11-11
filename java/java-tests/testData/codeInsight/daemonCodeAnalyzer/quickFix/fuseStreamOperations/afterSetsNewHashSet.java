@@ -1,4 +1,4 @@
-// "Fuse newHashSet into the Stream API chain" "true"
+// "Fuse newHashSet into the Stream API chain" "true-preview"
 package com.google.common.collect;
 
 import java.util.*;

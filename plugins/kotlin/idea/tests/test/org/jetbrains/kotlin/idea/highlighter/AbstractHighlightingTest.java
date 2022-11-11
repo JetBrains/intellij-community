@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.InspectionTestUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
@@ -18,6 +19,8 @@ import org.jetbrains.kotlin.idea.test.TagsTestDataUtil;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt.configureRegistryAndRun;
 
 public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFixtureTestCase {
 
@@ -50,7 +53,10 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
 
         withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, isFirPlugin(), () -> {
             try {
-                checkHighlighting(fileText);
+                configureRegistryAndRun(fileText, () -> {
+                    checkHighlighting(fileText);
+                    return Unit.INSTANCE;
+                });
             }
             catch (FileComparisonFailure e) {
                 List<HighlightInfo> highlights =

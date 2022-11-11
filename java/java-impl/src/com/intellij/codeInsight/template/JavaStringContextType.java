@@ -10,10 +10,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-
 public class JavaStringContextType extends TemplateContextType {
   public JavaStringContextType() {
-    super("JAVA_STRING", JavaPsiBundle.message("context.type.string"), JavaCodeContextType.Generic.class);
+    super(JavaPsiBundle.message("context.type.string"));
   }
 
   @Override

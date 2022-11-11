@@ -22,16 +22,12 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
 @Internal
-@VisibleForTesting
 open class MessageBusImpl : MessageBus {
   interface MessageHandlerHolder {
     val isDisposed: Boolean
@@ -635,7 +631,17 @@ private fun invokeListener(methodHandle: MethodHandle,
   }
   catch (e: Throwable) {
     val exceptions = prevExceptions ?: mutableListOf()
-    exceptions.add(e)
+    // ProcessCanceledException is rethrown only after executing all handlers
+    if (e is ProcessCanceledException || e is AssertionError || e is CancellationException) {
+      exceptions.add(e)
+    }
+    else {
+      exceptions.add(RuntimeException("Cannot invoke (" +
+                                      "class=${handler::class.java.simpleName}, " +
+                                      "method=${methodName}, " +
+                                      "topic=${topic.displayName}" +
+                                      ")", e))
+    }
     return exceptions
   }
   return prevExceptions
@@ -655,10 +661,7 @@ internal fun throwExceptions(exceptions: List<Throwable>) {
     throw exceptions[0]
   }
 
-  for (exception in exceptions) {
-    if (exception is ProcessCanceledException) {
-      throw exception
-    }
-  }
+  exceptions.firstOrNull { it is ProcessCanceledException || it is CancellationException }?.let { throw it }
+
   throw CompoundRuntimeException(exceptions)
 }

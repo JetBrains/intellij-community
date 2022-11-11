@@ -1,7 +1,8 @@
 <component name="libraryTable">
-  <library name="aia-proto">
+  <library name="aia-proto" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:proto:221.0.9.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../bazel-bin/tools/base/sdk-common/aia-manifest-jar-generator/proto.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/proto/221.0.9.0/proto-221.0.9.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

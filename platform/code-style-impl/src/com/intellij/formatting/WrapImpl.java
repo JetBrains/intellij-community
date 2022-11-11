@@ -160,7 +160,7 @@ public class WrapImpl extends Wrap {
   }
 
   /**
-   * @return    '{@link #getWrapOffset() firstPosition}' property value defined previously via {@link #setWrapOffset(int)} if any;
+   * @return    'firstPosition' property value defined previously via {@link #setWrapOffset(int)} if any;
    *            {@code '-1'} otherwise
    */
   public int getWrapOffset() {

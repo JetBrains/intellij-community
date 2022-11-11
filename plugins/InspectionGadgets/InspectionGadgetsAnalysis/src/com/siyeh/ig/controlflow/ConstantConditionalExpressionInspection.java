@@ -107,7 +107,7 @@ public class ConstantConditionalExpressionInspection extends BaseInspection impl
 
     @Override
     public void visitConditionalExpression(
-      PsiConditionalExpression expression) {
+      @NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression condition = expression.getCondition();
       final PsiExpression thenExpression = expression.getThenExpression();

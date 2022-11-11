@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import org.jetbrains.kotlin.idea.artifacts.*
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.*
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.*
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.AbstractLazyFileOutputProducer
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducer
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import java.io.File
 import java.security.MessageDigest
@@ -27,9 +31,9 @@ import java.security.MessageDigest
  * the whole pipeline if the pom changes ([AbstractLazyFileOutputProducer] guarantees us that). It's convenient for the local testing
  * ("install to maven local -> test" development cycle)
  */
-class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<Unit, DownloadContext> {
-    private val downloader =
-        LazyKotlinMavenArtifactDownloader(KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, version, artifactIsPom = true)
+internal class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<Unit, DownloadContext> {
+    private val downloader = LazyKotlinMavenArtifactDownloader(KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, version, artifactIsPom = true)
+
     private val distLayoutProducer = LazyDistDirLayoutProducer(version, KotlinArtifactsDownloader.getUnpackedKotlinDistPath(version))
 
     override fun isUpToDate(input: Unit): Boolean {
@@ -62,7 +66,7 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
         for (jarInMavenRepo in input) {
             jarInMavenRepo.copyTo(lib.resolve(getDistJarNameFromMavenJar(jarInMavenRepo) ?: continue))
         }
-        val jsEngines = KotlinPluginLayout.instance.jsEngines
+        val jsEngines = KotlinPluginLayout.jsEngines
         jsEngines.copyTo(lib.resolve(jsEngines.name)) // js.engines is required to avoid runtime errors when compiling kts via JPS
         return listOf(unpackedDistDestination)
     }

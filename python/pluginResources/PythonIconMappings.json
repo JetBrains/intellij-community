@@ -1,0 +1,17 @@
+{
+  "icons": {
+    "com": {
+      "jetbrains": {
+        "python": {
+          "expui": {
+            "python.svg": "icons/com/jetbrains/python/python.svg",
+            "pythonConsoleToolWindow.svg": "icons/com/jetbrains/python/pythonConsoleToolWindow.svg",
+            "pythonPackages.svg": "icons/com/jetbrains/python/pythonPackages.svg",
+            "commandQueue.svg": "icons/com/jetbrains/python/commandQueue.svg",
+            "sciView.svg": "icons/com/jetbrains/python/DataView.svg"
+          }
+        }
+      }
+    }
+  }
+}

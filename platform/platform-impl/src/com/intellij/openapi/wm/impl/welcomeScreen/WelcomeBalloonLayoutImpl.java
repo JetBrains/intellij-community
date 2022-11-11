@@ -35,6 +35,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
   public static final Topic<BalloonNotificationListener> BALLOON_NOTIFICATION_TOPIC =
     Topic.create("balloon notification changed", BalloonNotificationListener.class);
+  private static final int NOTIFICATION_BORDER = 5;
   private static final String TYPE_KEY = "Type";
 
   private @Nullable Component myLayoutBaseComponent;
@@ -169,7 +170,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       size.height = fullHeight;
     }
 
-    myPopupBalloon.setBounds(new Rectangle(x, fullHeight - size.height, size.width, size.height));
+    myPopupBalloon.setBounds(new Rectangle(x, fullHeight - size.height, size.width - JBUI.scale(NOTIFICATION_BORDER), size.height));
   }
 
   private void updatePopup() {

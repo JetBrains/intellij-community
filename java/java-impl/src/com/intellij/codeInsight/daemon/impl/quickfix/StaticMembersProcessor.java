@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.ImportFilter;
+import com.intellij.codeInsight.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
@@ -17,39 +14,26 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> implements Processor<T> {
-  public enum SearchMode {
-    MAX_2_MEMBERS(2),
-    MAX_100_MEMBERS(100);
-
-    private final int count;
-    SearchMode(int count) {
-      this.count = count;
-    }
-  }
-
   private final MultiMap<PsiClass, T> mySuggestions = MultiMap.createLinked();
 
   private final Map<String, Boolean> myPossibleClasses = new HashMap<>();
 
   @NotNull private final PsiElement myPlace;
-  @NotNull private final SearchMode mySearchMode;
   private final boolean myInDefaultPackage;
   private final boolean myAddStaticImport;
   private ExpectedTypeInfo[] myExpectedTypes;
+  private final int myMaxResults;
 
-  protected StaticMembersProcessor(@NotNull PsiElement place,
-                                   boolean addStaticImport,
-                                   @NotNull SearchMode searchMode) {
+  StaticMembersProcessor(@NotNull PsiElement place, boolean addStaticImport, int maxResults) {
     myPlace = place;
-    mySearchMode = searchMode;
+    myMaxResults = maxResults;
     myInDefaultPackage = PsiUtil.isFromDefaultPackage(place);
     myAddStaticImport = addStaticImport;
   }
 
-  protected abstract boolean isApplicable(T member, PsiElement place);
+  protected abstract boolean isApplicable(@NotNull T member, @NotNull PsiElement place);
 
-  @NotNull
-  public List<T> getMembersToImport(boolean applicableOnly) {
+  @NotNull List<T> getMembersToImport(boolean applicableOnly) {
     final List<T> list = new ArrayList<>();
     final List<T> applicableList = new ArrayList<>();
     for (Map.Entry<PsiClass, Collection<T>> methodEntry : mySuggestions.entrySet()) {
@@ -61,7 +45,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     return result;
   }
 
-  protected ExpectedTypeInfo[] getExpectedTypes() {
+  protected ExpectedTypeInfo @NotNull [] getExpectedTypes() {
     if (myExpectedTypes == null) {
       if (myPlace instanceof PsiExpression) {
         myExpectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiExpression)myPlace, false);
@@ -73,7 +57,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     return myExpectedTypes;
   }
 
-  protected boolean isApplicableFor(PsiType fieldType) {
+  protected boolean isApplicableFor(@NotNull PsiType fieldType) {
     ExpectedTypeInfo[] expectedTypes = getExpectedTypes();
     for (ExpectedTypeInfo info : expectedTypes) {
       if (TypeConversionUtil.isAssignable(info.getType(), fieldType)) return true;
@@ -84,7 +68,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   @Override
   public boolean process(T member) {
     ProgressManager.checkCanceled();
-    if (StaticImportMemberFix.isExcluded(member)) {
+    if (isExcluded(member)) {
       return true;
     }
     final PsiClass containingClass = member.getContainingClass();
@@ -99,7 +83,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       if (modifierList != null && member instanceof PsiMethod &&
           member.getLanguage().isKindOf(JavaLanguage.INSTANCE)
           && !modifierList.hasExplicitModifier(PsiModifier.STATIC)) {
-        //methods in interfaces must have explicit static modifier or they are not static;
+        //methods in interfaces must have explicit static modifier, or they are not static;
         return true;
       }
 
@@ -113,17 +97,18 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       }
     }
 
-    return processCondition();
+    return mySuggestions.size() < myMaxResults;
   }
 
-  private boolean processCondition() {
-    return mySuggestions.size() < mySearchMode.count;
+  private static boolean isExcluded(@NotNull PsiMember method) {
+    String name = PsiUtil.getMemberQualifiedName(method);
+    return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
   }
 
-  private void registerMember(PsiClass containingClass,
-                              Collection<? extends T> members,
-                              List<? super T> list,
-                              List<? super T> applicableList) {
+  private void registerMember(@NotNull PsiClass containingClass,
+                              @NotNull Collection<? extends T> members,
+                              @NotNull List<? super T> list,
+                              @NotNull List<? super T> applicableList) {
     String qualifiedName = containingClass.getQualifiedName();
     if (qualifiedName == null) {
       return;

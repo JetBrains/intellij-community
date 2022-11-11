@@ -26,25 +26,13 @@ interface CodeFenceGeneratingProvider {
    */
   fun generateHtml(language: String, raw: String, node: ASTNode): String
 
-  /**
-   * Will be called on Look and Feel change, but before rendering of new preview
-   * You should invalidate here all the caches that may be affected by old Look and Feel
-   */
-  fun onLaFChanged() {
-  }
-
   companion object {
-    @PublishedApi
-    internal val EP_NAME = ExtensionPointName<CodeFenceGeneratingProvider>("org.intellij.markdown.fenceGeneratingProvider")
+    private val EP_NAME = ExtensionPointName<CodeFenceGeneratingProvider>("org.intellij.markdown.fenceGeneratingProvider")
 
-    internal val all: Set<CodeFenceGeneratingProvider>
-      get() = EP_NAME.extensionList.toSet()
-
-    /**
-     * Notify all [CodeFenceGeneratingProvider] that Look and Feel has been changed
-     */
-    fun notifyLaFChanged() {
-      EP_NAME.extensionList.forEach(CodeFenceGeneratingProvider::onLaFChanged)
+    @ApiStatus.Internal
+    @JvmStatic
+    fun collectProviders(): Collection<CodeFenceGeneratingProvider> {
+      return EP_NAME.extensionList
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -22,10 +22,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -73,8 +73,13 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
     }
 
     override fun tearDown() {
-        tearDownImportStatusCollector()
-        super.tearDown()
+        try {
+            tearDownImportStatusCollector()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     protected open fun setUpImportStatusCollector() {

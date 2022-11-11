@@ -60,6 +60,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private boolean myAutoselectOnMouseMove = true;
 
   private Function<? super T, String> myItemsNamer;
+  private boolean myFilterAlwaysVisible;
   private boolean myMayBeParent;
   private int myAdAlignment = SwingConstants.LEFT;
   private boolean myModalContext;
@@ -274,6 +275,16 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public PopupChooserBuilder<T> setFilteringEnabled(Function<Object, String> namer) {
     myItemsNamer = namer;
     return this;
+  }
+
+  @Override
+  public PopupChooserBuilder<T> setFilterAlwaysVisible(boolean state) {
+    myFilterAlwaysVisible = state;
+    return this;
+  }
+
+  public boolean isFilterAlwaysVisible() {
+    return myFilterAlwaysVisible;
   }
 
   @Override

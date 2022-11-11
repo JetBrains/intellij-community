@@ -7,6 +7,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -36,12 +37,13 @@ import java.util.Objects;
 public final class VcsShelveUtils {
   private static final Logger LOG = Logger.getInstance(VcsShelveUtils.class.getName());
 
-  public static void doSystemUnshelve(final Project project,
-                                      final ShelvedChangeList shelvedChangeList,
-                                      @Nullable final LocalChangeList targetChangeList,
-                                      final ShelveChangesManager shelveManager,
-                                      @NlsContexts.Label @Nullable final String leftConflictTitle,
-                                      @NlsContexts.Label @Nullable final String rightConflictTitle) {
+  @NotNull
+  public static ApplyPatchStatus doSystemUnshelve(final Project project,
+                                                  final ShelvedChangeList shelvedChangeList,
+                                                  @Nullable final LocalChangeList targetChangeList,
+                                                  final ShelveChangesManager shelveManager,
+                                                  @NlsContexts.Label @Nullable final String leftConflictTitle,
+                                                  @NlsContexts.Label @Nullable final String rightConflictTitle) {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
@@ -57,9 +59,10 @@ public final class VcsShelveUtils {
 
     LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
     // we pass null as target change list for Patch Applier to do NOTHING with change lists
-    shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
-                                     true, leftConflictTitle, rightConflictTitle, true);
+    ApplyPatchStatus status = shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
+                                                               true, leftConflictTitle, rightConflictTitle, true);
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
+    return status;
   }
 
   @RequiresEdt
@@ -103,9 +106,9 @@ public final class VcsShelveUtils {
   }
 
   /**
-   * @param project       the context project
-   * @param changes       the changes to process
-   * @param description   the description of for the shelve
+   * @param project     the context project
+   * @param changes     the changes to process
+   * @param description the description of for the shelve
    * @return created shelved change list or null in case failure
    */
   @Nullable

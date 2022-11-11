@@ -26,7 +26,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -189,12 +188,9 @@ public class ExecutionPointHighlighter {
     if (mySourcePosition instanceof HighlighterProvider) {
       TextRange range = SlowOperations.allowSlowOperations(() -> ((HighlighterProvider)mySourcePosition).getHighlightRange());
       if (range != null) {
-        TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
-        if (!range.equals(lineRange)) {
-          myRangeHighlighter = markupModel
-            .addRangeHighlighter(attributesKey, range.getStartOffset(), range.getEndOffset(), DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                 HighlighterTargetArea.EXACT_RANGE);
-        }
+        myRangeHighlighter = markupModel
+          .addRangeHighlighter(attributesKey, range.getStartOffset(), range.getEndOffset(), DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
+                               HighlighterTargetArea.EXACT_RANGE);
       }
     }
     if (myRangeHighlighter == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
@@ -23,6 +24,7 @@ public final class SlowOperations {
   public static final String ACTION_PERFORM = "action.perform";
   public static final String RENDERING = "rendering";
   public static final String GENERIC = "generic";
+  public static final String FORCE_ASSERT = "  force assert  ";
   public static final String FAST_TRACK = "  fast track  ";
   public static final String RESET = "  reset  ";
 
@@ -72,12 +74,18 @@ public final class SlowOperations {
       return;
     }
     if (isInsideActivity(FAST_TRACK)) {
-      throw new ProcessCanceledException();
+      if (Cancellation.isInNonCancelableSection()) {
+        LOG.error("Non-cancellable section in FAST_TRACK");
+      }
+      else {
+        throw new ProcessCanceledException();
+      }
     }
-    if (isAlwaysAllowed()) {
+    boolean forceAssert = isInsideActivity(FORCE_ASSERT);
+    if (!forceAssert && isAlwaysAllowed()) {
       return;
     }
-    if (!Registry.is("ide.slow.operations.assertion", true)) {
+    if (!forceAssert && !Registry.is("ide.slow.operations.assertion", true)) {
       return;
     }
     Application application = ApplicationManager.getApplication();

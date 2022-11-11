@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
 import com.intellij.featureStatistics.FeatureDescriptor
@@ -10,19 +10,22 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ResourceUtil
 import com.intellij.util.text.DateFormatUtil
+import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import java.awt.EventQueue
 import kotlin.random.Random
 
 @ApiStatus.Internal
-@State(name = "ShownTips", storages = [Storage(value = "shownTips.xml", roamingType = RoamingType.DISABLED)])
+@Service(Service.Level.APP)
+@State(name = "ShownTips", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
 internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.State> {
   companion object {
     @JvmStatic
     fun getInstance(): TipsUsageManager = service()
   }
 
-  private val shownTips: MutableMap<String, Long> = mutableMapOf()
+  private val shownTips = Object2LongOpenHashMap<String>()
   private val utilityHolder = TipsUtilityHolder.readFromResourcesAndCreate()
 
   init {
@@ -46,7 +49,8 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
         if (System.currentTimeMillis() - feature.lastTimeUsed < DateFormatUtil.MONTH) {
           usedTips.add(tip)
           unusedTips.remove(tip) // some tips correspond to multiple features
-        } else if (!usedTips.contains(tip)) {
+        }
+        else if (!usedTips.contains(tip)) {
           unusedTips.add(tip)
         }
       }
@@ -69,7 +73,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
   }
 
   fun fireTipShown(tip: TipAndTrickBean) {
-    shownTips[tip.fileName] = System.currentTimeMillis()
+    shownTips.put(tip.fileName!!, System.currentTimeMillis())
   }
 
   fun filterShownTips(tips: List<TipAndTrickBean>): List<TipAndTrickBean> {
@@ -93,89 +97,89 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
 
   fun wereTipsShownToday(): Boolean = System.currentTimeMillis() - (shownTips.maxOfOrNull { it.value } ?: 0) < DateFormatUtil.DAY
 
-  data class State(var shownTips: Map<String, Long> = emptyMap())
+  @Serializable
+  data class State(val shownTips: Map<String, Long> = emptyMap())
 
-  private class TipsUtilityHolder private constructor(private val tips2utility: Map<String, Double>) {
-    companion object {
-      private val LOG = logger<TipsUtilityHolder>()
-      private const val TIPS_UTILITY_FILE = "tips_utility.csv"
-
-      fun create(tipsUtility: Map<String, Double>): TipsUtilityHolder = TipsUtilityHolder(tipsUtility)
-
-      fun readFromResourcesAndCreate(): TipsUtilityHolder = create(readTipsUtility())
-
-      private fun readTipsUtility() : Map<String, Double> {
-        assert(!EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode)
-        val classLoader = TipsUtilityHolder::class.java.classLoader
-        val lines = ResourceUtil.getResourceAsBytes(TIPS_UTILITY_FILE, classLoader)?.decodeToString()?.reader()?.readLines()
-        if (lines == null) {
-          LOG.error("Can't read resource file with tips utilities: $TIPS_UTILITY_FILE")
-          return emptyMap()
-        }
-        return lines.associate {
-          val values = it.split(",")
-          Pair(values[0], values[1].toDoubleOrNull() ?: 0.0)
-        }
+  private class TipsUsageListener : FeaturesRegistryListener {
+    override fun featureUsed(feature: FeatureDescriptor) {
+      val tip = TipUIUtil.getTip(feature) ?: return
+      val timestamp = getInstance().shownTips.getLong(tip.fileName)
+      if (timestamp != 0L) {
+        TipsOfTheDayUsagesCollector.triggerTipUsed(tip.fileName, System.currentTimeMillis() - timestamp)
       }
     }
+  }
+}
 
-    fun getMetadataVersion(): String = "0.1"
+private class TipsUtilityHolder(private val tipsToUtility: Object2DoubleOpenHashMap<String>) {
+  companion object {
+    private const val TIPS_UTILITY_FILE = "tips_utility.csv"
 
-    fun sampleTips(tips: Iterable<TipAndTrickBean>): List<TipAndTrickBean> {
-      val (knownTips, unknownTips) = tips.map { Pair(it, getTipUtility(it)) }.partition { it.second >= 0 }
-      val result = mutableListOf<TipAndTrickBean>()
-      result.sampleByUtility(knownTips)
-      result.sampleUnknown(unknownTips)
+    fun readFromResourcesAndCreate(): TipsUtilityHolder = TipsUtilityHolder(readTipsUtility())
+
+    private fun readTipsUtility(): Object2DoubleOpenHashMap<String> {
+      val classLoader = TipsUtilityHolder::class.java.classLoader
+      val lines = ResourceUtil.getResourceAsBytes(TIPS_UTILITY_FILE, classLoader)?.decodeToString()
+      if (lines == null) {
+        logger<TipsUtilityHolder>().error("Can't read resource file with tips utilities: $TIPS_UTILITY_FILE")
+        return Object2DoubleOpenHashMap()
+      }
+
+      val result = Object2DoubleOpenHashMap<String>()
+      result.defaultReturnValue(-1.0)
+      for (line in lines.lineSequence().filter(String::isNotBlank)) {
+        val values = line.split(',')
+        result.put(values[0], values[1].toDoubleOrNull() ?: 0.0)
+      }
+      result.trim()
       return result
     }
+  }
 
-    private fun MutableList<TipAndTrickBean>.sampleByUtility(knownTips: List<Pair<TipAndTrickBean, Double>>) {
-      val sortedTips = knownTips.sortedByDescending { it.second }.toMutableSet()
-      var totalUtility = sortedTips.sumByDouble { it.second }
-      for (i in 0 until sortedTips.size) {
-        var cumulativeUtility = 0.0
-        if (totalUtility <= 0.0) {
-          this.addAll(sortedTips.map { it.first }.shuffled())
+  fun getMetadataVersion(): String = "0.1"
+
+  fun sampleTips(tips: Iterable<TipAndTrickBean>): List<TipAndTrickBean> {
+    val (knownTips, unknownTips) = tips.map { Pair(it, getTipUtility(it)) }.partition { it.second >= 0 }
+    val result = mutableListOf<TipAndTrickBean>()
+    result.sampleByUtility(knownTips)
+    result.sampleUnknown(unknownTips)
+    return result
+  }
+
+  private fun MutableList<TipAndTrickBean>.sampleByUtility(knownTips: List<Pair<TipAndTrickBean, Double>>) {
+    val sortedTips = knownTips.sortedByDescending { it.second }.toMutableSet()
+    var totalUtility = sortedTips.sumOf { it.second }
+    for (i in 0 until sortedTips.size) {
+      var cumulativeUtility = 0.0
+      if (totalUtility <= 0.0) {
+        this.addAll(sortedTips.map { it.first }.shuffled())
+        break
+      }
+      val prob = Random.nextDouble(totalUtility)
+      for (tip2utility in sortedTips) {
+        val tipUtility = tip2utility.second
+        cumulativeUtility += tipUtility
+        if (prob <= cumulativeUtility) {
+          this.add(tip2utility.first)
+          totalUtility -= tipUtility
+          sortedTips.remove(tip2utility)
           break
         }
-        val prob = Random.nextDouble(totalUtility)
-        for (tip2utility in sortedTips) {
-          val tipUtility = tip2utility.second
-          cumulativeUtility += tipUtility
-          if (prob <= cumulativeUtility) {
-            this.add(tip2utility.first)
-            totalUtility -= tipUtility
-            sortedTips.remove(tip2utility)
-            break
-          }
-        }
       }
     }
+  }
 
-    private fun MutableList<TipAndTrickBean>.sampleUnknown(unknownTips: List<Pair<TipAndTrickBean, Double>>) {
-      val unknownProb = unknownTips.size.toDouble() / (this.size + unknownTips.size)
-      var currentIndex = 0
-      for (unknownTip in unknownTips.shuffled()) {
-        while (currentIndex < this.size && Random.nextDouble() > unknownProb) {
-          currentIndex++
-        }
-        this.add(currentIndex, unknownTip.first)
+  private fun MutableList<TipAndTrickBean>.sampleUnknown(unknownTips: List<Pair<TipAndTrickBean, Double>>) {
+    val unknownProb = unknownTips.size.toDouble() / (this.size + unknownTips.size)
+    var currentIndex = 0
+    for (unknownTip in unknownTips.shuffled()) {
+      while (currentIndex < this.size && Random.nextDouble() > unknownProb) {
         currentIndex++
       }
-    }
-
-    private fun getTipUtility(tip: TipAndTrickBean): Double {
-      return tips2utility.getOrDefault(tip.fileName, -1.0)
+      this.add(currentIndex, unknownTip.first)
+      currentIndex++
     }
   }
 
-  private inner class TipsUsageListener : FeaturesRegistryListener {
-    override fun featureUsed(feature: FeatureDescriptor) {
-      TipUIUtil.getTip(feature)?.let { tip ->
-        shownTips[tip.fileName]?.let { timestamp ->
-          TipsOfTheDayUsagesCollector.triggerTipUsed(tip.fileName, System.currentTimeMillis() - timestamp)
-        }
-      }
-    }
-  }
+  private fun getTipUtility(tip: TipAndTrickBean) = tipsToUtility.getDouble(tip.fileName)
 }

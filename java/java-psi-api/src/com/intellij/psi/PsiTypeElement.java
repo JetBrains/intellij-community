@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
@@ -47,10 +47,10 @@ public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
 
   /**
    * Returns {@code true} when a variable is declared as {@code var name;}
-   * 
+   *
    * The actual type should be inferred according to the JEP 286: Local-Variable Type Inference
-   * (http://openjdk.java.net/jeps/286). 
-   * 
+   * (<a href="http://openjdk.org/jeps/286">JEP-286</a>). 
+   * <p/>
    * Applicable to local variables with initializers, foreach parameters, try-with-resources variables 
    */
   @Contract(pure = true)

@@ -62,6 +62,5 @@
   <action id="NextTab" />
   <action id="PreviousTab" />
   <action id="WD.UploadCurrentRemoteFileAction" />
-  <action id="AddToFavoritesPopup" />
   <action id="EditorAddCaretPerSelectedLine"/>
 </keymap>

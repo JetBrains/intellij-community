@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -482,6 +482,14 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
             configureByFiles()
             importProject()
             checkHighlightingOnAllModules()
+        }
+
+        @Test
+        @PluginTargetVersions(pluginVersion = "1.8.0-dev-0+")
+        fun testKtij22345SyntheticJavaProperties() {
+            configureByFiles()
+            importProject()
+            createHighlightingCheck(testLineMarkers = false).invokeOnAllModules()
         }
     }
 

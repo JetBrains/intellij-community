@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 package org.jetbrains.intellij.build.images
 
@@ -62,8 +62,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
   private val modifiedClasses = ContainerUtil.createConcurrentList<ModifiedClass>()
   private val obsoleteClasses = ContainerUtil.createConcurrentList<Path>()
 
-  private val util: JpsModule by lazy {
-    modules.find { it.name == "intellij.platform.util" } ?: error("Can't load module 'util'")
+  private val utilUi: JpsModule by lazy {
+    modules.find { it.name == "intellij.platform.util.ui" } ?: error("Can't load module 'util'")
   }
 
   internal open fun getIconClassInfo(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?): List<IconClassInfo> {
@@ -75,7 +75,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         packageName = "com.intellij.icons"
         className = "AllIcons"
 
-        val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
+        val dir = utilUi.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
         outFile = Path.of(dir, "$className.java")
       }
       "intellij.android.artwork" -> {
@@ -91,10 +91,14 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
         val imagesS = imageCollector.collectSubDir(resourceRoot, "studio/icons", includePhantom = true)
         imageCollector.printUsedIconRobots()
+        imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
+        val imagesI = imageCollector.collectSubDir(resourceRoot, "studio/illustrations", includePhantom = true)
+        imageCollector.printUsedIconRobots()
 
         return listOf(
           IconClassInfo(true, packageName, "AndroidIcons", Path.of(sourceRoot, "icons", "AndroidIcons.java"), imagesA),
           IconClassInfo(true, packageName, "StudioIcons", Path.of(sourceRoot, "icons", "StudioIcons.java"), imagesS),
+          IconClassInfo(true, packageName, "StudioIllustrations", Path.of(sourceRoot, "icons", "StudioIllustrations.java"), imagesI),
         )
       }
       else -> {
@@ -488,11 +492,11 @@ private fun generateIconFieldName(file: Path): CharSequence {
   val imageFileName = file.fileName.toString()
   val path = file.toString()
   when {
-    path.contains("android/artwork/resources/studio") -> {
-      return toStreamingSnakeCaseJavaIdentifier(imageFileName, imageFileName.lastIndexOf('.'))
-    }
-    path.contains("android/artwork/resources/icons") -> {
+    path.contains("$androidIcons/icons") -> {
       return toCamelCaseJavaIdentifier(imageFileName, imageFileName.lastIndexOf('.'))
+    }
+    path.contains("$androidIcons") -> {
+      return toStreamingSnakeCaseJavaIdentifier(imageFileName, imageFileName.lastIndexOf('.'))
     }
     else -> {
       val id = if ((imageFileName.length - 4) == 2) {

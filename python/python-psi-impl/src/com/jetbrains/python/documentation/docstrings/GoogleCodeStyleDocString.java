@@ -150,11 +150,9 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
     }
 
     if (description != null) {
-      // parse line with indentation at least one space greater than indentation of the field
-      final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum));
+      final Pair<List<Substring>, Integer> pair = parseFieldContinuation(lineNum, fieldType);
       final List<Substring> nestedBlock = pair.getFirst();
       if (!nestedBlock.isEmpty()) {
-        //noinspection ConstantConditions
         description = description.union(ContainerUtil.getLastItem(nestedBlock));
       }
       description = description.trim();

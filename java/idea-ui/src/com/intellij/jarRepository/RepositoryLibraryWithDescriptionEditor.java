@@ -93,7 +93,7 @@ public class RepositoryLibraryWithDescriptionEditor
       myEditorComponent.renameLibrary(RepositoryLibraryType.getInstance().getDescription(properties));
     }
     final LibraryEditor libraryEditor = myEditorComponent.getLibraryEditor();
-    final String copyTo = getStorageRoot(myEditorComponent.getLibraryEditor().getUrls(OrderRootType.CLASSES), project);
+    final String copyTo = getStorageRoot(myEditorComponent.getLibraryEditor().getUrls(OrderRootType.CLASSES));
     final Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(
       project, properties.getRepositoryLibraryDescriptor(), model.getArtifactKinds(), null, copyTo
     );

@@ -11,8 +11,8 @@ internal val LOG: Logger = Logger.getInstance("#com.intellij.lang.documentation.
 
 @Internal
 fun psiDocumentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget {
-  for (factory in PsiDocumentationTargetFactory.EP_NAME.extensionList) {
-    return factory.documentationTarget(element, originalElement)
+  for (ext in PsiDocumentationTargetProvider.EP_NAME.extensionList) {
+    return ext.documentationTarget(element, originalElement)
            ?: continue
   }
   return PsiElementDocumentationTarget(element.project, element, originalElement)

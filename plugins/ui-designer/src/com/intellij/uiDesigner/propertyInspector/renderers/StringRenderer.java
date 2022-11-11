@@ -6,10 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class StringRenderer extends LabelPropertyRenderer<StringDescriptor> {
 
   @Override

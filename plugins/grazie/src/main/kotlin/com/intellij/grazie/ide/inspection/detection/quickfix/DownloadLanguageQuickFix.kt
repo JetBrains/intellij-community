@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.inspection.detection.quickfix
 
+import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.utils.englishName
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.toLang
-import com.intellij.grazie.detector.model.Language
-import com.intellij.grazie.detector.model.utils.englishName
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.openapi.project.Project

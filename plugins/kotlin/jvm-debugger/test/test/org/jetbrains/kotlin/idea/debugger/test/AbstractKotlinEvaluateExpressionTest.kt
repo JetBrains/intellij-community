@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -10,11 +10,14 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.memory.utils.InstanceJavaValue
+import com.intellij.debugger.memory.utils.InstanceValueDescriptor
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.xdebugger.impl.frame.XValueMarkers
+import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.sun.jdi.ObjectReference
 import org.jetbrains.eval4j.ObjectValue
@@ -22,7 +25,6 @@ import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompiler
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
@@ -58,6 +60,9 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
     private var isMultipleBreakpointsTest = false
     private var isFrameTest = false
 
+    override fun fragmentCompilerBackend() =
+        FragmentCompilerBackend.JVM
+
     private val exceptions = ConcurrentHashMap<String, Throwable>()
 
     fun doSingleBreakpointTest(path: String) {
@@ -90,8 +95,13 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
     }
 
     override fun tearDown() {
-        exceptions.clear()
-        super.tearDown()
+        try {
+            exceptions.clear()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     private fun performSingleBreakpointTest(data: EvaluationTestData) {
@@ -287,7 +297,7 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             return
         }
 
-        val markupMap = NodeDescriptorImpl.getMarkupMap(debugProcess) ?: return
+        val valueMarkers = DebuggerUtilsImpl.getValueMarkers(debugProcess)
 
         for ((name, localName) in labels) {
             val localVariable = evaluationContext.frameProxy!!.visibleVariableByName(localName)
@@ -296,7 +306,13 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             val localVariableValue = evaluationContext.frameProxy!!.getValue(localVariable) as? ObjectReference
             assert(localVariableValue != null) { "Local variable $localName should be an ObjectReference" }
 
-            markupMap[localVariableValue] = ValueMarkup(name, null, name)
+            // just need a wrapper XValue to pass into markValue
+            val instanceValue = InstanceJavaValue(
+                InstanceValueDescriptor(project, localVariableValue),
+                evaluationContext,
+                debugProcess.xdebugProcess?.nodeManager
+            )
+            XDebuggerTestUtil.markValue(valueMarkers, instanceValue, ValueMarkup(name, null, name))
         }
     }
 }

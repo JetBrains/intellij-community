@@ -1,5 +1,6 @@
 package com.intellij.platform.renameProject;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -31,6 +32,11 @@ public class RenameProjectAction extends DumbAwareAction {
     final DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     e.getPresentation().setEnabled(project != null && !project.isDefault());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.StubIndex
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -31,7 +32,7 @@ class KotlinGotoClassContributor : GotoClassContributor {
 
     override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> {
         val globalScope = if (includeNonProjectItems) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
-        val scope = KotlinSourceFilterScope.projectSourceAndClassFiles(globalScope, project)
+        val scope = KotlinSourceFilterScope.projectFiles(globalScope, project)
         val classesOrObjects = KotlinClassShortNameIndex.get(name, project, scope)
         val typeAliases = KotlinTypeAliasShortNameIndex.get(name, project, scope)
 
@@ -59,7 +60,7 @@ class KotlinGotoSymbolContributor : GotoClassContributor {
 
     override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> {
         val baseScope = if (includeNonProjectItems) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
-        val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(baseScope, project)
+        val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(baseScope, project)
 
         val result = ArrayList<NavigationItem>()
         result += KotlinFunctionShortNameIndex.get(name, project, noLibrarySourceScope).filter {

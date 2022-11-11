@@ -873,6 +873,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       updateText(getTemplatePresentation());
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     @NotNull
     @Override
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {

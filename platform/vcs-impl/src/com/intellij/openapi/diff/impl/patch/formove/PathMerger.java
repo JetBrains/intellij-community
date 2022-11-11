@@ -239,8 +239,6 @@ public final class PathMerger {
 
     /**
      * !!! should not go down (to null state), if can't find corresponding child
-     * @param name
-     * @return
      */
     boolean down(final String name);
     T getResult();

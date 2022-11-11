@@ -106,7 +106,7 @@ public class Topic<L> {
     return new Topic<>(displayName, listenerClass);
   }
 
-  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
+  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection direction) {
     return new Topic<>(displayName, listenerClass, direction);
   }
 
@@ -154,7 +154,7 @@ public class Topic<L> {
     TO_DIRECT_CHILDREN,
 
     /**
-     * No broadcasting is performed for the
+     * No broadcasting is performed.
      */
     NONE,
 

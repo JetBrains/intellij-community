@@ -14,9 +14,6 @@ import java.awt.*;
  * this property exists only in RadContainer</b>.
  *
  * @see com.intellij.uiDesigner.core.GridLayoutManager#getMargin
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class MarginProperty extends AbstractInsetsProperty<RadContainer> {
   private static final Insets DEFAULT_INSETS = new Insets(0, 0, 0, 0);

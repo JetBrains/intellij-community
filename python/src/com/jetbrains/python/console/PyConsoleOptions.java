@@ -2,6 +2,7 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -15,6 +16,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.run.PythonRunParams;
@@ -69,6 +71,17 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myUseExistingConsole = enabled;
   }
 
+  public void setCommandQueueEnabled(boolean selected) {
+    myState.myCommandQueueEnabled = selected;
+    if (!selected) {
+      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).disableCommandQueue();
+    }
+  }
+
+  public boolean isCommandQueueEnabled() {
+    return myState.myCommandQueueEnabled;
+  }
+
   public static PyConsoleOptions getInstance(Project project) {
     return project.getService(PyConsoleOptions.class);
   }
@@ -85,6 +98,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myIpythonEnabled = state.myIpythonEnabled;
     myState.myUseExistingConsole = state.myUseExistingConsole;
+    myState.myCommandQueueEnabled = state.myCommandQueueEnabled;
   }
 
   public static class State {
@@ -94,6 +108,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myShowVariablesByDefault = true;
     public boolean myIpythonEnabled = true;
     public boolean myUseExistingConsole = false;
+    public boolean myCommandQueueEnabled = true;
   }
 
   @Tag("console-settings")

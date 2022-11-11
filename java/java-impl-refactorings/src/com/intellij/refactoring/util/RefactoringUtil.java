@@ -12,7 +12,10 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -22,7 +25,10 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -119,7 +125,6 @@ public final class RefactoringUtil {
 
 
   /**
-   * @param expression
    * @return loop body if expression is part of some loop's condition or for loop's increment part
    * null otherwise
    */
@@ -644,8 +649,6 @@ public final class RefactoringUtil {
    * <p/>
    * Note that {@code graph.getTargets()} is not necessarily a subset of {@code graph.getVertex()}
    *
-   * @param graph
-   * @param initialRelation
    * @return subset of graph.getVertices()
    */
   public static <T> Set<T> transitiveClosure(Graph<T> graph, Condition<? super T> initialRelation) {
@@ -677,25 +680,11 @@ public final class RefactoringUtil {
     return result;
   }
 
-  public static boolean equivalentTypes(PsiType t1, PsiType t2, PsiManager manager) {
-    while (t1 instanceof PsiArrayType) {
-      if (!(t2 instanceof PsiArrayType)) return false;
-      t1 = ((PsiArrayType)t1).getComponentType();
-      t2 = ((PsiArrayType)t2).getComponentType();
-    }
-
-    if (t1 instanceof PsiPrimitiveType) {
-      return t2 instanceof PsiPrimitiveType && t1.equals(t2);
-    }
-
-    return manager.areElementsEquivalent(PsiUtil.resolveClassInType(t1), PsiUtil.resolveClassInType(t2));
-  }
-
   public static List<PsiVariable> collectReferencedVariables(PsiElement scope) {
     final List<PsiVariable> result = new ArrayList<>();
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         final PsiElement element = expression.resolve();
         if (element instanceof PsiVariable) {
           result.add((PsiVariable)element);

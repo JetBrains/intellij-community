@@ -23,6 +23,7 @@ class WindowDeactivationManager {
     @JvmStatic
     fun getInstance(): WindowDeactivationManager = service()
   }
+
   fun addWindowDeactivationListener(window: Window, project: Project, disposable: Disposable, onWindowDeactivated: Runnable) {
     val focusListener = object : WindowAdapter() {
       override fun windowGainedFocus(e: WindowEvent?) {
@@ -39,20 +40,26 @@ class WindowDeactivationManager {
         }
         // At the moment of deactivation there is just "temporary" focus owner (main frame),
         // true focus owner (Search Everywhere popup etc.) appears later so the check should be postponed too
-        ApplicationManager.getApplication().invokeLater({
-          val focusOwner = IdeFocusManager.getInstance(project).focusOwner ?: return@invokeLater
-          if (SwingUtilities.isDescendingFrom(focusOwner, window)) return@invokeLater
-          onWindowDeactivated.run()
-        }, ModalityState.current())
+        ApplicationManager.getApplication().invokeLater(
+          {
+            val focusOwner = IdeFocusManager.getInstance(project).focusOwner ?: return@invokeLater
+            if (!SwingUtilities.isDescendingFrom(focusOwner, window)) {
+              onWindowDeactivated.run()
+            }
+          },
+          ModalityState.current()
+        )
       }
 
       override fun windowOpened(e: WindowEvent?) {
         // Currently, in WSLg environment dialog showing generates focus events corresponding to dialog getting focus,
         // then losing it to main frame, then getting it again immediately. As a workaround, we track focus/activation events only after
         // 'window opened' event is received.
+        // Another case when such delaying can make sense is when the dialog is showing at the same time some popup is closing
+        // (e.g. invoking 'Find in Files...' from a quick list).
         wasOpened = true
 
-        Frame.getFrames().filter { it is IdeFrame && it.project == project}.forEach {
+        Frame.getFrames().asSequence().filter { it is IdeFrame && it.project === project }.forEach {
           it.addWindowFocusListener(focusListener)
           Disposer.register(disposable) {
             it.removeWindowFocusListener(focusListener)

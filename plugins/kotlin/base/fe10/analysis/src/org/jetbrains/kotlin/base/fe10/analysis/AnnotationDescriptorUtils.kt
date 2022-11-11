@@ -6,9 +6,13 @@ package org.jetbrains.kotlin.base.fe10.analysis
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.constants.*
+import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
+import org.jetbrains.kotlin.resolve.descriptorUtil.classId
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.reflect.KProperty
 
@@ -33,3 +37,6 @@ fun AnnotationDescriptor.getStringValue(property: KProperty<*>): String? = getSt
 fun AnnotationDescriptor.getAnnotationValue(property: KProperty<*>): AnnotationDescriptor? = getAnnotationValue(property.name)
 fun AnnotationDescriptor.getArrayValue(property: KProperty<*>): List<ConstantValue<*>>? = getArrayValue(property.name)
 fun AnnotationDescriptor.getEnumValue(property: KProperty<*>): EnumValue? = getEnumValue(property.name)
+
+val AnnotationDescriptor.classId: ClassId?
+    get() = annotationClass?.takeUnless(ErrorUtils::isError)?.classId

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include <CoreServices/CoreServices.h>
 #include <pthread.h>
@@ -112,29 +112,16 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
     CFRelease(mounts);
 }
 
-#define INPUT_BUF_LEN 2048
-static char input_buf[INPUT_BUF_LEN];
+// Static buffer for fscanf. All of the are being performed from a single thread, so it's thread safe.
+static char command[2048];
 
-static char *read_stdin() {
-    char* result = fgets(input_buf, INPUT_BUF_LEN, stdin);
-    if (result == NULL || feof(stdin)) {
-        return NULL;
-    }
-    size_t length = strlen(input_buf);
-    if (length > 0 && input_buf[length - 1] == '\n') {
-        input_buf[length - 1] = '\0';
-    }
-    return input_buf;
-}
-
-static bool ParseRoots() {
+static void ParseRoots() {
     CFMutableArrayRef roots = CFArrayCreateMutable(NULL, 0, NULL);
     bool has_private_root = false;
 
     while (TRUE) {
-        char *command = read_stdin();
-        if (command == NULL) return false;
-        if (strcmp(command, "#") == 0) break;
+        fscanf(stdin, "%s", command);
+        if (strcmp(command, "#") == 0 || feof(stdin)) break;
         char *path = command[0] == '|' ? command + 1 : command;
         CFArrayAppendValue(roots, strdup(path));
         if (strcmp(path, "/") == 0 || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) == 0) {
@@ -153,7 +140,6 @@ static bool ParseRoots() {
         free(value);
     }
     CFRelease(roots);
-    return true;
 }
 
 int main(void) {
@@ -181,11 +167,9 @@ int main(void) {
     }
 
     while (TRUE) {
-        char *command = read_stdin();
-        if (command == NULL || strcmp(command, "EXIT") == 0) break;
-        if (strcmp(command, "ROOTS") == 0) {
-            if (!ParseRoots()) break;
-        }
+        fscanf(stdin, "%s", command);
+        if (strcmp(command, "EXIT") == 0 || feof(stdin)) break;
+        if (strcmp(command, "ROOTS") == 0) ParseRoots();
     }
 
     return 0;

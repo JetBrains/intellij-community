@@ -3,25 +3,23 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.SimpleTextAttributes;
@@ -30,6 +28,7 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -77,7 +76,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  @Nullable private DiffPreview myEditorDiffPreview;
+  @Nullable private DiffPreviewController myEditorDiffPreviewController;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -128,7 +127,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     JComponent centerPanel = super.createCenterPanel();
     JScrollPane scrollPane = UIUtil.findComponentOfType(centerPanel, JScrollPane.class);
     if (scrollPane != null) {
-      ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+      ClientProperty.put(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     }
     return centerPanel;
   }
@@ -321,13 +320,13 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (VcsDataKeys.VCS.is(dataId)) {
-      AbstractVcs vcs = getVcs();
-      if (vcs == null) return null;
-      return vcs.getKeyInstanceMethod();
-    }
-    else if (HAS_AFFECTED_FILES.is(dataId)) {
+    if (HAS_AFFECTED_FILES.is(dataId)) {
       return myAffectedPaths != null;
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      VcsTreeModelData selectedData = VcsTreeModelData.selected(myViewer);
+      DataProvider superProvider = (DataProvider)super.getData(dataId);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selectedData), superProvider);
     }
     else if (QuickActionProvider.KEY.is(dataId)) {
       return new QuickActionProvider() {
@@ -350,14 +349,25 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return super.getData(dataId);
   }
 
-  @Nullable
-  private AbstractVcs getVcs() {
-    List<AbstractVcs> allVcs = ContainerUtil.mapNotNull(myRoots, root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root));
-    if (allVcs.size() == 1) return Objects.requireNonNull(getFirstItem(allVcs));
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull VcsTreeModelData selectedData) {
+    if (VcsDataKeys.VCS.is(dataId)) {
+      AbstractVcs rootsVcs = JBIterable.from(myRoots)
+        .map(root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root))
+        .filterNotNull()
+        .unique()
+        .single();
+      if (rootsVcs != null) return rootsVcs.getKeyInstanceMethod();
 
-    Set<AbstractVcs> selectedVcs = ChangesUtil.getAffectedVcses(getSelectedChanges(), myProject);
-    if (selectedVcs.size() == 1) return Objects.requireNonNull(getFirstItem(selectedVcs));
+      AbstractVcs selectionVcs = selectedData.iterateUserObjects(Change.class)
+        .map(change -> ChangesUtil.getFilePath(change))
+        .map(root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root))
+        .filterNotNull()
+        .unique()
+        .single();
+      if (selectionVcs != null) return selectionVcs.getKeyInstanceMethod();
 
+      return null;
+    }
     return null;
   }
 
@@ -401,20 +411,17 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   }
 
   private void setEditorDiffPreview() {
-    DiffPreview preview = myEditorDiffPreview;
+
+    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
+
     boolean isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
 
-    if (Registry.is("enable.combined.diff") && isWithEditorDiffPreview && preview == null) {
-      preview = new VcsLogCombinedDiffPreview(this);
-      myEditorDiffPreview = preview;
+    if (isWithEditorDiffPreview && editorDiffPreviewController == null) {
+      myEditorDiffPreviewController = new VcsLogChangesBrowserDiffPreviewController();
     }
-    else if (isWithEditorDiffPreview && preview == null) {
-      preview = new VcsLogEditorDiffPreview(myProject, this);
-      myEditorDiffPreview = preview;
-    }
-    else if (!isWithEditorDiffPreview && preview != null) {
-      preview.closePreview();
-      myEditorDiffPreview = null;
+    else if (!isWithEditorDiffPreview && editorDiffPreviewController != null) {
+      editorDiffPreviewController.getActivePreview().closePreview();
+      myEditorDiffPreviewController = null;
     }
   }
 
@@ -425,7 +432,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   @Override
   protected @Nullable DiffPreview getShowDiffActionPreview() {
-    return myEditorDiffPreview;
+    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
+    return editorDiffPreviewController != null ? editorDiffPreviewController.getActivePreview() : null;
   }
 
   public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
@@ -477,6 +485,20 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   public interface Listener extends EventListener {
     void onModelUpdated();
+  }
+
+  private class VcsLogChangesBrowserDiffPreviewController extends DiffPreviewControllerBase {
+    @NotNull
+    @Override
+    protected DiffPreview getSimplePreview() {
+      return new VcsLogEditorDiffPreview(myProject, VcsLogChangesBrowser.this);
+    }
+
+    @NotNull
+    @Override
+    protected CombinedDiffPreview createCombinedDiffPreview() {
+      return new VcsLogCombinedDiffPreview(VcsLogChangesBrowser.this);
+    }
   }
 
   private static class ParentTag extends ChangesBrowserNode.ValueTag<Hash> {

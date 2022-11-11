@@ -35,6 +35,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.SmartList;
@@ -48,13 +49,9 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author Vladimir Kondratyev
- */
 public abstract class TodoTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance(TodoTreeBuilder.class);
   public static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR =
@@ -335,12 +332,14 @@ public abstract class TodoTreeBuilder implements Disposable {
     JBLoadingPanel loadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myTree);
     if (loadingPanel != null) loadingPanel.startLoading();
     Set<VirtualFile> files = ContainerUtil.newConcurrentSet();
-    SingleAlarm alarm = new SingleAlarm(() -> uiUpdater.accept(files), 1000, ModalityState.NON_MODAL, uiUpdater);
+    SingleAlarm alarm = new SingleAlarm(() -> uiUpdater.accept(files), 1000, uiUpdater, Alarm.ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL);
     ReadAction.nonBlocking(() -> {
       collectFiles(virtualFile -> {
-        if (uiUpdater.isDisposed()) return false;
-        if (files.add(virtualFile)) {
-          alarm.request();
+        synchronized (LOCK) {
+          if (uiUpdater.isDisposed()) return false;
+          if (files.add(virtualFile)) {
+            alarm.request();
+          }
         }
         return true;
       });
@@ -497,7 +496,7 @@ public abstract class TodoTreeBuilder implements Disposable {
           validateCache();
           getTodoTreeStructure().validateCache();
         }
-        myModel.invalidate();
+        myModel.invalidateAsync();
       }, myProject.getDisposed()));
     }
     return Promises.resolvedPromise();
@@ -533,8 +532,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     return null;
   }
 
-  static PsiFile getFileForNode(DefaultMutableTreeNode node) {
-    Object obj = node.getUserObject();
+  static @Nullable PsiFile getFileForNodeDescriptor(@NotNull NodeDescriptor<?> obj) {
     if (obj instanceof TodoFileNode) {
       return ((TodoFileNode)obj).getValue();
     }

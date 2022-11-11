@@ -3,7 +3,8 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -25,7 +26,7 @@ internal abstract class GHCredentialsUi {
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)
 
-  var footer: LayoutBuilder.() -> Unit = { }
+  var footer: Panel.() -> Unit = { }
 
   fun getPanel(): JPanel =
     panel {
@@ -37,5 +38,5 @@ internal abstract class GHCredentialsUi {
       border = JBEmptyBorder(getRegularPanelInsets())
     }
 
-  protected abstract fun LayoutBuilder.centerPanel()
+  protected abstract fun Panel.centerPanel()
 }

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -25,16 +26,24 @@ import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MoveCatchUpFix implements IntentionAction {
-  private final PsiCatchSection myCatchSection;
-  private final PsiCatchSection myMoveBeforeSection;
+  private final @NotNull PsiCatchSection myCatchSection;
+  private final @NotNull PsiCatchSection myMoveBeforeSection;
 
   public MoveCatchUpFix(@NotNull PsiCatchSection catchSection, @NotNull PsiCatchSection moveBeforeSection) {
     this.myCatchSection = catchSection;
     myMoveBeforeSection = moveBeforeSection;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new MoveCatchUpFix(PsiTreeUtil.findSameElementInCopy(myCatchSection, target),
+                              PsiTreeUtil.findSameElementInCopy(myMoveBeforeSection, target));
   }
 
   @Override
@@ -68,7 +77,7 @@ public class MoveCatchUpFix implements IntentionAction {
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myCatchSection;
+    return myCatchSection.getContainingFile();
   }
 
   @Override

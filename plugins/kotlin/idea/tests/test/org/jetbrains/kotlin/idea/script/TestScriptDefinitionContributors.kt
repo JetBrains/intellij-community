@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -19,7 +19,7 @@ class CustomScriptTemplateProvider(val environment: Environment) : ScriptDefinit
     override val definitions: Sequence<ScriptDefinition>
         get() = loadDefinitionsFromTemplates(
             templateClassNames = environment["template-classes-names"] as List<String>,
-            templateClasspath = listOfNotNull(environment["template-classes"] as? File),
+            templateClasspath = environment["template-classes"]?.let { it as? List<File> } ?: emptyList(),
             baseHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
                 getEnvironment { environment }
             }
@@ -27,14 +27,14 @@ class CustomScriptTemplateProvider(val environment: Environment) : ScriptDefinit
 
 }
 
-class FromTextTemplateProvider(val environment: Map<String, Any?>) : ScriptDefinitionSourceAsContributor {
+class FromTextTemplateProvider(val environment: Environment) : ScriptDefinitionSourceAsContributor {
 
     override val id = "Test"
 
     override val definitions: Sequence<ScriptDefinition>
         get() = loadDefinitionsFromTemplates(
             templateClassNames = listOf("org.jetbrains.kotlin.idea.script.Template"),
-            templateClasspath = listOfNotNull(environment["template-classes"] as? File),
+            templateClasspath = environment["template-classes"]?.let { it as? List<File> } ?: emptyList(),
             baseHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
                 getEnvironment { environment }
             }

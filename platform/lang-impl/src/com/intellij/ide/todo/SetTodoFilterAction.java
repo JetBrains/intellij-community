@@ -71,8 +71,6 @@ public class SetTodoFilterAction extends ActionGroup implements DumbAware {
      * @param text        action's text.
      * @param description action's description.
      * @param filter      filter to be applied. {@code null} value means "empty" filter.
-     * @param settings
-     * @param todoFilterConsumer
      */
     TodoFilterApplier(@NlsActions.ActionText String text,
                       @NlsActions.ActionDescription String description,
@@ -92,6 +90,11 @@ public class SetTodoFilterAction extends ActionGroup implements DumbAware {
       if (myFilter != null) {
         e.getPresentation().setEnabled(!myFilter.isEmpty());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

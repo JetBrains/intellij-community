@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
-* @author irengrig
-*/
+ * @author irengrig
+ */
 class DummyChangesView implements ChangesViewEx {
   DummyChangesView(Project project) {
   }
@@ -58,14 +58,13 @@ class DummyChangesView implements ChangesViewEx {
   public void refreshImmediately() {
   }
 
-  @Nullable
-  @Override
-  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
-    return null;
-  }
-
   @Override
   public boolean isAllowExcludeFromCommit() {
     return false;
+  }
+
+  @Override
+  public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+    return null;
   }
 }

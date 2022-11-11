@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -15,9 +15,15 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
@@ -97,14 +103,14 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
 
             val psiFactory = KtPsiFactory(project)
             val validator = CollectingNameValidator(
-                lambda.valueParameters.mapNotNull { it.name },
-                NewDeclarationNameValidator(lambda.bodyExpression!!, null, NewDeclarationNameValidator.Target.VARIABLES)
+              lambda.valueParameters.mapNotNull { it.name },
+              Fe10KotlinNewDeclarationNameValidator(lambda.bodyExpression!!, null, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER)
             )
 
             val lambdaExtensionReceiver = lambdaDescriptor.extensionReceiverParameter
             val lambdaDispatchReceiver = lambdaDescriptor.dispatchReceiverParameter
 
-            val newParameterName = KotlinNameSuggester.suggestNamesByType(data.lambdaReceiverType, validator, "p").first()
+            val newParameterName = Fe10KotlinNameSuggester.suggestNamesByType(data.lambdaReceiverType, validator, "p").first()
             val newParameterRefExpression = psiFactory.createExpression(newParameterName)
 
             lambda.accept(object : KtTreeVisitorVoid() {

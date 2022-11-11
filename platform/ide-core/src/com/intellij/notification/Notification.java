@@ -68,7 +68,7 @@ public class Notification {
   private @Nullable NotificationListener myListener;
   private @Nullable @LinkLabel String myDropDownText;
   private @Nullable List<@NotNull AnAction> myActions;
-  private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
+  private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_LEFTMOST;
   private @Nullable AnAction myContextHelpAction;
   private @Nullable List<@NotNull Runnable> myWhenExpired;
   private @Nullable Boolean myImportant;
@@ -77,6 +77,7 @@ public class Notification {
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
   private String myRemindLaterHandlerId;
+  private @Nullable String myToolWindowId;
 
   private final AtomicBoolean myExpired = new AtomicBoolean(false);
   private final AtomicReference<WeakReference<Balloon>> myBalloonRef = new AtomicReference<>();
@@ -405,6 +406,18 @@ public class Notification {
     return myImportant != null ? myImportant : getListener() != null || myActions != null && !myActions.isEmpty();
   }
 
+  /**
+   * Sets the tool window ID, overriding the ID specified in the notification group registration.
+   */
+  public @NotNull Notification setToolWindowId(@Nullable String toolWindowId) {
+    myToolWindowId = toolWindowId;
+    return this;
+  }
+
+  public @Nullable String getToolWindowId() {
+    return myToolWindowId;
+  }
+
   public final void assertHasTitleOrContent() {
     LOG.assertTrue(hasTitle() || hasContent(), "Notification should have title and/or content; groupId: " + myGroupId);
   }
@@ -453,12 +466,6 @@ public class Notification {
   @Deprecated(forRemoval = true)
   public final void addActions(@NotNull List<? extends AnAction> actions) {
     addActions((Collection<? extends AnAction>)actions);
-  }
-
-  /** @deprecated use {@link #getCollapseDirection} */
-  @Deprecated(forRemoval = true)
-  public CollapseActionsDirection getCollapseActionsDirection() {
-    return myCollapseDirection;
   }
 
   /** @deprecated use {@link #setCollapseDirection} */

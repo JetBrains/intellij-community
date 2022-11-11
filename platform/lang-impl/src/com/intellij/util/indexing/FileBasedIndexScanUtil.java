@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,14 +64,18 @@ public final class FileBasedIndexScanUtil {
     return result == null ? null : processor.getResults();
   }
 
+  /**
+   * Basically this method short-circuits processAllKeys() for the indexes that could be implemented without index
+   * -- usually by direct scan of apt subset of VFS
+   */
   static <K> @Nullable Boolean processAllKeys(@NotNull ID<K, ?> indexId,
                                               @NotNull Processor<? super K> processor,
                                               @NotNull GlobalSearchScope scope,
                                               @Nullable IdFilter idFilter) {
-    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       ensureUpToDate(indexId);
       //noinspection unchecked
-      return FSRecords.processAllNames((Processor<String>)processor);
+      return FSRecords.processAllNames((Processor<CharSequence>)processor);
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
@@ -107,7 +111,7 @@ public final class FileBasedIndexScanUtil {
                                                        @NotNull GlobalSearchScope scope,
                                                        @Nullable IdFilter idFilter,
                                                        @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
-    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
@@ -229,7 +233,7 @@ public final class FileBasedIndexScanUtil {
                                                             @Nullable IdFilter idFilter,
                                                             @Nullable Condition<? super V> valueChecker,
                                                             @NotNull Processor<? super VirtualFile> processor) {
-    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       //noinspection unchecked

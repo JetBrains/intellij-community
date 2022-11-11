@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitRevisionNumber;
@@ -237,8 +238,8 @@ public class GitPushOperation {
   @NotNull
   private static List<GitRepository> getRejectedAndNotPushed(@NotNull final Map<GitRepository, GitPushRepoResult> results) {
     return filter(results.keySet(),
-                                repository -> results.get(repository).getType() == REJECTED_NO_FF ||
-                                              results.get(repository).getType() == NOT_PUSHED);
+                  repository -> results.get(repository).getType() == REJECTED_NO_FF ||
+                                results.get(repository).getType() == NOT_PUSHED);
   }
 
   @NotNull
@@ -364,18 +365,18 @@ public class GitPushOperation {
 
   @NotNull
   private ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
-    GitPushTarget target = pushSpec.getTarget();
-    GitPushSource gitPushSource = pushSpec.getSource();
-    GitLocalBranch sourceBranch = gitPushSource.getBranch();
-    GitRemoteBranch targetBranch = target.getBranch();
+    GitPushSource pushSource = pushSpec.getSource();
+    GitPushTarget pushTarget = pushSpec.getTarget();
+    GitLocalBranch sourceBranch = pushSource.getBranch();
+    GitRemoteBranch targetBranch = pushTarget.getBranch();
 
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
-    boolean setUpstream = target.isNewBranchCreated() && !branchTrackingInfoIsSet(repository, sourceBranch);
+    boolean setUpstream = pushTarget.isNewBranchCreated() &&
+                          pushSource.isBranchRef() &&
+                          !branchTrackingInfoIsSet(repository, sourceBranch);
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();
 
-    String remoteBranchName = targetBranch.getNameForRemoteOperations();
-    String targetRef = createReferenceForNewTargetBranch(remoteBranchName, setUpstream);
-    String spec = gitPushSource.getRevision() + ":" + targetRef;
+    String spec = createPushSpec(pushSource, pushTarget, setUpstream);
     GitRemote remote = targetBranch.getRemote();
 
     List<GitPushParams.ForceWithLease> forceWithLease = emptyList();
@@ -395,16 +396,16 @@ public class GitPushOperation {
     return new ResultWithOutput(res);
   }
 
-  private static boolean isParticularReferenceSpecified(@NotNull String remoteBranchName) {
-    return remoteBranchName.startsWith("refs/");
-  }
+  private static String createPushSpec(@NotNull GitPushSource source,
+                                       @NotNull GitPushTarget target,
+                                       boolean setUpstream) {
+    boolean needFullRefName = setUpstream || !source.isBranchRef();
+    String remoteBranchName = target.getBranch().getNameForRemoteOperations();
+    String targetRef = needFullRefName && !remoteBranchName.startsWith("refs/")
+                       ? GitBranch.REFS_HEADS_PREFIX + remoteBranchName
+                       : remoteBranchName;
 
-  private static String createReferenceForNewTargetBranch(@NotNull String remoteBranchName, boolean setUpstream) {
-    if (!isParticularReferenceSpecified(remoteBranchName) && setUpstream) {
-      return "refs/heads/" + remoteBranchName;
-    }
-
-    return remoteBranchName;
+    return source.getRevision() + ":" + targetRef;
   }
 
   private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, @NotNull final GitLocalBranch source) {
@@ -413,8 +414,9 @@ public class GitPushOperation {
 
   private void savePushUpdateSettings(@NotNull PushUpdateSettings settings, boolean rebaseOverMergeDetected) {
     UpdateMethod updateMethod = settings.getUpdateMethod();
-    if (!rebaseOverMergeDetected // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
-        && mySettings.getUpdateMethod() != updateMethod && mySettings.getUpdateMethod() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
+    if (!rebaseOverMergeDetected && // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
+        mySettings.getUpdateMethod() != updateMethod &&
+        mySettings.getUpdateMethod() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
       mySettings.setUpdateMethod(updateMethod);
     }
   }
@@ -451,9 +453,12 @@ public class GitPushOperation {
   @NotNull
   private static UpdateMethod convertUpdateMethodFromDialogExitCode(PushRejectedExitCode exitCode) {
     switch (exitCode) {
-      case MERGE: return UpdateMethod.MERGE;
-      case REBASE: return UpdateMethod.REBASE;
-      default: throw new IllegalStateException("Unexpected exit code: " + exitCode);
+      case MERGE:
+        return UpdateMethod.MERGE;
+      case REBASE:
+        return UpdateMethod.REBASE;
+      default:
+        throw new IllegalStateException("Unexpected exit code: " + exitCode);
     }
   }
 

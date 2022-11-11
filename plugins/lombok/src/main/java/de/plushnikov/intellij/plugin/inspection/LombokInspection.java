@@ -19,10 +19,7 @@ import java.util.HashSet;
  */
 public class LombokInspection extends LombokJavaInspectionBase {
 
-  private final ValProcessor valProcessor;
-
   public LombokInspection() {
-    valProcessor = new ValProcessor();
   }
 
   @NotNull
@@ -31,8 +28,8 @@ public class LombokInspection extends LombokJavaInspectionBase {
     return new LombokElementVisitor(holder);
   }
 
-  private class LombokElementVisitor extends JavaElementVisitor {
-
+  private static class LombokElementVisitor extends JavaElementVisitor {
+    private static final ValProcessor valProcessor = new ValProcessor();
     private final ProblemsHolder holder;
 
     LombokElementVisitor(ProblemsHolder holder) {
@@ -40,21 +37,21 @@ public class LombokInspection extends LombokJavaInspectionBase {
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
 
       valProcessor.verifyVariable(variable, holder);
     }
 
     @Override
-    public void visitParameter(PsiParameter parameter) {
+    public void visitParameter(@NotNull PsiParameter parameter) {
       super.visitParameter(parameter);
 
       valProcessor.verifyParameter(parameter, holder);
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
 
       final Collection<LombokProblem> problems = new HashSet<>();
@@ -73,7 +70,7 @@ public class LombokInspection extends LombokJavaInspectionBase {
      * Produce an error if resolved constructor method is build by lombok and contains some arguments
      */
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
       super.visitMethodCallExpression(methodCall);
 
       PsiExpressionList list = methodCall.getArgumentList();

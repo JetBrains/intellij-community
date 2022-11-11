@@ -261,7 +261,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
       for (PsiMethod method : allMethods) {
         method.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override public void visitReturnStatement(PsiReturnStatement statement) {
+          @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
             final PsiExpression returnValue = statement.getReturnValue();
             if (returnValue != null && PsiType.BOOLEAN.equals(returnValue.getType())) {
               elementsToInvert.add(returnValue);
@@ -269,10 +269,10 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
           }
 
           @Override
-          public void visitClass(PsiClass aClass) {}
+          public void visitClass(@NotNull PsiClass aClass) {}
 
           @Override
-          public void visitLambdaExpression(PsiLambdaExpression expression) {}
+          public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
         });
       }
     }

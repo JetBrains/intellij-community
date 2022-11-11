@@ -1,4 +1,4 @@
-// "Replace with forEach" "true"
+// "Replace with forEach" "true-preview"
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

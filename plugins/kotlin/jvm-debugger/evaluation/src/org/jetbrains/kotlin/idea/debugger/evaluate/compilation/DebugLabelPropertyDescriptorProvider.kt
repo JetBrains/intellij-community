@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.descriptors.impl.PackageFragmentDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
 import org.jetbrains.kotlin.idea.core.util.externalDescriptors
-import org.jetbrains.kotlin.idea.debugger.getClassDescriptor
+import org.jetbrains.kotlin.idea.debugger.evaluate.getClassDescriptor
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -38,7 +38,7 @@ class DebugLabelPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val
 
         private fun doGetMarkupMap(debugProcess: DebugProcessImpl): Map<out Value?, ValueMarkup>? {
             if (isUnitTestMode()) {
-                return NodeDescriptorImpl.getMarkupMap(debugProcess)
+                return DebuggerUtilsImpl.getValueMarkers(debugProcess)?.allMarkers as Map<ObjectReference, ValueMarkup>?
             }
 
             val debugSession = debugProcess.session.xDebugSession as? XDebugSessionImpl

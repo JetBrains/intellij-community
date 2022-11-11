@@ -61,6 +61,7 @@ import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.getActionById
 import training.util.learningToolWindow
+import training.util.surroundWithNonBreakSpaces
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -232,7 +233,7 @@ object LessonUtil {
   fun rawKeyStroke(keyCode: Int): String = rawKeyStroke(KeyStroke.getKeyStroke(keyCode, 0))
 
   fun rawKeyStroke(keyStroke: KeyStroke): String {
-    return " <raw_shortcut>$keyStroke</raw_shortcut> "
+    return "<raw_shortcut>$keyStroke</raw_shortcut>".surroundWithNonBreakSpaces()
   }
 
   fun rawEnter(): String = rawKeyStroke(KeyEvent.VK_ENTER)

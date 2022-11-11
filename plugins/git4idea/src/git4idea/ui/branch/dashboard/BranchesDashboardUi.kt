@@ -8,6 +8,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces.VCS_LOG_BRANCHES_PLACE
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -58,7 +59,6 @@ import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
-import git4idea.ui.branch.dashboard.BranchesDashboardActions.NewBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
@@ -79,7 +79,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val tree = BranchesTreeComponent(project).apply {
     accessibleContext.accessibleName = message("git.log.branches.tree.accessible.name")
   }
-  private val filteringTree = FilteringBranchesTree(project, tree, uiController, disposable = this)
+  private val filteringTree = FilteringBranchesTree(project, tree, uiController, place = VCS_LOG_BRANCHES_PLACE, disposable = this)
   private val branchViewSplitter = BranchViewSplitter()
   private val branchesTreePanel = BranchesTreePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(filteringTree.component, true)
@@ -200,7 +200,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val toggleFavoriteAction = ToggleFavoriteAction()
     val fetchAction = FetchAction(this)
     val showMyBranchesAction = ShowMyBranchesAction(uiController)
-    val newBranchAction = NewBranchAction()
+    val newBranchAction = ActionManager.getInstance().getAction("Git.New.Branch.In.Log")
     val updateSelectedAction = UpdateSelectedBranchAction()
     val defaultTreeExpander = DefaultTreeExpander(filteringTree.component)
     val commonActionsManager = CommonActionsManager.getInstance()

@@ -13,7 +13,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
@@ -92,14 +95,13 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   /**
-   * @deprecated please use {@link HyperlinkLabel#setTextWithHyperlink(String) with "beforeLinkText<hyperlink>linkText</hyperlink>" instead}
+   * @deprecated please use {@link HyperlinkLabel#setTextWithHyperlink(String) with "beforeLinkText<hyperlink>linkText</hyperlink>afterLinkText" instead}
    */
   @Deprecated
   public void setHyperlinkText(@LinkLabel String beforeLinkText, @LinkLabel String linkText, @LinkLabel String afterLinkText) {
     doSetHyperLinkText(beforeLinkText, linkText, afterLinkText);
   }
 
-  @ApiStatus.Experimental
   public void setTextWithHyperlink(@NotNull @LinkLabel String text) {
     int startTagOffset = text.indexOf(startTag);
     if (startTagOffset == -1){

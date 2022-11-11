@@ -822,6 +822,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
+    public @NotNull Collection<VirtualFile> getFilesIfCollection() {
+      return Collections.singleton(myVirtualFile);
+    }
+
+    @Override
     public boolean contains(@NotNull VirtualFile file) {
       return Comparing.equal(myVirtualFile, file);
     }
@@ -890,6 +895,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     AbstractFilesScope(@Nullable Project project, @Nullable Boolean hasFilesOutOfProjectRoots) {
       super(project);
       myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
+    }
+
+    @Override
+    public @Nullable Collection<VirtualFile> getFilesIfCollection() {
+      return getFiles();
     }
 
     abstract @NotNull VirtualFileSet getFiles();

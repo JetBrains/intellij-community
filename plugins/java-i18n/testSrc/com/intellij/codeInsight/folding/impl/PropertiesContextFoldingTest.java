@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
@@ -31,8 +31,15 @@ public class PropertiesContextFoldingTest extends BasePlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    PropertiesFoldingSettings.getInstance().setFoldPlaceholdersToContext(old);
-    super.tearDown();
+    try {
+      PropertiesFoldingSettings.getInstance().setFoldPlaceholdersToContext(old);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testPlaceholdersInPropertiesAreFolded() throws IOException {

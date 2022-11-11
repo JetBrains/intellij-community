@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * A class representing a version of some Java platform - e.g. the runtime the class is loaded into, or some installed JRE.
  *
- * Based on <a href="http://openjdk.java.net/jeps/322">JEP 322 "Time-Based Release Versioning"</a> (Java 10+), but also supports JEP 223
+ * Based on <a href="http://openjdk.org/jeps/322">JEP 322 "Time-Based Release Versioning"</a> (Java 10+), but also supports JEP 223
  * "New Version-String Scheme" (Java 9), as well as earlier version's formats.
  *
  * @see #parse(String) for examples of supported version strings

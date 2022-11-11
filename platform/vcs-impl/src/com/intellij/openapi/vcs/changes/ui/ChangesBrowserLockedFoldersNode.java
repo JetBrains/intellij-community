@@ -55,7 +55,7 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode<ChangesB
 
     @Override
     public void run() {
-      processVirtualFilesByVcs(myProject, myNode.getAllFilesUnder(), (vcs, files) -> {
+      processVirtualFilesByVcs(myProject, myNode.iterateFilesUnder().toList(), (vcs, files) -> {
         ChangeProvider provider = vcs.getChangeProvider();
         if (provider != null) {
           provider.doCleanup(files);

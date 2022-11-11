@@ -5544,6 +5544,39 @@ public final class CmdlineRemoteProto {
          * @return The deletionSpeed.
          */
         long getDeletionSpeed();
+
+        /**
+         * <code>required bool force_download = 7;</code>
+         * @return Whether the forceDownload field is set.
+         */
+        boolean hasForceDownload();
+        /**
+         * <code>required bool force_download = 7;</code>
+         * @return The forceDownload.
+         */
+        boolean getForceDownload();
+
+        /**
+         * <code>required bool disable_download = 8;</code>
+         * @return Whether the disableDownload field is set.
+         */
+        boolean hasDisableDownload();
+        /**
+         * <code>required bool disable_download = 8;</code>
+         * @return The disableDownload.
+         */
+        boolean getDisableDownload();
+
+        /**
+         * <code>required int32 max_download_duration = 9;</code>
+         * @return Whether the maxDownloadDuration field is set.
+         */
+        boolean hasMaxDownloadDuration();
+        /**
+         * <code>required int32 max_download_duration = 9;</code>
+         * @return The maxDownloadDuration.
+         */
+        int getMaxDownloadDuration();
       }
       /**
        * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings}
@@ -5859,6 +5892,108 @@ public final class CmdlineRemoteProto {
         private void clearDeletionSpeed() {
           bitField0_ = (bitField0_ & ~0x00000010);
           deletionSpeed_ = 0L;
+        }
+
+        public static final int FORCE_DOWNLOAD_FIELD_NUMBER = 7;
+        private boolean forceDownload_;
+        /**
+         * <code>required bool force_download = 7;</code>
+         * @return Whether the forceDownload field is set.
+         */
+        @java.lang.Override
+        public boolean hasForceDownload() {
+          return ((bitField0_ & 0x00000020) != 0);
+        }
+        /**
+         * <code>required bool force_download = 7;</code>
+         * @return The forceDownload.
+         */
+        @java.lang.Override
+        public boolean getForceDownload() {
+          return forceDownload_;
+        }
+        /**
+         * <code>required bool force_download = 7;</code>
+         * @param value The forceDownload to set.
+         */
+        private void setForceDownload(boolean value) {
+          bitField0_ |= 0x00000020;
+          forceDownload_ = value;
+        }
+        /**
+         * <code>required bool force_download = 7;</code>
+         */
+        private void clearForceDownload() {
+          bitField0_ = (bitField0_ & ~0x00000020);
+          forceDownload_ = false;
+        }
+
+        public static final int DISABLE_DOWNLOAD_FIELD_NUMBER = 8;
+        private boolean disableDownload_;
+        /**
+         * <code>required bool disable_download = 8;</code>
+         * @return Whether the disableDownload field is set.
+         */
+        @java.lang.Override
+        public boolean hasDisableDownload() {
+          return ((bitField0_ & 0x00000040) != 0);
+        }
+        /**
+         * <code>required bool disable_download = 8;</code>
+         * @return The disableDownload.
+         */
+        @java.lang.Override
+        public boolean getDisableDownload() {
+          return disableDownload_;
+        }
+        /**
+         * <code>required bool disable_download = 8;</code>
+         * @param value The disableDownload to set.
+         */
+        private void setDisableDownload(boolean value) {
+          bitField0_ |= 0x00000040;
+          disableDownload_ = value;
+        }
+        /**
+         * <code>required bool disable_download = 8;</code>
+         */
+        private void clearDisableDownload() {
+          bitField0_ = (bitField0_ & ~0x00000040);
+          disableDownload_ = false;
+        }
+
+        public static final int MAX_DOWNLOAD_DURATION_FIELD_NUMBER = 9;
+        private int maxDownloadDuration_;
+        /**
+         * <code>required int32 max_download_duration = 9;</code>
+         * @return Whether the maxDownloadDuration field is set.
+         */
+        @java.lang.Override
+        public boolean hasMaxDownloadDuration() {
+          return ((bitField0_ & 0x00000080) != 0);
+        }
+        /**
+         * <code>required int32 max_download_duration = 9;</code>
+         * @return The maxDownloadDuration.
+         */
+        @java.lang.Override
+        public int getMaxDownloadDuration() {
+          return maxDownloadDuration_;
+        }
+        /**
+         * <code>required int32 max_download_duration = 9;</code>
+         * @param value The maxDownloadDuration to set.
+         */
+        private void setMaxDownloadDuration(int value) {
+          bitField0_ |= 0x00000080;
+          maxDownloadDuration_ = value;
+        }
+        /**
+         * <code>required int32 max_download_duration = 9;</code>
+         */
+        private void clearMaxDownloadDuration() {
+          bitField0_ = (bitField0_ & ~0x00000080);
+          maxDownloadDuration_ = 0;
         }
 
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(
@@ -6276,6 +6411,114 @@ public final class CmdlineRemoteProto {
             return this;
           }
 
+          /**
+           * <code>required bool force_download = 7;</code>
+           * @return Whether the forceDownload field is set.
+           */
+          @java.lang.Override
+          public boolean hasForceDownload() {
+            return instance.hasForceDownload();
+          }
+          /**
+           * <code>required bool force_download = 7;</code>
+           * @return The forceDownload.
+           */
+          @java.lang.Override
+          public boolean getForceDownload() {
+            return instance.getForceDownload();
+          }
+          /**
+           * <code>required bool force_download = 7;</code>
+           * @param value The forceDownload to set.
+           * @return This builder for chaining.
+           */
+          public Builder setForceDownload(boolean value) {
+            copyOnWrite();
+            instance.setForceDownload(value);
+            return this;
+          }
+          /**
+           * <code>required bool force_download = 7;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearForceDownload() {
+            copyOnWrite();
+            instance.clearForceDownload();
+            return this;
+          }
+
+          /**
+           * <code>required bool disable_download = 8;</code>
+           * @return Whether the disableDownload field is set.
+           */
+          @java.lang.Override
+          public boolean hasDisableDownload() {
+            return instance.hasDisableDownload();
+          }
+          /**
+           * <code>required bool disable_download = 8;</code>
+           * @return The disableDownload.
+           */
+          @java.lang.Override
+          public boolean getDisableDownload() {
+            return instance.getDisableDownload();
+          }
+          /**
+           * <code>required bool disable_download = 8;</code>
+           * @param value The disableDownload to set.
+           * @return This builder for chaining.
+           */
+          public Builder setDisableDownload(boolean value) {
+            copyOnWrite();
+            instance.setDisableDownload(value);
+            return this;
+          }
+          /**
+           * <code>required bool disable_download = 8;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearDisableDownload() {
+            copyOnWrite();
+            instance.clearDisableDownload();
+            return this;
+          }
+
+          /**
+           * <code>required int32 max_download_duration = 9;</code>
+           * @return Whether the maxDownloadDuration field is set.
+           */
+          @java.lang.Override
+          public boolean hasMaxDownloadDuration() {
+            return instance.hasMaxDownloadDuration();
+          }
+          /**
+           * <code>required int32 max_download_duration = 9;</code>
+           * @return The maxDownloadDuration.
+           */
+          @java.lang.Override
+          public int getMaxDownloadDuration() {
+            return instance.getMaxDownloadDuration();
+          }
+          /**
+           * <code>required int32 max_download_duration = 9;</code>
+           * @param value The maxDownloadDuration to set.
+           * @return This builder for chaining.
+           */
+          public Builder setMaxDownloadDuration(int value) {
+            copyOnWrite();
+            instance.setMaxDownloadDuration(value);
+            return this;
+          }
+          /**
+           * <code>required int32 max_download_duration = 9;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearMaxDownloadDuration() {
+            copyOnWrite();
+            instance.clearMaxDownloadDuration();
+            return this;
+          }
+
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings)
         }
         private byte memoizedIsInitialized = 2;
@@ -6301,10 +6544,14 @@ public final class CmdlineRemoteProto {
                   "serverUrl_",
                   "decompressionSpeed_",
                   "deletionSpeed_",
+                  "forceDownload_",
+                  "disableDownload_",
+                  "maxDownloadDuration_",
                 };
                 java.lang.String info =
-                    "\u0001\u0006\u0000\u0001\u0001\u0006\u0006\u0001\u0000\u0005\u00012\u0002\u1508\u0000" +
-                    "\u0003\u1504\u0001\u0004\u1508\u0002\u0005\u1502\u0003\u0006\u1502\u0004";
+                    "\u0001\t\u0000\u0001\u0001\t\t\u0001\u0000\b\u00012\u0002\u1508\u0000\u0003\u1504" +
+                    "\u0001\u0004\u1508\u0002\u0005\u1502\u0003\u0006\u1502\u0004\u0007\u1507\u0005\b" +
+                    "\u1507\u0006\t\u1504\u0007";
                 return newMessageInfo(DEFAULT_INSTANCE, info, objects);
             }
             // fall through

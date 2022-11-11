@@ -8,16 +8,17 @@ import com.intellij.psi.OriginInfoAwareElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.lazyPub
 import icons.ExternalSystemIcons
-import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleTask
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder.DOCUMENTATION
 import org.jetbrains.plugins.groovy.lang.resolve.api.LazyTypeProperty
 import javax.swing.Icon
 
 @Presentation(typeName = "Gradle Task")
 class GradleTaskProperty(
-  val task: GradleTask,
+  name: String,
+  typeFqn: String,
+  description: String?,
   context: PsiElement
-) : LazyTypeProperty(task.name, task.typeFqn, context),
+) : LazyTypeProperty(name, typeFqn, context),
     OriginInfoAwareElement {
 
   override fun getIcon(flags: Int): Icon = ExternalSystemIcons.Task
@@ -28,9 +29,9 @@ class GradleTaskProperty(
     val result = StringBuilder()
     result.append("<PRE>")
     JavaDocInfoGeneratorFactory.create(context.project, null).generateType(result, propertyType, myContext, true)
-    result.append(" " + task.name)
+    result.append(" $name")
     result.append("</PRE>")
-    task.description?.let(result::append)
+    description?.let(result::append)
     result.toString()
   }
 

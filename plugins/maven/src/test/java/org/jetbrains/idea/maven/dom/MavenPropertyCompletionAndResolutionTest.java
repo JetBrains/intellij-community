@@ -242,7 +242,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   @Test
   public void testResolutionToInheritedModelPropertiesForManagedParent() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
+                     "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
 
@@ -257,7 +257,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                                         "<parent>" +
                                         "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
+                                        "  <artifactId>project</artifactId>" +
                                         "  <version>1</version>" +
                                         "</parent>" +
 
@@ -271,7 +271,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                     "<parent>" +
                     "  <groupId>test</groupId>" +
-                    "  <artifactId>parent</artifactId>" +
+                    "  <artifactId>project</artifactId>" +
                     "  <version>1</version>" +
                     "</parent>" +
 

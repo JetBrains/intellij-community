@@ -65,7 +65,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     ConditionCoveredByFurtherConditionVisitor(ProblemsHolder holder) {myHolder = holder;}
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       IElementType type = expression.getOperationTokenType();
       if (type.equals(JavaTokenType.ANDAND)) {
         processConditionChain(expression, true);

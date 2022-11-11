@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.scripting.gradle
 
@@ -8,12 +8,13 @@ import org.gradle.internal.exceptions.LocationAwareException
 import org.gradle.internal.resource.UriTextResource
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.parsePositionFromException
 import org.junit.Test
-import kotlin.io.path.*
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.div
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class KotlinDslScriptModelTest {
-    @OptIn(ExperimentalPathApi::class)
     @Test
     fun testExceptionPositionParsing() {
         val file = createTempDirectory("kotlinDslTest") / "build.gradle.kts"

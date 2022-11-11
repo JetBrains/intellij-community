@@ -1,15 +1,19 @@
 package com.intellij.settingsSync
 
+import com.intellij.util.io.isFile
 import com.intellij.util.io.readBytes
 import com.intellij.util.io.systemIndependentPath
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.SystemIndependent
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import kotlin.io.path.relativeTo
 
-internal sealed class FileState(open val file: String) {
+@ApiStatus.Internal
+sealed class FileState(open val file: @SystemIndependent String) {
 
-  class Modified(override val file: String, val content: ByteArray, val size: Int) : FileState(file) {
+  class Modified(override val file:  @SystemIndependent String, val content: ByteArray, val size: Int) : FileState(file) {
     override fun toString(): String = "file='$file', content:\n${String(content, StandardCharsets.UTF_8)}"
 
     override fun equals(other: Any?): Boolean {
@@ -33,7 +37,7 @@ internal sealed class FileState(open val file: String) {
     }
   }
 
-  data class Deleted(override val file: String): FileState(file)
+  data class Deleted(override val file: @SystemIndependent String): FileState(file)
 }
 
 internal fun getFileStateFromFileWithDeletedMarker(file: Path, storageBasePath: Path): FileState {
@@ -45,6 +49,22 @@ internal fun getFileStateFromFileWithDeletedMarker(file: Path, storageBasePath: 
   } else {
     FileState.Modified(fileSpec, bytes, bytes.size)
   }
+}
+
+internal fun collectFileStatesFromFiles(paths: Set<Path>, rootConfigPath: Path): Set<FileState> {
+  val fileStates = mutableSetOf<FileState>()
+  for (path in paths) {
+    if (path.isFile()) {
+      fileStates += getFileStateFromFileWithDeletedMarker(path, rootConfigPath)
+    }
+    else { // 'path' is e.g. 'ROOT_CONFIG/keymaps/'
+      val fileStatesFromFolder = path.toFile().walkTopDown()
+        .filter { it.isFile }
+        .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), rootConfigPath) }
+      fileStates.addAll(fileStatesFromFolder)
+    }
+  }
+  return fileStates
 }
 
 internal const val DELETED_FILE_MARKER = "DELETED"

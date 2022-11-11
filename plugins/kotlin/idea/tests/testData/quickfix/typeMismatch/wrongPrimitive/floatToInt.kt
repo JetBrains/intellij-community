@@ -1,5 +1,4 @@
 // "Change to '1'" "true"
-// ACTION: Add 'const' modifier
 // ACTION: Change to '1'
 // ACTION: Change type of 'a' to 'Float'
 // ACTION: Convert property initializer to getter

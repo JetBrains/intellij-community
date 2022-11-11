@@ -149,7 +149,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
   private static boolean isInternalError(@NotNull Throwable error,
                                          @NotNull ProjectSystemId externalSystemId) {
     if (RemoteUtil.unwrap(error) instanceof BuildIssueException) return false;
-    return ExternalSystemNotificationExtension.EP_NAME.extensions()
+    return ExternalSystemNotificationExtension.EP_NAME.getExtensionList().stream()
       .anyMatch(extension -> externalSystemId.equals(extension.getTargetExternalSystemId()) && extension.isInternalError(error));
   }
 

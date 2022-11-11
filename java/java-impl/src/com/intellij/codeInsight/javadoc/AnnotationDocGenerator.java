@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -302,7 +303,7 @@ public final class AnnotationDocGenerator {
   public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiModifierListOwner owner) {
     Set<String> shownAnnotations = new HashSet<>();
     return StreamEx.of(AnnotationUtil.getAllAnnotations(owner, false, null))
-      .filter(owner instanceof PsiClass || owner instanceof PsiJavaModule ? anno -> true
+      .filter(owner instanceof PsiClass || owner instanceof PsiJavaModule ? Predicates.alwaysTrue()
                                                                           : anno -> !AnnotationTargetUtil.isTypeAnnotation(anno) ||
                                                                                     AnnotationUtil.isInferredAnnotation(anno) ||
                                                                                     AnnotationUtil.isExternalAnnotation(anno))

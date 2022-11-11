@@ -47,7 +47,6 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
    * @param startOffset       start offset to use with the given text (inclusive)
    * @param endOffset         end offset to use with the given text (exclusive)
    * @param codeStyleSettings the code style settings
-   * @param nodeAfter
    * @return                  symbols to use for replacing {@code [startOffset; endOffset)} sub-sequence of the given text
    */
   @NotNull

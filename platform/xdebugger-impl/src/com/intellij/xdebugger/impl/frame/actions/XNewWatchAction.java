@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.xdebugger.XDebugSession;
@@ -32,5 +33,10 @@ public class XNewWatchAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(DebuggerUIUtil.getSession(e) != null && DebuggerUIUtil.getWatchesView(e) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

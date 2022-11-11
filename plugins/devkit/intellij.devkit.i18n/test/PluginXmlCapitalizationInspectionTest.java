@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -18,6 +19,33 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new PluginXmlCapitalizationInspection());
+  }
+
+  public void testPluginNameDomElementFix() {
+    myFixture.testHighlighting("pluginXmlPluginNameDomElementFix.xml");
+    IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
+    myFixture.checkPreviewAndLaunchAction(capitalizeIntention);
+    myFixture.checkResultByFile("pluginXmlPluginNameDomElementFix_after.xml");
+  }
+
+  public void testSeparatorTextDomElementFix() {
+    myFixture.testHighlighting("pluginXmlSeparatorTextDomElementFix.xml");
+    IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
+    myFixture.checkPreviewAndLaunchAction(capitalizeIntention);
+    myFixture.checkResultByFile("pluginXmlSeparatorTextDomElementFix_after.xml");
+  }
+
+  public void testActionDescriptionPropertyFix() {
+    myFixture.testHighlighting("pluginXmlActionDescriptionPropertyFix.xml",
+                               "ActionDescriptionFixBundle.properties");
+    IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize 'lower case description'");
+
+    String customPreviewText = myFixture.getIntentionPreviewText(capitalizeIntention);
+    assertEquals("action.BundleActionWrongCasing.description=Lower case description", customPreviewText);
+
+    myFixture.launchAction(capitalizeIntention);
+    myFixture.checkResultByFile("ActionDescriptionFixBundle.properties",
+                                "ActionDescriptionFixBundle_after.properties", true);
   }
 
   public void testActionPluginName() {

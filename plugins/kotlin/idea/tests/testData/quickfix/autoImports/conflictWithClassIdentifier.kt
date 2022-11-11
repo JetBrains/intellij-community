@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'Arrays'" "true"
 // DISABLE-ERRORS
 class java
 

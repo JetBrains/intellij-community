@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -13,6 +13,8 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.InjectableLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -25,6 +27,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesModel;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -150,9 +153,20 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       }
     });
     reloadProfiles(profiles, profileManager, projectProfileManager, project);
+    if (hasEnabledInspectionsOnInjectableCode(project)) {
+      dialog.setAnalyzeInjectedCode(false);
+    }
     return ui.getPanel();
   }
 
+  private boolean hasEnabledInspectionsOnInjectableCode(Project project) {
+    if (myExternalProfile != null) {
+      return ContainerUtil.exists(myExternalProfile.getAllEnabledInspectionTools(project),
+                                  tool -> Language.findLanguageByID(tool.getTool().getLanguage()) instanceof InjectableLanguage);
+    }
+    return false;
+  }
+  
   protected ExternalProfilesComboboxAwareInspectionToolsConfigurable createConfigurable(ProjectInspectionProfileManager projectProfileManager,
                                                                                         SchemesCombo<InspectionProfileImpl> profilesCombo) {
     return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profilesCombo);

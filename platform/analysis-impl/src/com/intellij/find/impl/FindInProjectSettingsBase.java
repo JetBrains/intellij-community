@@ -18,7 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class FindInProjectSettingsBase implements PersistentStateComponent<FindInProjectSettingsBase> {
-  private static final int MAX_RECENT_SIZE = 30;
+  private static final int MAX_RECENT_SIZE = 300;
 
   @XCollection(style = XCollection.Style.v2, elementName = "find", valueAttributeName = "")
   private final List<String> findStrings = new ArrayList<>();

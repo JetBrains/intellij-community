@@ -118,7 +118,6 @@ public final class GroovyInlineMethodUtil {
    * Checks whether given method call is tail call of other method or closure
    *
    * @param call [tail?] Method call
-   * @return
    */
   static boolean isTailMethodCall(GrCallExpression call) {
     GrStatement stmt = call;
@@ -476,8 +475,7 @@ public final class GroovyInlineMethodUtil {
    *
    * @param method     given method
     * @param nameFilter specified parameter names (which ma have default initializers)
-    * @param call
-    */
+   */
   private static void setDefaultValuesToParameters(GrMethod method, @Nullable Collection<String> nameFilter, GrCallExpression call) throws IncorrectOperationException {
     if (nameFilter == null) {
       nameFilter = new ArrayList<>();

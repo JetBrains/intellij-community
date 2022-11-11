@@ -90,7 +90,7 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
           protected void customizeComponent(@NotNull JList<? extends PopupFactoryImpl.ActionItem> list,
                                             @NotNull PopupFactoryImpl.ActionItem actionItem,
                                             boolean isSelected) {
-            myNextStepButtonSeparator.setVisible(false);
+            myButtonsSeparator.setVisible(false);
             AnAction action = actionItem.getAction();
             Editor editor = EDITOR.getData(dataContext);
             java.util.List<PsiElement> elements = CopyReferenceUtil.getElementsToCopy(editor, dataContext);

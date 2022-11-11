@@ -40,9 +40,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
                         serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
-    <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
-                        serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
-
     <projectService serviceInterface="com.intellij.psi.PsiManager"
                     serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
     <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"

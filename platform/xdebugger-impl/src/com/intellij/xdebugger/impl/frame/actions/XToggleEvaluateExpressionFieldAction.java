@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAwareToggleAction;
@@ -50,6 +51,11 @@ public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return isEvaluateExpressionFieldEnabled();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

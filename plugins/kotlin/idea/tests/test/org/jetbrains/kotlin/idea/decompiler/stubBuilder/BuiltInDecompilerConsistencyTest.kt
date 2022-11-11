@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
@@ -44,7 +44,11 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
     }
 
     fun testSameAsClsDecompilerForCompiledBuiltInClasses() {
-        doTest("kotlin")
+        doTest(
+            "kotlin",
+            // ExperimentalStdlibApi is incorrectly written in built-ins, see KT-53073
+            excludedClasses = setOf("ExperimentalStdlibApi")
+        )
         doTest("kotlin.annotation")
         doTest("kotlin.collections")
         doTest("kotlin.ranges")

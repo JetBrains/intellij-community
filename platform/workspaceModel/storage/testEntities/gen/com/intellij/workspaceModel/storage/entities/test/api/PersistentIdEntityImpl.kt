@@ -10,189 +10,193 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import java.util.*
+import java.util.UUID
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
-@GeneratedCodeApiVersion(0)
-@GeneratedCodeImplVersion(0)
-open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
-    
-        
-    @JvmField var _data: String? = null
-    override val data: String
-        get() = _data!!
+@GeneratedCodeApiVersion(1)
+@GeneratedCodeImplVersion(1)
+open class PersistentIdEntityImpl(val dataSource: PersistentIdEntityData) : PersistentIdEntity, WorkspaceEntityBase() {
 
-    class Builder(val result: PersistentIdEntityData?): ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
-        constructor(): this(PersistentIdEntityData())
-        
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                }
-                else {
-                    error("Entity PersistentIdEntity is already created in a different builder")
-                }
-            }
-            
-            this.diff = builder
-            this.snapshot = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-            
-            // Process entities from extension fields
-            val keysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (!key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    for (item in entity) {
-                        if (item is ModifiableWorkspaceEntityBase<*>) {
-                            builder.addEntity(item)
-                        }
-                    }
-                    entity as List<WorkspaceEntity>
-                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
-                    applyRef(key.getConnectionId(), withBuilder_entity)
-                    keysToRemove.add(key)
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyRef(key.getConnectionId(), entity)
-                    keysToRemove.add(key)
-                }
-            }
-            for (key in keysToRemove) {
-                extReferences.remove(key)
-            }
-            
-            // Adding parents and references to the parent
-            val parentKeysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    error("Cannot have parent lists")
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyParentRef(key.getConnectionId(), entity)
-                    parentKeysToRemove.add(key)
-                }
-            }
-            for (key in parentKeysToRemove) {
-                extReferences.remove(key)
-            }
-            checkInitialization() // TODO uncomment and check failed tests
+  companion object {
+
+
+    val connections = listOf<ConnectionId>(
+    )
+
+  }
+
+  override val data: String
+    get() = dataSource.data
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  class Builder(val result: PersistentIdEntityData?) : ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
+    constructor() : this(PersistentIdEntityData())
+
+    override fun applyToBuilder(builder: MutableEntityStorage) {
+      if (this.diff != null) {
+        if (existsInBuilder(builder)) {
+          this.diff = builder
+          return
         }
-    
-        fun checkInitialization() {
-            val _diff = diff
-            if (!getEntityData().isDataInitialized()) {
-                error("Field PersistentIdEntity#data should be initialized")
-            }
-            if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field PersistentIdEntity#entitySource should be initialized")
-            }
+        else {
+          error("Entity PersistentIdEntity is already created in a different builder")
         }
-    
-        
-        override var data: String
-            get() = getEntityData().data
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().data = value
-                changedProperty.add("data")
-            }
-            
-        override var entitySource: EntitySource
-            get() = getEntityData().entitySource
-            set(value) {
-                checkModificationAllowed()
-                getEntityData().entitySource = value
-                changedProperty.add("entitySource")
-                
-            }
-        
-        override fun getEntityData(): PersistentIdEntityData = result ?: super.getEntityData() as PersistentIdEntityData
-        override fun getEntityClass(): Class<PersistentIdEntity> = PersistentIdEntity::class.java
+      }
+
+      this.diff = builder
+      this.snapshot = builder
+      addToBuilder()
+      this.id = getEntityData().createEntityId()
+
+      // Process linked entities that are connected without a builder
+      processLinkedEntities(builder)
+      checkInitialization() // TODO uncomment and check failed tests
     }
+
+    fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
+      if (!getEntityData().isDataInitialized()) {
+        error("Field PersistentIdEntity#data should be initialized")
+      }
+    }
+
+    override fun connectionIdList(): List<ConnectionId> {
+      return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as PersistentIdEntity
+      this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
+      if (parents != null) {
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
+      }
+
+    override fun getEntityData(): PersistentIdEntityData = result ?: super.getEntityData() as PersistentIdEntityData
+    override fun getEntityClass(): Class<PersistentIdEntity> = PersistentIdEntity::class.java
+  }
 }
-    
+
 class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<PersistentIdEntity>() {
-    lateinit var data: String
+  lateinit var data: String
 
-    fun isDataInitialized(): Boolean = ::data.isInitialized
+  fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<PersistentIdEntity> {
-        val modifiable = PersistentIdEntityImpl.Builder(null)
-        modifiable.allowModifications {
-          modifiable.diff = diff
-          modifiable.snapshot = diff
-          modifiable.id = createEntityId()
-          modifiable.entitySource = this.entitySource
-        }
-        return modifiable
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<PersistentIdEntity> {
+    val modifiable = PersistentIdEntityImpl.Builder(null)
+    modifiable.allowModifications {
+      modifiable.diff = diff
+      modifiable.snapshot = diff
+      modifiable.id = createEntityId()
+      modifiable.entitySource = this.entitySource
     }
+    modifiable.changedProperty.clear()
+    return modifiable
+  }
 
-    override fun createEntity(snapshot: EntityStorage): PersistentIdEntity {
-        val entity = PersistentIdEntityImpl()
-        entity._data = data
-        entity.entitySource = entitySource
-        entity.snapshot = snapshot
-        entity.id = createEntityId()
-        return entity
+  override fun createEntity(snapshot: EntityStorage): PersistentIdEntity {
+    return getCached(snapshot) {
+      val entity = PersistentIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
     }
+  }
 
-    override fun persistentId(): PersistentEntityId<*> {
-      return LinkedListEntityId(data)
-    } 
+  override fun persistentId(): PersistentEntityId<*> {
+    return LinkedListEntityId(data)
+  }
 
-    override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return PersistentIdEntity::class.java
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return PersistentIdEntity::class.java
+  }
+
+  override fun serialize(ser: EntityInformation.Serializer) {
+  }
+
+  override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return PersistentIdEntity(data, entitySource) {
     }
+  }
 
-    override fun serialize(ser: EntityInformation.Serializer) {
-    }
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
 
-    override fun deserialize(de: EntityInformation.Deserializer) {
-    }
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as PersistentIdEntityData
-        
-        if (this.data != other.data) return false
-        if (this.entitySource != other.entitySource) return false
-        return true
-    }
+    other as PersistentIdEntityData
 
-    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-        if (other == null) return false
-        if (this::class != other::class) return false
-        
-        other as PersistentIdEntityData
-        
-        if (this.data != other.data) return false
-        return true
-    }
+    if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
+    return true
+  }
 
-    override fun hashCode(): Int {
-        var result = entitySource.hashCode()
-        result = 31 * result + data.hashCode()
-        return result
-    }
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as PersistentIdEntityData
+
+    if (this.data != other.data) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + data.hashCode()
+    return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
+  }
 }

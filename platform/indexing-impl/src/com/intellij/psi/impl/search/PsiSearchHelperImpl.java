@@ -89,7 +89,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     scope = element.getUseScope();
     for (UseScopeEnlarger enlarger : UseScopeEnlarger.EP_NAME.getExtensions()) {
       ProgressManager.checkCanceled();
-      SearchScope additionalScope = enlarger.getAdditionalUseScope(element);
+      SearchScope additionalScope = null;
+      try {
+        additionalScope = enlarger.getAdditionalUseScope(element);
+      }
+      catch (IndexNotReadyException pce) {
+        LOG.debug("ProcessCancelledException thrown while getUseScope() calculation", pce);
+      }
       if (additionalScope != null) {
         scope = scope.union(additionalScope);
       }
@@ -1116,8 +1122,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         Processor<PsiElement> localProcessor = localProcessor(searcher, adapted);
 
-        assert !localProcessors.containsKey(singleRequest) || localProcessors.get(singleRequest) == localProcessor;
-        localProcessors.put(singleRequest, localProcessor);
+        Processor<? super PsiElement> old = localProcessors.put(singleRequest, localProcessor);
+        assert old == null : old + ";" + localProcessor +"; singleRequest="+singleRequest;
       }
     }
   }

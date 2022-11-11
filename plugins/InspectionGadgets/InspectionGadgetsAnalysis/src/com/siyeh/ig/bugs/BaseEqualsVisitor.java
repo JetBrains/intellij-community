@@ -46,7 +46,7 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
                                                                                PREDICATE_NEGATE);
 
   @Override
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     super.visitMethodReferenceExpression(expression);
     if (!OBJECT_EQUALS.methodReferenceMatches(expression) && !STATIC_EQUALS.methodReferenceMatches(expression)) {
       return;

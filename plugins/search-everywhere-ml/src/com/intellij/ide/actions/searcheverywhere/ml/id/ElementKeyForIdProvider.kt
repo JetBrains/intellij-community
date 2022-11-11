@@ -1,10 +1,8 @@
 package com.intellij.ide.actions.searcheverywhere.ml.id
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-abstract class ElementKeyForIdProvider {
+internal abstract class ElementKeyForIdProvider {
   companion object {
     private val EP_NAME = ExtensionPointName.create<ElementKeyForIdProvider>("com.intellij.searcheverywhere.ml.elementKeyForIdProvider")
 

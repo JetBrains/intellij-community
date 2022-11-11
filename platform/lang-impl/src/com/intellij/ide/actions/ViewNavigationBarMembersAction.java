@@ -7,9 +7,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
 public class ViewNavigationBarMembersAction extends ToggleAction implements DumbAware {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setEnabledAndVisible(!ExperimentalUI.isNewUI());
+  }
+
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return UISettings.getInstance().getShowMembersInNavigationBar();

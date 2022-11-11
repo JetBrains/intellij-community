@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.Application;
@@ -92,6 +93,11 @@ public class InstalledPackagesPanel extends JPanel {
         PackageManagementUsageCollector.triggerUpgradePerformed(myProject, myPackageManagementService);
         upgradeAction();
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
     myInstallButton = new DumbAwareActionButton(IdeBundle.messagePointer("action.AnActionButton.text.install"), IconUtil.getAddIcon()) {
       @Override
@@ -102,6 +108,11 @@ public class InstalledPackagesPanel extends JPanel {
           dialog.show();
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
     myInstallButton.setShortcut(CommonShortcuts.getNew());
     myUninstallButton = new DumbAwareActionButton(IdeBundle.messagePointer("action.AnActionButton.text.uninstall"), IconUtil.getRemoveIcon()) {
@@ -109,6 +120,11 @@ public class InstalledPackagesPanel extends JPanel {
       public void actionPerformed(@NotNull AnActionEvent e) {
         PackageManagementUsageCollector.triggerUninstallPerformed(myProject, myPackageManagementService);
         uninstallAction();
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     myUninstallButton.setShortcut(CommonShortcuts.getDelete());

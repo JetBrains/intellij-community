@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -11,7 +11,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -71,10 +70,8 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   static void commitModel(@NotNull Module module, ModifiableRootModel model) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      model.commit();
-      module.getProject().save();
-    });
+    ApplicationManager.getApplication().runWriteAction(model::commit);
+    module.getProject().save();
   }
 
   protected abstract void modifyRoots(VirtualFile file, ContentEntry entry);
@@ -154,9 +151,9 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   private static Module findParentModule(@Nullable Project project, VirtualFile @NotNull [] files) {
     if (project == null) return null;
     Module result = null;
-    DirectoryIndex index = DirectoryIndex.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     for (VirtualFile file : files) {
-      Module module = index.getInfoForFile(file).getModule();
+      Module module = index.getModuleForFile(file, false);
       if (module == null) return null;
       if (result == null) {
         result = module;

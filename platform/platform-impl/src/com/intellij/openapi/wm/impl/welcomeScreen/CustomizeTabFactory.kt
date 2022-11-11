@@ -80,8 +80,10 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     lafProperty.afterChange({
                               val newLaf = laf.findLaf(it)
                               if (laf.currentLookAndFeel == newLaf) return@afterChange
-                              QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, newLaf, true)
-                              WelcomeScreenEventCollector.logLafChanged(newLaf, laf.autodetect)
+                              ApplicationManager.getApplication().invokeLater {
+                                QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, newLaf, true)
+                                WelcomeScreenEventCollector.logLafChanged(newLaf, laf.autodetect)
+                              }
                             }, parentDisposable)
     syncThemeProperty.afterChange {
       if (laf.autodetect == it) return@afterChange
@@ -233,7 +235,6 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
           checkBox(UIBundle.message("color.blindness.checkbox.text"))
             .bindSelected(adjustColorsProperty)
             .comment(UIBundle.message("color.blindness.checkbox.comment"))
-            .applyToComponent { isOpaque = false }
         }
         else {
           val checkBox = checkBox(UIBundle.message("welcome.screen.color.blindness.combobox.text"))

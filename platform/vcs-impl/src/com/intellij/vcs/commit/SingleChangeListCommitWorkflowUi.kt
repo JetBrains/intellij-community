@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import java.util.*
 
@@ -18,6 +19,8 @@ interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
   fun getChangeList(): LocalChangeList
 
   fun addChangeListListener(listener: ChangeListListener, parent: Disposable)
+
+  fun getInclusionModel(): InclusionModel
 
   interface ChangeListListener : EventListener {
     fun changeListChanged()

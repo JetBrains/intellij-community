@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -588,6 +588,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("dataClass")
         public void testDataClass() throws Exception {
             runTest("testData/multiModuleQuickFix/createExpect/dataClass/");
+        }
+
+        @TestMetadata("dataObject")
+        public void testDataObject() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/dataObject/");
         }
 
         @TestMetadata("enum")

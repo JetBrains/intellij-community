@@ -1,4 +1,4 @@
-// "Replace with allMatch()" "true"
+// "Replace with allMatch()" "true-preview"
 
 public class Main {
   boolean find(String[][] data) {

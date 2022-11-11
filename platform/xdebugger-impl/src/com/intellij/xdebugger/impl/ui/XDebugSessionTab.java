@@ -10,6 +10,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.ide.ui.customization.CustomActionsListener;
+import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
@@ -302,13 +304,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     initToolbars(session);
 
+    CustomActionsListener.subscribe(this, () -> initToolbars(session));
+
     if (myEnvironment != null) {
       initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
     }
   }
 
   protected void initToolbars(@NotNull XDebugSessionImpl session) {
-    DefaultActionGroup leftToolbar = new DefaultActionGroup();
+    ActionGroup leftGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP);
+    DefaultActionGroup leftToolbar = new DefaultActionGroupWithDelegate(leftGroup);
     if (myEnvironment != null) {
       leftToolbar.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
       leftToolbar.addAll(session.getRestartActions());
@@ -316,7 +321,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }
-    leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
+    leftToolbar.addAll(leftGroup);
 
     for (AnAction action : session.getExtraStopActions()) {
       leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
@@ -337,8 +342,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
 
-    DefaultActionGroup topLeftToolbar = new DefaultActionGroup();
-    topLeftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
+    ActionGroup topGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP);
+    DefaultActionGroup topLeftToolbar = new DefaultActionGroupWithDelegate(topGroup);
+    topLeftToolbar.addAll(topGroup);
 
     registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);

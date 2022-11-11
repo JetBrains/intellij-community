@@ -27,6 +27,11 @@ public class SwitchToReplace extends DumbAwareAction implements LightEditCompati
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
     FindModel findModel = search.getFindModel();

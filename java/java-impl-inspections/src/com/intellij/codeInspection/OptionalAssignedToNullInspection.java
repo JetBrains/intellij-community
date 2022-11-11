@@ -42,13 +42,13 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         checkNulls(expression.getType(), expression.getRExpression(),
                    JavaBundle.message("inspection.null.value.for.optional.context.assignment"));
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         if (args.length == 0) return;
         PsiMethod method = call.resolveMethod();
@@ -68,7 +68,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
         PsiElement body = lambda.getBody();
         if (body instanceof PsiExpression) {
           checkNulls(LambdaUtil.getFunctionalInterfaceReturnType(lambda), (PsiExpression)body,
@@ -77,19 +77,19 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         checkNulls(PsiTypesUtil.getMethodReturnType(statement), statement.getReturnValue(),
                    JavaBundle.message("inspection.null.value.for.optional.context.return"));
       }
 
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         checkNulls(variable.getType(), variable.getInitializer(),
                    JavaBundle.message("inspection.null.value.for.optional.context.declaration"));
       }
 
       @Override
-      public void visitBinaryExpression(PsiBinaryExpression binOp) {
+      public void visitBinaryExpression(@NotNull PsiBinaryExpression binOp) {
         if (!WARN_ON_COMPARISON) return;
         PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
         if (value != null &&

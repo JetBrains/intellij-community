@@ -10,7 +10,7 @@ import java.lang.reflect.Type
 data class CompletionStrategy(val prefix: CompletionPrefix,
                               val context: CompletionContext,
                               val emulateUser: Boolean,
-                              val codeGolf: Boolean,
+                              val completionGolf: Boolean,
                               val filters: Map<String, EvaluationFilter>)
 
 sealed class CompletionPrefix(val emulateTyping: Boolean) {
@@ -36,7 +36,7 @@ class CompletionStrategySerializer : JsonSerializer<CompletionStrategy> {
   override fun serialize(src: CompletionStrategy, typeOfSrc: Type, context: JsonSerializationContext): JsonObject {
     val jsonObject = JsonObject()
     jsonObject.addProperty("emulateUser", src.emulateUser)
-    jsonObject.addProperty("codeGolf", src.codeGolf)
+    jsonObject.addProperty("completionGolf", src.completionGolf)
     jsonObject.addProperty("context", src.context.name)
     val prefixClassName = src.prefix.javaClass.name
     val prefixObject = JsonObject()

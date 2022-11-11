@@ -49,7 +49,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     // schedule dumb mode start after the read action we're currently in
     if (fileBasedIndex instanceof FileBasedIndexImpl) {
       boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
-      UnindexedFilesUpdater.scanAndIndexProjectAfterOpen(project, suspended, "On project open");
+      UnindexedFilesScanner.scanAndIndexProjectAfterOpen(project, suspended, "On project open");
     }
 
     // done mostly for tests. In real life this is no-op, because the set was removed on project closing

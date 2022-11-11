@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jsonpath.ui
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -151,7 +151,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     fillToolbarOptions(actionGroup)
 
     val toolbar = ActionManager.getInstance().createActionToolbar("JsonPathEvaluateToolbar", actionGroup, true)
-    toolbar.setTargetComponent(this)
+    toolbar.targetComponent = this
 
     setToolbar(toolbar.component)
   }
@@ -168,6 +168,8 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
 
   private fun fillToolbarOptions(group: DefaultActionGroup) {
     val outputComboBox = object : ComboBoxAction() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
       override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
         val outputItems = DefaultActionGroup()
         outputItems.add(OutputOptionAction(false, JsonBundle.message("jsonpath.evaluate.output.values")))
@@ -267,6 +269,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
       is IncorrectDocument -> setError(result.message)
       is ResultNotFound -> setError(result.message)
       is ResultString -> setResult(result.value)
+      else -> {}
     }
 
     if (result != null && result !is IncorrectExpression) {
@@ -292,6 +295,8 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
   }
 
   private inner class OptionToggleAction(private val option: Option, @NlsActions.ActionText message: String) : ToggleAction(message) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun isSelected(e: AnActionEvent): Boolean {
       return evalOptions.contains(option)
     }

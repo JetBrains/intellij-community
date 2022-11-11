@@ -57,7 +57,7 @@ public interface FilePropertyPusher<T> {
   default void afterRootsChanged(@NotNull Project project) {}
 
   /**
-   * After property was pushed it can be retrieved any time using {@link FilePropertyPusher#getFileDataKey()}
+   * After property was pushed it can be retrieved any time using {@code getFileDataKey()}
    * from {@link VirtualFile#getUserData(Key)}.
    */
   @NotNull
@@ -83,7 +83,7 @@ public interface FilePropertyPusher<T> {
   /**
    * This method is called to persist the computed Pusher value (of type T).
    * The implementation is supposed to call {@link PushedFilePropertiesUpdater#filePropertiesChanged}
-   * if a change is detected to issue the {@para fileOrDir} re-index
+   * if a change is detected to issue the {@code fileOrDir} re-index
    */
   void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
 

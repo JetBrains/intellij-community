@@ -63,18 +63,29 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   public PsiFile getPsiFile(@NotNull Document document) {
     final PsiFile psiFile = super.getPsiFile(document);
     if (myUnitTestMode) {
-      final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-      if (virtualFile != null && virtualFile.isValid()) {
-        Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
-        LOG.assertTrue(projects.isEmpty() || projects.contains(myProject), "Trying to get PSI for an alien project. VirtualFile=" +
-                                                                           virtualFile +
-                                                                           ";\n myProject=" +
-                                                                           myProject +
-                                                                           ";\n projects returned: " +
-                                                                           projects);
+      VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+      if (virtualFile != null) {
+        assertFileIsFromCorrectProject(virtualFile);
       }
     }
     return psiFile;
+  }
+
+  @Override
+  public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) {
+    if (myUnitTestMode && virtualFile.isValid()) {
+      Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
+      boolean isMyProject = projects.isEmpty() || projects.contains(myProject)
+                            // set aside the use-case for lazy developers who just don't care to retrieve the correct project for the file
+                            // and use DefaultProjectFactory.getDefaultProject() because why bother
+                            || myProject.isDefault();
+      if (!isMyProject) {
+        LOG.error("Trying to get PSI for an alien project. VirtualFile=" +
+                  virtualFile + ";" +
+                  " project=" + myProject + " (" + myProject.getBasePath() + ")"
+                  + "; but the file actually belongs to " + StringUtil.join(projects, p -> p + " (" + p.getBasePath() + ")", ","));
+      }
+    }
   }
 
   @Override

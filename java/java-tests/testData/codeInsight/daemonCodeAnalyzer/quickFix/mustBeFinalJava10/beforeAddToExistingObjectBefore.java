@@ -1,4 +1,4 @@
-// "Move 'x' into anonymous object" "true"
+// "Move 'x' into anonymous object" "true-preview"
 class Test {
     public void test() {
         int /*6*/ x = 12;

@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
@@ -30,7 +32,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -57,19 +59,21 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.charset.Charset
 import java.util.*
-import java.util.concurrent.Future
 import java.util.function.Supplier
 
 class LineStatusTrackerManager(private val project: Project) : LineStatusTrackerManagerI, Disposable {
@@ -1131,7 +1135,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
 
   private var isScheduled: Boolean = false
   private var isDisposed: Boolean = false
-  private var lastFuture: Future<*>? = null
+  private val scope = ApplicationManager.getApplication().coroutineScope.childScope()
 
   @RequiresBackgroundThread
   protected abstract fun loadRequest(request: Request): Result<T>
@@ -1139,15 +1143,18 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
   @RequiresEdt
   protected abstract fun handleResult(request: Request, result: Result<T>)
 
-
   @RequiresEdt
   fun scheduleRefresh(request: Request) {
-    if (isDisposed) return
+    if (isDisposed) {
+      return
+    }
 
     synchronized(LOCK) {
-      if (taskQueue.contains(request)) return
-      taskQueue.add(request)
+      if (taskQueue.contains(request)) {
+        return
+      }
 
+      taskQueue.add(request)
       schedule()
     }
   }
@@ -1159,7 +1166,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
       isDisposed = true
       taskQueue.clear()
       waitingForRefresh.clear()
-      lastFuture?.cancel(true)
+      scope.cancel()
 
       callbacks += callbacksWaitingUpdateCompletion
       callbacksWaitingUpdateCompletion.clear()
@@ -1198,18 +1205,21 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
 
 
   private fun schedule() {
-    if (isDisposed) return
+    if (isDisposed) {
+      return
+    }
 
     synchronized(LOCK) {
-      if (isScheduled) return
-      if (taskQueue.isEmpty()) return
+      if (isScheduled || taskQueue.isEmpty()) {
+        return
+      }
 
       isScheduled = true
-      lastFuture = ApplicationManager.getApplication().executeOnPooledThread {
+      scope.launch {
         ClientId.withClientId(ClientId.localId) {
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
+          runUnderIndicator {
             handleRequests()
-          })
+          }
         }
       }
     }
@@ -1372,7 +1382,7 @@ private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTracke
            oldInfo.charset != newInfo.charset
   }
 
-  override fun loadContent(project: Project, info: ContentInfo): BaseRevisionContent? {
+  override fun loadContent(project: Project, info: ContentInfo): TrackerContent? {
     info as BaseRevisionContentInfo
     val lastUpToDateContent = info.baseContent.loadContent() ?: return null
     val correctedText = StringUtil.convertLineSeparators(lastUpToDateContent)

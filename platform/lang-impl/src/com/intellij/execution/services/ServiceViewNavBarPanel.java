@@ -48,7 +48,7 @@ final class ServiceViewNavBarPanel extends NavBarPanel {
       @Override
       public void selectionChanged() {
         updateItems();
-        scrollSelectionToVisible();
+        scrollSelectionToVisible(true);
       }
     });
   }

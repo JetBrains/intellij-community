@@ -1,8 +1,8 @@
 class InStaticInitializer {
-    public static final String hello_world = "Hello World";
+    public static final String helloWorld = "Hello World";
 
     static {
-		System.out.println(hello_world);
+		System.out.println(helloWorld);
     }
     //Field must be placed before initializer or illegal forward reference will happen
 }

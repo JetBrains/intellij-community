@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
@@ -28,15 +28,18 @@ import org.jetbrains.kotlin.descriptors.impl.MutablePackageFragmentDescriptor
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
-import org.jetbrains.kotlin.idea.core.util.isMultiLine
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassKind
 import org.jetbrains.kotlin.idea.refactoring.*
@@ -47,6 +50,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -403,7 +407,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             )
 
             val validator = CollectingNameValidator { scope.findClassifier(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
-            val parameterNames = KotlinNameSuggester.suggestNamesForTypeParameters(typeParameterCount, validator)
+            val parameterNames = Fe10KotlinNameSuggester.suggestNamesForTypeParameters(typeParameterCount, validator)
             val typeParameters = (0 until typeParameterCount).map {
                 TypeParameterDescriptorImpl.createWithDefaultBound(
                     fakeFunction,
@@ -640,7 +644,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
             val validator = CollectingNameValidator { scope.findClassifier(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
             val typeParameterNames = allTypeParametersNotInScope.map {
-                KotlinNameSuggester.suggestNameByName(it.name.asString(), validator)
+                Fe10KotlinNameSuggester.suggestNameByName(it.name.asString(), validator)
             }
 
             return allTypeParametersNotInScope.zip(typeParameterNames).toMap()
@@ -822,7 +826,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 // figure out suggested names for each type option
                 val parameterTypeToNamesMap = HashMap<String, Array<String>>()
                 typeCandidates[parameter.typeInfo]!!.forEach { typeCandidate ->
-                    val suggestedNames = KotlinNameSuggester.suggestNamesByType(typeCandidate.theType, { true })
+                    val suggestedNames = Fe10KotlinNameSuggester.suggestNamesByType(typeCandidate.theType, { true })
                     parameterTypeToNamesMap[typeCandidate.renderedTypes.first()] = suggestedNames.toTypedArray()
                 }
 
@@ -924,7 +928,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         private fun setupEditor(declaration: KtNamedDeclaration) {
             if (declaration is KtProperty && !declaration.hasInitializer() && containingElement is KtBlockExpression) {
                 val defaultValueType = typeCandidates[callableInfo.returnTypeInfo]!!.firstOrNull()?.theType
-                val defaultValue = defaultValueType?.let { CodeInsightUtils.defaultInitializer(it) } ?: "null"
+                val defaultValue = defaultValueType?.let { it.getDefaultInitializer() } ?: "null"
                 val initializer = declaration.setInitializer(KtPsiFactory(declaration).createExpression(defaultValue))!!
                 val range = initializer.textRange
                 containingFileEditor.selectionModel.setSelection(range.startOffset, range.endOffset)

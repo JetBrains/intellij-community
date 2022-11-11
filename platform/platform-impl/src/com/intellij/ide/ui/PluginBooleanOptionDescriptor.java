@@ -8,7 +8,6 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.NotABooleanOptionDescription;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -105,7 +104,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         }
       });
 
-    Set<PluginId> pluginIds = IdeaPluginDescriptorImplKt.toPluginSet(descriptors);
+    Set<PluginId> pluginIds = IdeaPluginDescriptorImplKt.toPluginIdSet(descriptors);
 
     DisabledPluginsState.addDisablePluginListener(new Runnable() {
       @Override

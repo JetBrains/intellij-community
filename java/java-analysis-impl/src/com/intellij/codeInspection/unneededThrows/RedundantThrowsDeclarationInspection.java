@@ -434,7 +434,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
 
         block.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitCallExpression(PsiCallExpression callExpression) {
+          public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
             final List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(callExpression, block);
             for (PsiClassType exception : exceptions) {
               addExceptionInducer(exception, callExpression);
@@ -442,7 +442,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
           }
 
           @Override
-          public void visitThrowStatement(PsiThrowStatement statement) {
+          public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
             final PsiExpression exception = statement.getException();
             if (exception == null) return;
 

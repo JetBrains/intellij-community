@@ -12,12 +12,13 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.JavaBundle;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -31,7 +32,10 @@ import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.OkCancelDialogBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts;
@@ -49,8 +53,6 @@ import com.intellij.usages.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,11 +62,14 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class InferNullityAnnotationsAction extends BaseAnalysisAction {
+  private static final String SUGGEST_ANNOTATION_DEPENDENCY = "java.suggest.annotation.dependency";
   @NonNls private static final String ANNOTATE_LOCAL_VARIABLES = "checkbox.annotate.local.variables";
   private final InferNullityAdditionalUi myUi = new InferNullityAdditionalUi();
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager
+    .getInstance()
+    .getNotificationGroup("Infer Nullity");
 
   public InferNullityAnnotationsAction() {
     super(JavaBundle.messagePointer("dialog.title.infer.nullity"), JavaBundle.messagePointer("action.title.infer.nullity.annotations"));
@@ -145,7 +150,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                                           modulesWithoutAnnotations.size(),
                                           StringUtil.join(modulesWithoutAnnotations, Module::getName, ", "),
                                           annotationsLib.getName());
-      if (Messages.showOkCancelDialog(project, message, title, Messages.getErrorIcon()) == Messages.OK) {
+      if (createDependencyDialog(title, message, project).ask(project)) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           for (Module module : modulesWithoutAnnotations) {
             ModuleRootModificationUtil.addDependency(module, annotationsLib);
@@ -155,15 +160,30 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       }
       return Promises.rejectedPromise();
     }
-    
-    if (Messages.showOkCancelDialog(project, JavaBundle.message(
-      "dialog.message.jetbrains.annotations.library.is.missing"),
-                                    title, Messages.getErrorIcon()) == Messages.OK) {
+
+    String message = JavaBundle.message("dialog.message.jetbrains.annotations.library.is.missing");
+    if (createDependencyDialog(title, message, project).ask(project)) {
       Module firstModule = modulesWithoutAnnotations.iterator().next();
-      return JavaProjectModelModificationService.getInstance(project).addDependency(modulesWithoutAnnotations, JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(firstModule),
-                                                                             DependencyScope.COMPILE);
+      return JavaProjectModelModificationService.getInstance(project)
+        .addDependency(modulesWithoutAnnotations, JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(firstModule),
+                       DependencyScope.COMPILE);
     }
     return Promises.rejectedPromise();
+  }
+
+  @NotNull
+  private static OkCancelDialogBuilder createDependencyDialog(@NlsContexts.DialogTitle String title,
+                                                              @NlsContexts.DialogMessage String message,
+                                                              @NotNull Project project) {
+    return MessageDialogBuilder.okCancel(title, message)
+      .icon(Messages.getErrorIcon())
+      .doNotAsk(new DoNotAskOption.Adapter() {
+        @Override
+        public void rememberChoice(boolean isSelected, int exitCode) {
+          PropertiesComponent.getInstance(project).setValue(SUGGEST_ANNOTATION_DEPENDENCY, !isSelected, true);
+        }
+      })
+      .yesText(JavaBundle.message("button.add.dependency"));
   }
 
   protected UsageInfo @Nullable [] findUsages(@NotNull final Project project,
@@ -242,6 +262,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             };
             CommandProcessor.getInstance()
               .executeCommand(project, command, JavaBundle.message("action.title.infer.nullity.annotations"), null);
+            NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", infos.length), NotificationType.INFORMATION)
+              .notify(project);
           }
           else {
             NullityInferrer.nothingFoundMessage(project);
@@ -305,5 +327,13 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
     myUi.getCheckBox().setSelected(PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
     return myUi.getPanel();
+  }
+
+  /**
+   * @param project current project
+   * @return true if it's allowed to suggest annotation dependency for this project
+   */
+  public static boolean maySuggestAnnotationDependency(@NotNull Project project) {
+    return PropertiesComponent.getInstance(project).getBoolean(SUGGEST_ANNOTATION_DEPENDENCY, true);
   }
 }

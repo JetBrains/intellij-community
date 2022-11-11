@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -29,7 +29,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 62);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 64);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -49,9 +49,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId PROTOCOL_OPEN_COMMAND_HANDLED = LIFECYCLE.registerEvent("protocol.open.command.handled");
   private static final EventId FRAME_ACTIVATED = LIFECYCLE.registerEvent("frame.activated");
   private static final EventId FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated");
-  private static final EventField<String> DURATION_GROUPED = new DurationEventField();
-  private static final EventId2<Long, String> IDE_FREEZE =
-    LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"), DURATION_GROUPED);
+  private static final EventId1<Long> IDE_FREEZE =
+    LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"));
 
   private static final EventField<String> errorField = EventFields.StringValidatedByCustomRule("error", ClassNameRuleValidator.class);
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField =
@@ -70,6 +69,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
                                                                                errorSizeField,
                                                                                tooManyErrorsField);
   private static final EventId IDE_CRASH_DETECTED = LIFECYCLE.registerEvent("ide.crash.detected");
+
+  private static final EventId IDE_DEADLOCK_DETECTED = LIFECYCLE.registerEvent("ide.deadlock.detected");
 
   private enum ProjectOpenMode { New, Same, Attach }
   private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, (mode) -> StringUtil.toLowerCase(mode.name()));
@@ -127,7 +128,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onFreeze(long durationMs) {
-    IDE_FREEZE.log(durationMs, toLengthGroup((int)(durationMs / 1000)));
+    IDE_FREEZE.log(durationMs);
   }
 
   public static void onError(@Nullable PluginId pluginId,
@@ -170,16 +171,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     IDE_CRASH_DETECTED.log();
   }
 
-  @NotNull
-  private static String toLengthGroup(int seconds) {
-    if (seconds >= 60) {
-      return "60s+";
-    }
-    if (seconds > 10) {
-      seconds -= (seconds % 10);
-      return seconds + "s+";
-    }
-    return seconds + "s";
+  public static void onDeadlockDetected() {
+    IDE_DEADLOCK_DETECTED.log();
   }
 
   public static void onProjectFrameSelected(int option) {
@@ -201,26 +194,5 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
         return;
     }
     PROJECT_FRAME_SELECTED.log(optionValue);
-  }
-
-  private static final class DurationEventField extends PrimitiveEventField<String> {
-    @NotNull
-    @Override
-    public List<String> getValidationRule() {
-      return Arrays.asList("{regexp#integer}s", "-{regexp#integer}s", "{regexp#integer}s+");
-    }
-
-    @Override
-    public void addData(@NotNull FeatureUsageData fuData, String value) {
-      if (value != null) {
-        fuData.addData(getName(), value);
-      }
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "duration_grouped";
-    }
   }
 }

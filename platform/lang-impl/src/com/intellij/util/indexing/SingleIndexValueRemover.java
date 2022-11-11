@@ -21,7 +21,7 @@ class SingleIndexValueRemover {
   private final @Nullable String fileInfo;
   private final @Nullable String filePath;
   private final boolean isWritingValuesSeparately;
-  long mapInputTime;
+  long evaluatingValueRemoverTime;
 
   SingleIndexValueRemover(FileBasedIndexImpl indexImpl, @NotNull ID<?, ?> indexId,
                           @Nullable VirtualFile file,
@@ -70,7 +70,7 @@ class SingleIndexValueRemover {
         return false;
       }
       finally {
-        this.mapInputTime = System.nanoTime() - startTime;
+        this.evaluatingValueRemoverTime = System.nanoTime() - startTime;
       }
 
       if (myIndexImpl.runUpdateForPersistentData(storageUpdate)) {

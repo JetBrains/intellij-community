@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.toolbar
 
-import com.intellij.application.options.RegistryManager
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.ide.ui.ExperimentalToolbarSettingsState
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
@@ -14,6 +14,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.ApiStatus
 
 private const val REGISTRY_KEY = "ide.widget.toolbar"
@@ -53,6 +54,9 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
   }
 
   override fun dispose() {}
+
+  override val isAvailable: Boolean
+    get() = isEnabled && !ExperimentalUI.isNewUI()
 
   override var isEnabled: Boolean
     get() = RegistryManager.getInstance().`is`(REGISTRY_KEY)

@@ -30,7 +30,7 @@ public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocal
                                                  boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!STRING_REPLACE.test(call)) return;
         PsiLiteralExpression qualifier = tryCast(
           PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiLiteralExpression.class);

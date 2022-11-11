@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
@@ -24,11 +25,11 @@ import com.intellij.util.LocalTimeCounter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -48,10 +49,6 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
     private class MyTransferableData(val text: String) : TextBlockTransferableData {
 
         override fun getFlavor() = DATA_FLAVOR
-        override fun getOffsetCount() = 0
-
-        override fun getOffsets(offsets: IntArray?, index: Int) = index
-        override fun setOffsets(offsets: IntArray?, index: Int) = index
 
         companion object {
             val DATA_FLAVOR: DataFlavor =
@@ -115,11 +112,12 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
         fun convert() {
             val additionalImports = dataForConversion.tryResolveImports(targetFile)
+            ProgressManager.checkCanceled()
             var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetModule, useNewJ2k).text
 
             val convertedResult = dataForConversion.convertCodeToKotlin(project, targetModule, useNewJ2k)
             val convertedText = convertedResult.text
-
+            ProgressManager.checkCanceled()
             val newBounds = runWriteAction {
                 val importsInsertOffset = targetFile.importList?.endOffset ?: 0
                 if (targetFile.importDirectives.isEmpty() && importsInsertOffset > 0)
@@ -138,6 +136,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
             }
 
             psiDocumentManager.commitAllDocuments()
+            ProgressManager.checkCanceled()
 
             if (useNewJ2k) {
                 val postProcessor = J2kConverterExtension.extension(useNewJ2k).createPostProcessor(formatCode = true)

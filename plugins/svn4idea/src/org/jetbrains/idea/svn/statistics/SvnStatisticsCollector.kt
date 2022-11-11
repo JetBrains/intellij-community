@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.svn.NestedCopyType
 import org.jetbrains.idea.svn.SvnVcs
+import java.util.*
 
 private class SvnStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup {
@@ -16,7 +17,7 @@ private class SvnStatisticsCollector : ProjectUsagesCollector() {
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val vcs = SvnVcs.getInstance(project)
-
+    if (vcs == null) return Collections.emptySet()
     // do not track roots with errors (SvnFileUrlMapping.getErrorRoots()) as they are "not usable" until errors are resolved
     // skip externals and switched directories as they will have the same format
     val roots = vcs.svnFileUrlMapping.allWcInfos.filter { it.type == null || it.type == NestedCopyType.inner }

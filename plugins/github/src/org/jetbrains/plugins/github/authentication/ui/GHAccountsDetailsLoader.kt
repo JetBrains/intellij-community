@@ -22,13 +22,12 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.Image
 
-internal class GHAccountsDetailsLoader(private val accountManager: GHAccountManager,
-                                       private val indicatorsProvider: ProgressIndicatorsProvider,
-                                       private val accountsModel: GHAccountsListModel)
+internal class GHAccountsDetailsLoader(private val indicatorsProvider: ProgressIndicatorsProvider,
+                                       private val executorSupplier: (GithubAccount) -> GithubApiRequestExecutor?)
   : AccountsDetailsLoader<GithubAccount, GithubUserDetailed> {
 
   override fun loadDetailsAsync(account: GithubAccount): Deferred<Result<GithubUserDetailed>> {
-    val executor = createExecutor(account) ?: return CompletableDeferred<Result<GithubUserDetailed>>(
+    val executor = executorSupplier(account) ?: return CompletableDeferred<Result<GithubUserDetailed>>(
       Result.Error(GithubBundle.message("account.token.missing"), true))
 
     return ProgressManager.getInstance().submitIOTask(indicatorsProvider, true) {
@@ -54,14 +53,7 @@ internal class GHAccountsDetailsLoader(private val accountManager: GHAccountMana
   }
 
   override fun loadAvatarAsync(account: GithubAccount, url: String): Deferred<Image?> {
-    val apiExecutor = createExecutor(account) ?: return CompletableDeferred<Image?>(null).apply { complete(null) }
+    val apiExecutor = executorSupplier(account) ?: return CompletableDeferred<Image?>(null).apply { complete(null) }
     return CachingGHUserAvatarLoader.getInstance().requestAvatar(apiExecutor, url).asDeferred()
-  }
-
-  private fun createExecutor(account: GithubAccount): GithubApiRequestExecutor? {
-    val token = accountsModel.newCredentials.getOrElse(account) {
-      accountManager.findCredentials(account)
-    } ?: return null
-    return service<GithubApiRequestExecutor.Factory>().create(token)
   }
 }

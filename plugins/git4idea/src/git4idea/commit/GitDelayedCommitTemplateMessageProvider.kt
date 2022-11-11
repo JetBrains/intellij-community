@@ -13,8 +13,7 @@ import git4idea.repo.GitRepository
 
 internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessageProvider {
 
-  override fun init(project: Project, commitUi: CommitWorkflowUi, initialCommitMessagePolicy: () -> String?) {
-    val initialCommitMessage = initialCommitMessagePolicy()
+  override fun init(project: Project, commitUi: CommitWorkflowUi, initialCommitMessage: String?) {
     val commitMessageUpdater = CommitMessageUpdater(project, commitUi, initialCommitMessage)
 
     project.messageBus.connect(commitUi).subscribe(GitCommitTemplateListener.TOPIC, commitMessageUpdater)

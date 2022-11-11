@@ -71,12 +71,13 @@ internal object LessonExecutorUtil {
                                  actionsRecorder: ActionsRecorder,
                                  lessonExecutor: LessonExecutor,
                                  useAnimationCycle: Boolean) {
-    val messages = MessageFactory.convert(text)
+    val message = MessageFactory.convert(text).singleOrNull()
+                  ?: error("Balloon message should contain only one paragraph")
     val messagesPane = LessonMessagePane(false)
     messagesPane.border = null
     messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
     messagesPane.isOpaque = false
-    messagesPane.addMessage(messages, LessonMessagePane.MessageProperties(visualIndex = lessonExecutor.visualIndexNumber))
+    messagesPane.addMessage(message, LessonMessagePane.MessageProperties(visualIndex = lessonExecutor.visualIndexNumber))
 
     val preferredSize = messagesPane.preferredSize
 
@@ -169,7 +170,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
 
   override fun text(text: String, useBalloon: LearningBalloonConfig?) {
     if (useBalloon?.duplicateMessage == false) return
-    textCount++
+    textCount += text.split("\n").size
   }
 
   override fun trigger(actionId: String) {

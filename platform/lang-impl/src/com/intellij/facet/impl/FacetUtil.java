@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.facet.*;
+import com.intellij.facet.impl.invalid.InvalidFacet;
 import com.intellij.facet.impl.invalid.InvalidFacetConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -12,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -107,5 +109,14 @@ public class FacetUtil {
       return null;
     }
     return config;
+  }
+
+  @SuppressWarnings("unchecked")
+  static Facet<?> createFacetFromStateRawJ(@NotNull Module module, @NotNull FacetType<?, ?> facetType, @NotNull InvalidFacet invalidFacet) {
+    return FacetManagerBridge.Companion.createFacetFromStateRaw$intellij_platform_lang_impl(
+      module, facetType,
+      invalidFacet.getConfiguration().getFacetState(),
+      invalidFacet.getUnderlyingFacet()
+    );
   }
 }

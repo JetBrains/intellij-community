@@ -1,5 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action class="com.intellij.settingsSync.SettingsSyncHistoryAction" id="settingsSync.history" icon="AllIcons.Vcs.History"/>
-  </actions>
-</idea-plugin>

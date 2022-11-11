@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleManager
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -58,9 +60,9 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
         val parameterList = functionLiteral.getOrCreateParameterList()
         val parameters = parameterList.parameters
         val nameValidator = CollectingNameValidator(
-            filter = NewDeclarationNameValidator(functionLiteral, null, NewDeclarationNameValidator.Target.VARIABLES)
+            filter = Fe10KotlinNewDeclarationNameValidator(functionLiteral, null, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER)
         )
-        val indexParameterName = KotlinNameSuggester.suggestNameByName("index", nameValidator)
+        val indexParameterName = Fe10KotlinNameSuggester.suggestNameByName("index", nameValidator)
         val indexParameter = psiFactory.createParameter(indexParameterName)
         if (parameters.isEmpty()) {
             parameterList.addParameter(indexParameter)

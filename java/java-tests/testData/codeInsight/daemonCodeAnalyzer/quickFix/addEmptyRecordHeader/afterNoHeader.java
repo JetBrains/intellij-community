@@ -1,3 +1,3 @@
-// "Insert '()'" "true"
+// "Insert '()'" "true-preview"
 
 record A() {}

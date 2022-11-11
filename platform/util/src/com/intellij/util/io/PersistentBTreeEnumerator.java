@@ -634,11 +634,17 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   public @NotNull PersistentEnumeratorStatistics getStatistics() throws IOException {
-    return new PersistentEnumeratorStatistics(myBTree.getStatistics(),
-                                              myCollisions,
-                                              myValuesCount,
-                                              myKeyStorage.getCurrentLength(),
-                                              myStorage.length());
+    lockStorageRead();
+    try {
+      return new PersistentEnumeratorStatistics(myBTree.getStatistics(),
+                                                myCollisions,
+                                                myValuesCount,
+                                                myKeyStorage.getCurrentLength(),
+                                                myStorage.length());
+    }
+    finally {
+      unlockStorageRead();
+    }
   }
 
   @Override
@@ -706,6 +712,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   public Data valueOf(int idx) throws IOException {
     assert !myInlineKeysNoMapping : "No valueOf for inline keys with no mapping option";
     return super.valueOf(idx);
+  }
+
+  @Override
+  protected boolean shouldLockOnValueOf() {
+    return !myExternalKeysNoMapping;
   }
 
   private int nextDuplicatedValueRecord() {

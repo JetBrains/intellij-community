@@ -21,8 +21,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
@@ -148,7 +148,7 @@ public final class CompletionLists {
           final String name = ((PsiNamedElement)o).getName();
           lookups.add(new VariableLookup("$" + name, type, ((PsiNamedElement)o).getIcon(0), (PsiElement)o));
         } else {
-          lookups.add(new VariableLookup("$" + o, PlatformIcons.VARIABLE_ICON));
+          lookups.add(new VariableLookup("$" + o, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable)));
         }
       }
       return lookups;

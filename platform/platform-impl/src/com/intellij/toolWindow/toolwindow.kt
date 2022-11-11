@@ -4,14 +4,17 @@ package com.intellij.toolWindow
 import com.intellij.BundleBase
 import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ui.EmptyIcon
@@ -40,9 +43,17 @@ enum class ToolWindowEventSource {
   InspectionsWidget
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("This API was replaced", ReplaceWith("getStripeTitleSupplier(id, project, pluginDescriptor)"))
 fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supplier<String>? {
+  val openProjects = ProjectUtilCore.getOpenProjects()
+  val project = if (openProjects.size == 1) openProjects.first() else DefaultProjectFactory.getInstance().defaultProject
+  return getStripeTitleSupplier(id, project, pluginDescriptor)
+}
+
+fun getStripeTitleSupplier(id: String, project: Project, pluginDescriptor: PluginDescriptor): Supplier<String>? {
   if (id == "Project") {
-    return Supplier { IdeUICustomization.getInstance().projectViewTitle }
+    return Supplier { IdeUICustomization.getInstance().getProjectViewTitle(project) }
   }
 
   val classLoader = pluginDescriptor.classLoader
@@ -85,6 +96,7 @@ data class ToolWindowDescriptor(
   val id: String,
   var order: Int = -1,
 
+  val paneId: String = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
   var anchor: ToolWindowAnchor = ToolWindowAnchor.LEFT,
   val isAutoHide: Boolean = false,
   val floatingBounds: List<Int>? = null,

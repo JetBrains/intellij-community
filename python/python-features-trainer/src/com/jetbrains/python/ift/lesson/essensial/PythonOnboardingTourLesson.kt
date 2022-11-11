@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -63,6 +64,7 @@ import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
+import training.ui.getFeedbackProposedPropertyName
 import training.util.*
 import java.awt.Point
 import java.awt.event.KeyEvent
@@ -158,12 +160,17 @@ class PythonOnboardingTourLesson :
   }
 
   override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
+    val primaryLanguage = module.primaryLanguage
+    if (primaryLanguage == null) {
+      thisLogger().error("Onboarding lesson has no language support for some magical reason")
+      return
+    }
     PythonLessonsUtil.prepareFeedbackDataForOnboardingLesson(
       project,
-      "ift.pycharm.onboarding.feedback.proposed",
+      getFeedbackProposedPropertyName(primaryLanguage),
       "PyCharm Onboarding Tour Feedback",
       "pycharm_onboarding_tour",
-      module.primaryLanguage,
+      primaryLanguage,
       lessonEndInfo,
       usedInterpreterAtStart,
     )
@@ -185,7 +192,7 @@ class PythonOnboardingTourLesson :
                                                                                 LessonUtil.returnToWelcomeScreenRemark()))
         .yesText(PythonLessonsBundle.message("python.onboarding.finish.exit"))
         .noText(PythonLessonsBundle.message("python.onboarding.finish.modules"))
-        .icon(FeaturesTrainerIcons.Img.PluginIcon)
+        .icon(FeaturesTrainerIcons.PluginIcon)
         .show(project)
 
       when (result) {

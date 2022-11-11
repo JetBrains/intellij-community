@@ -6,14 +6,15 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
 
 open class MockKotlinAsJavaSupport(private val baseKotlinAsJavaSupport: KotlinAsJavaSupport) : KotlinAsJavaSupport() {
-    override fun createFacadeForSyntheticFile(facadeClassFqName: FqName, file: KtFile): PsiClass =
-        baseKotlinAsJavaSupport.createFacadeForSyntheticFile(facadeClassFqName, file)
+    override fun createFacadeForSyntheticFile(file: KtFile): KtLightClassForFacade =
+        baseKotlinAsJavaSupport.createFacadeForSyntheticFile(file)
 
     override fun findClassOrObjectDeclarations(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtClassOrObject> =
         baseKotlinAsJavaSupport.findClassOrObjectDeclarations(fqName, searchScope)
@@ -23,16 +24,21 @@ open class MockKotlinAsJavaSupport(private val baseKotlinAsJavaSupport: KotlinAs
       searchScope: GlobalSearchScope
     ): Collection<KtClassOrObject> = baseKotlinAsJavaSupport.findClassOrObjectDeclarationsInPackage(packageFqName, searchScope)
 
-    override fun findFilesForFacade(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtFile> =
-        baseKotlinAsJavaSupport.findFilesForFacade(facadeFqName, scope)
+    override fun findFilesForFacade(facadeFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> =
+        baseKotlinAsJavaSupport.findFilesForFacade(facadeFqName, searchScope)
 
-    override fun findFilesForPackage(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> =
-        baseKotlinAsJavaSupport.findFilesForPackage(fqName, searchScope)
+    override fun findFilesForFacadeByPackage(packageFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> =
+        baseKotlinAsJavaSupport.findFilesForFacadeByPackage(packageFqName, searchScope)
 
-    override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> =
+    override fun findFilesForPackage(packageFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> =
+        baseKotlinAsJavaSupport.findFilesForPackage(packageFqName, searchScope)
+
+    override fun getLightFacade(file: KtFile): KtLightClassForFacade? = baseKotlinAsJavaSupport.getLightFacade(file)
+
+    override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtLightClassForFacade> =
         baseKotlinAsJavaSupport.getFacadeClasses(facadeFqName, scope)
 
-    override fun getFacadeClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> =
+    override fun getFacadeClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<KtLightClassForFacade> =
         baseKotlinAsJavaSupport.getFacadeClassesInPackage(packageFqName, scope)
 
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> =

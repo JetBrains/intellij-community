@@ -9,3 +9,6 @@ fun test() {
     A(1).unaryMinus()
     -A(1)
 }
+
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

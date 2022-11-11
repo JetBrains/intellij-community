@@ -13,7 +13,7 @@ import java.util.Objects;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.info;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
 
-public class KotlinCompiler {
+public final class KotlinCompiler {
   private static final String KOTLIN_IDE_MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies";
 
   public static Path downloadAndExtractKotlinCompiler(BuildDependenciesCommunityRoot communityRoot) throws Exception {

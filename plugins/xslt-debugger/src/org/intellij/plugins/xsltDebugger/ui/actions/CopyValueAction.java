@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xsltDebugger.ui.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -63,5 +64,10 @@ public class CopyValueAction extends AnAction {
       return event != null && event.getValue() != null;
     }
     return false;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

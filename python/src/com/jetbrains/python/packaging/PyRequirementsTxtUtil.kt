@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -80,7 +81,7 @@ private class PyCollectImportsTask(
 }
 
 internal fun syncWithImports(module: Module) {
-  val notificationGroup = NotificationGroup.balloonGroup("Sync Python requirements", PyBundle.message("python.requirements.balloon"))
+  val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Sync Python requirements")
   val sdk = PythonSdkUtil.findPythonSdk(module)
   if (sdk == null) {
     val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {

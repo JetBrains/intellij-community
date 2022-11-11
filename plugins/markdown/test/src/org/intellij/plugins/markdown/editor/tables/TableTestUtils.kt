@@ -2,12 +2,10 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.openapi.project.Project
-import com.intellij.ui.scale.TestScaleHelper
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal object TableTestUtils {
   fun runWithChangedSettings(project: Project, block: () -> Unit) {
-    TestScaleHelper.setRegistryProperty("markdown.tables.editing.support.enable", "true")
     val settings = MarkdownSettings.getInstance(project)
     val oldValue = settings.isEnhancedEditingEnabled
     settings.isEnhancedEditingEnabled = true
@@ -15,7 +13,6 @@ internal object TableTestUtils {
       block.invoke()
     } finally {
       settings.isEnhancedEditingEnabled = oldValue
-      TestScaleHelper.restoreRegistryProperties()
     }
   }
 }

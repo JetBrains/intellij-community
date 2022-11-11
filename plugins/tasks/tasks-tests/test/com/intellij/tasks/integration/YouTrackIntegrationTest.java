@@ -23,6 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @RunWith(JUnit38AssumeSupportRunner.class)
@@ -165,7 +170,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
       assertEquals(TaskState.RESOLVED, task.getState());
     }
     finally {
-      myRepository.setTaskState(task, new CustomTaskState("Open", "Open"));
+      setIssueStateViaRestApi(Issues.FOR_STATE_UPDATING, "Open");
     }
   }
 
@@ -232,9 +237,34 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     YouTrackIntellisense intellisense = new YouTrackIntellisense(myRepository);
     List<CompletionItem> completionItems = intellisense.fetchCompletion("type: ", 6);
     List<String> variants = ContainerUtil.map(completionItems, item -> item.getOption());
-    assertContainsElements(variants,"Bug", "Task", "Feature");
+    assertContainsElements(variants, "Bug", "Task", "Feature");
     CompletionItem bugState = ContainerUtil.find(completionItems, item -> item.getOption().equals("Bug"));
     assertTrue(bugState.getDescription().contains("Type in"));
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static void setIssueStateViaRestApi(@NotNull String issueId, @NotNull String stateName) throws Exception {
+    // Don't use Authenticator.getPasswordAuthentication() because it doesn't allow to send credentials
+    // preemptively without incoming "WWW-Authenticate" header (YouTrack doesn't send that).
+    String encodedCredentials = Base64.getEncoder().encodeToString(("root:" + APPLICATION_PASSWORD).getBytes(StandardCharsets.UTF_8));
+    HttpRequest request = HttpRequest.newBuilder(URI.create(SERVER_URL + "/api/commands"))
+      .header("Content-Type", "application/json")
+      .header("Authorization", "Basic " + encodedCredentials)
+      // language=json
+      .POST(HttpRequest.BodyPublishers.ofString("{\n" +
+                                                "  \"query\": \"state " + stateName + "\",\n" +
+                                                "  \"issues\": [\n" +
+                                                "    {\n" +
+                                                "      \"idReadable\": \"" + issueId + "\"\n" +
+                                                "    }\n" +
+                                                "  ]\n" +
+                                                "}"))
+      .build();
+    HttpResponse<String> response = HttpClient.newHttpClient()
+      .send(request, HttpResponse.BodyHandlers.ofString());
+    if (response.statusCode() != 200) {
+      throw new RuntimeException("Setting " + issueId + " state to " + stateName + " failed with response:" + response.body());
+    }
   }
 
   @Override

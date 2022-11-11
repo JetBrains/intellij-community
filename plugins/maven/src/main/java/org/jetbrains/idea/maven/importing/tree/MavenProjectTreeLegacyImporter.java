@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.tree;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -19,21 +20,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.*;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.statistics.MavenImportCollector;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.*;
 
-import static org.jetbrains.idea.maven.importing.tree.MavenModuleType.*;
+import static org.jetbrains.idea.maven.importing.StandardMavenModuleType.*;
 
 public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectTreeLegacyImporter.class);
 
-  private final LegacyMavenProjectImportContextProvider contextProvider;
   private volatile MavenModuleImportContext myContext;
-
-  public static boolean isAlwaysUseTreeImport() {
-    return "true".equals(System.getProperty("maven.import.use.tree.import"));
-  }
 
   public MavenProjectTreeLegacyImporter(@NotNull Project p,
                                         @NotNull MavenProjectsTree projectsTree,
@@ -43,32 +40,45 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
     super(p, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
 
     myContext = new MavenModuleImportContext();
-    contextProvider =
-      new LegacyMavenProjectImportContextProvider(p, projectsTree, projectsToImportWithChanges, myModuleModel, importingSettings);
   }
 
+  @Nullable
   @Override
-  @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
-    List<MavenProjectsProcessorTask> tasks = importProjectTree();
-    return tasks;
-  }
+    LegacyMavenProjectImportContextProvider contextProvider =
+      new LegacyMavenProjectImportContextProvider(myProject, myProjectsTree, myModuleModel, myImportingSettings);
 
-  @Nullable
-  private List<MavenProjectsProcessorTask> importProjectTree() {
-    myContext = contextProvider.getContext();
+    Map<MavenProject, MavenProjectChanges> allProjectsWithChanges = new HashMap<>();
+
+    StructuredIdeActivity activity = MavenImportCollector.LEGACY_IMPORT.started(myProject);
+
+    for (var each : myProjectsToImportWithChanges.entrySet()) {
+      if (!myProjectsTree.isIgnored(each.getKey())) {
+        allProjectsWithChanges.put(each.getKey(), each.getValue());
+      }
+    }
+    for (MavenProject eachProject : myProjectsTree.getProjects()) {
+      if (!myProjectsTree.isIgnored(eachProject) && !allProjectsWithChanges.containsKey(eachProject)) {
+        allProjectsWithChanges.put(eachProject, MavenProjectChanges.NONE);
+      }
+    }
+
+    myContext = contextProvider.getContext(allProjectsWithChanges);
     boolean hasChanges = false;
     List<MavenProjectsProcessorTask> postTasks = new ArrayList<>();
 
     if (myProject.isDisposed()) return null;
 
-    final List<MavenModuleImporter> importers = new ArrayList<>();
+    final List<MavenLegacyModuleImporter.ExtensionImporter> extensionImporters = new ArrayList<>();
     if (myContext.hasChanges) {
       hasChanges = true;
+      StructuredIdeActivity createModulesPhase = MavenImportCollector.LEGACY_CREATE_MODULES_PHASE.startedWithParent(myProject, activity);
 
       TreeModuleConfigurer configurer = new TreeModuleConfigurer(myProjectsTree, myImportingSettings, myModelsProvider);
-      importers.addAll(configurer.configModules(myContext.allModules, myContext.moduleNameByProject));
-      scheduleRefreshResolvedArtifacts(postTasks);
+      extensionImporters.addAll(configurer.configModules(myContext.allModules, myContext.moduleNameByProject));
+      scheduleRefreshResolvedArtifacts(postTasks, myProjectsToImportWithChanges.keySet());
+
+      createModulesPhase.finished();
     }
 
     List<Module> obsoleteModules = myContext.legacyObsoleteModules;
@@ -77,6 +87,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
 
     if (myProject.isDisposed()) return null;
     if (hasChanges) {
+      StructuredIdeActivity deleteObsoletePhase = MavenImportCollector.LEGACY_DELETE_OBSOLETE_PHASE.startedWithParent(myProject, activity);
       MavenUtil.invokeAndWaitWriteAction(myProject, () -> {
         ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
           setMavenizedModules(obsoleteModules, false);
@@ -88,17 +99,23 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
           myModelsProvider.commit();
 
           if (myContext.hasChanges) {
-            removeOutdatedCompilerConfigSettings();
+            removeOutdatedCompilerConfigSettings(myProject);
             setMavenizedModules(ContainerUtil.map(myContext.changedModules, e -> e.getLegacyModuleData().getModule()), true);
           }
         });
       });
+      deleteObsoletePhase.finished();
 
-      configFacets(importers, postTasks);
+      StructuredIdeActivity importersPhase = MavenImportCollector.LEGACY_IMPORTERS_PHASE.startedWithParent(myProject, activity);
+      importExtensions(myProject, myIdeModifiableModelsProvider, extensionImporters, postTasks, importersPhase);
+      importersPhase.finished();
     }
     else {
       finalizeImport(obsoleteModules);
     }
+
+    activity.finished(() -> List.of(MavenImportCollector.NUMBER_OF_MODULES.with(myContext.allModules.size())));
+
 
     return postTasks;
   }
@@ -129,14 +146,15 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
       myModelsProvider = modelsProvider;
     }
 
-    public List<MavenModuleImporter> configModules(List<MavenModuleImportData> allModules, Map<MavenProject, String> moduleNameByProject) {
-      List<MavenModuleImporter> importers = new ArrayList<>();
+    public List<MavenLegacyModuleImporter.ExtensionImporter> configModules(List<MavenTreeModuleImportData> allModules,
+                                                                           Map<MavenProject, String> moduleNameByProject) {
+      List<MavenLegacyModuleImporter.ExtensionImporter> extensionImporters = new ArrayList<>();
 
-      for (MavenModuleImportData importData : allModules) {
-        MavenModuleImporter moduleImporter = createModuleImporter(importData, moduleNameByProject);
-        importers.add(moduleImporter);
+      for (MavenTreeModuleImportData importData : allModules) {
+        MavenLegacyModuleImporter moduleImporter = createModuleImporter(importData, moduleNameByProject);
+        ContainerUtil.addIfNotNull(extensionImporters, createExtensionImporterIfApplicable(importData, moduleNameByProject));
 
-        if (!importData.hasChanges()) continue;
+        if (!importData.getChanges().hasChanges()) continue;
 
         MavenProject mavenProject = importData.getMavenProject();
         MavenId mavenId = mavenProject.getMavenId();
@@ -150,18 +168,18 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
         configModule(importData, moduleImporter, rootModelAdapter);
       }
 
-      return importers;
+      return extensionImporters;
     }
 
-    private static void configModule(@NotNull MavenModuleImportData importData,
-                                     @NotNull MavenModuleImporter moduleImporter,
+    private static void configModule(@NotNull MavenTreeModuleImportData importData,
+                                     @NotNull MavenLegacyModuleImporter moduleImporter,
                                      @NotNull MavenRootModelAdapter rootModelAdapter) {
-      MavenModuleType type = importData.getModuleData().getType();
+      StandardMavenModuleType type = importData.getModuleData().getType();
       rootModelAdapter.init(importData.getLegacyModuleData().isNewModule());
-      if (type == AGGREGATOR || type == MAIN_TEST) {
+      if (type == AGGREGATOR || type == SINGLE_MODULE) {
         moduleImporter.config(rootModelAdapter, importData);
       }
-      else if (type == AGGREGATOR_MAIN_TEST) {
+      else if (type == COMPOUND_MODULE) {
         moduleImporter.configMainAndTestAggregator(rootModelAdapter, importData);
       }
       else {
@@ -169,20 +187,30 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
       }
     }
 
-    private MavenModuleImporter createModuleImporter(MavenModuleImportData importData,
-                                                     Map<MavenProject, String> moduleNameByProject) {
-      return new MavenModuleImporter(importData.getLegacyModuleData().getModule(),
-                                     myProjectsTree,
-                                     importData.getMavenProject(),
-                                     importData.getChanges(),
-                                     moduleNameByProject,
-                                     myImportingSettings,
-                                     myModelsProvider,
-                                     importData.getModuleData().getType());
+    private MavenLegacyModuleImporter createModuleImporter(MavenTreeModuleImportData importData,
+                                                           Map<MavenProject, String> moduleNameByProject) {
+      return new MavenLegacyModuleImporter(importData.getLegacyModuleData().getModule(),
+                                           myProjectsTree,
+                                           importData.getMavenProject(),
+                                           moduleNameByProject,
+                                           myImportingSettings,
+                                           myModelsProvider);
+    }
+
+    @Nullable
+    private MavenLegacyModuleImporter.ExtensionImporter createExtensionImporterIfApplicable(MavenTreeModuleImportData importData,
+                                                                                            Map<MavenProject, String> moduleNameByProject) {
+      return MavenLegacyModuleImporter.ExtensionImporter.createIfApplicable(importData.getMavenProject(),
+                                                                            importData.getLegacyModuleData().getModule(),
+                                                                            importData.getModuleData().getType(),
+                                                                            myProjectsTree,
+                                                                            importData.getChanges(),
+                                                                            moduleNameByProject,
+                                                                            false);
     }
   }
 
-  private void removeUnusedProjectLibraries(List<MavenModuleImportData> changedModuleImportData) {
+  private void removeUnusedProjectLibraries(List<MavenTreeModuleImportData> changedModuleImportData) {
     Set<Library> unusedLibraries = new HashSet<>();
     Collections.addAll(unusedLibraries, myModelsProvider.getAllLibraries());
 
@@ -205,9 +233,9 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
     return library instanceof LibraryEx && ((LibraryEx)library).isDisposed();
   }
 
-  private Collection<ModuleRootModel> collectModuleModels(List<MavenModuleImportData> changedModuleImportData) {
+  private Collection<ModuleRootModel> collectModuleModels(List<MavenTreeModuleImportData> changedModuleImportData) {
     Map<Module, ModuleRootModel> rootModels = new HashMap<>();
-    for (MavenModuleImportData importData : changedModuleImportData) {
+    for (MavenTreeModuleImportData importData : changedModuleImportData) {
       Module module = importData.getLegacyModuleData().getModule();
       ModifiableRootModel rootModel = myModelsProvider.getModifiableRootModel(module);
       rootModels.put(module, rootModel);

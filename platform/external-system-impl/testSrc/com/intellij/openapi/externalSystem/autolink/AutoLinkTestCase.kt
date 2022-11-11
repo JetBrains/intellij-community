@@ -1,27 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
-import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.projectImport.ProjectOpenProcessor
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.openProjectAsync
 import com.intellij.util.io.systemIndependentPath
-import java.nio.file.Path
+import java.util.*
 import javax.swing.Icon
 
 abstract class AutoLinkTestCase : ExternalSystemTestCase() {
-
   lateinit var testDisposable: Disposable
     private set
+
+  final override fun runInDispatchThread() = false
 
   override fun setUp() {
     super.setUp()
@@ -29,8 +28,15 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
   }
 
   override fun tearDown() {
-    Disposer.dispose(testDisposable)
-    super.tearDown()
+    try {
+      Disposer.dispose(testDisposable)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   override fun getTestsTempDir() = "tmp${System.currentTimeMillis()}"
@@ -51,25 +57,34 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
       override fun isProjectFile(file: VirtualFile): Boolean =
         unlinedProjectAware.isBuildFile(file)
 
-      override fun linkAndRefreshProject(projectDirectory: Path, project: Project) =
+      override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+        val projectDirectory = getProjectDirectory(projectFile).toNioPath()
         unlinedProjectAware.linkAndLoadProject(project, projectDirectory.systemIndependentPath)
+      }
     }
     return object : ProjectOpenProcessor() {
-      override fun getName(): String = unlinedProjectAware.systemId.readableName
-      override fun getIcon(): Icon? = null
+      override val name: String
+        get() = unlinedProjectAware.systemId.readableName
+      override val icon: Icon?
+        get() = null
 
       override fun canOpenProject(file: VirtualFile): Boolean =
         openProvider.canOpenProject(file)
 
-      override fun doOpenProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-        val project = openProvider.openProject(projectFile, projectToClose, forceOpenInNewFrame)
+      override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+        throw UnsupportedOperationException("openProjectAsync must be used")
+      }
+
+      override suspend fun openProjectAsync(virtualFile: VirtualFile,
+                                            projectToClose: Project?,
+                                            forceOpenInNewFrame: Boolean): Optional<Project> {
+        val project = openProvider.openProject(virtualFile, projectToClose, forceOpenInNewFrame)
         if (project != null && !isExternalSystem) {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null)
         }
-        return project
+        return Optional.ofNullable(project)
       }
-
 
       override fun canImportProjectAfterwards(): Boolean = true
       override fun importProjectAfterwards(project: Project, file: VirtualFile) =
@@ -116,13 +131,8 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
     """.trimIndent())
   }
 
-  fun openProjectFrom(projectPath: VirtualFile): Project {
-    return ExternalSystemSetupProjectTestCase.openProjectFrom(projectPath).apply {
-      UnlinkedProjectStartupActivity().runActivity(this)
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-    }
+  suspend fun openProjectAsync(virtualFile: VirtualFile): Project {
+    return openProjectAsync(virtualFile, UnlinkedProjectStartupActivity())
   }
 
   fun assertNotificationAware(project: Project, vararg projects: ExternalSystemProjectId) {

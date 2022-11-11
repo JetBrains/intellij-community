@@ -24,10 +24,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Set;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   private static final Logger LOG = Logger.getInstance(ComponentTreeBuilder.class);
 

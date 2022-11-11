@@ -8,13 +8,16 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.messages.TwoStepConfirmationDialog;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -237,7 +240,7 @@ public class MessagesServiceImpl implements MessagesService {
     }
 
     final JTextArea textArea = new JTextArea(10, 50);
-    UIUtil.addUndoRedoActions(textArea);
+    SwingUndoUtil.addUndoRedoActions(textArea);
     textArea.setWrapStyleWord(true);
     textArea.setLineWrap(true);
     List<String> lines = parser.fun(textField.getText());

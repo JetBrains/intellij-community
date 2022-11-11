@@ -49,10 +49,10 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         Ref<Boolean> conflictFound = new Ref<>(false);
         parent.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitClass(PsiClass aClass) { }
+          public void visitClass(@NotNull PsiClass aClass) { }
 
           @Override
-          public void visitVariable(PsiVariable variable) {
+          public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             if (varName.equals(variable.getName())) {
               conflictFound.set(true);

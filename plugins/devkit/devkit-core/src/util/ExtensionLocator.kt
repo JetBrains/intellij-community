@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util
 
 import com.intellij.openapi.project.Project
@@ -62,7 +62,7 @@ internal fun processExtensionDeclarations(name: String,
 
       val extension = DomManager.getDomManager(project).getDomElement(element) as? Extension ?: return@processElementsWithWord true
       callback(extension, element)
-    }, scope, searchWord, UsageSearchContext.IN_FOREIGN_LANGUAGES, /* case-sensitive = */ true)
+    }, scope, searchWord, UsageSearchContext.IN_FOREIGN_LANGUAGES, /* caseSensitive = */ true)
 }
 
 private fun findExtensionsByClassName(project: Project, className: String): List<ExtensionCandidate> {

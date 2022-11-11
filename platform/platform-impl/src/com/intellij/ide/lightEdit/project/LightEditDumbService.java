@@ -89,11 +89,6 @@ public class LightEditDumbService extends DumbServiceImpl {
   }
 
   @Override
-  public boolean isSuspendedDumbMode() {
-    return false;
-  }
-
-  @Override
   public void unsafeRunWhenSmart(@NotNull Runnable runnable) {
     reportUnavailable();
   }

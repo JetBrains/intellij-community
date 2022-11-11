@@ -43,7 +43,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
   private static class ObjectInstantiationInEqualsHashCodeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitExpression(PsiExpression expression) {
+    public void visitExpression(@NotNull PsiExpression expression) {
       if (!ExpressionUtils.isAutoBoxed(expression) || isAutoBoxingFromCache(expression) || !isInsideEqualsOrHashCode(expression)) {
         return;
       }
@@ -56,7 +56,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null || iteratedValue.getType() instanceof PsiArrayType || !isInsideEqualsOrHashCode(statement)) {
         return;
@@ -65,7 +65,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         return;
@@ -133,7 +133,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       if (!(expression.getParent() instanceof PsiVariable)) {
         // new expressions are already reported.
         return;
@@ -145,7 +145,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       if (!ExpressionUtils.hasStringType(expression) || ExpressionUtils.isEvaluatedAtCompileTime(expression)) {
         return;
@@ -157,7 +157,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (!isInsideEqualsOrHashCode(expression)) {
         return;

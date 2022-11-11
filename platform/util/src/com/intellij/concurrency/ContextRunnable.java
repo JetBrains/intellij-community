@@ -3,23 +3,34 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.AccessToken;
 import kotlin.coroutines.CoroutineContext;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-final class ContextRunnable implements Runnable {
+@Internal
+public final class ContextRunnable implements Runnable {
 
+  private final boolean myRoot;
   private final @NotNull CoroutineContext myParentContext;
   private final @NotNull Runnable myRunnable;
 
-  ContextRunnable(@NotNull Runnable runnable) {
+  public ContextRunnable(boolean root, @NotNull Runnable runnable) {
+    myRoot = root;
     myParentContext = ThreadContext.currentThreadContext();
     myRunnable = runnable;
   }
 
   @Override
   public void run() {
-    ThreadContext.checkUninitializedThreadContext();
+    if (myRoot) {
+      ThreadContext.checkUninitializedThreadContext();
+    }
     try (AccessToken ignored = ThreadContext.replaceThreadContext(myParentContext)) {
       myRunnable.run();
     }
+  }
+
+  @Override
+  public String toString() {
+    return myRunnable.toString();
   }
 }

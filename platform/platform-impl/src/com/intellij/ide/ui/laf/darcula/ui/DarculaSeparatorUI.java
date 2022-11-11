@@ -33,10 +33,12 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    Rectangle r = new Rectangle(c.getSize());
-    g.setColor(c.getBackground());
-    g.fillRect(0, 0, c.getWidth(), c.getHeight());
+    if (c.isOpaque()) {
+      g.setColor(c.getBackground());
+      g.fillRect(0, 0, c.getWidth(), c.getHeight());
+    }
 
+    Rectangle r = new Rectangle(c.getSize());
     g.setColor(c.getForeground());
     if (((JSeparator)c).getOrientation() == SwingConstants.VERTICAL) {
       g.fillRect(r.x + getStripeIndent(), r.y, getStripeWidth(), r.height);

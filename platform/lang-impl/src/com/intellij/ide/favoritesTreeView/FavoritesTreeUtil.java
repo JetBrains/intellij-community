@@ -14,23 +14,6 @@ import java.util.Collections;
 import java.util.List;
 
 public final class FavoritesTreeUtil {
-  public static FavoriteTreeNodeDescriptor @NotNull [] getSelectedNodeDescriptors(final DnDAwareTree tree) {
-    TreePath[] path = tree.getSelectionPaths();
-    if (path == null) {
-      return FavoriteTreeNodeDescriptor.EMPTY_ARRAY;
-    }
-    ArrayList<FavoriteTreeNodeDescriptor> result = new ArrayList<>();
-    for (TreePath treePath : path) {
-      DefaultMutableTreeNode lastPathNode = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-      Object userObject = lastPathNode.getUserObject();
-      if (!(userObject instanceof FavoriteTreeNodeDescriptor)) {
-        continue;
-      }
-      FavoriteTreeNodeDescriptor treeNodeDescriptor = (FavoriteTreeNodeDescriptor)userObject;
-      result.add(treeNodeDescriptor);
-    }
-    return result.toArray(FavoriteTreeNodeDescriptor.EMPTY_ARRAY);
-  }
 
   public static List<AbstractTreeNode<?>> getLogicalPathToSelected(final Tree tree) {
     final List<AbstractTreeNode<?>> result = new ArrayList<>();
@@ -53,29 +36,5 @@ public final class FavoritesTreeUtil {
       }
     }
     return Collections.emptyList();
-  }
-
-  @Nullable
-  public static FavoritesListNode extractParentList(FavoriteTreeNodeDescriptor descriptor) {
-    AbstractTreeNode current = descriptor.getElement();
-    while (current != null) {
-      if (current instanceof FavoritesListNode) {
-        return (FavoritesListNode)current;
-      }
-      current = current.getParent();
-    }
-    return null;
-  }
-
-  static FavoritesListProvider getProvider(@NotNull FavoritesManager manager, @NotNull FavoriteTreeNodeDescriptor descriptor) {
-    AbstractTreeNode treeNode = descriptor.getElement();
-    while (treeNode != null && (!(treeNode instanceof FavoritesListNode))) {
-      treeNode = treeNode.getParent();
-    }
-    if (treeNode != null) {
-      final String name = ((FavoritesListNode)treeNode).getValue();
-      return manager.getListProvider(name);
-    }
-    return null;
   }
 }

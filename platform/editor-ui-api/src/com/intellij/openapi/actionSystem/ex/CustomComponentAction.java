@@ -30,6 +30,9 @@ public interface CustomComponentAction {
    *   or a {@link java.beans.PropertyChangeListener} shall be used to synchronize the provided {@link Presentation} and the component state.
    *   That is because an update can be called on any presentation and the result can be thrown away without really applying.
    *   Also, for {@link com.intellij.openapi.actionSystem.ActionUpdateThread#BGT} actions the update is called on a background thread.</li>
+   *   <li>ActionToolbar will apply its customization for the component. In particular it will set the {@link ActionButtonLook}
+   *   if the component is derived from {@link com.intellij.openapi.actionSystem.impl.ActionButton}.
+   *   </li>
    * </ul>
    *
    * @see com.intellij.openapi.actionSystem.impl.ActionButton

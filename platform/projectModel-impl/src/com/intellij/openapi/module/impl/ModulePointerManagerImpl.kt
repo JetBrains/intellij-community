@@ -33,14 +33,12 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
         unregisterPointer(module)
       }
 
-      override fun moduleAdded(project: Project, module: Module) {
-        moduleAppears(module)
+      override fun modulesAdded(project: Project, modules: List<Module>) {
+        modulesAppears(modules)
       }
 
       override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
-        for (module in modules) {
-          moduleAppears(module)
-        }
+        modulesAppears(modules)
         val renamedOldToNew = modules.associateBy({ oldNameProvider.`fun`(it) }, { it.name })
         for (entry in oldToNewName.entries) {
           val newValue = renamedOldToNew.get(entry.value)
@@ -95,11 +93,13 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
     }
   }
 
-  private fun moduleAppears(module: Module) {
+  private fun modulesAppears(modules: List<Module>) {
     lock.write {
-      unresolved.remove(module.name)?.forEach {
-        it.moduleAdded(module)
-        registerPointer(module, it)
+      for (module in modules) {
+        unresolved.remove(module.name)?.forEach {
+          it.moduleAdded(module)
+          registerPointer(module, it)
+        }
       }
     }
   }

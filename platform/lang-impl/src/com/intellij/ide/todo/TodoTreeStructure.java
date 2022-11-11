@@ -18,9 +18,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author Vladimir Kondratyev
- */
 public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings{
   protected TodoTreeBuilder myBuilder;
   protected AbstractTreeNode myRootElement;

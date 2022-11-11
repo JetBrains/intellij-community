@@ -13,7 +13,7 @@ public final class ResolveKt {
         date.time = 1000
         listOf("").last()
         mutableMapOf(1 <other> "1").entries.first().setValue("123")
-        var intRange: kotlin.ranges.LongRange = 0 .. 3
+        var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3
         intRange.contains(2 as int)
         <init>(1, 2)
     }

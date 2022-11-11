@@ -1063,9 +1063,6 @@
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
-  <action id="AddToFavoritesPopup">
-    <keyboard-shortcut first-keystroke="alt shift F"/>
-  </action>
   <action id="CodeInspection.OnEditor">
     <keyboard-shortcut first-keystroke="alt shift I"/>
   </action>
@@ -1165,6 +1162,14 @@
   <action id="Git.Rename.Local.Branch">
     <keyboard-shortcut first-keystroke="F2" />
     <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
+
+  <action id="GitNewBranchAction">
+    <keyboard-shortcut first-keystroke="control alt N"/>
+  </action>
+
+  <action id="Git.New.Branch.In.Log">
+    <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
 
   <action id="ChangesView.SetDefault">

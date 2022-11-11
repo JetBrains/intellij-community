@@ -1,4 +1,4 @@
-// "Replace with 'new Serializable[]{b}'" "true"
+// "Replace with 'new Serializable[]{b}'" "true-preview"
 
 import java.io.Serializable;
 

@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
-import com.intellij.debugger.engine.DebugProcess
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -17,14 +15,14 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus
-import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledDataDescriptor.MethodSignature
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledCodeFragmentData.MethodSignature
 import org.jetbrains.kotlin.idea.debugger.evaluate.getResolutionFacadeForCodeFragment
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -50,7 +48,6 @@ class CodeFragmentCodegenException(val reason: Exception) : Exception()
 class CodeFragmentCompiler(private val executionContext: ExecutionContext, private val status: EvaluationStatus) {
 
     companion object {
-
         fun useIRFragmentCompiler(): Boolean =
             Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend").asBoolean()
     }

@@ -330,18 +330,23 @@ public class StringUtilRt {
   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
     List<String> result = new ArrayList<String>();
     StringBuilder builder = new StringBuilder(s.length());
-    boolean inQuotes = false;
+    char quote = 0;
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
-      if (c == separator && !inQuotes) {
+      if (c == separator && quote == 0) {
         if (builder.length() > 0) {
           result.add(builder.toString());
           builder.setLength(0);
         }
         continue;
       }
-      if ((c == '"' || c == '\'') && !(i > 0 && s.charAt(i - 1) == '\\')) {
-        inQuotes = !inQuotes;
+      boolean isQuote = c == '"' || c == '\'';
+      boolean isEscaped = isEscapedSymbol(s, i);
+      if (quote == 0 && isQuote && !isEscaped) {
+        quote = c;
+      }
+      else if (c == quote && !isEscaped) {
+        quote = 0;
       }
       builder.append(c);
     }
@@ -349,6 +354,22 @@ public class StringUtilRt {
       result.add(builder.toString());
     }
     return result;
+  }
+
+  private static boolean isEscapedSymbol(CharSequence charSequence, int index) {
+    return countTailingSymbols(charSequence.subSequence(0, index), '\\') % 2 == 1;
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static int countTailingSymbols(CharSequence charSequence, char symbol) {
+    int counter = 0;
+    for (int i = charSequence.length() - 1; i >= 0; i--) {
+      if (charSequence.charAt(i) != symbol) {
+        break;
+      }
+      counter++;
+    }
+    return counter;
   }
 
   @NotNull

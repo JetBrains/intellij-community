@@ -71,13 +71,9 @@ class ResizeHandlebarUpdater private constructor() : IdeEventQueue.EventDispatch
 
   private fun setCurrentCollapsingComponent(new: CollapsingComponent?) {
     val old = currentCollapsingComponent.get()
-    if (old != null) {
-      old.border = invisibleResizeBorder
-    }
-    if (new != null) {
-      new.border = visibleResizeBorder
-    }
-    if (old !== new) {
+    if (old != new) {
+      old?.border = invisibleResizeBorder
+      new?.border = visibleResizeBorder
       currentCollapsingComponent = WeakReference(new)
     }
   }

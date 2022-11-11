@@ -20,6 +20,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.TransferToEDTQueue;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,8 +83,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
     HighlightingSession session = map.get(file);
     if (session == null) {
-      throw new IllegalStateException("No HighlightingSession found for " + file + " ("+file.getClass()+") in " + indicator + " in map: " + map.entrySet().stream().map(e->e.getKey() + " ("+e.getKey().getClass()+") -> "+e.getValue()).collect(
-        Collectors.joining("; ")));
+      String mapStr = map.entrySet().stream().map(e -> e.getKey() + " (" + e.getKey().getClass() + ") -> " + e.getValue()).collect(Collectors.joining("; "));
+      throw new IllegalStateException("No HighlightingSession found for " + file + " (" + file.getClass() + ") in " + indicator + " in map: " + mapStr);
     }
     return session;
   }
@@ -121,18 +122,19 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     if (map == null) {
       map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, new ConcurrentHashMap<>());
     }
-    HighlightingSessionImpl session = new HighlightingSessionImpl(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
+    HighlightingSession session = new HighlightingSessionImpl(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
     map.put(psiFile, session);
     return session;
   }
 
+  @ApiStatus.Internal
   public static void runInsideHighlightingSession(@NotNull PsiFile file,
-                                                  @NotNull DaemonProgressIndicator progressIndicator,
                                                   @Nullable EditorColorsScheme editorColorsScheme,
                                                   @NotNull ProperTextRange visibleRange,
                                                   boolean canChangeFileSilently,
                                                   @NotNull Runnable runnable) {
-    createHighlightingSession(file, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
+    DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
+    createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently);
     runnable.run();
   }
 

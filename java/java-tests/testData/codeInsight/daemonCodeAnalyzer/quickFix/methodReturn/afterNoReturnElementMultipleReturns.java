@@ -1,4 +1,4 @@
-// "Make 'm' return 'double'" "true"
+// "Make 'm()' return 'double'" "true-preview"
 class Test {
 
   double m(boolean b) {

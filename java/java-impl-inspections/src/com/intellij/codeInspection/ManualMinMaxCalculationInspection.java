@@ -44,14 +44,14 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
     return new JavaElementVisitor() {
 
       @Override
-      public void visitIfStatement(PsiIfStatement statement) {
+      public void visitIfStatement(@NotNull PsiIfStatement statement) {
         ConditionalModel model = IfConditionalModel.from(statement, false);
         if (model == null) return;
         visitConditional(statement.getFirstChild(), model);
       }
 
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression expression) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
         ConditionalModel model = ConditionalModel.from(expression);
         if (model == null) return;
         visitConditional(expression, model);

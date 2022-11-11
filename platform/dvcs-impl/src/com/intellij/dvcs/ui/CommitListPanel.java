@@ -105,7 +105,7 @@ public class CommitListPanel extends JPanel implements DataProvider {
       int row = rows[0];
 
       VcsFullCommitDetails commit = myCommits.get(row);
-      return commit.getChanges().toArray(new Change[0]);
+      return commit.getChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     return null;
   }

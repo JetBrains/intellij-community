@@ -53,7 +53,7 @@ public class AtomicFieldUpdaterNotStaticFinalInspection extends BaseInspection {
   private static class AtomicFieldUpdaterNotStaticFinalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
         return;

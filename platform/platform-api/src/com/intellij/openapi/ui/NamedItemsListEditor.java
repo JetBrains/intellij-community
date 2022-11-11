@@ -2,10 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -323,9 +320,13 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
     @Override
     public void update(@NotNull AnActionEvent event) {
-      super.update(event);
       T object = (T)getSelectedObject();
       event.getPresentation().setEnabled(object != null && canCopy(object));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

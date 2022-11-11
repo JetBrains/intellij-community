@@ -9,14 +9,13 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -32,12 +31,14 @@ import com.intellij.ui.preview.DescriptorPreview;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +81,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     if (node != null) ProblemsViewStatsCollector.problemSelected(this, node.getProblem());
     updateAutoscroll();
     updatePreview();
-  }, 50, stateForComponent(this), this);
+  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, stateForComponent(this));
 
   private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
     ToolWindow window = getCurrentToolWindow();
@@ -92,7 +93,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     int count = root == null ? 0 : root.getProblemCount();
     content.setDisplayName(getName(count));
     ProblemsViewIconUpdater.update(getProject());
-  }, 50, stateForComponent(this), this);
+  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, stateForComponent(this));
 
   private final Option myAutoscrollToSource = new Option() {
     @Override
@@ -221,7 +222,14 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     JScrollPane scrollPane = createScrollPane(myTree, true);
     if (ExperimentalUI.isNewUI()) {
       scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
-        Border border = event.getAdjustable().getValue() != 0 ? new CustomLineBorder(myToolbarInsets) : JBUI.Borders.empty(myToolbarInsets);
+        int orientation = ((ActionToolbarImpl)myToolbar).getOrientation();
+        Insets i = orientation == SwingConstants.VERTICAL ? UIManager.getInsets("ToolBar.verticalToolbarInsets")
+                                                          : UIManager.getInsets("ToolBar.horizontalToolbarInsets");
+        Border innerBorder = i != null ? JBUI.Borders.empty(i.top, i.left, i.bottom, i.right)
+                                       : JBUI.Borders.empty(2);
+
+        Border border = event.getAdjustable().getValue() != 0 ? JBUI.Borders.compound(new CustomLineBorder(myToolbarInsets), innerBorder)
+                                                              : innerBorder;
         myToolbar.getComponent().setBorder(border);
         myToolbar.getComponent().repaint();
       });
@@ -258,6 +266,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
+    if (PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(dataId)) return shouldHideExpandCollapseActionsIfThereIsNoTreeExpander();
     if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       // this code allows performing Editor's Undo action from the Problems View
       Editor editor = getPreview();
@@ -269,16 +278,23 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     Node node = getSelectedNode();
     if (node != null) {
       if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) return node;
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return node.getVirtualFile();
-      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        Navigatable navigatable = node.getNavigatable();
-        return navigatable == null ? null : new Navigatable[]{navigatable};
-      }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         VirtualFile file = node.getVirtualFile();
         return file == null ? null : new VirtualFile[]{file};
       }
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId, node);
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Node node) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      Navigatable navigatable = node.getNavigatable();
+      return navigatable == null ? null : new Navigatable[]{navigatable};
     }
     return null;
   }
@@ -290,10 +306,17 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   @Override
   public @NotNull @NlsContexts.TabTitle String getName(int count) {
     String name = myName.get();
-    if (count <= 0) return name;
-    return new HtmlBuilder().append(name).append(" ").append(
-      HtmlChunk.tag("font").attr("color", toHtmlColor(UIUtil.getInactiveTextColor())).addText(String.valueOf(count))
-    ).wrapWithHtmlBody().toString();
+    String padding = String.valueOf(count <= 0 ? 0 : JBUI.scale(8));
+    String fg = toHtmlColor(UIUtil.getInactiveTextColor());
+    String number = count <= 0 ? "" : String.valueOf(count);
+    @Language("HTML")
+    String labelWithCounter = "<html><body>" +
+                              "<table cellpadding='0' cellspacing='0'><tr>" +
+                                "<td>%s</td>" +
+                                "<td width='%s'></td>" +
+                                "<td><font color='%s'>%s</font></td>" +
+                              "</tr></table></body></html>";
+    return String.format(labelWithCounter, name, padding, fg, number);
   }
 
   @Override
@@ -328,6 +351,10 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
   @Nullable TreeExpander getTreeExpander() {
     return myTreeExpander;
+  }
+
+  Boolean shouldHideExpandCollapseActionsIfThereIsNoTreeExpander() {
+    return true;
   }
 
   void orientationChangedTo(boolean vertical) {

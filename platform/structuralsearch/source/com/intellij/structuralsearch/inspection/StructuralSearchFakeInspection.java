@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -68,7 +68,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getShortName() {
-    return myMainConfiguration.getUuid().toString();
+    return myMainConfiguration.getUuid();
   }
 
   @Override
@@ -252,7 +252,6 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final SearchContext searchContext = new SearchContext(project);
     final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
     dialog.loadConfiguration(configuration);
-    dialog.setUseLastConfiguration(true);
     if (!dialog.showAndGet()) return;
     final Configuration newConfiguration = dialog.getConfiguration();
     if (configuration.getOrder() == 0) {

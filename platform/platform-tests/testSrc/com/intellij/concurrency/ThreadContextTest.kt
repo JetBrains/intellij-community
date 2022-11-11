@@ -1,23 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency
 
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
+@TestApplication
 class ThreadContextTest {
-
-  companion object {
-    @RegisterExtension
-    @JvmField
-    val applicationExtension = ApplicationExtension()
-  }
 
   private fun assertContextElements(context: CoroutineContext, vararg elements: CoroutineContext.Element) {
     for (element in elements) {

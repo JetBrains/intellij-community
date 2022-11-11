@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.JvmVariableDescriptor
@@ -159,6 +159,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
             target is KtParameter && target.ownerFunction is KtPrimaryConstructor ||
             target is KtProperty && !target.hasDelegate() && target.getter == null && target.setter == null &&
                     !target.hasModifier(KtTokens.ABSTRACT_KEYWORD) &&
+                    !target.hasModifier(KtTokens.OPEN_KEYWORD) &&
                     target.findAnnotation(VOLATILE_ANNOTATION_FQ_NAME) == null &&
                     target.containingClass()?.isInterface() != true &&
                     !target.isExtensionDeclaration()

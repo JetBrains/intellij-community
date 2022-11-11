@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
@@ -62,9 +62,9 @@ internal fun MutableCodeToInline.introduceValue(
 
     fun suggestName(validator: (String) -> Boolean): Name {
         val name = if (nameSuggestion != null)
-            KotlinNameSuggester.suggestNameByName(nameSuggestion, validator)
+            Fe10KotlinNameSuggester.suggestNameByName(nameSuggestion, validator)
         else
-            KotlinNameSuggester.suggestNamesByExpressionOnly(value, bindingContext, validator, "t").first()
+            Fe10KotlinNameSuggester.suggestNamesByExpressionOnly(value, bindingContext, validator, "t").first()
         return Name.identifier(name)
     }
 

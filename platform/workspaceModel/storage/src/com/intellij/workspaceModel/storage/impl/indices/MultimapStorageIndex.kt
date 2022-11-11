@@ -22,6 +22,10 @@ open class MultimapStorageIndex private constructor(
 
   internal fun entries(): Collection<PersistentEntityId<*>> = index.values
 
+  internal fun toMap(): Map<Long, Set<PersistentEntityId<*>>> {
+    return index.toMap()
+  }
+
   class MutableMultimapStorageIndex private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
     override var index: BidirectionalMap

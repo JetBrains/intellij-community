@@ -322,6 +322,7 @@ public interface GroovyElementTypes {
   IElementType T_RPAREN = new GroovyElementType(")");
   IElementType T_RSHU_ASSIGN = new GroovyElementType(">>>=");
   IElementType T_RSH_ASSIGN = new GroovyElementType(">>=");
+  IElementType T_SAFE_CHAIN_DOT = new GroovyElementType("??.");
   IElementType T_SAFE_DOT = new GroovyElementType("?.");
   IElementType T_SEMI = new GroovyElementType(";");
   IElementType T_SPREAD_DOT = new GroovyElementType("*.");

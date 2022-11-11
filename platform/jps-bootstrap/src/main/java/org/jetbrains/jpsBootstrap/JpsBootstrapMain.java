@@ -1,19 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.jpsBootstrap;
 
+import com.google.common.hash.Hashing;
 import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.apache.commons.cli.*;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.dependencies.Jdk11Downloader;
+import org.jetbrains.intellij.build.dependencies.JdkDownloader;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -43,9 +45,10 @@ public class JpsBootstrapMain {
   private static final Option OPT_SYSTEM_PROPERTY = Option.builder("D").hasArgs().valueSeparator('=').desc("Pass system property to the build script").build();
   private static final Option OPT_PROPERTIES_FILE = Option.builder().longOpt("properties-file").hasArg().desc("Pass system properties to the build script from specified properties file https://en.wikipedia.org/wiki/.properties").build();
   private static final Option OPT_BUILD_TARGET_XMX = Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: " + DEFAULT_BUILD_SCRIPT_XMX).build();
-  private static final Option OPT_JAVA_ARGFILE_TARGET = Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").build();
+  private static final Option OPT_JAVA_ARGFILE_TARGET = Option.builder().longOpt("java-argfile-target").hasArg().desc("Write java argfile to this file").build();
+  private static final Option OPT_ONLY_DOWNLOAD_JDK = Option.builder().longOpt("download-jdk").desc("Download project JDK and exit").build();
   private static final List<Option> ALL_OPTIONS =
-    Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX);
+    Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX, OPT_ONLY_DOWNLOAD_JDK);
 
   private static Options createCliOptions() {
     Options opts = new Options();
@@ -73,7 +76,7 @@ public class JpsBootstrapMain {
       if (!underTeamCity) {
         System.err.println("\n###### ERROR EXIT due to FATAL error: " + t.getMessage() + "\n");
         String work = jpsBootstrapWorkDir == null ? "PROJECT_HOME/build/jps-bootstrap-work" : jpsBootstrapWorkDir.toString();
-        System.err.println("###### If it looks like a Kotlin incremental compilation bug, please delete " + work + " folder and retry");
+        System.err.println("###### You may try to delete caches at " + work + " and retry");
       }
 
       System.exit(1);
@@ -90,6 +93,7 @@ public class JpsBootstrapMain {
   private final List<String> mainArgsToRun;
   private final Properties additionalSystemProperties;
   private final Properties additionalSystemPropertiesFromPropertiesFile;
+  private final boolean onlyDownloadJdk;
 
   public JpsBootstrapMain(String[] args) throws IOException {
     initLogging();
@@ -105,14 +109,24 @@ public class JpsBootstrapMain {
     }
 
     final List<String> freeArgs = Arrays.asList(cmdline.getArgs());
-    if (cmdline.hasOption(OPT_HELP) || freeArgs.size() < 2) {
+    if (cmdline.hasOption(OPT_HELP) || freeArgs.size() < 1) {
       showUsagesAndExit();
     }
 
     projectHome = Path.of(freeArgs.get(0)).normalize();
-    moduleNameToRun = freeArgs.get(1);
-    classNameToRun = freeArgs.get(2);
-    mainArgsToRun = freeArgs.subList(3, freeArgs.size());
+    onlyDownloadJdk = cmdline.hasOption(OPT_ONLY_DOWNLOAD_JDK);
+    if (onlyDownloadJdk) {
+      moduleNameToRun = null;
+      classNameToRun = null;
+      mainArgsToRun = Collections.emptyList();
+      javaArgsFileTarget = null;
+    }
+    else {
+      moduleNameToRun = freeArgs.get(1);
+      classNameToRun = freeArgs.get(2);
+      mainArgsToRun = freeArgs.subList(3, freeArgs.size());
+      javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET));
+    }
 
     additionalSystemProperties = cmdline.getOptionProperties("D");
 
@@ -139,37 +153,44 @@ public class JpsBootstrapMain {
     info("Working directory: " + jpsBootstrapWorkDir);
     Files.createDirectories(jpsBootstrapWorkDir);
 
-    javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET));
     buildTargetXmx = cmdline.hasOption(OPT_BUILD_TARGET_XMX) ? cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) : DEFAULT_BUILD_SCRIPT_XMX;
   }
 
-  private void main() throws Throwable {
+  private Path downloadJdk() {
     Path jdkHome;
     if (JpsBootstrapUtil.underTeamCity) {
-      jdkHome = Jdk11Downloader.getJdkHome(communityHome);
+      jdkHome = JdkDownloader.getJdkHome(communityHome);
+      SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
+        "jps.bootstrap.java.home", jdkHome.toString()
+      );
+      System.out.println(setParameterServiceMessage.asString());
+      setParameterServiceMessage = new SetParameterServiceMessage(
+        "jps.bootstrap.java.executable", JdkDownloader.getJavaExecutable(jdkHome).toString());
+      System.out.println(setParameterServiceMessage.asString());
     }
     else {
       // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
       jdkHome = Path.of(System.getProperty("java.home"));
     }
+    return jdkHome;
+  }
 
+  private void main() throws Throwable {
+    Path jdkHome = downloadJdk();
+    if (onlyDownloadJdk) {
+      return;
+    }
     Path kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome);
 
     JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome);
     JpsModule module = JpsProjectUtils.getModuleByName(model, moduleNameToRun);
 
-    loadClasses(module, model, kotlincHome);
+    downloadOrBuildClasses(module, model, kotlincHome);
 
     List<File> moduleRuntimeClasspath = JpsProjectUtils.getModuleRuntimeClasspath(module);
     verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(JpsBootstrapMain::fileDebugInfo).collect(Collectors.joining("\n  ")));
 
     writeJavaArgfile(moduleRuntimeClasspath);
-
-    if (underTeamCity) {
-      SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
-        "jps.bootstrap.java.executable", Jdk11Downloader.getJavaExecutable(jdkHome).toString());
-      System.out.println(setParameterServiceMessage.asString());
-    }
   }
 
   private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws IOException {
@@ -188,10 +209,14 @@ public class JpsBootstrapMain {
     args.add("-ea");
     args.add("-Xmx" + buildTargetXmx);
 
+    Path openedPackagesPath = communityHome.getCommunityRoot().resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt");
+    List<String> openedPackages = ContainerUtil.filter(Files.readAllLines(openedPackagesPath), it -> !it.isBlank());
+    args.addAll(openedPackages);
+
     args.addAll(convertPropertiesToCommandLineArgs(systemProperties));
 
     args.add("-classpath");
-    args.add(StringUtil.join(moduleRuntimeClasspath, File.pathSeparator));
+    args.add(Strings.join(moduleRuntimeClasspath, File.pathSeparator));
 
     args.add("-Dbuild.script.launcher.main.class=" + classNameToRun);
     args.add("org.jetbrains.intellij.build.impl.BuildScriptLauncher");
@@ -207,9 +232,9 @@ public class JpsBootstrapMain {
     info("java argfile:\n" + Files.readString(javaArgsFileTarget));
   }
 
-  private void loadClasses(JpsModule module, JpsModel model, Path kotlincHome) throws Throwable {
+  private void downloadOrBuildClasses(JpsModule module, JpsModel model, Path kotlincHome) throws Throwable {
     String fromJpsBuildEnvValue = System.getenv(JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME);
-    boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
+    boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue) || ProjectStamps.PORTABLE_CACHES;
 
     String manifestJsonUrl = System.getenv(ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
     if (manifestJsonUrl != null && manifestJsonUrl.isBlank()) {
@@ -260,7 +285,7 @@ public class JpsBootstrapMain {
         }
         else {
           long length = attributes.size();
-          String sha256 = DigestUtils.sha256Hex(Files.readAllBytes(file.toPath()));
+          String sha256 = Hashing.sha256().hashBytes(Files.readAllBytes(file.toPath())).toString();
           return file + " file length " + length + " sha256 " + sha256;
         }
       }
@@ -298,7 +323,7 @@ public class JpsBootstrapMain {
     }
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
     ConsoleHandler consoleHandler = new ConsoleHandler();
-    consoleHandler.setFormatter(new IdeaLogRecordFormatter(layout, false));
+    consoleHandler.setFormatter(new IdeaLogRecordFormatter(false, layout));
     consoleHandler.setLevel(java.util.logging.Level.WARNING);
     rootLogger.addHandler(consoleHandler);
   }

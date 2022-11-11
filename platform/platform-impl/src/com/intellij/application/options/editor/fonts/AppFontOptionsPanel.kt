@@ -122,7 +122,9 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
         }
       }
 
-      createTypographySettings()
+      if (FontFamilyService.isServiceSupported()) {
+        createTypographySettings()
+      }
     }.withBorder(JBUI.Borders.empty(BASE_INSET))
   }
 

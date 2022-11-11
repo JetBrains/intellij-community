@@ -39,11 +39,11 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
-    <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
     <orderEntry type="library" name="winp" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
   <component name="copyright">
     <Base>

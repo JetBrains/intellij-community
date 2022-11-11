@@ -109,11 +109,8 @@ public final class InlineUtil implements CommonJavaInlineUtil {
       }
       else if (varType instanceof PsiEllipsisType &&
                ((PsiEllipsisType)varType).getComponentType().equals(exprType)) { //convert vararg to array
-        final PsiExpressionList argumentList = PsiTreeUtil.getParentOfType(expr, PsiExpressionList.class);
-        LOG.assertTrue(argumentList != null);
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        String varargsWrapper = "new " + exprType.getCanonicalText() + "[]{" + StringUtil.join(Arrays.asList(arguments), PsiElement::getText, ",") + '}';
-        expr.replace(elementFactory.createExpressionFromText(varargsWrapper, argumentList));
+        String varargsWrapper = "new " + exprType.getCanonicalText() + "[]{" + expr.getText() + '}';
+        expr.replace(elementFactory.createExpressionFromText(varargsWrapper, expr));
       }
       else {
         boolean insertCastWhenUnchecked = !(exprType instanceof PsiClassType && ((PsiClassType)exprType).isRaw() && parent instanceof PsiExpressionList);
@@ -243,7 +240,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     final Map<PsiElement, PsiElement> replacement = new HashMap<>();
     scope.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitTypeElement(PsiTypeElement typeElement) {
+      public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
         PsiType type = typeElement.getType();
         if (type instanceof PsiClassType) {
@@ -496,7 +493,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
         private boolean success = true;
 
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           final PsiElement psiElement = expression.resolve();
           if (psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) {
             if (!CommonJavaRefactoringUtil.canBeDeclaredFinal((PsiVariable)psiElement)) {

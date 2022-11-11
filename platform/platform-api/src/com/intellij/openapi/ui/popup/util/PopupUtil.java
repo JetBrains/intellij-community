@@ -249,4 +249,13 @@ public final class PopupUtil {
     //noinspection UseDPIAwareInsets
     selectablePanel.setSelectionInsets(new Insets(0, leftRightInset, 0, leftRightInset));
   }
+
+  public static void applyPreviewTitleInsets(JComponent title) {
+    if (ExperimentalUI.isNewUI()) {
+      title.setBorder(JBUI.Borders.empty(10, 20, 6, 0));
+    }
+    else {
+      title.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
+    }
+  }
 }

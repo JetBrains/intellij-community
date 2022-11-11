@@ -1,39 +1,39 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.fir.api.fixes.HLApplicatorTargetWithInput
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.fir.api.fixes.withInput
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 object CastExpressionFixFactories {
-    class Input(val typePresentation: String, val typeSourceCode: String) : HLApplicatorInput
+    class Input(val typePresentation: String, val typeSourceCode: String) : KotlinApplicatorInput
 
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
+    @OptIn(KtAllowAnalysisOnEdt::class)
     val applicator = applicator<PsiElement, Input> {
-        familyName(KotlinBundle.message("fix.cast.expression.family"))
+        familyName(KotlinBundle.lazyMessage("fix.cast.expression.family"))
         actionName { psi, input -> KotlinBundle.message("fix.cast.expression.text", psi.text, input.typePresentation) }
         applyToWithEditorRequired { psi, input, project, editor ->
             val expressionToInsert = KtPsiFactory(psi).createExpressionByPattern("$0 as $1", psi, input.typeSourceCode)
             val newExpression = psi.replaced(expressionToInsert)
 
-            hackyAllowRunningOnEdt {
-                analyse(newExpression) {
+            allowAnalysisOnEdt {
+                analyze(newExpression) {
                     collectPossibleReferenceShorteningsInElement(newExpression)
                 }
             }.invokeShortening()
@@ -75,7 +75,7 @@ object CastExpressionFixFactories {
         actualType: KtType,
         expectedType: KtType,
         psi: PsiElement,
-    ): List<HLApplicatorTargetWithInput<PsiElement, Input>> {
+    ): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
         // `null` related issue should not be handled by a cast fix.
         if (isDueToNullability || expectedType is KtClassErrorType) return emptyList()
 

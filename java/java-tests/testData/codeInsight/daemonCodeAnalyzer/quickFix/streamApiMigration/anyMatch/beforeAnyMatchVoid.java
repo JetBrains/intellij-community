@@ -1,4 +1,4 @@
-// "Replace with anyMatch()" "true"
+// "Replace with anyMatch()" "true-preview"
 
 public class Main {
   void contains(String[][] haystack, String needle) {

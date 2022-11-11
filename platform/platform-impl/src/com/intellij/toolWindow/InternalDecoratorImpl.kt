@@ -445,8 +445,8 @@ class InternalDecoratorImpl internal constructor(
         LinePainter2D.paint(graphics2D, x.toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(), (y + insets.top).toDouble())
       }
       if (insets.left > 0) {
+        LinePainter2D.paint(graphics2D, (x - 1).toDouble(), y.toDouble(), (x - 1).toDouble(), (y + height).toDouble())
         LinePainter2D.paint(graphics2D, x.toDouble(), y.toDouble(), x.toDouble(), (y + height).toDouble())
-        LinePainter2D.paint(graphics2D, (x + 1).toDouble(), y.toDouble(), (x + 1).toDouble(), (y + height).toDouble())
       }
       if (insets.right > 0) {
         LinePainter2D.paint(graphics2D, (x + width - 1).toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(),
@@ -513,11 +513,11 @@ class InternalDecoratorImpl internal constructor(
     get() = toolWindow.isActive
 
   fun updateActiveAndHoverState() {
-    val narrow = this.divider?.bounds?.x?.let { it < JBUI.scale(120)} ?: false
+    val narrow = this.toolWindow.decorator?.width?.let { it < JBUI.scale(120) } ?: false
     val toolbar = headerToolbar
     if (toolbar is AlphaAnimated) {
       val alpha = toolbar as AlphaAnimated
-      alpha.alphaAnimator.setVisible(narrow
+      alpha.alphaContext.isVisible = (narrow
                                      || !toolWindow.toolWindowManager.isNewUi
                                      || isWindowHovered
                                      || header.isPopupShowing

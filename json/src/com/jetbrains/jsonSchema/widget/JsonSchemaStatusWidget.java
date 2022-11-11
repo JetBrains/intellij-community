@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -133,54 +133,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   @Override
   public void update(@Nullable Runnable finishUpdate) {
     mySuppressInfoRef.set(null);
-
-    if (getUpdateAlarm().isDisposed()) return;
-    VirtualFile file = getSelectedFile();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      scheduleComponentUpdate(file, finishUpdate);
-    }
-    else {
-      ReadAction.nonBlocking(() -> scheduleComponentUpdate(file, finishUpdate))
-        .expireWith(getUpdateAlarm())
-        .withDocumentsCommitted(myProject)
-        .coalesceBy(this, file)
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
-  }
-
-  private void scheduleComponentUpdate(VirtualFile file, @Nullable Runnable finishUpdate) {
-    WidgetState state = getWidgetState(file);
-    getUpdateAlarm().cancelAllRequests();
-    getUpdateAlarm().addRequest(() -> {
-      if (state == WidgetState.NO_CHANGE) {
-        return;
-      }
-
-      if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
-        getComponent().setVisible(true);
-        return;
-      }
-
-      if (state == WidgetState.HIDDEN) {
-        getComponent().setVisible(false);
-        return;
-      }
-      if (isDisposed()) return;
-
-      getComponent().setVisible(true);
-      actionEnabled = state.isActionEnabled() && isEnabledForFile(file);
-      getComponent().setEnabled(actionEnabled);
-      updateComponent(state);
-
-      if (myStatusBar != null && !getComponent().isValid()) {
-        myStatusBar.updateWidget(ID());
-      }
-
-      if (finishUpdate != null) {
-        finishUpdate.run();
-      }
-      afterVisibleUpdate(state);
-    }, 200, ModalityState.any());
+    super.update(finishUpdate);
   }
 
   private static WidgetStatus getWidgetStatus(@NotNull Project project, @NotNull VirtualFile file) {
@@ -191,7 +144,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (DumbService.getInstance(project).isDumb()) {
       return WidgetStatus.ENABLED;
     }
-    if (JsonWidgetSuppressor.EXTENSION_POINT_NAME.extensions().anyMatch(s -> s.isCandidateForSuppress(file, project))) {
+    if (JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(s -> s.isCandidateForSuppress(file, project))) {
       return WidgetStatus.MAYBE_SUPPRESSED;
     }
     return WidgetStatus.ENABLED;
@@ -346,7 +299,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         mySuppressInfoRef.set(null);
       }
       else {
-        boolean suppress = JsonWidgetSuppressor.EXTENSION_POINT_NAME.extensions().anyMatch(s -> s.suppressSwitcherWidget(file, myProject));
+        boolean suppress = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream()
+          .anyMatch(s -> s.suppressSwitcherWidget(file, myProject));
         mySuppressInfoRef.set(Pair.create(file, suppress));
       }
       super.update(null);
@@ -463,7 +417,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
+  protected ListPopup createPopup(@NotNull DataContext context) {
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file == null) return null;
 
@@ -539,7 +493,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       .map(file -> jsonSchemaService.getSchemaProvider(file))
       .filter(Objects::nonNull)
       .map(provider -> Pair.create(SchemaType.userSchema.equals(provider.getSchemaType()), provider.getName()))
-      .collect(Collectors.toList());
+      .toList();
 
     final long numOfSystemSchemas = pairList.stream().filter(pair -> !pair.getFirst()).count();
     // do not report anything if there is only one system schema and one user schema (user overrides schema that we provide)

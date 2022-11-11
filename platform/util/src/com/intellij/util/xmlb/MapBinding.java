@@ -202,10 +202,13 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
 
   @SuppressWarnings({"rawtypes", "DuplicatedCode"})
   private @Nullable Map<?, ?> deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
-    // if accessor is null, it is sub-map and we must not use context
+    // if accessor is null, it is sub-map, and we must not use context
     Map map = accessor == null ? null : (Map<?, ?>)context;
     if (map != null) {
-      if (ClassUtil.isMutableMap(map)) {
+      if (childNodes.isEmpty()) {
+        return map;
+      }
+      else if (ClassUtil.isMutableMap(map)) {
         map.clear();
       }
       else {

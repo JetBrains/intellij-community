@@ -36,6 +36,6 @@ class JavaUNamedExpression(
     get() = sourcePsi.name
 
   override val expression: UExpression by lz {
-    sourcePsi.value?.let { value -> JavaConverter.convertPsiElement(value, this) } as? UExpression ?: UastEmptyExpression(this)
+    sourcePsi.value?.let { value -> JavaConverter.convertPsiElement(value, this, UElement::class.java) } as? UExpression ?: UastEmptyExpression(this)
   }
 }

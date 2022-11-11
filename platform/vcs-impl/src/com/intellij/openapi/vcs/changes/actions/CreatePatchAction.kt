@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.actions.commit.AbstractCommitChangesAction
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor

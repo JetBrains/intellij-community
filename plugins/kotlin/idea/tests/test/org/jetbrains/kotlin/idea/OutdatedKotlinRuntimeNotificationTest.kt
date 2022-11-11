@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea
 
+import com.intellij.util.text.VersionComparatorUtil
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.versions.isRuntimeOutdated
 import org.junit.Assert
-
 
 class KotlinRuntimeLibraryUtilTest : TestCase() {
 
@@ -50,5 +49,9 @@ class KotlinRuntimeLibraryUtilTest : TestCase() {
             isRuntimeOutdated(library, bundledRuntime)
         )
     }
+}
 
+private fun isRuntimeOutdated(libraryVersion: String?, runtimeVersion: String): Boolean {
+    return libraryVersion == null || libraryVersion.startsWith("internal-") != runtimeVersion.startsWith("internal-") ||
+            VersionComparatorUtil.compare(runtimeVersion.substringBefore("-release-"), libraryVersion) > 0
 }

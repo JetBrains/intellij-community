@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import function 'measureNanoTime'" "true"
 // WITH_STDLIB
 package some
 

@@ -1,4 +1,4 @@
-// "Replace !IntStream.noneMatch(...) with anyMatch(...)" "true"
+// "Replace !IntStream.noneMatch(...) with anyMatch(...)" "true-preview"
 
 import java.util.stream.*;
 

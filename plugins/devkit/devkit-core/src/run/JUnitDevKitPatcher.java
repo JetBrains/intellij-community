@@ -16,9 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.JavaModuleOptions;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +30,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -69,7 +68,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
         vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, Path.of(basePath, "config/test").toAbsolutePath().toString());
       }
 
-      appendAddOpensWhenNeeded(project, jdk, vm);
+      appendAddOpensWhenNeeded(jdk, vm);
     }
 
     jdk = IdeaJdk.findIdeaJdk(jdk);
@@ -128,18 +127,13 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
   }
 
-  static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
-    var sdkVersion = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
+  static void appendAddOpensWhenNeeded(@NotNull Sdk jdk, @NotNull ParametersList vm) {
+    JavaSdkVersion sdkVersion = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
     if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
-      var scope = ProjectScope.getContentScope(project);
-      var files = ReadAction.compute(() -> FilenameIndex.getVirtualFilesByName("OpenedPackages.txt", scope));
-      if (files.size() > 1) {
-        LOG.error("expecting 1 file, found: " + files);
-      }
-      else if (!files.isEmpty()) {
-        var file = files.iterator().next();
-        try (var stream = file.getInputStream()) {
-          JavaModuleOptions.readOptions(stream, OS.CURRENT).forEach(vm::add);
+      URL resource = JUnitDevKitPatcher.class.getResource("OpenedPackages.txt");
+      if (resource != null) {
+        try {
+          JavaModuleOptions.readOptions(resource.openStream(), OS.CURRENT).forEach(vm::add);
         }
         catch (ProcessCanceledException e) {
           throw e; //unreachable

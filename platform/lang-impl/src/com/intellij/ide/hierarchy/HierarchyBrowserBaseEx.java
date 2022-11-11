@@ -199,6 +199,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   protected abstract void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees);
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return getOccurrenceNavigator().getActionUpdateThread();
+  }
+
   /**
    * Put (scope type -> presentable name) pairs into a map.
    * This map is used in {@link #changeView(String, boolean)} method to get a proper localization in UI.
@@ -627,6 +632,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public final void setSelected(@NotNull AnActionEvent event, boolean flag) {
       HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY = flag;
       Comparator<NodeDescriptor<?>> comparator = getComparator();
@@ -752,6 +762,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       //noinspection HardCodedStringLiteral
       String scopeType = getCurrentScopeType();
       presentation.setText(myI18nMap.getOrDefault(scopeType, () -> scopeType));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     protected boolean isEnabled(){

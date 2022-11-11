@@ -15,13 +15,15 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import com.intellij.util.ui.UIUtil.DEFAULT_VGAP
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.JPanel
 import javax.swing.JTextArea
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
-internal class LibraryDescriptionPanel : ScrollablePanel(VerticalLayout(DEFAULT_VGAP)) {
+@ApiStatus.Internal
+class LibraryDescriptionPanel : ScrollablePanel(VerticalLayout(DEFAULT_VGAP)) {
   private val descriptionHeader: JBLabel = JBLabel()
   private val descriptionText: JTextArea = JTextArea()
   private val descriptionVersion: MultiLineLabel = MultiLineLabel()

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.inlays
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
@@ -8,7 +8,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.TextRange
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.VfsTestUtil
@@ -21,22 +20,16 @@ import java.util.regex.Pattern
 
 class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
 
-  private var isParamHintsEnabledBefore = false
-
   companion object {
-    val pattern: Pattern = Pattern.compile("(<caret>)|(<selection>)|(</selection>)|<(hint|HINT|Hint|hINT)\\s+text=\"([^\"\n\r]+)\"\\s*/>")
+    val pattern: Pattern = Pattern.compile("(<caret>)|(<selection>)|(</selection>)|<(hint|HINT|Hint|hINT)\\s+text=\"([^\n\r]+?(?=\"\\s*/>))\"\\s*/>")
 
     private val default = ParameterNameHintsSettings()
   }
 
   fun setUp() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    isParamHintsEnabledBefore = settings.isShowParameterNameHints
-    settings.isShowParameterNameHints = true
   }
 
   fun tearDown() {
-    EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
     val hintSettings = ParameterNameHintsSettings.getInstance()
 
     hintSettings.loadState(default.state)

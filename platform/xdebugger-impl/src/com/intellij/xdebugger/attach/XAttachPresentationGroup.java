@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
@@ -30,7 +30,9 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    */
   @Deprecated(forRemoval = true)
   @NotNull
-  Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+  default Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+    throw new AbstractMethodError();
+  }
 
   /**
    * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}
@@ -48,7 +50,9 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   @Deprecated(forRemoval = true)
   @NotNull
   @Nls
-  String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+  default String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+    throw new AbstractMethodError();
+  }
 
   /**
    * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}

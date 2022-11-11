@@ -5,8 +5,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.impl.FrameBoundsConverter;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -31,8 +29,8 @@ public final class SplashManager {
   private static volatile JFrame PROJECT_FRAME;
   static Splash SPLASH_WINDOW;
 
-  public static @NotNull Runnable scheduleShow(@NotNull Activity parentActivity) {
-    Activity frameActivity = parentActivity.startChild("splash as project frame initialization");
+  public static @NotNull Runnable scheduleShow(@NotNull ApplicationInfoEx appInfo) {
+    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization");
     try {
       Runnable task = createFrameIfPossible();
       if (task != null) {
@@ -48,7 +46,6 @@ public final class SplashManager {
     }
 
     // must be out of activity measurement
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
     Activity activity = StartUpMeasurer.startActivity("splash initialization");
     SPLASH_WINDOW = new Splash(appInfo);
@@ -71,7 +68,8 @@ public final class SplashManager {
       buffer = ByteBuffer.allocate((int)channel.size());
       do {
         channel.read(buffer);
-      } while (buffer.hasRemaining());
+      }
+      while (buffer.hasRemaining());
 
       buffer.flip();
       if (buffer.getShort() != 0) {
@@ -119,10 +117,7 @@ public final class SplashManager {
     if (SPLASH_WINDOW == null) {
       if (PROJECT_FRAME != null) {
         // just destroy frame
-        Runnable task = getHideTask();
-        if (task != null) {
-          task.run();
-        }
+        hide();
       }
       runnable.run();
       return;
@@ -159,39 +154,34 @@ public final class SplashManager {
   }
 
   public static void hideBeforeShow(@NotNull Window window) {
-    Runnable hideSplashTask = getHideTask();
-    if (hideSplashTask != null) {
+    if (SPLASH_WINDOW != null || PROJECT_FRAME != null) {
       window.addWindowListener(new WindowAdapter() {
         @Override
         public void windowOpened(WindowEvent e) {
-          hideSplashTask.run();
+          hide();
           window.removeWindowListener(this);
         }
       });
     }
   }
 
-  public static @Nullable Runnable getHideTask() {
+  public static void hide() {
     Window window = SPLASH_WINDOW;
     if (window == null) {
       window = PROJECT_FRAME;
       if (window == null) {
-        return null;
+        return;
+      }
+      else {
+        PROJECT_FRAME = null;
       }
     }
+    else {
+      SPLASH_WINDOW = null;
+    }
 
-    Ref<Window> ref = new Ref<>(window);
-    SPLASH_WINDOW = null;
-    PROJECT_FRAME = null;
-
-    return () -> {
-      Window w = ref.get();
-      if (w != null) {
-        ref.set(null);
-        StartUpMeasurer.addInstantEvent("splash hidden");
-        w.setVisible(false);
-        w.dispose();
-      }
-    };
+    StartUpMeasurer.addInstantEvent("splash hidden");
+    window.setVisible(false);
+    window.dispose();
   }
 }

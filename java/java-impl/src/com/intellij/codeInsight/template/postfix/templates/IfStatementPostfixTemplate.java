@@ -18,7 +18,9 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
@@ -32,10 +34,7 @@ public class IfStatementPostfixTemplate extends IfPostfixTemplateBase {
 
   @Override
   protected PsiElement getWrappedExpression(PsiElement expression) {
-    while (expression instanceof PsiParenthesizedExpression && ((PsiParenthesizedExpression)expression).getExpression() != null) {
-      expression = ((PsiParenthesizedExpression)expression).getExpression();
-    }
-    return expression;
+    return CommonJavaRefactoringUtil.unparenthesizeExpression((PsiExpression)expression);
   }
 
   @NotNull

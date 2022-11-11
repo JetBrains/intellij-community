@@ -12,6 +12,9 @@ import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 /**
  * @author anna
  */
@@ -87,7 +90,14 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
     IntentionAction action = myFixture.getAvailableIntention(hint);
     assertNotNull(action);
-    myFixture.launchAction(action);
+    Path previewPath = Path.of(myFixture.getTestDataPath(), getRelativePath(), testName + ".preview.java");
+    if (Files.exists(previewPath)) {
+      String previewText = myFixture.getIntentionPreviewText(action);
+      assertSameLinesWithFile(previewPath.toString(), previewText);
+      myFixture.launchAction(action);
+    } else {
+      myFixture.checkPreviewAndLaunchAction(action);
+    }
     myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
   }
 
@@ -119,7 +129,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     myFixture.configureByText(fileName, before);
     IntentionAction intention = myFixture.getAvailableIntention(hint);
     assertNotNull(intention);
-    myFixture.launchAction(intention);
+    myFixture.checkPreviewAndLaunchAction(intention);
     myFixture.checkResult(after);
   }
 

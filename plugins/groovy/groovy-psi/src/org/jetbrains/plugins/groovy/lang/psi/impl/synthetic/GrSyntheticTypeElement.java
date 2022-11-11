@@ -110,6 +110,9 @@ public class GrSyntheticTypeElement extends LightElement implements PsiTypeEleme
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeElement(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

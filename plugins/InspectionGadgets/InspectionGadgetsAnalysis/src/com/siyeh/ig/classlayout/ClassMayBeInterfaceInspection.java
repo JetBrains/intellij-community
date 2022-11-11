@@ -17,6 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.application.WriteAction;
@@ -27,6 +28,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -103,6 +105,20 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
         changeClassToInterface(interfaceClass);
         moveImplementsToExtends(interfaceClass);
       });
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiIdentifier classNameIdentifier = (PsiIdentifier)previewDescriptor.getPsiElement();
+      final PsiClass interfaceClass = (PsiClass)classNameIdentifier.getParent();
+      // In preview, limit search to current file only
+      List<PsiClass> inheritorsInThisFile = SyntaxTraverser.psiTraverser(classNameIdentifier.getContainingFile()).filter(PsiClass.class)
+        .filter(cls -> cls.isInheritor(interfaceClass, false))
+        .toList();
+      moveSubClassExtendsToImplements(ContainerUtil.prepend(inheritorsInThisFile, interfaceClass));
+      changeClassToInterface(interfaceClass);
+      moveImplementsToExtends(interfaceClass);
+      return IntentionPreviewInfo.DIFF;
     }
 
     private static void changeClassToInterface(PsiClass aClass) {

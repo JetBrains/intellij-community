@@ -13,9 +13,12 @@ import com.intellij.openapi.components.SkipReportingStatistics
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMExternalizable
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.BeanBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.util.*
@@ -39,9 +42,11 @@ internal fun isComponentOptionNameWhitelisted(name: String): Boolean {
 
 internal object FeatureUsageSettingsEvents {
   private val printer = FeatureUsageSettingsEventPrinter(false)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val scope = CoroutineScope(Dispatchers.Default.limitedParallelism(1))
 
   fun logDefaultConfigurationState(componentName: String, clazz: Class<*>, project: Project?) {
-    NonUrgentExecutor.getInstance().execute {
+    scope.launch {
       if (FeatureUsageLogger.isEnabled()) {
         printer.logDefaultConfigurationState(componentName, clazz, project)
       }
@@ -49,7 +54,7 @@ internal object FeatureUsageSettingsEvents {
   }
 
   fun logConfigurationState(componentName: String, state: Any, project: Project?) {
-    NonUrgentExecutor.getInstance().execute {
+    scope.launch {
       if (FeatureUsageLogger.isEnabled()) {
         printer.logConfigurationState(componentName, state, project)
       }
@@ -57,7 +62,7 @@ internal object FeatureUsageSettingsEvents {
   }
 
   fun logConfigurationChanged(componentName: String, state: Any, project: Project?) {
-    NonUrgentExecutor.getInstance().execute {
+    scope.launch {
       if (FeatureUsageLogger.isEnabled()) {
         printer.logConfigurationStateChanged(componentName, state, project)
       }

@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.common.CurrentProjectInfo
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.storage.MutableLookupStorage
@@ -72,15 +71,19 @@ class CompletionLoggerInitializer : LookupTracker() {
   private fun actionsTracker(lookup: LookupImpl,
                              storage: MutableLookupStorage,
                              experimentInfo: ExperimentInfo): CompletionActionsListener {
-    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(getLoggingLanguageName(storage.language))
+    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(getLoggingLanguageName(storage.language),
+                                                                            shouldLogElementFeatures(storage.language, lookup.project))
     val actionsTracker = CompletionActionsTracker(lookup, storage, logger, experimentInfo)
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
   }
 
+  private fun shouldLogElementFeatures(language: Language, project: Project): Boolean =
+    ExperimentStatus.getInstance().forLanguage(language).shouldLogElementFeatures(project)
+
   private fun sessionShouldBeLogged(experimentInfo: ExperimentInfo, language: Language, project: Project): Boolean {
     if (CompletionStatsPolicy.isStatsLogDisabled(language) || !getPluginInfo(language::class.java).isSafeToReport()) return false
     val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || experimentInfo.inExperiment || CurrentProjectInfo.getInstance(project).isIdeaProject) return true
+    if (application.isUnitTestMode || experimentInfo.shouldLogSessions(project)) return true
 
     if (!isCompletionLogsSendAllowed()) {
       return false

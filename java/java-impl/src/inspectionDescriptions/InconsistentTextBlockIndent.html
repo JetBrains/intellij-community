@@ -1,8 +1,9 @@
 <html>
 <body>
 Reports text blocks that are indented using both spaces and tabs.
-<p>Such cases produce unexpected results since spaces and tabs are treated equally during text block processing.</p>
-<p>In the following example, spaces and tabs are visualized as <code>·</code> and <code>␉</code> respectively, and a tab is equal to 4 spaces in the editor.</p>
+Such cases produce unexpected results since spaces and tabs are treated equally by the text block processing.
+<p>In the following example, spaces and tabs are visualized as <code>·</code> and <code>␉</code> respectively,
+and a tab is equal to 4 spaces in the editor.</p>
 <p><b>Example:</b></p>
 <pre><code>
 String colors = """
@@ -11,13 +12,14 @@ String colors = """
 ········blue""";
 </code></pre>
 
-<p>After printing such string, the result will be:</p>
+<p>After printing such a string, the result will be:</p>
 <pre><code>
-red
-······green
-blue
+······red
+green
+······blue
 </code></pre>
-<p>After the compiler removes 2 spaces or tabs from the beginning of each line, the lines end up with extra whitespaces at the beginning.</p>
+<p>After the compiler removes an equal amount of spaces or tabs from the beginning of each line,
+some lines remain with leading spaces.</p>
 <!-- tooltip end -->
 <p>This inspection only reports if the configured language level is 15 or higher.</p>
 <p><small>New in 2021.1</small></p>

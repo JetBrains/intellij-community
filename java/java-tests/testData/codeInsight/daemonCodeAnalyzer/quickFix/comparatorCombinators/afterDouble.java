@@ -1,4 +1,4 @@
-// "Replace with 'Comparator.comparingDouble'" "true"
+// "Replace with 'Comparator.comparingDouble'" "true-preview"
 
 import java.util.*;
 

@@ -117,20 +117,12 @@ public final class TestsUIUtil {
 
     ToolWindow toolWindow = toolWindowManager.getToolWindow(windowId);
     if (toolWindow != null && !toolWindow.isVisible()) {
-      String displayId = getTestResultsNotificationDisplayId(windowId);
-      NotificationGroup group = NotificationGroup.findRegisteredGroup(displayId);
-      if (group == null) {
-        group = NotificationGroup.toolWindowGroup(displayId, windowId, false);
-      }
-      group.createNotification(balloonText, type).notify(project);
+      NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Test Results");
+      group.createNotification(balloonText, type).setToolWindowId(windowId).notify(project);
     }
 
     NOTIFICATION_GROUP.createNotification(balloonText, type).notify(project);
     SystemNotifications.getInstance().notify("TestRunner", title, text);
-  }
-
-  private static @NonNls String getTestResultsNotificationDisplayId(@NotNull String toolWindowId) {
-    return "Test Results: " + toolWindowId;
   }
 
   @NlsContexts.NotificationContent

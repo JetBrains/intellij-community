@@ -1,4 +1,4 @@
-// "Replace with 'Objects.requireNonNull(arr)'" "true"
+// "Replace with 'Objects.requireNonNull(arr)'" "true-preview"
 
 class MyClass {
   void foo(String[] arr) {}

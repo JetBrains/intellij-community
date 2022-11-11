@@ -40,7 +40,7 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
 
   private static class StringConcatenationInFormatCallVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (FormatUtils.isFormatCall(call)) {
         PsiExpressionList argumentList = call.getArgumentList();
         PsiExpression formatArgument = FormatUtils.getFormatArgument(argumentList);

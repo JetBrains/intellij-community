@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
@@ -32,7 +33,7 @@ public class PagedFileStorage implements Forceable {
   static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 400));
 
   public static final int MB = 1024 * 1024;
-  public static final int BUFFER_SIZE = FilePageCache.BUFFER_SIZE;
+  public static final int BUFFER_SIZE = FilePageCache.PAGE_SIZE;
 
   @NotNull
   private final static ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
@@ -174,8 +175,8 @@ public class PagedFileStorage implements Forceable {
   public int getInt(long addr) throws IOException {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
-      int page_offset = (int) (addr % myPageSize);
-      DirectBufferWrapper buffer = getReadOnlyBuffer(page);
+      int page_offset = (int)(addr % myPageSize);
+      DirectBufferWrapper buffer = getReadOnlyBuffer(page, true);
       try {
         return buffer.getInt(page_offset);
       }
@@ -183,7 +184,7 @@ public class PagedFileStorage implements Forceable {
         buffer.unlock();
       }
     } else {
-      get(addr, getThreadLocalTypedIOBuffer(), 0, 4);
+      get(addr, getThreadLocalTypedIOBuffer(), 0, 4, true);
       return Bits.getInt(getThreadLocalTypedIOBuffer(), 0);
     }
   }
@@ -194,8 +195,8 @@ public class PagedFileStorage implements Forceable {
 
   public DirectBufferWrapper getByteBuffer(long address, boolean modify) throws IOException {
     long page = address / myPageSize;
-    assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT: address + " in " + myFile;
-    return getBufferWrapper(page, modify);
+    assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT : address + " in " + myFile;
+    return getBufferWrapper(page, modify, true);
   }
 
   public void putLong(long addr, long value) throws IOException {
@@ -219,7 +220,7 @@ public class PagedFileStorage implements Forceable {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
       int page_offset = (int)(addr % myPageSize);
-      DirectBufferWrapper buffer = getReadOnlyBuffer(page);
+      DirectBufferWrapper buffer = getReadOnlyBuffer(page, true);
       try {
         return buffer.getLong(page_offset);
       }
@@ -227,18 +228,35 @@ public class PagedFileStorage implements Forceable {
         buffer.unlock();
       }
     } else {
-      get(addr, getThreadLocalTypedIOBuffer(), 0, 8);
+      get(addr, getThreadLocalTypedIOBuffer(), 0, 8, true);
       return Bits.getLong(getThreadLocalTypedIOBuffer(), 0);
     }
   }
 
-  public byte get(long index) throws IOException {
+  public void putBuffer(long index, @NotNull ByteBuffer data) throws IOException {
+    if (!myValuesAreBufferAligned) {
+      //TODO
+      throw new RuntimeException("can't perform putBuffer() for unaligned storage");
+    }
     long page = index / myPageSize;
     int offset = (int)(index % myPageSize);
 
-    DirectBufferWrapper buffer = getReadOnlyBuffer(page);
+    DirectBufferWrapper buffer = getBuffer(page);
     try {
-      return buffer.get(offset);
+      buffer.putFromBuffer(data, offset);
+    }
+    finally {
+      buffer.unlock();
+    }
+  }
+
+  public byte get(long index, boolean checkAccess) throws IOException {
+    long page = index / myPageSize;
+    int offset = (int)(index % myPageSize);
+
+    DirectBufferWrapper buffer = getReadOnlyBuffer(page, checkAccess);
+    try {
+      return buffer.get(offset, checkAccess);
     }
     finally {
       buffer.unlock();
@@ -258,19 +276,19 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public void get(long index, byte[] dst, int offset, int length) throws IOException {
+  public void get(long index, byte[] dst, int offset, int length, boolean checkAccess) throws IOException {
     long i = index;
     int o = offset;
     int l = length;
 
     while (l > 0) {
       long page = i / myPageSize;
-      int page_offset = (int) (i % myPageSize);
+      int page_offset = (int)(i % myPageSize);
 
       int page_len = Math.min(l, myPageSize - page_offset);
-      final DirectBufferWrapper buffer = getReadOnlyBuffer(page);
+      final DirectBufferWrapper buffer = getReadOnlyBuffer(page, checkAccess);
       try {
-        buffer.readToArray(dst, o, page_offset, page_len);
+        buffer.readToArray(dst, o, page_offset, page_len, checkAccess);
       }
       finally {
         buffer.unlock();
@@ -289,7 +307,7 @@ public class PagedFileStorage implements Forceable {
 
     while (l > 0) {
       long page = i / myPageSize;
-      int page_offset = (int) (i % myPageSize);
+      int page_offset = (int)(i % myPageSize);
 
       int page_len = Math.min(l, myPageSize - page_offset);
       DirectBufferWrapper buffer = getBuffer(page);
@@ -336,24 +354,12 @@ public class PagedFileStorage implements Forceable {
       oldSize = 0;
     }
     if (oldSize == newSize && oldSize == length()) return;
-    //
-    //final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    //myStorageLockContext.getBufferCache().invalidateBuffer(myStorageIndex | (oldSize / myPageSize)); // TODO long page
-    //final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-
     resizeFile(newSize);
 
     // it is not guaranteed that new partition will consist of null
     // after resize, so we should fill it manually
     long delta = newSize - oldSize;
     if (delta > 0) fillWithZeros(oldSize, delta);
-
-    //if (IOStatistics.DEBUG) {
-    //  long finished = System.currentTimeMillis();
-    //  if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
-    //    IOStatistics.dump("Resized "+myFile + " from " + oldSize + " to " + newSize + " for " + (finished - started) + ", unmap all:" + (finished - unmapAllFinished));
-    //  }
-    //}
   }
 
   private void resizeFile(long newSize) throws IOException {
@@ -396,16 +402,16 @@ public class PagedFileStorage implements Forceable {
   }
 
   private DirectBufferWrapper getBuffer(long page) throws IOException {
-    return getBufferWrapper(page, true);
+    return getBufferWrapper(page, true, true);
   }
 
-  private DirectBufferWrapper getReadOnlyBuffer(long page) throws IOException {
-    return getBufferWrapper(page, false);
+  private DirectBufferWrapper getReadOnlyBuffer(long page, boolean checkAccess) throws IOException {
+    return getBufferWrapper(page, false, checkAccess);
   }
 
-  private DirectBufferWrapper getBufferWrapper(long page, boolean modify) throws IOException {
+  private DirectBufferWrapper getBufferWrapper(long page, boolean modify, boolean checkAccess) throws IOException {
     while (true) {
-      DirectBufferWrapper wrapper = doGetBufferWrapper(page, modify);
+      DirectBufferWrapper wrapper = doGetBufferWrapper(page, modify, checkAccess);
       assert this == wrapper.getFile();
       if (wrapper.tryLock()) {
         return wrapper;
@@ -414,7 +420,7 @@ public class PagedFileStorage implements Forceable {
   }
 
   @NotNull
-  private DirectBufferWrapper doGetBufferWrapper(long page, boolean modify) throws IOException {
+  private DirectBufferWrapper doGetBufferWrapper(long page, boolean modify, boolean checkAccess) throws IOException {
     DirectBufferWrapper pageFromCache =
       myLastAccessedBufferCache.getPageFromCache(page);
 
@@ -434,7 +440,7 @@ public class PagedFileStorage implements Forceable {
     if (myStorageIndex == -1) {
       throw new IOException("storage is already closed; path " + myFile);
     }
-    DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | page, !modify); // TODO: long page
+    DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | page, !modify, checkAccess); // TODO: long page
 
     myLastAccessedBufferCache.updateCache(page, byteBufferWrapper);
 

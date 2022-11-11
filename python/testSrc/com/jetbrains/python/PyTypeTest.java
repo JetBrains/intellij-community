@@ -3979,6 +3979,68 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-54503
+  public void testEnumGetItemResultValueAttribute() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("int",
+                   "import enum\n" +
+                   "\n" +
+                   "class MyEnum(enum.Enum):\n" +
+                   "    ONE = 1\n" +
+                   "    TWO = 2\n" +
+                   "\n" +
+                   "expr = MyEnum['ONE'].value")
+    );
+  }
+
+  // PY-54503
+  public void testEnumDunderCallResultValueAttribute() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("int",
+                   "import enum\n" +
+                   "\n" +
+                   "class MyEnum(enum.Enum):\n" +
+                   "    ONE = 1\n" +
+                   "    TWO = 2\n" +
+                   "\n" +
+                   "expr = MyEnum(1).value")
+    );
+  }
+  
+  // PY-54503
+  public void testTypeHintedEnumItemValueAttribute() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("int",
+                   "import enum\n" +
+                   "\n" +
+                   "class MyEnum(enum.Enum):\n" +
+                   "    ONE = 1\n" +
+                   "    TWO = 2\n" +
+                   "\n" +
+                   "def f(p: MyEnum):\n" +
+                   "    expr = p.value")
+    );
+  }
+
+  // PY-54503
+  public void testImportedEnumGetItemResultValueAttribute() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    @Nullable PyExpression expr = parseExpr("from mod import MyEnum\n" +
+                                            "\n" +
+                                            "expr = MyEnum['ONE'].value");
+    assertNotNull(expr);
+    TypeEvalContext codeAnalysisContext = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+    assertType("Any", expr, codeAnalysisContext);
+    assertProjectFilesNotParsed(codeAnalysisContext);
+
+    TypeEvalContext userInitiatedContext = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile());
+    assertType("int", expr, userInitiatedContext);
+    assertProjectFilesNotParsed(userInitiatedContext);
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

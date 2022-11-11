@@ -20,10 +20,11 @@ class Assertions {
     return new ObjectAssert(actual);
   }
 }
-class ObjectAssert {
+class ObjectAssert extends AbstractAssert {
   ObjectAssert(Object obj) {}
   
   public ObjectAssert isNotNull() {
     return this;
   }
 }
+class AbstractAssert {}

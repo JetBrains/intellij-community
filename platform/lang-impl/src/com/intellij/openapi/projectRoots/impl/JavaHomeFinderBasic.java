@@ -288,7 +288,7 @@ public class JavaHomeFinderBasic {
     var result = new HashSet<@NotNull String>();
 
     try (Stream<Path> stream = Files.list(javasDir)) {
-      List<Path> innerDirectories = stream.filter(d -> Files.isDirectory(d)).collect(Collectors.toList());
+      List<Path> innerDirectories = stream.filter(d -> Files.isDirectory(d)).toList();
       for (Path innerDir : innerDirectories) {
         var home = innerDir;
         var releaseFile = home.resolve("release");

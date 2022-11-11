@@ -26,7 +26,6 @@ public class TestEventXmlXPathView implements TestEventXmlView {
    * validate, and is namespace aware.
    *
    * @param xml            the XML content to be parsed (must be well formed)
-   * @throws XmlParserException
    */
   public TestEventXmlXPathView(String xml) throws XmlParserException {
     xpath = XPathFactory.newInstance().newXPath();

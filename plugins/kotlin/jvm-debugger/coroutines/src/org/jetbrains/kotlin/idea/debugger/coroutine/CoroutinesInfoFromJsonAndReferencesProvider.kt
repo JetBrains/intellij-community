@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.google.gson.Gson
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineInfoProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CoroutinesInfoFromJsonAndReferencesProvider(

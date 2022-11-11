@@ -84,16 +84,19 @@ object EventsSchemeBuilder {
    * If null, groups from all recorders will be used.
    * @param pluginId id of the plugin, only groups registered in that plugin will be used to build scheme.
    * If null, all registered groups will be used.
+   * @param brokenPluginIds list of plugin ids, groups registered in this plugins will **not** be used to build scheme.
+   * If null, all registered groups will be used.
+   * Only applicable when `pluginId == null`
    */
   @JvmStatic
   @JvmOverloads
-  fun buildEventsScheme(recorder: String?, pluginId: String? = null): List<GroupDescriptor> {
+  fun buildEventsScheme(recorder: String?, pluginId: String? = null, brokenPluginIds: Set<String> = emptySet()): List<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
     val counterCollectors = ArrayList<FeatureUsageCollectorInfo>()
     FUCounterUsageLogger.EP_NAME.processWithPluginDescriptor { counterUsageCollectorEP, descriptor: PluginDescriptor ->
       if (counterUsageCollectorEP.implementationClass != null) {
         val collectorPlugin = descriptor.pluginId.idString
-        if (pluginId == null || pluginId == collectorPlugin) {
+        if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
           val collector = ApplicationManager.getApplication().instantiateClass<FeatureUsagesCollector>(
             counterUsageCollectorEP.implementationClass, descriptor)
           counterCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
@@ -105,13 +108,13 @@ object EventsSchemeBuilder {
     val stateCollectors = ArrayList<FeatureUsageCollectorInfo>()
     ApplicationUsagesCollector.EP_NAME.processWithPluginDescriptor { collector, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
-      if (pluginId == null || pluginId == collectorPlugin) {
+      if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
         stateCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
       }
     }
     ProjectUsagesCollector.EP_NAME.processWithPluginDescriptor { collector, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
-      if (pluginId == null || pluginId == collectorPlugin) {
+      if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
         stateCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
       }
     }

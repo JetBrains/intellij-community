@@ -270,8 +270,15 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     final GroovyFileImports imports = getImports();
     if (!imports.processAllNamedImports(processor, state, place)) return false;
     if (!processClassesInPackage(this, processor, state, place)) return false;
-    if (!imports.processAllStarImports(processor, state, place)) return false;
-    if (!imports.processDefaultImports(processor, state, place)) return false;
+    if (!areImportsIgnored(state)) {
+      return processComplexImports(processor, state, place);
+    }
     return true;
+  }
+
+  public boolean processComplexImports(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
+    final GroovyFileImports imports = getImports();
+    if (!imports.processAllStarImports(processor, state, place)) return false;
+    return imports.processDefaultImports(processor, state, place);
   }
 }

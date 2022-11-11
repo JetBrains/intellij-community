@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.openapi.util.SystemInfo
@@ -25,12 +41,12 @@ internal class HeaderPanel(
 ) : BorderLayoutPanel() {
 
     private val titleLabel = JLabel().apply {
-        border = emptyBorder(right = 20)
+        border = emptyBorder(right = 10)
         font = RelativeFont.BOLD.derive(font)
     }
 
     private val countLabel = JLabel().apply {
-        foreground = PackageSearchUI.GRAY_COLOR
+        foreground = PackageSearchUI.Colors.infoLabelForeground
         border = emptyBorder(right = 8)
     }
 
@@ -50,12 +66,12 @@ internal class HeaderPanel(
     private var updateAllOperations: Deferred<List<PackageSearchOperation<*>>>? = null
 
     init {
-        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.SmallHeaderHeight.get())
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.smallHeaderHeight.get())
         border = emptyBorder(top = 5, left = 5, right = 1 + scrollbarWidth())
-        background = PackageSearchUI.SectionHeaderBackgroundColor
+        background = PackageSearchUI.Colors.sectionHeaderBackground
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.LEFT, 6.scaled(), 0)
 
                 add(titleLabel)
@@ -66,7 +82,7 @@ internal class HeaderPanel(
         )
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.RIGHT, 6.scaled(), 0)
                 add(updateAllLink)
             },
@@ -119,4 +135,6 @@ internal class HeaderPanel(
         border = emptyBorder(top = 5, left = 5, right = rightBorder)
         updateAndRepaint()
     }
+
+    override fun getBackground() = PackageSearchUI.Colors.sectionHeaderBackground
 }

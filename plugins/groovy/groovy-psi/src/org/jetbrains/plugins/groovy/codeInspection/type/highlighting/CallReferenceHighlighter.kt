@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.type.highlighting
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -53,6 +53,9 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
 
     val methodName = method.name
     val highlightElement = highlightElement
+    if (!highlightElement.isPhysical) {
+      return
+    }
     val argumentsString = argumentsString(arguments)
     if (containingClass == null) {
       highlightCannotApplyError(methodName, argumentsString)

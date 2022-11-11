@@ -510,7 +510,7 @@ public final class ImportUtils {
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       if (referenceFound) {
         return;
       }
@@ -570,7 +570,7 @@ public final class ImportUtils {
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       if (referenceFound) {
         return;
       }

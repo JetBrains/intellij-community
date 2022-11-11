@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
@@ -148,8 +149,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     Pair<Long, RootIndex> pair = branch.getUserData(BRANCH_ROOT_INDEX);
     long modCount = branch.getBranchedVfsStructureModificationCount();
     if (pair == null || pair.first != modCount) {
-      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)
-      ));
+      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)));
+      branch.putUserData(BRANCH_ROOT_INDEX, pair);
     }
     return pair.second;
   }
@@ -166,6 +167,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @Override
   public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     checkAvailability();
+    ProgressManager.checkCanceled();
+    SlowOperations.assertSlowOperationsAreAllowed();
     dispatchPendingEvents();
     return getRootIndex(file).getInfoForFile(file);
   }

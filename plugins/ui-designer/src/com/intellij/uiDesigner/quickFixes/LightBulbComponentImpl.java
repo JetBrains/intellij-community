@@ -15,9 +15,6 @@ import java.awt.event.MouseEvent;
 /**
  * [vova] This class should be inner but due to bugs in "beta" generics compiler
  * I need to use "static" modifier.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 final class LightBulbComponentImpl extends JComponent{
   private final QuickFixManager myManager;

@@ -1,33 +1,39 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public final class DefaultGradleConfiguration implements GradleConfiguration {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
   private final String name;
   private final String description;
   private final boolean visible;
   private final boolean scriptClasspathConfiguration;
+  private final List<String> declarationAlternatives;
 
-  @PropertyMapping({"name", "description", "visible"})
-  public DefaultGradleConfiguration(String name, String description, boolean visible) {
-    this(name, description, visible, false);
+
+  @PropertyMapping({"name", "description", "visible", "declarationAlternatives"})
+  public DefaultGradleConfiguration(String name, String description, boolean visible, @NotNull List<String> declarationAlternatives) {
+    this(name, description, visible, false, declarationAlternatives);
   }
 
-  public DefaultGradleConfiguration(@NotNull String name, @Nullable String description, boolean visible, boolean scriptClasspathConfiguration) {
+  public DefaultGradleConfiguration(@NotNull String name, @Nullable String description, boolean visible, boolean scriptClasspathConfiguration, @NotNull List<String> declarationAlternatives) {
     this.name = name;
     this.description = description;
     this.visible = visible;
     this.scriptClasspathConfiguration = scriptClasspathConfiguration;
+    this.declarationAlternatives = declarationAlternatives;
   }
 
   public DefaultGradleConfiguration(GradleConfiguration configuration) {
     this(configuration.getName(), configuration.getDescription(), configuration.isVisible(),
-         configuration.isScriptClasspathConfiguration());
+         configuration.isScriptClasspathConfiguration(),
+         configuration.getDeclarationAlternatives());
   }
 
   @NotNull
@@ -52,6 +58,12 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     return scriptClasspathConfiguration;
   }
 
+  @NotNull
+  @Override
+  public List<String> getDeclarationAlternatives() {
+    return declarationAlternatives;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -63,6 +75,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     if (scriptClasspathConfiguration != that.scriptClasspathConfiguration) return false;
     if (name != null ? !name.equals(that.name) : that.name != null) return false;
     if (description != null ? !description.equals(that.description) : that.description != null) return false;
+    if (!declarationAlternatives.equals(that.declarationAlternatives)) return false;
 
     return true;
   }
@@ -73,6 +86,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     result = 31 * result + (description != null ? description.hashCode() : 0);
     result = 31 * result + (visible ? 1 : 0);
     result = 31 * result + (scriptClasspathConfiguration ? 1 : 0);
+    result = 31 * result + (declarationAlternatives.hashCode());
     return result;
   }
 }

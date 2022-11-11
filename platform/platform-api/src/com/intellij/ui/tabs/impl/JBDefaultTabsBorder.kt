@@ -9,18 +9,9 @@ open class JBDefaultTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     if (tabs.isEmptyVisible) return
     g as Graphics2D
 
-
-    if (JBTabsImpl.NEW_TABS) {
-      val borderLines = tabs.lastLayoutPass.extraBorderLines ?: return
-      for (borderLine in borderLines) {
-        tabs.tabPainter.paintBorderLine(g, thickness, borderLine.from(), borderLine.to())
-      }
-    }
-    else {
-      val rect = Rectangle(x, y, width, height)
-      val firstLabel = tabs.myInfo2Label[tabs.visibleInfos[0]] ?: return
-      val maxY = firstLabel.bounds.maxY.toInt() - thickness
-      tabs.tabPainter.paintBorderLine(g, thickness, Point(rect.x, maxY), Point(rect.maxX.toInt(), maxY))
-    }
+    val rect = Rectangle(x, y, width, height)
+    val firstLabel = tabs.myInfo2Label[tabs.visibleInfos[0]] ?: return
+    val maxY = firstLabel.bounds.maxY.toInt() - thickness
+    tabs.tabPainter.paintBorderLine(g, thickness, Point(rect.x, maxY), Point(rect.maxX.toInt(), maxY))
   }
 }

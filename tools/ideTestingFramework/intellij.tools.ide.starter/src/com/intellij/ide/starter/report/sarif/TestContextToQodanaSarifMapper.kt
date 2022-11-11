@@ -11,7 +11,7 @@ object TestContextToQodanaSarifMapper {
   fun map(ideStartResult: IDEStartResult): SarifReport {
 
     val defaultReportPath = this::class.java.classLoader.getResource("sarif/qodana.sarif.json")?.path
-    if(defaultReportPath==null) throw RuntimeException("Default report doesn' exits")
+    if (defaultReportPath == null) throw RuntimeException("Default report doesn' exits")
     val sarifReport = SarifUtil.readReport(Path.of(defaultReportPath))
 
     return sarifReport(sarifReport) {

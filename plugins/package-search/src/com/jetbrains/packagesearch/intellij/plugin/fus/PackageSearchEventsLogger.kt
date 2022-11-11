@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.fus
 
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
@@ -9,8 +25,8 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
@@ -113,22 +129,21 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
             packageIdentifier: PackageIdentifier,
             packageVersion: PackageVersion,
             targetModule: ProjectModule
-        ) =
-            runSafelyIfEnabled(packageInstalledEvent) {
-                val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
-                if (moduleOperationProvider != null) {
-                    log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
-                } else {
-                    logDebug { "Unable to log package installation for target module '${targetModule.name}': no operation provider available" }
-                }
+        ) = runSafelyIfEnabled(packageInstalledEvent) {
+            val moduleOperationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            if (moduleOperationProvider != null) {
+                log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
+            } else {
+                logDebug { "Unable to log package installation for target module '${targetModule.name}': no operation provider available" }
             }
+        }
 
         fun logPackageRemoved(
             packageIdentifier: PackageIdentifier,
             packageVersion: PackageVersion,
             targetModule: ProjectModule
         ) = runSafelyIfEnabled(packageRemovedEvent) {
-            val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            val moduleOperationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
             if (moduleOperationProvider != null) {
                 log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
             } else {
@@ -142,7 +157,7 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
             packageVersion: PackageVersion,
             targetModule: ProjectModule
         ) = runSafelyIfEnabled(packageUpdatedEvent) {
-            val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            val moduleOperationProvider = CoroutineProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
             if (moduleOperationProvider != null) {
                 log(
                     packageIdField.with(packageIdentifier.rawValue),

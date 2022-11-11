@@ -150,6 +150,7 @@ data class IndexingMetrics(
     )
   }
 }
+
 fun extractIndexingMetrics(startResult: IDEStartResult): IndexingMetrics {
   val indexDiagnosticDirectory = startResult.context.paths.logsDir / "indexing-diagnostic"
   val indexDiagnosticDirectoryChildren = Files.list(indexDiagnosticDirectory).filter { it.toFile().isDirectory }.use { it.toList() }

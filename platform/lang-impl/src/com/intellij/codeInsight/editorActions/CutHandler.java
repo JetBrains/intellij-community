@@ -2,8 +2,6 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
@@ -33,16 +31,8 @@ public class CutHandler extends EditorWriteActionHandler {
   @Override
   public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
     assert caret == null : "Invocation of 'cut' operation for specific caret is not supported";
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
-    if (project == null) {
-      if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, null, dataContext);
-      }
-      return;
-    }
-
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-
+    Project project = editor.getProject();
+    PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, null, dataContext);
@@ -51,13 +41,11 @@ public class CutHandler extends EditorWriteActionHandler {
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection(true)) {
-      if (CopyAction.isSkipCopyPasteForEmptySelection()) {
-        return;
-      }
-      editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
-      if (!selectionModel.hasSelection(true)) return;
+    CopyAction.SelectionToCopy selectionToCopy = CopyAction.prepareSelectionToCut(editor);
+    if (selectionToCopy == null) {
+      return;
     }
+    dataContext = selectionToCopy.extendDataContext(dataContext);
 
     int start = selectionModel.getSelectionStart();
     int end = selectionModel.getSelectionEnd();

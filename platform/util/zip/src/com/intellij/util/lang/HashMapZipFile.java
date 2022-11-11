@@ -102,7 +102,6 @@ public final class HashMapZipFile implements ZipFile {
 
   /**
    * Returns a named entry, or {@code null} if no entry by that name exists. The name should not contain trailing slashes.
-   * @return
    */
   @Override
   public @Nullable ZipResource getResource(String name) {

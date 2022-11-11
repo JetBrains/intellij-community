@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'H.foo'" "true"
 // ERROR: Unresolved reference: foo
 
 package h

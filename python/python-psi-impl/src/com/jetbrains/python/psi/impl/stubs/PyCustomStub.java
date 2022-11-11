@@ -17,7 +17,6 @@ public interface PyCustomStub<CustomStubType extends PyCustomStubType> {
 
   /**
    * @param stream stream to serialize {@code this} stub
-   * @throws IOException
    * @see PyCustomStubType#deserializeStub(StubInputStream)
    */
   void serialize(@NotNull StubOutputStream stream) throws IOException;

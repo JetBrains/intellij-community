@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
@@ -21,13 +21,14 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.extractMethod.newImpl.inplace.*
+import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
+import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.KotlinExtractFunctionDialog
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.nonBlocking
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -205,7 +207,7 @@ class ExtractKotlinFunctionHandler(
             editor,
             file,
             KotlinBundle.message("title.select.target.code.block"),
-            listOf(CodeInsightUtils.ElementKind.EXPRESSION),
+            listOf(ElementKind.EXPRESSION),
             ::validateExpressionElements,
             { elements, parent -> parent.getExtractionContainers(elements.size == 1, allContainersEnabled) },
             continuation

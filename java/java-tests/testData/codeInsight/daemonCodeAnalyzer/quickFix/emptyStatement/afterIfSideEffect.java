@@ -1,4 +1,4 @@
-// "Extract side effects as an 'if' statement" "true"
+// "Extract side effects as an 'if' statement" "true-preview"
 class Test {
   void test(int x) {
       if (x > 0) {

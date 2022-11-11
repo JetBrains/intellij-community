@@ -5,3 +5,4 @@ fun foo() {
 
 // EXISTS: mutableListOf(vararg String)
 // EXISTS: also: block.invoke()
+// IGNORE_K2

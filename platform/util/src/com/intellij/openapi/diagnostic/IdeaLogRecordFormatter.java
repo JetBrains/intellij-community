@@ -2,6 +2,7 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -10,21 +11,28 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 public class IdeaLogRecordFormatter extends Formatter {
-  private static final String FORMAT_WITH_DATE_TIME = "%1$tF %1$tT,%1$tL [%2$7d] %3$6s - %4$s - %5$s%6$s";
-  private static final String FORMAT_WITHOUT_DATE_TIME = "[%2$7d] %3$6s - %4$s - %5$s%6$s";
+  private static final String FORMAT_WITH_DATE_TIME = "%1$tF %1$tT,%1$tL [%2$7s] %3$6s - %4$s - %5$s%6$s";
+  private static final String FORMAT_WITHOUT_DATE_TIME = "[%2$7s] %3$6s - %4$s - %5$s%6$s";
   private static final String LINE_SEPARATOR = System.lineSeparator();
 
   private final long myLogCreation;
   private final boolean myWithDateTime;
 
   public IdeaLogRecordFormatter() {
-    myWithDateTime = true;
-    myLogCreation = System.currentTimeMillis();
+    this(true);
   }
 
-  public IdeaLogRecordFormatter(IdeaLogRecordFormatter copyFrom, boolean withDateTime) {
-    myLogCreation = copyFrom.myLogCreation;
+  public IdeaLogRecordFormatter(boolean withDateTime) {
+    this(withDateTime, null);
+  }
+
+  public IdeaLogRecordFormatter(boolean withDateTime, @Nullable IdeaLogRecordFormatter copyFrom) {
     myWithDateTime = withDateTime;
+    myLogCreation = copyFrom != null ? copyFrom.getStartedMillis() : System.currentTimeMillis();
+  }
+
+  protected long getStartedMillis() {
+    return myLogCreation;
   }
 
   @Override
@@ -34,10 +42,12 @@ public class IdeaLogRecordFormatter extends Formatter {
       loggerName = smartAbbreviate(loggerName);
     }
     String level = record.getLevel() == Level.WARNING ? "WARN" : record.getLevel().toString();
+    long startedMillis = getStartedMillis();
+    String relativeToStartedMillis = (startedMillis == 0) ? "-------" : String.valueOf(record.getMillis() - startedMillis);
     String result = String.format(
       myWithDateTime ? FORMAT_WITH_DATE_TIME : FORMAT_WITHOUT_DATE_TIME,
       record.getMillis(),
-      record.getMillis() - myLogCreation,
+      relativeToStartedMillis,
       level,
       loggerName,
       formatMessage(record),

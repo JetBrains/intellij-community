@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -68,6 +69,9 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
   }
 
   protected void showChangesBetweenRevisions(@NotNull final FilePath path, @NotNull final T older, @Nullable final T newer) {
+    if (newer == null) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
     new CollectChangesTask(VcsBundle.message("file.history.diff.handler.comparing.process")) {
 
       @NotNull

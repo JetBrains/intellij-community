@@ -1,72 +1,159 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen
 
-import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
-import com.intellij.workspaceModel.storage.*
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.workspaceModel.codegen.classes.*
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.engine.GenerationProblem
+import com.intellij.workspaceModel.codegen.engine.ProblemLocation
+import com.intellij.workspaceModel.codegen.engine.impl.ProblemReporter
+import com.intellij.workspaceModel.codegen.fields.javaMutableType
 import com.intellij.workspaceModel.codegen.fields.javaType
-import org.jetbrains.deft.Type
-import com.intellij.workspaceModel.codegen.classes.noDefaultValue
-import com.intellij.workspaceModel.codegen.classes.noOptional
-import com.intellij.workspaceModel.codegen.classes.noRefs
-import com.intellij.workspaceModel.codegen.classes.noPersistentId
-import com.intellij.workspaceModel.codegen.fields.referencedField
 import com.intellij.workspaceModel.codegen.fields.wsCode
-import com.intellij.workspaceModel.codegen.deft.model.DefType
-import com.intellij.workspaceModel.codegen.deft.model.WsEntityInterface
 import com.intellij.workspaceModel.codegen.utils.fqn
+import com.intellij.workspaceModel.codegen.utils.fqn7
 import com.intellij.workspaceModel.codegen.utils.lines
-import com.intellij.workspaceModel.codegen.deft.Field
-import com.intellij.workspaceModel.codegen.fields.builderApi
+import com.intellij.workspaceModel.codegen.writer.*
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 
-fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean): String = lines(indent) {
-  if (isEmptyGenBlock) line("//region generated code") else result.append("//region generated code\n")
-  line("//@formatter:off")
+val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
+                                              ModifiableWorkspaceEntity::class.simpleName,
+                                              WorkspaceEntityWithPersistentId::class.simpleName)
 
+fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
+  checkSuperTypes(this@generateBuilderCode, reporter)
   line("@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})")
-  val abstractSupertype = if (base?.abstract == true) base else null
-  val header = when {
-    abstract && abstractSupertype != null -> {
-      "interface Builder<T: $javaFullName>: $javaFullName, ${abstractSupertype.name}.Builder<T>, ${
-        ModifiableWorkspaceEntity::class.fqn
-      }<T>, ObjBuilder<T>"
-    }
-    abstractSupertype != null -> {
-      "interface Builder: $javaFullName, ${abstractSupertype.name}.Builder<$javaFullName>, ${
-        ModifiableWorkspaceEntity::class.fqn
-      }<$javaFullName>, ObjBuilder<$javaFullName>"
-    }
-    abstract -> "interface Builder<T: $javaFullName>: $javaFullName, ${ModifiableWorkspaceEntity::class.fqn}<T>, ObjBuilder<T>"
-    else -> "interface Builder: $javaFullName, ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>, ObjBuilder<$javaFullName>"
+  val (typeParameter, typeDeclaration) = 
+    if (openness.extendable) "T" to "<T: $javaFullName>" else javaFullName to ""
+  val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString { 
+    ", ${it.name}.Builder<$typeParameter>"
   }
+  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${ModifiableWorkspaceEntity::class.fqn}<$typeParameter>, ${ObjBuilder::class.fqn}<$typeParameter>"
 
   section(header) {
-    list(structure.allFields.noPersistentId()) {
-      if (def.kind is WsEntityInterface) wsBuilderApi else builderApi
+    list(allFields.noPersistentId()) {
+      checkProperty(this, reporter)
+      wsBuilderApi
     }
   }
+}
 
-  line()
-  val builderGeneric = if (abstract) "<$javaFullName>" else ""
+fun checkSuperTypes(objClass: ObjClass<*>, reporter: ProblemReporter) {
+  objClass.superTypes.filterIsInstance<ObjClass<*>>().forEach {superClass -> 
+    if (!superClass.openness.extendable) {
+      reporter.reportProblem(GenerationProblem("Class '${superClass.name}' cannot be extended", GenerationProblem.Level.ERROR, 
+                                               ProblemLocation.Class(objClass)))
+    }
+    else if (!superClass.openness.openHierarchy && superClass.module != objClass.module) {
+      reporter.reportProblem(GenerationProblem("Class '${superClass.name}' cannot be extended from other modules", 
+                                               GenerationProblem.Level.ERROR, ProblemLocation.Class(objClass)))
+    }
+  }
+}
+
+private fun checkProperty(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
+  checkInheritance(objProperty, reporter)
+  checkPropertyType(objProperty, reporter)
+}
+
+fun checkInheritance(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
+  if (objProperty.name == "entitySource" && objProperty.receiver.javaFullName.decoded == ModifiableWorkspaceEntity::class.java.name) {
+    //ignore until ModifiableWorkspaceEntity is renamed to WorkspaceModel.Builder (IDEA-299150)
+    return
+  }
+  objProperty.receiver.allSuperClasses.mapNotNull { it.fieldsByName[objProperty.name] }.forEach { overriddenField -> 
+    if (!overriddenField.open) {
+      reporter.reportProblem(
+        GenerationProblem("Property '${overriddenField.receiver.name}::${overriddenField.name}' cannot be overriden",
+                          GenerationProblem.Level.ERROR, ProblemLocation.Property(objProperty)))
+    }
+  }
+}
+
+private fun checkPropertyType(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
+  val errorMessage = when (val type = objProperty.valueType) {
+    is ValueType.ObjRef<*> -> {
+      if (type.child) "Child references should always be nullable"
+      else null
+    }
+    else -> checkType(type)
+  }
+  if (errorMessage != null) {
+    reporter.reportProblem(GenerationProblem(errorMessage, GenerationProblem.Level.ERROR, ProblemLocation.Property(objProperty)))
+  }
+}
+
+private fun checkType(type: ValueType<*>): String? = when (type) {
+  is ValueType.Optional -> when (type.type) {
+    is ValueType.List<*> -> "Optional lists aren't supported"
+    is ValueType.Set<*> -> "Optional sets aren't supported"
+    else -> checkType(type.type)
+  }
+  is ValueType.Set<*> -> {
+    if (type.elementType.isRefType()) {
+      "Set of references isn't supported"
+    }
+    else checkType(type.elementType)
+  }
+  is ValueType.Map<*, *> -> {
+    checkType(type.keyType) ?: checkType(type.valueType)
+  }
+  is ValueType.Blob<*> -> {
+    if (!keepUnknownFields && type.javaClassName !in knownInterfaces) {
+      "Unsupported type '${type.javaClassName}'"
+    }
+    else null
+  }
+  else -> null
+}
+
+private val keepUnknownFields: Boolean
+  get() = Registry.`is`("workspace.model.generator.keep.unknown.fields")
+
+private val knownInterfaces = setOf(
+  VirtualFileUrl::class.qualifiedName!!,
+  EntitySource::class.qualifiedName!!,
+  PersistentEntityId::class.qualifiedName!!,
+)
+
+fun ObjClass<*>.generateCompanionObject(): String = lines {
+  val builderGeneric = if (openness.extendable) "<$javaFullName>" else ""
   val companionObjectHeader = buildString {
     append("companion object: ${Type::class.fqn}<$javaFullName, Builder$builderGeneric>(")
+    val base = superTypes.filterIsInstance<ObjClass<*>>().firstOrNull()
     if (base != null && base.name !in SKIPPED_TYPES)
       append(base.javaFullName)
     append(")")
   }
-  val mandatoryFields = structure.allFields.noRefs().noOptional().noPersistentId().noDefaultValue()
-  if (!mandatoryFields.isEmpty()) {
-    val fields = mandatoryFields.joinToString { "${it.name}: ${it.type.javaType}" }
+  val mandatoryFields = allFields.mandatoryFields()
+  if (mandatoryFields.isNotEmpty()) {
+    val fields = mandatoryFields.joinToString { "${it.name}: ${it.valueType.javaType}" }
     section(companionObjectHeader) {
       section("operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
         list(mandatoryFields) {
-          "builder.$name = $name"
+          if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
+            "builder.$name = $name.${fqn7(Collection<*>::toMutableWorkspaceSet)}()"
+          } else if (this.valueType is ValueType.List<*> && !this.valueType.isRefType()) {
+            "builder.$name = $name.${fqn7(Collection<*>::toMutableWorkspaceList)}()"
+          } else {
+            "builder.$name = $name"
+          }
         }
         line("init?.invoke(builder)")
         line("return builder")
       }
     }
-  } else {
+  }
+  else {
     section(companionObjectHeader) {
       section("operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
@@ -75,26 +162,31 @@ fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean):
       }
     }
   }
-  line("//@formatter:on")
-  lineNoNl("//endregion")
 }
 
-fun DefType.generatedExtensionCode(indent: String = "    "): String {
-  val extFields = ktModule.extFields.filter { it.owner is DefType &&
-                                              (this === it.owner || (it.owner.def.formExternalModule &&  it.referencedField.owner === this)) }
-  if (extFields.isEmpty() && abstract) return ""
-  return lines(indent) {
-    line("//region generated code")
-    if (!abstract) {
+fun List<OwnProperty<*, *>>.mandatoryFields(): List<ObjProperty<*, *>> {
+  var fields = this.noRefs().noOptional().noPersistentId().noDefaultValue()
+  if (fields.isNotEmpty()) {
+    fields = fields.noEntitySource() + fields.single { it.name == "entitySource" }
+  }
+  return fields
+}
+
+fun ObjClass<*>.generateExtensionCode(): String? {
+  val fields = module.extensions.filter { it.receiver == this || it.receiver.module != module && it.valueType.isRefType() && it.valueType.getRefType().target == this }
+  if (openness.extendable && fields.isEmpty()) return null
+
+  return lines {
+    if (!openness.extendable) {
       line("fun ${MutableEntityStorage::class.fqn}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit) = modifyEntity($name.Builder::class.java, entity, modification)")
     }
-    if (extFields.isNotEmpty()) {
-      extFields.sortedWith(compareBy({it.owner.name}, {it.name})).forEach { line(it.wsCode) }
-    }
-    lineNoNl("//endregion")
+    fields.sortedWith(compareBy({ it.receiver.name }, { it.name })).forEach { line(it.wsCode) }
   }
 }
 
-val Field<*, *>.wsBuilderApi: String
-  get() = "override var $javaName: ${type.javaType}"
+val ObjProperty<*, *>.wsBuilderApi: String
+  get() {
+    val returnType = if (valueType is ValueType.Collection<*, *> && !valueType.isRefType()) valueType.javaMutableType else valueType.javaType
+    return "override var $javaName: $returnType"
+  }
 

@@ -9,4 +9,5 @@ class MyClass {
     val bar = 1
 }
 
-// EXPECTED: null
+// EXPECTED: a.MyClass()
+// EXPECTED_LEGACY: null

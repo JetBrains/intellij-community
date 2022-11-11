@@ -1,27 +1,34 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.*;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBase {
 
   private static final String[] METHODS_TO_IGNORE_CLASS = {
-    "generatePreview", "getFileModifierForPreview", "applyFixForPreview", "startInWriteAction"};
+    "generatePreview", "getFileModifierForPreview", "applyFixForPreview", "startInWriteAction", "invokeForPreview"};
   private static final Set<String> ALLOWED_METHOD_LOCATIONS = Set.of(
     LocalQuickFix.class.getName(),
     FileModifier.class.getName(),
     LocalQuickFixOnPsiElement.class.getName(),
-    WriteActionAware.class.getName()
+    WriteActionAware.class.getName(),
+    IntentionAction.class.getName()
   );
   private static final Set<String> ALLOWED_FIELD_TYPES = Set.of(
     String.class.getName(),
@@ -46,7 +53,10 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBa
     if (sourcePsi == null) return ProblemDescriptor.EMPTY_ARRAY;
     PsiClass psiClass = node.getJavaPsi();
     if (psiClass.isInterface()) return ProblemDescriptor.EMPTY_ARRAY;
-    if (!InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getName())) return ProblemDescriptor.EMPTY_ARRAY;
+    if (!InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getName()) &&
+        !InheritanceUtil.isInheritor(psiClass, IntentionAction.class.getName())) {
+      return ProblemDescriptor.EMPTY_ARRAY;
+    }
     if (hasCustomPreviewStrategy(psiClass)) return ProblemDescriptor.EMPTY_ARRAY;
     ProblemsHolder holder = new ProblemsHolder(manager, sourcePsi.getContainingFile(), isOnTheFly);
     // PSI mirror of FileModifier#getFileModifierForPreview implementation
@@ -66,7 +76,8 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBa
         }
       } else {
         holder.registerProblem(psiAnchor,
-                               DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"));
+                               DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"),
+                               new AddAnnotationFix(FileModifier.SafeFieldForPreview.class.getCanonicalName(), field));
       }
     }
     return holder.getResultsArray();
@@ -106,10 +117,26 @@ public class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBa
         PsiClass containingClass = method.getContainingClass();
         if (containingClass != null) {
           String className = containingClass.getQualifiedName();
-          if (className != null && !ALLOWED_METHOD_LOCATIONS.contains(className)) return true;
+          boolean standardPreviewMethod = className != null && ALLOWED_METHOD_LOCATIONS.contains(className) ||
+                                          method.getName().equals("startInWriteAction") && returnsTrue(method);
+          if (!standardPreviewMethod) {
+            return true;
+          }
         }
       }
     }
     return false;
+  }
+
+  private static boolean returnsTrue(PsiMethod method) {
+    Predicate<PsiMethod> predicate = m -> {
+      PsiCodeBlock body = m.getBody();
+      if (body == null) return false;
+      PsiStatement[] statements = body.getStatements();
+      if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) return false;
+      PsiExpression value = ((PsiReturnStatement)statements[0]).getReturnValue();
+      return BoolUtils.isTrue(value);
+    };
+    return CachedValuesManager.getCachedValue(method, () -> CachedValueProvider.Result.create(predicate.test(method), method));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -20,11 +20,13 @@ import java.util.function.Predicate;
 
 abstract class UndoRedo {
   protected final UndoManagerImpl myManager;
+  protected final UndoManagerImpl.ClientState myState;
   protected final FileEditor myEditor;
   protected final UndoableGroup myUndoableGroup;
 
-  protected UndoRedo(UndoManagerImpl manager, FileEditor editor) {
-    myManager = manager;
+  protected UndoRedo(UndoManagerImpl.ClientState state, FileEditor editor) {
+    myState = state;
+    myManager = state.myManager;
     myEditor = editor;
     myUndoableGroup = getLastAction();
   }

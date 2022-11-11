@@ -58,11 +58,11 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   private volatile ModifierCache myModifierCache;
 
-  public PsiModifierListImpl(final PsiModifierListStub stub) {
+  public PsiModifierListImpl(PsiModifierListStub stub) {
     super(stub, JavaStubElementTypes.MODIFIER_LIST);
   }
 
-  public PsiModifierListImpl(final ASTNode node) {
+  public PsiModifierListImpl(ASTNode node) {
     super(node);
   }
 
@@ -200,8 +200,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       return BitUtil.isSet(stub.getModifiersMask(), ModifierFlags.NAME_TO_MODIFIER_FLAG_MAP.getInt(name));
     }
 
-    final CompositeElement tree = (CompositeElement)getNode();
-    final IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
+    CompositeElement tree = (CompositeElement)getNode();
+    IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
     return type != null && tree.findChildByType(type) != null;
   }
 
@@ -297,7 +297,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   @Override
   public PsiAnnotation @NotNull [] getApplicableAnnotations() {
-    final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(this);
+    PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(this);
     List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), annotation -> {
       PsiAnnotation.TargetType target = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
       return target != null && target != PsiAnnotation.TargetType.UNKNOWN;

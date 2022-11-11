@@ -9,14 +9,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import javax.swing.Icon
 
-class GithubYamlIconProvider : FileIconProvider {
-
-  companion object {
-    private val GITHUB_SCHEMA_NAMES = setOf("github-workflow", "github-action")
-  }
+internal class GithubYamlIconProvider : FileIconProvider {
+  private val GITHUB_SCHEMA_NAMES: Set<String> = setOf("github-workflow", "github-action")
 
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
     if (project == null) return null
+
+    val extension = file.extension
+    if (extension != "yml" && extension != "yaml") return null
 
     val schemaFiles = project.service<JsonSchemaService>().getSchemaFilesForFile(file)
     if (schemaFiles.any { GITHUB_SCHEMA_NAMES.contains(it.name) }) {

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
@@ -17,7 +18,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
  *
  * By default, table actions are intended to be updated on BGT.
  */
-internal abstract class RowBasedTableAction(private val considerSeparatorRow: Boolean = false): AnAction() {
+internal abstract class RowBasedTableAction(private val considerSeparatorRow: Boolean = false) : AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val editor = event.getRequiredData(CommonDataKeys.EDITOR)
     val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
@@ -35,17 +36,24 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
     val offset = event.getData(CommonDataKeys.CARET)?.offset
-    if (project == null || editor == null || file == null || offset == null) {
+
+    if (project == null
+        || editor == null
+        || file == null
+        || offset == null
+        || !file.language.isMarkdownLanguage()) {
       event.presentation.isEnabledAndVisible = false
       return
     }
+
     val document = editor.document
     val tableAndRow = findTableAndRow(event, file, document, offset)
     event.presentation.isEnabledAndVisible = tableAndRow != null
     if (tableAndRow != null) {
       val (table, row) = tableAndRow
       update(event, table, row)
-    } else {
+    }
+    else {
       update(event, null, null)
     }
   }
@@ -73,35 +81,33 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
     return TableUtils.findRow(file, offset)
   }
 
-  companion object {
-    fun findTableAndRow(
-      event: AnActionEvent,
-      file: PsiFile,
-      document: Document,
-      offset: Int,
-      rowGetter: (PsiFile, Document, Int) -> PsiElement?
-    ): Pair<MarkdownTable, PsiElement>? {
-      val elementFromEvent = event.getData(TableActionKeys.ELEMENT)?.get()
-      if (elementFromEvent != null) {
-        val table = obtainParentTable(elementFromEvent)
-        if (table != null) {
-          return table to elementFromEvent
-        }
-      }
-      val row = rowGetter(file, document, offset)?.takeIf { it.isValid }
-      val table = row?.let(::obtainParentTable)?.takeIf { it.isValid }
-      return when {
-        table != null -> table to row
-        else -> null
+  private fun findTableAndRow(
+    event: AnActionEvent,
+    file: PsiFile,
+    document: Document,
+    offset: Int,
+    rowGetter: (PsiFile, Document, Int) -> PsiElement?
+  ): Pair<MarkdownTable, PsiElement>? {
+    val elementFromEvent = event.getData(TableActionKeys.ELEMENT)?.get()
+    if (elementFromEvent != null) {
+      val table = obtainParentTable(elementFromEvent)
+      if (table != null) {
+        return table to elementFromEvent
       }
     }
+    val row = rowGetter(file, document, offset)?.takeIf { it.isValid }
+    val table = row?.let(::obtainParentTable)?.takeIf { it.isValid }
+    return when {
+      table != null -> table to row
+      else -> null
+    }
+  }
 
-    private fun obtainParentTable(element: PsiElement): MarkdownTable? {
-      return when (element) {
-        is MarkdownTableRow -> element.parentTable
-        is MarkdownTableSeparatorRow -> element.parentTable
-        else -> null
-      }
+  private fun obtainParentTable(element: PsiElement): MarkdownTable? {
+    return when (element) {
+      is MarkdownTableRow -> element.parentTable
+      is MarkdownTableSeparatorRow -> element.parentTable
+      else -> null
     }
   }
 }

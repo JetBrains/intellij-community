@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.effectiveVisibility
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.canBePrivate
 import org.jetbrains.kotlin.idea.core.isInheritable
@@ -29,11 +30,12 @@ import org.jetbrains.kotlin.idea.refactoring.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.util.hasNonSuppressAnnotation
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
@@ -64,7 +66,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
     private fun canBePrivate(declaration: KtNamedDeclaration): Boolean {
         if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) || declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
-        if (declaration.hasNonSuppressAnnotation) return false
+        if (KotlinPsiHeuristics.hasNonSuppressAnnotations(declaration)) return false
 
         val classOrObject = declaration.containingClassOrObject ?: return false
         val inheritable = classOrObject is KtClass && classOrObject.isInheritable()

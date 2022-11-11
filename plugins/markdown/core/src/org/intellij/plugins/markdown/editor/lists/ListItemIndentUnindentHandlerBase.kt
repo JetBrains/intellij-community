@@ -41,12 +41,14 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
     val firstLinesOfSelectedItems = getFirstLinesOfSelectedItems(caret, document, file)
 
     // use lines instead of items, because items may become invalid before used
+    var indentPerformed = false
     for (line in firstLinesOfSelectedItems) {
       psiDocumentManager.commitDocument(document)
       val item = file.getListItemAtLine(line, document)!!
       if (!doIndentUnindent(item, file, document)) {
         continue
       }
+      indentPerformed = true
       if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
         psiDocumentManager.commitDocument(document)
         @Suppress("name_shadowing") // item is not valid anymore, but line didn't change
@@ -54,7 +56,7 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
         updateNumbering(item, file, document)
       }
     }
-    return firstLinesOfSelectedItems.isNotEmpty()
+    return firstLinesOfSelectedItems.isNotEmpty() && indentPerformed
   }
 
   private fun getFirstLinesOfSelectedItems(caret: Caret, document: Document, file: MarkdownFile): List<Int> {

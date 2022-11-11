@@ -309,6 +309,10 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       Editor editor = e.getData(CommonDataKeys.EDITOR);

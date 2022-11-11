@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -96,7 +96,13 @@ public interface PluginDescriptor {
   /**
    * If true, this plugin is hidden from the list of installed plugins in Settings | Plugins.
    */
+  @ApiStatus.Internal
   default boolean isImplementationDetail() {
+    return false;
+  }
+
+  @ApiStatus.Experimental
+  default boolean isOnDemand() {
     return false;
   }
 

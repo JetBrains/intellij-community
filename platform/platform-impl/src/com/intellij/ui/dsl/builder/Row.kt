@@ -106,11 +106,6 @@ interface Row {
    */
   fun resizableRow(): Row
 
-  @Deprecated("Use overloaded rowComment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun rowComment(@NlsContexts.DetailedDescription comment: String,
-                 maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Row
-
   /**
    * Adds comment after the row with appropriate color and font size (macOS and Linux use smaller font).
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
@@ -193,14 +188,14 @@ interface Row {
 
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
-  @Deprecated("Use overloaded radioButton(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton>
-
   /**
    * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons.
-   * If there is a binding [ButtonsGroup.bind] for the buttons group then [value] must be provided with correspondent to binding type,
-   * or null otherwise
+   * If there is a binding [ButtonsGroup.bind] for the buttons group then:
+   * * [value] must be provided with correspondent to binding type for all radio buttons in the group
+   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true, such button will be selected by default in case
+   * initial bound variable value is not equal to values of radio button in the group
+   *
+   * If there is no binding, then values of all radio buttons in the group must be null
    */
   fun radioButton(@NlsContexts.RadioButton text: String, value: Any? = null): Cell<JBRadioButton>
 
@@ -244,11 +239,6 @@ interface Row {
    */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
-  @Deprecated("Use text(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun labelHtml(@NlsContexts.Label text: String,
-                action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
-
   /**
    * Adds text
    * * [text] can contain HTML tags except &lt;html&gt;, which is added automatically
@@ -265,10 +255,6 @@ interface Row {
   fun text(@NlsContexts.Label text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
            action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
-  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP): Cell<JLabel>
-
   /**
    * Adds comment with appropriate color and font size (macOS and Linux use smaller font).
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
@@ -282,15 +268,6 @@ interface Row {
    */
   fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
-
-  @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
-
-  @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  fun commentHtml(@NlsContexts.DetailedDescription text: String,
-                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
    * Creates focusable link with text inside. Should not be used with html in [text]
@@ -326,6 +303,10 @@ interface Row {
                                 project: Project? = null,
                                 fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                 fileChosen: ((chosenFile: VirtualFile) -> String)? = null): Cell<TextFieldWithBrowseButton>
+  /**
+   * Creates password field with [columns] set to [COLUMNS_SHORT]
+   */
+  fun passwordField(): Cell<JBPasswordField>
 
   /**
    * Creates expandable text field with [columns] set to [COLUMNS_SHORT]

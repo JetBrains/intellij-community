@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
@@ -11,6 +12,10 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean {
     return e.getData(SavedPatchesUi.SAVED_PATCHES_UI) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun update(e: AnActionEvent) {
@@ -27,7 +32,7 @@ abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider
     else {
       VcsTreeModelData.selected(changesBrowser.viewer)
     }
-    e.presentation.isEnabled = selection.userObjectsStream().anyMatch {
+    e.presentation.isEnabled = selection.iterateUserObjects().any {
       getDiffRequestProducer(changesBrowser, it) != null
     }
   }

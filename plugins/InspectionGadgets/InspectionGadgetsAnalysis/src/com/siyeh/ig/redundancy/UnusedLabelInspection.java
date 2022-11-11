@@ -81,7 +81,7 @@ public class UnusedLabelInspection extends BaseInspection implements CleanupLoca
   private static class UnusedLabelVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLabeledStatement(PsiLabeledStatement statement) {
+    public void visitLabeledStatement(@NotNull PsiLabeledStatement statement) {
       if (containsBreakOrContinueForLabel(statement)) {
         return;
       }

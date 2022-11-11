@@ -18,10 +18,9 @@ import javax.swing.*;
  * @see History
  */
 abstract class NavigationAction extends AnAction implements DumbAware {
-  protected NavigationAction(JComponent c, final String originalActionID, @NotNull Disposable parentDisposable) {
-    final AnAction original = ActionManager.getInstance().getAction(originalActionID);
-    new ShadowAction(this, original, c, parentDisposable);
-    getTemplatePresentation().setIcon(original.getTemplatePresentation().getIcon());
+  protected NavigationAction(JComponent c, String originalActionID, @NotNull Disposable parentDisposable) {
+    new ShadowAction(this, originalActionID, c,  parentDisposable);
+    getTemplatePresentation().setIcon(ActionManager.getInstance().getAction(originalActionID).getTemplatePresentation().getIcon());
   }
 
   @Override

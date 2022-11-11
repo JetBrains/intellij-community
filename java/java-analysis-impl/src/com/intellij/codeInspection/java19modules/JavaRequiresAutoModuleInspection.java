@@ -37,7 +37,7 @@ public class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspe
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return !PsiUtil.isModuleFile(holder.getFile()) ? PsiElementVisitor.EMPTY_VISITOR : new JavaElementVisitor() {
       @Override
-      public void visitRequiresStatement(PsiRequiresStatement statement) {
+      public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
         super.visitRequiresStatement(statement);
         PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
         if (refElement != null) {

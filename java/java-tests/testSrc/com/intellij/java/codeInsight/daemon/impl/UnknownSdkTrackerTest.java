@@ -67,21 +67,23 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
   public void testMissingModuleJdk() {
     setModuleSdk("missingSDK", JavaSdk.getInstance());
 
-    final List<String> fixes = detectMissingSdks();
+    List<String> fixes = detectMissingSdks();
     assertThat(fixes)
       .withFailMessage(String.valueOf(fixes))
       .hasSize(1)
-      .first().asString().startsWith("SdkFixInfo:");
+      .first().asString().matches(s -> s.startsWith("SdkFixInfo:") || s.startsWith("SdkSetupNotification:"));
   }
 
   public void testMissingModuleUnknownSdk() {
     setModuleSdk("missingSDK", "foo-bar-baz");
 
-    final List<String> fixes = detectMissingSdks();
+    List<String> fixes = detectMissingSdks();
     assertThat(fixes)
       .withFailMessage(String.valueOf(fixes))
       .hasSize(1)
-      .first().asString().startsWith("SdkSetupNotification:");
+      .first()
+      .asString()
+      .startsWith("SdkSetupNotification:");
   }
 
   public void testNoProjectSdk() {
@@ -106,7 +108,6 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
 
   public void testNoModuleSdk() {
     ModuleRootModificationUtil.setModuleSdk(getModule(), null);
-
     final List<String> fixes = detectMissingSdks();
     assertThat(fixes)
       .withFailMessage(String.valueOf(fixes))
@@ -155,7 +156,6 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     //it must not re-compute it
     assertThat(lookupCalls).hasValue(2);
   }
-
 
   @TestFor(issues = "IDEA-237884")
   public void testShouldNotRantOnCustomSDKType() {
@@ -267,7 +267,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
   private @NotNull List<String> detectMissingSdks() {
     UnknownSdkTracker.getInstance(getProject()).updateUnknownSdks();
 
-    ArrayList<String> infos = new ArrayList<>();
+    List<String> infos = new ArrayList<>();
     EditorNotificationPanel sdkNotification =
       SdkSetupNotificationTestBase.runOnText(myFixture, "Sample.java", "class Sample { java.lang.String foo; }");
     if (sdkNotification != null) {

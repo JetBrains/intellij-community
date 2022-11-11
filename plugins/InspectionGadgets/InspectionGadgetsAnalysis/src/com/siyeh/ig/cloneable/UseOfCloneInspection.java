@@ -38,7 +38,7 @@ public class UseOfCloneInspection extends BaseInspection {
   private static class UseOfCloneVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (!CloneUtils.isCallToClone(expression)) {
         return;
       }
@@ -53,7 +53,7 @@ public class UseOfCloneInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       final PsiElement target = expression.resolve();
       if (!(target instanceof PsiMethod) || !CloneUtils.isClone((PsiMethod)target) ||
           PsiUtil.isArrayClass(((PsiMethod)target).getContainingClass())) {
@@ -63,7 +63,7 @@ public class UseOfCloneInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       final String qualifiedName = reference.getQualifiedName();
       if (!CommonClassNames.JAVA_LANG_CLONEABLE.equals(qualifiedName)) {
         return;
@@ -72,7 +72,7 @@ public class UseOfCloneInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       if (!CloneUtils.isClone(method) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
         return;
       }

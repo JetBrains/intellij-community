@@ -17,12 +17,14 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.json.JsonTokenSets.STRING_LITERALS;
+
 /**
  * @author Mikhail Golubev
  */
 public class JsonQuoteHandler extends SimpleTokenSetQuoteHandler implements MultiCharQuoteHandler {
   public JsonQuoteHandler() {
-    super(JsonParserDefinition.STRING_LITERALS);
+    super(STRING_LITERALS);
   }
 
   @Nullable

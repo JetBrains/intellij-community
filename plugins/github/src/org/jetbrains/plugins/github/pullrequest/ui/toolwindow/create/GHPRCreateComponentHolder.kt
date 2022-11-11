@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import git4idea.remote.hosting.knownRepositories
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.diff.chains.DiffRequestChain
@@ -18,16 +19,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
-import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.Processor
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -49,9 +51,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
+import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -62,7 +65,7 @@ import javax.swing.text.PlainDocument
 internal class GHPRCreateComponentHolder(private val actionManager: ActionManager,
                                          private val project: Project,
                                          private val settings: GithubPullRequestsProjectUISettings,
-                                         private val repositoriesManager: GHProjectRepositoriesManager,
+                                         private val repositoriesManager: GHHostedRepositoriesManager,
                                          private val dataContext: GHPRDataContext,
                                          private val viewController: GHPRToolWindowTabComponentController,
                                          disposable: Disposable) {
@@ -121,7 +124,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       return
     }
 
-    val repository = headRepo.gitRemoteUrlCoordinates.repository
+    val repository = headRepo.remote.repository
     changesLoadingModel.load(EmptyProgressIndicator()) {
       GitChangeUtils.getThreeDotDiff(repository, baseBranch.name, headBranch.name)
     }
@@ -146,7 +149,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   private fun checkUpdateHead() {
     val headRepo = directionModel.headRepo
     if (headRepo != null && !directionModel.headSetByUser) directionModel.setHead(headRepo,
-                                                                                  headRepo.gitRemoteUrlCoordinates.repository.currentBranch)
+                                                                                  headRepo.remote.repository.currentBranch)
   }
 
   private val changesLoadingErrorHandler = GHRetryLoadingErrorHandler {
@@ -240,20 +243,16 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   private fun createChangesTree(parentPanel: JPanel,
                                 model: SingleValueModel<Collection<Change>>,
                                 emptyTextText: String): JComponent {
-    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText).also {
-      it.doubleClickHandler = Processor { e ->
-        if (EditSourceOnDoubleClickHandler.isToggleEvent(it, e)) return@Processor false
-        viewController.openNewPullRequestDiff(true)
-        true
-      }
-      it.enterKeyHandler = Processor {
-        viewController.openNewPullRequestDiff(true)
-        true
-      }
-    }
+    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
 
-    DataManager.registerDataProvider(parentPanel) {
-      if (tree.isShowing) tree.getData(it) else null
+    val diffPreviewHolder = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, null, dataContext.filesManager)
+
+    DataManager.registerDataProvider(parentPanel) { dataId ->
+      when {
+        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreviewHolder.activePreview
+        tree.isShowing -> tree.getData(dataId)
+        else -> null
+      }
     }
     return ScrollPaneFactory.createScrollPane(tree, true)
   }
@@ -296,7 +295,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
   private fun GHPRMergeDirectionModelImpl.preFill() {
     val repositoryDataService = dataContext.repositoryDataService
-    val currentRemote = repositoryDataService.repositoryMapping.gitRemoteUrlCoordinates
+    val currentRemote = repositoryDataService.repositoryMapping.remote
     val currentRepo = currentRemote.repository
 
     val baseRepo = GHGitRepositoryMapping(repositoryDataService.repositoryCoordinates, currentRemote)
@@ -316,13 +315,13 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     val repos = repositoriesManager.knownRepositories
     val baseIsFork = repositoryDataService.isFork
     val recentHead = settings.recentNewPullRequestHead
-    val headRepo = repos.find { it.ghRepositoryCoordinates == recentHead } ?: when {
+    val headRepo = repos.find { it.repository == recentHead } ?: when {
       repos.size == 1 -> repos.single()
       baseIsFork -> baseRepo
-      else -> repos.find { it.gitRemoteUrlCoordinates.remote.name == "origin" }
+      else -> repos.find { it.remote.remote.name == "origin" }
     }
 
-    val headBranch = headRepo?.gitRemoteUrlCoordinates?.repository?.currentBranch
+    val headBranch = headRepo?.remote?.repository?.currentBranch
     setHead(headRepo, headBranch)
     headSetByUser = false
   }
@@ -347,25 +346,28 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   }
 
   private inner class NewPRDiffRequestChainProducer : DiffRequestChainProducer {
-    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
-      val producers = changes.map {
-        val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
-        if (diffController.activeTree == GHPRDiffController.ActiveTree.FILES) {
-          val baseBranchName = directionModel.baseBranch?.name ?: "Base"
-          requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] =
-            VcsDiffUtil.getRevisionTitle(baseBranchName, it.beforeRevision?.file, it.afterRevision?.file)
+    val changeProducerFactory = ChangeDiffRequestProducerFactory { project, change ->
+      val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
-          val headBranchName = directionModel.headBranch?.name ?: "Head"
-          requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] =
-            VcsDiffUtil.getRevisionTitle(headBranchName, it.afterRevision?.file, null)
-        }
-        else {
-          VcsDiffUtil.putFilePathsIntoChangeContext(it, requestDataKeys)
-        }
+      if (diffController.activeTree == GHPRDiffController.ActiveTree.FILES) {
+        val baseBranchName = directionModel.baseBranch?.name ?: "Base"
+        requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] =
+          VcsDiffUtil.getRevisionTitle(baseBranchName, change.beforeRevision?.file, change.afterRevision?.file)
 
-        ChangeDiffRequestProducer.create(project, it, requestDataKeys)
+        val headBranchName = directionModel.headBranch?.name ?: "Head"
+        requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] =
+          VcsDiffUtil.getRevisionTitle(headBranchName, change.afterRevision?.file, null)
       }
+      else {
+        VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
+      }
+
+      ChangeDiffRequestProducer.create(project, change, requestDataKeys)
+    }
+
+    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
+      val producers = changes.map { change -> changeProducerFactory.create(project, change) as? Producer }
       return ChangeDiffRequestChain(producers)
     }
   }

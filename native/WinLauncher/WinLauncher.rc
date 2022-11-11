@@ -40,10 +40,10 @@ END
 
 STRINGTABLE
 BEGIN
-  IDS_MAIN_CLASS                    "com/intellij/idea/Main"
   IDS_COMMAND_LINE_PROCESSOR_CLASS  "com/intellij/ide/WindowsCommandLineProcessor"
 
   // placeholders to ensure table size
+  IDS_MAIN_CLASS                    "-"
   IDS_JDK_ONLY                      "-"
   IDS_JDK_ENV_VAR                   "-"
   IDS_APP_TITLE                     "-"
@@ -56,5 +56,6 @@ BEGIN
   IDS_ERROR_LAUNCHING_APP           "-"
   IDS_VM_OPTIONS                    "-"
   IDS_CLASSPATH_LIBS                "-"
+  IDS_INSTANCE_ACTIVATION           "-"
   IDS_BOOTCLASSPATH_LIBS            "-"
 END

@@ -1,0 +1,17 @@
+// NEW_NAME: bar
+
+package test
+
+fun function(): Int {
+    val other = foo
+
+    val bar = 10
+
+    bar + bar
+
+    run {
+        val foo = 20
+
+        foo + foo
+    }
+}

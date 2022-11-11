@@ -89,7 +89,6 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
 
     /**
      * Additional check to make sure that relationships between elements is suitable for current strategy
-     * @param elements
      */
     default boolean isSuitableElements(List<? extends PsiElement> elements) {
       return true;

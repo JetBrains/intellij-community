@@ -220,11 +220,13 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
     assertNotNull(jar);
 
-    JarFileSystem fs = JarFileSystem.getInstance();
-    NewVirtualFile root1 = ManagingFS.getInstance().findRoot(jar.getPath() + "!/", fs);
-    NewVirtualFile root2 = ManagingFS.getInstance().findRoot(jar.getParent().getPath() + "//" + jar.getName() + "!/", fs);
+    NewVirtualFile root1 = ManagingFS.getInstance().findRoot(jar.getPath() + "!/", JarFileSystem.getInstance());
+    NewVirtualFile root2 = ManagingFS.getInstance().findRoot(jar.getParent().getPath() + "//" + jar.getName() + "!/", JarFileSystem.getInstance());
     assertNotNull(root1);
     assertSame(root1, root2);
+
+    assertNull(LocalFileSystem.getInstance().findFileByPath("//../blah-blah")); // must not crash in FsRoot("//..")
+    assertNull(LocalFileSystem.getInstance().findFileByPath("//./blah-blah")); // must not crash in FsRoot("//.")
   }
 
   @Test

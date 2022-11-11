@@ -24,7 +24,7 @@ class NonFinalFieldsVisitor extends BaseInspectionVisitor {
     method.accept(new JavaRecursiveElementWalkingVisitor() {
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         // Do not recurse into.
       }
 

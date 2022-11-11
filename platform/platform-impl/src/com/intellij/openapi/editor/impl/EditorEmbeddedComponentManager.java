@@ -341,7 +341,7 @@ public final class EditorEmbeddedComponentManager {
       }, this);
       myEditor.getInlayModel().addListener(new InlayModel.SimpleAdapter() {
         @Override
-        public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+        public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
           if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0 && inlay.getRenderer() instanceof MyRenderer) {
             JComponent component = (JComponent)inlay.getRenderer();
             // This method can be called while validating the same component. Prevent resetting parent validation flags.
@@ -352,7 +352,7 @@ public final class EditorEmbeddedComponentManager {
         }
 
         @Override
-        public void onRemoved(@NotNull Inlay inlay) {
+        public void onRemoved(@NotNull Inlay<?> inlay) {
           Disposer.dispose(inlay);
         }
       }, this);

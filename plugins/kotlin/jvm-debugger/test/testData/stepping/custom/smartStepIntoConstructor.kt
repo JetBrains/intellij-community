@@ -113,3 +113,4 @@ class O<T>(i: T) {
     constructor(i: Int, j: T): this(j) {
     }
 }
+// IGNORE_K2

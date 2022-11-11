@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // RUNTIME
 
 fun none() {}

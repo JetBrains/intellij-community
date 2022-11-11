@@ -3,11 +3,12 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityExtensionDelegate
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.annotations.Open
+import org.jetbrains.deft.annotations.Abstract
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -17,7 +18,7 @@ import kotlin.reflect.KProperty1
  */
 
 /**
- * A base interface for entities. A entity may have properties of the following types:
+ * A base interface for entities. An entity may have properties of the following types:
  * * primitive types;
  * * String;
  * * enum;
@@ -78,19 +79,34 @@ import kotlin.reflect.KProperty1
  * ```
  */
 
-@Open interface WorkspaceEntity : Obj {
+@Abstract
+interface WorkspaceEntity : Obj {
   val entitySource: EntitySource
 
   fun <E : WorkspaceEntity> createReference(): EntityReference<E>
   fun getEntityInterface(): Class<out WorkspaceEntity>
+
+  companion object {
+    inline fun <reified T> extension(): WorkspaceEntityExtensionDelegate<T> {
+      return WorkspaceEntityExtensionDelegate()
+    }
+  }
 }
+
+/**
+ * Add this annotation to the field to mark this fields as a key field for replaceBySource operation.
+ * Entities will be compared based on these fields.
+ */
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
+annotation class EqualsBy
 
 /**
  * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][MutableEntityStorage.addEntity]
  * or [modify an existing value][MutableEntityStorage.modifyEntity].
  *
- * Currently the class must inherit from ModifiableWorkspaceEntityBase.
+ * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
  */
+@Abstract
 interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
   override var entitySource: EntitySource
 }
@@ -125,31 +141,6 @@ interface EntitySource {
 interface DummyParentEntitySource : EntitySource
 
 /**
- * Base interface for entities which may need to find all entities referring to them.
- */
-interface ReferableWorkspaceEntity : WorkspaceEntity {
-  /**
-   * Returns all entities of type [R] which [propertyName] property refers to this entity. Consider using type-safe variant referrers(KProperty1) instead.
-   */
-  fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R>
-}
-
-/**
- * Returns all entities of type [R] which [property] refers to this entity.
- */
-inline fun <E : ReferableWorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): Sequence<R> {
-  return referrers(R::class.java, property.name)
-}
-
-inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): List<R> {
-  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
-}
-
-inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity, reified X : List<E>> E.referrersy(property: KProperty1<R, X?>): List<R> {
-  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
-}
-
-/**
  * Represents a reference to an entity inside of [WorkspaceEntity].
  *
  * The reference can be obtained via [EntityStorage.createReference].
@@ -178,7 +169,8 @@ interface PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
   override fun toString(): String
 }
 
-@Open interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
+@Abstract
+interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
   val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
 }
 
@@ -188,6 +180,7 @@ interface EntityStorage {
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
+  operator fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean
 
   /**
    * Please select a name for your mapping in a form `<product_id>.<mapping_name>`.
@@ -222,7 +215,11 @@ interface MutableEntityStorage : EntityStorage {
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
-  fun removeEntity(e: WorkspaceEntity)
+  /**
+   * Remove the entity from the builder.
+   * Returns true if the entity was removed, false if the entity was not in the storage
+   */
+  fun removeEntity(e: WorkspaceEntity): Boolean
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage)
 
   /**
@@ -254,7 +251,31 @@ fun EntityStorage.toBuilder(): MutableEntityStorage {
 }
 
 sealed class EntityChange<T : WorkspaceEntity> {
-  data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
-  data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
-  data class Replaced<T : WorkspaceEntity>(val oldEntity: T, val newEntity: T) : EntityChange<T>()
+  /**
+   * Returns the entity which was removed or replaced in the change.
+   */
+  abstract val oldEntity: T?
+
+  /**
+   * Returns the entity which was added or used as a replacement in the change.
+   */
+  abstract val newEntity: T?
+  
+  data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+    override val oldEntity: T?
+      get() = null
+    override val newEntity: T
+      get() = entity
+  }
+  data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+    override val oldEntity: T
+      get() = entity
+    override val newEntity: T?
+      get() = null
+  }
+  data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
 }
+
+open class NotGeneratedRuntimeException(message: String) : RuntimeException(message)
+class NotGeneratedMethodRuntimeException(val methodName: String)
+  : NotGeneratedRuntimeException("Method `$methodName` uses default implementation. Please regenerate entities")

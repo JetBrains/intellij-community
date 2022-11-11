@@ -40,10 +40,6 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       project.getMessageBus().connect(),
       new WorkspaceModelChangeListener() {
         @Override
-        public void beforeChanged(@NotNull VersionedStorageChange event) {
-        }
-
-        @Override
         public void changed(@NotNull VersionedStorageChange event) {
           if (event.getChanges(JavaModuleSettingsEntity.class).stream().anyMatch(change ->
             change instanceof EntityChange.Replaced<?> &&

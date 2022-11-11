@@ -31,14 +31,12 @@ public abstract class SmartPointerAnchorProvider {
   /**
    * Provides anchor used for restoring elements after stub-to-AST switch.
    * One can use name identifier (such as tag or method name) as an anchor
-   * @param element
    * @return anchor to be used when restoring element
    */
   @Nullable
   public abstract PsiElement getAnchor(@NotNull PsiElement element);
 
   /**
-   * @param anchor
    * @return restored original element using anchor
    */
   @Nullable

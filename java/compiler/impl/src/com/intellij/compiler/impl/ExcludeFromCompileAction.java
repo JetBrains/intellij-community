@@ -2,6 +2,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -42,5 +43,10 @@ public abstract class ExcludeFromCompileAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     final boolean isApplicable = getFile() != null;
     presentation.setEnabledAndVisible(isApplicable);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

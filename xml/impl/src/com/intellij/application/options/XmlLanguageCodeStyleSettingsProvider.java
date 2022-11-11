@@ -36,7 +36,7 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
                                                   @NotNull final CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, getConfigurableDisplayNameText()){
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new XmlCodeStyleMainPanel(getCurrentSettings(), settings);
       }
 
@@ -48,7 +48,7 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   }
 
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new XmlCodeStyleSettings(settings);
   }
 

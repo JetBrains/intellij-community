@@ -18,6 +18,7 @@ package com.intellij.psi.tree;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides more flexible parsing capabilities for ILazyParseableElementType.
@@ -31,5 +32,6 @@ public interface ILightLazyParseableElementType {
    * @param chameleon the node to parse.
    * @return the parsed contents of the node.
    */
-  FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon);
+  @NotNull
+  FlyweightCapableTreeStructure<LighterASTNode> parseContents(@NotNull LighterLazyParseableNode chameleon);
 }

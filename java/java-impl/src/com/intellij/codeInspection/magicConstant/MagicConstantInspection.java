@@ -71,7 +71,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
                                         @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitJavaFile(@NotNull PsiJavaFile file) {
         if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
           Runnable fix = getAttachAnnotationsJarFix(file.getProject());
           if (fix != null) {
@@ -81,17 +81,17 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
-      public void visitEnumConstant(PsiEnumConstant enumConstant) {
+      public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
         checkCall(enumConstant, holder);
       }
 
       @Override
-      public void visitCallExpression(PsiCallExpression callExpression) {
+      public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
         checkCall(callExpression, holder);
       }
 
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         PsiExpression r = expression.getRExpression();
         if (r == null) return;
         PsiExpression l = expression.getLExpression();
@@ -104,7 +104,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         PsiExpression value = statement.getReturnValue();
         if (value == null) return;
         PsiElement element = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
@@ -114,7 +114,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
-      public void visitNameValuePair(PsiNameValuePair pair) {
+      public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
         PsiAnnotationMemberValue value = pair.getValue();
         if (!(value instanceof PsiExpression)) return;
         PsiReference ref = pair.getReference();
@@ -125,7 +125,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
-      public void visitBinaryExpression(PsiBinaryExpression expression) {
+      public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
         IElementType tokenType = expression.getOperationTokenType();
         if (tokenType != JavaTokenType.EQEQ && tokenType != JavaTokenType.NE) return;
         PsiExpression l = expression.getLOperand();
@@ -136,7 +136,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
-      public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
+      public void visitCaseLabelElementList(@NotNull PsiCaseLabelElementList list) {
         PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(list, PsiSwitchBlock.class);
         if (switchBlock == null) return;
         PsiExpression selector = switchBlock.getExpression();
@@ -527,7 +527,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     @Override
     public String getText() {
       List<String> names = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).filter(Objects::nonNull)
-                                                .map(PsiElement::getText).collect(Collectors.toList());
+        .map(PsiElement::getText).toList();
       String expression = StringUtil.join(names, " | ");
       return CommonQuickFixBundle.message("fix.replace.with.x", expression);
     }
@@ -541,7 +541,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       List<PsiLiteralExpression> expressionsToReplace = new ArrayList<>(values.size());
       concatExp.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
           super.visitLiteralExpression(expression);
           if (Integer.valueOf(0).equals(expression.getValue())) {
             expressionsToReplace.add(expression);
@@ -562,7 +562,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       Iterator<PsiElement> resolvedValuesIterator = resolved.iterator();
       newStartElement.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           PsiElement bound = expression.bindToElement(resolvedValuesIterator.next());
           JavaCodeStyleManager.getInstance(project).shortenClassReferences(bound);
         }

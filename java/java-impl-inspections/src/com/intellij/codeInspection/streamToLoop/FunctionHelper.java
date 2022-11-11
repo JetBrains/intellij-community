@@ -299,7 +299,7 @@ public abstract class FunctionHelper {
       public void visitClass(@NotNull PsiClass psiClass) { }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) { }
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) { }
 
       @Override
       public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {

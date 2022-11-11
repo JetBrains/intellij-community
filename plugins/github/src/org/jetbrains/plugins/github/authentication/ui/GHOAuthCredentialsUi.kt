@@ -6,8 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.UIUtil.getInactiveTextColor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -45,13 +44,12 @@ internal class GHOAuthCredentialsUi(
 
   override fun setBusy(busy: Boolean) = Unit
 
-  override fun LayoutBuilder.centerPanel() {
+  override fun Panel.centerPanel() {
     row {
-      val progressLabel = JBLabel(message("label.login.progress")).apply {
+      label(message("label.login.progress")).applyToComponent {
         icon = AnimatedIcon.Default()
         foreground = getInactiveTextColor()
       }
-      progressLabel()
     }
   }
 

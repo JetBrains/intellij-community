@@ -6,13 +6,15 @@
   <property name="classes.dir" value="${build.dir}/jps-bootstrap.classes" />
   <property name="uber.dir" value="${build.dir}/jps-bootstrap.out.lib" />
   <property environment="env"/>
-  <property prefix="dependencies" file="${community.home}/build/dependencies/gradle.properties" />
+  <property prefix="dependencies" file="${community.home}/build/dependencies/dependencies.properties" />
 
   <mkdir dir="${build.dir}" />
 
   <property name="maven.resolver.ant.tasks.version" value="1.2.1"/>
   <property name="maven.resolver.ant.tasks.file.name" value="maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"/>
-  <property name="maven.resolver.ant.tasks.file.path" value="${build.dir}/${maven.resolver.ant.tasks.file.name}"/>
+  <property name="maven.resolver.ant.tasks.file.path" value="org/apache/maven/resolver/maven-resolver-ant-tasks/${maven.resolver.ant.tasks.version}"/>
+  <property name="maven.resolver.ant.tasks.cache.dir" value="${user.home}/.m2/repository/${maven.resolver.ant.tasks.file.path}"/>
+  <property name="maven.resolver.ant.tasks.cache.file" value="${maven.resolver.ant.tasks.cache.dir}/${maven.resolver.ant.tasks.file.name}"/>
 
   <xmlproperty file="${jps.bootstrap.dir}/pom.xml" prefix="jps.bootstrap.pom.xml"/>
 
@@ -25,22 +27,23 @@
   </loadfile>
   <echo message="kotlinc.version=${kotlinc.version}" />
 
-  <available file="${maven.resolver.ant.tasks.file.path}" property="maven.resolver.ant.tasks.file.exists"/>
+  <available file="${maven.resolver.ant.tasks.cache.file}" property="maven.resolver.ant.tasks.file.exists"/>
 
   <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists">
+    <mkdir dir="${maven.resolver.ant.tasks.cache.dir}" />
     <get
-      src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-ant-tasks/${maven.resolver.ant.tasks.version}/maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"
-      dest="${maven.resolver.ant.tasks.file.path}.tmp"
+      src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/${maven.resolver.ant.tasks.file.path}/${maven.resolver.ant.tasks.file.name}"
+      dest="${maven.resolver.ant.tasks.cache.file}.tmp"
       verbose="true"/>
     <move
-      file="${maven.resolver.ant.tasks.file.path}.tmp"
-      tofile="${maven.resolver.ant.tasks.file.path}"
+      file="${maven.resolver.ant.tasks.cache.file}.tmp"
+      tofile="${maven.resolver.ant.tasks.cache.file}"
       overwrite="true"/>
   </target>
 
   <target name="jps-bootstrap-classpath" depends="download.resolver">
     <taskdef uri="antlib:org.apache.maven.resolver.ant" resource="org/apache/maven/resolver/ant/antlib.xml"
-             classpath="${maven.resolver.ant.tasks.file.path}"/>
+             classpath="${maven.resolver.ant.tasks.cache.file}"/>
 
     <resolver:remoterepos id="remoterepos.buildscript">
       <resolver:remoterepo id="central" url="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"/>

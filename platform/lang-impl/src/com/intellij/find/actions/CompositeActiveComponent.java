@@ -2,11 +2,9 @@
 package com.intellij.find.actions;
 
 import com.intellij.ui.ActiveComponent;
-import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class CompositeActiveComponent implements ActiveComponent {
   private final ActiveComponent[] myComponents;
@@ -14,13 +12,7 @@ public class CompositeActiveComponent implements ActiveComponent {
 
   public CompositeActiveComponent(ActiveComponent @NotNull ... components) {
     myComponents = components;
-
-    myComponent = new JPanel(new FlowLayout(FlowLayout.CENTER, JBUIScale.scale(2), JBUIScale.scale(2)));
-    myComponent.setBorder(null);
-    myComponent.setOpaque(false);
-    for (ActiveComponent component : components) {
-      myComponent.add(component.getComponent());
-    }
+    myComponent = CompositeActiveComponentPanelKt.createPanel(components);
   }
 
   @Override

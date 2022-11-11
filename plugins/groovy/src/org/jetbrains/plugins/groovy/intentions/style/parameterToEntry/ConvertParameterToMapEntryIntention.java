@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -338,7 +338,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   /**
    * @param owner       Method or closure
    * @param occurrences references to owner
-   * @return true if there we use owner's first parameter as map, false if we need to add ne one as fist map
    */
   private static FIRST_PARAMETER_KIND analyzeForNamedArguments(final GrParameterListOwner owner, final Collection<PsiElement> occurrences) {
     boolean thereAreNamedArguments = false;

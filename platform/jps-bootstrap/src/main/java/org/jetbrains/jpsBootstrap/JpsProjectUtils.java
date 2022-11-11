@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jpsBootstrap;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,7 +30,7 @@ import java.util.*;
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.info;
 
 @SuppressWarnings("SameParameterValue")
-public class JpsProjectUtils {
+public final class JpsProjectUtils {
   public static JpsModel loadJpsProject(Path projectHome, Path jdkHome, Path kotlincHome) throws Exception {
     long startTime = System.currentTimeMillis();
 
@@ -45,7 +45,7 @@ public class JpsProjectUtils {
     pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlincHome.toString());
 
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
-    JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectHome.toString());
+    JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectHome);
     System.out.println(
       "Loaded project " + projectHome + ": " +
         model.getProject().getModules().size() + " modules, " +

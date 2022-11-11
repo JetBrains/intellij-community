@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -6,9 +6,11 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -17,6 +19,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.ClientFileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -397,7 +400,9 @@ final class PassExecutorService implements Disposable {
             }
 
             if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
-              myPass.collectInformation(myUpdateProgress);
+              try(AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
+                myPass.collectInformation(myUpdateProgress);
+              }
             }
           }
           catch (ProcessCanceledException e) {
@@ -422,7 +427,7 @@ final class PassExecutorService implements Disposable {
       log(myUpdateProgress, myPass, "Finished. ");
 
       if (!myUpdateProgress.isCanceled()) {
-        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown, ()->{
+        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown, ()-> {
           for (ScheduledPass successor : mySuccessorsOnCompletion) {
             int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
             if (predecessorsToRun == 0) {
@@ -463,7 +468,7 @@ final class PassExecutorService implements Disposable {
         log(updateProgress, pass, " is canceled during apply, sorry");
         return;
       }
-      try {
+      try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
         if (UIUtil.isShowing(fileEditor.getComponent())) {
           pass.applyInformationToEditor();
           repaintErrorStripeAndIcon(fileEditor);
@@ -563,15 +568,15 @@ final class PassExecutorService implements Disposable {
   }
 
   // return true if terminated
-  boolean waitFor(int millis) throws Throwable {
+  boolean waitFor(int millis) {
+    long deadline = System.currentTimeMillis() + millis;
     try {
       for (Job<Void> job : mySubmittedPasses.values()) {
-        job.waitForCompletion(millis);
+        if (!job.waitForCompletion((int)(System.currentTimeMillis() - deadline))) {
+          return false;
+        }
       }
       return true;
-    }
-    catch (TimeoutException ignored) {
-      return false;
     }
     catch (InterruptedException e) {
       return true;

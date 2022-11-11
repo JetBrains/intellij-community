@@ -14,10 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class StartInplaceEditingAction extends AnAction{
 
   private GuiEditor myEditor;

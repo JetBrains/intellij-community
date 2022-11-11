@@ -38,7 +38,7 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
   @Test
   fun cancellation() {
     val job = Job()
-    withJob(job) {
+    withCurrentJob(job) {
       assertThrows<CancellationException> {
         computeCancellable {
           testNoExceptions()

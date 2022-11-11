@@ -18,7 +18,7 @@ class TestDependenciesResolver : DependenciesResolver {
             count++
             return ScriptDependencies.Empty.asSuccess()
         }
-        return ScriptDependencies(classpath = listOf(environment["lib-classes"] as File)).asSuccess()
+        return ScriptDependencies(classpath = environment["lib-classes"] as List<File>).asSuccess()
     }
 }
 

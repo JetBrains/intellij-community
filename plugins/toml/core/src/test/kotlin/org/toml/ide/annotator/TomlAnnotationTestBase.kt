@@ -19,8 +19,13 @@ abstract class TomlAnnotationTestBase : TomlTestBase() {
     }
 
     override fun tearDown() {
-        annotationFixture.tearDown()
-        super.tearDown()
+        try {
+            annotationFixture.tearDown()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     protected abstract fun createAnnotationFixture(): TomlAnnotationTestFixture

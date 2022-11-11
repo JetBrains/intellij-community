@@ -154,8 +154,7 @@ public class PrepareToDeployAction extends AnAction {
     }, DevKitBundle.message("prepare.for.deployment.task", pluginName), true, module.getProject());
   }
 
-  @NotNull
-  private static Map<Module, String> collectJpsPluginModules(@NotNull Module module) {
+  private static @NotNull Map<Module, String> collectJpsPluginModules(@NotNull Module module) {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml == null) return Collections.emptyMap();
 
@@ -163,8 +162,7 @@ public class PrepareToDeployAction extends AnAction {
     if (plugin == null) return Collections.emptyMap();
 
     Map<Module, String> jpsPluginToOutputPath = new HashMap<>();
-    List<Extensions> extensions = plugin.getExtensions();
-    for (Extensions extensionGroup : extensions) {
+    for (Extensions extensionGroup : plugin.getExtensions()) {
       XmlTag extensionsTag = extensionGroup.getXmlTag();
       String defaultExtensionNs = extensionsTag.getAttributeValue("defaultExtensionNs");
       for (XmlTag tag : extensionsTag.getSubTags()) {

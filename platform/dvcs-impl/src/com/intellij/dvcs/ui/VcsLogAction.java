@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -36,13 +23,17 @@ import java.util.Map;
 import static com.intellij.vcs.log.util.VcsLogUtil.MAX_SELECTED_COMMITS;
 
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
+    VcsLogCommitSelection selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
 
-    log.requestSelectedDetails(details -> {
+    selection.requestFullDetails(details -> {
       MultiMap<Repo, VcsFullCommitDetails> grouped = groupCommits(project, details, VcsShortCommitDetails::getRoot);
       if (grouped == null) return;
       actionPerformed(project, grouped);
@@ -52,13 +43,13 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    if (project == null || log == null) {
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (project == null || selection == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    MultiMap<Repo, Hash> grouped = groupFirstPackOfCommits(project, log);
+    MultiMap<Repo, Hash> grouped = groupFirstPackOfCommits(project, selection);
     if (grouped == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
@@ -88,8 +79,8 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
    * To use only during update.
    */
   @Nullable
-  private MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLog log) {
-    MultiMap<Repo, CommitId> commitIds = groupCommits(project, ContainerUtil.getFirstItems(log.getSelectedCommits(), MAX_SELECTED_COMMITS),
+  private MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLogCommitSelection selection) {
+    MultiMap<Repo, CommitId> commitIds = groupCommits(project, ContainerUtil.getFirstItems(selection.getCommits(), MAX_SELECTED_COMMITS),
                                                       CommitId::getRoot);
     if (commitIds == null) return null;
 

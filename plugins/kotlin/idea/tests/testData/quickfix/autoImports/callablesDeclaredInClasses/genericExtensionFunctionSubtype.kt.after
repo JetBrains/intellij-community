@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'bar'" "true"
 package p
 
 import p.CObject.bar

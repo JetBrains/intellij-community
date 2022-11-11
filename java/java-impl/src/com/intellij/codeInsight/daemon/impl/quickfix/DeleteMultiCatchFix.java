@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -27,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -35,6 +37,11 @@ public class DeleteMultiCatchFix implements IntentionAction {
 
   public DeleteMultiCatchFix(@NotNull PsiTypeElement typeElement) {
     myTypeElement = typeElement;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new DeleteMultiCatchFix(PsiTreeUtil.findSameElementInCopy(myTypeElement, target));
   }
 
   @NotNull
@@ -57,7 +64,7 @@ public class DeleteMultiCatchFix implements IntentionAction {
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myTypeElement;
+    return myTypeElement.getContainingFile();
   }
 
   @Override

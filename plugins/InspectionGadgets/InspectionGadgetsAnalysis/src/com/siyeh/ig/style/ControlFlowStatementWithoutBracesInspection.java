@@ -77,7 +77,7 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
       if (element instanceof PsiStatement) {
         statement = (PsiStatement)element;
       }
-      else if ((parent instanceof PsiStatement)) {
+      else if (parent instanceof PsiStatement) {
         statement = (PsiStatement)parent;
       }
       else {

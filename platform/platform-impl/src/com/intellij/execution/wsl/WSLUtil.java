@@ -135,7 +135,6 @@ public final class WSLUtil {
   }
 
   /**
-   * @param distribution
    * @return version if it can be determined or -1 instead
    */
   static int getWslVersion(@NotNull WSLDistribution distribution) {

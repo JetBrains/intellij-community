@@ -12,8 +12,9 @@ import com.intellij.ui.IdeUICustomization
  */
 class CloseOtherProjectsAction : CloseProjectsActionBase() {
   init {
-    templatePresentation.setText { IdeUICustomization.getInstance().projectMessage("action.close.other.projects.text") }
-    templatePresentation.setDescription { IdeUICustomization.getInstance().projectMessage("action.close.other.projects.description") }
+    val uiCustomization = IdeUICustomization.getInstance()
+    templatePresentation.setText(uiCustomization.projectMessagePointer("action.close.other.projects.text"))
+    templatePresentation.setDescription(uiCustomization.projectMessagePointer("action.close.other.projects.description"))
   }
 
   override fun canClose(project: Project, currentProject: Project) = project !== currentProject

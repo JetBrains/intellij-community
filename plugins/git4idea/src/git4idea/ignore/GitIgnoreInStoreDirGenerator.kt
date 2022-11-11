@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
 import com.intellij.openapi.Disposable
@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
@@ -38,9 +38,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = logger<GitIgnoreInStoreDirGenerator>()
 
-class GitIgnoreInStoreDirGeneratorActivity : StartupActivity.Background {
-  override fun runActivity(project: Project) {
-    if (!project.isDirectoryBased || project.isDefault) return
+internal class GitIgnoreInStoreDirGeneratorActivity : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
+    if (!project.isDirectoryBased) {
+      return
+    }
 
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       project.service<GitIgnoreInStoreDirGenerator>().run()
@@ -156,7 +158,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
 
     LOG.debug("Generate $GITIGNORE in $projectConfigDirPath for ${gitVcsKey.name}")
     val gitIgnoreFile = createGitignore(projectConfigDirVFile)
-    for (ignoredFileProvider in IgnoredFileProvider.IGNORE_FILE.extensions) {
+    for (ignoredFileProvider in IgnoredFileProvider.IGNORE_FILE.extensionList) {
       val ignoresInStoreDir =
         ignoredFileProvider.getIgnoredFiles(project).filter { ignore -> inStoreDir(projectConfigDirPath.systemIndependentPath, ignore) }.toTypedArray()
       if (ignoresInStoreDir.isEmpty()) continue

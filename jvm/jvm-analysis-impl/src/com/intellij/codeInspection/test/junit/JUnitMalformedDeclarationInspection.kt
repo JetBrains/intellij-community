@@ -37,11 +37,10 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import javax.swing.JComponent
 import kotlin.streams.asSequence
-import kotlin.streams.toList
 
 class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
-  val ignorableAnnotations: List<String> = ArrayList(listOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir"))
+  val ignorableAnnotations = mutableListOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir")
 
   override fun createOptionsPanel(): JComponent = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
     ignorableAnnotations, JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by")
@@ -204,7 +203,7 @@ private class JUnitMalformedSignatureVisitor(
     val sourcePsi = this.sourcePsi ?: return false
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
     val extension = alternatives.mapNotNull { it.javaPsi.containingClass }.flatMap {
-      MetaAnnotationUtil.findMetaAnnotations(it, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)).asSequence()
+      MetaAnnotationUtil.findMetaAnnotationsInHierarchy(it, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)).asSequence()
     }.firstOrNull()?.findAttributeValue("value")?.toUElement() ?: return false
     if (extension is UClassLiteralExpression) return InheritanceUtil.isInheritor(extension.type,
                                                                                  ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
@@ -462,7 +461,7 @@ private class JUnitMalformedSignatureVisitor(
                                               providerName)
       holder.registerProblem(place, message, *quickFixes)
     }
-    else if (sourceProvider.uastParameters.isNotEmpty()) {
+    else if (sourceProvider.uastParameters.isNotEmpty() && !classHasParameterResolverField(containingClass)) {
       val message = JvmAnalysisBundle.message(
         "jvm.inspections.junit.malformed.param.method.source.no.params.descriptor", providerName)
       holder.registerProblem(place, message)
@@ -483,6 +482,15 @@ private class JUnitMalformedSignatureVisitor(
           "jvm.inspections.junit.malformed.param.wrapped.in.arguments.descriptor")
         holder.registerProblem(place, message)
       }
+    }
+  }
+
+  private fun classHasParameterResolverField(aClass: PsiClass?): Boolean {
+    if (aClass == null) return false
+    if (aClass.isInterface) return false
+    return aClass.fields.any { field ->
+      AnnotationUtil.isAnnotated(field, ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION, 0) &&
+      field.type.isInheritorOf(ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
     }
   }
 
@@ -728,8 +736,8 @@ private class JUnitMalformedSignatureVisitor(
     ): List<@NlsSafe String> {
       val problems = mutableListOf<String>()
       if (shouldBeInTestInstancePerClass) { if (!isStatic && !isInstancePerClass) problems.add("static") }
-      else if (shouldBeStatic) { if (!isStatic) problems.add("static") }
-      else if (!shouldBeStatic) { if (isStatic) problems.add("non-static") }
+      else if (shouldBeStatic && !isStatic) problems.add("static")
+      else if (!shouldBeStatic && isStatic) problems.add("non-static")
       if (validVisibility != null && validVisibility != decVisibility) problems.add(validVisibility.text)
       return problems
     }

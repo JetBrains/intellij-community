@@ -34,8 +34,6 @@ public final class ElementUtils {
      * Gets the list of members to be put in the VelocityContext.
      *
      * @param members a list of {@link PsiMember} objects.
-     * @param selectedNotNullMembers
-     * @param useAccessors
      * @return a filtered list of only the fields as {@link FieldElement} objects.
      */
     public static List<FieldElement> getOnlyAsFieldElements(Collection<? extends PsiMember> members,
@@ -82,7 +80,6 @@ public final class ElementUtils {
      *
      * @param members                  a list of {@link PsiMember} objects.
      * @param selectedNotNullMembers  a list of @NotNull objects
-     * @param useAccessors
      * @return a filtered list of only the methods as a {@link FieldElement} or {@link MethodElement} objects.
      */
     public static List<Element> getOnlyAsFieldAndMethodElements(Collection<? extends PsiMember> members,

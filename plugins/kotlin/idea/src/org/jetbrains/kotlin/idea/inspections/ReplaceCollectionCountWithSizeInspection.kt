@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -8,15 +8,18 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
-import org.jetbrains.kotlin.idea.inspections.collections.receiverType
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.intentions.receiverType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 class ReplaceCollectionCountWithSizeInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -24,7 +27,7 @@ class ReplaceCollectionCountWithSizeInspection : AbstractKotlinInspection() {
             if (callExpression.calleeExpression?.text != "count" || callExpression.valueArguments.isNotEmpty()) return
             val context = callExpression.analyze(BodyResolveMode.PARTIAL)
             if (!callExpression.isCalling(FqName("kotlin.collections.count"))) return
-            val receiverType = callExpression.receiverType(context) ?: return
+            val receiverType = callExpression.getResolvedCall(context)?.resultingDescriptor?.receiverType()?: return
             if (KotlinBuiltIns.isIterableOrNullableIterable(receiverType)) return
             holder.registerProblem(
                 callExpression,

@@ -122,7 +122,6 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   /**
    * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactory caches such instances per level.
-   * @param languageLevel
    */
   public PyHighlighter(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;

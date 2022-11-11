@@ -40,7 +40,6 @@ public class PsiExpressionCategory implements PsiEnhancerCategory{
   }
 
   /**
-   * @param call
    * @return arguments
    */
   public static Collection<GrExpression> getArguments(GrCall call) {

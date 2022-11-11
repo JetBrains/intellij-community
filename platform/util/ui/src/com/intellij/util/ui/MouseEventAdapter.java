@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -103,7 +104,7 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
 
   @NotNull
   public static MouseEvent convert(@NotNull MouseEvent event, Component source, int x, int y) {
-    return convert(event, source, event.getID(), event.getWhen(), event.getModifiers() | event.getModifiersEx(), x, y);
+    return convert(event, source, event.getID(), event.getWhen(), UIUtil.getAllModifiers(event), x, y);
   }
 
   @NotNull

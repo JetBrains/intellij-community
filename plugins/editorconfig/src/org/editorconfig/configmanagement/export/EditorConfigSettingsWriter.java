@@ -125,13 +125,13 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
         }
       }
     });
-    for (String pattern : mappers.keySet().stream().sorted().collect(Collectors.toList())) {
+    for (String pattern : mappers.keySet().stream().sorted().toList()) {
       if (pattern.isEmpty()) continue;
       String currPattern = pattern;
       for (
         LanguageCodeStylePropertyMapper mapper :
         mappers.get(pattern).stream()
-          .sorted(Comparator.comparing(mapper -> mapper.getLanguageDomainId())).collect(Collectors.toList())) {
+          .sorted(Comparator.comparing(mapper -> mapper.getLanguageDomainId())).toList()) {
         if (writeLangSection(mapper, currPattern)) {
           currPattern = null; // Do not write again
         }

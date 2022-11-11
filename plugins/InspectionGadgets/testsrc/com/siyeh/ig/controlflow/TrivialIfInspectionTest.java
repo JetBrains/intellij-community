@@ -133,6 +133,26 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  "}");
   }
 
+  public void testArrayWriteIncrement() {
+    doMemberTest("""
+                 void test(int[] arr, int idx, int i, int j) {
+                   arr[idx++] = i;
+                   if (i != j) {
+                     arr[idx++] = j;
+                   }
+                 }""");
+  }
+
+  public void testArrayWrite() {
+    doMemberTest("""
+                 void test(int[] arr, int idx, int i, int j) {
+                   arr[idx] = i;
+                   /*'if' statement can be simplified*/if/**/ (i != j) {
+                     arr[idx] = j;
+                   }
+                 }""");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     TrivialIfInspection inspection = new TrivialIfInspection();

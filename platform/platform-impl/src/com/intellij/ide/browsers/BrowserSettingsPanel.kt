@@ -9,10 +9,11 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Comparing
-import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.ColumnInfo
@@ -23,7 +24,6 @@ import com.intellij.util.ui.table.TableModelEditor.DialogItemEditor
 import com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo
 import java.awt.event.ItemEvent
 import java.util.*
-import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.TableModelEvent
@@ -103,75 +103,63 @@ internal class BrowserSettingsPanel {
       })
 
     row {
-      cell(isFullWidth = true) {
-        component(browsersEditor.createComponent()).constraints(grow, pushY).applyToComponent { browsersTable = this }
+      browsersTable = cell(browsersEditor.createComponent())
+        .verticalAlign(VerticalAlign.FILL)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .component
+    }.resizableRow()
+
+    row(IdeBundle.message("settings.browsers.default.browser")) {
+      val defaultBrowserPolicies = ArrayList<DefaultBrowserPolicy>()
+      if (canUseSystemDefaultBrowserPolicy()) {
+        defaultBrowserPolicies.add(DefaultBrowserPolicy.SYSTEM)
       }
-    }
+      defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST)
+      defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE)
 
-    row {
-      cell(isFullWidth = true) {
-        val defaultBrowserPolicies = ArrayList<DefaultBrowserPolicy>()
-        if (canUseSystemDefaultBrowserPolicy()) {
-          defaultBrowserPolicies.add(DefaultBrowserPolicy.SYSTEM)
+      defaultBrowserPolicyComboBox = comboBox(defaultBrowserPolicies, SimpleListCellRenderer.create("") { value: DefaultBrowserPolicy ->
+        when (value) {
+          DefaultBrowserPolicy.SYSTEM -> IdeBundle.message("settings.browsers.system.default")
+          DefaultBrowserPolicy.FIRST -> IdeBundle.message("settings.browsers.first.listed")
+          DefaultBrowserPolicy.ALTERNATIVE -> IdeBundle.message("settings.browsers.custom.path")
         }
-        defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST)
-        defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE)
-
-        label(IdeBundle.message("settings.browsers.default.browser"))
-        component(ComboBox(CollectionComboBoxModel(defaultBrowserPolicies))).applyToComponent {
-          this.renderer = SimpleListCellRenderer.create("") { value: DefaultBrowserPolicy ->
-            when (value) {
-              DefaultBrowserPolicy.SYSTEM -> IdeBundle.message("settings.browsers.system.default")
-              DefaultBrowserPolicy.FIRST -> IdeBundle.message("settings.browsers.first.listed")
-              DefaultBrowserPolicy.ALTERNATIVE -> IdeBundle.message("settings.browsers.custom.path")
+      }).applyToComponent {
+        addItemListener { e ->
+          val customPathEnabled = e.item === DefaultBrowserPolicy.ALTERNATIVE
+          if (e.stateChange == ItemEvent.DESELECTED) {
+            if (customPathEnabled) {
+              customPathValue = alternativeBrowserPathField.text
             }
           }
-          this.addItemListener { e ->
-            val customPathEnabled = e.item === DefaultBrowserPolicy.ALTERNATIVE
-            if (e.stateChange == ItemEvent.DESELECTED) {
-              if (customPathEnabled) {
-                customPathValue = alternativeBrowserPathField.text
-              }
-            }
-            else if (e.stateChange == ItemEvent.SELECTED) {
-              alternativeBrowserPathField.isEnabled = customPathEnabled
-              updateCustomPathTextFieldValue(e.item as DefaultBrowserPolicy)
-            }
+          else if (e.stateChange == ItemEvent.SELECTED) {
+            alternativeBrowserPathField.isEnabled = customPathEnabled
+            updateCustomPathTextFieldValue(e.item as DefaultBrowserPolicy)
           }
-          defaultBrowserPolicyComboBox = this
         }
-        component(TextFieldWithBrowseButton()).applyToComponent {
-          this.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR)
-          alternativeBrowserPathField = this
-        }
+      }.component
+      alternativeBrowserPathField = cell(TextFieldWithBrowseButton()).applyToComponent {
+        addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR)
+      }.horizontalAlign(HorizontalAlign.FILL)
+        .component
+    }
+
+    group(IdeBundle.message("settings.browsers.show.browser.popup.in.the.editor")) {
+      row {
+        showBrowserHover = checkBox(IdeBundle.message("settings.browsers.show.browser.popup.html")).component
+      }
+      row {
+        showBrowserHoverXml = checkBox(IdeBundle.message("settings.browsers.show.browser.popup.xml")).component
       }
     }
 
-    titledRow(IdeBundle.message("settings.browsers.show.browser.popup.in.the.editor")) {
-      row {
-        checkBox(IdeBundle.message("settings.browsers.show.browser.popup.html")).applyToComponent {
-          showBrowserHover = this
-        }
-      }
-      row {
-        checkBox(IdeBundle.message("settings.browsers.show.browser.popup.xml")).applyToComponent {
-          showBrowserHoverXml = this
-        }
-      }
-    }
-
-    titledRow(IdeBundle.message("settings.browsers.reload.behavior")) {
+    group(IdeBundle.message("settings.browsers.reload.behavior")) {
       row(IdeBundle.message("setting.value.reload.mode.server")) {
-        component(ComboBox(DefaultComboBoxModel(ReloadMode.values()))).applyToComponent {
-          this.renderer = SimpleListCellRenderer.create("") { it.title }
-          serverReloadModeComboBox = this
-        }
+        serverReloadModeComboBox = comboBox(ReloadMode.values().asList(), SimpleListCellRenderer.create("") { it.title })
+          .component
       }
       row(IdeBundle.message("setting.value.reload.mode.preview")) {
-        component(ComboBox(DefaultComboBoxModel(ReloadMode.values()))).applyToComponent {
-          this.renderer = SimpleListCellRenderer.create("") { it.title }
-          previewReloadModeComboBox = this
-        }
+        previewReloadModeComboBox = comboBox(ReloadMode.values().asList(), SimpleListCellRenderer.create("") { it.title })
+          .component
       }
     }
   }

@@ -2,14 +2,11 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -29,13 +26,16 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   @NotNull
   @Override
   public ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit) {
-    MyScheduledFutureTask<?> task = new MyScheduledFutureTask<Void>(ClientId.decorateRunnable(command), null, triggerTime(delayQueue, delay, unit)){
+    MyScheduledFutureTask<?> task = new MyScheduledFutureTask<Void>(ClientId.decorateRunnable(command), null, triggerTime(delay, unit)){
       @Override
-      void executeMeInBackendExecutor() {
-        EdtExecutorService.getInstance().execute(this, modalityState, (o) -> {
-          Application application = ApplicationManager.getApplication();
-          return this.isCancelled() || application == null || application.isDisposed();
-        });
+      boolean executeMeInBackendExecutor() {
+        if (!isDone()) {  // optimization: can be cancelled already
+          EdtExecutorService.getInstance().execute(this, modalityState, __ -> {
+            Application application = ApplicationManager.getApplication();
+            return this.isCancelled() || application == null || application.isDisposed();
+          });
+        }
+        return true;
       }
     };
     return delayedExecute(task);
@@ -51,13 +51,13 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   // stubs
   @Override
   public void shutdown() {
-    AppScheduledExecutorService.error();
+    AppScheduledExecutorService.notAllowedMethodCall();
   }
 
   @NotNull
   @Override
   public List<Runnable> shutdownNow() {
-    return AppScheduledExecutorService.error();
+    return AppScheduledExecutorService.notAllowedMethodCall();
   }
 
   @Override
@@ -72,7 +72,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
 
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) {
-    AppScheduledExecutorService.error();
+    AppScheduledExecutorService.notAllowedMethodCall();
     return false;
   }
 

@@ -15,7 +15,7 @@ class SingleIndexValueApplier<FileIndexMetaData> {
   @NotNull final ID<?, ?> indexId;
   final int inputId;
   private final @Nullable FileIndexMetaData myFileIndexMetaData;
-  final long mapInputTime;
+  final long evaluatingIndexValueApplierTime;
   @NotNull final Supplier<Boolean> storageUpdate;
   @NotNull private final String fileInfo;
   @NotNull private final String filePath;
@@ -28,12 +28,12 @@ class SingleIndexValueApplier<FileIndexMetaData> {
                           @NotNull Supplier<Boolean> update,
                           @NotNull VirtualFile file,
                           @NotNull FileContent currentFC,
-                          long mapInputTime) {
+                          long evaluatingIndexValueApplierTime) {
     myIndex = index;
     this.indexId = indexId;
     this.inputId = inputId;
     myFileIndexMetaData = fileIndexMetaData;
-    this.mapInputTime = mapInputTime;
+    this.evaluatingIndexValueApplierTime = evaluatingIndexValueApplierTime;
     storageUpdate = update;
     fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, currentFC);
     filePath = file.getPath();

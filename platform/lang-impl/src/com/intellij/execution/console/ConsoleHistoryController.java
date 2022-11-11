@@ -311,6 +311,11 @@ public class ConsoleHistoryController implements Disposable {
       e.getPresentation().setVisible(false);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     private boolean isUpDownKey(@NotNull AnActionEvent e) {
       final InputEvent event = e.getInputEvent();
       if (!(event instanceof KeyEvent)) {
@@ -350,6 +355,11 @@ public class ConsoleHistoryController implements Disposable {
     public void update(@NotNull AnActionEvent e) {
       boolean enabled = hasHistory();
       e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

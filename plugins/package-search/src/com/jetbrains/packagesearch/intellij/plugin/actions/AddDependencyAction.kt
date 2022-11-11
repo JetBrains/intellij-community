@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -13,12 +29,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateModifier
+import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 
 class AddDependencyAction : AnAction(
     PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
@@ -36,7 +52,7 @@ class AddDependencyAction : AnAction(
             && editor != null
             && run {
             val psiFile: PsiFile? = PsiUtilBase.getPsiFileInEditor(editor, project)
-            if (psiFile == null || ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, psiFile) == null) {
+            if (psiFile == null || CoroutineProjectModuleOperationProvider.forProjectPsiFileOrNull(project, psiFile) == null) {
                 return@run false
             }
 
@@ -54,7 +70,7 @@ class AddDependencyAction : AnAction(
         val selectedModule = findSelectedModule(e, modules) ?: return
 
         PackageSearchToolWindowFactory.activateToolWindow(project) {
-            project.uiStateModifier.setTargetModules(TargetModules.One(selectedModule))
+            project.pkgsUiStateModifier.setTargetModules(TargetModules.One(selectedModule))
         }
     }
 

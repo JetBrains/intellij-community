@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions.generate
 
@@ -26,7 +26,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
@@ -170,9 +170,9 @@ abstract class KotlinGenerateTestSupportActionBase(
                 val functionDescriptor = functionInPlace.unsafeResolveToDescriptor() as FunctionDescriptor
                 val overriddenDescriptors = functionDescriptor.overriddenDescriptors
                 val bodyText = when (overriddenDescriptors.size) {
-                    0 -> generateUnsupportedOrSuperCall(project, functionDescriptor, BodyType.FROM_TEMPLATE)
-                    1 -> generateUnsupportedOrSuperCall(project, overriddenDescriptors.single(), BodyType.SUPER)
-                    else -> generateUnsupportedOrSuperCall(project, overriddenDescriptors.first(), BodyType.QUALIFIED_SUPER)
+                    0 -> generateUnsupportedOrSuperCall(project, functionDescriptor, BodyType.FromTemplate)
+                    1 -> generateUnsupportedOrSuperCall(project, overriddenDescriptors.single(), BodyType.Super)
+                    else -> generateUnsupportedOrSuperCall(project, overriddenDescriptors.first(), BodyType.QualifiedSuper)
                 }
                 functionInPlace.bodyExpression?.delete()
                 functionInPlace.add(KtPsiFactory(project).createBlock(bodyText))

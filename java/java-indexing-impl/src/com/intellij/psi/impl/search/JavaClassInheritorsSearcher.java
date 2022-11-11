@@ -169,7 +169,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
                            @NotNull final PsiClass baseClass, final boolean[] success) {
     psiFile.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitClass(PsiClass candidate) {
+      public void visitClass(@NotNull PsiClass candidate) {
         ProgressManager.checkCanceled();
         if (!success[0]) return;
         if (candidate.isInheritor(baseClass, true)

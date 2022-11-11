@@ -4,7 +4,6 @@ package com.intellij.packageDependencies;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
-import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -34,14 +33,5 @@ public final class DefaultScopesProvider extends CustomScopesProviderEx {
   @NotNull
   public List<NamedScope> getCustomScopes() {
     return myScopes;
-  }
-
-  /**
-   * @deprecated use {@link ProblemsScope#INSTANCE} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public NamedScope getProblemsScope() {
-    return ProblemsScope.INSTANCE;
   }
 }

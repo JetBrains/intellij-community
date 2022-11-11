@@ -1,7 +1,8 @@
 <component name="libraryTable">
-  <library name="emulator-proto">
+  <library name="emulator-proto" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:emulator_java_proto:221.0.9.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../bazel-bin/tools/base/emulator/proto/emulator_java_proto.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/emulator_java_proto/221.0.9.0/emulator_java_proto-221.0.9.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

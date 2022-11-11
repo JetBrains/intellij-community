@@ -77,7 +77,7 @@ public class GrDeprecatedAPIUsageInspection extends BaseInspection {
       }
 
       private @Nullable PsiElement getResolveElement(GroovyReference reference) {
-        GroovyResolveResult[] results = reference.multiResolve(true);
+        GroovyResolveResult[] results = reference.multiResolve(false);
         for (GroovyResolveResult result : results) {
           PsiElement element = result.getElement();
           if (element != null) {

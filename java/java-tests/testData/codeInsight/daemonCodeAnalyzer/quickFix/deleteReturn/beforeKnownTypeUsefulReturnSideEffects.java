@@ -1,4 +1,4 @@
-// "Delete return value and extract side effects" "true"
+// "Delete return value and extract side effects" "true-preview"
 
 class Test {
 

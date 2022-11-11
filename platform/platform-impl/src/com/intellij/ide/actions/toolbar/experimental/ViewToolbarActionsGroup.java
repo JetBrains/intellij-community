@@ -12,7 +12,7 @@ public class ViewToolbarActionsGroup extends DefaultActionGroup implements DumbA
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean isEnabled = !ToolbarSettings.getInstance().isEnabled();
+    boolean isEnabled = !ToolbarSettings.getInstance().isAvailable();
     e.getPresentation().setEnabledAndVisible(isEnabled);
   }
 

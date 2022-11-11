@@ -38,26 +38,12 @@ public final class JpsGradleModelSerializationExtension extends JpsModelSerializ
   }
 
   @Override
-  public void saveModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
-    if (JpsGradleExtensionService.getInstance().getExtension(module) != null) {
-      rootElement.setAttribute("external.system.id", "GRADLE");
-    }
-  }
-
-  @Override
   public void loadModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
     if (orderEntry.getAttributeValue(PRODUCTION_ON_TEST_ATTRIBUTE) != null) {
       JpsGradleExtensionService.getInstance().setProductionOnTestDependency(dependency, true);
     }
   }
-
-  @Override
-  public void saveModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
-    if (JpsGradleExtensionService.getInstance().isProductionOnTestDependency(dependency)) {
-      orderEntry.setAttribute(PRODUCTION_ON_TEST_ATTRIBUTE, "");
-    }
-  }
-
+  
   @NotNull
   @Override
   public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {

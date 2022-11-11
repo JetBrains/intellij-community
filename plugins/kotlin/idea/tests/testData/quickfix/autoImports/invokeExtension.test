@@ -1,6 +1,7 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'Some.invoke'" "true"
 // ERROR: Expression 'Some()' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
+/* IGNORE_FIR */
 
 package testing
 
@@ -13,7 +14,7 @@ fun testing() {
 
 
 // FILE: second.kt
-// "Import" "true"
+// "Import extension function 'Some.invoke'" "true"
 // ERROR: Expression 'Some()' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
 
 package some
@@ -25,8 +26,9 @@ operator fun Some.invoke(s: String) {}
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'Some.invoke'" "true"
 // ERROR: Expression 'Some()' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
+/* IGNORE_FIR */
 
 package testing
 

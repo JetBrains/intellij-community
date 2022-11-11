@@ -166,6 +166,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (pathToFile() == null) {
         VirtualFile selectedFile = FileChooser.chooseFile(FILE_DESCRIPTOR, myComponent, getEventProject(e), null);
@@ -280,6 +285,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myRunner != null) {
         myRunner.stop();
@@ -303,6 +313,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myRunner == null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class RunOnFameActivationAction extends AnAction {
@@ -314,6 +329,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myRunner == null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

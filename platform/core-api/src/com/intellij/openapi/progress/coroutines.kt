@@ -3,11 +3,16 @@
 
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.replaceThreadContext
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -71,13 +76,11 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
     return runBlockingCancellable(indicator, action)
   }
   return ensureCurrentJob { currentJob ->
-    // TODO put currentThreadContext() into the runBlocking context
-    val context = currentJob +
+    val context = currentThreadContext() +
+                  currentJob +
                   CoroutineName("job run blocking")
-    runBlocking(context) {
-      replaceThreadContext(EmptyCoroutineContext).use {
-        action()
-      }
+    replaceThreadContext(EmptyCoroutineContext).use {
+      runBlocking(context, action)
     }
   }
 }
@@ -101,14 +104,12 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
 @Internal
 fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   return ensureCurrentJob(indicator) { currentJob ->
-    // TODO put currentThreadContext() into the runBlocking context
-    val context = currentJob +
+    val context = currentThreadContext() +
+                  currentJob +
                   CoroutineName("indicator run blocking") +
                   ProgressIndicatorSink(indicator).asContextElement()
-    runBlocking(context) {
-      replaceThreadContext(EmptyCoroutineContext).use {
-        action()
-      }
+    replaceThreadContext(EmptyCoroutineContext).use {
+      runBlocking(context, action)
     }
   }
 }
@@ -134,8 +135,11 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
  * @see com.intellij.concurrency.currentThreadContext
  */
 suspend fun <T> blockingContext(action: () -> T): T {
-  return replaceThreadContext(coroutineContext).use {
-    withJob(coroutineContext.job, action)
+  val currentContext = coroutineContext.minusKey(ContinuationInterceptor.Key)
+  return replaceThreadContext(currentContext).use {
+    // this will catch com.intellij.openapi.progress.JobCanceledException
+    // and throw original java.util.concurrent.CancellationException instead
+    withCurrentJob(currentContext.job, action)
   }
 }
 
@@ -158,14 +162,31 @@ suspend fun <T> blockingContext(action: () -> T): T {
 @Internal
 suspend fun <T> runUnderIndicator(action: () -> T): T {
   val ctx = coroutineContext
-  return runUnderIndicator(ctx.job, ctx.progressSink, action)
+  return runUnderIndicator(ctx, action)
 }
 
 @Internal
-@Suppress("EXPERIMENTAL_API_USAGE_ERROR")
-fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
+fun <T> runUnderIndicator(ctx: CoroutineContext, action: () -> T): T {
+  val job = ctx.job
   job.ensureActive()
-  val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
+  val indicator = ctx.createIndicator()
+  return runUnderIndicator(job, indicator, action)
+}
+
+private fun CoroutineContext.createIndicator(): ProgressIndicator {
+  val contextModality = contextModality()
+                        ?: ModalityState.NON_MODAL
+  val progressSink = progressSink
+  return if (progressSink == null) {
+    EmptyProgressIndicator(contextModality)
+  }
+  else {
+    ProgressSinkIndicator(progressSink, contextModality)
+  }
+}
+
+@Internal
+fun <T> runUnderIndicator(job: Job, indicator: ProgressIndicator, action: () -> T): T {
   try {
     return ProgressManager.getInstance().runProcess(Computable {
       // Register handler inside runProcess to avoid cancelling the indicator before even starting the progress.

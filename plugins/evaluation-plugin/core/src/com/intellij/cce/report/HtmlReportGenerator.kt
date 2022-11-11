@@ -21,7 +21,7 @@ class HtmlReportGenerator(
   private val comparisonFilterName: String,
   suggestionsComparators: List<SuggestionsComparator>,
   featuresStorages: List<FeaturesStorage>,
-  isCodeGolfEvaluation: Boolean
+  isCompletionGolfEvaluation: Boolean
 ) : FullReportGenerator {
   companion object {
     private const val globalReportName = "index.html"
@@ -46,8 +46,8 @@ class HtmlReportGenerator(
 
   private val dirs = GeneratorDirectories.create(outputDir, type, filterName, comparisonFilterName)
 
-  private var fileGenerator: FileReportGenerator = if (isCodeGolfEvaluation) {
-    CodeGolfFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
+  private var fileGenerator: FileReportGenerator = if (isCompletionGolfEvaluation) {
+    CompletionGolfFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
   } else {
     BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
   }

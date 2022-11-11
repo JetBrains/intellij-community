@@ -17,7 +17,6 @@ UFile (package = )
             UParameter (name = paramAndProp)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = foo)
-            UAnnotation (fqName = kotlin.jvm.JvmStatic)
             UBlockExpression
         UClass (name = Companion)
             UMethod (name = foo)

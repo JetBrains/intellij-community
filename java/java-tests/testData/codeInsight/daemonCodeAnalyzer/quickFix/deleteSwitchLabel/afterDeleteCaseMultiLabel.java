@@ -1,4 +1,4 @@
-// "Remove switch label '0-/*x*/1'" "true"
+// "Remove switch label '0-/*x*/1'" "true-preview"
 class Main {
     static void fff(int x) {
         if (x > 0) {

@@ -2,6 +2,7 @@
 package com.intellij.application.options.codeStyle.cache;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -10,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface CodeStyleCachingService {
+
+  Key<StackTraceElement[]> CALL_TRACE = Key.create(CodeStyleCachingService.class.getName() + ".call-trace");
 
   static CodeStyleCachingService getInstance(@NotNull Project project) {
     return project.getService(CodeStyleCachingService.class);

@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
@@ -24,6 +25,7 @@ public abstract class CopyPastePostProcessor<T extends TextBlockTransferableData
    * This method will be run in the dispatch thread with alternative resolve enabled
    */
   @NotNull
+  @RequiresEdt
   public abstract List<T> collectTransferableData(@NotNull PsiFile file,
                                                   @NotNull Editor editor,
                                                   int @NotNull [] startOffsets,

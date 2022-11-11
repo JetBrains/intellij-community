@@ -9,8 +9,7 @@ import java.util.*
 import java.util.function.Predicate
 import java.util.regex.Pattern
 
-@PublishedApi
-internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
+val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING)
 
 fun copyFileToDir(file: Path, targetDir: Path) {
   doCopyFile(file, targetDir.resolve(file.fileName), targetDir)
@@ -94,7 +93,11 @@ private class CopyDirectoryVisitor(private val sourceDir: Path,
   }
 }
 
-internal fun deleteDir(startDir: Path) {
+fun deleteDir(startDir: Path) {
+  if (!Files.exists(startDir)) {
+    return
+  }
+
   Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
       deleteFile(file)
@@ -141,8 +144,13 @@ fun substituteTemplatePlaceholders(inputFile: Path,
                                    outputFile: Path,
                                    placeholder: String,
                                    values: List<Pair<String, String>>,
-                                   mustUseAllPlaceholders: Boolean = true) {
+                                   mustUseAllPlaceholders: Boolean = true,
+                                   convertToUnixLineEndings: Boolean = false) {
   var result = Files.readString(inputFile)
+
+  if (convertToUnixLineEndings) {
+    result = result.replace("\r", "")
+  }
 
   val missingPlaceholders = mutableListOf<String>()
   for ((name, value) in values) {

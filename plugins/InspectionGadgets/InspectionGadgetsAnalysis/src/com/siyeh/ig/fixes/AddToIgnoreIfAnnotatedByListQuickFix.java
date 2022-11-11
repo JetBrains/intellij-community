@@ -31,7 +31,8 @@ public final class AddToIgnoreIfAnnotatedByListQuickFix {
       fixes.add(new DelegatingFix(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
         InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
         QuickFixBundle.message("fix.add.special.annotation.family"),
-        configurationList, qualifiedName, modifierListOwner)) {
+        InspectionGadgetsBundle.message("ignore.if.annotated.by"), configurationList, qualifiedName
+      )) {
         @NotNull
         @Override
         public Priority getPriority() {

@@ -9,6 +9,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.ui.HyperlinkAdapter;
@@ -86,6 +88,7 @@ public class CompareBranchesDiffPanel extends JPanel {
     updateLabelText();
 
     myChangesBrowser = new MyChangesBrowser(project, emptyList());
+    myChangesBrowser.getViewer().setTreeStateStrategy(ChangesTree.KEEP_NON_EMPTY);
 
     setLayout(new BorderLayout());
     add(myLabel, BorderLayout.NORTH);
@@ -188,6 +191,11 @@ public class CompareBranchesDiffPanel extends JPanel {
             DvcsBundle.messagePointer("compare.branches.diff.panel.get.from.branch.action.description", myBranchName),
             AllIcons.Actions.Download);
       copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.GetVersion"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

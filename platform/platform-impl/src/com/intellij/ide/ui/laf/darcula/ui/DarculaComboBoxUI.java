@@ -4,10 +4,8 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
-import com.intellij.openapi.util.ColoredItem;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.render.RenderingUtil;
@@ -463,11 +461,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           paintOutlineBorder(g2, r.width, r.height, myArc, true, hasFocus, Outline.valueOf(op.toString()));
         }
         else {
-          if (hasFocus && !isBorderless(c)) {
-            paintOutlineBorder(g2, r.width, r.height, myArc, true, true, Outline.focus);
+          if (!isBorderless(c)) {
+            if (hasFocus) {
+              paintOutlineBorder(g2, r.width, r.height, myArc, true, true, Outline.focus);
+            }
+            paintBorder(c, g2, bw, r, lw, myArc);
           }
-
-          paintBorder(c, g2, isBorderless(c) ? lw : bw, r, lw, myArc);
         }
       }
       else {
@@ -720,6 +719,35 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
           popupMenu.setOpaque(true);
           LookAndFeel.installColorsAndFont(popupMenu, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
+        }
+
+        @Override
+        public Popup getPopup(JPopupMenu popup, int x, int y) {
+          PopupFactory factory = PopupFactory.getSharedInstance();
+          int oldType = -1;
+          boolean isRoundBorder = WindowRoundedCornersManager.isAvailable();
+          if (isRoundBorder) {
+            oldType = PopupUtil.getPopupType(factory);
+            if (oldType == 2) {
+              oldType = -1;
+            } else {
+              PopupUtil.setPopupType(factory, 2);
+            }
+          }
+          Popup p = super.getPopup(popup, x, y);
+          if (oldType >= 0) {
+            PopupUtil.setPopupType(factory, oldType);
+          }
+          if (isRoundBorder) {
+            Window window = ComponentUtil.getWindow(popup);
+            if (window != null) {
+              WindowRoundedCornersManager.setRoundedCorners(window);
+              if (SystemInfoRt.isMac) {
+                popup.setBorder(null);
+              }
+            }
+          }
+          return p;
         }
       });
     }

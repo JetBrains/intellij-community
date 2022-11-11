@@ -139,21 +139,6 @@ public class ResolveCache implements Disposable {
     }
   }
 
-  @Nullable
-  private <TRef extends PsiReference, TResult> TResult resolve(@NotNull final TRef ref,
-                                                               @NotNull final AbstractResolver<? super TRef, TResult> resolver,
-                                                               boolean needToPreventRecursion,
-                                                               final boolean incompleteCode,
-                                                               boolean isPoly,
-                                                               boolean isPhysical) {
-    ProgressIndicatorProvider.checkCanceled();
-    if (isPhysical) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-    int index = getIndex(incompleteCode, isPoly);
-    return resolve(ref, getMap(isPhysical, index), needToPreventRecursion, () -> resolver.resolve(ref, incompleteCode));
-  }
-
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull T ref,
                                                                                           @NotNull PolyVariantResolver<T> resolver,
@@ -166,7 +151,14 @@ public class ResolveCache implements Disposable {
                                                                                           boolean needToPreventRecursion,
                                                                                           boolean incompleteCode,
                                                                                           @NotNull PsiFile containingFile) {
-    ResolveResult[] result = resolve(ref, resolver, needToPreventRecursion, incompleteCode, true, containingFile.isPhysical());
+    boolean isPhysical = containingFile.isPhysical();
+    ProgressIndicatorProvider.checkCanceled();
+    if (isPhysical) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+    int index = getIndex(incompleteCode, true);
+    ResolveResult[] result = resolve(ref, getMap(isPhysical, index), needToPreventRecursion,
+                                     () -> ((AbstractResolver<? super @NotNull T, ResolveResult[]>)resolver).resolve(ref, incompleteCode));
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
@@ -185,44 +177,29 @@ public class ResolveCache implements Disposable {
     return results == null ? ResolveResult.EMPTY_ARRAY : results;
   }
 
+  @FunctionalInterface
   @ApiStatus.Experimental
-  public interface PsiSymbolReferenceResolver<@NotNull R extends PsiSymbolReference> {
-    @NotNull Collection<? extends @NotNull Symbol> resolve(R reference);
+  public interface PsiSymbolReferenceResolver<R extends @NotNull PsiSymbolReference> {
+    @NotNull Collection<? extends @NotNull Symbol> resolve(@NotNull R reference);
   }
 
   @ApiStatus.Experimental
-  public <@NotNull R extends PsiSymbolReference>
-  @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(
-    R ref,
-    @NotNull PsiSymbolReferenceResolver<? super R> resolver
-  ) {
+  public <R extends @NotNull PsiSymbolReference> @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(@NotNull R ref, @NotNull PsiSymbolReferenceResolver<? super R> resolver) {
     return resolveWithCaching(ref, true, resolver);
   }
 
   @ApiStatus.Experimental
-  public <@NotNull R extends PsiSymbolReference>
-  @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(
-    R ref,
-    boolean preventRecursion,
-    @NotNull PsiSymbolReferenceResolver<? super R> resolver
-  ) {
+  public <R extends @NotNull PsiSymbolReference>
+  @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(@NotNull R ref, boolean preventRecursion, @NotNull PsiSymbolReferenceResolver<? super R> resolver) {
     ProgressIndicatorProvider.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     boolean physical = ref.getElement().isPhysical();
     int index = getIndex(false, true);
-    Collection<? extends Symbol> results = resolve(
-      ref, getMap(physical, index), preventRecursion,
-      () -> resolver.resolve(ref)
-    );
+    Collection<? extends Symbol> results = resolve(ref, getMap(physical, index), preventRecursion, () -> resolver.resolve(ref));
     return results == null ? Collections.emptyList() : results;
   }
 
-  private static <TRef, TResult> @Nullable TResult resolve(
-    @NotNull TRef ref,
-    @NotNull Map<TRef, TResult> cache,
-    boolean preventRecursion,
-    @NotNull Computable<? extends TResult> resolver
-  ) {
+  private static <TRef, TResult> @Nullable TResult resolve(@NotNull TRef ref, @NotNull Map<TRef, TResult> cache, boolean preventRecursion, @NotNull Computable<? extends TResult> resolver) {
     TResult cachedResult = cache.get(ref);
     if (cachedResult != null) {
       if (IdempotenceChecker.areRandomChecksEnabled()) {
@@ -261,7 +238,7 @@ public class ResolveCache implements Disposable {
     };
   }
 
-  private static void ensureValidResults(ResolveResult @NotNull [] result) {
+  private static void ensureValidResults(@NotNull ResolveResult @NotNull [] result) {
     for (ResolveResult resolveResult : result) {
       ensureValidPsi(resolveResult);
     }
@@ -286,7 +263,13 @@ public class ResolveCache implements Disposable {
                                                                          @NotNull AbstractResolver<TRef, TResult> resolver,
                                                                          boolean needToPreventRecursion,
                                                                          boolean incompleteCode) {
-    return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
+    boolean isPhysical = ref.getElement().isPhysical();
+    ProgressIndicatorProvider.checkCanceled();
+    if (isPhysical) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+    int index = getIndex(incompleteCode, false);
+    return resolve(ref, getMap(isPhysical, index), needToPreventRecursion, () -> resolver.resolve(ref, incompleteCode));
   }
 
   private <TRef, TResult> @NotNull Map<TRef, TResult> getMap(boolean physical, int index) {
@@ -302,17 +285,12 @@ public class ResolveCache implements Disposable {
   }
 
   private static int getIndex(boolean incompleteCode, boolean isPoly) {
-    return (incompleteCode ? 0 : 1)*2 + (isPoly ? 0 : 1);
+    return (incompleteCode ? 0 : 2) + (isPoly ? 0 : 1);
   }
 
   private static final Object NULL_RESULT = ObjectUtils.sentinel("ResolveCache.NULL_RESULT");
 
-  private static <TRef, TResult> void cache(
-    @NotNull TRef ref,
-    @NotNull Map<? super TRef, TResult> map,
-    TResult result,
-    @NotNull Computable<TResult> doResolve
-  ) {
+  private static <TRef, TResult> void cache(@NotNull TRef ref, @NotNull Map<? super TRef, TResult> map, TResult result, @NotNull Computable<? extends TResult> doResolve) {
     // optimization: less contention
     TResult cached = map.get(ref);
     if (cached != null) {
@@ -336,8 +314,8 @@ public class ResolveCache implements Disposable {
   private static <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
     //noinspection unchecked
     return value == NULL_RESULT ? (StrongValueReference<K, V>)NULL_VALUE_REFERENCE
-                                : value == ResolveResult.EMPTY_ARRAY ? (StrongValueReference<K, V>)EMPTY_RESOLVE_RESULT
-                                                                     : new StrongValueReference<>(value);
+           : value == ResolveResult.EMPTY_ARRAY ? (StrongValueReference<K, V>)EMPTY_RESOLVE_RESULT
+           : new StrongValueReference<>(value);
   }
 
   private static final StrongValueReference<?, ?> NULL_VALUE_REFERENCE = new StrongValueReference<>(NULL_RESULT);
@@ -358,6 +336,7 @@ public class ResolveCache implements Disposable {
     }
 
     @Override
+    @NotNull
     public V get() {
       return myValue;
     }

@@ -6,7 +6,7 @@
   <description>Provides customization for IDEs which main language is Java (e.g. IntelliJ IDEA).</description>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
-  <incompatible-with>com.intellij.modules.appcode</incompatible-with>
+  <incompatible-with>com.intellij.modules.appcode.ide</incompatible-with>
 
   <content>
     <module name="intellij.java.ide.customization/training"/>
@@ -16,6 +16,7 @@
     <!-- Android Studio: sends statistics to JetBrains (find a better way to disable this?)
     <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
     <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
     Android Studio: sends statistics to JetBrains (find a better way to disable this?) -->
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
@@ -69,7 +70,7 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
-    <group>
+    <group id="Java.MarkRootGroup" searchable="false">
       <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
       <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
       <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
@@ -93,7 +94,7 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <!-- Android Studio: This does not apply to Gradle projects. issuetracker.google.com/37013723
-    <group>
+    <group id="Java.ProjectTemplate.Group" searchable="false">
       <separator/>
       <action id="SaveProjectAsTemplate" class="com.intellij.platform.templates.SaveProjectAsTemplateAction"/>
       <action id="ManageProjectTemplates" class="com.intellij.platform.templates.ManageProjectTemplatesAction"/>

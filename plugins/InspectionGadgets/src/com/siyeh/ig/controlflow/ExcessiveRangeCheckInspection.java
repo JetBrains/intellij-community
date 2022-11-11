@@ -43,7 +43,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         IElementType type = expression.getOperationTokenType();
         boolean andChain = type.equals(JavaTokenType.ANDAND);
         if (!andChain && !type.equals(JavaTokenType.OROR)) return;

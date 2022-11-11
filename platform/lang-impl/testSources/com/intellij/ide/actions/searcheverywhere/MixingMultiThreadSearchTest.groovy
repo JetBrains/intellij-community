@@ -254,7 +254,7 @@ class MixingMultiThreadSearchTest extends BasePlatformTestCase {
     }
   }
 
-  static class SearchResultsCollector implements SESearcher.Listener {
+  static class SearchResultsCollector implements SearchListener {
 
     private final Map<String, List<String>> myMap = new ConcurrentHashMap<>()
     private final AtomicBoolean myFinished = new AtomicBoolean(false)
@@ -293,6 +293,12 @@ class MixingMultiThreadSearchTest extends BasePlatformTestCase {
     }
 
     @Override
+    void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) {}
+
+    @Override
+    void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) {}
+
+    @Override
     void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
       hasMoreContributors.entrySet()
         .stream()
@@ -309,5 +315,8 @@ class MixingMultiThreadSearchTest extends BasePlatformTestCase {
 
       myPhaser.arrive()
     }
+
+    @Override
+    void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {}
   }
 }

@@ -1,3 +1,421 @@
+Changes from Ant 1.10.11 TO Ant 1.10.12
+=======================================
+
+Fixed bugs:
+-----------
+
+ * The http condition would follow redirects even when "followRedirects" attribute
+   was set to "false". This has now been fixed.
+   Bugzilla Report 65489
+
+ * Made sure setting build.compiler to the fully qualified classname
+   that corresponds to extJavac or modern has the same effect as using
+   the shorter alias names.
+   Bugzilla Report 65539
+
+ * Prevent potential deadlocks in org.apache.tools.ant.IntrospectionHelper.
+   Bugzilla Report 65424
+
+Other changes:
+--------------
+
+ * The implementation of AntClassLoader#findResources() has been changed to optimize
+   it for potential performance issues, as those noted at
+   https://issues.jenkins.io/browse/JENKINS-22310?focusedCommentId=197405&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-197405
+   Github Pull Request #151
+
+ * AntClassLoader now implements the ClassLoader#findResource(String) method.
+   Github Pull Request #150
+
+ * Ant tries to avoid file name canonicalization when possible.
+   Bugzilla Report 65499
+
+ * javadoc task will now look for warning messages in the STDERR stream too
+   when "failonwarning" is set to true to account for changes in JDK 17+
+
+ * The tar task now preserves symlinks of nested tarfilesets.
+   Github Pull Request #142
+
+Changes from Ant 1.10.10 TO Ant 1.10.11
+=======================================
+
+Fixed bugs:
+-----------
+
+ * a race condition could lead to NullPointerExceptions when running
+   tasks in parallel.
+   Bugzilla Report 65316
+
+ * fixed potential OutOfMemory errors when reading broken archives
+   using the tar or zip formats or formats derived from zip.
+
+Other changes:
+--------------
+
+ * org.apache.tools.ant.taskdefs.optional.junitlauncher.confined.JUnitLauncherTask now
+   has a new protected createExecuteWatchdog() method for allowing it to be overriden.
+   Github Pull Request #147
+
+ * Upgraded AntUnit to 1.4.1.
+
+
+Changes from Ant 1.10.9 TO Ant 1.10.10
+======================================
+
+Fixed bugs:
+-----------
+
+ * SCP (with sftp=true) task would fail if fetching file located in root directory
+   Bugzilla Report 64742
+
+ * javac task would fail if the arguments file it (internally) created didn't quote
+   the # character. This has now been fixed.
+   Bugzilla Reports 64912, 64790
+
+ * made sure LegacyXmlResultFormatter encodes characters illegal in
+   XML the same way JUnit5's built-in formatter would.
+   Bugzilla Report 65030
+
+ * LegacyXmlResultFormatter no longer double-encodes <>& in system-err
+   and system-out
+   Bugzilla Report 63436
+
+ * Fixes a bug in junitlauncher task's legacy-xml formatter, where the testcase
+   representing a @Parameterized JUnit4 test wasn't being reported in the XML.
+   Bugzilla Report 64952
+
+ * Fixes a bug where the ant-testutil-sources.jar that gets published to Maven
+   central repository didn't contain any source files.
+   Bugzilla Report 65110
+
+ * The <http> condition didn't follow redirects from http to https.
+   Bugzilla Report 65105
+
+ * ZipOutputStream now overrides write(int) in order to make sure
+   single byte writes get the same treatment as array writes.
+   Github Pull Request #145
+
+ * Fixes a potential deadlock in junitlauncher task when using legacy-xml
+   reporter.
+   Bugzilla Report 64733
+
+Other changes:
+--------------
+
+ * javaversion condition now has a new "atmost" attribute. See the javaversion
+   manual for more details
+
+ * The "listener" nested element of the "junitlauncher" task now has a new
+   "useLegacyReportingName" attribute which can be used to control the test
+   identifiers names that get reported by the listener. See the junitlauncher
+   manual for more details.
+   Note that this change also introduces a new "setUseLegacyReportingName" method
+   on the org.apache.tools.ant.taskdefs.optional.junitlauncher.TestResultFormatter
+   interface. This will break backward compatibility with any of your custom
+   result formatters which implemented this interface and such implementations
+   are now expected to implement this new method.
+
+ * a new attribute preserveduplicates allows <resourcelist> to return
+   the same resource multiple times when set to true.
+   Bugzilla Report 64854
+
+ * a new attribute filterbeforeconcat in <concat> can be used to
+   decide whether the filterchain should be applied to the
+   concatenated content (the default) or each nested resource
+   individually before concatenating them.
+   Bugzilla Report 64855
+
+ * the ssh tasks now share a new nested element additionalConfig that
+   can be used to set config values for the jsch Session used by the
+   task.
+   Bugzilla Report 65089
+
+ * added new discardOutput and discardError properties to redirector
+   and the exec, apply and java tasks which can be used to completely
+   discard any (error) output. This is a platform independent
+   alternative to directiong output to any kind of null device.
+
+ * junitlauncher now prints a more useful and instantaneous summary of
+   tests being run, closely matching the junit task's summary.
+   Bugzilla Report 64836
+
+Changes from Ant 1.10.8 TO Ant 1.10.9
+=====================================
+
+Fixed bugs:
+-----------
+
+ * the ftp task could throw a NullPointerException if an error occured
+   Bugzilla Report 64438
+
+ * propertyset now also sees in-scope local properties
+   Bugzilla Report 50179
+
+ * replaced our version of ReaderInputStream with the battle-tested
+   version of Apache Commons IO as our version had problems with
+   surrogate pairs (and likely other edge cases as well).
+   Bugzilla Report 40455
+
+ * <fixcrlf> will no longer remove the temporary file it just created
+   before writing to it.
+
+ * <sshexec> and <scp> didn't deal with wildcard hostnames in ssh
+   config files properly.
+   Bugzilla Report 64530
+
+Other changes:
+--------------
+
+ * Ant will no longer log a warning if it doesn't find tools.jar
+   Bugzilla Report 63577
+
+ * the <jar> task accepts now a nested <indexjarsmapper> element
+   that can be used to perform custom filename transformations
+   for the <indexjars> archives.
+   Github Pull Request #134
+
+ * added a new PropertyEnumerator interface that extensions can
+   provide if they are managing properties unknown to the Ant project.
+
+ * added some special code to support GraalVM JavaScript as
+   javax.script scripting engine for JavaScript. In particular we
+   relax some security settings of GraalVM so that scripts can access
+   Ant objects.
+
+   Also Ant enables Nashorn compatibility mode by default, you can
+   disable that by setting the magic Ant property
+   ant.disable.graal.nashorn.compat to true.
+
+   See the script task manual for additional details.
+
+ * If the magic property ant.tmpdir hasn't been set and Ant can
+   control the permissions of directories it creates it will create an
+   owner-owned temporary directory unaccessible to others as default
+   tempdir as soon as a temporary file is created for the first time,
+
+Changes from Ant 1.10.7 TO Ant 1.10.8
+=====================================
+
+Fixed bugs:
+-----------
+
+ * "legacy-xml" formatter of junitlauncher task wasn't writing out
+   the stacktrace for failures. This is now fixed.
+   Bugzilla Report 63827
+
+ * sshexec failed to write output to a file if the file didn't exist
+
+ * Fixes a regression in javac task involving command line argument
+   files.
+   Bugzilla Report 63874
+
+ * sshexec, sshsession and scp now support a new sshConfig parameter.
+   It specified the SSH configuration file (typically ${user.home}/.ssh/config)
+   defining the username and keyfile to be used per host.
+
+ * "legacy-xml" formatter of junitlauncher task wasn't writing out
+   exceptions that happen in @BeforeAll method of a test. This is now fixed.
+   Bugzilla Report 63850
+
+ * Building Ant from source could result in the javadocs target failing if the
+   optional dependencies were missing. This has now been fixed.
+   Bugzilla Report 63438
+
+ * Fixes a potential ConcurrentModificationException in XMLLogger.
+   Bugzilla Report 63921
+
+ * Fixes a bug in junitlauncher task in forked mode, where if a listener element
+   was used as a sibling element for either the test or testclasses element,
+   then the forked mode launch would fail.
+   Bugzilla Report 63958
+
+ * Fixes an issue in AntStructure where an incorrect DTD was being generated.
+   Github Pull Request #116
+
+ * Fixes an incorrect variable name usage in junit-frames-xalan1.xsl.
+   Github Pull Request #117
+
+Other changes:
+--------------
+
+ * org.apache.tools.mail.MailMessage will now send a fully qualified
+   domain name in its HELO message.
+   Github Pull Request #101
+
+ * The runant.py script should now work with Python 3.
+   Github Pull Request #96
+
+ * tstamp task now honors SOURCE_DATE_EPOCH environment variable for
+   reproducible builds (https://reproducible-builds.org/specs/source-date-epoch/#idm55)
+   Bugzilla Report 62617
+
+ * rmic has been removed from Java 15. The task will now throw an
+   exception if you try to use it while running Java 15 or newer.
+
+ * a new property ant.tmpdir provides improved control over the
+   location Ant uses to create temporary files
+
+Changes from Ant 1.10.6 TO Ant 1.10.7
+=====================================
+
+Fixed bugs:
+-----------
+
+ * FTP still tries checking or entering directories after a timeout
+   Bugzilla Report 63454
+
+ * junitlauncher - does not detect failure in @BeforeAll
+   Bugzilla Report 63479
+
+ * Error using ant-1.10.6 with jdk8
+   Bugzilla Report 63457
+
+ * FTP task no longer duplicates a check for a file being a symlink.
+   Bugzilla Report 63259
+
+ * junitlauncher task, when used in fork mode with "<testclasses>",
+   used to create the wrong number of listeners per test class. This
+   has now been fixed.
+   Bugzilla Report 63446
+
+ * The "legacy-xml" junitlauncher task's listener would not include
+   @ParameterizedTest testcases in its XML report file. This has now
+   been fixed.
+   Bugzilla Report 63680
+
+Other changes:
+--------------
+
+ * FTP task timeout improvements.
+   Bugzilla Reports 63252 and 47414
+
+ * junitlauncher task now supports selecting test classes for execution,
+   based on the JUnit 5 tags, through the new "includeTags" and
+   "excludeTags" attributes.
+
+ * prefer https over http when building ant itself, and in the ant 
+   documentation and sources
+
+ * changed the references and Maven coordinates of JavaMail dependency
+   to Jakarta Mail and thus javax.mail to jakarta.mail - and upgraded
+   the dependency to 1.6.3.
+
+Changes from Ant 1.10.5 TO Ant 1.10.6
+=====================================
+
+Changes that could break older environments:
+-------------------------------------------
+
+ * image task no longer works on Java 9+ because internal classes
+   supporting Java Advanced Imaging are removed; imageio task (based on
+   ImageIO and AWT) is provided as a replacement.
+
+ * junitlauncher task has changed the class names and package names of
+   the task as well as some of the supporting classes of that task. If
+   any code depended on these class or package names, they will have to
+   be updated to reference these newly named classes. This however,
+   doesn't impact build scripts if their reference to junitlauncher task
+   was merely through the use of the <junitlauncher> element.
+
+ * ClearCase#runS has been augmented by a two arg-version and the
+   one-arg version will no longer be called. This may affect
+   subclasses that have overridden runS.
+
+Fixed bugs:
+-----------
+
+ * fetch.xml must retrieve runtime rather than compile dependencies for
+   mail task.
+   Bugzilla Report 62621
+
+ * Fixes an issue in junitreport task, which used to throw a
+   java.net.MalformedURLException when saxon was used on Windows OS.
+   Bugzilla Report 62594
+
+ * augment task now throws a BuildException (as noted in its manual)
+   instead of a IllegalStateException in the absence of the "id" attribute.
+   Bugzilla Report 62655
+
+ * org.apache.tools.zip.ZipOutputStream would sometimes potentially use
+   an incorrect compression level for a zip entry. This is now fixed.
+   Bugzilla Report 62686
+
+ * sync task, in some cases on case insensitive file systems, would consider
+   a file in a destination directory to be orphaned and would delete it.
+   This task has now been fixed to infer the case sensitivity of the filesystem
+   of the destination directory.
+   Bugzilla Report 62890
+
+ * Fixes a potential java.util.ConcurrentModificationException in
+   org.apache.tools.ant.Project#getCopyOfReferences.
+   Github Pull Request #81
+
+ * cccheckout would ignore an error of the "ls checkout" command even
+   if failOnError was set to false.
+   Bugzilla Report 63071
+
+ * The isreachable condition could in some cases return true even if the
+   actual address could potentially be unreachable. This is now fixed
+   and the resolved address is actually checked for reachability.
+
+ * Fixes an issue where scp transfer completion tracking wasn't being
+   triggered for 100% completion.
+   Github Pull Request #91
+
+
+Other changes:
+--------------
+ * generatekey task now supports SubjectAlternativeName during key
+   generation.
+
+ * the <modified> selector has a new built-in algorithm 'lastmodified'
+   which computes a value based upon the lastmodified time of the file.
+
+ * junitlauncher task now supports running tests in a forked JVM. More
+   details available in the junitlauncher task manual.
+
+ * signjar and verifyjar now support the -providerName, -providerClass
+   and -providerArg command line options of keytool via new attributes.
+   Bugzilla Report 65234
+
+ * signjar and verifyjar now supported nested <arg> elements for
+   command line arguments that are not supported explicitly by the
+   tasks via attributes.
+
+ * added several attributes to <javadoc> that support modules.
+   Bugzilla Report 62424
+
+ * properties used or set by BuildFileTask/BuildFileRule are documented
+   in MagicTestNames. A new magic property, ant.test.basedir.ignore, is
+   introduced for cases where Ant projects set up for test purposes
+   must ignore basedir set externally by test harness.
+
+ * a new CharSet type is provided for encoding or charset attributes in
+   tasks that must deal with different character encodings in files,
+   file names and other string resources.
+
+ * org.apache.tools.ant.AntClassLoader is now multi-release jar aware.
+   Starting Java 9, jar files can be packaged as multi-release jars,
+   AntClassLoader now recognizes such multi-release jar files while
+   loading resources at runtime in Java 9+ runtime environments.
+   Bugzilla Report 62952
+
+ * Added jmod and link tasks, to support jmod and jlink tools of JDK 9+.
+   Github Pull Request #80
+
+ * Jsch library dependency has now been upgraded to 0.1.55. Jsch is
+   the library behind the sshexec and scp Ant tasks.
+   Github Pull Request #84
+
+ * The "http" condition, now has a "readTimeout" attribute which can be
+   used to control the amount of time to wait for the read to complete.
+   Bugzilla Report 63193
+
+ * ftp task manual has been updated to mention that the remote listing of
+   files honours the followsymlinks attribute.
+   Bugzilla Report 63226
+
+
 Changes from Ant 1.10.4 TO Ant 1.10.5
 =====================================
 
@@ -53,7 +471,7 @@ Fixed bugs:
  * <cab> died with a NullPointerException since Ant 1.10.2.
    Bugzilla Report 62335
 
- * The <depend> task would fail with 
+ * The <depend> task would fail with
    "java.lang.ClassFormatError: Invalid Constant Pool entry Type 19" while
    parsing a module-info.class. The task is compatible with
    Java bytecode version 53 now.
@@ -154,7 +572,7 @@ Other changes:
    Github Pull Request #57
 
  * when running on Java 11+ rmic will fail early if iiop or idl are
-   requested. Java11 removes support for CORBA and the switches have
+   requested. Java 11 removes support for CORBA and the switches have
    been removed from the rmic tool.
 
  * A new junitlauncher task which support JUnit 5 test framework.

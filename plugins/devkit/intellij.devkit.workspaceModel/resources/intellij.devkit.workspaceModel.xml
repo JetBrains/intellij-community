@@ -2,6 +2,7 @@
   <dependencies>
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.kotlin"/>
+    <module name="intellij.devkit.core"/>
     <module name="intellij.platform.workspaceModel.codegen"/>
   </dependencies>
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
@@ -11,6 +12,8 @@
       </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider" 
+                    serviceImplementation="com.intellij.devkit.workspaceModel.metaModel.impl.WorkspaceMetaModelProviderImpl"/>
     <registryKey key="workspace.model.generator.keep.unknown.fields" defaultValue="false"
                  description="With this option generator keeps unknown properties at generated interface otherwise it will be skipped"/>
     <localInspection language="kotlin"

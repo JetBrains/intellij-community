@@ -13,7 +13,7 @@ import java.nio.file.Path;
 /**
  * Open project with {@code project.ipr}.
  */
-public class ProjectCheckoutListener implements CheckoutListener {
+final class ProjectCheckoutListener implements CheckoutListener {
   @Override
   public boolean processCheckedOutDirectory(@NotNull Project project, @NotNull Path directory) {
     File[] files = directory.toFile().listFiles((dir, name) -> dir.isFile() && name.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION));

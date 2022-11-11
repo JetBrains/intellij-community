@@ -69,10 +69,16 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     List<UParameter> paramList = method.getUastParameters();
     if (!paramList.isEmpty()) {
+      // Empty constructor body signals Java record header or Kotlin primary constructor (or red code): uses all parameters implicitly
+      // TODO create an extension point for this kind of thing.
+      boolean parameterUsed = method.isConstructor() && method.getUastBody() == null;
       for (int i = 0; i < paramList.size(); i++) {
         UParameter param = paramList.get(i);
         if (param.getSourcePsi() != null) {
-          getRefJavaManager().getParameterReference(param, i, this);
+          RefParameterImpl parameter = (RefParameterImpl)getRefJavaManager().getParameterReference(param, i, this);
+          if (parameterUsed && parameter != null) {
+            parameter.setUsedForReading();
+          }
         }
       }
     }
@@ -223,7 +229,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (refManager.isOfflineView()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (refManager.belongsToScope(psiSuperMethod)) {
-        PsiElement sourceElement = psiSuperMethod instanceof LightElement ? psiSuperMethod.getNavigationElement() : psiSuperMethod;
+        PsiElement sourceElement = RefJavaUtilImpl.returnToPhysical(psiSuperMethod);
         RefElement refElement = refManager.getReference(sourceElement);
         if (refElement instanceof RefMethodImpl) {
           RefMethodImpl refSuperMethod = (RefMethodImpl)refElement;
@@ -287,8 +293,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(method.getUastBody()));
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
-
-    getRefManager().fireBuildReferences(this);
   }
 
   private void collectUncaughtExceptions(@NotNull PsiMethod method) {
@@ -414,17 +418,14 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Nullable
-  static RefMethod methodFromExternalName(RefManager manager, String externalName) {
-    PsiElement method = findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName);
-    if (method instanceof LightElement) {
-      method = method.getNavigationElement();
-    }
+  static RefJavaElement methodFromExternalName(RefManager manager, String externalName) {
+    PsiElement method = RefJavaUtilImpl.returnToPhysical(findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName));
     RefElement reference = manager.getReference(method);
-    if (!(reference instanceof RefMethod) && reference != null) {
+    if (!(reference instanceof RefJavaElement) && reference != null) {
       LOG.error("Expected refMethod but found: " + reference.getClass().getName() + "; for externalName: " +externalName );
       return null;
     }
-    return (RefMethod)reference;
+    return (RefJavaElement)reference;
   }
 
   @Nullable
@@ -681,10 +682,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Nullable
   static RefElement findParentRef(@NotNull PsiElement psiElement, @NotNull UElement uElement, @NotNull RefManagerImpl refManager) {
     UDeclaration containingUDecl = UDeclarationKt.getContainingDeclaration(uElement);
-    PsiElement containingDeclaration = containingUDecl == null ? null : containingUDecl.getSourcePsi();
-    if (containingDeclaration instanceof LightElement) {
-      containingDeclaration = containingDeclaration.getNavigationElement();
-    }
+    PsiElement containingDeclaration = RefJavaUtilImpl.returnToPhysical(containingUDecl == null ? null : containingUDecl.getSourcePsi());
     final RefElement parentRef;
     //TODO strange
     if (containingDeclaration == null || containingDeclaration instanceof LightElement) {

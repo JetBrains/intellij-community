@@ -1,11 +1,13 @@
 package com.intellij.settingsSync
 
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Records changes in the settings, merges changes made locally and remotely.
  */
-internal interface SettingsLog {
+@ApiStatus.Internal
+interface SettingsLog {
   interface Position {
     val id: String
   }
@@ -32,7 +34,7 @@ internal interface SettingsLog {
    * Records the current local state of the settings.
    */
   @RequiresBackgroundThread
-  fun applyIdeState(snapshot: SettingsSnapshot)
+  fun applyIdeState(snapshot: SettingsSnapshot, message: String)
 
   /**
    * Records the state of the settings received from the server.
@@ -40,7 +42,7 @@ internal interface SettingsLog {
    * returns true if merge has happened, false in case of fast-forward
    */
   @RequiresBackgroundThread
-  fun applyCloudState(snapshot: SettingsSnapshot)
+  fun applyCloudState(snapshot: SettingsSnapshot, message: String)
 
   /**
    * Returns the current state of the settings as it is now from the SettingsLog point of view,
@@ -55,6 +57,7 @@ internal interface SettingsLog {
 
   fun setIdePosition(position: Position)
   fun setCloudPosition(position: Position)
+  fun setMasterPosition(position: Position)
 
   /**
    * Moves the master branch to the actual position, which is defined as following:
@@ -68,4 +71,14 @@ internal interface SettingsLog {
    */
   fun advanceMaster(): Position
 
+  /**
+   * Applies the given state to the master branch of the settings without any merging (as opposed to [advanceMaster] which merges
+   * changes coming from different sources).
+   *
+   * This operation is used, for example, when initially taking all the settings from the server: they should be applied right away to
+   * the local state, and no merge should happen, since local settings are not needed at this point and should be overwritten.
+   *
+   * @return New position of 'master'.
+   */
+  fun forceWriteToMaster(snapshot: SettingsSnapshot, message: String) : Position
 }

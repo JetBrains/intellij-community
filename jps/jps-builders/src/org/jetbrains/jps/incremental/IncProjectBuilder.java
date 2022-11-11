@@ -267,7 +267,7 @@ public final class IncProjectBuilder {
       return;
     }
     final BuildTargetsState targetsState = myProjectDescriptor.getTargetsState();
-    final long timeThreshold = targetsState.getLastSuccessfulRebuildDuration() * 95 / 100; // 95% of last registered clean rebuild time
+    final long timeThreshold = targetsState.getLastSuccessfulRebuildDuration();
     if (timeThreshold <= 0) {
       return; // no stats available
     }
@@ -279,7 +279,14 @@ public final class IncProjectBuilder {
       }
     }
     // compute estimated times for dirty targets
-    long estimatedWorkTime = calculateEstimatedBuildTime(myProjectDescriptor, targetsState, scope);
+    final long estimatedWorkTime = calculateEstimatedBuildTime(myProjectDescriptor, new Predicate<BuildTarget<?>>() {
+      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
+      @Override
+      public boolean test(BuildTarget<?> target) {
+        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
+        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
+      }
+    });
     if (LOG.isDebugEnabled()) {
       LOG.debug("Rebuild heuristic: estimated build time / timeThreshold : " + estimatedWorkTime + " / " + timeThreshold);
     }
@@ -295,20 +302,13 @@ public final class IncProjectBuilder {
     }
   }
 
-  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, BuildTargetsState targetsState, CompileScope scope) {
+  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, Predicate<BuildTarget<?>> isAffected) {
+    final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
     // compute estimated times for dirty targets
     long estimatedBuildTime = 0L;
 
-    final Predicate<BuildTarget<?>> isAffected = new Predicate<BuildTarget<?>>() {
-      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
-      @Override
-      public boolean test(BuildTarget<?> target) {
-        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
-        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
-      }
-    };
     final BuildTargetIndex targetIndex = projectDescriptor.getBuildTargetIndex();
-    List<BuildTarget<?>> affectedTarget = new ArrayList<>();
+    int affectedTargets = 0;
     for (BuildTarget<?> target : targetIndex.getAllTargets()) {
       if (!targetIndex.isDummy(target)) {
         final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
@@ -317,12 +317,12 @@ public final class IncProjectBuilder {
           // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
           if (targetsState.getTargetConfiguration(target).isTargetDirty(projectDescriptor) && isAffected.test(target)) {
             estimatedBuildTime += avgTimeToBuild;
-            affectedTarget.add(target);
+            affectedTargets++;
           }
         }
       }
     }
-    LOG.info("Affected build targets count: " + affectedTarget.size());
+    LOG.info("Affected build targets count: " + affectedTargets);
     return estimatedBuildTime;
   }
 
@@ -695,7 +695,7 @@ public final class IncProjectBuilder {
   private static Set<BuildTarget<?>> getTargetsWithClearedOutput(CompileContext context) {
     synchronized (TARGET_WITH_CLEARED_OUTPUT) {
       Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
-      return data != null? Collections.unmodifiableSet(new HashSet<>(data)) : Collections.emptySet();
+      return data != null ? Set.copyOf(data) : Collections.emptySet();
     }
   }
 

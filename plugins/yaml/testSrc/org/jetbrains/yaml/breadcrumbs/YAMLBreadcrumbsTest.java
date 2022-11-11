@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 
@@ -38,9 +39,7 @@ public class YAMLBreadcrumbsTest extends BasePlatformTestCase {
   private void doTest(@NotNull Function<? super Crumb, String> crumbToString) {
     myFixture.configureByFile("all.yml");
     final CaretModel caretModel = myFixture.getEditor().getCaretModel();
-    final String result = caretModel.getAllCarets().stream()
-      .map(Caret::getOffset)
-      .collect(Collectors.toList()).stream()
+    final String result = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset).stream()
       .map((offset) -> {
         caretModel.moveToOffset(offset);
         return myFixture.getBreadcrumbsAtCaret().stream()

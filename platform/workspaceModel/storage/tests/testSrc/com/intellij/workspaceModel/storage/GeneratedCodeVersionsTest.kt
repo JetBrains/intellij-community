@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -39,8 +39,7 @@ class GeneratedCodeVersionsTest {
     }
     catch (e: AssertionError) {
       assertTrue("API" in e.message!!)
-      assertTrue("'0'" in e.message!!)
-      assertTrue("'-10'" in e.message!!)
+      assertTrue("'1000000'" in e.message!!)
       return
     }
     fail("No exception thrown")
@@ -48,15 +47,15 @@ class GeneratedCodeVersionsTest {
 
   @Test
   fun `test api builder impl code`() {
-    CodeGeneratorVersions.API_VERSION = -10
+    CodeGeneratorVersions.API_VERSION = 1000000
     val emptyBuilder = createEmptyBuilder()
     try {
       emptyBuilder.addEntity(SuperSimpleEntity {})
     }
     catch (e: AssertionError) {
       assertContains(e.message!!, "API")
-      assertContains(e.message!!, "'-10'")
-      assertContains(e.message!!, "'-11'")
+      assertContains(e.message!!, "'1000000'")
+      assertContains(e.message!!, "'1000001'")
       return
     }
     fail("No exception thrown")
@@ -72,8 +71,7 @@ class GeneratedCodeVersionsTest {
     }
     catch (e: AssertionError) {
       assertContains(e.message!!, "IMPL")
-      assertContains(e.message!!, "'0'")
-      assertContains(e.message!!, "'-12'")
+      assertContains(e.message!!, "'1000002'")
       return
     }
     fail("No exception thrown")
@@ -83,7 +81,7 @@ class GeneratedCodeVersionsTest {
 interface SuperSimpleEntity : WorkspaceEntity {
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(-10)
+  @GeneratedCodeApiVersion(1000000)
   interface Builder: SuperSimpleEntity, ModifiableWorkspaceEntity<SuperSimpleEntity>, ObjBuilder<SuperSimpleEntity> {
   }
 
@@ -101,8 +99,8 @@ interface SuperSimpleEntity : WorkspaceEntity {
 
 
 
-@GeneratedCodeApiVersion(-11)
-@GeneratedCodeImplVersion(-12)
+@GeneratedCodeApiVersion(1000001)
+@GeneratedCodeImplVersion(1000002)
 open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 
 
@@ -127,6 +125,7 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
       addToBuilder()
       this.id = getEntityData().createEntityId()
 
+      /*
       // Process entities from extension fields
       val keysToRemove = ArrayList<ExtRefKey>()
       for ((key, entity) in extReferences) {
@@ -154,7 +153,9 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
       for (key in keysToRemove) {
         extReferences.remove(key)
       }
+      */
 
+      /*
       // Adding parents and references to the parent
       val parentKeysToRemove = ArrayList<ExtRefKey>()
       for ((key, entity) in extReferences) {
@@ -174,6 +175,7 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
       for (key in parentKeysToRemove) {
         extReferences.remove(key)
       }
+      */
       checkInitialization() // TODO uncomment and check failed tests
     }
 
@@ -185,11 +187,18 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 
 
     override fun getEntityData(): SuperSimpleEntityData = result ?: super.getEntityData() as SuperSimpleEntityData
+    override fun connectionIdList(): List<ConnectionId> {
+      TODO("Not yet implemented")
+    }
+
     override fun getEntityClass(): Class<SuperSimpleEntity> = SuperSimpleEntity::class.java
   }
 
   // TODO: Fill with the data from the current entity
   fun builder(): ObjBuilder<*> = Builder(SuperSimpleEntityData())
+  override fun connectionIdList(): List<ConnectionId> {
+    TODO("Not yet implemented")
+  }
 }
 
 class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {

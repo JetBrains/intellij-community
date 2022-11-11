@@ -14,7 +14,7 @@ import com.intellij.ui.*
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-class TextCompletionComboBox<T>(
+open class TextCompletionComboBox<T>(
   project: Project?,
   private val converter: TextCompletionComboBoxConverter<T>
 ) : TextCompletionField<T>(project) {

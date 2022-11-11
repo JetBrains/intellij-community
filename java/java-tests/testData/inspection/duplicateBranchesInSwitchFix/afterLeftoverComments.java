@@ -2,8 +2,7 @@
 class C {
     String foo(int n) {
         switch (n) {
-            case 1:
-            case 2:
+            case 1, 2:
                 foo(); // same comment
                 return "A";
             // another comment

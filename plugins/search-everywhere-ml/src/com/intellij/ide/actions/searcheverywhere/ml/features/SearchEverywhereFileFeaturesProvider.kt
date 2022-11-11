@@ -5,7 +5,7 @@ import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
-import com.intellij.ide.favoritesTreeView.FavoritesManager
+import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -26,7 +26,7 @@ class SearchEverywhereFileFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
   companion object {
     val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", "file_type")
-    val IS_FAVORITE_DATA_KEY = EventFields.Boolean("isFavorite")
+    val IS_BOOKMARK_DATA_KEY = EventFields.Boolean("isBookmark")
     val IS_OPENED_DATA_KEY = EventFields.Boolean("isOpened")
 
     internal val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
@@ -45,7 +45,7 @@ class SearchEverywhereFileFeaturesProvider
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return arrayListOf<EventField<*>>(
-      IS_DIRECTORY_DATA_KEY, FILETYPE_DATA_KEY, IS_FAVORITE_DATA_KEY, IS_OPENED_DATA_KEY, RECENT_INDEX_DATA_KEY,
+      IS_DIRECTORY_DATA_KEY, FILETYPE_DATA_KEY, IS_BOOKMARK_DATA_KEY, IS_OPENED_DATA_KEY, RECENT_INDEX_DATA_KEY,
       PREDICTION_SCORE_DATA_KEY, IS_EXACT_MATCH_DATA_KEY, FILETYPE_MATCHES_QUERY_DATA_KEY,
       TIME_SINCE_LAST_MODIFICATION_DATA_KEY, WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY, WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY,
       WAS_MODIFIED_IN_LAST_DAY_DATA_KEY, WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY, IS_TOP_LEVEL_DATA_KEY
@@ -60,9 +60,9 @@ class SearchEverywhereFileFeaturesProvider
     val item = (SearchEverywherePsiElementFeaturesProvider.getPsiElement(element) as? PsiFileSystemItem) ?: return emptyList()
 
     val data = arrayListOf<EventPair<*>>(
-      IS_FAVORITE_DATA_KEY.with(isFavorite(item)),
+      IS_BOOKMARK_DATA_KEY.with(isBookmark(item)),
       IS_DIRECTORY_DATA_KEY.with(item.isDirectory),
-      IS_EXACT_MATCH_DATA_KEY.with(elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE)
+      IS_EXACT_MATCH_DATA_KEY.with(isExactMatch(item, searchQuery, elementPriority))
     )
 
     data.putIfValueNotNull(IS_TOP_LEVEL_DATA_KEY, isTopLevel(item))
@@ -87,9 +87,45 @@ class SearchEverywhereFileFeaturesProvider
     return data
   }
 
-  private fun isFavorite(item: PsiFileSystemItem): Boolean {
-    val favoritesManager = FavoritesManager.getInstance(item.project)
-    return ReadAction.compute<Boolean, Nothing> { favoritesManager.getFavoriteListName(null, item.virtualFile) != null }
+  private fun isBookmark(item: PsiFileSystemItem): Boolean {
+    val bookmarkManager = BookmarkManager.getInstance(item.project)
+    return ReadAction.compute<Boolean, Nothing> { item.virtualFile?.let { bookmarkManager.findFileBookmark(it) } != null }
+  }
+
+  private fun isExactMatch(item: PsiFileSystemItem, searchQuery: String, elementPriority: Int): Boolean {
+    /*
+    The exact match feature is based on the same logic that is used in GotoFileItemProvider to add the
+    exact match degree on top of the matching score. Note that even though the score gets added on top
+    of the matching degree, the priority can be lower than EXACT_MATCH_DEGREE, but we can still have
+    an exact match. This is because the score also contains a gap penalty, which can lower the final priority.
+
+    There are two cases where an exact match can occur:
+      1. Search query is an absolute path. In that case, there will be just one element in the results
+         which will be the matching file (given, of course, that it exists).
+         In that case, the priority is always exactly equal to EXACT_MATCH_DEGREE.
+
+      2. Search query contains at least the last character of the parent directory, along with the complete
+         filename and extension.
+         For example, if a file "foo" with extension "ext" exists in a directory called "dir", then
+         'r/foo.ext' - is an exact match
+         'dir/foo.ext' - is an exact match
+         but
+         '/foo.ext' and 'foo.ext' are not
+    */
+    if (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE) return true  // Absolute path
+
+    val filePath = item.virtualFile.path
+    val fileName = item.virtualFile.name
+
+    return searchQuery.asSequence()
+      .map { if (it == '\\') '/' else it }
+      .filterIndexed { index, c ->
+        // check if query starts with slash and contains just the filename (i.e. "/foo.ext")
+        // by comparing query length and filename length we can check we should expect any more slashes in the query
+        if ((index == 0 && c == '/') && (searchQuery.length - 1) == fileName.length) return@filterIndexed true
+
+        filePath[filePath.length - searchQuery.length + index] != c
+      }.none()
   }
 
   private fun isTopLevel(item: PsiFileSystemItem): Boolean? {

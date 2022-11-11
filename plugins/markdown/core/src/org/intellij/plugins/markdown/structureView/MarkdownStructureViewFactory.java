@@ -8,15 +8,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets;
-import org.intellij.plugins.markdown.util.MarkdownPsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static org.intellij.plugins.markdown.util.MarkdownPsiUtil.PRESENTABLE_TYPES;
+import static org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.PRESENTABLE_TYPES;
+import static org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.TRANSPARENT_CONTAINERS;
 
 public class MarkdownStructureViewFactory implements PsiStructureViewFactory {
-
-
   @Nullable
   @Override
   public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
@@ -47,7 +45,7 @@ public class MarkdownStructureViewFactory implements PsiStructureViewFactory {
         IElementType parentType = PsiUtilCore.getElementType(element.getParent());
 
         final PsiElement previous = element.getPrevSibling();
-        if (previous == null || !MarkdownPsiUtil.TRANSPARENT_CONTAINERS.contains(parentType)) {
+        if (previous == null || !TRANSPARENT_CONTAINERS.contains(parentType)) {
           element = element.getParent();
         }
         else {

@@ -48,7 +48,7 @@ public final class GroovyStubNotificationProvider extends EditorNotifications.Pr
   }
 
   private static EditorNotificationPanel decorateStubFile(final VirtualFile file, final Project project, @NotNull FileEditor fileEditor) {
-    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info);
     panel.setText(GroovyBundle.message("generated.stub.message"));
     panel.createActionLabel(GroovyBundle.message("generated.stub.navigate.link.label"), () -> DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
       final PsiClass original = findClassByStub(project, file);

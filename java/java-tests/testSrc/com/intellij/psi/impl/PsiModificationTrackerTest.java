@@ -2,7 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
-import com.intellij.configurationStore.StateStorageManagerKt;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -419,7 +419,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   public void testNoIncrementOnWorkspaceFileChange() {
     FixtureRuleKt.runInLoadComponentStateMode(myProject, () -> {
-      StateStorageManagerKt.saveComponentManager(getProject(), true);
+      StoreUtil.saveSettings(getProject(), true);
 
       ModificationTracker tracker = getTracker();
       long mc = tracker.getModificationCount();

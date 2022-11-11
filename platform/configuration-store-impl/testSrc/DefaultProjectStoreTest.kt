@@ -15,7 +15,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
-import com.intellij.testFramework.use
+import com.intellij.testFramework.useProject
 import com.intellij.util.io.getDirectoryTree
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
@@ -40,7 +40,7 @@ internal class DefaultProjectStoreTest {
   fun `new project from default - file-based storage`() {
     checkDefaultProjectAsTemplate { checkTask ->
       val project = openAsNewProjectAndUseDefaultSettings(fsRule.fs.getPath("/test${ProjectFileType.DOT_DEFAULT_EXTENSION}"))
-      project.use {
+      project.useProject {
         checkTask(project, true)
       }
     }
@@ -51,7 +51,7 @@ internal class DefaultProjectStoreTest {
     checkDefaultProjectAsTemplate { checkTask ->
       // obviously, project must be directory-based also
       val project = openAsNewProjectAndUseDefaultSettings(fsRule.fs.getPath("/test"))
-      project.use {
+      project.useProject {
         checkTask(project, true)
       }
     }

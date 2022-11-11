@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -66,6 +66,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("ConstructorVarParameter.kt")
     public void testConstructorVarParameter() throws Exception {
         runTest("testData/editor/quickDoc/ConstructorVarParameter.kt");
+    }
+
+    @TestMetadata("DefinitelyNonNullType.kt")
+    public void testDefinitelyNonNullType() throws Exception {
+        runTest("testData/editor/quickDoc/DefinitelyNonNullType.kt");
     }
 
     @TestMetadata("DeprecationWithReplaceInfo.kt")

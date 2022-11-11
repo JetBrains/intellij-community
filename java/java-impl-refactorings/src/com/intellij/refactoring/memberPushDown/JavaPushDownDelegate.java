@@ -150,18 +150,18 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       final PsiElement member = memberInfo.getMember();
       member.accept(new JavaRecursiveElementVisitor() {
         @Override
-        public void visitThisExpression(PsiThisExpression expression) {
+        public void visitThisExpression(@NotNull PsiThisExpression expression) {
           encodeRef((PsiClass)pushDownData.getSourceClass(), null, movedMembers, expression, expression);
           super.visitThisExpression(expression);
         }
 
         @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+        public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement referenceElement) {
           encodeRef((PsiClass)pushDownData.getSourceClass(), referenceElement, movedMembers, referenceElement);
           super.visitReferenceElement(referenceElement);
         }
 
-        @Override public void visitNewExpression(PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
           final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
           if (classReference != null) {
             encodeRef((PsiClass)pushDownData.getSourceClass(), classReference, movedMembers, expression);
@@ -170,7 +170,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         }
 
         @Override
-        public void visitTypeElement(final PsiTypeElement type) {
+        public void visitTypeElement(final @NotNull PsiTypeElement type) {
           final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
           if (referenceElement != null) {
             encodeRef((PsiClass)pushDownData.getSourceClass(), referenceElement, movedMembers, type);
@@ -462,25 +462,25 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(sourceClass.getProject());
     member.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement referenceElement) {
         decodeRef(sourceClass, referenceElement, factory, targetClass, referenceElement);
         super.visitReferenceElement(referenceElement);
       }
 
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         decodeRef(sourceClass, expression, factory, targetClass, expression);
         super.visitThisExpression(expression);
       }
 
-      @Override public void visitNewExpression(PsiNewExpression expression) {
+      @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
         final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
         if (classReference != null) decodeRef(sourceClass, classReference, factory, targetClass, expression);
         super.visitNewExpression(expression);
       }
 
       @Override
-      public void visitTypeElement(final PsiTypeElement type) {
+      public void visitTypeElement(final @NotNull PsiTypeElement type) {
         final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
         if (referenceElement != null)  decodeRef(sourceClass, referenceElement, factory, targetClass, type);
         super.visitTypeElement(type);

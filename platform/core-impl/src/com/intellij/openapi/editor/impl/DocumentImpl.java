@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -874,14 +875,16 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
     if (!ShutDownTracker.isShutdownHookRunning()) {
       DocumentListener[] listeners = getListeners();
-      for (int i = listeners.length - 1; i >= 0; i--) {
-        try {
-          listeners[i].beforeDocumentChange(event);
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        for (int i = listeners.length - 1; i >= 0; i--) {
+          try {
+            listeners[i].beforeDocumentChange(event);
+          }
+          catch (Throwable e) {
+            exceptions.register(e);
+          }
         }
-        catch (Throwable e) {
-          exceptions.register(e);
-        }
-      }
+      });
     }
 
     myEventsHandling = true;
@@ -913,14 +916,16 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
       if (!ShutDownTracker.isShutdownHookRunning()) {
         DocumentListener[] listeners = getListeners();
-        for (DocumentListener listener : listeners) {
-          try {
-            listener.documentChanged(event);
+        ProgressManager.getInstance().executeNonCancelableSection(() -> {
+          for (DocumentListener listener : listeners) {
+            try {
+              listener.documentChanged(event);
+            }
+            catch (Throwable e) {
+              exceptions.register(e);
+            }
           }
-          catch (Throwable e) {
-            exceptions.register(e);
-          }
-        }
+        });
       }
     }
     finally {
@@ -1202,7 +1207,11 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public String toString() {
-    return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) + (isInEventsHandling() ? ",inEventHandling" : "") + "]";
+    return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) +
+           (isInEventsHandling() ? ",inEventHandling" : "") +
+           (!myAssertThreading ? ",nonWriteThreadOnly" : "") +
+           (myAcceptSlashR ? ",acceptSlashR" : "") +
+           "]";
   }
 
   @NotNull
@@ -1227,7 +1236,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     private final Attachment[] myAttachments;
 
     private UnexpectedBulkUpdateStateException(Throwable enteringTrace) {
-      super("Current operation is not permitted in bulk mode, see Document.setInBulkUpdate javadoc");
+      super("Current operation is not permitted in bulk mode, see Document.isInBulkUpdate() javadoc");
       myAttachments = enteringTrace == null ? Attachment.EMPTY_ARRAY
                                             : new Attachment[] {new Attachment("enteringTrace.txt", enteringTrace)};
     }

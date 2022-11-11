@@ -22,10 +22,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class BeanStep extends StepAdapter{
   private JPanel myComponent;
   private TextFieldWithBrowseButton myTfWitgBtnChooseClass;

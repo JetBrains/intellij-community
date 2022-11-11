@@ -6,6 +6,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
@@ -14,11 +15,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.systemIndependentPath
 import java.util.concurrent.locks.ReentrantLock
@@ -135,6 +134,8 @@ class JdkUpdateNotification(val jdk: Sdk,
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isUpdateActionVisible
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       performUpdateAction(e)

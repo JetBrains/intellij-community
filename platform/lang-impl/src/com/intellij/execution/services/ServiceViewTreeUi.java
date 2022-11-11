@@ -2,6 +2,7 @@
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.runners.RunTab;
 import com.intellij.ide.navigationToolbar.NavBarBorder;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -10,6 +11,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
@@ -45,7 +47,15 @@ class ServiceViewTreeUi implements ServiceViewUi {
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
     myContentPanel.setContent(mySplitter);
 
-    myMasterPanel = new JPanel(new BorderLayout());
+    myMasterPanel = new JPanel(new BorderLayout()) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        if (myMasterActionToolbar != null) {
+          myMasterActionToolbar.getComponent().setBorder(JBUI.Borders.empty(2));
+        }
+      }
+    };
     mySplitter.setFirstComponent(myMasterPanel);
 
     myDetailsPanel = new JPanel(new BorderLayout());
@@ -88,7 +98,6 @@ class ServiceViewTreeUi implements ServiceViewUi {
 
     myMasterActionToolbar = actionProvider.createMasterComponentToolbar(component);
     JComponent toolbarComponent = myMasterActionToolbar.getComponent();
-    toolbarComponent.setBorder(JBUI.Borders.empty(1, 0, 2, 0));
     myMasterPanel.add(toolbarComponent, BorderLayout.NORTH);
 
     actionProvider.installPopupHandler(component);

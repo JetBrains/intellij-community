@@ -28,10 +28,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class QuickFixManager <T extends JComponent>{
   private static final Logger LOG = Logger.getInstance(QuickFixManager.class);
 

@@ -1,4 +1,4 @@
-// "Remove custom ''CREATOR'' property" "true"
+// "Remove custom 'CREATOR' property" "true"
 // ERROR: Overriding 'writeToParcel' is not allowed. Use 'Parceler' companion object instead
 // WITH_STDLIB
 

@@ -53,7 +53,7 @@ public final class LambdaUnfriendlyMethodOverloadInspection extends BaseInspecti
   private static class LambdaUnfriendlyMethodOverloadVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiParameterList parameterList = method.getParameterList();
       final int parametersCount = parameterList.getParametersCount();

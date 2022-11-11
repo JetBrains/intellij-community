@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -42,8 +43,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   private int deadReferenceCount;
 
   static class IntervalNode<E> extends RedBlackTree.Node<E> implements MutableInterval {
-    private volatile int myStart;
-    private volatile int myEnd;
+    private volatile long myRange;
     private static final byte ATTACHED_TO_TREE_FLAG = COLOR_MASK <<1; // true if the node is inserted to the tree
     final List<Supplier<? extends E>> intervals;
     int maxEnd; // max of all intervalEnd()s among all children.
@@ -61,8 +61,10 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     IntervalNode(@NotNull IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
       myIntervalTree = intervalTree;
-      myStart = start;
-      myEnd = end;
+      if (start < 0 || end < 0) {
+        throw new IllegalArgumentException("Invalid offsets: start=" + start+"; end="+end);
+      }
+      myRange = TextRangeScalarUtil.toScalarRange(start, end);
       intervals = new SmartList<>(createGetter(key));
       setValid(true);
     }
@@ -212,7 +214,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
             }
             IntervalNode<E> parent = node.getParent();
             if (parent == null) {
-              return deltaUp;  // can happen when remove node and explicitly set valid to true (e.g. in RangeMarkerTree)
+              return deltaUp;  // can happen when remove node and explicitly set valid to true (e.g., in RangeMarkerTree)
             }
             path = (path << 1) |  (parent.getLeft() == node ? 0 : 1);
             node = parent;
@@ -261,14 +263,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       }
     }
 
-    @Override
-    public int setIntervalStart(int start) {
-      return myStart = start;
-    }
-
-    @Override
-    public int setIntervalEnd(int end) {
-      return myEnd = end;
+    public void setRange(long scalarRange) {
+      myRange = scalarRange;
     }
 
     static final byte VALID_FLAG = ATTACHED_TO_TREE_FLAG << 1;
@@ -285,12 +281,16 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
 
     @Override
     public int intervalStart() {
-      return myStart;
+      return TextRangeScalarUtil.startOffset(myRange);
     }
 
     @Override
     public int intervalEnd() {
-      return myEnd;
+      return TextRangeScalarUtil.endOffset(myRange);
+    }
+
+    public long toScalarRange() {
+      return myRange;
     }
 
     @NotNull
@@ -784,8 +784,11 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   @NotNull
   public IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
                                                       boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+    if (start < 0 || start > end) {
+      throw new IllegalArgumentException("invalid offsets: start="+start+"; end="+end);
+    }
+    l.writeLock().lock();
     try {
-      l.writeLock().lock();
       if (firingBeforeRemove) {
         throw new IncorrectOperationException("Must not add rangemarker from within beforeRemoved listener");
       }
@@ -1011,8 +1014,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     int delta = root.delta;
     root.setCachedValues(0, true, 0);
     if (delta != 0) {
-      root.setIntervalStart(root.intervalStart() + delta);
-      root.setIntervalEnd(root.intervalEnd() + delta);
+      root.setRange(TextRangeScalarUtil.deltaScalarRange(root.toScalarRange(), delta, delta));
       root.maxEnd += delta;
       root.delta = 0;
       //noinspection NonShortCircuitBooleanExpression

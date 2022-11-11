@@ -287,6 +287,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(expression);
       myFunctionalScopeStack.addLast(expression);
       addNode(startClosure);
+      addPendingEdge(expression, startClosure);
       addFunctionalExpressionParameters(expression);
       if (body instanceof GrBlockLambdaBody) {
         addControlFlowInstructions((GrStatementOwner)body);
@@ -295,7 +296,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
       InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);
       addNode(endClosure);
-      checkPending(expression, endClosure);
+      checkPending(expression.getParent(), endClosure);
       myFunctionalScopeStack.removeLast();
     } else {
       List<kotlin.Pair<ReadWriteVariableInstruction, VariableDescriptor>> reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(ControlFlowUtils.getGroovyControlFlow(body), false);
@@ -309,11 +310,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(closure);
       myFunctionalScopeStack.addLast(closure);
       addNodeAndCheckPending(startClosure);
+      addPendingEdge(closure, startClosure);
       addFunctionalExpressionParameters(closure);
       addControlFlowInstructions(closure);
       InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);
       addNode(endClosure);
-      checkPending(closure, endClosure);
+      checkPending(closure.getParent(), endClosure);
       myFunctionalScopeStack.removeLast();
     } else {
       //do not go inside closures except gstring injections

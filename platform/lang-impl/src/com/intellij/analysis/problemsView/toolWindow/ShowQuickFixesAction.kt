@@ -109,10 +109,12 @@ internal class ShowQuickFixesAction : AnAction() {
     val panel = ProblemsView.getSelectedPanel(event.project) ?: return null
     if (!UIUtil.isShowing(panel)) return null
     val editor = panel.preview ?: getEditor(psi, showEditor) ?: return null
-    val markers = problem.info?.quickFixActionMarkers ?: return null
-
     val info = ShowIntentionsPass.IntentionsInfo()
-    markers.filter { it.second.isValid }.forEach { info.intentionsToShow.add(it.first) }
+    problem.info?.findRegisteredQuickFix { desc, range ->
+      info.intentionsToShow.add(desc)
+      null
+    }
+    if (info.isEmpty) return null
     info.offset = problem.info?.actualStartOffset ?: -1
 
     val intentions = CachedIntentions.createAndUpdateActions(psi.project, psi, editor, info)

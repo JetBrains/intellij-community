@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -44,6 +44,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (myAnnotation instanceof GitFileAnnotation) {
         return new AnAction[]{
@@ -76,6 +81,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
         mySettings.set(CommonUiProperties.PREFER_COMMIT_DATE, state);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private static class ToggleIgnoreWhitespaces extends ToggleAction implements DumbAware {
@@ -84,6 +94,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     ToggleIgnoreWhitespaces(@NotNull Project project) {
       super(GitBundle.message("annotations.options.ignore.whitespaces"));
       myProject = project;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -104,6 +119,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     ToggleInnerMovementsWhitespaces(@NotNull Project project) {
       super(GitBundle.message("annotations.options.detect.movements.within.file"));
       myProject = project;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -130,6 +150,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     ToggleOuterMovementsWhitespaces(@NotNull Project project) {
       super(GitBundle.message("annotations.options.detect.movements.across.files"));
       myProject = project;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

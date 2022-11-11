@@ -1,20 +1,27 @@
 package com.intellij.tasks.integration;
 
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.bugzilla.BugzillaRepository;
 import com.intellij.tasks.bugzilla.BugzillaRepositoryType;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author Mikhail Golubev
  */
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class BugzillaIntegrationTest extends TaskManagerTestCase {
   private static final String BUGZILLA_4_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8028/xmlrpc.cgi";
   private static final String BUG_FOR_CUSTOM_STATES_ID = "10";
@@ -64,5 +71,18 @@ public class BugzillaIntegrationTest extends TaskManagerTestCase {
     myRepository.setUrl(BUGZILLA_4_TEST_SERVER_URL);
     myRepository.setUsername("buildtest");
     myRepository.setPassword("buildtest");
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    try {
+      super.runTestRunnable(testRunnable);
+    }
+    catch (Throwable e) {
+      if (ExceptionUtil.causedBy(e, IOException.class)) {
+        ExternalResourcesChecker.reportUnavailability(BUGZILLA_4_TEST_SERVER_URL, e);
+      }
+      throw e;
+    }
   }
 }

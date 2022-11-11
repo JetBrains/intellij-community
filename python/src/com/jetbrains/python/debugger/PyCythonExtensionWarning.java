@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.ExecutionException;
@@ -53,6 +53,7 @@ public class PyCythonExtensionWarning {
       new Notification(CYTHON_WARNING_GROUP_ID, PyBundle.message("compile.cython.extensions.notification"),
                        PyBundle.message("debugger.cython.extension.speeds.up.python.debugging"),
                        NotificationType.INFORMATION);
+    notification.setSuggestionType(true);
     notification.addAction(createInstallAction(notification, project));
     notification.addAction(createDocsAction());
     notification.notify(project);

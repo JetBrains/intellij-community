@@ -18,6 +18,7 @@ package com.intellij.lang.ant.config.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.execution.AntBuildMessageView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -40,5 +41,10 @@ public final class StopAction extends AnAction {
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(!myAntBuildMessageView.isStopped());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

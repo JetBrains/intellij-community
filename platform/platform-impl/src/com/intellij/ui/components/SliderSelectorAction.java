@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -43,6 +44,11 @@ public class SliderSelectorAction extends DumbAwareAction {
       e.getPresentation().setText(getTemplatePresentation().getText() + " (" + tooltip + ")");
       e.getPresentation().setDescription(getTemplatePresentation().getDescription() + " (" + tooltip + ")");
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

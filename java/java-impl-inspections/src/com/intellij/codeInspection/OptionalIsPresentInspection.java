@@ -34,12 +34,10 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   private static final CallMatcher OPTIONAL_IS_PRESENT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "isPresent").parameterCount(0);
 
-  private static final OptionalIsPresentCase[] CASES = {
-    new ReturnCase(),
-    new AssignmentCase(),
-    new ConsumerCase(),
-    new TernaryCase()
-  };
+  private static final CallMatcher OPTIONAL_IS_EMPTY =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "isEmpty").parameterCount(0);
+
+  private static final OptionalIsPresentCase[] CASES = OptionalIsPresentCase.values();
 
   private enum ProblemType {
     WARNING, INFO, NONE;
@@ -69,14 +67,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         super.visitConditionalExpression(expression);
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(expression.getCondition());
         if (condition == null) return;
-        boolean invert = false;
-        PsiExpression strippedCondition = condition;
-        if (BoolUtils.isNegation(condition)) {
-          strippedCondition = BoolUtils.getNegated(condition);
-          invert = true;
-        }
-        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(strippedCondition);
+        PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
         if (optionalRef == null) return;
+        boolean invert = isEmptyCheck(condition);
         PsiExpression thenExpression = invert ? expression.getElseExpression() : expression.getThenExpression();
         PsiExpression elseExpression = invert ? expression.getThenExpression() : expression.getElseExpression();
         check(condition, optionalRef, thenExpression, elseExpression);
@@ -87,14 +80,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         super.visitIfStatement(statement);
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (condition == null) return;
-        boolean invert = false;
-        PsiExpression strippedCondition = condition;
-        if (BoolUtils.isNegation(condition)) {
-          strippedCondition = BoolUtils.getNegated(condition);
-          invert = true;
-        }
-        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(strippedCondition);
+        PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
         if (optionalRef == null) return;
+        boolean invert = isEmptyCheck(condition);
         PsiStatement thenStatement = extractThenStatement(statement, invert);
         PsiStatement elseStatement = extractElseStatement(statement, invert);
         check(condition, optionalRef, thenStatement, elseStatement);
@@ -137,15 +125,31 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
 
   @Nullable
   @Contract("null -> null")
-  static PsiReferenceExpression extractOptionalFromIsPresentCheck(PsiExpression expression) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
-    if (!OPTIONAL_IS_PRESENT.matches(call)) return null;
+  private static PsiReferenceExpression extractOptionalFromPresenceCheck(PsiExpression condition) {
+    while (condition != null && BoolUtils.isNegation(condition)) {
+      condition = BoolUtils.getNegated(condition);
+    }
+    PsiMethodCallExpression call = ObjectUtils.tryCast(condition, PsiMethodCallExpression.class);
+    if (!OPTIONAL_IS_PRESENT.matches(call) && !OPTIONAL_IS_EMPTY.matches(call)) return null;
     PsiReferenceExpression qualifier =
       ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiReferenceExpression.class);
     if (qualifier == null) return null;
     PsiElement element = qualifier.resolve();
     if (!(element instanceof PsiVariable) || isRaw((PsiVariable)element)) return null;
     return qualifier;
+  }
+
+  /**
+   * @param condition condition which is known to represent either isPresent() or isEmpty() check
+   * @return true if condition represents isEmpty() check; false if it's isPresent() check
+   */
+  private static boolean isEmptyCheck(PsiExpression condition) {
+    boolean invert = false;
+    while (condition != null && BoolUtils.isNegation(condition)) {
+      condition = BoolUtils.getNegated(condition);
+      invert = !invert;
+    }
+    return OPTIONAL_IS_EMPTY.matches(condition) != invert;
   }
 
   @Contract("null, _ -> false")
@@ -268,16 +272,12 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       PsiElement element = descriptor.getStartElement();
       if (!(element instanceof PsiExpression)) return;
       PsiExpression condition = (PsiExpression)element;
-      boolean invert = false;
-      if (BoolUtils.isNegation(condition)) {
-        condition = BoolUtils.getNegated(condition);
-        invert = true;
-      }
-      PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(condition);
+      PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
       if (optionalRef == null) return;
       PsiElement cond = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiConditionalExpression.class);
       PsiElement thenElement;
       PsiElement elseElement;
+      boolean invert = isEmptyCheck(condition);
       if (cond instanceof PsiIfStatement) {
         thenElement = extractThenStatement((PsiIfStatement)cond, invert);
         elseElement = extractElseStatement((PsiIfStatement)cond, invert);
@@ -305,143 +305,143 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     }
   }
 
-  interface OptionalIsPresentCase {
+  enum OptionalIsPresentCase {
+    RETURN_CASE {
+      @NotNull
+      @Override
+      public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalRef,
+                                        @Nullable PsiElement trueElement,
+                                        @Nullable PsiElement falseElement) {
+        if (!(trueElement instanceof PsiReturnStatement) || !(falseElement instanceof PsiReturnStatement)) return ProblemType.NONE;
+        PsiExpression falseValue = ((PsiReturnStatement)falseElement).getReturnValue();
+        PsiExpression trueValue = ((PsiReturnStatement)trueElement).getReturnValue();
+        if (!isSimpleOrUnchecked(falseValue)) return ProblemType.NONE;
+        return getTypeByLambdaCandidate(optionalRef, trueValue, falseValue);
+      }
+
+      @NotNull
+      @Override
+      public String generateReplacement(@NotNull PsiElementFactory factory,
+                                        @NotNull CommentTracker ct, @NotNull PsiReferenceExpression optionalVariable,
+                                        PsiElement trueElement,
+                                        PsiElement falseElement) {
+        PsiExpression trueValue = ((PsiReturnStatement)trueElement).getReturnValue();
+        PsiExpression falseValue = ((PsiReturnStatement)falseElement).getReturnValue();
+        LOG.assertTrue(trueValue != null);
+        LOG.assertTrue(falseValue != null);
+        return "return " +
+               generateOptionalUnwrap(factory, ct, optionalVariable, trueValue, falseValue, PsiTypesUtil.getMethodReturnType(trueElement)) +
+               ";";
+      }
+    },
+
+    ASSIGNMENT_CASE {
+      @NotNull
+      @Override
+      public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
+                                        @Nullable PsiElement trueElement,
+                                        @Nullable PsiElement falseElement) {
+        PsiAssignmentExpression trueAssignment = ExpressionUtils.getAssignment(trueElement);
+        PsiAssignmentExpression falseAssignment = ExpressionUtils.getAssignment(falseElement);
+        if (trueAssignment == null || falseAssignment == null) return ProblemType.NONE;
+        PsiExpression falseVal = falseAssignment.getRExpression();
+        PsiExpression trueVal = trueAssignment.getRExpression();
+        if (areElementsEquivalent(trueAssignment.getLExpression(), falseAssignment.getLExpression()) &&
+            isSimpleOrUnchecked(falseVal)) {
+          return getTypeByLambdaCandidate(optionalVariable, trueVal, falseVal);
+        }
+        return ProblemType.NONE;
+      }
+
+      @NotNull
+      @Override
+      public String generateReplacement(@NotNull PsiElementFactory factory,
+                                        @NotNull CommentTracker ct,
+                                        @NotNull PsiReferenceExpression optionalRef,
+                                        PsiElement trueElement,
+                                        PsiElement falseElement) {
+        PsiAssignmentExpression trueAssignment = ExpressionUtils.getAssignment(trueElement);
+        PsiAssignmentExpression falseAssignment = ExpressionUtils.getAssignment(falseElement);
+        LOG.assertTrue(trueAssignment != null);
+        LOG.assertTrue(falseAssignment != null);
+        PsiExpression lValue = trueAssignment.getLExpression();
+        PsiExpression trueValue = trueAssignment.getRExpression();
+        PsiExpression falseValue = falseAssignment.getRExpression();
+        LOG.assertTrue(trueValue != null);
+        LOG.assertTrue(falseValue != null);
+        return lValue.getText() + " = " + generateOptionalUnwrap(factory, ct, optionalRef, trueValue, falseValue, lValue.getType()) + ";";
+      }
+    },
+
+    TERNARY_CASE {
+      @NotNull
+      @Override
+      public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
+                                        @Nullable PsiElement trueElement,
+                                        @Nullable PsiElement falseElement) {
+        if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return ProblemType.NONE;
+        PsiExpression trueExpression = (PsiExpression)trueElement;
+        PsiExpression falseExpression = (PsiExpression)falseElement;
+        PsiType trueType = trueExpression.getType();
+        PsiType falseType = falseExpression.getType();
+        if (trueType == null || falseType == null || !trueType.isAssignableFrom(falseType) || !isSimpleOrUnchecked(falseExpression)) {
+          return ProblemType.NONE;
+        }
+        return getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression);
+      }
+
+      @NotNull
+      @Override
+      public String generateReplacement(@NotNull PsiElementFactory factory,
+                                        @NotNull CommentTracker ct,
+                                        @NotNull PsiReferenceExpression optionalVariable,
+                                        PsiElement trueElement,
+                                        PsiElement falseElement) {
+        PsiExpression ternary = PsiTreeUtil.getParentOfType(trueElement, PsiConditionalExpression.class);
+        LOG.assertTrue(ternary != null);
+        PsiExpression trueExpression = (PsiExpression)trueElement;
+        PsiExpression falseExpression = (PsiExpression)falseElement;
+        return generateOptionalUnwrap(factory, ct, optionalVariable, trueExpression, falseExpression, ternary.getType());
+      }
+    },
+
+    CONSUMER_CASE {
+      @NotNull
+      @Override
+      public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalRef,
+                                        @Nullable PsiElement trueElement,
+                                        @Nullable PsiElement falseElement) {
+        if (falseElement != null && !(falseElement instanceof PsiEmptyStatement)) return ProblemType.NONE;
+        if (!(trueElement instanceof PsiStatement)) return ProblemType.NONE;
+        if (trueElement instanceof PsiExpressionStatement) {
+          PsiExpression expression = ((PsiExpressionStatement)trueElement).getExpression();
+          if (isOptionalGetCall(expression, optionalRef)) return ProblemType.NONE;
+          trueElement = expression;
+        }
+        return getTypeByLambdaCandidate(optionalRef, trueElement, null);
+      }
+
+      @NotNull
+      @Override
+      public String generateReplacement(@NotNull PsiElementFactory factory,
+                                        @NotNull CommentTracker ct,
+                                        @NotNull PsiReferenceExpression optionalRef,
+                                        PsiElement trueElement,
+                                        PsiElement falseElement) {
+        return optionalRef.getText() + ".ifPresent(" + generateOptionalLambda(factory, ct, optionalRef, trueElement) + ");";
+      }
+    };
+
     @NotNull
-    ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
+    abstract ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
                                @Nullable PsiElement trueElement,
                                @Nullable PsiElement falseElement);
 
     @NotNull
-    String generateReplacement(@NotNull PsiElementFactory factory,
+    abstract String generateReplacement(@NotNull PsiElementFactory factory,
                                @NotNull CommentTracker ct,
                                @NotNull PsiReferenceExpression optionalVariable,
                                PsiElement trueElement,
                                PsiElement falseElement);
-  }
-
-  static class ReturnCase implements OptionalIsPresentCase {
-    @NotNull
-    @Override
-    public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalRef,
-                                      @Nullable PsiElement trueElement,
-                                      @Nullable PsiElement falseElement) {
-      if (!(trueElement instanceof PsiReturnStatement) || !(falseElement instanceof PsiReturnStatement)) return ProblemType.NONE;
-      PsiExpression falseValue = ((PsiReturnStatement)falseElement).getReturnValue();
-      PsiExpression trueValue = ((PsiReturnStatement)trueElement).getReturnValue();
-      if (!isSimpleOrUnchecked(falseValue)) return ProblemType.NONE;
-      return getTypeByLambdaCandidate(optionalRef, trueValue, falseValue);
-    }
-
-    @NotNull
-    @Override
-    public String generateReplacement(@NotNull PsiElementFactory factory,
-                                      @NotNull CommentTracker ct, @NotNull PsiReferenceExpression optionalVariable,
-                                      PsiElement trueElement,
-                                      PsiElement falseElement) {
-      PsiExpression trueValue = ((PsiReturnStatement)trueElement).getReturnValue();
-      PsiExpression falseValue = ((PsiReturnStatement)falseElement).getReturnValue();
-      LOG.assertTrue(trueValue != null);
-      LOG.assertTrue(falseValue != null);
-      return "return " +
-             generateOptionalUnwrap(factory, ct, optionalVariable, trueValue, falseValue, PsiTypesUtil.getMethodReturnType(trueElement)) +
-             ";";
-    }
-  }
-
-  static class AssignmentCase implements OptionalIsPresentCase {
-    @NotNull
-    @Override
-    public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
-                                      @Nullable PsiElement trueElement,
-                                      @Nullable PsiElement falseElement) {
-      PsiAssignmentExpression trueAssignment = ExpressionUtils.getAssignment(trueElement);
-      PsiAssignmentExpression falseAssignment = ExpressionUtils.getAssignment(falseElement);
-      if (trueAssignment == null || falseAssignment == null) return ProblemType.NONE;
-      PsiExpression falseVal = falseAssignment.getRExpression();
-      PsiExpression trueVal = trueAssignment.getRExpression();
-      if (areElementsEquivalent(trueAssignment.getLExpression(), falseAssignment.getLExpression()) &&
-          isSimpleOrUnchecked(falseVal)) {
-        return getTypeByLambdaCandidate(optionalVariable, trueVal, falseVal);
-      }
-      return ProblemType.NONE;
-    }
-
-    @NotNull
-    @Override
-    public String generateReplacement(@NotNull PsiElementFactory factory,
-                                      @NotNull CommentTracker ct,
-                                      @NotNull PsiReferenceExpression optionalRef,
-                                      PsiElement trueElement,
-                                      PsiElement falseElement) {
-      PsiAssignmentExpression trueAssignment = ExpressionUtils.getAssignment(trueElement);
-      PsiAssignmentExpression falseAssignment = ExpressionUtils.getAssignment(falseElement);
-      LOG.assertTrue(trueAssignment != null);
-      LOG.assertTrue(falseAssignment != null);
-      PsiExpression lValue = trueAssignment.getLExpression();
-      PsiExpression trueValue = trueAssignment.getRExpression();
-      PsiExpression falseValue = falseAssignment.getRExpression();
-      LOG.assertTrue(trueValue != null);
-      LOG.assertTrue(falseValue != null);
-      return lValue.getText() + " = " + generateOptionalUnwrap(factory, ct, optionalRef, trueValue, falseValue, lValue.getType()) + ";";
-    }
-  }
-
-  static class TernaryCase implements OptionalIsPresentCase {
-    @NotNull
-    @Override
-    public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
-                                      @Nullable PsiElement trueElement,
-                                      @Nullable PsiElement falseElement) {
-      if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return ProblemType.NONE;
-      PsiExpression trueExpression = (PsiExpression)trueElement;
-      PsiExpression falseExpression = (PsiExpression)falseElement;
-      PsiType trueType = trueExpression.getType();
-      PsiType falseType = falseExpression.getType();
-      if (trueType == null || falseType == null || !trueType.isAssignableFrom(falseType) || !isSimpleOrUnchecked(falseExpression)) {
-        return ProblemType.NONE;
-      }
-      return getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression);
-    }
-
-    @NotNull
-    @Override
-    public String generateReplacement(@NotNull PsiElementFactory factory,
-                                      @NotNull CommentTracker ct,
-                                      @NotNull PsiReferenceExpression optionalVariable,
-                                      PsiElement trueElement,
-                                      PsiElement falseElement) {
-      PsiExpression ternary = PsiTreeUtil.getParentOfType(trueElement, PsiConditionalExpression.class);
-      LOG.assertTrue(ternary != null);
-      PsiExpression trueExpression = (PsiExpression)trueElement;
-      PsiExpression falseExpression = (PsiExpression)falseElement;
-      return generateOptionalUnwrap(factory, ct, optionalVariable, trueExpression, falseExpression, ternary.getType());
-    }
-  }
-
-  static class ConsumerCase implements OptionalIsPresentCase {
-    @NotNull
-    @Override
-    public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalRef,
-                                      @Nullable PsiElement trueElement,
-                                      @Nullable PsiElement falseElement) {
-      if (falseElement != null && !(falseElement instanceof PsiEmptyStatement)) return ProblemType.NONE;
-      if (!(trueElement instanceof PsiStatement)) return ProblemType.NONE;
-      if (trueElement instanceof PsiExpressionStatement) {
-        PsiExpression expression = ((PsiExpressionStatement)trueElement).getExpression();
-        if (isOptionalGetCall(expression, optionalRef)) return ProblemType.NONE;
-        trueElement = expression;
-      }
-      return getTypeByLambdaCandidate(optionalRef, trueElement, null);
-    }
-
-    @NotNull
-    @Override
-    public String generateReplacement(@NotNull PsiElementFactory factory,
-                                      @NotNull CommentTracker ct,
-                                      @NotNull PsiReferenceExpression optionalRef,
-                                      PsiElement trueElement,
-                                      PsiElement falseElement) {
-      return optionalRef.getText() + ".ifPresent(" + generateOptionalLambda(factory, ct, optionalRef, trueElement) + ");";
-    }
   }
 }

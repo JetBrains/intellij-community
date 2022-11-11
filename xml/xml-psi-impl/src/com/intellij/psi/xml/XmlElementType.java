@@ -18,6 +18,7 @@ package com.intellij.psi.xml;
 import com.intellij.html.embedding.HtmlRawTextElementType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
+import com.intellij.lang.html.HTMLParserDefinition;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
@@ -27,7 +28,6 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
-
 
 public interface XmlElementType extends XmlTokenType {
   IElementType XML_DOCUMENT = new IXmlElementType("XML_DOCUMENT");
@@ -55,7 +55,7 @@ public interface XmlElementType extends XmlTokenType {
   //todo: move to html
   IElementType HTML_DOCUMENT = new IXmlElementType("HTML_DOCUMENT");
   IElementType HTML_TAG = new XmlTagElementType("HTML_TAG");
-  IFileElementType HTML_FILE = new HtmlFileElementType();
+  IFileElementType HTML_FILE = HTMLParserDefinition.FILE_ELEMENT_TYPE;
   IElementType HTML_EMBEDDED_CONTENT = new EmbeddedHtmlContentElementType();
   IElementType HTML_RAW_TEXT = HtmlRawTextElementType.INSTANCE;
 

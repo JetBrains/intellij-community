@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -79,6 +79,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         @TestMetadata("Operation.kt")
         public void testOperation() throws Exception {
             runTest("../idea/tests/testData/highlighter/deprecated/Operation.kt");
+        }
+
+        @TestMetadata("OperationSuppressedDeprecation.kt")
+        public void testOperationSuppressedDeprecation() throws Exception {
+            runTest("../idea/tests/testData/highlighter/deprecated/OperationSuppressedDeprecation.kt");
         }
 
         @TestMetadata("Property.kt")

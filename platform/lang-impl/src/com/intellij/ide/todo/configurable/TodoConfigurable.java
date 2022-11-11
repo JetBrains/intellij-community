@@ -29,9 +29,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class TodoConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final int HEADER_GAP = JBUIScale.scale(20);
   /*

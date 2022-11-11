@@ -14,7 +14,6 @@ public interface IconWithToolTip extends Icon {
    * Returns the tooltip for the icon.
    * @param composite if true, this tooltip will be combined with other tooltips (from other layers of a layered icon or parts of a row icon).
    *                  For some icons, it only makes sense to show a tooltip if the icon is composite.
-   * @return
    */
   @NlsContexts.Tooltip @Nullable String getToolTip(boolean composite);
 }

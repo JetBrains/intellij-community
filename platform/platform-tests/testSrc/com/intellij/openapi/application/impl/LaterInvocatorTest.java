@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -89,16 +90,22 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   @Override
-  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
-    runnable.run();
-  }
-
-  @Override
   protected void tearDown() throws Exception {
     myOrder.clear();
     flushSwingQueue();
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.leaveAllModals());
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
+  }
+
+  @Override
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
+    if (isStressTest()) {
+      // this call is in hot path. make sure it's cached and local, to avoid remote crazy stuff
+      ClientId.Companion.nullizeCachedServiceInTest(runnable);
+    }
+    else {
+      runnable.run();
+    }
   }
 
   public void testReorder() {
@@ -165,19 +172,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   public void testStress() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       int N = 1000;
-      //long start = System.currentTimeMillis();
       for (int i = 0; i < N; i++) {
-        /*
-        if (i % 10 == 0) {
-          long elapsed = System.currentTimeMillis() - start;
-          System.out.println("i = " + i+"; elapsed="+elapsed);
-          start = System.currentTimeMillis();
-        }
-        */
-
-        //assertEquals(null, Toolkit.getDefaultToolkit().getSystemEventQueue().peekEvent());
-        //assertEquals(null, LaterInvocator.dumpQueue());
-
         UsefulTestCase.assertEmpty(LaterInvocator.getCurrentModalEntities());
         LaterInvocator.enterModal(myWindow2);
         //some weird things like MyFireIdleRequest may still sneak in
@@ -205,10 +200,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
         LaterInvocator.leaveModal(myWindow2);
         flushSwingQueue();
-        if (!LaterInvocator.isInModalContext()) {
-          //System.out.println("inv queue" + LaterInvocator.dumpQueue());
-          TestCase.fail();
-        }
+        assertTrue(LaterInvocator.isInModalContext());
 
         checkOrder(0);
 
@@ -349,37 +341,18 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   static void flushSwingQueue() {
-
-    //try {
-    //  Thread.sleep(10);
-    //}
-    //catch (InterruptedException e) {
-    //  throw new RuntimeException(e);
-    //}
-
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
     else {
       UIUtil.pump();
     }
-    /*
-    final AtomicBoolean hasEventsInQueue = new AtomicBoolean(true);
-    while (hasEventsInQueue.get()) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          hasEventsInQueue.set(Toolkit.getDefaultToolkit().getSystemEventQueue().peekEvent() != null);
-        }
-      });
-    }
-    */
-
     //some weird things like MyFireIdleRequest may still sneak in
     //assertEquals(null, Toolkit.getDefaultToolkit().getSystemEventQueue().peekEvent());
   }
 
   private void blockSwingThread() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     SwingUtilities.invokeLater(new Lock(this));
   }
 
@@ -614,7 +587,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
 
-    PlatformTestUtil.startPerformanceTest("Swing invokeLater", 15_000, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 20_000, () -> {
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
           // decrease GC pressure, we're not measuring that
@@ -631,7 +604,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
-    PlatformTestUtil.startPerformanceTest("Application invokeLater", 800, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> {
       Application application = ApplicationManager.getApplication();
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
@@ -649,16 +622,18 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
-    PlatformTestUtil.startPerformanceTest("Application invokeLater in modal context", 800, () -> {
+    Application application = ApplicationManager.getApplication();
+    application.invokeAndWait(r);
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 900, () -> {
+      counter.set(0);
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.enterModal(myWindow1));
-      Application application = ApplicationManager.getApplication();
       for (int i = 0; i < N; i++) {
         application.invokeLater(r);
       }
       assertEquals(0, counter.get());
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.leaveModal(myWindow1));
       application.invokeAndWait(EmptyRunnable.getInstance());
-      assertEquals(N, counter.getAndSet(0));
+      assertEquals(N, counter.get());
     }).assertTiming();
   }
 

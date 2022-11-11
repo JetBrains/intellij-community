@@ -76,7 +76,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
                          VcsLogMetadataColumn {
   override fun getValue(model: GraphTableModel, row: Int) =
     GraphCommitCell(
-      getValue(model, model.getCommitMetadata(row)),
+      getValue(model, model.getCommitMetadata(row, true)),
       model.getRefsAtRow(row),
       model.visiblePack.visibleGraph.getRowInfo(row).printElements
     )
@@ -120,7 +120,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
 
 internal object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBundle.message("vcs.log.column.author")),
                          VcsLogMetadataColumn {
-  override fun getValue(model: GraphTableModel, row: Int) = getValue(model, model.getCommitMetadata(row))
+  override fun getValue(model: GraphTableModel, row: Int) = getValue(model, model.getCommitMetadata(row, true))
   override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata) = CommitPresentationUtil.getAuthorPresentation(commit)
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
@@ -133,7 +133,7 @@ internal object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBun
 
 internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.message("vcs.log.column.date")), VcsLogMetadataColumn {
   override fun getValue(model: GraphTableModel, row: Int): String {
-    return getValue(model, model.getCommitMetadata(row))
+    return getValue(model, model.getCommitMetadata(row, true))
   }
 
   override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata): String {
@@ -167,7 +167,7 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
 }
 
 internal object Hash : VcsLogDefaultColumn<String>("Default.Hash", VcsLogBundle.message("vcs.log.column.hash")), VcsLogMetadataColumn {
-  override fun getValue(model: GraphTableModel, row: Int): String = getValue(model, model.getCommitMetadata(row))
+  override fun getValue(model: GraphTableModel, row: Int): String = getValue(model, model.getCommitMetadata(row, true))
   override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata) = commit.id.toShortString()
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {

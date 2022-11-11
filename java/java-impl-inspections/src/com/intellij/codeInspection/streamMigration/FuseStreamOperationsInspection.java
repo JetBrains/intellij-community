@@ -128,7 +128,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (STREAM_COLLECT.test(call)) {
           PsiMethodCallExpression arg =
             tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiMethodCallExpression.class);

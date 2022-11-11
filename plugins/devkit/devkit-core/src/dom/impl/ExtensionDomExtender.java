@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.google.common.base.CaseFormat;
@@ -96,25 +96,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         markAsRequired(extension, required);
 
         if (clazz == String.class) {
-          if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
-            extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
-          }
-          else if (!fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(fieldType);
-            if (fieldPsiClass != null && fieldPsiClass.isEnum()) {
-              extension.setConverter(createEnumConverter(fieldPsiClass));
-              return;
-            }
-          }
-
-          if ("language".equals(attributeName) ||
-              StringUtil.endsWith(attributeName, "Language")) // NON-NLS
-          {
-            extension.setConverter(LANGUAGE_CONVERTER);
-          }
-          else if ("action".equals(attributeName)) {
-            extension.setConverter(ACTION_CONVERTER);
-          }
+          markStringProperty(extension, field, fieldType, attributeName);
         }
         else if (clazz == PsiClass.class) {
           markAsClass(extension, true, withElement);
@@ -130,9 +112,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
         final With withElement = findWithElement(elements, field);
         markAsClass(extension, Extension.isClassField(field.getName()), withElement);
-        if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
-          extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
-        }
+
+        markStringProperty(extension, field, field.getType(), tagName);
       }
 
       @Override
@@ -187,6 +168,28 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
     else if (required == ExtensionPointBinding.BindingVisitor.RequiredFlag.REQUIRED_ALLOW_EMPTY) {
       extension.addCustomAnnotation(MyRequiredCanBeEmpty.INSTANCE);
+    }
+  }
+
+  private static void markStringProperty(DomExtension extension, PsiField field, PsiType fieldType, String propertyName) {
+    if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
+      extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
+    }
+    else if (!fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(fieldType);
+      if (fieldPsiClass != null && fieldPsiClass.isEnum()) {
+        extension.setConverter(createEnumConverter(fieldPsiClass));
+        return;
+      }
+    }
+
+    if ("language".equals(propertyName) ||
+        StringUtil.endsWith(propertyName, "Language")) // NON-NLS
+    {
+      extension.setConverter(LANGUAGE_CONVERTER);
+    }
+    else if ("action".equals(propertyName)) {
+      extension.setConverter(ACTION_CONVERTER);
     }
   }
 

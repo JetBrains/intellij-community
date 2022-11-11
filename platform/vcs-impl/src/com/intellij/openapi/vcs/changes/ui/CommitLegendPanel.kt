@@ -18,7 +18,7 @@ private val FileStatus.attributes
 private fun Int.formatInt(): String = "%,d".format(this) // NON-NLS
 
 open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
-  private val myRootPanel = SimpleColoredComponent()
+  private val myRootPanel = SimpleColoredComponent().apply { isOpaque = false  }
   private val isPanelEmpty get() = !myRootPanel.iterator().hasNext()
 
   val component get() = myRootPanel

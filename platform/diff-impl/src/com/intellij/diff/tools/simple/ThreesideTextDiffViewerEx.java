@@ -6,6 +6,7 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.side.ThreesideContentPanel;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
 import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.util.*;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -55,7 +55,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myPrevNextConflictIterable = new MyPrevNextConflictIterable();
     myStatusPanel = new MyStatusPanel();
-    myFoldingModel = new MyFoldingModel(getProject(), getEditors().toArray(new EditorEx[0]), this);
+    myFoldingModel = new MyFoldingModel(getProject(), getEditors().toArray(new EditorEx[0]), myContentPanel, this);
 
     for (ThreeSide side : ThreeSide.values()) {
       DiffUtil.installLineConvertor(getEditor(side), getContent(side), myFoldingModel, side.getIndex());
@@ -408,10 +408,20 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   protected static class MyFoldingModel extends FoldingModelSupport {
     private final MyPaintable myPaintable1 = new MyPaintable(0, 1);
     private final MyPaintable myPaintable2 = new MyPaintable(1, 2);
+    private final ThreesideContentPanel myContentPanel;
 
-    public MyFoldingModel(@Nullable Project project, EditorEx @NotNull [] editors, @NotNull Disposable disposable) {
+    public MyFoldingModel(@Nullable Project project,
+                          EditorEx @NotNull [] editors,
+                          @NotNull ThreesideContentPanel contentPanel,
+                          @NotNull Disposable disposable) {
       super(project, editors, disposable);
+      myContentPanel = contentPanel;
       assert editors.length == 3;
+    }
+
+    @Override
+    protected void repaintSeparators() {
+      myContentPanel.repaint();
     }
 
     @Nullable

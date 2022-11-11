@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" exported="" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="Eclipse" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" scope="TEST" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
+    <orderEntry type="library" scope="TEST" name="gson" level="project" />
+  </component>
+</module>

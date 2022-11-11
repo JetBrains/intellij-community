@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -536,16 +536,6 @@ class CompoundRendererConfigurable extends JPanel {
 
     public List<EnumerationChildrenRenderer.ChildInfo> getExpressions() {
       return myData;
-    }
-
-    private static final class Row {
-      public String name;
-      public TextWithImports value;
-
-      Row(final String name, final TextWithImports value) {
-        this.name = name;
-        this.value = value;
-      }
     }
   }
 

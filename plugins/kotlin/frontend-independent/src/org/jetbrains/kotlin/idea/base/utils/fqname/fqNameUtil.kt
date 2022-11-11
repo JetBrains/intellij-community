@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.base.utils.fqname
 
@@ -19,6 +19,10 @@ import org.jetbrains.kotlin.types.KotlinType
 /**
  * Returns FqName for given declaration (either Java or Kotlin)
  */
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.kotlinFqName' instead",
+    ReplaceWith("this.kotlinFqName", imports = ["org.jetbrains.kotlin.idea.base.psi.kotlinFqName"])
+)
 fun PsiElement.getKotlinFqName(): FqName? = when (val element = namedUnwrappedElement) {
     is PsiPackage -> FqName(element.qualifiedName)
     is PsiClass -> element.qualifiedName?.let(::FqName)
@@ -53,6 +57,3 @@ val KotlinType.fqName: FqName?
         is AbbreviatedType -> abbreviation.fqName
         else -> constructor.declarationDescriptor?.fqNameOrNull()
     }
-
-fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
-    JavaToKotlinClassMap.isJavaPlatformClass(this) || javaToKotlinNameMap[this] != null

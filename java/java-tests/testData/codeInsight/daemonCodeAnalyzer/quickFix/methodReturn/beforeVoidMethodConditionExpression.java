@@ -1,4 +1,4 @@
-// "Make 'foo' return 'void'" "false"
+// "Make 'foo()' return 'void'" "false"
 abstract class A {
   private void condition(boolean flag) {
     return flag ? foo()<caret> : bar();

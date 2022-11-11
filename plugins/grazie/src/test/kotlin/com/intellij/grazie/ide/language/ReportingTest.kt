@@ -139,6 +139,7 @@ class ReportingTest : BasePlatformTestCase() {
     text.contains("Edit inspection")
     || text.contains("Run inspection")
     || text.contains("Disable inspection")
+    || text.contains("Disable highlighting, keep fix")
     || text.contains("Fix all")
     || text == CodeInsightBundle.message("assign.intention.shortcut")
     || text == CodeInsightBundle.message("edit.intention.shortcut")

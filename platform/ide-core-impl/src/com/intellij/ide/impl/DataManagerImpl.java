@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
@@ -264,7 +264,12 @@ public class DataManagerImpl extends DataManager {
     if (ourGetDataLevel.get()[0] > 0) {
       LOG.error("DataContext shall not be created and queried inside another getData() call.");
     }
-    return IdeUiService.getInstance().createUiDataContext(component);
+    if (component instanceof DependentTransientComponent) {
+      LOG.assertTrue(getDataProviderEx(component) == null, "DependentTransientComponent must not yield DataProvider");
+    }
+    Component adjusted = component instanceof DependentTransientComponent ?
+                         ((DependentTransientComponent)component).getPermanentComponent() : component;
+    return IdeUiService.getInstance().createUiDataContext(adjusted);
   }
 
   @Override
@@ -298,7 +303,7 @@ public class DataManagerImpl extends DataManager {
   public @NotNull Promise<DataContext> getDataContextFromFocusAsync() {
     AsyncPromise<DataContext> result = new AsyncPromise<>();
     IdeFocusManager.getGlobalInstance()
-                   .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.any());
+                   .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.defaultModalityState());
     return result;
   }
 

@@ -2,7 +2,7 @@ Markdown file
   ASTWrapperPsiElement(Markdown:Markdown:MARKDOWN_FILE)
     markdown: Markdown:ATX_1
       PsiElement(Markdown:Markdown:ATX_HEADER)('#')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('123')
     PsiWhiteSpace('\n')
@@ -17,13 +17,13 @@ Markdown file
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_1
       PsiElement(Markdown:Markdown:ATX_HEADER)('#')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('Other header')
     PsiWhiteSpace('\n')
     markdown: Markdown:ATX_1
       PsiWhiteSpace('  ')
       PsiElement(Markdown:Markdown:ATX_HEADER)('#')
-      ASTWrapperPsiElement(Markdown:ATX_CONTENT)
+      MarkdownHeaderContent(Markdown:ATX_CONTENT)
         PsiWhiteSpace(' ')
         PsiElement(Markdown:Markdown:TEXT)('And other')

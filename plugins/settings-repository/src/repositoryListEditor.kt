@@ -9,59 +9,48 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runModalTask
-import com.intellij.ui.layout.*
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.ComboBoxModelEditor
 import com.intellij.util.ui.ListItemEditor
 import kotlinx.coroutines.runBlocking
-import java.util.*
 import javax.swing.JButton
 
-internal class RepositoryItem(var url: String? = null) {
+private class RepositoryItem(var url: String? = null) {
   override fun toString() = url ?: ""
 }
 
-internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUiEx<IcsSettings> {
-  val editor = ComboBoxModelEditor(object: ListItemEditor<RepositoryItem> {
+internal fun createRepositoryListEditor(icsManager: IcsManager): DialogPanel {
+  val editor = ComboBoxModelEditor(object : ListItemEditor<RepositoryItem> {
     override fun getItemClass() = RepositoryItem::class.java
 
     override fun clone(item: RepositoryItem, forInPlaceEditing: Boolean) = RepositoryItem(item.url)
   })
 
-  val deleteButton = JButton(IcsBundle.message("repository.editor.delete.button"))
-  deleteButton.addActionListener {
-    editor.model.selected?.let { selected ->
-      editor.model.remove(selected)
-      deleteButton.isEnabled = editor.model.selected != null
-    }
-  }
+  lateinit var deleteButton: Cell<JButton>
 
-  return object: ConfigurableUiEx<IcsSettings> {
-    private var repositoryRow: Row? = null
-
-    override fun isModified(settings: IcsSettings) = editor.isModified
-
-    override fun buildUi(builder: LayoutBuilder) {
-      builder.apply {
-        repositoryRow = row(icsMessage("repository.editor.repository.label")) {
-          cell {
-            editor.comboBox(comment = icsMessage("repository.editor.combobox.comment"))
-            deleteButton()
-          }
+  return panel {
+    row(icsMessage("repository.editor.repository.label")) {
+      cell(editor.comboBox)
+        .comment(icsMessage("repository.editor.combobox.comment"))
+      deleteButton = button(IcsBundle.message("repository.editor.delete.button")) {
+        editor.model.selected?.let { selected ->
+          editor.model.remove(selected)
+          deleteButton.enabled(editor.model.selected != null)
         }
       }
     }
 
-    override fun getComponent() = panel(init = ::buildUi)
-
-    override fun apply(settings: IcsSettings) {
+    onIsModified { editor.isModified }
+    onApply {
       val newList = editor.apply()
       if (newList.isEmpty()) {
         // repo is deleted
         deleteRepository(icsManager)
       }
     }
-
-    override fun reset(settings: IcsSettings) {
+    onReset {
       val list = ArrayList<RepositoryItem>()
       val upstream = icsManager.repositoryManager.getUpstream()?.let(::RepositoryItem)
       upstream?.let {
@@ -71,7 +60,7 @@ internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUiE
       editor.reset(list)
       editor.model.selectedItem = upstream
 
-      deleteButton.isEnabled = editor.model.selectedItem != null
+      deleteButton.enabled(editor.model.selectedItem != null)
     }
   }
 }

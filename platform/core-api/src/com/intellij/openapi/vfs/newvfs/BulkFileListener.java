@@ -27,11 +27,6 @@ import java.util.List;
  * <p>For a non-blocking alternative, please see {@link com.intellij.openapi.vfs.AsyncFileListener}.</p>
  */
 public interface BulkFileListener {
-  /** @deprecated obsolete, implement {@link BulkFileListener} directly */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  class Adapter implements BulkFileListener { }
-
   default void before(@NotNull List<? extends @NotNull VFileEvent> events) { }
 
   default void after(@NotNull List<? extends @NotNull VFileEvent> events) { }

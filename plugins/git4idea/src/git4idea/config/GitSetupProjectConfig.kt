@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
-class GitSetupProjectConfig : StartupActivity.Background {
-  override fun runActivity(project: Project) {
+internal class GitSetupProjectConfig : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       setupConfigIfNeeded(project)
     }

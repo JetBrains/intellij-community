@@ -14,8 +14,6 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.performance.tests.utils.projectFileByName
 
-
-
 fun openInEditor(project: Project, name: String): EditorFile {
     val psiFile = projectFileByName(project, name)
     return openInEditor(project, psiFile.virtualFile)

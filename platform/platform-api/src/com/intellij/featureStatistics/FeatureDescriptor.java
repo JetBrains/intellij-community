@@ -28,7 +28,8 @@ public class FeatureDescriptor {
   private long myLastTimeShown;
   private long myLastTimeUsed;
   private int myShownCount;
-  private ProductivityFeaturesProvider myProvider;
+  @Nullable private final ProductivityFeaturesProvider myProvider;
+
   private static final Logger LOG = Logger.getInstance(FeatureDescriptor.class);
   @NonNls private static final String ATTRIBUTE_COUNT = "count";
   @NonNls private static final String ATTRIBUTE_LAST_SHOWN = "last-shown";
@@ -45,15 +46,10 @@ public class FeatureDescriptor {
   @NonNls private static final String ELEMENT_TRACK_ACTION = "track-action";
   @NonNls private static final String ELEMENT_TRACK_INTENTION = "track-intention";
 
-  FeatureDescriptor(@NotNull GroupDescriptor group, @NotNull Element featureElement) {
+  FeatureDescriptor(@NotNull GroupDescriptor group, @Nullable ProductivityFeaturesProvider provider, @NotNull Element featureElement) {
     myGroupId = group.getId();
+    myProvider = provider;
     readExternal(featureElement);
-  }
-
-  FeatureDescriptor(@NonNls @NotNull String id, @NonNls @Nullable String tipFileName, @NotNull String displayName) {
-    myId = id;
-    myTipFileName = tipFileName;
-    myDisplayName = displayName;
   }
 
   public FeatureDescriptor(@NonNls @NotNull String id,
@@ -64,7 +60,7 @@ public class FeatureDescriptor {
                            int daysBetweenSuccessiveShowUps,
                            @Nullable Set<String> dependencies,
                            int minUsageCount,
-                           ProductivityFeaturesProvider provider) {
+                           @Nullable ProductivityFeaturesProvider provider) {
     myId = id;
     myGroupId = groupId;
     myTipFileName = tipFileName;

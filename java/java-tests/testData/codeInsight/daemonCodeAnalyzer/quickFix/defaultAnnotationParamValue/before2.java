@@ -1,4 +1,4 @@
-// "Remove redundant parameter" "true"
+// "Remove redundant parameter" "true-preview"
 
 @interface Anno {
     String[] foo() default {"One", "Two"};

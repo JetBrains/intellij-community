@@ -2,6 +2,7 @@
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Scheme;
@@ -38,6 +39,11 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
                                  : IdeBundle.message("action.DescriptionAwareSchemeActions.edit.description.text");
         e.getPresentation().setEnabledAndVisible(true);
         e.getPresentation().setText(text);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

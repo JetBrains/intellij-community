@@ -2,12 +2,9 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.lang.Language
-import com.intellij.lang.LanguageExtension
-import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -20,7 +17,6 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
-private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider"
 
 enum class InlayGroup(val key: String, @Nls val description: String? = null) {
   CODE_VISION_GROUP_NEW("settings.hints.new.group.code.vision", ApplicationBundle.message("settings.hints.new.group.code.vision.description")),
@@ -38,23 +34,6 @@ enum class InlayGroup(val key: String, @Nls val description: String? = null) {
   override fun toString(): @Nls String {
     return ApplicationBundle.message(key)
   }}
-
-object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EXTENSION_POINT_NAME) {
-  private fun findLanguagesWithHintsSupport(): List<Language> {
-    val extensionPointName = inlayProviderName
-    return extensionPointName.extensionList.map { it.language }
-      .toSet()
-      .mapNotNull { Language.findLanguageByID(it) }
-  }
-
-  fun findProviders() : List<ProviderInfo<*>> {
-    return findLanguagesWithHintsSupport().flatMap { language ->
-      InlayHintsProviderExtension.allForLanguage(language).map { ProviderInfo(language, it) }
-    }
-  }
-
-  val inlayProviderName = ExtensionPointName<LanguageExtensionPoint<InlayHintsProvider<*>>>(EXTENSION_POINT_NAME)
-}
 
 /**
  * Provider of inlay hints for single language. If you need to create hints for multiple languages, please use [InlayHintsProviderFactory].
@@ -228,7 +207,13 @@ class NoSettings {
  * Allows type-safe access to settings of provider.
  */
 data class SettingsKey<T>(val id: String) {
-  fun getFullId(language: Language): String = language.id + "." + id
+  companion object {
+    fun getFullId(languageId: String, keyId: String): String {
+      return "$languageId.$keyId"
+    }
+  }
+
+  fun getFullId(language: Language): String = getFullId(language.id, id)
 }
 
 interface AbstractSettingsKey<T: Any> {

@@ -69,8 +69,6 @@ class CommentUncommentLesson(private val sample: LessonSample, private val block
     }
   }
 
-  override val suitableTips = listOf("CommentCode")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(message("help.lines.of.code"),
          LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),

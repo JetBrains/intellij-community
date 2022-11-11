@@ -21,6 +21,16 @@ interface UInjectionHost : UExpression {
 
   val psiLanguageInjectionHost: PsiLanguageInjectionHost
 
+  /**
+   * @return the whole "string-like" expression, which the current [UInjectionHost] participates in.
+   * For instance for the `"abc"` participating in the expression
+   * ```
+   * val a = "abc" + v1 + "def"
+   * ```
+   * the `"abc" + v1 + "def"` will be returned.
+   * 
+   * Also, it will include string-processing postfix-methods like `trimIndent` and `trimMargin` if any of them is used.
+   */
   @ApiStatus.Experimental
   @JvmDefault
   fun getStringRoomExpression(): UExpression = this

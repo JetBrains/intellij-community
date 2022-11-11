@@ -4,7 +4,10 @@ import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.workspace.Config
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.awt.event.ItemEvent
 import javax.swing.*
 
@@ -19,29 +22,26 @@ class FlowConfigurable : EvaluationConfigurable {
 
   override fun createPanel(previousState: Config): JPanel {
     saveLogs = previousState.interpret.saveLogs
-    workspaceDirTextField = JTextField(previousState.outputDir) // NON-NLS
     val statsCollectorEnabled = PluginManagerCore.getPlugin(PluginId.getId(statsCollectorId))?.isEnabled ?: false
     trainTestSpinner = JSpinner(SpinnerNumberModel(previousState.interpret.trainTestSplit, 1, 99, 1)).apply {
       isEnabled = saveLogs && statsCollectorEnabled
     }
 
-    return panel(title = EvaluationPluginBundle.message("evaluation.settings.flow.title")) {
-      row {
-        cell {
-          label(EvaluationPluginBundle.message("evaluation.settings.flow.workspace"))
-          workspaceDirTextField()
+    return panel {
+      group(EvaluationPluginBundle.message("evaluation.settings.flow.title")) {
+        row(EvaluationPluginBundle.message("evaluation.settings.flow.workspace")) {
+          workspaceDirTextField = textField()
+            .text(previousState.outputDir)
+            .horizontalAlign(HorizontalAlign.FILL)
+            .component
         }
-      }
-      row {
-        cell {
-          label(EvaluationPluginBundle.message("evaluation.settings.flow.logs.save"))
-          checkBox("", saveLogs).configureSaveLogs(statsCollectorEnabled)
+        row(EvaluationPluginBundle.message("evaluation.settings.flow.logs.save")) {
+          checkBox("")
+            .applyToComponent { isSelected = saveLogs }
+            .configureSaveLogs(statsCollectorEnabled)
         }
-      }
-      row {
-        cell {
-          label(EvaluationPluginBundle.message("evaluation.settings.flow.logs.split"))
-          trainTestSpinner()
+        row(EvaluationPluginBundle.message("evaluation.settings.flow.logs.split")) {
+          cell(trainTestSpinner)
         }
       }
     }
@@ -53,7 +53,7 @@ class FlowConfigurable : EvaluationConfigurable {
     builder.trainTestSplit = trainTestSpinner.value as Int
   }
 
-  private fun CellBuilder<JCheckBox>.configureSaveLogs(statsCollectorEnabled: Boolean) {
+  private fun Cell<JCheckBox>.configureSaveLogs(statsCollectorEnabled: Boolean) {
     if (!statsCollectorEnabled) {
       saveLogs = false
       component.isSelected = false

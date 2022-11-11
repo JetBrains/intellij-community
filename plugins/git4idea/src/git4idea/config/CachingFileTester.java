@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -108,8 +106,8 @@ abstract class CachingFileTester {
 
     Semaphore semaphore = new Semaphore(0);
 
-    ApplicationManager.getApplication().executeOnPooledThread(
-      () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         try {
           resultRef.set(testExecutable(executable));
         }
@@ -119,7 +117,8 @@ abstract class CachingFileTester {
         finally {
           semaphore.release();
         }
-      }, indicator));
+      }, indicator);
+    });
 
     try {
       long start = System.currentTimeMillis();

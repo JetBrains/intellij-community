@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -1440,6 +1440,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("JKClassDerivedClasses.0.java")
             public void testJKClassDerivedClasses() throws Exception {
                 runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedClasses.0.java");
+            }
+
+            @TestMetadata("JKClassDerivedClassesCircular.0.java")
+            public void testJKClassDerivedClassesCircular() throws Exception {
+                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedClassesCircular.0.java");
             }
 
             @TestMetadata("JKClassDerivedInnerClasses.0.java")

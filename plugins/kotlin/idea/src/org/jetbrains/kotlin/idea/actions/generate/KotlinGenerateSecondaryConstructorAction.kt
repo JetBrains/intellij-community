@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions.generate
 
@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -161,7 +163,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             for (parameter in superConstructor.valueParameters) {
                 val isVararg = parameter.varargElementType != null
 
-                val paramName = KotlinNameSuggester.suggestNameByName(parameter.name.asString(), validator)
+                val paramName = Fe10KotlinNameSuggester.suggestNameByName(parameter.name.asString(), validator)
 
                 val typeToUse = parameter.varargElementType ?: parameter.type
                 val paramType = IdeDescriptorRenderers.SOURCE_CODE.renderType(
@@ -183,7 +185,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             val body = psiFactory.createEmptyBody()
             for (property in propertiesToInitialize) {
                 val propertyName = property.name
-                val paramName = KotlinNameSuggester.suggestNameByName(propertyName.asString(), validator)
+                val paramName = Fe10KotlinNameSuggester.suggestNameByName(propertyName.asString(), validator)
                 val paramType = IdeDescriptorRenderers.SOURCE_CODE.renderType(property.type)
 
                 parameterList.addParameter(psiFactory.createParameter("$paramName: $paramType"))

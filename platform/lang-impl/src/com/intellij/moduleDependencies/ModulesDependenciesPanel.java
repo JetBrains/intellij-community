@@ -214,7 +214,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     TreeUtil.installActions(tree);
 
-    new TreeSpeedSearch(tree, o -> o.getLastPathComponent().toString(), true);
+    new TreeSpeedSearch(tree, true, o -> o.getLastPathComponent().toString());
 
     DefaultActionGroup group = new DefaultActionGroup();
     CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
@@ -259,6 +259,11 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       public void update(@NotNull AnActionEvent e) {
         analyzeDepsAction.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return analyzeDepsAction.getActionUpdateThread();
+      }
     });
 
     group.add(new ToggleAction(CodeInsightBundle.message("action.module.dependencies.direction")) {
@@ -278,12 +283,22 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
         e.getPresentation().setIcon(myState.forwardDirection ? AllIcons.Hierarchy.Subtypes : AllIcons.Hierarchy.Supertypes);
         super.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     });
 
     group.add(new ToggleAction(CodeInsightBundle.message("action.module.dependencies.tests"), null, AllIcons.Nodes.TestSourceFolder) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myState.includeTests;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override

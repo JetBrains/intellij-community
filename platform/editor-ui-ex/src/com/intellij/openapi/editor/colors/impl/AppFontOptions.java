@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -38,6 +38,11 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
     Application app = ApplicationManager.getApplication();
     if (!app.isHeadlessEnvironment() || app.isUnitTestMode()) {
       myFontPreferences.register(FontPreferences.DEFAULT_FONT_NAME, UISettings.restoreFontSize((float)FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
+      if (FontFamilyService.isServiceSupported()) {
+        String regular = FontFamilyService.getRecommendedSubFamily(FontPreferences.DEFAULT_FONT_NAME);
+        myFontPreferences.setRegularSubFamily(regular);
+        myFontPreferences.setBoldSubFamily(FontFamilyService.getRecommendedBoldSubFamily(FontPreferences.DEFAULT_FONT_NAME, regular));
+      }
     }
   }
 
@@ -61,7 +66,7 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   public void loadState(@NotNull F state) {
     copyState(state, myFontPreferences);
     myFontPrefVersion = state.VERSION;
-    myFontPreferences.setChangeListener(() -> EditorFontCache.getInstance().reset());
+    myFontPreferences.addChangeListener((source) -> EditorFontCache.getInstance().reset());
   }
 
   protected abstract F createFontState(@NotNull FontPreferences fontPreferences);

@@ -1,14 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.TerminalSplitAction;
 import com.intellij.terminal.actions.TerminalActionUtil;
+import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.pty.PtyProcessTtyConnector;
@@ -18,6 +22,7 @@ import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
+import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +42,7 @@ import java.util.function.Function;
 public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
+  private static final long VFS_REFRESH_DELAY_MS = 500;
 
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
@@ -45,11 +51,21 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private final Queue<Consumer<TtyConnector>> myPendingActionsToExecute = new LinkedList<>();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
 
+  private final Alarm myVfsRefreshAlarm;
+  private final TerminalModelListener myVfsRefreshModelListener;
+  private volatile String myPrevPromptWhenCommandStarted;
+
   public ShellTerminalWidget(@NotNull Project project,
                              @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
+
+    myVfsRefreshAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+    myVfsRefreshModelListener = () -> {
+      myVfsRefreshAlarm.cancelAllRequests();
+      myVfsRefreshAlarm.addRequest(this::refreshVfsIfPromptIsShown, VFS_REFRESH_DELAY_MS);
+    };
 
     getTerminalPanel().addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
@@ -58,6 +74,17 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       }
       handleAnyKeyPressed();
 
+      if (!e.isConsumed() && e.getKeyCode() == KeyEvent.VK_ENTER) {
+        String prompt = myPrompt.myPrompt;
+        if (!prompt.isEmpty() && !getTypedShellCommand().isEmpty()) {
+          myVfsRefreshAlarm.cancelAllRequests();
+          getTerminalTextBuffer().removeModelListener(myVfsRefreshModelListener);
+          myPrevPromptWhenCommandStarted = prompt;
+          if (!getTerminalTextBuffer().isUsingAlternateBuffer()) {
+            getTerminalTextBuffer().addModelListener(myVfsRefreshModelListener);
+          }
+        }
+      }
       if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
         TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(project);
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
@@ -72,6 +99,25 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         myShellCommandHandlerHelper.processKeyPressed(e);
       }
     });
+    Disposer.register(this, () -> getTerminalTextBuffer().removeModelListener(myVfsRefreshModelListener));
+  }
+
+  private void refreshVfsIfPromptIsShown() {
+    String promptWhenCommandStarted = myPrevPromptWhenCommandStarted;
+    if (promptWhenCommandStarted != null) {
+      processTerminalBuffer(terminalTextBuffer -> {
+        TerminalLine line = myPrompt.getLineAtCursor(terminalTextBuffer);
+        String lineStr = line.getText();
+        if (lineStr.startsWith(promptWhenCommandStarted)) {
+          // A shown prompt probably suggests that last command has been terminated
+          SaveAndSyncHandler.getInstance().scheduleRefresh();
+          myPrevPromptWhenCommandStarted = null;
+          myVfsRefreshAlarm.cancelAllRequests();
+          getTerminalTextBuffer().removeModelListener(myVfsRefreshModelListener);
+        }
+        return null;
+      });
+    }
   }
 
   public void handleEnterPressed() {

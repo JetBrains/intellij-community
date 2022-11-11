@@ -20,6 +20,7 @@ import com.intellij.execution.KillableProcess;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -51,6 +52,11 @@ public class StopProcessAction extends DumbAwareAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     update(e.getPresentation(), getTemplatePresentation(), myProcessHandler);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   public static void update(@NotNull Presentation presentation,

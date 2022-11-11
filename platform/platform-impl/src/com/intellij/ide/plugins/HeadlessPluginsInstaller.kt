@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.ApplicationStarter
@@ -12,9 +12,11 @@ internal class HeadlessPluginsInstaller : ApplicationStarter {
   @Suppress("SSBasedInspection")
   private val LOG = logger<HeadlessPluginsInstaller>()
 
-  override fun getCommandName(): String = "installPlugins"
+  override val commandName: String
+    get() = "installPlugins"
 
-  override fun getRequiredModality(): Int = ApplicationStarter.NOT_IN_EDT
+  override val requiredModality: Int
+    get() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
     try {
@@ -32,12 +34,12 @@ internal class HeadlessPluginsInstaller : ApplicationStarter {
         val hosts = System.getProperty("idea.plugin.hosts")
         val newHosts = customRepositories.joinToString(separator = ";", prefix = if (hosts.isNullOrBlank()) "" else "${hosts};")
         System.setProperty("idea.plugin.hosts", newHosts)
-        println("plugin hosts: ${newHosts}")
-        LOG.info("plugin hosts: ${newHosts}")
+        println("plugin hosts: $newHosts")
+        LOG.info("plugin hosts: $newHosts")
       }
 
-      println("installing: ${pluginIds}")
-      LOG.info("installing: ${pluginIds}")
+      println("installing: $pluginIds")
+      LOG.info("installing: $pluginIds")
       installAndEnable(null, pluginIds) {}
       exitProcess(0)
     }

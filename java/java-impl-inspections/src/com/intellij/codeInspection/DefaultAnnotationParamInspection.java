@@ -38,7 +38,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitNameValuePair(final PsiNameValuePair pair) {
+      public void visitNameValuePair(final @NotNull PsiNameValuePair pair) {
         PsiAnnotationMemberValue value = pair.getValue();
         PsiReference reference = pair.getReference();
         if (reference == null) return;

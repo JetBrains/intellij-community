@@ -21,7 +21,6 @@ public class BundleFactory {
    * Return {code}null{code} if bundle type can't be defined or
    * if IO exception occurred while reading directory.
    *
-   * @param directory
    * @return Bundle object or null
    */
   @Nullable

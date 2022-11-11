@@ -338,7 +338,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     final boolean[] dependsOnCollection = {false};
     condition.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiExpression callQualifier = expression.getMethodExpression().getQualifierExpression();
         if (callQualifier == null ||
@@ -349,7 +349,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
 
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         super.visitThisExpression(expression);
         if (expression.getQualifier() == null && expression.getParent() instanceof PsiExpressionList) {
           dependsOnCollection[0] = true;
@@ -357,10 +357,10 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
     });
 
     return dependsOnCollection[0];
@@ -376,19 +376,19 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
       processLoop(statement);
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
       processLoop(statement);
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       processLoop(statement);
     }
@@ -1208,9 +1208,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     private @Nullable final PsiUnaryExpression myUnaryExpression;
 
     /**
-     * @param condition
      * @param type            if not null, equivalent form of update is: variable type= expression;
-     * @param unaryExpression
      */
     protected IterateStreamSource(
       @NotNull PsiLoopStatement loop,

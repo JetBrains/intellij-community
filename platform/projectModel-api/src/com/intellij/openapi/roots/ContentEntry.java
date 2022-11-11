@@ -59,7 +59,7 @@ public interface ContentEntry extends Synthetic {
   /**
    * Returns the list of source roots under this content root.
    *
-   * @return list of this {@code ContentEntry} {@link SourceFolder}s
+   * @return array of this {@code ContentEntry} {@link SourceFolder}s
    */
   SourceFolder @NotNull [] getSourceFolders();
 
@@ -81,14 +81,14 @@ public interface ContentEntry extends Synthetic {
   /**
    * Returns the list of files and directories for valid source roots under this content root.
    *
-   * @return list of all valid source roots.
+   * @return array of all valid source roots.
    */
   VirtualFile @NotNull [] getSourceFolderFiles();
 
   /**
    * Returns the list of excluded roots configured under this content root. The result doesn't include synthetic excludes like the module output.
    *
-   * @return list of this {@code ContentEntry} {@link ExcludeFolder}s
+   * @return array of this {@code ContentEntry} {@link ExcludeFolder}s
    */
   ExcludeFolder @NotNull [] getExcludeFolders();
 
@@ -101,7 +101,7 @@ public interface ContentEntry extends Synthetic {
   /**
    * Returns the list of files and directories for valid excluded roots under this content root.
    *
-   * @return list of all valid exclude roots including synthetic excludes like the module output
+   * @return array of all valid exclude roots including synthetic excludes like the module output
    */
   VirtualFile @NotNull [] getExcludeFolderFiles();
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HAS
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter.getPresentableRelativePath
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
@@ -45,7 +46,7 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
       appendParentPath(renderer, path.parentPath)
     }
     else {
-      renderer.append(getRelativePath(path), textAttributes)
+      renderer.append(getRelativePath(renderer, path), textAttributes)
       appendOriginText(renderer)
     }
     if (!isLeaf) {
@@ -78,12 +79,23 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     get() = if (status != null) SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, status.color)
     else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
-  protected open fun getRelativePath(path: FilePath): @NlsSafe String {
-    return getRelativePath(safeCastToFilePath(getParent()), path)
+  protected open fun getRelativePath(renderer: ChangesBrowserNodeRenderer?, path: FilePath): @NlsSafe String {
+    val parent = getParent()
+    val isLocal = !path.isNonLocal
+    if (parent is ChangesBrowserRootNode && isLocal) {
+      return VcsUtil.getPresentablePath(renderer?.project, path, true, false)
+    }
+    else {
+      val parentPath = safeCastToFilePath(parent)
+      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
+      val relativePath = if (parentPath != null) FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive) else null
+      val prettyPath = relativePath ?: path.path
+      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
+    }
   }
 
   override fun getTextPresentation(): String {
-    return getRelativePath(filePath)
+    return getRelativePath(null, filePath)
   }
 
   override fun toString(): String {
@@ -102,21 +114,13 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     @JvmStatic
     fun safeCastToFilePath(node: ChangesBrowserNode<*>?): FilePath? {
       if (node == null) return null
-      if (node is ChangesBrowserModuleNode) {
-        return node.moduleRoot
+      if (node is NodeWithFilePath) {
+        return node.nodeFilePath
       }
       val o = node.userObject
       if (o is FilePath) return o
       if (o is Change) return ChangesUtil.getAfterPath(o)
       return null
-    }
-
-    fun getRelativePath(parent: FilePath?, child: FilePath): String {
-      val isLocal = !child.isNonLocal
-      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
-      var result = if (parent != null) FileUtil.getRelativePath(parent.path, child.path, '/', caseSensitive) else null
-      result = result ?: child.path
-      return if (isLocal) FileUtil.toSystemDependentName(result) else result
     }
   }
 }

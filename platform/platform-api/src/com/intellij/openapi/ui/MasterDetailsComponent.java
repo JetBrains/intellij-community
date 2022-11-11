@@ -820,6 +820,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       removePaths(myTree.getSelectionPaths());
     }

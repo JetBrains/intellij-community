@@ -18,6 +18,8 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +35,15 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Expands action group for a warm-up as less intrusive as possible:
+ * in an "idle" listener, on a UI-only data-context, with a dedicated action-place.
+ */
 public final class PopupMenuPreloader implements Runnable, HierarchyListener {
   private static final Logger LOG = Logger.getInstance(PopupMenuPreloader.class);
+
+  private static final String MODE = Registry.get("actionSystem.update.actions.preload.menus").getSelectedOption();
+  private static final String PRELOADER_PLACE_SUFFIX = "(preload-" + MODE + ")";
 
   private static int ourEditorContextMenuPreloadCount;
 
@@ -51,6 +60,7 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
                              @Nullable PopupHandler popupHandler,
                              @NotNull Supplier<? extends ActionGroup> groupSupplier) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if ("none".equals(MODE)) return;
     if (component instanceof EditorComponentImpl && ourEditorContextMenuPreloadCount > 4 ||
         component instanceof IdeMenuBar && SwingUtilities.getWindowAncestor(component) instanceof IdeFrame.Child) {
       return;
@@ -83,8 +93,12 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
     myPopupHandlerRef = popupHandler == null ? null : new WeakReference<>(popupHandler);
 
     myGroupSupplier = groupSupplier;
-    myPlace = actionPlace;
+    myPlace = actionPlace + PRELOADER_PLACE_SUFFIX;
     component.addHierarchyListener(this);
+  }
+
+  static boolean isToSkipComputeOnEDT(@NotNull String place) {
+    return place.endsWith(PRELOADER_PLACE_SUFFIX) && "bgt".equals(MODE);
   }
 
   @Override
@@ -119,10 +133,13 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
     promise.onSuccess(__ -> dispose(TimeoutUtil.getDurationMillis(start)));
     promise.onError(__ -> {
       int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
-      if (myRetries > retries) dispose(-1);
+      if (myRetries > retries) {
+        UIUtil.invokeLaterIfNeeded(() -> dispose(-1));
+      }
     });
   }
 
+  @RequiresEdt
   private void dispose(long millis) {
     if (myDisposed) return;
     myDisposed = true;

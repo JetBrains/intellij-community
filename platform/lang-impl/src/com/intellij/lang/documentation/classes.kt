@@ -56,7 +56,6 @@ internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver?
   return DocumentationImageResolver(map.toMap()::get)
 }
 
-@Suppress("OPT_IN_USAGE")
 internal fun DocumentationContentUpdater.asFlow(): Flow<DocumentationContent> {
   val flow = channelFlow {
     blockingContext {

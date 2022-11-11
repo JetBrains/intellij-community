@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.jcef.JBCefJSQuery.JSQueryFunc;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.LinkedHashMap;

@@ -145,10 +145,11 @@ fun NewProjectWizardStep.logGroovySdkFinished(sdk: DistributionInfo?) {
   logGroovyLibraryFinished(context, type, version)
 }
 
-private fun getGroovySdkType(sdk: DistributionInfo?): String {
+private fun getGroovySdkType(sdk: DistributionInfo?): String? {
   return when (sdk) {
     is FrameworkLibraryDistributionInfo -> "maven"
     is LocalDistributionInfo -> "local"
+    null -> null
     else -> error("Unexpected distribution type: $sdk")
   }
 }
@@ -161,6 +162,8 @@ private fun getGroovySdkVersion(sdk: DistributionInfo?): String? {
     is LocalDistributionInfo ->
       GroovyConfigUtils.getInstance().getSDKVersion(sdk.path)
         .takeIf { it != GroovyConfigUtils.UNDEFINED_VERSION }
+
+    null -> null
 
     else -> error("Unexpected distribution type: $sdk")
   }

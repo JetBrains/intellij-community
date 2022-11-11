@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCacheDataProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereContributorStatistician
 import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
@@ -11,10 +12,11 @@ import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTrack
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.NonUrgentExecutor
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMLSearchSession(project: Project?,
-                                               private val mixedListInfo: SearchEverywhereMixedListInfo,
+                                               val mixedListInfo: SearchEverywhereMixedListInfo,
                                                private val sessionId: Int) {
   val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
@@ -39,7 +41,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
                       keysTyped: Int,
                       backspacesTyped: Int,
                       searchQuery: String,
-                      previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                      previousElementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
@@ -67,12 +69,18 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 
   fun onItemSelected(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
                      indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
-                     elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                     elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
       if (project != null) {
         val statisticianService = service<SearchEverywhereStatisticianService>()
         selectedItems.forEach { statisticianService.increaseUseCount(it) }
+
+        if (state.tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID) {
+          elementsProvider.invoke()
+            .slice(indexes.asIterable())
+            .forEach { SearchEverywhereContributorStatistician.increaseUseCount(it.contributor.searchProviderId) }
+        }
       }
 
       logger.onItemSelected(
@@ -87,7 +95,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 
   fun onSearchFinished(project: Project?,
                        experimentStrategy: SearchEverywhereMlExperiment,
-                       elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                       elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
       logger.onSearchFinished(
@@ -103,20 +111,17 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
     performanceTracker.stop()
   }
 
-  fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
-    val state = getCurrentSearchState()
-    if (state != null && SearchEverywhereTabWithMl.findById(state.tabId) != null) {
-      return state.getMLWeight(itemIdProvider.getId(element), element, contributor, cachedContextInfo, matchingDegree)
-    }
-    return -1.0
-  }
-
   fun getCurrentSearchState() = currentSearchState.get()
 }
 
 internal class SearchEverywhereMLContextInfo(project: Project?) {
   val features: List<EventPair<*>> by lazy {
-    val featuresProvider = SearchEverywhereContextFeaturesProvider()
-    return@lazy featuresProvider.getContextFeatures(project)
+    SearchEverywhereContextFeaturesProvider().getContextFeatures(project)
+  }
+
+  init {
+    NonUrgentExecutor.getInstance().execute {
+      features  // We don't care about the value, we just want the features to be computed
+    }
   }
 }

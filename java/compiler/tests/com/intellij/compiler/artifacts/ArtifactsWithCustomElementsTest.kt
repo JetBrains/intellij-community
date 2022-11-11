@@ -29,7 +29,7 @@ import java.util.function.Supplier
 class ArtifactsWithCustomElementsTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Test
   fun `create custom artifact`() {

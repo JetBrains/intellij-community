@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'let'" "true"
 // WITH_STDLIB
 
 import kotlin.let as let1

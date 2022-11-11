@@ -177,7 +177,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
                                                                              CommonClassNames.JAVA_LANG_STRING);
 
     @Override
-    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
       super.visitDeclarationStatement(statement);
       final PsiElement[] declaredElements = statement.getDeclaredElements();
       if (declaredElements.length == 0) {

@@ -1,4 +1,4 @@
-// "Add 'C2' as 2nd parameter to method 'f'" "true"
+// "Add 'C2' as 2nd parameter to method 'f'" "true-preview"
 
 final class X {
 

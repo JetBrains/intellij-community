@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.*;
+
 /**
  * Immutable object representing a number of type constraints applied to some reference value.
  * Type constraints represent a lattice with {@link TypeConstraints#TOP} and {@link TypeConstraints#BOTTOM}
@@ -34,7 +36,7 @@ import java.util.Set;
  * value is instance of some type and value is not an instance of some type.
  * Null or primitive types are not handled here.
  */
-public interface TypeConstraint {
+public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeConstraint.Exact, BottomConstraint, TopConstraint {
   /**
    * @param other other constraint to join with
    * @return joined constraint. If some type satisfies either this or other constraint, it also satisfies the resulting constraint.
@@ -97,7 +99,7 @@ public interface TypeConstraint {
   }
 
   /**
-   * @return true if this type constraint represents a known singleton type (an object that has exactly one instance)
+   * @return true if this type constraint represents a known isSingleton type (an object that has exactly one instance)
    */
   default boolean isSingleton() {
     return false;
@@ -126,7 +128,6 @@ public interface TypeConstraint {
   /**
    * @param otherType          other type
    * @param expectedAssignable whether other type is expected to be assignable from this, or not
-   * @param elementTitle
    * @return textual explanation about why expected assignability cannot be satisfied; null if it can be satisfied, or
    * explanation cannot be found.
    */
@@ -154,7 +155,7 @@ public interface TypeConstraint {
    * @return a {@link DfType} that represents any object that satisfies this constraint, or null (nullability is unknown)
    */
   default DfType asDfType() {
-    return this == TypeConstraints.BOTTOM ? DfType.BOTTOM :
+    return this == BOTTOM ? DfType.BOTTOM :
            DfTypes.customObject(this, DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, DfType.BOTTOM);
   }
 
@@ -170,7 +171,7 @@ public interface TypeConstraint {
    * @see #getArrayComponentType()
    */
   default @NotNull TypeConstraint arrayOf() {
-    return TypeConstraints.TOP;
+    return TOP;
   }
 
   /**
@@ -217,10 +218,9 @@ public interface TypeConstraint {
   /**
    * Convert type constraint to another factory based on fully-qualified names of classes
    *
-   * @param factory
    * @return converted type constraint that uses a supplied factory
    */
-  default @NotNull TypeConstraint convert(TypeConstraints.TypeConstraintFactory factory) {
+  default @NotNull TypeConstraint convert(TypeConstraintFactory factory) {
     return this;
   }
 
@@ -230,33 +230,34 @@ public interface TypeConstraint {
    */
   static @NotNull TypeConstraint fromDfType(@NotNull DfType type) {
     return type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() :
-           type == DfType.BOTTOM ? TypeConstraints.BOTTOM :
-           TypeConstraints.TOP;
+           type == DfType.BOTTOM ? BOTTOM :
+           TOP;
   }
 
   /**
    * Represents an exact type. It may also represent types that cannot be instantiated (e.g. interface types), so no object
    * could satisfy them, but they are still useful as building blocks for {@link Constrained}.
    */
-  interface Exact extends TypeConstraint {
+  sealed interface Exact extends TypeConstraint
+    permits ArraySuperInterface, ExactArray, ExactClass, ExactObject, ExactSubclass, PrimitiveArray, Unresolved {
     @Override
     default @NotNull TypeConstraint join(@NotNull TypeConstraint other) {
-      if (other == TypeConstraints.BOTTOM || this.equals(other)) return this;
-      if (other == TypeConstraints.TOP) return other;
+      if (other == BOTTOM || this.equals(other)) return this;
+      if (other == TOP) return other;
       return new Constrained(Collections.singleton(this), Collections.emptySet()).join(other);
     }
 
     @Override
     default @Nullable TypeConstraint tryJoinExactly(TypeConstraint other) {
-      if (other == TypeConstraints.BOTTOM || this.equals(other)) return this;
-      if (other == TypeConstraints.TOP) return other;
+      if (other == BOTTOM || this.equals(other)) return this;
+      if (other == TOP) return other;
       return new Constrained(Collections.singleton(this), Collections.emptySet()).tryJoinExactly(other);
     }
 
     @Override
     default @NotNull TypeConstraint meet(@NotNull TypeConstraint other) {
       if (this.equals(other) || other.isSuperConstraintOf(this)) return this;
-      return TypeConstraints.BOTTOM;
+      return BOTTOM;
     }
 
     /**
@@ -270,7 +271,7 @@ public interface TypeConstraint {
      */
     @Override
     default @NotNull Exact arrayOf() {
-      return new TypeConstraints.ExactArray(this);
+      return new ExactArray(this);
     }
 
     @Override
@@ -338,7 +339,7 @@ public interface TypeConstraint {
 
     @Override
     default boolean isSuperConstraintOf(@NotNull TypeConstraint other) {
-      return other == TypeConstraints.BOTTOM || this.equals(other);
+      return other == BOTTOM || this.equals(other);
     }
 
     @Override
@@ -350,7 +351,7 @@ public interface TypeConstraint {
      * @return a constraint that represents objects not only of this type but also of any subtypes. May return self if the type is final.
      */
     default @NotNull TypeConstraint instanceOf() {
-      if (isFinal()) return canBeInstantiated() ? this : TypeConstraints.BOTTOM;
+      if (isFinal()) return canBeInstantiated() ? this : BOTTOM;
       return new Constrained(Collections.singleton(this), Collections.emptySet());
     }
 
@@ -368,12 +369,12 @@ public interface TypeConstraint {
 
     @Override
     default @NotNull String getPresentationText(@Nullable PsiType type) {
-      return type != null && TypeConstraints.exact(type).equals(this) ? "" : "exactly " + toShortString();
+      return type != null && exact(type).equals(this) ? "" : "exactly " + toShortString();
     }
 
     @Override
     @NotNull
-    default Exact convert(TypeConstraints.TypeConstraintFactory factory) {
+    default Exact convert(TypeConstraintFactory factory) {
       return this;
     }
   }
@@ -429,7 +430,7 @@ public interface TypeConstraint {
       if (other instanceof Exact) {
         return joinWithConstrained(new Constrained(Collections.singleton((Exact)other), Collections.emptySet()));
       }
-      return TypeConstraints.TOP;
+      return TOP;
     }
 
     @Override
@@ -480,7 +481,7 @@ public interface TypeConstraint {
         instanceOfTypes = withSuper(this.myInstanceOf);
         instanceOfTypes.retainAll(withSuper(other.myInstanceOf));
       }
-      TypeConstraint constraint = TypeConstraints.TOP;
+      TypeConstraint constraint = TOP;
       for (Exact type: instanceOfTypes) {
         constraint = constraint.meet(type.instanceOf());
       }
@@ -542,24 +543,24 @@ public interface TypeConstraint {
     public @NotNull TypeConstraint meet(@NotNull TypeConstraint other) {
       if (this.isSuperConstraintOf(other)) return other;
       if (other.isSuperConstraintOf(this)) return this;
-      if (!(other instanceof Constrained)) return TypeConstraints.BOTTOM;
+      if (!(other instanceof Constrained)) return BOTTOM;
       Constrained right = (Constrained)other;
 
       Constrained result = this;
       for (Exact type : right.myInstanceOf) {
         result = result.withInstanceofValue(type);
-        if (result == null) return TypeConstraints.BOTTOM;
+        if (result == null) return BOTTOM;
       }
       for (Exact type : right.myNotInstanceOf) {
         result = result.withNotInstanceofValue(type);
-        if (result == null) return TypeConstraints.BOTTOM;
+        if (result == null) return BOTTOM;
       }
       return result;
     }
 
     @Override
     public boolean isSuperConstraintOf(@NotNull TypeConstraint other) {
-      if (other == TypeConstraints.BOTTOM) return true;
+      if (other == BOTTOM) return true;
       if (other instanceof Constrained) {
         Constrained that = (Constrained)other;
         if (!that.myNotInstanceOf.containsAll(myNotInstanceOf)) {
@@ -664,7 +665,7 @@ public interface TypeConstraint {
     @Override
     public @NotNull TypeConstraint arrayOf() {
       TypeConstraint constraint =
-        instanceOfTypes().<TypeConstraint>map(Exact::arrayOf).reduce(TypeConstraint::meet).orElse(TypeConstraints.EXACTLY_OBJECT.arrayOf());
+        instanceOfTypes().<TypeConstraint>map(Exact::arrayOf).reduce(TypeConstraint::meet).orElse(EXACTLY_OBJECT.arrayOf());
       return constraint instanceof Exact ? ((Exact)constraint).instanceOf() : constraint;
     }
 
@@ -684,7 +685,7 @@ public interface TypeConstraint {
     }
 
     @Override
-    public @NotNull TypeConstraint convert(TypeConstraints.TypeConstraintFactory factory) {
+    public @NotNull TypeConstraint convert(TypeConstraintFactory factory) {
       Set<Exact> instanceOf = ContainerUtil.map2LinkedSet(myInstanceOf, exact -> exact.convert(factory));
       Set<Exact> notInstanceOf = ContainerUtil.map2LinkedSet(myNotInstanceOf, exact -> exact.convert(factory));
       return new Constrained(instanceOf, notInstanceOf);
@@ -716,7 +717,7 @@ public interface TypeConstraint {
     @Override
     public @NotNull String getPresentationText(@Nullable PsiType type) {
       Set<Exact> instanceOfTypes = myInstanceOf;
-      Exact exact = type == null ? null : ObjectUtils.tryCast(TypeConstraints.exact(type), Exact.class);
+      Exact exact = type == null ? null : ObjectUtils.tryCast(exact(type), Exact.class);
       if (exact != null) {
         instanceOfTypes = StreamEx.of(instanceOfTypes)
           .without(exact)

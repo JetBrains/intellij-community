@@ -1,1 +1,1 @@
-FirLightClassForSymbol: B
+SymbolLightClass: B

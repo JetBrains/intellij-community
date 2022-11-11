@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
+// WITH_STDLIB
 
 class A
 

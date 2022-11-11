@@ -1,6 +1,7 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'X.foo'" "true"
 // ERROR: Type mismatch: inferred type is Int but String was expected
+/* IGNORE_FIR */
 
 package main
 
@@ -22,8 +23,9 @@ fun X.foo(p: Int) {
 }
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'X.foo'" "true"
 // ERROR: Type mismatch: inferred type is Int but String was expected
+/* IGNORE_FIR */
 
 package main
 
@@ -37,4 +39,5 @@ class X {
         foo(<caret>p)
     }
 }
+
 

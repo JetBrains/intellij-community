@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -58,6 +59,7 @@ class GitShowDiffWithBranchPanel(val project: Project,
   }
 
   private fun loadDiffInBackground() {
+    FileDocumentManager.getInstance().saveAllDocuments()
     ApplicationManager.getApplication().executeOnPooledThread {
       val result = loadDiff()
       runInEdt {

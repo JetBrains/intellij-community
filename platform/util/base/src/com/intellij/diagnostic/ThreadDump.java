@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +9,7 @@ import java.lang.management.ThreadInfo;
 /**
  * Represents thread dump of the IDE captured by its performance diagnostic tool.
  */
-public class ThreadDump {
+public final class ThreadDump {
   private final String myRawDump;
   private final StackTraceElement[] myEdtStack;
   private final ThreadInfo[] myThreadInfos;
@@ -23,8 +23,7 @@ public class ThreadDump {
   /**
    * @return full thread dump as a string
    */
-  @NotNull
-  public String getRawDump() {
+  public @NotNull String getRawDump() {
     return myRawDump;
   }
 

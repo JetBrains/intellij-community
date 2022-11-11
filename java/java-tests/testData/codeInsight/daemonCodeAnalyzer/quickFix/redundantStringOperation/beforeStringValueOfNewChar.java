@@ -2,7 +2,7 @@
 
 class Test {
   String foo1(char c) {
-    return String.valueOf(new char[]<caret> { c });
+    return String.valueOf(new <caret>char[] { c });
   }
 
   String foo2(Character character) {

@@ -3,10 +3,6 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class LwAtomicComponent extends LwComponent {
   LwAtomicComponent(final String className){
     super(className);

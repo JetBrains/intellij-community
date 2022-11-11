@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Native;
@@ -20,10 +17,7 @@ import java.awt.*;
 import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
@@ -54,9 +48,7 @@ public final class X11UiUtil {
 
     private long display;
 
-    private long UTF8_STRING;
     private long NET_SUPPORTING_WM_CHECK;
-    private long NET_WM_NAME;
     private long NET_WM_ALLOWED_ACTIONS;
     private long NET_WM_STATE;
     private long NET_WM_ACTION_FULLSCREEN;
@@ -91,9 +83,7 @@ public final class X11UiUtil {
         Class<?> XAtom = Class.forName("sun.awt.X11.XAtom");
         Method get = method(XAtom, "get", String.class);
         Field atom = field(XAtom, "atom");
-        x11.UTF8_STRING = (Long)atom.get(get.invoke(null, "UTF8_STRING"));
         x11.NET_SUPPORTING_WM_CHECK = (Long)atom.get(get.invoke(null, "_NET_SUPPORTING_WM_CHECK"));
-        x11.NET_WM_NAME = (Long)atom.get(get.invoke(null, "_NET_WM_NAME"));
         x11.NET_WM_ALLOWED_ACTIONS = (Long)atom.get(get.invoke(null, "_NET_WM_ALLOWED_ACTIONS"));
         x11.NET_WM_STATE = (Long)atom.get(get.invoke(null, "_NET_WM_STATE"));
         x11.NET_WM_ACTION_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_ACTION_FULLSCREEN"));
@@ -137,11 +127,7 @@ public final class X11UiUtil {
       return getWindowProperty(window, name, type, FORMAT_LONG);
     }
 
-    private @Nullable String getUtfStringProperty(long window, long name) throws Exception {
-      byte[] bytes = getWindowProperty(window, name, UTF8_STRING, FORMAT_BYTE);
-      return bytes != null ? new String(bytes, StandardCharsets.UTF_8) : null;
-    }
-
+    @SuppressWarnings("SameParameterValue")
     private @Nullable <T> T getWindowProperty(long window, long name, long type, long expectedFormat) throws Exception {
       long data = unsafe.allocateMemory(64);
       awtLock.invoke(null);
@@ -237,88 +223,6 @@ public final class X11UiUtil {
 
   private static final @Nullable Xlib X11 = Xlib.getInstance();
 
-  // WM detection and patching
-
-  public static @Nullable String getWmName() {
-    if (X11 == null) return null;
-
-    try {
-      Long netWmWindow = X11.getNetWmWindow();
-      if (netWmWindow != null) {
-        return X11.getUtfStringProperty(netWmWindow, X11.NET_WM_NAME);
-      }
-    }
-    catch (Throwable t) {
-      LOG.info("cannot get WM name", t);
-    }
-
-    return null;
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  public static void patchDetectedWm(String wmName) {
-    if (X11 == null || !Boolean.parseBoolean(System.getProperty("ide.x11.override.wm", "true"))) {
-      return;
-    }
-
-    try {
-      if ("Muffin".equals(wmName)) {
-        setWM("MUTTER_WM");
-      }
-      else if ("Marco".equals(wmName)) {
-        setWM("MARCO_WM", "METACITY_WM");
-      }
-      else if ("awesome".equals(wmName)) {
-        String version = getAwesomeWMVersion();
-        if (StringUtil.compareVersionNumbers(version, "3.5") >= 0) {
-          setWM("SAWFISH_WM");
-        }
-        else if (version != null) {
-          setWM("OTHER_NONREPARENTING_WM", "LG3D_WM");
-        }
-      }
-    }
-    catch (Throwable t) {
-      LOG.warn(t);
-    }
-  }
-
-  private static void setWM(@NonNls String... wmConstants) throws Exception {
-    Class<?> xwmClass = Class.forName("sun.awt.X11.XWM");
-    Object xwm = method(xwmClass, "getWM").invoke(null);
-    if (xwm != null) {
-      for (String wmConstant : wmConstants) {
-        try {
-          Field wm = field(xwmClass, wmConstant);
-          Object id = wm.get(null);
-          if (id != null) {
-            field(xwmClass, "awt_wmgr").set(null, id);
-            field(xwmClass, "WMID").set(xwm, id);
-            LOG.info("impersonated WM: " + wmConstant);
-            break;
-          }
-        }
-        catch (NoSuchFieldException ignore) { }
-      }
-    }
-  }
-
-  private static @Nullable String getAwesomeWMVersion() {
-    try {
-      String version = ExecUtil.execAndReadLine(new GeneralCommandLine("awesome", "--version"));
-      if (version != null) {
-        Matcher m = Pattern.compile("awesome v([0-9.]+)").matcher(version);
-        if (m.find()) {
-          return m.group(1);
-        }
-      }
-    }
-    catch (Throwable t) {
-      LOG.warn(t);
-    }
-    return null;
-  }
-
   // full-screen support
 
   public static boolean isFullScreenSupported() {
@@ -410,6 +314,7 @@ public final class X11UiUtil {
     throw new NoSuchMethodException(name);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static Field field(Class<?> aClass, @NonNls String name) throws Exception {
     Field field = aClass.getDeclaredField(name);
     field.setAccessible(true);

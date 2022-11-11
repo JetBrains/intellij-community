@@ -62,6 +62,7 @@
                          implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
 
         <intentionAction>
+            <language>TOML</language>
             <className>org.toml.ide.intentions.TomlExpandInlineTableIntention</className>
             <categoryKey>intention.category.toml</categoryKey>
         </intentionAction>

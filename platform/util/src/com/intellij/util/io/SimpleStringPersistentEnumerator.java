@@ -82,6 +82,10 @@ public final class SimpleStringPersistentEnumerator implements DataEnumerator<St
     return myInvertedState.isEmpty();
   }
 
+  public synchronized int getSize(){
+    return myInvertedState.size();
+  }
+
   @NotNull
   public String dumpToString() {
     return myInvertedState

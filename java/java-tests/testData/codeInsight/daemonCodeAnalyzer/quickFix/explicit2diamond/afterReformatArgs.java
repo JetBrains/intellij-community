@@ -1,4 +1,4 @@
-// "Replace with <>" "true"
+// "Replace with <>" "true-preview"
 class Test<T> {
     public Test(String s1, String s2) {}
 

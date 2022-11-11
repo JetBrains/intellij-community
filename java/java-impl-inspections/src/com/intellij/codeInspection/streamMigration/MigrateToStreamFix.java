@@ -91,6 +91,9 @@ class MigrateToStreamFix implements LocalQuickFix {
         if (PsiType.BOOLEAN.equals(expression.getType())) {
           List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariablesIgnoreParent(expression);
           for (PsiPatternVariable variable : variables) {
+            if (variable.getPattern() instanceof PsiTypeTestPattern pattern && pattern.getParent() instanceof PsiDeconstructionList) {
+              continue;
+            }
             if (!VariableAccessUtils.variableIsUsed(variable, expression)) {
               variable.delete();
             }

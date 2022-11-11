@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,6 +69,10 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      applyFix(project, descriptor, true);
+    }
+
+    private void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor, boolean writeCommand) {
       final PsiElement psiElement = descriptor.getPsiElement();
       if (!(psiElement instanceof PsiIdentifier)) return;
       PsiModifierListOwner owner = (PsiModifierListOwner)psiElement.getParent();
@@ -77,12 +82,23 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
         String compactCtorText = "public " + rec.getName() + " {}";
         PsiMethod ctor = JavaPsiFacade.getElementFactory(project).createMethodFromText(compactCtorText, owner);
         PsiMethod firstMethod = ArrayUtil.getFirstElement(rec.getMethods());
-        owner = (PsiMethod)WriteCommandAction.writeCommandAction(owner.getContainingFile()).withName(getFamilyName())
-          .compute(() -> rec.addBefore(ctor, firstMethod));
+        if (writeCommand) {
+          owner = (PsiMethod)WriteCommandAction.writeCommandAction(owner.getContainingFile()).withName(getFamilyName())
+            .compute(() -> rec.addBefore(ctor, firstMethod));
+        }
+        else {
+          owner = (PsiMethod)rec.addBefore(ctor, firstMethod);
+        }
       }
       if (owner instanceof PsiMethod) {
         new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, owner).applyFix(project, descriptor);
       }
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      applyFix(project, descriptor, false);
+      return IntentionPreviewInfo.DIFF;
     }
   }
 
@@ -119,7 +135,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_7)) return;
       if (AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0)) return;
@@ -133,7 +149,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       if (!aClass.isRecord()) return;
       if (AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0)) return;

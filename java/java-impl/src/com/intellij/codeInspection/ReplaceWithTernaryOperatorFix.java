@@ -81,6 +81,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
   }
 
   static void selectElseBranch(PsiFile file, PsiConditionalExpression conditionalExpression) {
+    if (!file.isPhysical()) return;
     PsiExpression elseExpression = conditionalExpression.getElseExpression();
     if (elseExpression != null) {
       Project project = file.getProject();

@@ -1,10 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
-import com.intellij.util.ThreeState
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import org.jetbrains.annotations.ApiStatus
@@ -14,13 +12,7 @@ import java.nio.ByteBuffer
 interface StartUpPerformanceService {
   companion object {
     @JvmStatic
-    fun getInstance(): StartUpPerformanceService {
-      @Suppress("UNCHECKED_CAST") val aClass = StartUpPerformanceService::class.java.classLoader
-        .loadClass("com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter") as Class<StartUpPerformanceService>
-      val ep = ApplicationManager.getApplication().extensionArea
-        .getExtensionPoint<Any>("com.intellij.startupActivity") as ExtensionPointImpl<Any>
-      return ep.findExtension(aClass, true, ThreeState.YES)!!
-    }
+    fun getInstance(): StartUpPerformanceService = ApplicationManager.getApplication().getService(StartUpPerformanceService::class.java)
   }
 
   fun reportStatistics(project: Project)
@@ -30,4 +22,6 @@ interface StartUpPerformanceService {
   fun getMetrics(): Object2IntMap<String>?
 
   fun getLastReport(): ByteBuffer?
+
+  fun addActivityListener(project: Project)
 }

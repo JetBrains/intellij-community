@@ -89,7 +89,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiType returnType = method.getReturnType();
       if (!isObsoleteCollectionType(returnType)) {

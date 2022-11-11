@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 @ApiStatus.Internal
 public final class DirectBufferWrapper {
-  private static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator();
   private static final int RELEASED_CODE = -1;
 
   private static final AtomicIntegerFieldUpdater<DirectBufferWrapper> REF_UPDATER =
@@ -34,7 +33,11 @@ public final class DirectBufferWrapper {
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
   }
 
-  private void markDirty() throws IOException {
+  public ByteBuffer getBuffer() {
+    return myBuffer;
+  }
+
+  public void markDirty() throws IOException {
     if (!myDirty) {
       if (myFile.isReadOnly()) {
         throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
@@ -44,7 +47,7 @@ public final class DirectBufferWrapper {
     }
   }
 
-  private void fileSizeMayChanged(int bufferDataEndPos) {
+  public void fileSizeMayChanged(int bufferDataEndPos) {
     if (bufferDataEndPos > myBufferDataEndPos) {
       myBufferDataEndPos = bufferDataEndPos;
       myFile.ensureCachedSizeAtLeast(myPosition + myBufferDataEndPos);
@@ -63,9 +66,11 @@ public final class DirectBufferWrapper {
     });
   }
 
-  public byte get(int index) {
-    StorageLockContext context = myFile.getStorageLockContext();
-    context.checkReadAccess();
+  public byte get(int index, boolean checkAccess) {
+    if (checkAccess) {
+      StorageLockContext context = myFile.getStorageLockContext();
+      context.checkReadAccess();
+    }
 
     return myBuffer.get(index);
   }
@@ -134,13 +139,13 @@ public final class DirectBufferWrapper {
     fileSizeMayChanged(index + 1);
   }
 
-  public void readToArray(byte[] dst, int o, int page_offset, int page_len) throws IllegalArgumentException {
-    StorageLockContext context = myFile.getStorageLockContext();
-    context.checkReadAccess();
+  public void readToArray(byte[] dst, int o, int page_offset, int page_len, boolean checkAccess) throws IllegalArgumentException {
+    if (checkAccess) {
+      StorageLockContext context = myFile.getStorageLockContext();
+      context.checkReadAccess();
+    }
 
-    ByteBuffer buf = myBuffer.duplicate();
-    buf.position(page_offset);
-    buf.get(dst, o, page_len);
+    ByteBufferUtil.copyMemory(myBuffer, page_offset, dst, o, page_len);
   }
 
   public void putFromArray(byte[] src, int o, int page_offset, int page_len) throws IOException, IllegalArgumentException {
@@ -154,13 +159,31 @@ public final class DirectBufferWrapper {
     fileSizeMayChanged(buf.position());
   }
 
+  public void putFromBuffer(@NotNull ByteBuffer data, int page_offset) throws IOException, IllegalArgumentException {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkWriteAccess();
+
+    markDirty();
+    ByteBuffer buf = myBuffer.duplicate();
+
+    buf.position(page_offset);
+    buf.put(data);
+    fileSizeMayChanged(buf.position());
+  }
+
 
   private ByteBuffer create() throws IOException {
-    ByteBuffer buffer = ALLOCATOR.allocate(myFile.myPageSize);
+    int bufferSize = myFile.myPageSize;
+    ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(bufferSize);
     buffer.order(myFile.useNativeByteOrder() ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
     assert buffer.limit() > 0;
     return myFile.useChannel(ch -> {
-      ch.read(buffer, myPosition);
+      int readBytes = ch.read(buffer, myPosition);
+      if (readBytes < bufferSize) {
+        for (int i = Math.max(0, readBytes); i < bufferSize; i++) {
+          buffer.put(i, (byte) 0);
+        }
+      }
       return buffer;
     }, myFile.isReadOnly());
   }
@@ -172,7 +195,7 @@ public final class DirectBufferWrapper {
 
       if (isDirty()) force();
       if (myBuffer != null) {
-        ALLOCATOR.release(myBuffer);
+        DirectByteBufferAllocator.ALLOCATOR.release(myBuffer);
         myBuffer = null;
       }
 

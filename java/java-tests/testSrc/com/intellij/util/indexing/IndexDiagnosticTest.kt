@@ -32,10 +32,16 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
   }
 
   override fun tearDown() {
-    @Suppress("LocalVariableName") val _previousLogDir = previousLogDir
-    super.tearDown()
-    IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
-    SystemProperties.setProperty(PathManager.PROPERTY_LOG_PATH, _previousLogDir)
+    try {
+      IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
+      SystemProperties.setProperty(PathManager.PROPERTY_LOG_PATH, previousLogDir)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   @TestFor(issues = ["IDEA-252012"])

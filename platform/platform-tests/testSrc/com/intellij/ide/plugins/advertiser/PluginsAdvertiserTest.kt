@@ -46,7 +46,7 @@ class PluginsAdvertiserTest {
 
   @Test
   fun testSerializeKnownExtensions() {
-    val expected = PluginFeatureMap(hashMapOf("foo" to hashSetOf(PluginData("foo", "Foo"))))
+    val expected = PluginFeatureMap(mapOf("foo" to PluginDataSet(setOf(PluginData("foo", "Foo")))))
     PluginFeatureCacheService.getInstance().extensions = expected
 
     val state = serialize(PluginFeatureCacheService.getInstance().state)!!
@@ -126,11 +126,14 @@ class PluginsAdvertiserTest {
   }
 
   private fun preparePluginCache(vararg ext: Pair<String, PluginData?>) {
-    fun PluginData?.nullableToSet() = this?.let { hashSetOf(it) } ?: hashSetOf()
+    val featureMap = ext.associate { (extensionOrFileName, pluginData) ->
+      extensionOrFileName to PluginDataSet(setOfNotNull(pluginData))
+    }
 
-    PluginFeatureCacheService.getInstance().extensions = PluginFeatureMap(ext.associate { (extensionOrFileName, pluginData) -> extensionOrFileName to pluginData.nullableToSet() })
-    for ((extensionOrFileName, pluginData) in ext) {
-      PluginAdvertiserExtensionsStateService.instance.updateCache(extensionOrFileName, pluginData.nullableToSet())
+    PluginFeatureCacheService.getInstance().extensions = PluginFeatureMap(featureMap)
+
+    for ((extensionOrFileName, pluginDataSet) in featureMap) {
+      PluginAdvertiserExtensionsStateService.instance.updateCache(extensionOrFileName, pluginDataSet.dataSet)
     }
   }
 

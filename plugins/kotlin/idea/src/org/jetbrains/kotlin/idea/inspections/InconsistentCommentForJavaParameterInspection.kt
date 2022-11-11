@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -7,10 +7,12 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.blockCommentWithName
-import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toCommentedParameterName
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.isParameterNameComment
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toParameterNameComment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -32,19 +34,18 @@ class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() 
 
             for ((argument, descriptor)  in valueDescriptorByValueArgument) {
                 val comment = argument.blockCommentWithName() ?: continue
-                val commentedParameterName = descriptor.toCommentedParameterName()
-                if (commentedParameterName == comment.text) continue
+                if (comment.isParameterNameComment(descriptor)) continue
                 holder.registerProblem(
                     comment,
                     KotlinBundle.message("inspection.message.inconsistent.parameter.name.for.0", descriptor.name.asString()),
-                    CorrectNamesInCommentsToJavaCallArgumentsFix(commentedParameterName)
+                    CorrectNamesInCommentsToJavaCallArgumentsFix(descriptor.toParameterNameComment())
                 )
             }
         }
     }
 
     class CorrectNamesInCommentsToJavaCallArgumentsFix(private val commentedParameterName: String) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("intention.name.correct.parameter.name")
+        override fun getName() = KotlinBundle.message("intention.name.use.correct.parameter.name")
 
         override fun getFamilyName() = name
 

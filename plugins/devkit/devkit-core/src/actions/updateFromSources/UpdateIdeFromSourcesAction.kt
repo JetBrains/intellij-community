@@ -143,8 +143,9 @@ internal open class UpdateIdeFromSourcesAction
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources" // NON-NLS
     val params = createScriptJavaParameters(project, deployDir, distRelativePath,
                                             buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude) ?: return
-    ProjectTaskManager.getInstance(project)
-      .buildAllModules()
+    val taskManager = ProjectTaskManager.getInstance(project)
+    taskManager
+      .run(taskManager.createModulesBuildTask(ModuleManager.getInstance(project).modules, true, true, true, false))
       .onSuccess {
         if (!it.isAborted && !it.hasErrors()) {
           runUpdateScript(params, project, workIdeHome, deployDir, distRelativePath, backupDir, restartAutomatically)

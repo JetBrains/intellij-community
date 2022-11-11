@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.util.CollectionDelta
+import com.intellij.collaboration.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
 interface GHPRDetailsService {

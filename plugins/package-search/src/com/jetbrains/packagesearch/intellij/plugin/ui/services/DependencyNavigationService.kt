@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.services
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
@@ -11,7 +27,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleMo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateModifier
+import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -29,11 +45,11 @@ class DependencyNavigationService(private val project: Project) {
         return when {
             entry != null -> {
                 val (projectModule, installedDependencies) = entry
-                val isFound = installedDependencies.find { it.coordinates == coordinates }
+                val isFound = installedDependencies.find { it.dependency.coordinates == coordinates }
                 val moduleModel = project.packageSearchProjectService.moduleModelsStateFlow.value
                     .find { it.projectModule == projectModule }
                 when {
-                    isFound != null && moduleModel != null -> onSuccess(moduleModel, isFound)
+                    isFound != null && moduleModel != null -> onSuccess(moduleModel, isFound.dependency)
                     else -> NavigationResult.CoordinatesNotFound(module, coordinates)
                 }
             }
@@ -57,7 +73,7 @@ class DependencyNavigationService(private val project: Project) {
                 val moduleModel = project.packageSearchProjectService.moduleModelsStateFlow.value
                     .find { it.projectModule == projectModule }
                 when {
-                    dependency in installedDependencies && moduleModel != null -> onSuccess(moduleModel, dependency)
+                    installedDependencies.any { it.dependency == dependency } && moduleModel != null -> onSuccess(moduleModel, dependency)
                     else -> NavigationResult.DependencyNotFound(module, dependency)
                 }
             }
@@ -68,8 +84,8 @@ class DependencyNavigationService(private val project: Project) {
     private fun onSuccess(moduleModel: ModuleModel, dependency: UnifiedDependency): NavigationResult.Success {
         project.lifecycleScope.launch(Dispatchers.EDT) {
             PackageSearchToolWindowFactory.activateToolWindow(project) {
-                project.uiStateModifier.setTargetModules(TargetModules.from(moduleModel))
-                project.uiStateModifier.setDependency(dependency)
+                project.pkgsUiStateModifier.setTargetModules(TargetModules.from(moduleModel))
+                project.pkgsUiStateModifier.setDependency(dependency)
             }
         }
         return NavigationResult.Success

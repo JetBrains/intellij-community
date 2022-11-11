@@ -16,7 +16,7 @@ class CodeVisionRichTextPainter<T>(
   theme: CodeVisionTheme? = null
 ) : ICodeVisionEntryBasePainter<T> {
 
-  val theme = theme ?: CodeVisionTheme()
+  val theme: CodeVisionTheme = theme ?: CodeVisionTheme()
 
   companion object {
     private val logger = Logger.getInstance(CodeVisionRichTextPainter::class.java)

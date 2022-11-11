@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.asJava.classes
 
@@ -34,11 +34,11 @@ abstract class AbstractUltraLightFacadeClassTest15 : KotlinLightCodeInsightFixtu
     }
 
     protected open fun checkLightFacades(testDataPath: String, facades: Collection<String>, scope: GlobalSearchScope) {
-        for (facadeName in facades) {
-            val ultraLightClass = UltraLightChecker.checkFacadeEquivalence(FqName(facadeName), scope, project)
-            if (ultraLightClass != null) {
-                UltraLightChecker.checkDescriptorsLeak(ultraLightClass)
-            }
+        val support = KotlinAsJavaSupport.getInstance(project)
+        val lightClasses = facades.sorted().flatMap { support.getFacadeClasses(FqName(it), scope) }.filterIsInstance<KtLightClass>()
+
+        for (lightClass in lightClasses) {
+            UltraLightChecker.checkDescriptorsLeak(lightClass)
         }
     }
 }

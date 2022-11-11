@@ -18,14 +18,22 @@ import javax.swing.JComponent
 
 class AttachZoomIndicator : EditorFactoryListener {
   private fun service(project: Project) = project.service<ZoomIndicatorManager>()
-  private fun suppressZoomIndicator(editor: Editor) = editor.isDisposed || editor.getUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR) == true
+  private fun shouldSuppressZoomIndicator(editor: Editor): Boolean {
+    if (editor.isDisposed) return true
+    if (editor.getUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR) == true) return true
+    if (editor.getUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE) == true) {
+      editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, false)
+      return true
+    }
+    return false
+  }
   override fun editorCreated(event: EditorFactoryEvent) {
     val editorEx = event.editor as? EditorImpl ?: return
     val project = editorEx.project ?: return
-    if (project.isDisposed || suppressZoomIndicator(editorEx)) return
+    if (project.isDisposed || shouldSuppressZoomIndicator(editorEx)) return
     editorEx.addPropertyChangeListener {
       if (it.propertyName != EditorEx.PROP_FONT_SIZE) return@addPropertyChangeListener
-      if (!ZoomIndicatorManager.isEnabled || suppressZoomIndicator(editorEx)) return@addPropertyChangeListener
+      if (!ZoomIndicatorManager.isEnabled || shouldSuppressZoomIndicator(editorEx)) return@addPropertyChangeListener
 
       invokeLater {
         if (!editorEx.isDisposed) {

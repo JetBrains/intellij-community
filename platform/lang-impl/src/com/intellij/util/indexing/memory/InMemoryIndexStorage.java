@@ -67,4 +67,9 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
   public void flush() {
 
   }
+
+  @Override
+  public int keysCountApproximately() {
+    return myMap.size();
+  }
 }

@@ -153,7 +153,7 @@ public final class ControlFlowWrapper {
         statement.accept(new JavaRecursiveElementVisitor() {
 
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement resolved = expression.resolve();
             if (resolved instanceof PsiVariable) {

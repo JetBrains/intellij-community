@@ -6,17 +6,9 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.psi.statistics.StatisticsInfo
 
-internal class SearchEverywhereActionStatistician : SearchEverywhereStatistician<MatchedValue>(MatchedValue::class.java) {
-  override fun serializeElement(element: MatchedValue, location: String): StatisticsInfo? {
-    val value = getValue(element) ?: return null
-    val context = getContext(element) ?: return null
-
-    return StatisticsInfo(context, value)
-  }
-
-  private fun getValue(element: MatchedValue) = when (val value = element.value) {
+private class SearchEverywhereActionStatistician : SearchEverywhereStatistician<MatchedValue>(MatchedValue::class.java) {
+  override fun getValue(element: MatchedValue, location: String) = when (val value = element.value) {
     is ActionWrapper -> getValueForAction(value)
     is OptionDescription -> value.hit ?: value.option
     else -> null
@@ -30,13 +22,11 @@ internal class SearchEverywhereActionStatistician : SearchEverywhereStatistician
     else -> null
   }?.let { context -> "$contextPrefix#$context" }
 
-  private fun getContextForAction(action: ActionWrapper): String {
-    return action.groupMapping
-             ?.firstGroup
-             ?.mapNotNull { ActionManager.getInstance().getId(it) }
-             ?.joinToString("|")
-           ?: "action"
-  }
+  private fun getContextForAction(action: ActionWrapper): String = action.groupMapping
+                                                                     ?.firstGroup
+                                                                     ?.mapNotNull { ActionManager.getInstance().getId(it) }
+                                                                     ?.joinToString("|")
+                                                                   ?: "action"
 
   private fun getContextForOption(option: OptionDescription): String {
     return if (option is RegistryBooleanOptionDescriptor || option is RegistryTextOptionDescriptor) {

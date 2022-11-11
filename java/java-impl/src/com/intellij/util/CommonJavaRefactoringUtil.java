@@ -8,13 +8,12 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
@@ -127,7 +126,7 @@ public class CommonJavaRefactoringUtil {
   public static String qNameToCreateInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) throws IncorrectOperationException {
     String targetQName = aPackage.getQualifiedName();
     String sourceRootPackage =
-      ProjectRootManager.getInstance(aPackage.getManager().getProject()).getFileIndex().getPackageNameByDirectory(sourceRoot);
+      PackageIndex.getInstance(aPackage.getManager().getProject()).getPackageNameByDirectory(sourceRoot);
     if (!canCreateInSourceRoot(sourceRootPackage, targetQName)) {
       throw new IncorrectOperationException(
         "Cannot create package '" + targetQName + "' in source folder " + sourceRoot.getPresentableUrl());
@@ -436,7 +435,7 @@ public class CommonJavaRefactoringUtil {
   public static void collectTypeParameters(final Set<? super PsiTypeParameter> used, final PsiElement element,
                                            final Condition<? super PsiTypeParameter> filter) {
     element.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         if (!reference.isQualified()) {
           final PsiElement resolved = reference.resolve();
@@ -450,7 +449,7 @@ public class CommonJavaRefactoringUtil {
       }
 
       @Override
-      public void visitExpression(final PsiExpression expression) {
+      public void visitExpression(final @NotNull PsiExpression expression) {
         super.visitExpression(expression);
         final PsiType type = expression.getType();
         if (type != null) {
@@ -942,12 +941,12 @@ public class CommonJavaRefactoringUtil {
       final boolean[] found = {false};
       place.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
 
         }
 
         @Override
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
           if (name.equals(variable.getName())) {
             found[0] = true;
             stopWalking();

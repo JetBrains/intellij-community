@@ -3,9 +3,11 @@
     <extensionPoint qualifiedName="com.intellij.html.compatibleLanguage"
                     beanClass="com.intellij.lang.html.HtmlCompatibleMetaLanguage$HtmlCompatibleLanguageEP"
                     dynamic="true"/>
-
     <extensionPoint name="completion.htmlInTextCompletionEnabler"
                     interface="com.intellij.codeInsight.completion.HtmlInTextCompletionEnabler"
+                    dynamic="true"/>
+    <extensionPoint name="completion.htmlInTextCompletionPopupExtension"
+                    interface="com.intellij.codeInsight.completion.HtmlInTextCompletionPopupExtension"
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">

@@ -14,7 +14,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   private final QuickFix<?>[] myFixes;
   private final @InspectionMessage String myDescriptionTemplate;
 
-  public CommonProblemDescriptorImpl(QuickFix<?> @Nullable [] fixes, @NotNull @InspectionMessage String descriptionTemplate) {
+  CommonProblemDescriptorImpl(@NotNull @InspectionMessage String descriptionTemplate, QuickFix<?> @Nullable [] fixes) {
     if (fixes != null && fixes.length > 0) {
       myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), ArrayUtil.newArray(ArrayUtil.getComponentType(fixes), 0))
                                                 : fixes;

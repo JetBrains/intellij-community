@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.mlCompletion
 
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.lang.Language
-import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 
 class KotlinMLRankingProvider : CatBoostJarCompletionModelProvider(
-    KotlinIdeaCompletionBundle.message("kotlin.ml.completion.model"),
+    KotlinMlCompletionBundle.message("kotlin.ml.completion.model"),
     "kotlin_features",
     "kotlin_model"
 ) {

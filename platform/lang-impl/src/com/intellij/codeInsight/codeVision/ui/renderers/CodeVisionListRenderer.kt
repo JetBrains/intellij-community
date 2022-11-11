@@ -11,7 +11,7 @@ import java.awt.Point
 import java.awt.Rectangle
 
 abstract class CodeVisionListRenderer(theme: CodeVisionTheme? = null) : CodeVisionRenderer {
-  protected val painter = CodeVisionListPainter(theme = theme)
+  protected val painter: CodeVisionListPainter = CodeVisionListPainter(theme = theme)
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     if (!inlay.isValid) return
@@ -32,7 +32,7 @@ abstract class CodeVisionListRenderer(theme: CodeVisionTheme? = null) : CodeVisi
 
   protected open fun getPoint(inlay: Inlay<*>, targetPoint: Point): Point = targetPoint
 
-  protected fun inlayState(inlay: Inlay<*>) =
+  protected fun inlayState(inlay: Inlay<*>): RangeCodeVisionModel.InlayState =
     inlay.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel?.state() ?: RangeCodeVisionModel.InlayState.NORMAL
 
 }

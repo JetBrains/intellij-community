@@ -1,4 +1,4 @@
-// "Replace with 'y'" "true"
+// "Replace with 'y'" "true-preview"
 class X {
   void test(int x, int y) {
     if (x > y) return;

@@ -275,7 +275,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     task {
       before { LearningUiHighlightingManager.clearHighlights() }
       val commitButtonText = GitBundle.message("commit.action.name").dropMnemonic()
-      text(GitLessonsBundle.message("git.quick.start.perform.commit", strong(commitButtonText)))
+      text(GitLessonsBundle.message("git.quick.start.perform.commit", code("Edit eyes color of puss in boots"), strong(commitButtonText)))
       triggerAndBorderHighlight().component { _: CommitMessage -> true }
       triggerOnNotification { it.displayId == COMMIT_FINISHED }
       showWarningIfCommitWindowClosed()
@@ -323,8 +323,6 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     LessonUtil.restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupSearchEverywhereLocation)
     backupSearchEverywhereLocation = null
   }
-
-  override val suitableTips = listOf("VCS_general")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(GitLessonsBundle.message("git.quick.start.help.link"),

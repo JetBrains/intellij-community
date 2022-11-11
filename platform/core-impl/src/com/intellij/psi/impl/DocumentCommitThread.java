@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -28,7 +28,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -67,6 +67,9 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
                                    @NotNull FileViewProvider cachedViewProvider) {
     assert !isDisposed : "already disposed";
     if (!project.isInitialized()) return;
+    if (documentManager.myProject != project) {
+      throw new IllegalArgumentException("Wrong project: "+project+"; expected: "+documentManager.myProject);
+    }
 
     assert cachedViewProvider.isEventSystemEnabled() : "Asynchronous commit is only supported for physical PSI" +
                                                        ", document=" + document +
@@ -170,13 +173,18 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   @TestOnly
   // NB: failures applying EDT tasks are not handled - i.e., failed documents are added back to the queue and the method returns
   public void waitForAllCommits(long timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      while (!((BoundedTaskExecutor)executor).isEmpty()) {
+        ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
+      }
+      return;
+    }
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    EdtInvocationManager.dispatchAllInvocationEvents();
+    EDT.dispatchAllInvocationEvents();
     while (!((BoundedTaskExecutor)executor).isEmpty()) {
       ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
-      EdtInvocationManager.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
     }
   }
 

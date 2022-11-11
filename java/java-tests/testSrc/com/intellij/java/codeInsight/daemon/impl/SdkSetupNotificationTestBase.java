@@ -17,11 +17,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,21 +60,22 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
                                                      @NotNull String fileName,
                                                      @NotNull String fileText) {
     FileEditor editor = openTextInEditor(fixture, fileName, fileText);
-    return (EditorNotificationPanel)EditorNotificationsImpl.getNotificationPanels(editor)
-      .get(SdkSetupNotificationProvider.class);
+    EditorNotificationsImpl editorNotifications = (EditorNotificationsImpl)EditorNotifications.getInstance(fixture.getProject());
+    return (EditorNotificationPanel)(editorNotifications.getNotificationPanels(editor).get(SdkSetupNotificationProvider.class));
   }
 
   static @NotNull FileEditor openTextInEditor(@NotNull JavaCodeInsightTestFixture fixture,
                                               @NotNull String fileName,
                                               @NotNull String fileText) {
-    UIUtil.dispatchAllInvocationEvents();
-    EditorNotificationsImpl.completeAsyncTasks();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    EditorNotificationsImpl editorNotifications = (EditorNotificationsImpl)EditorNotifications.getInstance(fixture.getProject());
+    editorNotifications.completeAsyncTasks();
 
-    final PsiFile psiFile = fixture.configureByText(fileName, fileText);
+    PsiFile psiFile = fixture.configureByText(fileName, fileText);
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(fixture.getProject());
     VirtualFile virtualFile = psiFile.getVirtualFile();
 
-    final FileEditor[] editors = fileEditorManager.openFile(virtualFile, true);
+    FileEditor[] editors = fileEditorManager.openFile(virtualFile, true);
     Disposer.register(fixture.getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
@@ -82,8 +84,8 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     });
     assertThat(editors).hasSize(1);
 
-    UIUtil.dispatchAllInvocationEvents();
-    EditorNotificationsImpl.completeAsyncTasks();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    editorNotifications.completeAsyncTasks();
 
     return editors[0];
   }

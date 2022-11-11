@@ -350,7 +350,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     class Visitor extends JavaRecursiveElementWalkingVisitor {
 
 
-      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiMember &&
             PsiTreeUtil.isAncestor(myInnerClass, resolved, true) &&
@@ -362,7 +362,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
 
 
-      @Override public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(@NotNull PsiClass aClass) {
         if (aClass == myInnerClass) return;
         super.visitClass(aClass);
       }
@@ -372,7 +372,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     myOuterClass.accept(new Visitor());
     myInnerClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         final PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiMember) {

@@ -75,6 +75,10 @@ fun <T> List<T>?.nullize(): List<T>? {
   return if (this == null || this.isEmpty()) null else this
 }
 
+fun <T> Array<T>?.nullize(): Array<T>? {
+  return if (this == null || this.isEmpty()) null else this
+}
+
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
   return iterator().forEachGuaranteed(operation)
 }
@@ -138,7 +142,7 @@ fun <T> Stream<T>?.getIfSingle(): T? {
 
 /**
  * There probably could be some performance issues if there is lots of streams to concat. See
- * http://mail.openjdk.java.net/pipermail/lambda-dev/2013-July/010659.html for some details.
+ * http://mail.openjdk.org/pipermail/lambda-dev/2013-July/010659.html for some details.
  *
  * See also [Stream.concat] documentation for other possible issues of concatenating large number of streams.
  */

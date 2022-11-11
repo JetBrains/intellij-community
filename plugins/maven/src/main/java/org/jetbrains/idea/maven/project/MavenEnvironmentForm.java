@@ -7,8 +7,12 @@ import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.TextComponentAccessors;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +28,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
+import org.jetbrains.idea.maven.MavenVersionSupportUtil;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
 import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
@@ -103,7 +109,6 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
       });
 
     mavenHomeField.addDocumentListener(listener);
-
   }
 
   @NotNull
@@ -126,17 +131,20 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     mavenHomeField = new TextFieldWithHistory();
     mavenHomeField.setHistorySize(-1);
     final ArrayList<String> foundMavenHomes = new ArrayList<>();
-    foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_3);
+    MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.forEachExtensionSafe(e -> {
+      foundMavenHomes.addAll(e.supportedBundles());
+    });
     foundMavenHomes.add(MavenServerManager.WRAPPED_MAVEN);
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
     final File bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3);
-    if (mavenHomeDirectory != null && ! FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
+    if (mavenHomeDirectory != null && !FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
       foundMavenHomes.add(FileUtil.toSystemIndependentName(mavenHomeDirectory.getPath()));
     }
     mavenHomeField.setHistory(foundMavenHomes);
     mavenHomeComponent = LabeledComponent.create(
       new ComponentWithBrowseButton<>(mavenHomeField, null), MavenConfigurableBundle.message("maven.settings.environment.home.directory"));
-    mavenHomeOnTargetHelpLabel = ContextHelpLabel.create(MavenConfigurableBundle.message("maven.settings.on.targets.environment.home.directory.context.help"));
+    mavenHomeOnTargetHelpLabel =
+      ContextHelpLabel.create(MavenConfigurableBundle.message("maven.settings.on.targets.environment.home.directory.context.help"));
     mavenHomeOnTargetHelpLabel.setVisible(false);
     mavenHomeOnTargetHelpLabel.setOpaque(true);
     mavenHomeComponent.add(mavenHomeOnTargetHelpLabel, BorderLayout.EAST);
@@ -200,7 +208,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
 
   @Nullable
   private static String resolveMavenHome(@Nullable String mavenHome) {
-    if (StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome) || StringUtil.equals(MavenServerManager.WRAPPED_MAVEN, mavenHome)) {
+    if (StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome) ||
+        StringUtil.equals(MavenServerManager.WRAPPED_MAVEN, mavenHome)) {
       return mavenHome;
     }
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(mavenHome);
@@ -212,14 +221,39 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     String version = MavenUtil.getMavenVersion(MavenServerManager.getMavenHomeFile(getMavenHome()));
     String versionText = null;
     if (version != null) {
-      versionText = MavenProjectBundle.message("label.invalid.maven.home.version", version);
-    } else if (StringUtil.equals(MavenProjectBundle.message("maven.wrapper.version.title"), mavenHomeField.getText())) {
+      if (StringUtil.compareVersionNumbers(version, "3") < 0) {
+        versionText = getMaven2Message(version);
+      }
+      else {
+        versionText = MavenProjectBundle.message("label.invalid.maven.home.version", version);
+      }
+    }
+    else if (StringUtil.equals(MavenProjectBundle.message("maven.wrapper.version.title"), mavenHomeField.getText())) {
       versionText = MavenProjectBundle.message("maven.wrapper.version.label", version);
     }
-    else if(localTarget) {
-      versionText = MavenProjectBundle.message("label.invalid.maven.home.directory");
+    else if (localTarget) {
+      if (MavenServerManager.BUNDLED_MAVEN_2.equals(mavenHomeField.getText().trim())) {
+        versionText = getMaven2Message(null);
+      }
+      else {
+        versionText = MavenProjectBundle.message("label.invalid.maven.home.directory");
+      }
     }
     mavenVersionLabelComponent.getComponent().setText(StringUtil.notNullize(versionText));
+  }
+
+  @NlsContexts.Label
+  private static String getMaven2Message(String version) {
+    if (!MavenVersionSupportUtil.isMaven2PluginInstalled()) {
+      return MavenProjectBundle.message("label.invalid.install.maven2plugin");
+    }
+
+    if (MavenVersionSupportUtil.isMaven2PluginDisabled()) {
+      return MavenProjectBundle.message("label.invalid.enable.maven2plugin");
+    }
+
+    if (version == null) return MavenProjectBundle.message("label.invalid.maven.home.directory");
+    return MavenProjectBundle.message("label.invalid.maven.home.version", version);
   }
 
   @Nullable
@@ -288,7 +322,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
           mavenHomeInputLabel = MessageFormat.format("<html><body><nobr>{0}</nobr></body></html>",
                                                      MavenConfigurableBundle.message("maven.settings.on.targets.environment.home.directory",
                                                                                      targetEnvironmentType.getDisplayName()));
-        } else {
+        }
+        else {
           mavenHomeInputLabel = MavenConfigurableBundle.message("maven.settings.environment.home.directory");
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
@@ -16,6 +16,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
+import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
@@ -23,12 +25,15 @@ import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
 import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.configuration.toGroovyRepositorySnippet
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.extensions.gradle.SettingsScriptBuilder
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.scope
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.configuration.*
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
 import org.jetbrains.kotlin.idea.versions.*
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider
@@ -80,7 +85,7 @@ abstract class GradleKotlinFrameworkSupportProvider(
         specifyPluginVersionIfNeeded: Boolean,
         explicitPluginVersion: IdeKotlinVersion? = null
     ) {
-        var kotlinVersion = explicitPluginVersion ?: KotlinPluginLayout.instance.standaloneCompilerVersion
+        var kotlinVersion = explicitPluginVersion ?: KotlinPluginLayout.standaloneCompilerVersion
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
         if (kotlinVersion.isSnapshot) {
             kotlinVersion = LAST_SNAPSHOT_VERSION
@@ -177,7 +182,7 @@ open class GradleKotlinJavaFrameworkSupportProvider(
     override fun getPluginExpression() = "id 'org.jetbrains.kotlin.jvm'"
 
     override fun getDependencies(sdk: Sdk?): List<String> {
-        return listOf(getStdlibArtifactId(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion))
+        return listOf(getJvmStdlibArtifactId(sdk, KotlinPluginLayout.standaloneCompilerVersion))
     }
 
     override fun addSupport(
@@ -188,7 +193,7 @@ open class GradleKotlinJavaFrameworkSupportProvider(
         explicitPluginVersion: IdeKotlinVersion?
     ) {
         super.addSupport(buildScriptData, module, sdk, specifyPluginVersionIfNeeded, explicitPluginVersion)
-        val jvmTarget = getDefaultJvmTarget(sdk, KotlinPluginLayout.instance.standaloneCompilerVersion)
+        val jvmTarget = getDefaultJvmTarget(sdk, KotlinPluginLayout.standaloneCompilerVersion)
         if (jvmTarget != null) {
             val description = jvmTarget.description
             buildScriptData.addOther("compileKotlin {\n    kotlinOptions.jvmTarget = \"$description\"\n}\n\n")
@@ -276,7 +281,7 @@ open class GradleKotlinJSBrowserFrameworkSupportProvider(
     }
 
     override fun additionalSubTargetSettings(): String? =
-        browserConfiguration()
+        browserConfiguration(kotlinDsl = false)
 }
 
 open class GradleKotlinJSNodeFrameworkSupportProvider(

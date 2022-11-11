@@ -74,13 +74,7 @@ public final class MavenExternalParameters {
   }
 
   /**
-   * @param project
-   * @param parameters
-   * @param coreSettings
-   * @param runnerSettings
    * @param runConfiguration used to creation fix if maven home not found
-   * @return
-   * @throws ExecutionException
    */
   public static JavaParameters createJavaParameters(@Nullable final Project project,
                                                     @NotNull final MavenRunnerParameters parameters,
@@ -439,11 +433,8 @@ public final class MavenExternalParameters {
   }
 
   /**
-   * @param coreSettings
    * @param project          used to creation fix if maven home not found
    * @param runConfiguration used to creation fix if maven home not found
-   * @return
-   * @throws ExecutionException
    */
   @NotNull
   @NlsSafe

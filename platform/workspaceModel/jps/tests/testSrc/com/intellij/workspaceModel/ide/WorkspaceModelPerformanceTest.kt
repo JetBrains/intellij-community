@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -127,7 +127,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   private fun hundredModulesRemove(modules: MutableList<Module>,
                                    moduleManager: ModuleManager) {
     modules.forEach {
-      val modifiableModel = moduleManager.modifiableModel
+      val modifiableModel = moduleManager.getModifiableModel()
       modifiableModel.disposeModule(it)
       modifiableModel.commit()
     }
@@ -178,7 +178,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   private fun hundredModulesCreation(moduleManager: ModuleManager,
                                      modules: MutableList<Module>) {
     (1..100).forEach {
-      val modifiableModel = moduleManager.modifiableModel
+      val modifiableModel = moduleManager.getModifiableModel()
       modules.add(modifiableModel.newModule(File(project.basePath, "$TEST_MODULE_PREFIX$it.iml").path, EmptyModuleType.getInstance().id))
       modifiableModel.commit()
     }

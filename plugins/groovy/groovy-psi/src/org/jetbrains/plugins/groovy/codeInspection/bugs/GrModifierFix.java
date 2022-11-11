@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -39,8 +39,12 @@ public class GrModifierFix extends GroovyFix {
   private final String myModifier;
   private final @IntentionName String myText;
   private final boolean myDoSet;
+  @SafeFieldForPreview
   private final Function<? super ProblemDescriptor, ? extends PsiModifierList> myModifierListProvider;
 
+  /**
+   * The function must be pure
+   */
   public GrModifierFix(@NotNull GrVariable member,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean doSet,
@@ -48,6 +52,9 @@ public class GrModifierFix extends GroovyFix {
     this(initText(doSet, member.getName(), modifier), modifier, doSet, modifierListProvider);
   }
 
+  /**
+   * The function must be pure
+   */
   public GrModifierFix(@NotNull PsiMember member,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean showContainingClass,
@@ -56,6 +63,9 @@ public class GrModifierFix extends GroovyFix {
     this(initText(doSet, getMemberName(member, showContainingClass), modifier), modifier, doSet, modifierListProvider);
   }
 
+  /**
+   * The function must be pure
+   */
   public GrModifierFix(@IntentionName @NotNull String text,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean doSet,

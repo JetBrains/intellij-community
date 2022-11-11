@@ -49,7 +49,7 @@ class KotlinUSimpleReferenceExpression(
 
     private fun visitAccessorCalls(visitor: UastVisitor) {
         // Visit Kotlin get-set synthetic Java property calls as function calls
-        val resolvedMethod = baseResolveProviderService.resolveAccessorCall(sourcePsi) ?: return
+        val resolvedMethod = baseResolveProviderService.resolveSyntheticJavaPropertyAccessorCall(sourcePsi) ?: return
         val access = sourcePsi.readWriteAccess()
         val setterValue = if (access.isWrite) {
             findAssignment(sourcePsi)?.right ?: run {

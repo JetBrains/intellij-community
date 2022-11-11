@@ -26,7 +26,7 @@ public final class StringTokenizerDelimiterInspection extends AbstractBaseJavaLo
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitCallExpression(PsiCallExpression callExpression) {
+      public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
         final PsiExpressionList argumentList = callExpression.getArgumentList();
         final PsiMethod method = callExpression.resolveMethod();
         if (method != null && argumentList != null && (method.isConstructor() || NEXT_TOKEN.equals(method.getName()))) {

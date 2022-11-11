@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
+import git4idea.remote.hosting.findKnownRepositories
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -20,6 +22,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.URLUtil
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
@@ -27,12 +30,11 @@ import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
-import org.apache.commons.httpclient.util.URIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -42,10 +44,13 @@ open class GHOpenInBrowserActionGroup
                 GithubBundle.messagePointer("open.on.github.action.description"),
                 AllIcons.Vcs.Vendors.Github), DumbAware {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.OLD_EDT
+
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
     e.presentation.isEnabledAndVisible = !data.isNullOrEmpty()
     e.presentation.isPerformGroup = data?.size == 1
+    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup);
     e.presentation.isPopupGroup = true
     e.presentation.isDisableGroupIfEmpty = false
   }
@@ -85,16 +90,16 @@ open class GHOpenInBrowserActionGroup
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(fileRevision.path)
     if (repository == null) return null
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it.ghRepositoryCoordinates, fileRevision.revisionNumber.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, fileRevision.revisionNumber.asString()) }
   }
 
   private fun getDataFromLog(project: Project, dataContext: DataContext): List<Data>? {
-    val log = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
+    val selection = dataContext.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return null
 
-    val selectedCommits = log.selectedCommits
+    val selectedCommits = selection.commits
     if (selectedCommits.size != 1) return null
 
     val commit = ContainerUtil.getFirstItem(selectedCommits) ?: return null
@@ -103,10 +108,10 @@ open class GHOpenInBrowserActionGroup
     if (repository == null) return null
 
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it.ghRepositoryCoordinates, commit.hash.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, commit.hash.asString()) }
   }
 
   private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): List<Data>? {
@@ -116,7 +121,7 @@ open class GHOpenInBrowserActionGroup
     if (repository == null) return null
 
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     val changeListManager = ChangeListManager.getInstance(project)
@@ -124,7 +129,7 @@ open class GHOpenInBrowserActionGroup
 
     val change = changeListManager.getChange(virtualFile)
     return if (change != null && change.type == Change.Type.NEW) null
-    else accessibleRepositories.map { Data.File(project, it.ghRepositoryCoordinates, repository.root, virtualFile) }
+    else accessibleRepositories.map { Data.File(project, it.repository, repository.root, virtualFile) }
   }
 
   protected sealed class Data(val project: Project) {
@@ -159,6 +164,8 @@ open class GHOpenInBrowserActionGroup
   private companion object {
     class GithubOpenInBrowserAction(val data: Data)
       : DumbAwareAction({ data.getName() }) {
+
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
       override fun actionPerformed(e: AnActionEvent) {
         when (data) {
@@ -242,7 +249,7 @@ object GHPathUtil {
       builder.append(path.toUrl()).append("/tree/").append(branch)
     }
     else {
-      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URIUtil.encodePath(relativePath))
+      builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(URLUtil.encodePath(relativePath))
     }
 
     if (editor != null && editor.document.lineCount >= 1) {

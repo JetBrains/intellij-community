@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -69,6 +69,11 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   private static class SelectIntelliSortTypeAction extends ToggleAction implements DumbAware {
     private final PermanentGraph.SortType mySortType;
     private final VcsLogUi myUI;
@@ -102,6 +107,11 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
       if (state && myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
         myProperties.set(MainVcsLogUiProperties.BEK_SORT_TYPE, mySortType);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

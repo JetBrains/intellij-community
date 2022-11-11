@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 
@@ -64,7 +65,7 @@ class EditorTabTheme : TabTheme {
     get() = newUIAware(EditorColorsManager.getInstance().globalScheme.defaultBackground, JBUI.CurrentTheme.EditorTabs.background())
 
   override val borderColor: Color
-    get() = JBUI.CurrentTheme.EditorTabs.borderColor()
+    get() = JBColor.namedColor("EditorTabs.underTabsBorderColor", JBUI.CurrentTheme.EditorTabs.borderColor())
 
   override val underlineColor: Color
     get() = globalScheme.getColor(EditorColors.TAB_UNDERLINE) ?: JBUI.CurrentTheme.EditorTabs.underlineColor()

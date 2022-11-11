@@ -51,9 +51,7 @@ final class UnindexedFilesFinder {
     myFileBasedIndex = fileBasedIndex;
     myFileTypeIndex = fileBasedIndex.getIndex(FileTypeIndex.NAME);
 
-    myStateProcessors = FileBasedIndexInfrastructureExtension
-      .EP_NAME
-      .extensions()
+    myStateProcessors = FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList().stream()
       .map(ex -> ex.createFileIndexingStatusProcessor(project))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());

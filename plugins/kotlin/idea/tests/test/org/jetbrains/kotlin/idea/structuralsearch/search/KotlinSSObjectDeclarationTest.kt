@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchCompanionObjectModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
 
-class KotlinSSObjectDeclarationTest : KotlinSSResourceInspectionTest() {
+class KotlinSSObjectDeclarationTest : KotlinStructuralSearchTest() {
     fun testObject() {
         doTest("object '_", """
             <warning descr="SSR">object A { }</warning>

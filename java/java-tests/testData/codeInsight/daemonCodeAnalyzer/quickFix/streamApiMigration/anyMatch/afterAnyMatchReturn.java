@@ -1,4 +1,4 @@
-// "Replace with anyMatch()" "true"
+// "Replace with anyMatch()" "true-preview"
 
 import java.util.Collection;
 import java.util.List;

@@ -10,7 +10,7 @@ InlineStackFrame bar (nestedInlineFun.kt:20)
     JavaValue[local] i: int = 0
 InlineStackFrame foo (nestedInlineFun.kt:14)
     JavaValue[local] x: int = 3
-KotlinStackFrameWithProvidedVariables (nestedInlineFun.kt:5)
+KotlinStackFrame (nestedInlineFun.kt:5)
     JavaValue[local] a: int = 1 (nestedInlineFun.kt:4)
 Disconnected from the target VM
 

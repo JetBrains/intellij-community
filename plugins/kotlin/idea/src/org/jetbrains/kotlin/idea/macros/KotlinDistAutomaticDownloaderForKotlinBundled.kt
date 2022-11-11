@@ -11,9 +11,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.config.JpsPluginSettings
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
@@ -41,7 +40,7 @@ internal class KotlinDistAutomaticDownloaderForKotlinBundled(
     }
 
     override fun kotlinBundledDetected() {
-        val jpsVersion = KotlinJpsPluginSettings.jpsVersion(project) ?: return
+        val jpsVersion = KotlinJpsPluginSettings.jpsVersion(project)
         downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries = true, jpsVersion, project)
     }
 }
@@ -59,7 +58,7 @@ private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries
                                 KotlinBasePluginBundle.message("kotlin.dist.downloading.failed"),
                                 KotlinArtifactsDownloader.failedToDownloadUnbundledJpsMavenArtifact(
                                     project,
-                                    KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID,
+                                    KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID,
                                     version
                                 ),
                                 NotificationType.ERROR,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.library
 
 import org.jetbrains.annotations.NonNls
@@ -8,10 +8,20 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 sealed class LibraryArtifact
 
 data class MavenArtifact(
-    val repository: Repository,
+    val repositories: List<Repository>,
     @NonNls val groupId: String,
     @NonNls val artifactId: String
-) : LibraryArtifact()
+) : LibraryArtifact() {
+    constructor(
+        repository: Repository,
+        groupId: String,
+        artifactId: String
+    ) : this(
+        listOf(repository),
+        groupId,
+        artifactId
+    )
+}
 
 data class NpmArtifact(
     @NonNls val name: String

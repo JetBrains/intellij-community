@@ -8,10 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class BeanPropertyListCellRenderer extends ColoredListCellRenderer{
   private final SimpleTextAttributes myAttrs1;
   private final SimpleTextAttributes myAttrs2;

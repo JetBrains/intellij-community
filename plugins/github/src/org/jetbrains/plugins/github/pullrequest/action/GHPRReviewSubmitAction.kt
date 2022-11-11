@@ -3,10 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.codereview.InlineIconButton
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -45,6 +46,8 @@ import java.awt.event.ActionListener
 import javax.swing.*
 
 class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.message("pull.request.review.submit.action.description")) {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)

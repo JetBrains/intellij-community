@@ -59,5 +59,5 @@ internal fun <T> LinesBuilder.listBuilder(c: Collection<T>, f: LinesBuilder.(ite
 }
 
 internal fun LinesBuilder.wrapper(): LinesBuilder {
-  return LinesBuilder(result, "$indent    ")
+  return LinesBuilder(result, indentLevel+1, indentSize)
 }

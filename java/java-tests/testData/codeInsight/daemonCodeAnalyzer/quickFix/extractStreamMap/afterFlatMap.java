@@ -1,4 +1,4 @@
-// "Extract variable 'y' to 'mapToInt' operation" "true"
+// "Extract variable 'y' to 'mapToInt' operation" "true-preview"
 import java.util.*;
 import java.util.stream.*;
 

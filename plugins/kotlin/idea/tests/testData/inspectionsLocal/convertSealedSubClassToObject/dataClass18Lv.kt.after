@@ -1,0 +1,5 @@
+// LANGUAGE_VERSION: 1.8
+// DISABLE-ERRORS
+sealed class Bar
+
+data object Foo : Bar()

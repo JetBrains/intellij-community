@@ -25,8 +25,14 @@ public final class UnknownFeature {
   }
 
   public UnknownFeature(@NonNls @NotNull String featureType,
+                        @Nls @Nullable String featureDisplayName,
                         @NonNls @NotNull String implementationName) {
-    this(featureType, null, implementationName, null);
+    this(featureType, featureDisplayName, implementationName, null);
+  }
+
+  public UnknownFeature(@NonNls @NotNull String featureType,
+                        @NonNls @NotNull String implementationName) {
+    this(featureType, null, implementationName);
   }
 
   public @NonNls @NotNull String getFeatureType() {
@@ -69,5 +75,14 @@ public final class UnknownFeature {
     int result = myFeatureType.hashCode();
     result = 31 * result + myImplementationName.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "UnknownFeature{" + "myFeatureType='" + myFeatureType + '\'' +
+           ", myFeatureDisplayName='" + myFeatureDisplayName + '\'' +
+           ", myImplementationName='" + myImplementationName + '\'' +
+           ", myImplementationDisplayName='" + myImplementationDisplayName + '\'' +
+           '}';
   }
 }

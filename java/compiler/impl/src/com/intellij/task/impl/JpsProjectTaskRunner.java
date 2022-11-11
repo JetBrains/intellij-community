@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.compiler.impl.CompileDriver;
@@ -111,12 +111,14 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
                                            @NotNull MyNotificationCollector notificationCollector,
                                            @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
     Collection<? extends ProjectTask> buildTasks = tasksMap.get(ModuleBuildTask.class);
-    if (ContainerUtil.isEmpty(buildTasks)) return;
+    if (ContainerUtil.isEmpty(buildTasks)) {
+      return;
+    }
 
     ModulesBuildSettings buildSettings = assembleModulesBuildSettings(buildTasks);
     CompilerManager compilerManager = CompilerManager.getInstance(project);
 
-    if (buildSettings.isRebuild()){
+    if (buildSettings.isRebuild()) {
       compilerManager.rebuild(new MyCompileStatusNotification(notificationCollector));
     }
     else {
@@ -136,7 +138,9 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
                                         @NotNull MyNotificationCollector notificationCollector,
                                         @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
     Collection<? extends ProjectTask> buildTasks = tasksMap.get(EmptyCompileScopeBuildTask.class);
-    if (ContainerUtil.isEmpty(buildTasks)) return;
+    if (ContainerUtil.isEmpty(buildTasks)) {
+      return;
+    }
 
     CompilerManager compilerManager = CompilerManager.getInstance(project);
     CompileScope scope = createScope(compilerManager, context, Collections.emptySet(), false, false, true);

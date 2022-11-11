@@ -117,12 +117,12 @@ private fun updateThreadContext(
  * Do not use this method with executors returned from [com.intellij.util.concurrency.AppExecutorUtil], they already capture the context.
  */
 fun captureThreadContext(runnable: Runnable): Runnable {
-  return ContextRunnable(runnable)
+  return ContextRunnable(true, runnable)
 }
 
 /**
  * Same as [captureThreadContext] but for [Callable].
  */
 fun <V> captureThreadContext(callable: Callable<V>): Callable<V> {
-  return ContextCallable(callable)
+  return ContextCallable(true, callable)
 }

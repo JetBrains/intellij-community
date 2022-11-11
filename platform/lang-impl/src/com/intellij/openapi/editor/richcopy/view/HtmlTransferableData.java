@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.richcopy.view;
 
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 
@@ -15,23 +16,8 @@ public class HtmlTransferableData extends HtmlSyntaxInfoReader implements RawTex
   }
 
   @Override
-  public DataFlavor getFlavor() {
+  public @Nullable DataFlavor getFlavor() {
     return FLAVOR;
-  }
-
-  @Override
-  public int getOffsetCount() {
-    return 0;
-  }
-
-  @Override
-  public int getOffsets(int[] offsets, int index) {
-    return index;
-  }
-
-  @Override
-  public int setOffsets(int[] offsets, int index) {
-    return index;
   }
 
   @Override

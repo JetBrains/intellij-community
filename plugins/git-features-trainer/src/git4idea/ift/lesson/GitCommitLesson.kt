@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.changes.ChangeListChange
-import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -103,7 +103,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
         setRecentMessages(listOf(lastCommitMessage))
       }
 
-      val commitWorkflowHandler: AbstractCommitWorkflowHandler<*, *> = ChangesViewManager.getInstanceEx(project).commitWorkflowHandler
+      val commitWorkflowHandler: AbstractCommitWorkflowHandler<*, *> = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
                                                                        ?: return@prepareRuntimeTask
       commitWorkflowHandler.workflow.commitOptions.restoreState()
       commitWorkflowHandler.setCommitMessage(lastCommitMessage)
@@ -348,8 +348,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       robot.click(tree, Point(pathRect.x + offset, pathRect.y + offset))
     }
   }
-
-  override val suitableTips = listOf("partial_git_commit")
 
   override val helpLinks: Map<String, String>
     get() = mapOf(

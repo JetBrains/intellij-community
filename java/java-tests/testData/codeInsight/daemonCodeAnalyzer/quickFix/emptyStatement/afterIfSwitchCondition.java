@@ -1,4 +1,4 @@
-// "Extract side effect" "true"
+// "Extract side effect" "true-preview"
 class Z {
 
   void z() {

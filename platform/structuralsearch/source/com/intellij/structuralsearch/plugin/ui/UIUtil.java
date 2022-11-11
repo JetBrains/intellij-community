@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -29,7 +30,6 @@ import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -267,6 +267,6 @@ public final class UIUtil {
 
   public static TemplateContextType getTemplateContextType(@NotNull StructuralSearchProfile profile) {
     final Class<? extends TemplateContextType> clazz = profile.getTemplateContextTypeClass();
-    return ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz);
+    return TemplateContextTypes.getByClass(clazz);
   }
 }

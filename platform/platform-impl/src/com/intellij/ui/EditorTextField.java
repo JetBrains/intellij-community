@@ -139,15 +139,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     myFileType = fileType;
     setLayout(new BorderLayout());
     enableEvents(AWTEvent.KEY_EVENT_MASK);
-    // todo[dsl,max]
-    setFocusable(true);
-    // dsl: this is a weird way of doing things....
-    super.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        requestFocus();
-      }
-    });
+    setFocusable(false);
 
     setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new Jdk7DelegatingToRootTraversalPolicy());
@@ -266,20 +258,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     installDocumentListener();
     Editor editor = getEditor();
     if (editor != null) {
-      //MainWatchPanel watches the oldEditor's focus in order to remove debugger combobox when focus is lost
-      //we should first transfer focus to new oldEditor and only then remove current oldEditor
-      //MainWatchPanel check that oldEditor.getParent == newEditor.getParent and does not remove oldEditor in such cases
-
-      boolean isFocused = isFocusOwner();
       EditorEx newEditor = createEditor();
-      releaseEditorNow();
+      scheduleEditorRelease();
       myEditor = newEditor;
       add(newEditor.getComponent(), BorderLayout.CENTER);
+      releaseScheduledEditors();
 
       validate();
-      if (isFocused) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(newEditor.getContentComponent(), true));
-      }
     }
   }
 
@@ -503,12 +488,16 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   private void releaseEditorNow() {
-    EditorEx editor = myEditor;
-    if (editor != null) {
-      scheduleEditorRelease(editor);
-      myEditor = null;
-    }
+    scheduleEditorRelease();
     releaseScheduledEditors();
+  }
+
+  private boolean scheduleEditorRelease() {
+    EditorEx editor = myEditor;
+    if (editor == null) return false;
+    myEditorsToBeReleased.add(editor);
+    myEditor = null;
+    return true;
   }
 
   void releaseEditorLater() {
@@ -517,15 +506,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     // removeNotify(), so we need to let swing complete its removeNotify() chain
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
-    EditorEx editor = myEditor;
-    if (editor == null) return;
-    scheduleEditorRelease(editor);
-    ApplicationManager.getApplication().invokeLater(() -> releaseScheduledEditors(), ModalityState.stateForComponent(this));
-    myEditor = null;
-  }
-
-  private void scheduleEditorRelease(EditorEx editor) {
-    myEditorsToBeReleased.add(editor);
+    if (scheduleEditorRelease()) {
+      ApplicationManager.getApplication().invokeLater(() -> releaseScheduledEditors(), ModalityState.stateForComponent(this));
+    }
   }
 
   private void releaseScheduledEditors() {
@@ -733,8 +716,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     final EditorEx editor = myEditor;
 
     if (editor != null) {
-      releaseEditorNow();
+      scheduleEditorRelease();
       initEditorInner();
+      releaseScheduledEditors();
       revalidate();
     }
   }
@@ -899,11 +883,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public void requestFocus() {
     Editor editor = getEditor(true);
     if (editor != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        Editor e = getEditor(true);
-        if (e != null) IdeFocusManager.getGlobalInstance().requestFocus(e.getContentComponent(), true);
-      });
+      IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+    else {
+      super.requestFocus();
     }
   }
 
@@ -1070,6 +1054,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
     @Override
     public Component getComponentAfter(Container aContainer, Component aComponent) {
+      if (aContainer instanceof EditorTextField) {
+        int count = aContainer.getComponentCount();
+        if (count > 1 && aComponent != aContainer.getComponent(count - 1)) {
+          return getDefaultComponent(aContainer);
+        }
+      }
+
       invokedFromBeforeOrAfter = true;
       Component after;
       try {

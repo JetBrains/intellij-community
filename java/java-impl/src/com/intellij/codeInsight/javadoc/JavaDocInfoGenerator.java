@@ -516,11 +516,17 @@ public class JavaDocInfoGenerator {
     else if (myElement instanceof PsiMethod) {
       generateMethodJavaDoc(buffer, (PsiMethod)myElement, generatePrologue);
     }
+    else if (myElement instanceof PsiPatternVariable) {
+      generatePatternVariableJavaDoc(buffer, generatePrologue, (PsiPatternVariable)myElement);
+    }
     else if (myElement instanceof PsiParameter) {
       generateMethodParameterJavaDoc(buffer, (PsiParameter)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiField) {
       generateFieldJavaDoc(buffer, (PsiField)myElement, generatePrologue);
+    }
+    else if (myElement instanceof PsiRecordComponent) {
+      generateRecordComponentJavaDoc(buffer, generatePrologue, (PsiRecordComponent)myElement);
     }
     else if (myElement instanceof PsiVariable) {
       generateVariableJavaDoc(buffer, (PsiVariable)myElement, generatePrologue);
@@ -541,6 +547,70 @@ public class JavaDocInfoGenerator {
     }
 
     return true;
+  }
+
+  private void generateRecordComponentJavaDoc(StringBuilder buffer, boolean generatePrologue, @NotNull PsiRecordComponent recordComponent) {
+    if (generatePrologue) generatePrologue(buffer);
+    generateVariableDefinition(buffer, recordComponent, true);
+
+    PsiRecordHeader recordHeader = ObjectUtils.tryCast(recordComponent.getParent(), PsiRecordHeader.class);
+    if (recordHeader == null) return;
+    PsiRecordComponent[] components = recordHeader.getRecordComponents();
+    int recordIndex = ArrayUtil.indexOf(components, recordComponent);
+    PsiClass recordClass = recordComponent.getContainingClass();
+    if (recordClass == null) return;
+    String recordComponentJavadoc = getRecordComponentJavadocFromParameterTag(recordIndex, recordClass);
+    if (recordComponentJavadoc != null) {
+      buffer.append(DocumentationMarkup.CONTENT_START);
+      buffer.append(recordComponentJavadoc);
+      buffer.append(DocumentationMarkup.CONTENT_END);
+    }
+  }
+
+  private void generatePatternVariableJavaDoc(StringBuilder buffer, boolean generatePrologue, @NotNull PsiPatternVariable variable) {
+    if (generatePrologue) generatePrologue(buffer);
+    generateVariableDefinition(buffer, variable, true);
+
+    String docForPattern = getDocForPattern(variable);
+    if (docForPattern != null) {
+      buffer.append(DocumentationMarkup.CONTENT_START);
+      buffer.append(docForPattern);
+      buffer.append(DocumentationMarkup.CONTENT_END);
+    }
+  }
+
+
+  @Nullable
+  private String getDocForPattern(@NotNull PsiPatternVariable variable) {
+    PsiPattern pattern = variable.getPattern();
+    PsiElement parent = pattern.getParent();
+    if (!(parent instanceof PsiDeconstructionList)) return null;
+    PsiPattern[] components = ((PsiDeconstructionList)parent).getDeconstructionComponents();
+    int index = ArrayUtil.indexOf(components, pattern);
+    PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)parent.getParent();
+    PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
+    PsiType deconstructionType = typeElement.getType();
+    PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(deconstructionType);
+    if (recordClass == null) return null;
+    return getRecordComponentJavadocFromParameterTag(index, recordClass);
+  }
+
+  @Nullable
+  private String getRecordComponentJavadocFromParameterTag(int recordComponentIndex, @NotNull PsiClass recordClass) {
+    PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
+    if (recordComponents.length <= recordComponentIndex) return null;
+    PsiRecordComponent recordComponent = recordComponents[recordComponentIndex];
+    PsiDocComment classComment = recordClass.getDocComment();
+    String recordComponentName = recordComponent.getName();
+    if (classComment == null || recordComponentName == null) return null;
+    PsiDocTag tag = getParamTagByName(classComment, recordComponentName);
+    if (tag == null) return null;
+    PsiElement[] elements = tag.getDataElements();
+    if (elements.length == 0) return null;
+    String text = elements[0].getText();
+    StringBuilder buffer = new StringBuilder();
+    generateValue(buffer, new ParamInfo(recordComponentName, recordComponentName, tag, ourEmptyProvider), elements, text);
+    return buffer.toString();
   }
 
   public @NlsSafe String generateSignature(PsiElement element) {
@@ -1132,35 +1202,56 @@ public class JavaDocInfoGenerator {
 
   private void appendInitializer(StringBuilder buffer, PsiVariable variable, int variableSignatureLength) {
     PsiExpression initializer = variable.getInitializer();
-    if (initializer == null) return;
+    if (initializer != null) {
+      String initializerText = initializer.getText().trim();
+      if (variableSignatureLength + initializerText.length() < 80) {
+        // initializer should be printed on the same line
+        buffer.append(" ");
+      }
+      else {
+        // initializer should be printed on the new line
+        buffer.append("\n");
+        buffer.append(NBSP.repeat(CodeStyle.getIndentSize(variable.getContainingFile())));
+      }
+      appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), "= ");
 
-    String initializerText = initializer.getText().trim();
-    if (variableSignatureLength + initializerText.length() < 80) {
-      // initializer should be printed on the same line
-      buffer.append(" ");
+      int index = newLineIndex(initializerText);
+      if (index < initializerText.length()) {
+        initializerText = initializerText.substring(0, index);
+        buffer.append(StringUtil.escapeXmlEntities(initializerText));
+        buffer.append("...");
+      }
+      else {
+        generateExpressionText(initializer, buffer);
+      }
+      PsiExpression constantInitializer = calcInitializerExpression(variable);
+      if (constantInitializer != null) {
+        buffer.append(DocumentationMarkup.GRAYED_START);
+        appendExpressionValue(buffer, constantInitializer);
+        buffer.append(DocumentationMarkup.GRAYED_END);
+      }
     }
-    else {
-      // initializer should be printed on the new line
-      buffer.append("\n");
-      buffer.append(NBSP.repeat(CodeStyle.getIndentSize(variable.getContainingFile())));
+    else if (variable instanceof PsiEnumConstant) {
+      PsiExpressionList list = ((PsiEnumConstant)variable).getArgumentList();
+      if (canComputeArguments(list)) {
+        generateExpressionText(list, buffer);
+      }
     }
-    appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), "= ");
+  }
 
-    int index = newLineIndex(initializerText);
-    if (index < initializerText.length()) {
-      initializerText = initializerText.substring(0, index);
-      buffer.append(StringUtil.escapeXmlEntities(initializerText));
-      buffer.append("...");
+  public static boolean canComputeArguments(@Nullable PsiExpressionList list) {
+    if (list == null) return false;
+    PsiExpression[] args = list.getExpressions();
+    JavaPsiFacade instance = JavaPsiFacade.getInstance(list.getProject());
+    PsiConstantEvaluationHelper helper = instance.getConstantEvaluationHelper();
+    for (PsiExpression arg : args) {
+      if (helper.computeConstantExpression(arg) == null) return false;
     }
-    else {
-      initializer.accept(new MyVisitor(buffer));
-    }
-    PsiExpression constantInitializer = calcInitializerExpression(variable);
-    if (constantInitializer != null) {
-      buffer.append(DocumentationMarkup.GRAYED_START);
-      appendExpressionValue(buffer, constantInitializer);
-      buffer.append(DocumentationMarkup.GRAYED_END);
-    }
+    return true;
+  }
+
+  public void generateExpressionText(PsiElement initializer, StringBuilder buffer) {
+    initializer.accept(new MyVisitor(buffer));
   }
 
   private static int newLineIndex(String text) {
@@ -2959,7 +3050,7 @@ public class JavaDocInfoGenerator {
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       appendStyledSpan(myBuffer, getHighlightingManager().getKeywordAttributes(), "new ");
       PsiType type = expression.getType();
       if (type != null) {
@@ -2984,7 +3075,7 @@ public class JavaDocInfoGenerator {
     }
 
     @Override
-    public void visitExpressionList(PsiExpressionList list) {
+    public void visitExpressionList(@NotNull PsiExpressionList list) {
       appendStyledSpan(myBuffer, getHighlightingManager().getParenthesesAttributes(), "(");
       String separator = ", ";
       PsiExpression[] expressions = list.getExpressions();
@@ -2997,7 +3088,7 @@ public class JavaDocInfoGenerator {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       appendStyledSpan(
         myBuffer,
         getHighlightingManager().getMethodCallAttributes(),
@@ -3006,13 +3097,13 @@ public class JavaDocInfoGenerator {
     }
 
     @Override
-    public void visitExpression(PsiExpression expression) {
+    public void visitExpression(@NotNull PsiExpression expression) {
       appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
         doHighlightSignatures(), myBuffer, expression.getProject(), expression.getLanguage(), expression.getText());
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
         doHighlightSignatures(), myBuffer, expression.getProject(), expression.getLanguage(), expression.getText());
     }

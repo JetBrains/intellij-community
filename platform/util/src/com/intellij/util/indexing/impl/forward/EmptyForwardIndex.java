@@ -2,11 +2,11 @@
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.indexing.impl.forward.ForwardIndex;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EmptyForwardIndex implements ForwardIndex {
+public class EmptyForwardIndex implements ForwardIndex, MeasurableIndexStore {
   @Nullable
   @Override
   public ByteArraySequence get(@NotNull Integer key) {
@@ -24,4 +24,9 @@ public class EmptyForwardIndex implements ForwardIndex {
 
   @Override
   public void force() { }
+
+  @Override
+  public int keysCountApproximately() {
+    return 0;
+  }
 }

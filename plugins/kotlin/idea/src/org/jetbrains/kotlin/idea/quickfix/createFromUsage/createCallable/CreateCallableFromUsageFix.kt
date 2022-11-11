@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.quickfix.KotlinCrossLanguageQuickFixAction
@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.isAbstract
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
@@ -248,6 +249,8 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean {
         checkIsInitialized()
         element ?: return false
@@ -301,8 +304,12 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                     val receiverClass = it.second as? KtClass
                     if (staticContextRequired && receiverClass?.isWritable == true) {
                         val hasCompanionObject = receiverClass.companionObjects.isNotEmpty()
-                        val companionObject = receiverClass.getOrCreateCompanionObject()
-                        if (!hasCompanionObject && this@CreateCallableFromUsageFixBase.isExtension) companionObject.body?.delete()
+                        val companionObject = runWriteAction {
+                            val companionObject = receiverClass.getOrCreateCompanionObject()
+                            if (!hasCompanionObject && this@CreateCallableFromUsageFixBase.isExtension) companionObject.body?.delete()
+
+                            companionObject
+                        }
                         val classValueType = (companionObject.descriptor as? ClassDescriptor)?.classValueType
                         val receiverTypeCandidate = if (classValueType != null) TypeCandidate(classValueType) else it.first
                         CallablePlacement.WithReceiver(receiverTypeCandidate)

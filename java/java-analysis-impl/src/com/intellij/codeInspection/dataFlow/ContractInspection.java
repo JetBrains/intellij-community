@@ -40,7 +40,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
     return new JavaElementVisitor() {
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
         if (annotation == null || (!ApplicationManager.getApplication().isInternal() && AnnotationUtil.isInferredAnnotation(annotation))) {
           return;
@@ -53,7 +53,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       }
 
       @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
+      public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         if (!JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName())) return;
 
         PsiMethod method = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);

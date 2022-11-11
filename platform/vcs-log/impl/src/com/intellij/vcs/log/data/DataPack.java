@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.vcs.log.Hash;
@@ -11,7 +12,7 @@ import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
-import com.intellij.vcs.log.util.StopWatch;
+import io.opentelemetry.api.trace.Span;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
@@ -51,9 +52,9 @@ public class DataPack extends DataPackBase {
       GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
-      StopWatch sw = StopWatch.start("building graph");
+      Span span = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("building graph").startSpan();
       permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
-      sw.report();
+      span.end();
     }
 
     return new DataPack(refsModel, permanentGraph, providers, full);

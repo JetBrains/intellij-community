@@ -29,8 +29,6 @@ interface CommitWorkflowUi : DataProvider, Disposable {
   fun getDisplayedUnversionedFiles(): List<FilePath>
   fun getIncludedUnversionedFiles(): List<FilePath>
 
-  fun includeIntoCommit(items: Collection<*>)
-
   fun addInclusionListener(listener: InclusionListener, parent: Disposable)
 
   fun startBeforeCommitChecks()

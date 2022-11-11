@@ -1,4 +1,4 @@
-// "Qualify the call with 'A'" "true"
+// "Qualify the call with 'A'" "true-preview"
 class A {
   class B {
     static String name(String key) {

@@ -1,5 +1,5 @@
-// PROBLEM: none
 // WITH_STDLIB
+// PROBLEM: none
 
 fun test() {
     // We do not report "redundant arrow" here,

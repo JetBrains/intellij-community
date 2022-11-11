@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -14,6 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -23,6 +25,11 @@ public class WrapSwitchRuleStatementsIntoBlockFix extends BaseIntentionAction im
 
   public WrapSwitchRuleStatementsIntoBlockFix(@NotNull PsiSwitchLabeledRuleStatement ruleStatement) {
     myRuleStatement = ruleStatement;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new WrapSwitchRuleStatementsIntoBlockFix(PsiTreeUtil.findSameElementInCopy(myRuleStatement, target));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

@@ -1,4 +1,4 @@
-// "Cast argument to 'long'" "true"
+// "Cast argument to 'long'" "true-preview"
 class a {
     void f(Long l) {}
     void g() {

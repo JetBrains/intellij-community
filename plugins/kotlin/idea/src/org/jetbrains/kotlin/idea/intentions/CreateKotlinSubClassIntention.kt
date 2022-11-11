@@ -14,11 +14,12 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.ui.CreateKotlinClassDialog
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -93,7 +94,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
     private fun KtClassOrObject.hasSameDeclaration(name: String) = declarations.any { it is KtNamedDeclaration && it.name == name }
 
     private fun targetNameWithoutConflicts(baseName: String, container: KtClassOrObject?) =
-        KotlinNameSuggester.suggestNameByName(defaultTargetName(baseName)) { container?.hasSameDeclaration(it) != true }
+        Fe10KotlinNameSuggester.suggestNameByName(defaultTargetName(baseName)) { container?.hasSameDeclaration(it) != true }
 
     private fun createNestedSubclass(sealedClass: KtClass, sealedName: String, editor: Editor) {
         if (!super.preparePsiElementForWriteIfNeeded(sealedClass)) return

@@ -63,7 +63,7 @@ final class ScrollSettings {
   }
 
   /* A heuristics that disables scrolling interpolation in diff / merge windows.
-     We need to to make scrolling synchronization compatible with the interpolation first.
+     We need to make scrolling synchronization compatible with the interpolation first.
 
      NOTE: The implementation is a temporary, ad-hoc heuristics that is needed solely to
            facilitate testing of the experimental "true smooth scrolling" feature. */

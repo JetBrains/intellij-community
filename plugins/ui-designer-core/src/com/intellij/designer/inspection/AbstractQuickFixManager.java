@@ -39,8 +39,6 @@ import java.util.List;
 
 /**
  * @author Alexander Lobas
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public abstract class AbstractQuickFixManager {
   protected DesignerEditorPanel myDesigner;

@@ -5,6 +5,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindModel;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -157,6 +158,11 @@ public class FindPopupDirectoryChooser extends JPanel {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myHelper.getModel().isWithSubdirectories();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

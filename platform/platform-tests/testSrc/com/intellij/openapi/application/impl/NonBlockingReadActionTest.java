@@ -32,12 +32,14 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -451,13 +453,12 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
   private static void watchLoggedExceptions(Consumer<? super AtomicReference<Throwable>> runnable) {
     AtomicReference<Throwable> loggedError = new AtomicReference<>();
-
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
         assertNotNull(t);
         loggedError.set(t);
-        return false;
+        return Action.NONE;
       }
     }, ()->runnable.accept(loggedError));
   }

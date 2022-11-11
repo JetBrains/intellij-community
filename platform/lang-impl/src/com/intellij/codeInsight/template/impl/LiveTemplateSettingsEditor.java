@@ -401,7 +401,6 @@ public final class LiveTemplateSettingsEditor extends JPanel {
           }
         }
         onChange.run();
-
       }
     };
 

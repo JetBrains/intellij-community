@@ -468,7 +468,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(final @NotNull PsiMethodCallExpression expression) {
       if (myCollectExpressions) {
         final PsiMethod psiMethod = expression.resolveMethod();
         if (psiMethod != null && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
@@ -479,7 +479,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitReferenceExpression(final PsiReferenceExpression reference) {
+    public void visitReferenceExpression(final @NotNull PsiReferenceExpression reference) {
       if (myLineRange.intersects(reference.getTextRange())) {
         final PsiElement psiElement = reference.resolve();
         if (psiElement instanceof PsiVariable) {
@@ -528,7 +528,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+    public void visitArrayAccessExpression(final @NotNull PsiArrayAccessExpression expression) {
       if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
         myExpressions.add(new TextWithImportsImpl(expression));
       }
@@ -536,13 +536,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitParameter(final PsiParameter parameter) {
+    public void visitParameter(final @NotNull PsiParameter parameter) {
       processVariable(parameter);
       super.visitParameter(parameter);
     }
 
     @Override
-    public void visitLocalVariable(final PsiLocalVariable variable) {
+    public void visitLocalVariable(final @NotNull PsiLocalVariable variable) {
       processVariable(variable);
       super.visitLocalVariable(variable);
     }
@@ -554,7 +554,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitClass(final PsiClass aClass) {
+    public void visitClass(final @NotNull PsiClass aClass) {
       // Do not step in to local and anonymous classes...
     }
   }
@@ -682,7 +682,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
     final Ref<TextRange> rangeRef = new Ref<>(originalRange);
     element.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
+      @Override public void visitExpressionStatement(final @NotNull PsiExpressionStatement statement) {
         final TextRange stRange = statement.getTextRange();
         if (originalRange.intersects(stRange)) {
           final TextRange currentRange = rangeRef.get();

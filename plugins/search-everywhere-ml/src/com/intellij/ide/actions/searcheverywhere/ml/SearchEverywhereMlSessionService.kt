@@ -12,17 +12,17 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   companion object {
     internal const val RECORDER_CODE = "MLSE"
 
-    fun getService() = EP_NAME.findExtensionOrFail(SearchEverywhereMlSessionService::class.java)
+    fun getService() = EP_NAME.findExtensionOrFail(SearchEverywhereMlSessionService::class.java).takeIf { it.isEnabled() }
   }
 
   private val sessionIdCounter = AtomicInteger()
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 
-  private val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
+  internal val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
 
-  override fun shouldOrderByMl(): Boolean {
-    val state = getCurrentSession()?.getCurrentSearchState()
-    return state?.orderByMl ?: false
+  override fun isEnabled(): Boolean {
+    val settings = service<SearchEverywhereMlSettings>()
+    return settings.isSortingByMlEnabledInAnyTab() || experiment.isAllowed
   }
 
   internal fun shouldUseExperimentalModel(tabId: String): Boolean {
@@ -30,22 +30,34 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
   }
 
-  override fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
-    val session = getCurrentSession() ?: return -1.0
-    return session.getMLWeight(contributor, element, matchingDegree)
-  }
-
   fun getCurrentSession(): SearchEverywhereMLSearchSession? {
-    if (experiment.isAllowed) {
+    if (isEnabled()) {
       return activeSession.get()
     }
     return null
   }
 
   override fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo) {
-    if (experiment.isAllowed) {
+    if (isEnabled()) {
       activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet()) }
     }
+  }
+
+  override fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
+                                      element: Any,
+                                      priority: Int): SearchEverywhereFoundElementInfo {
+    val foundElementInfoWithoutMl = SearchEverywhereFoundElementInfoWithMl.withoutMl(element, priority, contributor)
+
+    if (!isEnabled()) return foundElementInfoWithoutMl
+
+    val session = getCurrentSession() ?: return foundElementInfoWithoutMl
+    val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
+
+    val elementId = session.itemIdProvider.getId(element)
+    val mlFeatures = state.getElementFeatures(elementId, element, contributor, priority).features
+    val mlWeight = if (state.orderByMl) state.getMLWeight(session.cachedContextInfo, mlFeatures) else null
+
+    return SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlFeatures)
   }
 
   override fun onSearchRestart(project: Project?,
@@ -55,12 +67,12 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
                                backspacesTyped: Int,
                                searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    if (experiment.isAllowed) {
-      val orderByMl = shouldOrderByMlInTab(tabId)
-      getCurrentSession()?.onSearchRestart(
-        project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, previousElementsProvider
-      )
-    }
+    if (!isEnabled()) return
+
+    val orderByMl = shouldOrderByMlInTab(tabId)
+    getCurrentSession()?.onSearchRestart(
+      project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider)
+    )
   }
 
   private fun shouldOrderByMlInTab(tabId: String): Boolean {
@@ -79,24 +91,25 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
   override fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    if (experiment.isAllowed) {
-      getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, elementsProvider)
-    }
+    getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, mapElementsProvider(elementsProvider))
   }
 
   override fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    if (experiment.isAllowed) {
-      getCurrentSession()?.onSearchFinished(project, experiment, elementsProvider)
-    }
+    getCurrentSession()?.onSearchFinished(project, experiment, mapElementsProvider(elementsProvider))
   }
 
   override fun notifySearchResultsUpdated() {
-    if (experiment.isAllowed) {
-      getCurrentSession()?.notifySearchResultsUpdated()
-    }
+    getCurrentSession()?.notifySearchResultsUpdated()
   }
 
   override fun onDialogClose() {
     activeSession.updateAndGet { null }
+  }
+
+  private fun mapElementsProvider(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>): () -> List<SearchEverywhereFoundElementInfoWithMl> {
+    return { ->
+      elementsProvider.invoke()
+        .map { SearchEverywhereFoundElementInfoWithMl.from(it) }
+    }
   }
 }

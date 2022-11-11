@@ -25,7 +25,7 @@ public class JavadocLinkAsPlainTextInspection extends LocalInspectionTool {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitDocComment(PsiDocComment comment) {
+      public void visitDocComment(@NotNull PsiDocComment comment) {
         if (comment.getOwner() == null) return;
         for (PsiReference reference : ReferenceProvidersRegistry.getReferencesFromProviders(comment)) {
           if (!(reference instanceof WebReference)) continue;

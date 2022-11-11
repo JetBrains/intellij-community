@@ -3,23 +3,32 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.AccessToken;
 import kotlin.coroutines.CoroutineContext;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 
-final class ContextCallable<V> implements Callable<V> {
+@Internal
+public final class ContextCallable<V> implements Callable<V> {
 
+  /**
+   * Whether this callable is expected to be at the bottom of the stacktrace.
+   */
+  private final boolean myRoot;
   private final @NotNull CoroutineContext myParentContext;
   private final @NotNull Callable<? extends V> myCallable;
 
-  ContextCallable(@NotNull Callable<? extends V> callable) {
+  public ContextCallable(boolean root, @NotNull Callable<? extends V> callable) {
+    myRoot = root;
     myParentContext = ThreadContext.currentThreadContext();
     myCallable = callable;
   }
 
   @Override
   public V call() throws Exception {
-    ThreadContext.checkUninitializedThreadContext();
+    if (myRoot) {
+      ThreadContext.checkUninitializedThreadContext();
+    }
     try (AccessToken ignored = ThreadContext.replaceThreadContext(myParentContext)) {
       return myCallable.call();
     }

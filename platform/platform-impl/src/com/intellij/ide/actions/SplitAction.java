@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Vladimir Kondratyev
  * @author Konstantin Bulenkov
  */
 public abstract class SplitAction extends AnAction implements DumbAware {
@@ -36,7 +35,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
     final VirtualFile file = window.getSelectedFile();
 
     if (myCloseSource && file != null) {
-      file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, window.isFilePinned(file));
+      file.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), window.isFilePinned(file));
       window.closeFile(file, false, false);
     }
 

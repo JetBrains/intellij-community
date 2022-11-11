@@ -103,4 +103,9 @@ public interface PersistentMapBase<Key, Value> {
    * Note, that map should not be used after this method has been called.
    */
   void closeAndDelete() throws IOException;
+
+  /**@return keys count, or -1 if implementation doesn't provide this info */
+  default int keysCount(){
+    return -1;
+  }
 }

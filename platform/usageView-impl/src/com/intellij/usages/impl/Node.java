@@ -50,7 +50,7 @@ abstract class Node extends DefaultMutableTreeNode {
 
   /**
    * isDataXXX methods perform actual (expensive) data computation.
-   * Called from {@link #update(Consumer})
+   * Called from {@link #update(Consumer)}
    * to be compared later with cached data stored in {@link #myCachedFlags} and {@link #myCachedTextHash}
    */
   protected abstract boolean isDataValid();

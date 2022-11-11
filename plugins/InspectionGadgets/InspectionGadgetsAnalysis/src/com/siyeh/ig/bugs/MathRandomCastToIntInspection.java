@@ -117,7 +117,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
   private static class MathRandomCastToIntegerVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       PsiExpression operand = expression.getOperand();
       while (operand instanceof PsiPrefixExpression) {

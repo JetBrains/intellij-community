@@ -8,13 +8,17 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
+import org.jetbrains.plugins.github.ui.util.getName
 import java.awt.BorderLayout
 import java.awt.Component
+import javax.swing.Action
 import javax.swing.JList
 
-class GHRepositoryListCellRenderer(private val accountsSupplier: () -> Collection<GithubAccount>) :
+class GHRepositoryListCellRenderer(private val errorHandler: ErrorHandler,
+                                   private val accountsSupplier: () -> Collection<GithubAccount>) :
   ColoredListCellRenderer<GHRepositoryListItem>() {
 
   private val nameRenderer = AccountNameRenderer()
@@ -42,7 +46,28 @@ class GHRepositoryListCellRenderer(private val accountsSupplier: () -> Collectio
                                      value: GHRepositoryListItem,
                                      index: Int,
                                      selected: Boolean,
-                                     hasFocus: Boolean) = value.customizeRenderer(this, list)
+                                     hasFocus: Boolean) {
+    when (value) {
+      is GHRepositoryListItem.Repo -> {
+        val user = value.user
+        val repo = value.repo
+
+        ipad.left = 10
+        toolTipText = repo.description
+        append(if (repo.owner.login == user.login) repo.name else repo.fullName)
+      }
+      is GHRepositoryListItem.Error -> {
+        val error = value.error
+
+        ipad.left = 10
+        toolTipText = null
+        append(errorHandler.getPresentableText(error), SimpleTextAttributes.ERROR_ATTRIBUTES)
+        val action = errorHandler.getAction(value.account, error)
+        append(" ")
+        append(action.getName(), SimpleTextAttributes.LINK_ATTRIBUTES, action)
+      }
+    }
+  }
 
 
   private class AccountNameRenderer : CellRendererPanel() {
@@ -72,6 +97,11 @@ class GHRepositoryListCellRenderer(private val accountsSupplier: () -> Collectio
       add(itemContent, BorderLayout.CENTER)
       return this
     }
+  }
+
+  interface ErrorHandler {
+    fun getPresentableText(error: Throwable): @Nls String
+    fun getAction(account: GithubAccount, error: Throwable): Action
   }
 }
 

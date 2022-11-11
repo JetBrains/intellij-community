@@ -8,6 +8,7 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
@@ -39,15 +40,20 @@ public interface PyFrameAccessor {
   @Nullable
   XValueChildrenList loadFrame(@Nullable XStackFrame frame) throws PyDebuggerException;
 
-  /*
+  @Nullable
+  default XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+    return null;
+  }
+
+  /**
    * Load a variable's attributes taking into account various view settings (for example, Type Renderers)
-   * */
+   */
   @Nullable
   XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException;
 
-  /*
+  /**
    * Load full list of a variable's attributes ignoring view settings
-   * */
+   */
   @Nullable
   default XValueChildrenList loadVariableDefaultView(PyDebugValue variable) throws PyDebuggerException { return new XValueChildrenList(); }
 

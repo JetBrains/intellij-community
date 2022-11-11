@@ -196,7 +196,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
         if (isEmpty(((LibraryOrderEntry)entry).getLibraryName())) {
           final Set<String> paths = ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
                                                           PathUtil::getLocalPath);
-          final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
+          final Set<String> entryPaths = ContainerUtil.map2Set(((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES),
                                                                s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
           if (entryPaths.equals(paths) && ((LibraryOrderEntry)entry).getScope() == data.getScope()) return entry;
           continue;
@@ -238,7 +238,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       if (entry instanceof LibraryOrderEntry) {
         LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
         if (!libraryOrderEntry.isModuleLevel()) continue;
-        final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
+        final Set<String> entryPaths = ContainerUtil.map2Set(((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES),
                                                              s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
         LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
         if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {

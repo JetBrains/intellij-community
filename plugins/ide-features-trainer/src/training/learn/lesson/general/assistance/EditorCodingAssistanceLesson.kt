@@ -113,8 +113,6 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
     return caretOffset != sequence.length && sequence[caretOffset].isLetter()
   }
 
-  override val suitableTips = listOf("HighlightUsagesInFile", "NextPrevError", "NavigateBetweenErrors")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("editor.coding.assistance.help.link"),
          LessonUtil.getHelpLink("working-with-source-code.html")),

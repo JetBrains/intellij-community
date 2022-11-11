@@ -50,6 +50,7 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
     val methodCalls = methodCalls(file) ?: return@ImperativeCommand
     val methodCall = env.generateValue(methodCalls, null)
     val method = methodCall.resolveMethod() ?: return@ImperativeCommand
+    if (method.isConstructor) return@ImperativeCommand
     val parentStatement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement::class.java) ?: return@ImperativeCommand
     val rangeToExtract = createGreedyMarker(editor.document, parentStatement)
 

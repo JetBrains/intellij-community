@@ -43,7 +43,7 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
 
       char c1 = chars.charAt(offset);
       if (c1 != '>') return true;
-      TypedHandlerUtil.handleGenericLTDeletion(editor, offset, JavaTokenType.LT, JavaTokenType.GT, JavaTypedHandler.INVALID_INSIDE_REFERENCE);
+      TypedHandlerUtil.handleGenericLTDeletion(editor, offset, JavaTokenType.LT, JavaTokenType.GT, JavaTypingTokenSets.INVALID_INSIDE_REFERENCE);
       return true;
     }
     return false;

@@ -16,17 +16,17 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesViewManager.createTextStatusFactory
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.ExpandableItemsHandler
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.PopupHandler
+import com.intellij.ui.*
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -34,11 +34,13 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.ProportionKey
+import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.CommitChecksResult
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
 import com.intellij.vcs.commit.EditedCommitNode
@@ -68,7 +70,6 @@ import java.awt.BorderLayout
 import java.awt.event.InputEvent
 import java.beans.PropertyChangeListener
 import java.util.*
-import java.util.stream.Collectors
 import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
@@ -82,13 +83,15 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private val _tree: MyChangesTree
   val tree: ChangesTree get() = _tree
-  private val treeMessageSplitter: Splitter
-  private val commitPanel: GitStageCommitPanel
-  private val commitWorkflowHandler: GitStageCommitWorkflowHandler
   private val progressStripe: ProgressStripe
-  private val commitDiffSplitter: OnePixelSplitter
   private val toolbar: ActionToolbar
+  private val commitPanel: GitStageCommitPanel
   private val changesStatusPanel: Wrapper
+
+  private val treeMessageSplitter: Splitter
+  private val commitDiffSplitter: OnePixelSplitter
+
+  private val commitWorkflowHandler: GitStageCommitWorkflowHandler
 
   private var diffPreviewProcessor: GitStageDiffPreview? = null
   private var editorTabPreview: GitStageEditorDiffPreview? = null
@@ -108,7 +111,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       !commitPanel.commitProgressUi.isDumbMode &&
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
     }
-    commitPanel.commitActionsPanel.setupShortcuts(this, this)
+    commitPanel.commitActionsPanel.createActions().forEach { it.registerCustomShortcutSet(this, this) }
     commitPanel.addEditedCommitListener(_tree::editedCommitChanged, this)
     commitPanel.setIncludedRoots(_tree.getIncludedRoots())
     _tree.addIncludedRootsListener(object : IncludedRootsListener {
@@ -121,9 +124,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stage.Toolbar"))
-    toolbarGroup.addSeparator()
-    toolbarGroup.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
-    toolbarGroup.addSeparator()
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
     toolbar = ActionManager.getInstance().createActionToolbar(GIT_STAGE_PANEL_PLACE, toolbarGroup, true)
     toolbar.targetComponent = tree
@@ -136,7 +136,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
       addToLeft(commitPanel.toolbar.component)
     }
-    val treePanel = simplePanel(createScrollPane(tree, SideBorder.TOP)).addToBottom(statusPanel)
+    val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
+    val treePanel = simplePanel(createScrollPane(tree, sideBorder)).addToBottom(statusPanel)
     progressStripe = ProgressStripe(treePanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
     val treePanelWithToolbar = JPanel(BorderLayout())
     treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
@@ -242,7 +243,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     installSelectionHandler(tree, false)
     installNextDiffActionOn(this@GitStagePanel)
-    UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
+    tree.putClientProperty(ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }
 
   override fun dispose() {
@@ -367,10 +368,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): List<Any> {
       return treeModelData
-        .rawNodesStream()
+        .iterateRawNodes()
         .filter { node -> isIncludable(node) }
         .map { node -> node.userObject }
-        .collect(Collectors.toList())
+        .toList()
     }
 
     override fun getNodeStatus(node: ChangesBrowserNode<*>): ThreeStateCheckBox.State {
@@ -469,11 +470,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         update()
       }
     }
-
-    override fun vcsesChanged() = Unit
-    override fun executionStarted() = Unit
-    override fun beforeCommitChecksStarted() = Unit
-    override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, executor: CommitExecutor?, result: CommitChecksResult) = Unit
   }
 
   companion object {

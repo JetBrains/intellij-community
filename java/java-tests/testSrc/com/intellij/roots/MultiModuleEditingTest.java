@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
 import com.intellij.ProjectTopics;
@@ -190,10 +190,11 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
     }
 
     @Override
-    public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-      myLog.add("+" + module.getName());
+    public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+      for (Module module : modules) {
+        myLog.add("+" + module.getName());
+      }
     }
-
     public void assertCorrectEvents(String[][] expected) {
       int runningIndex = 0;
       for (int chunkIndex = 0; chunkIndex < expected.length; chunkIndex++) {

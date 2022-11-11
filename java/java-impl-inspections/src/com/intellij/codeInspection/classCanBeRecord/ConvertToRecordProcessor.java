@@ -273,7 +273,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       PsiField field = ObjectUtils.tryCast(expression.resolve(), PsiField.class);
       if (field == null) return;
       PsiType fieldType = field.getType();
@@ -292,7 +292,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (OBJECTS_CALL.test(expression)) {
         for (PsiExpression argument : expression.getArgumentList().getExpressions()) {
           PsiReferenceExpression fieldRef = ObjectUtils.tryCast(argument, PsiReferenceExpression.class);
@@ -342,7 +342,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       IElementType operationType = expression.getOperationTokenType();
       if (!JavaTokenType.PLUS.equals(operationType) && !JavaTokenType.MINUS.equals(operationType) &&

@@ -59,6 +59,12 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   protected final JLabel myGearLabel = new JLabel();
   protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(16));
 
+  private JPanel myLastPanel;
+  private InplaceButton myCloseButton;
+  private Runnable myCloseAction;
+
+  private static Icon CLOSE_ICON;
+
   private final @NotNull Supplier<? extends EditorColorsScheme> mySchemeSupplier;
   protected final @Nullable Color myBackgroundColor;
   protected final @NotNull ColorKey myBackgroundColorKey;
@@ -69,6 +75,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     this(null, backgroundColor);
   }
 
+  public EditorNotificationPanel(@Nullable Color backgroundColor, @NotNull Status status) {
+    this((FileEditor)null, backgroundColor, null, status);
+  }
+
   public EditorNotificationPanel(@Nullable FileEditor fileEditor,
                                  @Nullable Color backgroundColor) {
     this(fileEditor, backgroundColor, null);
@@ -76,6 +86,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public EditorNotificationPanel(@NotNull ColorKey backgroundColorKey) {
     this((FileEditor)null, null, backgroundColorKey);
+  }
+
+  public EditorNotificationPanel(@NotNull ColorKey backgroundColorKey, @NotNull Status status) {
+    this((FileEditor)null, null, backgroundColorKey, status);
   }
 
   /**
@@ -139,6 +153,82 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());
   }
 
+  public EditorNotificationPanel(@NotNull Status status) {
+    this((Editor)null, null, null, status);
+  }
+
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor, @NotNull Status status) {
+    this(fileEditor, null, null, status);
+  }
+
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor,
+                                 @Nullable Color backgroundColor,
+                                 @Nullable ColorKey backgroundColorKey,
+                                 @NotNull Status status) {
+    this(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null, backgroundColor, backgroundColorKey, status);
+  }
+
+  public EditorNotificationPanel(@Nullable Editor editor,
+                                 @Nullable Color backgroundColor,
+                                 @Nullable ColorKey backgroundColorKey,
+                                 @NotNull Status status) {
+    this(editor, ExperimentalUI.isNewUI() ? status.background : backgroundColor, backgroundColorKey);
+
+    if (!ExperimentalUI.isNewUI()) {
+      return;
+    }
+
+    myLabel.setIconTextGap(JBUI.scale(8));
+    myLabel.setIcon(new Icon() {
+      @Override
+      public void paintIcon(Component component, Graphics graphics, int x, int y) {
+        if (!StringUtil.isEmpty(myLabel.getText())) {
+          status.icon.paintIcon(component, graphics, x, y);
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return status.icon.getIconWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return status.icon.getIconHeight();
+      }
+    });
+    myLabel.setForeground(JBUI.CurrentTheme.Banner.FOREGROUND);
+    myLabel.setBorder(JBUI.Borders.emptyRight(20));
+
+    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.Notification.borderInsets", JBInsets.create(10, 12))));
+
+    putClientProperty(FileEditorManager.SEPARATOR_BORDER, new SideBorder(status.border, SideBorder.TOP | SideBorder.BOTTOM));
+
+    Container parent = myGearLabel.getParent();
+    parent.remove(myGearLabel);
+    remove(parent);
+
+    myLastPanel = new NonOpaquePanel(new HorizontalLayout(16)) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        if (myGearLabel.getIcon() == null && (myCloseButton == null || !myCloseButton.isVisible())) {
+          size.width = 0;
+        }
+        return size;
+      }
+    };
+    myLastPanel.setBorder(new AbstractBorder() {
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return myGearLabel.getIcon() == null && (myCloseButton == null || !myCloseButton.isVisible())
+               ? super.getBorderInsets(c) : new JBInsets(0, 16, 0, 0);
+      }
+    });
+    myLastPanel.add(myGearLabel);
+    add(BorderLayout.EAST, myLastPanel);
+  }
+
   @Override
   public void updateUI() {
     setUI(new BasicPanelUI() {
@@ -194,6 +284,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return this;
   }
 
+  public EditorNotificationPanel noIcon() {
+    myLabel.setIcon(null);
+    return this;
+  }
+
   public final @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
                                                          @NotNull @NonNls String actionId) {
     return createActionLabel(text, actionId, true);
@@ -208,6 +303,30 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   public final @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
                                                          @NotNull Runnable action) {
     return createActionLabel(text, action, true);
+  }
+
+  private static @NotNull Icon getCloseIcon() {
+    if (CLOSE_ICON == null) {
+      CLOSE_ICON = IconManager.getInstance().getIcon("expui/general/close.svg", AllIcons.class);
+    }
+    return CLOSE_ICON;
+  }
+
+  public final @NotNull InplaceButton setCloseAction(@NotNull Runnable action) {
+    myCloseAction = action;
+    if (myCloseButton == null) {
+      myCloseButton = new InplaceButton(IdeBundle.message("editor.banner.close.tooltip"), getCloseIcon(), e -> {
+        myCloseAction.run();
+      });
+      myCloseButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      if (myLastPanel == null) {
+        myLinksPanel.add(myCloseButton);
+      }
+      else {
+        myLastPanel.add(myCloseButton);
+      }
+    }
+    return myCloseButton;
   }
 
   public interface ActionHandler {
@@ -320,7 +439,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   private final class ActionHyperlinkLabel extends HyperlinkLabel {
-
+    private JLabel mySizeLabel;
     private final @NotNull ActionHandler myHandler;
     private final boolean myShowInIntentionMenu;
 
@@ -344,6 +463,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     void handleIntentionActionClick(Editor editor, PsiFile file) {
       if (editor == null || file == null) return;
       myHandler.handleQuickFixClick(editor, file);
+    }
+
+    @Override
+    protected int getStringWidth(@Nls String text, FontMetrics fm) {
+      if (mySizeLabel == null) {
+        mySizeLabel = new JLabel();
+      }
+      mySizeLabel.setText(text);
+      mySizeLabel.setFont(fm.getFont());
+      return mySizeLabel.getPreferredSize().width;
     }
   }
 
@@ -489,6 +618,23 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @Override
     public Icon getIcon(@IconFlags int flags) {
       return myLabel.getIcon();
+    }
+  }
+
+  public enum Status {
+    Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, AllIcons.General.BalloonInformation),
+    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, AllIcons.Debugger.ThreadStates.Idle),
+    Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, AllIcons.General.BalloonWarning),
+    Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, AllIcons.General.BalloonError);
+
+    final Color background;
+    final Color border;
+    final Icon icon;
+
+    Status(@NotNull Color background, @NotNull Color border, @NotNull Icon icon) {
+      this.background = background;
+      this.border = border;
+      this.icon = icon;
     }
   }
 }

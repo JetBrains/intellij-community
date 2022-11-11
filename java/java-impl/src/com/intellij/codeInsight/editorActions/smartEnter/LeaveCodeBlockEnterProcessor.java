@@ -94,9 +94,7 @@ public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
    *     [caret]
    *   }
    * </pre>
-   * 
-   * @param element
-   * @return
+   *
    */
   private static boolean isControlFlowBreak(@Nullable PsiElement element) {
     return element instanceof PsiReturnStatement || element instanceof PsiThrowStatement;

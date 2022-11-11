@@ -3,6 +3,7 @@ package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
@@ -195,7 +196,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                                       Object value,
                                                       boolean suggestFix) {
     final String name = parameter.getName();
-    if (name.isEmpty()) return null;
+    if (name == null || name.isEmpty()) return null;
     String shortName;
     String stringPresentation;
 
@@ -272,19 +273,8 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (method == null) return;
-      PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
-      if (parameter == null) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        for (PsiParameter psiParameter : parameters) {
-          if (Comparing.strEqual(psiParameter.getName(), myParameterName)) {
-            parameter = psiParameter;
-            break;
-          }
-        }
-      }
+      PsiParameter parameter = findParameter(method, element);
       if (parameter == null) return;
-
-
       final PsiExpression defToInline;
       try {
         defToInline = JavaPsiFacade.getElementFactory(project)
@@ -293,8 +283,31 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       catch (IncorrectOperationException e) {
         return;
       }
-      final PsiParameter parameterToInline = parameter;
-      inlineSameParameterValue(method, parameterToInline, defToInline);
+      inlineSameParameterValue(method, parameter, defToInline);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiElement element = previewDescriptor.getPsiElement();
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      if (method == null) return IntentionPreviewInfo.EMPTY;
+      final PsiParameter parameter = findParameterByName(method);
+      if (parameter == null) return IntentionPreviewInfo.EMPTY;
+      Collection<PsiReference> references = ReferencesSearch.search(parameter).findAll();
+      final PsiExpression defToInline = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myValue, parameter);
+      references.forEach((ref) -> ref.getElement().replace(defToInline));
+      parameter.delete();
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    private @Nullable PsiParameter findParameter(PsiMethod method, PsiElement descriptorElement) {
+      PsiParameter parameter = PsiTreeUtil.getParentOfType(descriptorElement, PsiParameter.class, false);
+      if (parameter == null) parameter = findParameterByName(method);
+      return parameter;
+    }
+
+    private @Nullable PsiParameter findParameterByName(PsiMethod method) {
+      return ContainerUtil.find(method.getParameterList().getParameters(), (param) -> Comparing.strEqual(param.getName(), myParameterName));
     }
 
     @Override
@@ -493,7 +506,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       }, new Class[]{UMethod.class});
     }
 
-    private Object getArgValue(UExpression arg, PsiMethod method) {
+    private static Object getArgValue(UExpression arg, PsiMethod method) {
       return RefParameterImpl.getAccessibleExpressionValue(arg, () -> method);
     }
   }

@@ -21,15 +21,21 @@ The launcher then creates threads to read/write them to the console.
 -------
 How to build.
 
+CMake: 3.16 or newer
 ToolChain: VisualStudio 2017
 SDK: 8.1 (for "launcher and elevator")
 
-You may open .sln from Visual Studio or use msbuild from VS command prompt:
- msbuild Elevator.sln /p:Configuration=release /property:Platform=x86
+```
+if exist build rmdir /s /q build
+mkdir build && cd build
 
+cmake -F "Visual Studio 15 2017" -T v141 -A Win32 -DCMAKE_SYSTEM_VERSION="8.1" ..
+cmake --build . --config RelWithDebInfo -- -clp:ShowCommandLine
 
-Building and signing on TC:
-To sign binary you need to build and sign it on TC.
+```
+
+Building and signing on TeamCity:
+To sign binary you need to build and sign it on TeamCity.
 Run https://buildserver.labs.intellij.net/viewType.html?buildTypeId=ijplatform_master_Idea_NativeHelpers_WindowsFileWatcher
 Download artifact and store in VCS
 

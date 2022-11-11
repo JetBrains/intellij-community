@@ -36,7 +36,7 @@ class SdkInRootModelTest {
   @Test
   fun `set module sdk`() {
     val model = createModifiableModel(module)
-    val sdk = projectModel.addSdk(projectModel.createSdk("my sdk"))
+    val sdk = projectModel.addSdk("my sdk")
     model.sdk = sdk
     assertThat(model.isSdkInherited).isFalse()
     assertThat(model.sdk).isEqualTo(sdk)
@@ -66,7 +66,7 @@ class SdkInRootModelTest {
 
   @Test
   fun `inherit project sdk`() {
-    val sdk = projectModel.addSdk(projectModel.createSdk("my sdk"))
+    val sdk = projectModel.addSdk("my sdk")
     runWriteActionAndWait { projectModel.projectRootManager.projectSdk = sdk }
     val model = createModifiableModel(module)
     model.inheritSdk()
@@ -110,7 +110,7 @@ class SdkInRootModelTest {
     assertThat(committed.isSdkInherited).isFalse()
     assertThat(committed.sdk).isNull()
     assertThat(committedEntry.isValid).isFalse()
-    val sdk = projectModel.addSdk(projectModel.createSdk("my sdk"))
+    val sdk = projectModel.addSdk("my sdk")
     assertThat(committed.sdk).isEqualTo(sdk)
     val committedEntry2 = dropModuleSourceEntry(committed, 1).single() as JdkOrderEntry
     assertThat(committedEntry2.isValid).isTrue()
@@ -133,7 +133,7 @@ class SdkInRootModelTest {
     val committedEntry = dropModuleSourceEntry(committed, 1).single() as JdkOrderEntry
     assertThat(committedEntry.presentableName).isEqualTo("< my sdk >")
     assertThat(committedEntry.isValid).isFalse()
-    val sdk = projectModel.addSdk(projectModel.createSdk("my sdk"))
+    val sdk = projectModel.addSdk("my sdk")
     assertThat(committed.sdk).isEqualTo(sdk)
     val committedEntry2 = dropModuleSourceEntry(committed, 1).single() as JdkOrderEntry
     assertThat(committedEntry2.isValid).isTrue()
@@ -141,7 +141,7 @@ class SdkInRootModelTest {
 
   @Test
   fun `rename sdk`() {
-    val sdk = projectModel.addSdk(projectModel.createSdk("foo"))
+    val sdk = projectModel.addSdk("foo")
     val model = createModifiableModel(module)
     model.sdk = sdk
     commitModifiableRootModel(model)
@@ -158,7 +158,7 @@ class SdkInRootModelTest {
 
   @Test
   fun `rename project sdk`() {
-    val sdk = projectModel.addSdk(projectModel.createSdk("foo"))
+    val sdk = projectModel.addSdk("foo")
     runWriteActionAndWait { projectModel.projectRootManager.projectSdk = sdk }
     val model = createModifiableModel(module)
     model.inheritSdk()

@@ -5,16 +5,8 @@ import com.intellij.ide.util.propComponentProperty
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.components.CheckBox
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
-import java.awt.event.ItemEvent
+import com.intellij.ui.dsl.builder.*
 import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JRadioButton
-import javax.swing.JTextField
-
 
 
 class RetypeOptions(val project: Project) {
@@ -39,37 +31,51 @@ class RetypeOptionsDialog(project: Project, private val retypeOptions: RetypeOpt
     retypeOptions.retypeCurrentFile = editor != null
 
     return panel {
-      row(label = "Typing delay (ms):") {
-        spinner(retypeOptions::retypeDelay, 0, 5000, 50)
+      row("Typing delay (ms):") {
+        spinner(0..5000, 50)
+          .bindIntValue(retypeOptions::retypeDelay)
       }
-      row(label = "Thread dump capture delay (ms):") {
-        spinner(retypeOptions::threadDumpDelay, 50, 5000, 50)
+      row("Thread dump capture delay (ms):") {
+        spinner(50..5000, 50)
+          .bindIntValue(retypeOptions::threadDumpDelay)
       }
       row {
-        val c = checkBox("Create", retypeOptions::enableLargeIndexing).actsAsLabel()
-        spinner(retypeOptions::largeIndexFilesCount, 100, 1_000_000, 1_000)
-          .enableIf(c.selected)
+        val c = checkBox("Create")
+          .bindSelected(retypeOptions::enableLargeIndexing)
+          .gap(RightGap.SMALL)
+        spinner(100..1_000_000, 1_000)
+          .bindIntValue(retypeOptions::largeIndexFilesCount)
+          .gap(RightGap.SMALL)
+          .enabledIf(c.selected)
         label("files to start background indexing")
       }
-      buttonGroup(retypeOptions::retypeCurrentFile) {
+      buttonsGroup {
         row {
           radioButton(if (editor?.selectionModel?.hasSelection() == true) "Retype selected text" else "Retype current file", true)
             .enabled(editor != null)
-        }
+        }.topGap(TopGap.SMALL)
         row {
           val r = radioButton("Retype", false)
-          spinner(retypeOptions::fileCount, 1, 5000)
-            .enableIf(r.selected)
+            .gap(RightGap.SMALL)
+          spinner(1..5000)
+            .bindIntValue(retypeOptions::fileCount)
+            .gap(RightGap.SMALL)
+            .enabledIf(r.selected)
           label("files with different sizes and extension")
-          textField(retypeOptions::retypeExtension, 5)
-            .enableIf(r.selected)
-        }
+            .gap(RightGap.SMALL)
+          textField()
+            .bindText(retypeOptions::retypeExtension)
+            .columns(5)
+            .enabledIf(r.selected)
+        }.bottomGap(BottomGap.SMALL)
+      }.bind(retypeOptions::retypeCurrentFile)
+      row {
+        checkBox("Record script for performance testing plugin")
+          .bindSelected(retypeOptions::recordScript)
       }
       row {
-        checkBox("Record script for performance testing plugin", retypeOptions::recordScript)
-      }
-      row {
-        checkBox("Restore original text after retype", retypeOptions::restoreOriginalText)
+        checkBox("Restore original text after retype")
+          .bindSelected(retypeOptions::restoreOriginalText)
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.LoadingState;
@@ -14,7 +14,14 @@ import java.util.Set;
 @ApiStatus.Experimental
 public interface PluginEnabler {
 
-  PluginEnabler HEADLESS = new DisabledPluginsState();
+  interface Headless extends PluginEnabler {
+
+    boolean isIgnoredDisabledPlugins();
+
+    void setIgnoredDisabledPlugins(boolean ignoredDisabledPlugins);
+  }
+
+  Headless HEADLESS = new DisabledPluginsState();
 
   static @NotNull PluginEnabler getInstance() {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
@@ -41,21 +48,5 @@ public interface PluginEnabler {
 
   default boolean disableById(@NotNull Set<PluginId> pluginIds) {
     return disable(IdeaPluginDescriptorImplKt.toPluginDescriptors(pluginIds));
-  }
-
-  /**
-   * @deprecated Renamed to {@link #enable(Collection)}.
-   */
-  @Deprecated
-  default void enablePlugins(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    enable(descriptors);
-  }
-
-  /**
-   * @deprecated Renamed to {@link #disable(Collection)}.
-   */
-  @Deprecated
-  default void disablePlugins(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    disable(descriptors);
   }
 }

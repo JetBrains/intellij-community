@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.ExecutionTarget
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.impl.EditConfigurationsDialog
@@ -14,13 +15,11 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -44,6 +43,7 @@ interface RunToolbarData {
   val id: String
   var configuration: RunnerAndConfigurationSettings?
   val environment: ExecutionEnvironment?
+  var executionTarget: ExecutionTarget?
 
   fun clear()
 }
@@ -66,6 +66,10 @@ fun AnActionEvent.mainState(): RunToolbarMainSlotState? {
   return this.dataContext.getData(RunToolbarData.RUN_TOOLBAR_MAIN_STATE)
 }
 
+internal fun DataContext.activeTarget(): ExecutionTarget? {
+  return runToolbarData()?.executionTarget
+}
+
 internal fun DataContext.configuration(): RunnerAndConfigurationSettings? {
   return runToolbarData()?.configuration
 }
@@ -82,12 +86,20 @@ internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSetting
   this.runToolbarData()?.configuration = value
 }
 
-internal fun DataContext.setConfiguration(value: RunnerAndConfigurationSettings?) {
+internal fun AnActionEvent.setExecutionTarget(value: ExecutionTarget?) {
+  this.runToolbarData()?.executionTarget = value
+}
+
+private fun DataContext.setConfiguration(value: RunnerAndConfigurationSettings?) {
   runToolbarData()?.configuration = value
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
   return runToolbarData()?.configuration
+}
+
+internal fun AnActionEvent.executionTarget(): ExecutionTarget? {
+  return runToolbarData()?.executionTarget
 }
 
 internal fun AnActionEvent.arrowIcon(): Icon? {

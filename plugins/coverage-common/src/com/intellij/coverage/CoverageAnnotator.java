@@ -13,7 +13,6 @@ public interface CoverageAnnotator {
   /**
    *
    * @param directory  {@link PsiDirectory} to obtain coverage information for
-   * @param manager
    * @return human-readable coverage information
    */
   @Nullable
@@ -24,7 +23,6 @@ public interface CoverageAnnotator {
   /**
    *
    * @param file {@link PsiFile} to obtain coverage information for
-   * @param manager
    * @return human-readable coverage information
    */
   @Nullable

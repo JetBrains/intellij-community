@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 val a = object : A<Int, String> {
     override fun foo(it: Int): String {

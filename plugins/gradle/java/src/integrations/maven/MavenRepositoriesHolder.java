@@ -2,11 +2,7 @@
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.CommonBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
@@ -113,9 +109,8 @@ public final class MavenRepositoriesHolder {
                                    CommonBundle.getCancelButtonText(),
                                    Messages.getWarningIcon());
         if (result == Messages.YES) {
-          NotificationsConfigurationImpl.getInstanceImpl().changeSettings(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP_ID,
-                                                                          NotificationDisplayType.NONE, false, false);
-
+          NotificationsConfiguration.getNotificationsConfiguration().setDisplayType(
+            UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP_ID, NotificationDisplayType.NONE);
           notification.hideBalloon();
         }
       }

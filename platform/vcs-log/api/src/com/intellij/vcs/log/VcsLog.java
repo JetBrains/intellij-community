@@ -3,6 +3,7 @@ package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,42 +18,31 @@ import java.util.concurrent.Future;
 public interface VcsLog {
 
   /**
-   * Returns commits currently selected in the log.
+   * Use {@link VcsLogCommitSelection#getCommits()} instead.
    */
+  @RequiresEdt
   @NotNull
   List<CommitId> getSelectedCommits();
 
   /**
-   * Returns cached metadata of the commits selected in the table.
-   * For commits that are not loaded a placeholder object
-   * (an instance of {@link com.intellij.vcs.log.data.LoadingDetails}) is returned.
-   * <br/>
-   * Metadata are loaded faster than full details and since it is done while scrolling,
-   * there is a better chance that details for a commit are loaded when user selects it.
-   * This makes this method preferable to {@link #getSelectedDetails()}.
-   *
-   * @see com.intellij.vcs.log.data.LoadingDetails
+   * Use {@link VcsLogCommitSelection#getCachedMetadata()} instead.
    */
+  @RequiresEdt
   @NotNull
   List<VcsCommitMetadata> getSelectedShortDetails();
 
   /**
-   * Returns cached details of the selected commits.
-   * For commits that are not loaded a placeholder object
-   * (an instance of {@link com.intellij.vcs.log.data.LoadingDetails}) is returned.
-   *
-   * @see com.intellij.vcs.log.data.LoadingDetails
+   * Use {@link VcsLogCommitSelection#getCachedFullDetails()} instead.
    */
+  @RequiresEdt
   @NotNull
   List<VcsFullCommitDetails> getSelectedDetails();
 
   /**
-   * Sends a request to load details that are currently selected.
-   * Details are loaded in background. If a progress indicator is specified it is used during loading process.
-   * After all details are loaded they are provided to the consumer in the EDT.
-   *
-   * @param consumer called in EDT after all details are loaded.
+   * @deprecated Use {@link VcsLogCommitSelection#requestFullDetails(Consumer)} instead.
    */
+  @RequiresEdt
+  @Deprecated
   void requestSelectedDetails(@NotNull Consumer<? super List<? extends VcsFullCommitDetails>> consumer);
 
   /**

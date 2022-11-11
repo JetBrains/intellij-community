@@ -43,7 +43,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         PsiFile file = holder.getFile();
         if (!(file instanceof XmlFile)) return;
 
@@ -108,7 +108,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
 
     // trimming the result
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    Document document = documentManager.getDocument(file);
+    Document document = file.getViewProvider().getDocument();
     assert document != null;
     documentManager.commitDocument(document);
     String trimmed = element.getValue().trim();

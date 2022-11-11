@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,7 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
           String[] lines = PsiLiteralUtil.getTextBlockLines(expression);
         if (lines == null) return;
         int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, false);
@@ -103,12 +104,19 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
 
   private static class ReplaceTrailingWhiteSpacesFix implements LocalQuickFix {
     private final String myMessage;
+    @SafeFieldForPreview
     private final @NotNull Function<? super @NotNull String, ? extends @Nullable CharSequence> myTransformation;
 
     private ReplaceTrailingWhiteSpacesFix(@NotNull String message,
                                           @NotNull Function<? super @NotNull String, ? extends @Nullable CharSequence> transformation) {
       myMessage = message;
       myTransformation = transformation;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      IntentionPreviewInfo info = LocalQuickFix.super.generatePreview(project, previewDescriptor);
+      return info == IntentionPreviewInfo.DIFF ? IntentionPreviewInfo.DIFF_NO_TRIM : info;
     }
 
     @Override

@@ -14,6 +14,7 @@ import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diff.impl.GenericDataProvider
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.util.concurrent.CompletableFuture
@@ -47,21 +49,25 @@ open class GHPRDiffRequestChainProducer(
   private val currentUser: GHUser
 ) : DiffRequestChainProducer {
 
-  override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
+  internal val changeProducerFactory = object : ChangeDiffRequestProducerFactory {
     val changesData = dataProvider.changesData
     val changesProviderFuture = changesData.loadChanges()
     //TODO: check if revisions are already fetched or load via API (could be much quicker in some cases)
     val fetchFuture = CompletableFuture.allOf(changesData.fetchBaseBranch(), changesData.fetchHeadBranch())
 
+    override fun create(project: Project?, change: Change): DiffRequestProducer? {
+      val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+      val changeDataKeys = loadRequestDataKeys(indicator, change, changesProviderFuture, fetchFuture)
+      val customDataKeys = createCustomContext(change)
+
+      return ChangeDiffRequestProducer.create(project, change, changeDataKeys + customDataKeys)
+    }
+  }
+
+  override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
     return object : AsyncDiffRequestChain() {
       override fun loadRequestProducers(): ListSelection<out DiffRequestProducer> {
-        return changes.map { change ->
-          val indicator = ProgressManager.getInstance().progressIndicator
-          val changeDataKeys = loadRequestDataKeys(indicator, change, changesProviderFuture, fetchFuture)
-          val customDataKeys = createCustomContext(change)
-
-          ChangeDiffRequestProducer.create(project, change, changeDataKeys + customDataKeys)
-        }
+        return changes.map { change -> changeProducerFactory.create(project, change) }
       }
     }
   }

@@ -57,7 +57,7 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
   private static class SerializableStoresNonSerializableVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       final PsiElement parent = aClass.getParent();
       if (!(parent instanceof PsiDeclarationStatement) && !(aClass instanceof PsiAnonymousClass)) {
@@ -75,7 +75,7 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression lambda) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
       super.visitLambdaExpression(lambda);
       final PsiType type = lambda.getFunctionalInterfaceType();
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
@@ -94,7 +94,7 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (expression.getQualifierExpression() != null) {
           return;

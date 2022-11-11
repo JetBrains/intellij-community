@@ -14,3 +14,6 @@ fun test() {
         !in A(2) -> Unit
     }
 }
+
+// FIR_COMPARISON
+// IGNORE_FIR_LOG

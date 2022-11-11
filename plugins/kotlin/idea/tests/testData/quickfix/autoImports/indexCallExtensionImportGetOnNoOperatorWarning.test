@@ -1,7 +1,7 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'Some.get'" "true"
 // ERROR: 'operator' modifier is required on 'get' in 'some.Some'
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
+/* IGNORE_FIR */
 
 package testing
 
@@ -27,9 +27,9 @@ operator fun Some.get(s: String) {}
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'Some.get'" "true"
 // ERROR: 'operator' modifier is required on 'get' in 'some.Some'
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
+/* IGNORE_FIR */
 
 package testing
 

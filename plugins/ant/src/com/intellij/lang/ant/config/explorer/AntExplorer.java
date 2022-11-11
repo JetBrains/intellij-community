@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -108,12 +108,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     final AntConfigurationListener listener = new AntConfigurationListener() {
       @Override
       public void configurationLoaded() {
-        treeModel.invalidate();
+        treeModel.invalidateAsync();
       }
 
       @Override
       public void buildFileAdded(AntBuildFile buildFile) {
-        treeModel.invalidate();
+        treeModel.invalidateAsync();
       }
 
       @Override
@@ -123,7 +123,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
       @Override
       public void buildFileRemoved(AntBuildFile buildFile) {
-        treeModel.invalidate();
+        treeModel.invalidateAsync();
       }
     };
     config.addAntConfigurationListener(listener);
@@ -165,30 +165,30 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void keymapAdded(@NotNull Keymap keymap) {
-        treeModel.invalidate();
+        treeModel.invalidateAsync();
       }
 
       @Override
       public void keymapRemoved(@NotNull Keymap keymap) {
-        treeModel.invalidate();
+        treeModel.invalidateAsync();
       }
 
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
-        treeModel.invalidate();
+        treeModel.invalidateAsync();
       }
 
       @Override
       public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
-        treeModel.invalidate();
+        treeModel.invalidateAsync();
       }
     });
-    DomManager.getDomManager(project).addDomEventListener(__ -> treeModel.invalidate(), this);
+    DomManager.getDomManager(project).addDomEventListener(__ -> treeModel.invalidateAsync(), this);
 
     project.getMessageBus().connect(this).subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
       public void beforeRunTasksChanged () {
-        treeModel.invalidate();
+        treeModel.invalidateAsync();
       }
     });
 
@@ -407,10 +407,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       .toArray(AntBuildTarget[]::new);
   }
 
-  public boolean isBuildFileSelected() {
-    if( myProject == null) return false;
-    final AntBuildFileBase file = getCurrentBuildFile();
-    return file != null && file.exists();
+  public AntBuildFileBase getSelectedFile() {
+    if( myProject == null) return null;
+    return getCurrentBuildFile();
   }
 
   @Nullable
@@ -644,6 +643,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     public void update(@NotNull AnActionEvent event) {
       event.getPresentation().setEnabled(getCurrentBuildFile() != null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class RunAction extends AnAction {
@@ -682,6 +686,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
       presentation.setEnabled(canRunSelection());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
   private final class MakeAntRunConfigurationAction extends AnAction {
     MakeAntRunConfigurationAction() {
@@ -693,6 +702,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(myTree.getSelectionCount() == 1 && canRunSelection());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -748,6 +762,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setTargetsFiltered(flag);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private void setTargetsFiltered(boolean value) {
@@ -756,7 +775,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       AntConfigurationBase.getInstance(myProject).setFilterTargets(value);
     }
     finally {
-      myTreeModel.invalidate();
+      myTreeModel.invalidateAsync();
     }
   }
 
@@ -786,7 +805,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       else {
         antConfiguration.clearTargetForEvent(myExecutionEvent);
       }
-      myTreeModel.invalidate();
+      myTreeModel.invalidateAsync();
     }
 
     @Override
@@ -794,6 +813,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       super.update(e);
       final AntBuildFile buildFile = myTarget.getModel().getBuildFile();
       e.getPresentation().setEnabled(buildFile != null && buildFile.exists());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -814,6 +838,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTarget.getModel().getBuildFile().exists());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -842,6 +871,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     public void update(@NotNull AnActionEvent e) {
       final TreePath[] paths = myTree.getSelectionPaths();
       e.getPresentation().setEnabled(paths != null && paths.length > 1 && canRunSelection());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -900,7 +934,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         }
       }
       finally {
-        myTreeModel.invalidate();
+        myTreeModel.invalidateAsync();
       }
     }
 
@@ -949,6 +983,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         presentation.setEnabled(enabled);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class AssignShortcutAction extends AnAction {
@@ -967,6 +1006,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myActionId != null && ActionManager.getInstance().getAction(myActionId) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

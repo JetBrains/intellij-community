@@ -5,12 +5,12 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiJavaModule
-import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
+import com.intellij.testFramework.junit5.RunInEdt
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
-@RunsInEdt
+@RunInEdt
 class PsiJavaModuleModificationTrackerTest : LightJavaCodeInsightFixtureTestCase5() {
   @Test
   fun changeInPsiModuleInfo() {

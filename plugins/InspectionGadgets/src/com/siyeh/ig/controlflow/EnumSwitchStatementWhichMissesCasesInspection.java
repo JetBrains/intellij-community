@@ -78,7 +78,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       }
 
       @Override
-      public void visitSwitchExpression(PsiSwitchExpression expression) {
+      public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
         processSwitchBlock(expression);
       }
 

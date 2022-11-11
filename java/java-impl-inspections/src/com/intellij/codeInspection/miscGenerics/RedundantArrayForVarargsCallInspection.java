@@ -53,13 +53,13 @@ public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression expression) {
+    public void visitCallExpression(@NotNull PsiCallExpression expression) {
       super.visitCallExpression(expression);
       checkCall(expression);
     }
 
     @Override
-    public void visitEnumConstant(PsiEnumConstant expression) {
+    public void visitEnumConstant(@NotNull PsiEnumConstant expression) {
       super.visitEnumConstant(expression);
       checkCall(expression);
     }

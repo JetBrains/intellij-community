@@ -132,6 +132,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return myItems;
   }
 
+  public List<PopupFactoryImpl.InlineActionItem> getInlineActions(PopupFactoryImpl.ActionItem value) {
+    return value.getInlineActions();
+  }
+
   @Override
   public boolean isSelectable(final PopupFactoryImpl.ActionItem value) {
     return value.isEnabled();
@@ -208,13 +212,17 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public @Nullable PopupStep<?> onChosen(PopupFactoryImpl.ActionItem item, boolean finalChoice, @Nullable InputEvent inputEvent) {
+  public @Nullable PopupStep<?> onChosen(@NotNull PopupFactoryImpl.ActionItem item, boolean finalChoice, @Nullable InputEvent inputEvent) {
     if (!item.isEnabled()) return FINAL_CHOICE;
     AnAction action = item.getAction();
     if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
       return createActionsStep(
         (ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
         false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
+    }
+    else if (action instanceof ToggleAction && item.isKeepPopupOpen()) {
+      performAction(action, inputEvent);
+      return FINAL_CHOICE;
     }
     else {
       myFinalRunnable = () -> performAction(action, inputEvent);
@@ -243,6 +251,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
         for (PopupFactoryImpl.ActionItem actionItem : values) {
           Presentation presentation = presentationFactory.getPresentation(actionItem.getAction());
           actionItem.updateFromPresentation(presentation, myActionPlace);
+          for (PopupFactoryImpl.InlineActionItem inlineActionItem : actionItem.getInlineActions()) {
+            presentation = presentationFactory.getPresentation(inlineActionItem.getAction());
+            inlineActionItem.updateFromPresentation(presentation, myActionPlace);
+          }
         }
       }
     );

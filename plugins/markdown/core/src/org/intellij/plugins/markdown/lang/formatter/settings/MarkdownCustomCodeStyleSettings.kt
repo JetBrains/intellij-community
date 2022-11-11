@@ -59,4 +59,7 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
 
   @JvmField
   var INSERT_QUOTE_ARROWS_ON_WRAP = true
+
+  @JvmField
+  var FORMAT_TABLES = true
 }

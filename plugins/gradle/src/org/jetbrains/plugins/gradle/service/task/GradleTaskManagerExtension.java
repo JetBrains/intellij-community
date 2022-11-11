@@ -62,7 +62,6 @@ public interface GradleTaskManagerExtension {
    * @param listener should be called to notify IDEA on tasks' progress and status
    * @return false if tasks were not executed and IDEA should proceed with default logic, true - if tasks are executed and no
    * more actions are required
-   * @throws ExternalSystemException
    */
   default boolean executeTasks(@NotNull final ExternalSystemTaskId id,
                                @NotNull final List<String> taskNames,

@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log
 
+import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -17,7 +19,6 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.BekUtil
-import com.intellij.vcs.log.util.StopWatch
 import git4idea.history.GitLogUtil
 import java.util.regex.Pattern
 
@@ -97,26 +98,26 @@ fun getIncorrectCommits(project: Project, root: VirtualFile): Set<Hash> {
 fun getIncorrectCommitsFromIndex(dataManager: VcsLogData,
                                  dataGetter: IndexDataGetter,
                                  root: VirtualFile): MutableSet<Hash> {
-  val stopWatch = StopWatch.start("getting incorrect merges from index for ${root.name}")
-  val commits = dataGetter.filter(listOf(MAGIC_FILTER)).asSequence()
-  val result = commits.map { dataManager.storage.getCommitId(it)!! }.filter { it.root == root }.mapTo(mutableSetOf()) { it.hash }
-  stopWatch.report()
-  return result
+  TraceManager.getTracer("vcs").spanBuilder("getting incorrect merges from index").setAttribute("rootName",
+                                                                                                root.name).useWithScope {
+    val commits = dataGetter.filter(listOf(MAGIC_FILTER)).asSequence()
+    return commits.map { dataManager.storage.getCommitId(it)!! }.filter { it.root == root }.mapTo(mutableSetOf()) { it.hash }
+  }
 }
 
 @Throws(VcsException::class)
 fun getIncorrectCommitsFromGit(project: Project, root: VirtualFile): MutableSet<Hash> {
-  val stopWatch = StopWatch.start("getting incorrect merges from git for ${root.name}")
-  val filterParameters = mutableListOf<String>()
+  TraceManager.getTracer("vcs").spanBuilder("getting incorrect merges from git").setAttribute("rootName", root.name).useWithScope {
+    val filterParameters = mutableListOf<String>()
 
-  filterParameters.addAll(GitLogUtil.LOG_ALL)
-  filterParameters.add("--merges")
+    filterParameters.addAll(GitLogUtil.LOG_ALL)
+    filterParameters.add("--merges")
 
-  GitLogProvider.appendTextFilterParameters(MAGIC_REGEX, true, false, filterParameters)
+    GitLogProvider.appendTextFilterParameters(MAGIC_REGEX, true, false, filterParameters)
 
-  val result = mutableSetOf<Hash>()
-  GitLogUtil.readTimedCommits(project, root, filterParameters, EmptyConsumer.getInstance(),
-                              EmptyConsumer.getInstance(), Consumer { commit -> result.add(commit.id) })
-  stopWatch.report()
-  return result
+    val result = mutableSetOf<Hash>()
+    GitLogUtil.readTimedCommits(project, root, filterParameters, EmptyConsumer.getInstance(),
+                                EmptyConsumer.getInstance(), Consumer { commit -> result.add(commit.id) })
+    return result
+  }
 }

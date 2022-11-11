@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerManager;
@@ -63,7 +63,6 @@ public final class JVMNameUtil {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void appendJVMSignature(JVMNameBuffer buffer , PsiType type){
     if (type == null) {
       return;
@@ -410,7 +409,7 @@ public final class JVMNameUtil {
     try {
         parent.accept(new JavaRecursiveElementVisitor() {
           @Override
-          public void visitAnonymousClass(PsiAnonymousClass cls) {
+          public void visitAnonymousClass(@NotNull PsiAnonymousClass cls) {
             classIndex.set(classIndex.get() + 1);
             if (aClass.equals(cls)) {
               throw new ProcessCanceledException();

@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Objects;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class SimpleTextAttributes {
 
   @MagicConstant(flags = {

@@ -60,7 +60,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         PsiReferenceExpression expression = call.getMethodExpression();
         PsiElement nameElement = expression.getReferenceNameElement();

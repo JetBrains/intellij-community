@@ -8,14 +8,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
-import org.jetbrains.annotations.NotNull;
 
 
 final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
-  CoverageProjectViewDirectoryNodeDecorator(@NotNull Project project) {
-    super(project);
-  }
-
   @Override
   public void decorate(ProjectViewNode node, PresentationData data) {
     Project project = node.getProject();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.search
 
@@ -8,6 +8,8 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
@@ -16,7 +18,6 @@ import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.usagesSearch.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
@@ -101,7 +102,7 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
         KotlinTypeAliasShortNameIndex.get(shortName, project, scope)
 
     override fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean =
-        ProjectRootsUtil.isInProjectSource(element, includeScriptsOutsideSourceRoots)
+        RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = includeScriptsOutsideSourceRoots).matches(element)
 
     override fun isOverridable(declaration: KtDeclaration): Boolean =
         declaration.isOverridable()

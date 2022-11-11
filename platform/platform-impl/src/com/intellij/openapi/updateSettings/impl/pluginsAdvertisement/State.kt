@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -40,19 +39,13 @@ data class PluginAdvertiserExtensionsData(
 
 @State(name = "PluginAdvertiserExtensions", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 @Service(Service.Level.APP)
-class PluginAdvertiserExtensionsStateService : SerializablePersistentStateComponent<PluginAdvertiserExtensionsStateService.State>(
-  State()
-) {
-  private val tracker = SimpleModificationTracker()
-
+class PluginAdvertiserExtensionsStateService : SerializablePersistentStateComponent<PluginAdvertiserExtensionsStateService.State>(State()) {
 
   /**
    * Stores locally installed plugins (both enabled and disabled) supporting given filenames/extensions.
    */
   @Serializable
-  data class State(val plugins: MutableMap<String, PluginData> = HashMap())
-
-  override fun getStateModificationCount() = tracker.modificationCount
+  data class State(val plugins: Map<String, PluginData> = emptyMap())
 
   companion object {
     private val LOG = logger<PluginAdvertiserExtensionsStateService>()
@@ -99,7 +92,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
       return plugins
     }
 
-    @Suppress("HardCodedStringLiteral")
+    @Suppress("HardCodedStringLiteral", "DEPRECATION")
     private fun createUnknownExtensionFeature(extensionOrFileName: String) = UnknownFeature(
       FileTypeFactory.FILE_TYPE_FACTORY_EP.name,
       "File Type",
@@ -127,11 +120,9 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
   fun createExtensionDataProvider(project: Project) = ExtensionDataProvider(project)
 
   fun registerLocalPlugin(matcher: FileNameMatcher, descriptor: PluginDescriptor) {
-    state.plugins.put(matcher.presentableString, PluginData(descriptor))
-
-    // no need to waste time to check that map is really changed - registerLocalPlugin is not called often after start-up,
-    // so, mod count will be not incremented too often
-    tracker.incModificationCount()
+    updateState { oldState ->
+      State(oldState.plugins + (matcher.presentableString to PluginData(descriptor)))
+    }
   }
 
   @RequiresBackgroundThread

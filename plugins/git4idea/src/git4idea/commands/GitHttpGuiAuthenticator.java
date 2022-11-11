@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -181,7 +181,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myAuthenticationMode != AuthenticationMode.NONE) {
       delegates.add(passwordSafeProvider);
     }
-    List<ExtensionAdapterProvider> extensionAdapterProviders = ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensions(),
+    List<ExtensionAdapterProvider> extensionAdapterProviders = ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensionList(),
                                                                                  (provider) -> new ExtensionAdapterProvider(unifiedUrl,
                                                                                                                             myProject,
                                                                                                                             provider));
@@ -373,7 +373,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @NotNull
     private AuthData getDataFromDialog(@NotNull String url, @Nullable String username, boolean editableUsername) {
       Map<String, InteractiveGitHttpAuthDataProvider> providers = new HashMap<>();
-      for (GitRepositoryHostingService service : GitRepositoryHostingService.EP_NAME.getExtensions()) {
+      for (GitRepositoryHostingService service : GitRepositoryHostingService.EP_NAME.getExtensionList()) {
         InteractiveGitHttpAuthDataProvider provider = editableUsername || username == null
                                                       ? service.getInteractiveAuthDataProvider(myProject, url)
                                                       : service.getInteractiveAuthDataProvider(myProject, url, username);

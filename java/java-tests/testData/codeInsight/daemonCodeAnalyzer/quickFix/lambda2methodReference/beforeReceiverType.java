@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference" "true-preview"
 class Example {
   interface I {
     void foo(Example e);

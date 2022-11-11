@@ -1,4 +1,4 @@
-// "Replace '=' with '=='" "true"
+// "Replace '=' with '=='" "true-preview"
 class Test {
   void f(int a) {
     if (a <caret>= 0) {}

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.filename.UniqueNameBuilder;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
@@ -29,6 +28,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
+import com.intellij.util.indexing.FileBasedIndexExtension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,23 +37,19 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-
 final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
-  @NotNull
   @Override
-  public String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile file, @NotNull GlobalSearchScope scope) {
+  public @NotNull String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile file, @NotNull GlobalSearchScope scope) {
     return getUniqueVirtualFilePath(project, file, false, scope);
   }
 
-  @NotNull
   @Override
-  public String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile vFile) {
+  public @NotNull String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile vFile) {
     return getUniqueVirtualFilePath(project, vFile, GlobalSearchScope.projectScope(project));
   }
 
-  @NotNull
   @Override
-  public String getUniqueVirtualFilePathWithinOpenedFileEditors(@NotNull Project project, @NotNull VirtualFile vFile) {
+  public @NotNull String getUniqueVirtualFilePathWithinOpenedFileEditors(@NotNull Project project, @NotNull VirtualFile vFile) {
     return getUniqueVirtualFilePath(project, vFile, true, GlobalSearchScope.projectScope(project));
   }
 
@@ -63,8 +59,7 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     ourShortNameOpenedBuilderCacheKey = Key.create("project's.short.file.name.opened.builder");
   private static final UniqueNameBuilder<VirtualFile> ourEmptyBuilder = new UniqueNameBuilder<>(null, null);
 
-  @NotNull
-  private static String getName(@NotNull VirtualFile file) {
+  private static @NotNull String getName(@NotNull VirtualFile file) {
     return file instanceof VirtualFilePathWrapper ? file.getPresentableName() : file.getName();
   }
 
@@ -82,11 +77,10 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     return getName(file);
   }
 
-  @Nullable
-  private static UniqueNameBuilder<VirtualFile> getUniqueVirtualFileNameBuilder(@NotNull Project project,
-                                                                                @NotNull VirtualFile file,
-                                                                                boolean skipNonOpenedFiles,
-                                                                                @NotNull GlobalSearchScope scope) {
+  private static @Nullable UniqueNameBuilder<VirtualFile> getUniqueVirtualFileNameBuilder(@NotNull Project project,
+                                                                                          @NotNull VirtualFile file,
+                                                                                          boolean skipNonOpenedFiles,
+                                                                                          @NotNull GlobalSearchScope scope) {
     Key<CachedValue<Map<GlobalSearchScope, Map<String, UniqueNameBuilder<VirtualFile>>>>> key =
       skipNonOpenedFiles ? ourShortNameOpenedBuilderCacheKey : ourShortNameBuilderCacheKey;
     CachedValue<Map<GlobalSearchScope, Map<String, UniqueNameBuilder<VirtualFile>>>> data = project.getUserData(key);
@@ -125,10 +119,9 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     return null;
   }
 
-  @NotNull
-  private static ModificationTracker getFilenameIndexModificationTracker(@NotNull Project project) {
-    if (Registry.is("indexing.filename.over.vfs")) {
-      return () -> FSRecords.getNamesIndexModCount();
+  private static @NotNull ModificationTracker getFilenameIndexModificationTracker(@NotNull Project project) {
+    if (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+      return FSRecords::getNamesIndexModCount;
     }
     return () -> disableIndexUpToDateCheckInEdt(() -> FileBasedIndex.getInstance().getIndexModificationStamp(FilenameIndex.NAME, project));
   }
@@ -144,7 +137,7 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
 
     final MultiMap<String, VirtualFile> multiMap = MultiMap.createSet();
     if (useIndex) {
-      Set<String> names = JBIterable.of(requiredFile).append(openFiles).append(recentFiles).map(o -> getName(o)).toSet();
+      Set<String> names = JBIterable.of(requiredFile).append(openFiles).append(recentFiles).map(UniqueVFilePathBuilderImpl::getName).toSet();
       ThrowableComputable<Boolean, RuntimeException> query = () -> FilenameIndex.processFilesByNames(
         names, true, scope, null, file -> {
           String name = getName(file);

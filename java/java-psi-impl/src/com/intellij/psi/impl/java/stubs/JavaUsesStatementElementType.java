@@ -56,7 +56,7 @@ public class JavaUsesStatementElementType extends JavaStubElementType<PsiUsesSta
 
   @NotNull
   @Override
-  public PsiUsesStatementStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PsiUsesStatementStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, node, JavaElementType.JAVA_CODE_REFERENCE);
     String refText = ref != null ? JavaSourceUtil.getReferenceText(tree, ref) : null;
     return new PsiUsesStatementStubImpl(parentStub, refText);

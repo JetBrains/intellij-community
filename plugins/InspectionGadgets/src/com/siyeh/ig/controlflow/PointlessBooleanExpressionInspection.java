@@ -413,19 +413,19 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
   private class PointlessBooleanExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       checkExpression(expression);
     }
@@ -584,7 +584,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       final PsiElement target = expression.resolve();
       if (target instanceof PsiVariable && ((PsiVariable)target).hasModifierProperty(PsiModifier.FINAL) &&
           ((PsiVariable)target).hasInitializer()) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables.actions.column
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -9,6 +10,7 @@ import com.intellij.openapi.command.executeCommand
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.updateColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 internal abstract class SetColumnAlignmentAction(private val alignment: MarkdownTableSeparatorRow.CellAlignment): ToggleAction() {
@@ -19,10 +21,15 @@ internal abstract class SetColumnAlignmentAction(private val alignment: Markdown
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
     val offset = event.getData(CommonDataKeys.CARET)?.offset
-    if (editor == null || file == null || offset == null) {
+
+    if (editor == null
+        || file == null
+        || offset == null
+        || !file.language.isMarkdownLanguage()) {
       event.presentation.isEnabledAndVisible = false
       return false
     }
+
     val document = editor.document
     val (table, columnIndex) = ColumnBasedTableAction.findTableAndIndex(event, file, document, offset)
     event.presentation.isEnabledAndVisible = table?.hasCorrectBorders() == true
@@ -52,6 +59,10 @@ internal abstract class SetColumnAlignmentAction(private val alignment: Markdown
         }
       }
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   //class None: SetColumnAlignmentAction(MarkdownTableSeparatorRow.CellAlignment.NONE)

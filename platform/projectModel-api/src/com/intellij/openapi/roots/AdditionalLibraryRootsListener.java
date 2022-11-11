@@ -27,7 +27,7 @@ public interface AdditionalLibraryRootsListener {
                            @NotNull String libraryNameForDebug);
 
   /**
-   * Use {@link #fireAdditionalLibraryChanged(Project, String, Collection, Collection, String)} to notify platform about changes in roots
+   * Use {@code fireAdditionalLibraryChanged()} to notify platform about changes in roots
    * provided by a {@link SyntheticLibrary} from an {@link AdditionalLibraryRootsProvider}.
    * In particular {@code newRoots} would be indexed, and Project View tree would be refreshed. So in hypothetical case
    * when multiple {@link SyntheticLibrary} from same {@link AdditionalLibraryRootsProvider} were changed,

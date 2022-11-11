@@ -240,8 +240,7 @@ class ProjectCreationFeedbackDialog(
                 checkBoxOtherProperty.set(false)
               }
             }
-            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                              Predicate<JBTextField> { textField -> textField.text.isEmpty() })
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, Predicate<JBTextField> { it.text.isEmpty() })
           }
       }.bottomGap(BottomGap.MEDIUM)
 
@@ -285,8 +284,7 @@ class ProjectCreationFeedbackDialog(
             checkBoxEmail?.addActionListener { _ ->
               isEnabled = checkBoxEmailProperty.get()
             }
-            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                              Predicate<JBTextField> { textField -> textField.text.isEmpty() })
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, Predicate<JBTextField> { it.text.isEmpty() })
           }.errorOnApply(NPWFeedbackBundle.message("dialog.created.project.textfield.email.required")) {
             checkBoxEmailProperty.get() && it.text.isBlank()
           }.errorOnApply(ApplicationBundle.message("feedback.form.email.invalid")) {

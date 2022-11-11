@@ -31,7 +31,7 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
       if (javaModule != null) {
         return new JavaElementVisitor() {
           @Override
-          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
 
             if (isCallToMethod(expression, JAVA_LANG_CLASS, FOR_NAME) || isCallToMethod(expression, JAVA_LANG_CLASS_LOADER, LOAD_CLASS)) {

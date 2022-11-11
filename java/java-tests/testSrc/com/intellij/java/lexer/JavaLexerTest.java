@@ -226,6 +226,8 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("\\u0023! ", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u0023')\nEXCL ('!')\nWHITE_SPACE (' ')");
     doTest("/", "DIV ('/')");
     doTest("1/2", "INTEGER_LITERAL ('1')\nDIV ('/')\nINTEGER_LITERAL ('2')");
+    doTest("//\\\\u000A test", "END_OF_LINE_COMMENT ('//\\\\u000A test')"); // escaped backslash, not a unicode escape
+    doTest("//\\\\\\u000A test", "END_OF_LINE_COMMENT ('//\\\\')\nWHITE_SPACE ('\\u000A ')\nIDENTIFIER ('test')"); // escaped backslash, followed by a unicode escape
   }
 
   public void testWhitespace() {
@@ -236,6 +238,15 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("\\u000A", "WHITE_SPACE ('\\u000A')");
     doTest("\\u000d", "WHITE_SPACE ('\\u000d')");
     doTest("\\u000d\n\\u000a", "WHITE_SPACE ('\\u000d\\n\\u000a')");
+    doTest("\\", "BAD_CHARACTER ('\\')");
+    doTest("\\u", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u')");
+    doTest("\\u0", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u0')");
+    doTest("\\u00", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u00')");
+    doTest("\\u000", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u000')");
+    doTest("\\u000A", "WHITE_SPACE ('\\u000A')");
+    doTest("\\u000A\\u000A", "WHITE_SPACE ('\\u000A\\u000A')");
+    doTest("\\\\u000A", "BAD_CHARACTER ('\\')\nBAD_CHARACTER ('\\')\nIDENTIFIER ('u000A')");
+    doTest("\\\\\\u000A", "BAD_CHARACTER ('\\')\nBAD_CHARACTER ('\\')\nWHITE_SPACE ('\\u000A')");
   }
 
   @Override

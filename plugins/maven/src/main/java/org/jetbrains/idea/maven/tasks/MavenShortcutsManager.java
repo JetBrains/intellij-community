@@ -70,7 +70,7 @@ public final class MavenShortcutsManager implements Disposable {
 
     MyProjectsTreeListener listener = new MyProjectsTreeListener();
     MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);
-    mavenProjectManager.addManagerListener(listener);
+    mavenProjectManager.addManagerListener(listener, this);
     mavenProjectManager.addProjectsTreeListener(listener, this);
 
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect(this);

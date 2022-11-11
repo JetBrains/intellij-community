@@ -1,0 +1,6 @@
+-DoNotShowParentsInLocationJava.kt
+ -interface Third : Second
+  fun equals(other: Any?): Boolean location=→Any
+  fun foo(): Unit location=→Second
+  fun hashCode(): Int location=→Any
+  fun toString(): String location=→Any

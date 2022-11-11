@@ -1,4 +1,4 @@
-// "Sort content" "true"
+// "Sort content" "true-preview"
 
 public class Test {
   static final String[] SPECIFICATIONS = new String[]{

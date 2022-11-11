@@ -5,7 +5,7 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.avatar.AvatarIconsProvider
+import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.GridBag
@@ -19,7 +19,7 @@ import javax.swing.*
 internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
   private val listModel: AccountsListModel<A, *>,
   private val detailsProvider: AccountsDetailsProvider<A, D>,
-  private val avatarIconsProvider: AvatarIconsProvider<A>
+  private val avatarIconsProvider: IconsProvider<A>
 ) : ListCellRenderer<A>, JPanel() {
 
   private val accountName = JLabel()
@@ -62,7 +62,7 @@ internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
                                             cellHasFocus: Boolean): Component {
     UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus()))
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
-    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
+    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(isSelected, list.hasFocus())
 
     accountName.apply {
       text = account.name

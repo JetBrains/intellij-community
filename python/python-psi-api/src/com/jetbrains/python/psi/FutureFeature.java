@@ -61,7 +61,6 @@ public enum FutureFeature {
   }
 
   /**
-   * @param level
    * @return true iff the feature can either be imported from __future__ at given level, or is already built-in.
    */
   public boolean availableAt(@NotNull LanguageLevel level) {
@@ -69,7 +68,6 @@ public enum FutureFeature {
   }
 
   /**
-   * @param level
    * @return true iff the feature is already present (required) at given level, and there's no need to import it.
    */
   public boolean requiredAt(@NotNull LanguageLevel level) {

@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -648,6 +649,9 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   public static ArrayList<TaskRepository> loadRepositories(@NotNull Element element) {
     ArrayList<TaskRepository> repositories = new ArrayList<>();
+    // do not initialize TaskRepositoryType EPs eagerly if we have no settings for any of them
+    if (element.getChildren().isEmpty()) return repositories;
+
     for (TaskRepositoryType repositoryType : TaskRepositoryType.getRepositoryTypes()) {
       for (Element o : element.getChildren(repositoryType.getName())) {
         try {
@@ -720,7 +724,9 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     changeListManager.addChangeListListener(myChangeListListener, myProject);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> WorkingContextManager.getInstance(myProject).pack(200, 50));
+      ProjectUtilKt.executeOnPooledThread(myProject, () -> {
+        WorkingContextManager.getInstance(myProject).pack(200, 50);
+      });
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {

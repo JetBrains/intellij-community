@@ -1,4 +1,4 @@
-// "Annotate method 'dontAnnotateBase' as @NotNull" "true"
+// "Annotate method 'dontAnnotateBase()' as '@NotNull'" "true-preview"
 import org.jetbrains.annotations.NotNull;
 
 class X {
@@ -14,7 +14,7 @@ class Y extends X{
 }
 class Z extends Y {
     @NotNull
-    String dontAnnotateBase<caret>() { // trigger quick fix for inspection here
+    String dontAnnotateBase<caret>() {// trigger quick fix for inspection here
         return "Z";
     }
 }

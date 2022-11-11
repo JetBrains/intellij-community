@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -411,7 +411,8 @@ public final class LambdaUtil {
           PsiElement resultElement = resolveResult.getElement();
           LOG.assertTrue(!(MethodCandidateInfo.isOverloadCheck(contextCall.getArgumentList()) &&
                            resultElement instanceof PsiMethod &&
-                           ((PsiMethod)resultElement).hasTypeParameters()));
+                           ((PsiMethod)resultElement).hasTypeParameters() &&
+                           contextCall instanceof PsiCallExpression && ((PsiCallExpression)contextCall).getTypeArguments().length == 0));
           return getSubstitutedType(expression, tryToSubstitute, lambdaIdx, resolveResult);
         }
       }
@@ -486,7 +487,10 @@ public final class LambdaUtil {
         if (results != null) {
           final Set<PsiType> types = new HashSet<>();
           for (JavaResolveResult result : results) {
-            final PsiType functionalExpressionType = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(functionalExpression, false, () -> getSubstitutedType(functionalExpression, true, lambdaIdx, result));
+            Computable<PsiType> computeType = () -> getSubstitutedType(functionalExpression, true, lambdaIdx, result);
+            final PsiType functionalExpressionType = results.length == 1
+                                                     ? computeType.compute() 
+                                                     : MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(functionalExpression, false, computeType);
             if (functionalExpressionType != null && types.add(functionalExpressionType)) {
               overloadProcessor.consume(functionalExpressionType);
             }
@@ -802,22 +806,8 @@ public final class LambdaUtil {
 
   public static PsiCall copyTopLevelCall(@NotNull PsiCall call) {
     if (call instanceof PsiEnumConstant) {
-      PsiClass containingClass = ((PsiEnumConstant)call).getContainingClass();
-      if (containingClass == null) {
-        return null;
-      }
-      String enumName = containingClass.getName();
-      if (enumName == null) {
-        return null;
-      }
-      PsiMethod resolveMethod = call.resolveMethod();
-      if (resolveMethod == null) {
-        return null;
-      }
-      PsiElement contextFile = call.getContainingFile().copy();
-      PsiClass anEnum = (PsiClass)contextFile.add(JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName));
-      anEnum.add(resolveMethod);
-      return  (PsiCall)anEnum.add(call);
+      PsiFile contextFile = (PsiFile)call.getContainingFile().copy();
+      return PsiTreeUtil.findSameElementInCopy(call, contextFile);
     }
     PsiElement expressionForType = call;
     while (true) {
@@ -1075,7 +1065,7 @@ public final class LambdaUtil {
       boolean capturing;
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (expression instanceof PsiMethodReferenceExpression) return;
         if (expression.getParent() instanceof PsiMethodCallExpression && expression.getQualifierExpression() != null) return;
@@ -1091,13 +1081,13 @@ public final class LambdaUtil {
       }
 
       @Override
-      public void visitSuperExpression(PsiSuperExpression expression) {
+      public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
         capturing = true;
         stopWalking();
       }
 
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         capturing = true;
         stopWalking();
       }

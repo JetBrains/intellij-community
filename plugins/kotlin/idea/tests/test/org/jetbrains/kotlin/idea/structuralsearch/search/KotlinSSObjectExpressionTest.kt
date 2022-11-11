@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSObjectExpressionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSObjectExpressionTest : KotlinStructuralSearchTest() {
     fun testObject() {
         doTest(pattern = """
             fun '_() = object {

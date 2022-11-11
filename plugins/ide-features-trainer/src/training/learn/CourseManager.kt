@@ -79,6 +79,11 @@ class CourseManager internal constructor() : Disposable {
       }
     }
 
+  val currentCourse: LearningCourse?
+    get() = LangManager.getInstance().getLanguageId()?.let { lang ->
+      COURSE_MODULES_EP.extensionList.find { lang.equals(it.language, ignoreCase = true) }?.instance
+    }
+
   override fun dispose() {
   }
 
@@ -120,6 +125,10 @@ class CourseManager internal constructor() : Disposable {
   fun findCommonModules(commonCourseId: String): Collection<IftModule> {
     if (commonCourses.isEmpty) reloadCommonModules()
     return commonCourses[commonCourseId].map(ModuleInfo::module)
+  }
+
+  fun findCommonCourseById(id: String): LearningCourse? {
+    return COMMON_COURSE_MODULES_EP.extensionList.find { it.key == id }?.instance
   }
 
   fun isModuleExternal(module: IftModule): Boolean {

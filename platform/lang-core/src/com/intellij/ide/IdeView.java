@@ -40,7 +40,7 @@ public interface IdeView {
    * Returns the list of directories corresponding to the element currently selected in the view.
    * Can return a list of multiple elements if a package is selected.
    *
-   * @return the list of directories, or an empty array if nothing is selected.
+   * @return the array of directories, or an empty array if nothing is selected.
    */
   PsiDirectory @NotNull [] getDirectories();
 

@@ -168,7 +168,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     final PsiExpression constantExpression = refConstantInitializer.get();
     constantExpression.accept(new JavaRecursiveElementVisitor(){
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiMember && !PsiUtil.isMemberAccessibleAt((PsiMember)resolved, method)) {

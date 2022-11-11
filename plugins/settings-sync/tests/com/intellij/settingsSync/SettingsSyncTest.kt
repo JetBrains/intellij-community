@@ -4,14 +4,16 @@ import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
+import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.testFramework.replaceService
+import com.intellij.util.io.exists
 import com.intellij.util.toBufferExposingByteArray
+import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -21,6 +23,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.charset.Charset
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.CountDownLatch
 
 @RunWith(JUnit4::class)
@@ -136,7 +139,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState), null))
 
     updateChecker.scheduleUpdateFromServer()
 
@@ -144,12 +147,61 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
   }
 
+  @Test fun `exportable non-roamable settings should not be synced`() {
+    testVariousComponentsShouldBeSyncedOrNot(ExportableNonRoamable(), expectedToBeSynced = false)
+  }
+
+  @Test fun `roamable settings should be synced`() {
+    testVariousComponentsShouldBeSyncedOrNot(Roamable(), expectedToBeSynced = true)
+  }
+
+  private fun testVariousComponentsShouldBeSyncedOrNot(component: BaseComponent, expectedToBeSynced: Boolean) {
+    component.aState.foo = "bar"
+    runBlocking {
+      application.componentStore.saveComponent(component)
+    }
+    application.registerComponentImplementation(component.javaClass, component.javaClass, false)
+
+    initSettingsSync()
+
+    val state = component::class.annotations.find { it is State } as State
+    val file = state.storages.first().value
+
+    val fileExists = settingsSyncStorage.resolve("options").resolve(file).exists()
+    val assertMessage = "File $file of ${component::class.simpleName} should ${if (!expectedToBeSynced) "not " else ""}exist"
+    if (expectedToBeSynced) {
+      assertTrue(assertMessage, fileExists)
+    }
+    else {
+      assertFalse(assertMessage, fileExists)
+    }
+  }
+
+  private data class AState(@Attribute var foo: String = "")
+
+  @State(name = "SettingsSyncTestExportableNonRoamable",
+         storages = [Storage("settings-sync-test.exportable-non-roamable.xml", roamingType = RoamingType.DISABLED, exportable = true)])
+  private class ExportableNonRoamable: BaseComponent()
+
+  @State(name = "SettingsSyncTestRoamable", storages = [Storage("settings-sync-test.roamable.xml", roamingType = RoamingType.DEFAULT)])
+  private class Roamable: BaseComponent()
+
+  private open class BaseComponent : PersistentStateComponent<AState> {
+    var aState = AState()
+
+    override fun getState() = aState
+
+    override fun loadState(state: AState) {
+      this.aState = state
+    }
+  }
+
   private fun performInOfflineMode(action: () -> Unit) {
-    remoteCommunicator.offline = true
-    val cdl = CountDownLatch(1)
-    remoteCommunicator.startPushLatch = cdl
-    action()
-    assertTrue("Didn't await for the push request", cdl.await(5, TIMEOUT_UNIT))
+    //remoteCommunicator.offline = true
+    //val cdl = CountDownLatch(1)
+    //remoteCommunicator.startPushLatch = cdl
+    //action()
+    //assertTrue("Didn't await for the push request", cdl.await(5, TIMEOUT_UNIT))
   }
 
   // temporarily disabled: the failure needs to be investigated
@@ -170,8 +222,8 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     val fileState = GeneralSettings().apply {
       isSaveOnFrameDeactivation = false
     }.toFileState()
-    remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
-    remoteCommunicator.offline = false
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState), null))
+    //remoteCommunicator.offline = false
 
     updateChecker.scheduleUpdateFromServer() // merge will happen here
 

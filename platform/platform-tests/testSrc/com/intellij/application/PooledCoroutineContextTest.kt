@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
@@ -44,9 +45,9 @@ class PooledCoroutineContextTest : UsefulTestCase() {
   private fun loggedError(block: () -> Unit): Throwable? {
     var throwable by AtomicReference<Throwable?>()
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): MutableSet<Action> {
         throwable = t
-        return false
+        return Action.NONE
       }
     }, block)
     return throwable

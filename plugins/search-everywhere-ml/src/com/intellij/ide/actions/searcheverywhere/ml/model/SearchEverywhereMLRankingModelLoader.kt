@@ -51,7 +51,7 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
   protected abstract val supportedContributor: Class<out SearchEverywhereContributor<*>>
 
   protected fun shouldProvideExperimentalModel(): Boolean {
-    return SearchEverywhereMlSessionService.getService().shouldUseExperimentalModel(supportedContributor.simpleName)
+    return SearchEverywhereMlSessionService.getService()?.shouldUseExperimentalModel(supportedContributor.simpleName) ?: false
   }
 
   private fun shouldProvideLocalModel(): Boolean {

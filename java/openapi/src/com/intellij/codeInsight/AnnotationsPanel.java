@@ -203,7 +203,7 @@ public class AnnotationsPanel {
           Object selectedItem = myCombo.getSelectedItem();
           List<String> newItems = Stream.concat(
             IntStream.range(0, count).mapToObj(myCombo::getItemAt),
-            advancedAnnotations.stream()).sorted().distinct().collect(Collectors.toList());
+            advancedAnnotations.stream()).sorted().distinct().toList();
           myCombo.removeAllItems();
           newItems.forEach(myCombo::addItem);
           myCombo.setSelectedItem(selectedItem);
@@ -300,6 +300,23 @@ public class AnnotationsPanel {
       }
     }
     return result;
+  }
+
+  /** Reset table to contain only annotations from the list. */
+  public void resetAnnotations(List<String> annotations) {
+    final Set<String> set = new HashSet<>(annotations);
+    int row = 0;
+    for (String annotation : getAnnotations()) {
+      if (!set.contains(annotation)) {
+        myTableModel.removeRow(row);
+      } else {
+        set.remove(annotation);
+        row++;
+      }
+    }
+    for (String annotation : set) {
+      addRow(annotation, false);
+    }
   }
 
   private static class SimpleAnnotationPanelModel implements AnnotationPanelModel {

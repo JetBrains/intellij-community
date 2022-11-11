@@ -29,7 +29,6 @@ import java.util.function.Function;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.createLockedFolders;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.sorted;
-import static com.intellij.util.containers.ContainerUtil.toList;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
 
@@ -179,7 +178,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   private TreeModelBuilder insertSpecificFilePathNodeToModel(@NotNull List<? extends FilePath> specificFiles,
-                                                             @NotNull ChangesBrowserSpecificFilePathsNode node,
+                                                             @NotNull ChangesBrowserSpecificFilePathsNode<?> node,
                                                              @NotNull FileStatus status) {
     insertSubtreeRoot(node);
     if (!node.isManyFiles()) {
@@ -226,7 +225,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     if (lists.size() != 1) return false;
     ChangeList single = lists.iterator().next();
     if (!(single instanceof LocalChangeList)) return false;
-    return ((LocalChangeList) single).isBlank();
+    return ((LocalChangeList)single).isBlank();
   }
 
   @NotNull
@@ -460,15 +459,14 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
       node = collapsedNode;
     }
 
-    final Enumeration<?> children = node.children();
-    while (children.hasMoreElements()) {
-      ChangesBrowserNode<?> child = (ChangesBrowserNode<?>)children.nextElement();
+    node.iterateNodeChildren().forEach(child -> {
       collapseDirectories(model, child);
-    }
+    });
   }
 
   @Nullable
-  private static ChangesBrowserNode<?> collapseParentWithOnlyChild(@NotNull ChangesBrowserNode<?> parent, @NotNull ChangesBrowserNode<?> child) {
+  private static ChangesBrowserNode<?> collapseParentWithOnlyChild(@NotNull ChangesBrowserNode<?> parent,
+                                                                   @NotNull ChangesBrowserNode<?> child) {
     if (child.isLeaf()) return null;
 
     Object parentUserObject = parent.getUserObject();
@@ -487,9 +485,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
       parent.remove(0);
 
-      @SuppressWarnings({"unchecked", "rawtypes"})
-      Enumeration<ChangesBrowserNode<?>> children = (Enumeration)child.children();
-      for (ChangesBrowserNode<?> childNode : toList(children)) {
+      List<ChangesBrowserNode<?>> children = child.iterateNodeChildren().toList(); // defensive copy
+      for (ChangesBrowserNode<?> childNode : children) {
         parent.add(childNode);
       }
 

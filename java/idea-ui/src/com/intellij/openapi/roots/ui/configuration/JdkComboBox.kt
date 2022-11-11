@@ -34,17 +34,6 @@ import org.jetbrains.annotations.ApiStatus
 import com.intellij.ui.layout.Row as RowV1
 
 
-@Deprecated("Please, migrate on Kotlin UI DSL Version 2")
-@ApiStatus.ScheduledForRemoval
-fun RowV1.sdkComboBox(
-  sdkModel: ProjectSdksModel,
-  sdkProperty: GraphProperty<Sdk?>,
-  project: Project?,
-  moduleBuilder: ModuleBuilder
-): CellBuilder<JdkComboBox> {
-  return component(createSdkComboBox(project, sdkModel, sdkProperty, StdModuleTypes.JAVA.id, moduleBuilder::isSuitableSdkType))
-}
-
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 fun Row.sdkComboBox(

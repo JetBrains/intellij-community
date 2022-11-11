@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.core
 
 import com.intellij.openapi.util.NlsSafe
@@ -65,7 +65,7 @@ data class ValidationError(@Nls val validationMessage: String) : Error() {
         get() = validationMessage.capitalize()
 }
 
-data class ProjectImportingError(val kotlinVersion: String, @Nls val reason: String) : Error() {
+data class ProjectImportingError(val kotlinVersion: String, @Nls val reason: String, val details: String) : Error() {
     override val message: String
         get() = KotlinNewProjectWizardBundle.message("error.text.project.importing.error.kotlin.version.0.reason.1", kotlinVersion, reason)
 }

@@ -29,7 +29,10 @@ public class FileDeleteAction extends FileChooserAction {
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
     var visible = isEnabled(e);
     e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(visible && !panel.selectedPaths().isEmpty());
+    e.getPresentation().setEnabled(
+      visible &&
+      !(e.getInputEvent() instanceof KeyEvent && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) instanceof JTextField) &&  // do not override text deletion
+      !panel.selectedPaths().isEmpty());
   }
 
   @Override

@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -63,16 +62,18 @@ public class ArrangementRuleIndexControl extends JPanel {
       return;
     }
 
-    g.setColor(myIsError ? JBColor.red : JBColor.border());
-    Rectangle bounds = getBounds();
+    final Color error = JBColor.namedColor("Label.errorForeground", JBColor.red);
+    final Color foreground = JBColor.namedColor("Label.infoForeground", JBColor.border());
+    g.setColor(myIsError ? error : foreground);
+
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     int y = Math.max(0, myBaseLine - myHeight - (myDiameter - myHeight) / 2);
     g.drawOval(0, y, myDiameter, myDiameter);
 
-    if (StartupUiUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderDarcula()) {
       g.setColor(UIUtil.getLabelForeground());
     }
-    g.drawChars(myChars, 0, myChars.length, (bounds.width - myIndexWidth) / 2, myBaseLine);
+    g.drawChars(myChars, 0, myChars.length, (myDiameter - myIndexWidth) / 2, myBaseLine);
   }
 
   public void setError(boolean isError) {

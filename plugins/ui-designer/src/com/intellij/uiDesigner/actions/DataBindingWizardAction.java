@@ -23,10 +23,6 @@ import com.intellij.uiDesigner.wizard.Generator;
 import com.intellij.uiDesigner.wizard.WizardData;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class DataBindingWizardAction extends AnAction{
   private static final Logger LOG = Logger.getInstance(DataBindingWizardAction.class);
 

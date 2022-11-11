@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.codeinsight;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonElementVisitor;
 import com.intellij.json.psi.JsonObject;
@@ -16,6 +15,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -30,15 +31,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * @author Mikhail Golubev
- */
-public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
+public final class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
   private static final String COMMENT = "$comment";
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     boolean isSchemaFile = JsonSchemaService.isSchemaFile(holder.getFile());
     return new JsonElementVisitor() {
       @Override
@@ -62,8 +59,9 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
   }
 
   private static final class NavigateToDuplicatesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    @NotNull private final Collection<SmartPsiElementPointer> mySameNamedKeys;
-    @NotNull private final String myEntryKey;
+    @SafeFieldForPreview
+    private final @NotNull Collection<SmartPsiElementPointer<PsiElement>> mySameNamedKeys;
+    private final @NotNull String myEntryKey;
 
     private NavigateToDuplicatesFix(@NotNull Collection<PsiElement> sameNamedKeys, @NotNull PsiElement element, @NotNull String entryKey) {
       super(element);
@@ -71,16 +69,13 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
       myEntryKey = entryKey;
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return JsonBundle.message("navigate.to.duplicates");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return getText();
     }
 
@@ -93,7 +88,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
       if (editor == null) return;
 
       if (mySameNamedKeys.size() == 2) {
-        final Iterator<SmartPsiElementPointer> iterator = mySameNamedKeys.iterator();
+        final Iterator<SmartPsiElementPointer<PsiElement>> iterator = mySameNamedKeys.iterator();
         final PsiElement next = iterator.next().getElement();
         PsiElement toNavigate = next != startElement ? next : iterator.next().getElement();
         if (toNavigate == null) return;
@@ -104,15 +99,13 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
           mySameNamedKeys.stream().map(k -> k.getElement()).filter(k -> k != startElement).collect(Collectors.toList());
         JBPopupFactory.getInstance().createListPopup(
           new BaseListPopupStep<>(JsonBundle.message("navigate.to.duplicates.header", myEntryKey), allElements) {
-            @NotNull
             @Override
-            public Icon getIconFor(PsiElement aValue) {
-              return AllIcons.Nodes.Property;
+            public @NotNull Icon getIconFor(PsiElement aValue) {
+              return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
             }
 
-            @NotNull
             @Override
-            public String getTextFor(PsiElement value) {
+            public @NotNull String getTextFor(PsiElement value) {
               return JsonBundle
                 .message("navigate.to.duplicates.desc", myEntryKey, editor.getDocument().getLineNumber(value.getTextOffset()));
             }
@@ -122,9 +115,8 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
               return 0;
             }
 
-            @Nullable
             @Override
-            public PopupStep onChosen(PsiElement selectedValue, boolean finalChoice) {
+            public @Nullable PopupStep<?> onChosen(PsiElement selectedValue, boolean finalChoice) {
               navigateTo(editor, selectedValue);
               return PopupStep.FINAL_CHOICE;
             }

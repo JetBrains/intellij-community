@@ -1,6 +1,15 @@
 UFile (package = )
     UImportStatement (isOnDemand = false)
     UClass (name = LambdasKt)
+        UField (name = lambdaVarWithType)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            ULambdaExpression
+                UParameter (name = it)
+                UBlockExpression
+                    UReturnExpression
+                        UQualifiedReferenceExpression
+                            USimpleNameReferenceExpression (identifier = it)
+                            USimpleNameReferenceExpression (identifier = length)
         UMethod (name = foo)
             UBlockExpression
                 UQualifiedReferenceExpression
@@ -45,3 +54,7 @@ UFile (package = )
                         UIdentifier (Identifier ({))
                         USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null)
                     UBlockExpression
+        UMethod (name = getLambdaVarWithType)
+        UMethod (name = setLambdaVarWithType)
+            UParameter (name = <set-?>)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)

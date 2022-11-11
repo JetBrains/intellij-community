@@ -34,6 +34,8 @@ import org.jetbrains.kotlin.base.fe10.analysis.findAnnotation
 import org.jetbrains.kotlin.base.fe10.analysis.getStringValue
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -44,7 +46,6 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -73,7 +74,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     )
 
     private fun getBaseInjection(ktHost: KtElement, support: LanguageInjectionSupport): Injection {
-        if (!ProjectRootsUtil.isInProjectOrLibSource(ktHost.containingFile.originalFile)) return absentKotlinInjection
+        if (!RootKindFilter.projectAndLibrarySources.matches(ktHost.containingFile.originalFile)) return absentKotlinInjection
 
         val needImmediateAnswer = with(ApplicationManager.getApplication()) { isDispatchThread }
         val kotlinCachedInjection = ktHost.cachedInjectionWithModification

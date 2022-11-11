@@ -15,10 +15,10 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   private val metrics = mutableListOf<Metric>()
 
   fun registerDefaultMetrics(strategy: CompletionStrategy) {
-    if (strategy.codeGolf) {
-      registerMetric(CodeGolfMovesSumMetric())
-      registerMetric(CodeGolfMovesCountNormalised())
-      registerMetric(CodeGolfPerfectLine())
+    if (strategy.completionGolf) {
+      registerMetric(CompletionGolfMovesSumMetric())
+      registerMetric(CompletionGolfMovesCountNormalised())
+      registerMetric(CompletionGolfPerfectLine())
       registerMetric(MeanLatencyMetric())
       registerMetric(MaxLatencyMetric())
       registerMetric(SessionsCountMetric())

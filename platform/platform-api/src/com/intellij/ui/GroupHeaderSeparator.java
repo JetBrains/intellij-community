@@ -2,9 +2,11 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
@@ -17,14 +19,14 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
   private boolean myHideLine;
   private final Insets myLabelInsets;
-  private final Insets lineInsets;
+  private Insets lineInsets;
 
   public GroupHeaderSeparator(Insets labelInsets) {
     myLabelInsets = labelInsets;
     if (ExperimentalUI.isNewUI()) {
       lineInsets = JBUI.CurrentTheme.Popup.separatorInsets();
       setBorder(JBUI.Borders.empty());
-      setFont(RelativeFont.BOLD.derive(JBFont.small()));
+      setFont(RelativeFont.BOLD.derive(JBFont.smallOrNewUiMedium()));
     } else {
       lineInsets = JBUI.insets(getVgap(), getHgap(), getVgap(), getHgap());
     }
@@ -32,6 +34,13 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
   public void setHideLine(boolean hideLine) {
     myHideLine = hideLine;
+  }
+
+  public void useComboLineInsets() {
+    if (ExperimentalUI.isNewUI()) {
+      final int hInsets = JBUIScale.scale(UIUtil.getListCellHPadding());
+      lineInsets = JBUI.insets(1, 12 - hInsets, 4, 12 - hInsets);
+    }
   }
 
   @Override

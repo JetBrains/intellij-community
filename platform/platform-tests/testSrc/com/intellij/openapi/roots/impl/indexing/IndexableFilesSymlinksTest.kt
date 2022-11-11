@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunsInEdt
@@ -167,7 +164,7 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       sourcesSymlink = symlink("sources", sourcesDir)
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdk")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdk") { sdkModificator ->
       sdkModificator.addRoot(classesSymlink.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesSymlink.file, OrderRootType.SOURCES)
     }
@@ -210,7 +207,7 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       sourcesSymlink = symlink("sources", sourcesDir)
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdk")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdk") { sdkModificator ->
       sdkModificator.addRoot(classesSymlink.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesSymlink.file, OrderRootType.SOURCES)
     }
@@ -297,6 +294,7 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary(
+          "test",
           listOf(sourcesDirSymlink.file),
           listOf(binariesDirSymlink.file),
           emptySet(),
@@ -342,6 +340,7 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary(
+          "test",
           listOf(sourcesSymlink.file),
           listOf(binariesSymlink.file),
           emptySet(),
@@ -374,6 +373,7 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary(
+          "test",
           listOf(symlinkDirOne.file),
           listOf(symlinkDirTwo.file),
           emptySet(),

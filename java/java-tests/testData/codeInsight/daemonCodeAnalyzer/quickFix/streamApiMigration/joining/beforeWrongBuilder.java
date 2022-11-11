@@ -1,4 +1,4 @@
-// "Replace with forEach" "true"
+// "Replace with forEach" "true-preview"
 class X {
   private void initBuilder() {
     StringBuilder builder = new StringBuilder();

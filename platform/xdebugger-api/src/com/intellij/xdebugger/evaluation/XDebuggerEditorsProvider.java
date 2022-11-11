@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.evaluation;
 
 import com.intellij.lang.Language;
@@ -23,7 +23,6 @@ public abstract class XDebuggerEditorsProvider {
   /** @deprecated Use {@link #createDocument(Project, XExpression, XSourcePosition, EvaluationMode)} instead */
   @NotNull
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public Document createDocument(@NotNull Project project,
                                  @NotNull String text,
                                  @Nullable XSourcePosition sourcePosition,
@@ -32,7 +31,6 @@ public abstract class XDebuggerEditorsProvider {
   }
 
   @NotNull
-  @SuppressWarnings("deprecation")
   public Document createDocument(@NotNull Project project,
                                  @NotNull XExpression expression,
                                  @Nullable XSourcePosition sourcePosition,

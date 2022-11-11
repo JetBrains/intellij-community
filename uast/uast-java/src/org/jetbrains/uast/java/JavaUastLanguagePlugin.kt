@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.map2Array
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
+import org.jetbrains.uast.java.JavaConverter.convertPsiElement
 import org.jetbrains.uast.java.declarations.JavaLazyParentUIdentifier
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUModuleReferenceExpression
@@ -37,18 +38,17 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
 
   override fun isExpressionValueUsed(element: UExpression): Boolean = when (element) {
     is JavaUDeclarationsExpression -> false
-    is UnknownJavaExpression -> (element.uastParent as? UExpression)?.let { isExpressionValueUsed(it) } ?: false
+    is UnknownJavaExpression -> {
+      val parent = element.uastParent
+      parent is UExpression && isExpressionValueUsed(parent)
+    }
     else -> {
       val statement = element.sourcePsi as? PsiStatement
       statement != null && statement.parent !is PsiExpressionStatement
     }
   }
 
-  override fun getMethodCallExpression(
-    element: PsiElement,
-    containingClassFqName: String?,
-    methodName: String
-  ): UastLanguagePlugin.ResolvedMethod? {
+  override fun getMethodCallExpression(element: PsiElement, containingClassFqName: String?, methodName: String): UastLanguagePlugin.ResolvedMethod? {
     if (element !is PsiMethodCallExpression) return null
     if (element.methodExpression.referenceName != methodName) return null
 
@@ -67,10 +67,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     return UastLanguagePlugin.ResolvedMethod(callExpression, method)
   }
 
-  override fun getConstructorCallExpression(
-    element: PsiElement,
-    fqName: String
-  ): UastLanguagePlugin.ResolvedConstructor? {
+  override fun getConstructorCallExpression(element: PsiElement, fqName: String): UastLanguagePlugin.ResolvedConstructor? {
     if (element !is PsiNewExpression) return null
     val simpleName = fqName.substringAfterLast('.')
     if (element.classReference?.referenceName != simpleName) return null
@@ -85,29 +82,35 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   }
 
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-    return convertElement(element, parent, elementTypes(requiredType))
+    val target = if (requiredType == null) UElement::class.java else requiredType
+    return if (canConvert(element.javaClass, target)) {
+      convertDeclaration(element, parent, target) ?: convertPsiElement(element, parent, target)
+    }
+    else null
   }
 
   override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
-    if (element is PsiJavaFile) return requiredType.el<UFile> { JavaUFile(element, this) }
-
     return convertElement(element, null, requiredType)
   }
 
-  fun <T : UElement> convertElement(element: PsiElement, parent: UElement?, requiredTypes: Array<out Class<out T>>): T? {
-    val nonEmptyRequiredTypes = requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)
-    if (!canConvert(element.javaClass, requiredTypes)) return null
-    @Suppress("UNCHECKED_CAST")
-    return (convertDeclaration(element, parent, nonEmptyRequiredTypes)
-            ?: JavaConverter.convertPsiElement(element, parent, nonEmptyRequiredTypes)) as? T
-  }
-
   override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? {
-    return convertElement(element, null, requiredTypes)
+    val nonEmptyRequiredTypes = requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)
+    if (canConvert(element.javaClass, requiredTypes)) {
+      val declaration = nonEmptyRequiredTypes.asSequence()
+        .map { requiredType -> convertDeclaration(element, null, requiredType) }
+        .firstNotNullOfOrNull { u -> u }
+      @Suppress("UNCHECKED_CAST")
+      if (declaration != null) return declaration as T
+      @Suppress("UNCHECKED_CAST")
+      return nonEmptyRequiredTypes.asSequence()
+        .map { requiredType -> convertPsiElement(element, null, requiredType) }
+        .firstNotNullOfOrNull { u -> u } as T?
+    }
+    return null
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>) = when (element) {
+  override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> = when (element) {
     is PsiMethodCallExpression ->
       JavaConverter.psiMethodCallConversionAlternatives(element,
         null,
@@ -116,32 +119,71 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     else -> sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
   }
 
-  private fun convertDeclaration(element: PsiElement,
-                                 givenParent: UElement?,
-                                 requiredType: Array<out Class<out UElement>>): UElement? {
-    return with(requiredType) {
-      when (element) {
-        is PsiJavaFile -> el<UFile,PsiJavaFile>(element, null) { el, _ -> JavaUFile(el, this@JavaUastLanguagePlugin) }
-        is UDeclaration -> el<UDeclaration,PsiElement>(element, null) { _, _ -> element }
-        is PsiClass -> el<UClass, PsiClass>(element, givenParent, JavaUClass::create)
-
-        is PsiRecordHeader -> el<UMethod, PsiRecordHeader>(element, givenParent, JavaUMethod::create)
-        is PsiMethod -> el<UMethod, PsiMethod>(element, givenParent) { el, givenParent ->
-          JavaUMethod.create(el, this@JavaUastLanguagePlugin, givenParent)
-        }
-
-        is PsiClassInitializer -> el<UClassInitializer,PsiClassInitializer>(element, givenParent, ::JavaUClassInitializer)
-        is PsiEnumConstant -> el<UEnumConstant,PsiEnumConstant>(element, givenParent, ::JavaUEnumConstant)
-        is PsiLocalVariable -> el<ULocalVariable,PsiLocalVariable>(element, givenParent, ::JavaULocalVariable)
-        is PsiRecordComponent, is LightRecordConstructorParameter, is LightRecordField ->
-          convertRecordConstructorParameterAlternatives(element, givenParent, requiredType).firstOrNull()
-        is PsiParameter -> el<UParameter, PsiParameter>(element, givenParent, ::JavaUParameter)
-        is PsiField -> el<UField, PsiField>(element, givenParent, ::JavaUField)
-        is PsiVariable -> el<UVariable, PsiVariable>(element, givenParent, ::JavaUVariable)
-        is PsiAnnotation -> el<UAnnotation,PsiAnnotation>(element, givenParent, ::JavaUAnnotation)
-        else -> null
-      }
+  private fun convertDeclaration(element: PsiElement, givenParent: UElement?, requiredType: Class<out UElement>): UElement? {
+    if (element is UDeclaration) {
+      return requiredType.el<UDeclaration,PsiElement>(element, null) { _, _ -> element }
     }
+    var result: UElement? = null
+    element.accept(object : JavaElementVisitor() {
+      override fun visitAnnotation(annotation: PsiAnnotation) {
+        result = requiredType.el<UAnnotation, PsiAnnotation>(annotation, givenParent, ::JavaUAnnotation)
+      }
+
+      override fun visitClass(aClass: PsiClass) {
+        result = requiredType.el<UClass, PsiClass>(aClass, givenParent, JavaUClass::create)
+      }
+
+      override fun visitClassInitializer(initializer: PsiClassInitializer) {
+        result = requiredType.el<UClassInitializer, PsiClassInitializer>(initializer, givenParent, ::JavaUClassInitializer)
+      }
+
+      override fun visitEnumConstant(enumConstant: PsiEnumConstant) {
+        result = requiredType.el<UEnumConstant, PsiEnumConstant>(enumConstant, givenParent, ::JavaUEnumConstant)
+      }
+
+      override fun visitField(field: PsiField) {
+        if (field is LightRecordField) {
+          result = convertRecordConstructorParameterAlternatives(field, givenParent, requiredType)
+        }
+        else {
+          result = requiredType.el<UField, PsiField>(field, givenParent, ::JavaUField)
+        }
+      }
+
+      override fun visitJavaFile(file: PsiJavaFile) {
+        result = requiredType.el<UFile, PsiJavaFile>(file, null) { el, _ -> JavaUFile(el, this@JavaUastLanguagePlugin) }
+      }
+
+      override fun visitLocalVariable(variable: PsiLocalVariable) {
+        result = requiredType.el<ULocalVariable, PsiLocalVariable>(variable, givenParent, ::JavaULocalVariable)
+      }
+
+      override fun visitMethod(method: PsiMethod) {
+        result = requiredType.el<UMethod, PsiMethod>(method, givenParent) { el, gp -> JavaUMethod.create(el, this@JavaUastLanguagePlugin, gp) }
+      }
+
+      override fun visitParameter(parameter: PsiParameter) {
+        if (parameter is LightRecordConstructorParameter) {
+          result = convertRecordConstructorParameterAlternatives(element, givenParent, requiredType)
+        }
+        else {
+          result = requiredType.el<UParameter, PsiParameter>(parameter, givenParent, ::JavaUParameter)
+        }
+      }
+
+      override fun visitRecordComponent(recordComponent: PsiRecordComponent) {
+        result = convertRecordConstructorParameterAlternatives(recordComponent, givenParent, requiredType)
+      }
+
+      override fun visitRecordHeader(recordHeader: PsiRecordHeader) {
+        result = requiredType.el<UMethod, PsiRecordHeader>(recordHeader, givenParent, JavaUMethod::create)
+      }
+
+      override fun visitVariable(variable: PsiVariable) {
+        result = requiredType.el<UVariable, PsiVariable>(variable, givenParent, ::JavaUVariable)
+      }
+    })
+    return result
   }
 
   override val analysisPlugin: UastAnalysisPlugin?
@@ -159,138 +201,292 @@ internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?
   return if (this == null || isAssignableFrom(ActualT::class.java)) f() else null
 }
 
-
-internal inline fun <reified ActualT : UElement, P : PsiElement> Array<out Class<out UElement>>.el(arg1: P,
-                                                                                                   arg2: UElement?,
-                                                                                                   ctor: (P, UElement?) -> UElement?): UElement? {
-  return if (hasAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
+internal inline fun <reified ActualT : UElement, P : PsiElement> Class<out UElement>.el(arg1: P,
+                                                                                        arg2: UElement?,
+                                                                                        ctor: (P, UElement?) -> UElement?): UElement? {
+  return if (this.isAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
 }
 
-internal inline fun <reified ActualT : UElement, P : PsiElement> Array<out Class<out UElement>>.expr(arg1: P, arg2: UElement?, ctor: (P, UElement?) -> UExpression?): UExpression? {
-  return if (hasAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
-}
+internal inline fun <reified ActualT : UElement, P : PsiElement> Array<out Class<out UElement>>.expr(arg1: P, arg2: UElement?, ctor: (P, UElement?) -> UExpression?): UExpression? =
+  if (hasAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
+internal inline fun <reified ActualT : UElement, P : PsiElement> Class<out UElement>.expr(arg1: P, arg2: UElement?, ctor: (P, UElement?) -> UExpression?): UExpression? =
+  if (this.isAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
 
-internal fun Array<out Class<out UElement>>.hasAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
+internal fun Array<out Class<out UElement>>.hasAssignableFrom(cls: Class<*>): Boolean = any { it.isAssignableFrom(cls) }
 
 internal object JavaConverter {
-
-  internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
-    is PsiExpressionStatement -> unwrapElements(element.parent)
-    is PsiParameterList -> unwrapElements(element.parent)
-    is PsiAnnotationParameterList -> unwrapElements(element.parent)
-    is PsiModifierList -> unwrapElements(element.parent)
-    is PsiExpressionList -> unwrapElements(element.parent)
-    is PsiCaseLabelElementList -> unwrapElements(element.parent)
-    is PsiPackageStatement -> unwrapElements(element.parent)
-    is PsiImportList -> unwrapElements(element.parent)
-    is PsiReferenceList -> unwrapElements(element.parent)
-    is PsiReferenceParameterList -> unwrapElements(element.parent)
-    is PsiBlockStatement -> unwrapElements(element.parent)
-    is PsiDocTag -> unwrapElements(element.parent)
-    is PsiDocTagValue -> unwrapElements(element.parent)
-    is LazyParseablePsiElement ->
-      if (element.elementType == JavaDocElementType.DOC_REFERENCE_HOLDER)
-        unwrapElements(element.parent)
-      else element
-    else -> element
+  internal tailrec fun unwrapElements(element: PsiElement): PsiElement {
+    val parent = element.parent
+    return if (parent != null && shouldUnwrapParent(element)) unwrapElements(parent) else element
   }
 
-  internal fun convertPsiElement(el: PsiElement,
-                                 givenParent: UElement?,
-                                 requiredType: Array<out Class<out UElement>> = DEFAULT_TYPES_LIST): UElement? {
-    return with(requiredType) {
-      when (el) {
-        is PsiCodeBlock -> el<UBlockExpression, PsiCodeBlock>(el, givenParent, ::JavaUCodeBlockExpression)
-        is PsiResourceExpression -> convertExpression(el.expression, givenParent, requiredType)
-        is PsiExpression -> convertExpression(el, givenParent, requiredType)
-        is PsiStatement -> convertStatement(el, givenParent, requiredType)
-        is PsiImportStatementBase -> el<UImportStatement,PsiImportStatementBase>(el, givenParent, ::JavaUImportStatement)
-        is PsiIdentifier -> el<UIdentifier, PsiElement>(el, givenParent, ::JavaLazyParentUIdentifier)
-        is PsiKeyword -> if (el.text == PsiKeyword.SUPER || el.text == PsiKeyword.THIS)
-          el<UIdentifier, PsiElement>(el, givenParent, ::JavaLazyParentUIdentifier)
-        else null
-        is PsiNameValuePair -> el<UNamedExpression,PsiNameValuePair>(el, givenParent, ::JavaUNamedExpression)
-        is PsiArrayInitializerMemberValue -> el<UCallExpression,PsiArrayInitializerMemberValue>(el, givenParent,
-                                                                                                ::JavaAnnotationArrayInitializerUCallExpression)
-        is PsiTypeElement -> el<UTypeReferenceExpression,PsiTypeElement>(el, givenParent, ::JavaUTypeReferenceExpression)
-        is PsiJavaCodeReferenceElement -> convertReference(el, givenParent, requiredType)
-        is PsiJavaModuleReferenceElement -> el<UReferenceExpression,PsiJavaModuleReferenceElement>(el, givenParent,
-                                                                                                   ::JavaUModuleReferenceExpression)
-        is PsiAnnotation -> el.takeIf { PsiTreeUtil.getParentOfType(it, PsiAnnotationMemberValue::class.java, true) != null }?.let {
-          el<UExpression,PsiAnnotation>(it, givenParent, ::JavaUAnnotationCallExpression)
-        }
-        is PsiComment -> el<UComment,PsiComment>(el, givenParent, ::UComment)
-        is PsiDocToken ->
-          if (el.tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
-            val reference = when (val elParent = el.parent) {
-              is PsiDocMethodOrFieldRef -> elParent.reference
-              is PsiDocParamRef -> elParent.reference
-              else -> null
-            }
-            reference?.let { el<USimpleNameReferenceExpression, PsiElement>(el, givenParent) { el, givenParent ->
-              JavaUSimpleNameReferenceExpression(el, el.text, givenParent, it)
-            }
-            }
-          }
-          else null
-
-        is PsiCatchSection -> el<UCatchClause,PsiCatchSection>(el, givenParent, ::JavaUCatchClause)
-        else -> null
-      }
+  private fun shouldUnwrapParent(element: PsiElement): Boolean {
+    if (element is LazyParseablePsiElement) {
+      return element.elementType == JavaDocElementType.DOC_REFERENCE_HOLDER
     }
+    var result:Boolean = false
+    element.accept(object:JavaElementVisitor() {
+      override fun visitAnnotationParameterList(list: PsiAnnotationParameterList) {
+        result = true
+      }
+
+      override fun visitBlockStatement(statement: PsiBlockStatement) {
+        result = true
+      }
+
+      override fun visitCaseLabelElementList(list: PsiCaseLabelElementList) {
+        result = true
+      }
+
+      override fun visitDocTag(tag: PsiDocTag) {
+        result = true
+      }
+
+      override fun visitDocTagValue(value: PsiDocTagValue) {
+        result = true
+      }
+
+      override fun visitExpressionList(list: PsiExpressionList) {
+        result = true
+      }
+
+      override fun visitExpressionStatement(statement: PsiExpressionStatement) {
+        result = true
+      }
+
+      override fun visitImportList(list: PsiImportList) {
+        result = true
+      }
+
+      override fun visitModifierList(list: PsiModifierList) {
+        result = true
+      }
+
+      override fun visitPackageStatement(statement: PsiPackageStatement) {
+        result = true
+      }
+
+      override fun visitParameterList(list: PsiParameterList) {
+        result = true
+      }
+
+      override fun visitReferenceList(list: PsiReferenceList) {
+        result = true
+      }
+
+      override fun visitReferenceParameterList(list: PsiReferenceParameterList) {
+        result = true
+      }
+    })
+    return result
+  }
+
+  internal fun convertPsiElement(el: PsiElement, givenParent: UElement?, requiredType: Class<out UElement>): UElement? {
+    var result:UElement? = null
+    el.accept(object: JavaElementVisitor(){
+      override fun visitAnnotation(annotation: PsiAnnotation) {
+        result = annotation.takeIf { PsiTreeUtil.getParentOfType(it, PsiAnnotationMemberValue::class.java, true) != null }?.let { requiredType.el<UExpression,PsiAnnotation>(it, givenParent, ::JavaUAnnotationCallExpression) }
+      }
+
+      override fun visitAnnotationArrayInitializer(initializer: PsiArrayInitializerMemberValue) {
+        result = requiredType.el<UCallExpression,PsiArrayInitializerMemberValue>(initializer, givenParent, ::JavaAnnotationArrayInitializerUCallExpression)
+      }
+
+      override fun visitCatchSection(section: PsiCatchSection) {
+        result = requiredType.el<UCatchClause,PsiCatchSection>(section, givenParent, ::JavaUCatchClause)
+      }
+
+      override fun visitCodeBlock(block: PsiCodeBlock) {
+        result = requiredType.el<UBlockExpression, PsiCodeBlock>(block, givenParent, ::JavaUCodeBlockExpression)
+      }
+
+      override fun visitDocToken(token: PsiDocToken) {
+        result = if (token.tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+          val reference = when (val elParent = token.parent) {
+            is PsiDocMethodOrFieldRef -> elParent.reference
+            is PsiDocParamRef -> elParent.reference
+            else -> null
+          }
+          if (reference == null) null else requiredType.el<USimpleNameReferenceExpression, PsiElement>(token, givenParent) { e, gp ->
+            JavaUSimpleNameReferenceExpression(e, e.text, gp, reference)
+          }
+        }
+        else null
+      }
+
+      override fun visitExpression(expression: PsiExpression) {
+        result = convertExpression(expression, givenParent, requiredType)
+      }
+
+      override fun visitReferenceExpression(expression: PsiReferenceExpression) {
+        visitExpression(expression)
+      }
+
+      override fun visitIdentifier(identifier: PsiIdentifier) {
+        result = requiredType.el<UIdentifier, PsiElement>(identifier, givenParent, ::JavaLazyParentUIdentifier)
+      }
+
+      override fun visitImportStatement(statement: PsiImportStatement) {
+        result = requiredType.el<UImportStatement,PsiImportStatementBase>(statement, givenParent, ::JavaUImportStatement)
+      }
+
+      override fun visitImportStaticStatement(statement: PsiImportStaticStatement) {
+        result = requiredType.el<UImportStatement,PsiImportStatementBase>(statement, givenParent, ::JavaUImportStatement)
+      }
+
+      override fun visitKeyword(keyword: PsiKeyword) {
+        result = if (keyword.text == PsiKeyword.SUPER || keyword.text == PsiKeyword.THIS) requiredType.el<UIdentifier, PsiElement>(keyword, givenParent, ::JavaLazyParentUIdentifier) else null
+      }
+
+      override fun visitModuleReferenceElement(refElement: PsiJavaModuleReferenceElement) {
+        result = requiredType.el<UReferenceExpression,PsiJavaModuleReferenceElement>(refElement, givenParent, ::JavaUModuleReferenceExpression)
+      }
+
+      override fun visitNameValuePair(pair: PsiNameValuePair) {
+        result = requiredType.el<UNamedExpression,PsiNameValuePair>(pair, givenParent, ::JavaUNamedExpression)
+      }
+
+      override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
+        result = convertReference(reference, givenParent, requiredType)
+      }
+
+      override fun visitResourceExpression(expression: PsiResourceExpression) {
+        result = convertExpression(expression.expression, givenParent, requiredType)
+      }
+
+      override fun visitStatement(statement: PsiStatement) {
+        result = convertStatement(statement, givenParent, requiredType)
+      }
+
+      override fun visitTypeElement(type: PsiTypeElement) {
+        result = requiredType.el<UTypeReferenceExpression,PsiTypeElement>(type, givenParent, ::JavaUTypeReferenceExpression)
+      }
+
+      override fun visitComment(comment: PsiComment) {
+        result = requiredType.el<UComment,PsiComment>(comment, givenParent, ::UComment)
+      }
+    })
+    return result
   }
 
   internal fun convertBlock(block: PsiCodeBlock, parent: UElement?): UBlockExpression = JavaUCodeBlockExpression(block, parent)
 
   internal fun convertReference(reference: PsiJavaCodeReferenceElement,
                                 givenParent: UElement?,
-                                requiredType: Array<out Class<out UElement>> = DEFAULT_TYPES_LIST): UExpression? {
-    return with(requiredType) {
-      if (reference.isQualified) {
-        expr<UQualifiedReferenceExpression,PsiJavaCodeReferenceElement>(reference, givenParent, ::JavaUQualifiedReferenceExpression)
-      }
-      else {
-        val name = reference.referenceName ?: "<error name>"
-        expr<USimpleNameReferenceExpression, PsiElement>(reference, givenParent) { reference, givenParent -> JavaUSimpleNameReferenceExpression(reference, name, givenParent, reference as PsiReference) }
-      }
+                                requiredType: Class<out UElement>): UExpression? {
+    return if (reference.isQualified) {
+      requiredType.expr<UQualifiedReferenceExpression,PsiJavaCodeReferenceElement>(reference, givenParent, ::JavaUQualifiedReferenceExpression)
+    }
+    else {
+      val name = reference.referenceName ?: "<error name>"
+      requiredType.expr<USimpleNameReferenceExpression, PsiElement>(reference, givenParent) { ref, gp -> JavaUSimpleNameReferenceExpression(ref, name, gp, ref as PsiReference) }
     }
   }
 
   internal fun convertExpression(el: PsiExpression,
                                  givenParent: UElement?,
-                                 requiredType: Array<out Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
-    return with(requiredType) {
-      when (el) {
-        is PsiAssignmentExpression -> expr<UBinaryExpression, PsiAssignmentExpression>(el, givenParent, ::JavaUAssignmentExpression)
-        is PsiConditionalExpression -> expr<UIfExpression, PsiConditionalExpression>(el, givenParent, ::JavaUTernaryIfExpression)
-        is PsiNewExpression -> {
-          if (el.anonymousClass != null)
-            expr<UObjectLiteralExpression,PsiNewExpression>(el, givenParent, ::JavaUObjectLiteralExpression)
-          else
-            expr<UCallExpression,PsiNewExpression>(el, givenParent, ::JavaConstructorUCallExpression)
-        }
-        is PsiMethodCallExpression -> psiMethodCallConversionAlternatives(el, givenParent, requiredType).firstOrNull()
-        is PsiArrayInitializerExpression -> expr<UCallExpression,PsiArrayInitializerExpression>(el, givenParent, ::JavaArrayInitializerUCallExpression)
-        is PsiBinaryExpression -> expr<UBinaryExpression,PsiBinaryExpression>(el, givenParent, ::JavaUBinaryExpression)
-        // Should go after PsiBinaryExpression since it implements PsiPolyadicExpression
-        is PsiPolyadicExpression -> expr<UPolyadicExpression,PsiPolyadicExpression>(el, givenParent, ::JavaUPolyadicExpression)
-        is PsiParenthesizedExpression -> expr<UParenthesizedExpression,PsiParenthesizedExpression>(el, givenParent, ::JavaUParenthesizedExpression)
-        is PsiPrefixExpression -> expr<UPrefixExpression,PsiPrefixExpression>(el, givenParent, ::JavaUPrefixExpression)
-        is PsiPostfixExpression -> expr<UPostfixExpression,PsiPostfixExpression>(el, givenParent, ::JavaUPostfixExpression)
-        is PsiLiteralExpressionImpl -> expr<JavaULiteralExpression,PsiLiteralExpressionImpl>(el, givenParent, ::JavaULiteralExpression)
-        is PsiMethodReferenceExpression -> expr<UCallableReferenceExpression,PsiMethodReferenceExpression>(el, givenParent, ::JavaUCallableReferenceExpression)
-        is PsiReferenceExpression -> convertReference(el, givenParent, requiredType)
-        is PsiThisExpression -> expr<UThisExpression,PsiThisExpression>(el, givenParent, ::JavaUThisExpression)
-        is PsiSuperExpression -> expr<USuperExpression,PsiSuperExpression>(el, givenParent, ::JavaUSuperExpression)
-        is PsiInstanceOfExpression -> expr<UBinaryExpressionWithType,PsiInstanceOfExpression>(el, givenParent, ::JavaUInstanceCheckExpression)
-        is PsiTypeCastExpression -> expr<UBinaryExpressionWithType,PsiTypeCastExpression>(el, givenParent, ::JavaUTypeCastExpression)
-        is PsiClassObjectAccessExpression -> expr<UClassLiteralExpression,PsiClassObjectAccessExpression>(el, givenParent, ::JavaUClassLiteralExpression)
-        is PsiArrayAccessExpression -> expr<UArrayAccessExpression,PsiArrayAccessExpression>(el, givenParent, ::JavaUArrayAccessExpression)
-        is PsiLambdaExpression -> expr<ULambdaExpression,PsiLambdaExpression>(el, givenParent, ::JavaULambdaExpression)
-        is PsiSwitchExpression -> expr<USwitchExpression,PsiSwitchExpression>(el, givenParent, ::JavaUSwitchExpression)
-        else -> expr<UExpression,PsiElement>(el, givenParent, ::UnknownJavaExpression)
+                                 requiredType: Class<out UElement>): UExpression? {
+    var result:UExpression? = null
+    el.accept(object : JavaElementVisitor(){
+      override fun visitArrayAccessExpression(expression: PsiArrayAccessExpression) {
+        result = requiredType.expr<UArrayAccessExpression,PsiArrayAccessExpression>(expression, givenParent, ::JavaUArrayAccessExpression)
       }
-    }
+
+      override fun visitArrayInitializerExpression(expression: PsiArrayInitializerExpression) {
+        result = requiredType.expr<UCallExpression,PsiArrayInitializerExpression>(expression, givenParent, ::JavaArrayInitializerUCallExpression)
+      }
+
+      override fun visitAssignmentExpression(expression: PsiAssignmentExpression) {
+        result = requiredType.expr<UBinaryExpression, PsiAssignmentExpression>(expression, givenParent, ::JavaUAssignmentExpression)
+      }
+
+      override fun visitBinaryExpression(expression: PsiBinaryExpression) {
+        result = requiredType.expr<UBinaryExpression,PsiBinaryExpression>(expression, givenParent, ::JavaUBinaryExpression)
+      }
+
+      override fun visitClassObjectAccessExpression(expression: PsiClassObjectAccessExpression) {
+        result = requiredType.expr<UClassLiteralExpression,PsiClassObjectAccessExpression>(expression, givenParent, ::JavaUClassLiteralExpression)
+      }
+
+      override fun visitConditionalExpression(expression: PsiConditionalExpression) {
+        result = requiredType.expr<UIfExpression, PsiConditionalExpression>(expression, givenParent, ::JavaUTernaryIfExpression)
+      }
+
+      override fun visitInstanceOfExpression(expression: PsiInstanceOfExpression) {
+        result = requiredType.expr<UBinaryExpressionWithType,PsiInstanceOfExpression>(expression, givenParent, ::JavaUInstanceCheckExpression)
+      }
+
+      override fun visitLambdaExpression(expression: PsiLambdaExpression) {
+        result = requiredType.expr<ULambdaExpression,PsiLambdaExpression>(expression, givenParent, ::JavaULambdaExpression)
+      }
+
+      override fun visitLiteralExpression(expression: PsiLiteralExpression) {
+        if (expression is PsiLiteralExpressionImpl) {
+          result = requiredType.expr<JavaULiteralExpression,PsiLiteralExpressionImpl>(expression, givenParent, ::JavaULiteralExpression)
+        }
+        else {
+          result = requiredType.expr<UExpression,PsiElement>(expression, givenParent, ::UnknownJavaExpression)
+        }
+      }
+
+      override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
+        result = psiMethodCallConversionAlternatives(expression, givenParent, requiredType)
+      }
+
+      override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
+        result = requiredType.expr<UCallableReferenceExpression,PsiMethodReferenceExpression>(expression, givenParent, ::JavaUCallableReferenceExpression)
+      }
+
+      override fun visitNewExpression(expression: PsiNewExpression) {
+        if (expression.anonymousClass != null)
+          result = requiredType.expr<UObjectLiteralExpression,PsiNewExpression>(expression, givenParent, ::JavaUObjectLiteralExpression)
+        else
+          result = requiredType.expr<UCallExpression,PsiNewExpression>(expression, givenParent, ::JavaConstructorUCallExpression)
+
+      }
+
+      override fun visitParenthesizedExpression(expression: PsiParenthesizedExpression) {
+        result = requiredType.expr<UParenthesizedExpression,PsiParenthesizedExpression>(expression, givenParent, ::JavaUParenthesizedExpression)
+      }
+
+      override fun visitPolyadicExpression(expression: PsiPolyadicExpression) {
+        result = requiredType.expr<UPolyadicExpression,PsiPolyadicExpression>(expression, givenParent, ::JavaUPolyadicExpression)
+      }
+
+      override fun visitPostfixExpression(expression: PsiPostfixExpression) {
+        result = requiredType.expr<UPostfixExpression,PsiPostfixExpression>(expression, givenParent, ::JavaUPostfixExpression)
+      }
+
+      override fun visitPrefixExpression(expression: PsiPrefixExpression) {
+        result = requiredType.expr<UPrefixExpression,PsiPrefixExpression>(expression, givenParent, ::JavaUPrefixExpression)
+      }
+
+      override fun visitReferenceExpression(expression: PsiReferenceExpression) {
+        result = convertReference(expression, givenParent, requiredType)
+      }
+
+      override fun visitSuperExpression(expression: PsiSuperExpression) {
+        result = requiredType.expr<USuperExpression,PsiSuperExpression>(expression, givenParent, ::JavaUSuperExpression)
+      }
+
+      override fun visitSwitchExpression(expression: PsiSwitchExpression) {
+        result = requiredType.expr<USwitchExpression,PsiSwitchExpression>(expression, givenParent, ::JavaUSwitchExpression)
+      }
+
+      override fun visitThisExpression(expression: PsiThisExpression) {
+        result = requiredType.expr<UThisExpression,PsiThisExpression>(expression, givenParent, ::JavaUThisExpression)
+      }
+
+      override fun visitTypeCastExpression(expression: PsiTypeCastExpression) {
+        result = requiredType.expr<UBinaryExpressionWithType,PsiTypeCastExpression>(expression, givenParent, ::JavaUTypeCastExpression)
+      }
+
+      override fun visitElement(element: PsiElement) {
+        result = requiredType.expr<UExpression,PsiElement>(element, givenParent, ::UnknownJavaExpression)
+      }
+    })
+
+    return result
   }
 
   internal fun psiMethodCallConversionAlternatives(element: PsiMethodCallExpression,
@@ -312,55 +508,146 @@ internal object JavaConverter {
     }
 
     val results = sequenceOf(expr, expr.selector)
-    return requiredTypes.asSequence().flatMap { required -> results.filter { required.isInstance(it) } }.distinct()
+    return requiredTypes.asSequence().flatMap { requiredType -> results.filter { requiredType.isInstance(it) } }.distinct()
+  }
+  private fun psiMethodCallConversionAlternatives(element: PsiMethodCallExpression,
+                                                  givenParent: UElement?,
+                                                  requiredType: Class<out UElement>): UExpression? {
+    if (element.methodExpression.qualifierExpression == null) {
+      return requiredType.expr<UCallExpression,PsiMethodCallExpression>(element, givenParent, ::JavaUCallExpression)
+    }
+
+    if (!requiredType.isAssignableFrom(UQualifiedReferenceExpression::class.java) &&
+        !requiredType.isAssignableFrom(UCallExpression::class.java)) return null
+
+
+    val expr = JavaUCompositeQualifiedExpression(element, givenParent).apply {
+      receiverInitializer = {
+        convertOrEmpty(element.methodExpression.qualifierExpression!!, this@apply)
+      }
+      selector = JavaUCallExpression(element, this@apply)
+    }
+
+    return if (requiredType.isInstance(expr)) expr
+    else if (requiredType.isInstance(expr.selector)) expr.selector
+    else null
   }
 
   internal fun convertStatement(el: PsiStatement,
                                 givenParent: UElement?,
-                                requiredType: Array<out Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
-    return with(requiredType) {
-      when (el) {
-        is PsiDeclarationStatement -> expr<UDeclarationsExpression,PsiDeclarationStatement>(el, givenParent) { el, givenParent ->
-          convertDeclarations(el.declaredElements, givenParent ?: unwrapElements(el.parent).toUElement())
-        }
-        is PsiExpressionListStatement -> expr<UDeclarationsExpression,PsiExpressionListStatement>(el, givenParent) { el, givenParent ->
-          convertDeclarations(el.expressionList.expressions, givenParent ?: unwrapElements(el.parent).toUElement())
-        }
-        is PsiBlockStatement -> expr<UBlockExpression,PsiBlockStatement>(el, givenParent, ::JavaUBlockExpression)
-        is PsiLabeledStatement -> expr<ULabeledExpression,PsiLabeledStatement>(el, givenParent, ::JavaULabeledExpression)
-        is PsiExpressionStatement -> convertExpression(el.expression, givenParent, requiredType)
-        is PsiIfStatement -> expr<UIfExpression,PsiIfStatement>(el, givenParent, ::JavaUIfExpression)
-        is PsiSwitchStatement -> expr<USwitchExpression,PsiSwitchStatement>(el, givenParent, ::JavaUSwitchExpression)
-        is PsiWhileStatement -> expr<UWhileExpression,PsiWhileStatement>(el, givenParent, ::JavaUWhileExpression)
-        is PsiDoWhileStatement -> expr<UDoWhileExpression,PsiDoWhileStatement>(el, givenParent, ::JavaUDoWhileExpression)
-        is PsiForStatement -> expr<UForExpression,PsiForStatement>(el, givenParent, ::JavaUForExpression)
-        is PsiForeachStatement -> expr<UForEachExpression,PsiForeachStatement>(el, givenParent, ::JavaUForEachExpression)
-        is PsiBreakStatement -> expr<UBreakExpression,PsiBreakStatement>(el, givenParent, ::JavaUBreakExpression)
-        is PsiYieldStatement -> expr<UYieldExpression,PsiYieldStatement>(el, givenParent, ::JavaUYieldExpression)
-        is PsiContinueStatement -> expr<UContinueExpression,PsiContinueStatement>(el, givenParent, ::JavaUContinueExpression)
-        is PsiReturnStatement -> expr<UReturnExpression,PsiReturnStatement>(el, givenParent, ::JavaUReturnExpression)
-        is PsiAssertStatement -> expr<UCallExpression,PsiAssertStatement>(el, givenParent, ::JavaUAssertExpression)
-        is PsiThrowStatement -> expr<UThrowExpression,PsiThrowStatement>(el, givenParent, ::JavaUThrowExpression)
-        is PsiSynchronizedStatement -> expr<UBlockExpression,PsiSynchronizedStatement>(el, givenParent, ::JavaUSynchronizedExpression)
-        is PsiTryStatement -> expr<UTryExpression,PsiTryStatement>(el, givenParent, ::JavaUTryExpression)
-        is PsiEmptyStatement -> expr<UExpression,PsiEmptyStatement>(el,givenParent) { el,_->UastEmptyExpression(el.parent?.toUElement()) }
-        is PsiSwitchLabelStatementBase -> expr<UExpression,PsiSwitchLabelStatementBase>(el, givenParent) { el, givenParent ->
-          when (givenParent) {
-            is JavaUSwitchEntryList -> givenParent.findUSwitchEntryForLabel(el)
-            null -> PsiTreeUtil.getParentOfType(el, PsiSwitchBlock::class.java)?.let {
-              JavaUSwitchExpression(it, null).body.findUSwitchEntryForLabel(el)
+                                requiredType: Class<out UElement>): UExpression? {
+    var result:UExpression? = null
+    el.accept(object: JavaElementVisitor() {
+      override fun visitAssertStatement(statement: PsiAssertStatement) {
+        result = requiredType.expr<UCallExpression,PsiAssertStatement>(statement, givenParent, ::JavaUAssertExpression)
+      }
+
+      override fun visitBlockStatement(statement: PsiBlockStatement) {
+        result = requiredType.expr<UBlockExpression,PsiBlockStatement>(statement, givenParent, ::JavaUBlockExpression)
+      }
+
+      override fun visitBreakStatement(statement: PsiBreakStatement) {
+        result = requiredType.expr<UBreakExpression,PsiBreakStatement>(statement, givenParent, ::JavaUBreakExpression)
+      }
+
+      override fun visitContinueStatement(statement: PsiContinueStatement) {
+        result = requiredType.expr<UContinueExpression,PsiContinueStatement>(statement, givenParent, ::JavaUContinueExpression)
+      }
+
+      override fun visitDeclarationStatement(statement: PsiDeclarationStatement) {
+        result = requiredType.expr<UDeclarationsExpression,PsiDeclarationStatement>(statement, givenParent) { e, gp -> convertDeclarations(e.declaredElements, gp ?: e.parent ?.run { unwrapElements(this).toUElement() }) }
+      }
+
+      override fun visitDoWhileStatement(statement: PsiDoWhileStatement) {
+        result = requiredType.expr<UDoWhileExpression,PsiDoWhileStatement>(statement, givenParent, ::JavaUDoWhileExpression)
+      }
+
+      override fun visitEmptyStatement(statement: PsiEmptyStatement) {
+        result = requiredType.expr<UExpression,PsiEmptyStatement>(statement,givenParent) { e,_->UastEmptyExpression(e.parent?.toUElement()) }
+      }
+
+      override fun visitExpressionListStatement(statement: PsiExpressionListStatement) {
+        result = requiredType.expr<UDeclarationsExpression,PsiExpressionListStatement>(statement, givenParent) { e, gp -> convertDeclarations(e.expressionList.expressions, gp ?: e.parent ?.run { unwrapElements(this).toUElement() }) }
+      }
+
+      override fun visitExpressionStatement(statement: PsiExpressionStatement) {
+        result = convertExpression(statement.expression, givenParent, requiredType)
+      }
+
+      override fun visitForeachStatement(statement: PsiForeachStatement) {
+        result = requiredType.expr<UForEachExpression,PsiForeachStatement>(statement, givenParent, ::JavaUForEachExpression)
+      }
+
+      override fun visitForStatement(statement: PsiForStatement) {
+        result = requiredType.expr<UForExpression,PsiForStatement>(statement, givenParent, ::JavaUForExpression)
+      }
+
+      override fun visitIfStatement(statement: PsiIfStatement) {
+        result = requiredType.expr<UIfExpression,PsiIfStatement>(statement, givenParent, ::JavaUIfExpression)
+      }
+
+      override fun visitLabeledStatement(statement: PsiLabeledStatement) {
+        result = requiredType.expr<ULabeledExpression,PsiLabeledStatement>(statement, givenParent, ::JavaULabeledExpression)
+      }
+
+      override fun visitReturnStatement(statement: PsiReturnStatement) {
+        result = requiredType.expr<UReturnExpression,PsiReturnStatement>(statement, givenParent, ::JavaUReturnExpression)
+      }
+
+      override fun visitSwitchLabelStatement(statement: PsiSwitchLabelStatement) {
+        visitSwitchLabelStatementBase(statement)
+      }
+
+      private fun visitSwitchLabelStatementBase(statement: PsiSwitchLabelStatementBase) {
+        result = requiredType.expr<UExpression, PsiSwitchLabelStatementBase>(statement, givenParent) { e, gp ->
+          when (gp) {
+            is JavaUSwitchEntryList -> gp.findUSwitchEntryForLabel(e)
+            null -> PsiTreeUtil.getParentOfType(e, PsiSwitchBlock::class.java)?.let {
+              JavaUSwitchExpression(it, null).body.findUSwitchEntryForLabel(e)
             }
             else -> null
           }
         }
-        else -> expr<UExpression, PsiElement>(el, givenParent, ::UnknownJavaExpression)
       }
-    }
+
+      override fun visitSwitchLabeledRuleStatement(statement: PsiSwitchLabeledRuleStatement) {
+        visitSwitchLabelStatementBase(statement)
+      }
+
+      override fun visitSwitchStatement(statement: PsiSwitchStatement) {
+        result = requiredType.expr<USwitchExpression,PsiSwitchStatement>(statement, givenParent, ::JavaUSwitchExpression)
+      }
+
+      override fun visitSynchronizedStatement(statement: PsiSynchronizedStatement) {
+        result = requiredType.expr<UBlockExpression,PsiSynchronizedStatement>(statement, givenParent, ::JavaUSynchronizedExpression)
+      }
+
+      override fun visitThrowStatement(statement: PsiThrowStatement) {
+        result = requiredType.expr<UThrowExpression,PsiThrowStatement>(statement, givenParent, ::JavaUThrowExpression)
+      }
+
+      override fun visitTryStatement(statement: PsiTryStatement) {
+        result = requiredType.expr<UTryExpression,PsiTryStatement>(statement, givenParent, ::JavaUTryExpression)
+      }
+
+      override fun visitWhileStatement(statement: PsiWhileStatement) {
+        result = requiredType.expr<UWhileExpression,PsiWhileStatement>(statement, givenParent, ::JavaUWhileExpression)
+      }
+
+      override fun visitYieldStatement(statement: PsiYieldStatement) {
+        result = requiredType.expr<UYieldExpression,PsiYieldStatement>(statement, givenParent, ::JavaUYieldExpression)
+      }
+
+      override fun visitElement(element: PsiElement) {
+        result = requiredType.expr<UExpression, PsiElement>(element, givenParent, ::UnknownJavaExpression)
+      }
+    })
+    return result
   }
 
   private fun convertDeclarations(elements: Array<out PsiElement>, parent: UElement?): UDeclarationsExpression {
     return JavaUDeclarationsExpression(parent).apply {
-      val declarations = mutableListOf<UDeclaration>()
+      val declarations = ArrayList<UDeclaration>(elements.size)
       for (element in elements) {
         if (element is PsiVariable) {
           declarations += JavaUVariable.create(element, this)
@@ -374,18 +661,26 @@ internal object JavaConverter {
   }
 
   internal fun convertOrEmpty(statement: PsiStatement?, parent: UElement?): UExpression =
-    statement?.let { convertStatement(it, parent) } ?: UastEmptyExpression(parent)
+    if (statement == null) {
+      UastEmptyExpression(parent)
+    }
+    else {
+      convertStatement(statement, parent, UExpression::class.java) ?: UastEmptyExpression(parent)
+    }
 
   internal fun convertOrEmpty(expression: PsiExpression?, parent: UElement?): UExpression =
-    expression?.let { convertExpression(it, parent) } ?: UastEmptyExpression(parent)
+    if (expression == null) {
+      UastEmptyExpression(parent)
+    }
+    else {
+      convertExpression(expression, parent, UExpression::class.java) ?: UastEmptyExpression(parent)
+    }
 
   internal fun convertOrNull(expression: PsiExpression?, parent: UElement?): UExpression? =
-    if (expression != null) convertExpression(expression, parent) else null
+    if (expression == null) null else convertExpression(expression, parent, UExpression::class.java)
 
   internal fun convertOrEmpty(block: PsiCodeBlock?, parent: UElement?): UExpression =
-    if (block != null) convertBlock(block, parent) else UastEmptyExpression(parent)
+    if (block == null) UastEmptyExpression(parent) else convertBlock(block, parent)
 }
 
-private fun elementTypes(requiredType: Class<out UElement>?): Array<Class<out UElement>> = requiredType?.let { arrayOf(it) } ?: DEFAULT_TYPES_LIST
-
-private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out T>>): Array<out Class<out T>> = takeIf { it.isNotEmpty() } ?: default
+private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out T>>): Array<out Class<out T>> = if (isNotEmpty()) this else default

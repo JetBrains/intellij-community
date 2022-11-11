@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -15,8 +16,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector;
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem;
 import com.intellij.util.BitUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -31,7 +33,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   private final String myProjectPath;
   private final String myProjectName;
   private boolean myIsRemoved = false;
-  @Nullable private ProjectGroup myProjectGroup;
+  private @Nullable ProjectGroup myProjectGroup;
 
   public ReopenProjectAction(@NotNull @SystemIndependent String projectPath, @NlsSafe String projectName, @NlsSafe String displayName) {
     myProjectPath = projectPath;
@@ -61,21 +63,20 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     }
 
 
-    int modifiers = e.getModifiers();
-    boolean forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
-                                  || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
-                                  || e.getPlace() == ActionPlaces.WELCOME_SCREEN
-                                  || LightEdit.owns(project);
-    OpenProjectTask options =
-      OpenProjectTask.build().withProjectToClose(project).withForceOpenInNewFrame(forceOpenInNewFrame).withRunConfigurators();
-    RecentProjectsManagerBase.getInstanceEx().openProject(file, options);
-    for (ProjectDetector extension : ProjectDetector.EXTENSION_POINT_NAME.getExtensions()) {
-      extension.logRecentProjectOpened(myProjectGroup);
-    }
+    OpenProjectTask options = OpenProjectTaskKt.OpenProjectTask(builder -> {
+      builder.setProjectToClose(project);
+      int modifiers = e.getModifiers();
+      builder.setForceOpenInNewFrame(BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
+                                       || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
+                                       || ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())
+                                       || LightEdit.owns(project));
+      builder.setRunConfigurators(true);
+      return Unit.INSTANCE;
+    });
+    RecentProjectItem.Companion.openProjectAndLogRecent(file, options, myProjectGroup);
   }
 
-  @SystemIndependent
-  public String getProjectPath() {
+  public @SystemIndependent String getProjectPath() {
     return myProjectPath;
   }
 
@@ -83,8 +84,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     return myIsRemoved;
   }
 
-  @NlsSafe
-  public String getProjectName() {
+  public @NlsSafe String getProjectName() {
     final RecentProjectsManager mgr = RecentProjectsManager.getInstance();
     if (mgr instanceof RecentProjectsManagerBase) {
       return ((RecentProjectsManagerBase)mgr).getProjectName(myProjectPath);
@@ -92,9 +92,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     return myProjectName;
   }
 
-  @NlsSafe
-  @Nullable
-  public String getProjectNameToDisplay() {
+  public @NlsSafe @Nullable String getProjectNameToDisplay() {
     final RecentProjectsManager mgr = RecentProjectsManager.getInstance();
     String displayName = mgr instanceof RecentProjectsManagerBase
                          ? ((RecentProjectsManagerBase)mgr).getDisplayName(myProjectPath)
@@ -102,10 +100,8 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     return displayName != null ? displayName : getProjectName();
   }
 
-  @NlsActions.ActionText
-  @Nullable
   @Override
-  public String getTemplateText() {
+  public @NlsActions.ActionText @Nullable String getTemplateText() {
     return IdeBundle.message("action.ReopenProject.reopen.project.text");
   }
 

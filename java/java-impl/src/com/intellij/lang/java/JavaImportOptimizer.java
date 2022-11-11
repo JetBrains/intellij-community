@@ -4,6 +4,7 @@ package com.intellij.lang.java;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,9 +12,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +40,7 @@ public class JavaImportOptimizer implements ImportOptimizer {
 
       @Override
       public void run() {
-        SlowOperations.allowSlowOperations(() -> doRun());
+        SlowOperations.allowSlowOperations(this::doRun);
       }
 
       private void doRun() {
@@ -95,9 +98,11 @@ public class JavaImportOptimizer implements ImportOptimizer {
 
   @Override
   public boolean supports(@NotNull PsiFile file) {
-    return file instanceof PsiJavaFile
-           && !TemplateLanguageUtil.isTemplateDataFile(file)
-           && ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInSource(file.getViewProvider().getVirtualFile())
-      ;
+    if (file instanceof PsiJavaFile && !TemplateLanguageUtil.isTemplateDataFile(file)) {
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
+      return virtualFile != null && (ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInSource(virtualFile) ||
+                                     ScratchUtil.isScratch(virtualFile));
+    }
+    return false;
   }
 }

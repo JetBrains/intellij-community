@@ -1,4 +1,4 @@
-// "Replace with 'Comparator' chain" "true"
+// "Replace with 'Comparator' chain" "true-preview"
 
 import java.util.List;
 

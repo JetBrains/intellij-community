@@ -117,10 +117,6 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
     /**
      * Adds range [first, last] before anchor under parent.
      *
-     * @param first
-     * @param last
-     * @param parent
-     * @param anchor
      * @return the first child element which was actually added
      */
     protected PsiElement addRangeBefore(@NotNull PsiElement first,

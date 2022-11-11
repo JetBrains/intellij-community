@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -25,10 +26,12 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isLast
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
+import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearHalfOvalOverEditor
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.fillHalfOval
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import org.intellij.plugins.markdown.ui.floating.FloatingToolbar
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Point
@@ -200,13 +203,18 @@ internal class VerticalBarPresentation(
   }
 
   private fun showToolbar() {
-    val actionToolbar = TableActionKeys.createActionToolbar(
-      rowActionGroup,
-      isHorizontal = true,
-      editor,
-      createDataProvider(row)
+    val targetComponent = TableActionKeys.createDataContextComponent(editor, createDataProvider(row))
+    FloatingToolbar.createImmediatelyUpdatedToolbar(
+      group = rowActionGroup,
+      place = TableActionPlaces.TABLE_INLAY_TOOLBAR,
+      targetComponent,
+      horizontal = true,
+      onUpdated = this::createAndShowHint
     )
-    val hint = LightweightHint(actionToolbar.component)
+  }
+
+  private fun createAndShowHint(toolbar: ActionToolbar) {
+    val hint = LightweightHint(toolbar.component)
     hint.setForceShowAsPopup(true)
     val targetPoint = calculateToolbarPosition(hint.component.preferredSize.height)
     val hintManager = HintManagerImpl.getInstanceImpl()

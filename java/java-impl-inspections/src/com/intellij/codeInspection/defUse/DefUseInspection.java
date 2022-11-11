@@ -41,22 +41,22 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         checkBody(method.getBody(), holder);
       }
 
       @Override
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
         checkBody(initializer.getBody(), holder);
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         checkBody(expression.getBody(), holder);
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         checkField(field, holder);
       }
     };
@@ -251,7 +251,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     final List<PsiAssignmentExpression> assignmentExpressions = new ArrayList<>();
     classInitializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         final PsiExpression lExpression = expression.getLExpression();
         if (lExpression instanceof PsiJavaReference && ((PsiJavaReference)lExpression).isReferenceTo(field)) {
           final PsiExpression rExpression = expression.getRExpression();

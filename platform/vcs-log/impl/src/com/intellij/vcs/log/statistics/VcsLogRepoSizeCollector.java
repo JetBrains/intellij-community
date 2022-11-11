@@ -46,7 +46,9 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
-    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    VcsProjectLog projectLog = project.getServiceIfCreated(VcsProjectLog.class);
+    if (projectLog == null) return Collections.emptySet();
+
     VcsLogData logData = projectLog.getDataManager();
     if (logData != null) {
       DataPack dataPack = logData.getDataPack();

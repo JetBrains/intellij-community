@@ -15,6 +15,7 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
@@ -260,8 +261,13 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     }
 
     private void onShowLongEdgesChanged() {
-      myVisiblePack.getVisibleGraph().getActionController()
-        .setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
+      ActionController<Integer> actionController = myVisiblePack.getVisibleGraph().getActionController();
+      boolean oldLongEdgesHiddenValue = actionController.areLongEdgesHidden();
+      boolean newLongEdgesHiddenValue = !myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES);
+      if (newLongEdgesHiddenValue != oldLongEdgesHiddenValue) {
+        actionController.setLongEdgesHidden(newLongEdgesHiddenValue);
+        getTable().repaint();
+      }
     }
   }
 }

@@ -35,6 +35,10 @@ public final class IndexAccessValidator {
     ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(exception); // RuntimeException to skip rebuild
   }
 
+  /**
+   * Ensures no nested index access in a current thread -- i.e. throws or logs {@link PluginException} if other index is
+   * already accessed now.
+   */
   public <T, E extends Throwable> T validate(@NotNull ID<?, ?> indexKey, @NotNull ThrowableComputable<T, E> runnable) throws E {
     checkAccessingIndexDuringOtherIndexProcessing(indexKey);
     ourAlreadyProcessingIndices.set(indexKey);

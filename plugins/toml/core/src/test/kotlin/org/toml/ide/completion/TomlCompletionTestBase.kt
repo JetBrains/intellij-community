@@ -19,8 +19,13 @@ abstract class TomlCompletionTestBase : TomlTestBase() {
     }
 
     override fun tearDown() {
-        completionFixture.tearDown()
-        super.tearDown()
+        try {
+            completionFixture.tearDown()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     fun checkContainsCompletion(

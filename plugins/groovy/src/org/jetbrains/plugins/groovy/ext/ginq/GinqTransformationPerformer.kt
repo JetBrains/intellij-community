@@ -75,7 +75,7 @@ class GinqTransformationPerformer(private val root: GinqRootPsiElement) : Groovy
 
   override fun computeType(expression: GrExpression): PsiType? {
     val topGinqExpression = getTopParsedGinqTree(root) ?: return null
-    val ginq = if (expression is GrMethodCall && (expression == root.psi || expression.refCallIdentifier() == topGinqExpression.select.keyword))
+    val ginq = if (expression is GrMethodCall && (expression == root.psi || expression.refCallIdentifier() == topGinqExpression.select?.keyword))
       topGinqExpression
     else
       expression.getStoredGinq()
@@ -94,9 +94,9 @@ class GinqTransformationPerformer(private val root: GinqRootPsiElement) : Groovy
   override fun isUntransformed(element: PsiElement): Boolean {
     if (getTopShutdownGinq(root) != null) return false
     val tree = element.getClosestGinqTree(root) ?: return false
-    val localRoots = tree.select.projections.flatMapTo(HashSet()) { projection -> projection.windows.map { it.overKw.parent.parent } }
+    val localRoots = tree.select?.projections?.flatMapTo(HashSet()) { projection -> projection.windows.map { it.overKw.parent.parent } }
     for (parent in element.parents(true)) {
-      if (parent.isGinqRoot() || localRoots.contains(parent)) {
+      if (parent.isGinqRoot() || localRoots?.contains(parent) == true) {
         return false
       }
       if (parent.isGinqUntransformed()) {

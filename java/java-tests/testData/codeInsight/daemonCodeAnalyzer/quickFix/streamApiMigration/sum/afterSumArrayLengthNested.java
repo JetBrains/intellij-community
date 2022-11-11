@@ -1,4 +1,4 @@
-// "Replace with sum()" "true"
+// "Replace with sum()" "true-preview"
 
 import java.util.Arrays;
 import java.util.Objects;

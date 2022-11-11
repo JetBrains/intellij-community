@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.*;
 
 /**
@@ -20,16 +18,6 @@ import java.util.*;
 @ApiStatus.ScheduledForRemoval
 @Deprecated
 public final class ContainerUtilRt {
-  /**
-   * @deprecated Use {@link HashMap#HashMap()}
-   */
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static <K, V> HashMap<K, V> newHashMap() {
-    return new HashMap<K, V>();
-  }
 
   /**
    * @deprecated Use {@link ArrayList#ArrayList()} instead
@@ -52,42 +40,6 @@ public final class ContainerUtilRt {
     ArrayList<T> list = new ArrayList<T>(elements.length);
     Collections.addAll(list, elements);
     return list;
-  }
-
-  /**
-   * @deprecated Use {@link HashSet#HashSet(int)}
-   */
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static <T> HashSet<T> newHashSet() {
-    return new HashSet<T>();
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Object[])}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
-    return new HashSet<T>(Arrays.asList(elements));
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Iterable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> elements) {
-    Iterator<? extends T> iterator = elements.iterator();
-    HashSet<T> set = new HashSet<T>();
-    while (iterator.hasNext()) set.add(iterator.next());
-    return set;
   }
 
   /**

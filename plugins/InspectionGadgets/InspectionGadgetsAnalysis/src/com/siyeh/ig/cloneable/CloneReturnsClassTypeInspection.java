@@ -80,13 +80,13 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       parent.accept(new JavaRecursiveElementVisitor() {
 
         @Override
-        public void visitClass(PsiClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) {}
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {}
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
         @Override
-        public void visitReturnStatement(PsiReturnStatement statement) {
+        public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
           final PsiExpression returnValue = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
           if (returnValue == null) {
@@ -113,7 +113,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
   private static class CloneReturnsClassTypeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       if (!CloneUtils.isClone(method) || !PsiUtil.isLanguageLevel5OrHigher(method)) {
         return;
       }
@@ -169,20 +169,20 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {}
+    public void visitClass(@NotNull PsiClass aClass) {}
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       myallReturnsMatchPredicate = false;
       stopWalking();
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       myReturnFound = true;
       myallReturnsMatchPredicate &= myPredicate.test(statement);

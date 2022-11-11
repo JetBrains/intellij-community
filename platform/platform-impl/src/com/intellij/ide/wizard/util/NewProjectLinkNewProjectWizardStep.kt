@@ -10,7 +10,7 @@ abstract class NewProjectLinkNewProjectWizardStep(parent: NewProjectWizardStep) 
 
   private val builder = if (context.isCreatingNewProject) NewProjectBuilder() else NewModuleBuilder()
 
-  override val builderId: String = builder.builderId!!
+  override val builderId: String = builder.builderId
 
   override val comment: String by lazy { getComment(builder.presentableName) }
 

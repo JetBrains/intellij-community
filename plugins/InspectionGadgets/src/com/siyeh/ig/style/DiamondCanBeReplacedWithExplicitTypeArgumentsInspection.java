@@ -53,7 +53,7 @@ public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends Bas
 
   private static class DiamondTypeVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitReferenceParameterList(PsiReferenceParameterList referenceParameterList) {
+    public void visitReferenceParameterList(@NotNull PsiReferenceParameterList referenceParameterList) {
       super.visitReferenceParameterList(referenceParameterList);
       final PsiTypeElement[] typeParameterElements = referenceParameterList.getTypeParameterElements();
       if (typeParameterElements.length == 1) {

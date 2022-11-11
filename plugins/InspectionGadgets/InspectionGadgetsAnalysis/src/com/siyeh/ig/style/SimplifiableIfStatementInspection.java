@@ -35,7 +35,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitIfStatement(PsiIfStatement ifStatement) {
+      public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
         IfConditionalModel model = IfConditionalModel.from(ifStatement, false);
         if (model == null) return;
         ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);

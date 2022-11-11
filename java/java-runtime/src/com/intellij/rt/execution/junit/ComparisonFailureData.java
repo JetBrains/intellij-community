@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.execution.junit;
-
-import junit.framework.ComparisonFailure;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,26 +20,26 @@ public class ComparisonFailureData {
   private final String myFilePath;
   private final String myActualFilePath;
 
-  private static final Map EXPECTED = new HashMap();
-  private static final Map ACTUAL = new HashMap();
+  private static final Map<String, Field> EXPECTED = new HashMap<>();
+  private static final Map<String, Field> ACTUAL = new HashMap<>();
 
   static {
     try {
-      init(ComparisonFailure.class);
-      init(org.junit.ComparisonFailure.class);
+      init("junit.framework.ComparisonFailure");
+      init("org.junit.ComparisonFailure");
     }
-    catch (Throwable e) {
-    }
+    catch (Throwable ignored) { }
   }
 
-  private static void init(Class exceptionClass) throws NoSuchFieldException {
+  private static void init(String exceptionClassName) throws NoSuchFieldException, ClassNotFoundException {
+    Class<?> exceptionClass = Class.forName(exceptionClassName, false, ComparisonFailureData.class.getClassLoader());
     final Field expectedField = exceptionClass.getDeclaredField("fExpected");
     expectedField.setAccessible(true);
-    EXPECTED.put(exceptionClass, expectedField);
+    EXPECTED.put(exceptionClassName, expectedField);
 
     final Field actualField = exceptionClass.getDeclaredField("fActual");
     actualField.setAccessible(true);
-    ACTUAL.put(exceptionClass, actualField);
+    ACTUAL.put(exceptionClassName, actualField);
   }
 
   public ComparisonFailureData(String expected, String actual) {
@@ -163,7 +148,7 @@ public class ComparisonFailureData {
         File tempFile = File.createTempFile(expectedOrActualPrefix, "");
         OutputStream stream = new FileOutputStream(tempFile);
         try {
-          stream.write(text.getBytes("UTF-8"), 0, text.length());
+          stream.write(text.getBytes(StandardCharsets.UTF_8), 0, text.length());
         }
         finally {
           stream.close();
@@ -205,10 +190,22 @@ public class ComparisonFailureData {
   }
 
   public static ComparisonFailureData create(Throwable assertion) {
+    if (assertion instanceof FileComparisonData) {
+      final FileComparisonData comparisonFailure = (FileComparisonData)assertion;
+      String actual = comparisonFailure.getActualStringPresentation();
+      String expected = comparisonFailure.getExpectedStringPresentation();
+      if (actual != null && expected != null) {
+        return new ComparisonFailureData(expected, actual, comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
+      }
+    }
+
     if (assertion instanceof FileComparisonFailure) {
       final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;
-      return new ComparisonFailureData(comparisonFailure.getExpected(), comparisonFailure.getActual(),
-                                       comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
+      String actual = comparisonFailure.getActual();
+      String expected = comparisonFailure.getExpected();
+      if (actual != null && expected != null) {
+        return new ComparisonFailureData(expected, actual, comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
+      }
     }
 
     ComparisonFailureData commonAssertion = createCommonAssertion(assertion);
@@ -255,16 +252,15 @@ public class ComparisonFailureData {
      return get(assertion, EXPECTED, "fExpected");
    }
 
-   private static String get(final Throwable assertion, final Map staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
+   private static String get(final Throwable assertion, final Map<String, Field> staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
      String actual;
-     if (assertion instanceof ComparisonFailure) {
-       actual = (String)((Field)staticMap.get(ComparisonFailure.class)).get(assertion);
-     }
-     else if (assertion instanceof org.junit.ComparisonFailure) {
-       actual = (String)((Field)staticMap.get(org.junit.ComparisonFailure.class)).get(assertion);
+     Class<? extends Throwable> assertionClass = assertion.getClass();
+     Field actualField = staticMap.get(assertionClass.getName());
+     if (actualField != null) {
+       actual = (String)actualField.get(assertion);
      }
      else {
-       Field field = assertion.getClass().getDeclaredField(fieldName);
+       Field field = assertionClass.getDeclaredField(fieldName);
        field.setAccessible(true);
        actual = (String)field.get(assertion);
      }

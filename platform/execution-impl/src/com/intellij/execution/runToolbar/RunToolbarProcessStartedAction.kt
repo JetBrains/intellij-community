@@ -147,7 +147,10 @@ internal class RunToolbarProcessStartedAction : ComboBoxAction(),
 
       override fun getPreferredSize(): Dimension {
         val d = super.getPreferredSize()
-        d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH
+        getProject()?.let {
+          d.width = RunWidgetWidthHelper.getInstance(it).runConfig
+        }
+
         return d
       }
     }

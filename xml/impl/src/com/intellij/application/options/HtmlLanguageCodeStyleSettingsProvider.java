@@ -33,7 +33,7 @@ public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new HtmlCodeStyleSettings(settings);
   }
 
@@ -70,7 +70,7 @@ public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
 
     @Override
-    protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+    protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
       return new HtmlCodeStyleMainPanel(getCurrentSettings(), settings);
     }
 

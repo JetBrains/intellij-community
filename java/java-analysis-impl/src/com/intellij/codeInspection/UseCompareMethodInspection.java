@@ -48,7 +48,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         CompareInfo info = fromCall(call);
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (info != null && nameElement != null) {
@@ -57,7 +57,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Override
-      public void visitIfStatement(PsiIfStatement statement) {
+      public void visitIfStatement(@NotNull PsiIfStatement statement) {
         CompareInfo info = fromIf(statement);
         PsiElement keyword = statement.getFirstChild();
         if (info != null && keyword != null) {
@@ -66,7 +66,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression expression) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
         CompareInfo info = fromTernary(expression);
         if (info != null) {
           register(info, expression);

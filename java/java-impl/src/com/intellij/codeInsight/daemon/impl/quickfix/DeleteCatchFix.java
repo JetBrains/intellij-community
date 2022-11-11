@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,14 +26,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DeleteCatchFix implements IntentionActionWithFixAllOption {
   private final PsiParameter myCatchParameter;
   private final String myTypeText;
 
-  public DeleteCatchFix(@NotNull PsiParameter myCatchParameter) {
-    this.myCatchParameter = myCatchParameter;
-    myTypeText = JavaHighlightUtil.formatType(myCatchParameter.getType());
+  public DeleteCatchFix(@NotNull PsiParameter catchParameter) {
+    this(catchParameter, JavaHighlightUtil.formatType(catchParameter.getType()));
+  }
+
+  private DeleteCatchFix(@NotNull PsiParameter catchParameter, @NotNull String typeText) {
+    myCatchParameter = catchParameter;
+    myTypeText = typeText;
   }
 
   @Override
@@ -52,10 +58,15 @@ public class DeleteCatchFix implements IntentionActionWithFixAllOption {
     return myCatchParameter.isValid() && BaseIntentionAction.canModify(myCatchParameter);
   }
 
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new DeleteCatchFix(PsiTreeUtil.findSameElementInCopy(myCatchParameter, target));
+  }
+
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myCatchParameter;
+    return myCatchParameter.getContainingFile();
   }
 
   @Override

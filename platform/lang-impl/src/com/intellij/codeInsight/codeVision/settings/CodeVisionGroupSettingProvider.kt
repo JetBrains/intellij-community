@@ -38,7 +38,7 @@ interface CodeVisionGroupSettingProvider {
   }
 
   object EP {
-    val EXTENSION_POINT_NAME =
+    val EXTENSION_POINT_NAME: ExtensionPointName<CodeVisionGroupSettingProvider> =
       ExtensionPointName.create<CodeVisionGroupSettingProvider>("com.intellij.config.codeVisionGroupSettingProvider")
 
     fun findGroupModels(): List<CodeVisionGroupSettingProvider> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 
@@ -46,7 +46,7 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
         private const val KOTLIN_COMPILER_VERSION_TAG = "kotlin.compiler.version"
 
         private fun getKotlinVersionFromCompiler(): Version? {
-            val kotlinCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+            val kotlinCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
             val kotlinArtifactVersion = kotlinCompilerVersion.takeUnless { it.isSnapshot }?.artifactVersion ?: return null
             return Version.fromString(kotlinArtifactVersion)
         }

@@ -2,7 +2,6 @@ package com.intellij.ide.starter.bus
 
 import com.intellij.ide.starter.utils.catchAll
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 
@@ -19,13 +18,13 @@ open class EventsReceiver @JvmOverloads constructor(
 
   private val jobs = mutableMapOf<Class<*>, Job>()
 
-  private var returnDispatcher: CoroutineDispatcher = Dispatchers.Default
+  private var returnDispatcher: CoroutineDispatcher = Dispatchers.IO
 
   /**
    * Set the `CoroutineDispatcher` which will be used to launch your callbacks.
    *
    * If this [EventsReceiver] was created on the main thread the default dispatcher will be [Dispatchers.Main].
-   * In any other case [Dispatchers.Default] will be used.
+   * In any other case [Dispatchers.IO] will be used.
    */
   fun returnOn(dispatcher: CoroutineDispatcher): EventsReceiver {
     returnDispatcher = dispatcher
@@ -55,7 +54,7 @@ open class EventsReceiver @JvmOverloads constructor(
       throw throwable
     }
 
-    val job = CoroutineScope(Job() + Dispatchers.Default + exceptionHandler).launch {
+    val job = CoroutineScope(Job() + Dispatchers.IO + exceptionHandler).launch {
       bus.forEvent(clazz)
         .drop(if (skipRetained) 1 else 0)
         .filterNotNull()
@@ -97,7 +96,10 @@ open class EventsReceiver @JvmOverloads constructor(
    * Unsubscribe from all events
    */
   fun unsubscribe() {
-    jobs.values.forEach { it.cancel() }
+    runBlocking {
+      jobs.values.forEach { it.cancelAndJoin() }
+    }
+
     jobs.clear()
   }
 }

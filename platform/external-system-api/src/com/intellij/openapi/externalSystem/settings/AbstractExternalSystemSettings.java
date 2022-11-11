@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
@@ -73,20 +74,21 @@ public abstract class AbstractExternalSystemSettings<
    *
    * @param listener         target generic listener to wrap to external system-specific implementation
    * @param parentDisposable is a disposable to unsubscribe from external system settings events
-   * @note lifetime of parentDisposable must be shorter of project lifetime
-   * @abstract at 2021
    */
   public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener, @NotNull Disposable parentDisposable) {
+    Logger.getInstance(AbstractExternalSystemSettings.class)
+      .error("Unimplemented subscribe method for " + getClass());
     subscribe(listener); // Api backward compatibility
   }
 
   /**
-   * @remove at 2021
    * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
    * @deprecated use/implements {@link AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)} instead
    */
-  @Deprecated
-  public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
+  @Deprecated(forRemoval = true)
+  public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener) {
+    subscribe(listener, this);
+  }
 
   /**
    * Generic subscribe implementation
@@ -243,7 +245,8 @@ public abstract class AbstractExternalSystemSettings<
     getPublisher().onProjectsLoaded(settings);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
     if (manager != null) {
-      ExternalSystemSettingsListenerEx.Companion.onProjectsLoaded(myProject, manager, settings);
+      ExternalSystemSettingsListenerEx.EP_NAME
+        .forEachExtensionSafe(it -> it.onProjectsLoaded(myProject, manager, settings));
     }
   }
 
@@ -251,7 +254,8 @@ public abstract class AbstractExternalSystemSettings<
     getPublisher().onProjectsLinked(settings);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
     if (manager != null) {
-      ExternalSystemSettingsListenerEx.Companion.onProjectsLinked(myProject, manager, settings);
+      ExternalSystemSettingsListenerEx.EP_NAME
+        .forEachExtensionSafe(it -> it.onProjectsLinked(myProject, manager, settings));
     }
   }
 
@@ -259,7 +263,8 @@ public abstract class AbstractExternalSystemSettings<
     getPublisher().onProjectsUnlinked(linkedProjectPaths);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
     if (manager != null) {
-      ExternalSystemSettingsListenerEx.Companion.onProjectsUnlinked(myProject, manager, linkedProjectPaths);
+      ExternalSystemSettingsListenerEx.EP_NAME
+        .forEachExtensionSafe(it -> it.onProjectsUnlinked(myProject, manager, linkedProjectPaths));
     }
   }
 

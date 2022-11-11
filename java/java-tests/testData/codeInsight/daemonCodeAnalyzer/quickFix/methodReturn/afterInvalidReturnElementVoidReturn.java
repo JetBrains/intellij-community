@@ -1,4 +1,4 @@
-// "Make 'm' return 'void'" "true"
+// "Make 'm()' return 'void'" "true-preview"
 
 class Test {
 

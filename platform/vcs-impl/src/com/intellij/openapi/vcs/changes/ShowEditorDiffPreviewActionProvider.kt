@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.idea.ActionsBundle.message
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
@@ -13,6 +14,10 @@ class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
     return project != null &&
            getDiffPreview(e) != null &&
            EditorTabDiffPreviewManager.getInstance(project).isEditorDiffPreviewAvailable()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun update(e: AnActionEvent) {

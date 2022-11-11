@@ -7,7 +7,7 @@
 <ul><li>Dedicated tool window</li>
 <li>Coding assistance for build files</li>
 <li>Possibility to execute tasks</li></ul>
-To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>.
+To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
   ]]></description>
   <vendor>JetBrains</vendor>
 
@@ -89,6 +89,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <postStartupActivity implementation="com.intellij.lang.ant.config.impl.AntShortcutStartupActivity"/>
 
     <externalSystemUnlinkedProjectAware implementation="com.intellij.lang.ant.config.impl.AntUnlinkedProjectAware"/>
+    <iconMapper mappingFile="antIconMappings.json"/>
   </extensions>
 
   <actions>
@@ -99,7 +100,6 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
       <add-to-group group-id="ToolsXmlGroup" relative-to-action="GenerateDTD" anchor="before"/>
       <add-to-group group-id="EditorPopupMenu" relative-to-action="PackageFile" anchor="after"/>
       <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
       <add-to-group group-id="ScopeViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
       <add-to-group group-id="CommanderPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
     </action>

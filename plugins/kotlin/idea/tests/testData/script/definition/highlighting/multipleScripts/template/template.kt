@@ -34,7 +34,7 @@ object DefinitionForFirstLoadedScript : ScriptCompilationConfiguration(
 
                 // lib-classes as script dependencies: they will be the first in allScriptDependenciesClassFiles
                 context.compilationConfiguration.with {
-                    dependencies(JvmDependency(environment["lib-classes"] as File))
+                    dependencies(JvmDependency(environment["lib-classes"] as List<File>))
                 }.asSuccess()
             }
         }
@@ -63,7 +63,7 @@ object DefinitionForMainScript : ScriptCompilationConfiguration(
 
                 // template-classes as script dependencies: they will be the second in allScriptDependenciesClassFiles
                 context.compilationConfiguration.with {
-                    dependencies(JvmDependency(environment["template-classes"] as File))
+                    dependencies(JvmDependency(environment["template-classes"] as List<File>))
 
                     implicitReceivers(custom.project.Project::class)
                 }.asSuccess()

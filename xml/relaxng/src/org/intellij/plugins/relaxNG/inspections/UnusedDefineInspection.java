@@ -63,7 +63,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private final XmlElementVisitor myXmlVisitor = new XmlElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         MyElementVisitor.this.visitXmlTag(tag);
       }
     };
@@ -93,7 +93,7 @@ public class UnusedDefineInspection extends BaseInspection {
       if (processRncUsages(pattern, new LocalSearchScope(collector.toArray()))) return;
 
       final ASTNode astNode = ((RncDefineImpl)pattern).getNameNode();
-      myHolder.registerProblem(astNode.getPsi(), RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(pattern));
+      myHolder.registerProblem(astNode.getPsi(), RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>());
     }
 
     private static boolean processRncUsages(PsiElement tag, LocalSearchScope scope) {
@@ -162,7 +162,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
       if (processUsages(tag, value, new LocalSearchScope(collector.toArray()))) return;
 
-      myHolder.registerProblem(value, RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(tag));
+      myHolder.registerProblem(value, RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>());
     }
 
     private static boolean processUsages(PsiElement tag, XmlAttributeValue value, LocalSearchScope scope) {
@@ -180,12 +180,6 @@ public class UnusedDefineInspection extends BaseInspection {
     }
 
     private static class MyFix<T extends PsiElement> implements LocalQuickFix {
-      private final T myTag;
-
-      MyFix(T tag) {
-        myTag = tag;
-      }
-
       @Override
       @NotNull
       public String getFamilyName() {
@@ -194,6 +188,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        T myTag = (T)descriptor.getPsiElement();
         try {
           if (myTag.isValid()) {
             myTag.delete();

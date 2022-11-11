@@ -1,8 +1,8 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 class X {
   int m(String s, boolean r) {
       //ignore
-      if ("x".equals(s)) {
+      if (s.equals("x")) {
           System.out.println("foo");
       }
   }

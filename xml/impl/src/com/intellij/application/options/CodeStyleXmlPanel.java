@@ -62,7 +62,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   @Override
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(final @NotNull EditorColorsScheme scheme) {
     return XmlHighlighterFactory.createXMLHighlighter(scheme);
   }
 
@@ -72,7 +72,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     xmlSettings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
@@ -99,7 +99,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     myKeepBlankLines.setText(String.valueOf(xmlSettings.XML_KEEP_BLANK_LINES));
     myWrapAttributes.setSelectedItem(CodeStyleSettings.WrapStyle.forWrapping(xmlSettings.XML_ATTRIBUTE_WRAP));

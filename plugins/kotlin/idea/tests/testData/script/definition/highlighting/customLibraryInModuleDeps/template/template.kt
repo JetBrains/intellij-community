@@ -26,7 +26,7 @@ object TemplateDefinition : ScriptCompilationConfiguration(
                     }.orEmpty()
 
                 context.compilationConfiguration.with {
-                    dependencies(JvmDependency(environment["template-classes"] as File))
+                    dependencies(JvmDependency(environment["template-classes"] as List<File>))
                 }.asSuccess()
             }
         }

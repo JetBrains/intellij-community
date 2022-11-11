@@ -6,6 +6,7 @@ import com.intellij.facet.mock.MockFacet;
 import com.intellij.facet.mock.MockFacetConfiguration;
 import com.intellij.facet.mock.MockFacetType;
 import com.intellij.facet.mock.MockSubFacetType;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -174,6 +175,7 @@ public class FacetManagerTest extends FacetTestCase {
     assertEquals("newName", mockFacet.getName());
   }
 
+  @TestFor(issues = "IDEA-296991")
   public void testFacetIsCreatedOnlyOnce() {
     MockFacet.setConstructorCounter(0);
     addFacet("facet");

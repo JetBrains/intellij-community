@@ -79,7 +79,7 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
       for (HighlightInfo info : infos) {
         if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
           fail(String.format("%s in: %s", info.getDescription(),
-                             myFixture.getEditor().getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))));
+                             myFixture.getEditor().getDocument().getText(TextRange.create(info))));
         }
       }
     }

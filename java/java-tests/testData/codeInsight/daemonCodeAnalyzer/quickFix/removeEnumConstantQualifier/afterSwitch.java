@@ -1,4 +1,4 @@
-// "Remove qualifier" "true"
+// "Remove qualifier" "true-preview"
 class Test {
     void test(Letter obj) {
         switch (obj) {

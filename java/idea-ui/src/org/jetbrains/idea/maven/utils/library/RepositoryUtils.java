@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.utils.library;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RepositoryLibraryType;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,12 +56,12 @@ public final class RepositoryUtils {
     return libraryEditor != null && libraryEditor.getUrls(AnnotationOrderRootType.getInstance()).length > 0;
   }
 
-  public static String getStorageRoot(Library library, Project project) {
-    return getStorageRoot(library.getUrls(OrderRootType.CLASSES), project);
+  public static String getStorageRoot(Library library) {
+    return getStorageRoot(library.getUrls(OrderRootType.CLASSES));
   }
 
 
-  public static String getStorageRoot(String[] urls, Project project) {
+  public static String getStorageRoot(String[] urls) {
     if (urls.length == 0) {
       return null;
     }
@@ -136,6 +135,6 @@ public final class RepositoryUtils {
   }
 
   public static Promise<List<OrderRoot>> reloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
-    return loadDependenciesToLibrary(project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library, project));
+    return loadDependenciesToLibrary(project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library));
   }
 }

@@ -3,10 +3,6 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.UIDesignerBundle;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntEditor extends AbstractTextFieldEditor<Integer> {
   private final int myLowBoundary;
 

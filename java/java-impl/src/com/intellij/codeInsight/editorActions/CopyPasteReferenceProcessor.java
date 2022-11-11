@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -23,17 +9,21 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
@@ -48,6 +38,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData> {
@@ -129,19 +120,26 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       askReferencesToRestore(project, refs, referenceData);
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    Consumer<ProgressIndicator> consumer = indicator -> {
       Set<String> imported = new TreeSet<>();
       restoreReferences(referenceData, refs, imported);
       if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.YES && !imported.isEmpty()) {
         String notificationText = JavaBundle.message("copy.paste.reference.notification", imported.size());
-        ApplicationManager.getApplication().invokeLater(
+        app.invokeLater(
           () -> showHint(editor, notificationText, e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               reviewImports(project, file, imported);
             }
-          }), ModalityState.NON_MODAL, __->editor.isDisposed());
+          }), ModalityState.NON_MODAL, __ -> editor.isDisposed());
       }
-    });
+    };
+    if (Registry.is("run.refactorings.under.progress")) {
+      app.runWriteActionWithCancellableProgressInDispatchThread(JavaBundle.message("progress.title.restore.references"), project, null, consumer);
+    }
+    else {
+      app.runWriteAction(() -> consumer.accept(null));
+    }
   }
 
   protected abstract void removeImports(@NotNull PsiFile file, @NotNull Set<String> imports);

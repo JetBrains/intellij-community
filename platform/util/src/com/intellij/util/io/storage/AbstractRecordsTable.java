@@ -15,6 +15,15 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 
+/**
+ * Table of indirect addressing, logically contains tuples (id, address, size, capacity), do
+ * the mapping id -> (address, size, capacity), and stores tuples as fixed-size records on
+ * the top of {@link PagedFileStorage}.
+ * <br>
+ * Subclasses could add fields to the tuple, and implement more efficient storage formats.
+ * <br>
+ * Thread safety is unclear: some methods are protected against concurrent access, some are not.
+ */
 public abstract class AbstractRecordsTable implements Closeable, Forceable {
   private static final Logger LOG = Logger.getInstance(AbstractRecordsTable.class);
 
@@ -84,7 +93,8 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
     markDirty();
     ensureFreeRecordsScanned();
 
-    if (myFreeRecordsList.isEmpty()) {
+    int reusedRecord = reserveFreeRecord();
+    if (reusedRecord == -1) {
       int result = getRecordsCount() + 1;
       doCleanRecord(result);
       if (getRecordsCount() != result) {
@@ -93,11 +103,17 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
       return result;
     }
     else {
-      final int result = myFreeRecordsList.removeInt(myFreeRecordsList.size() - 1);
-      assert isSizeOfRemovedRecord(getSize(result));
-      setSize(result, 0);
-      setCapacity(result, 0);
-      return result;
+      assert isSizeOfRemovedRecord(getSize(reusedRecord));
+      setSize(reusedRecord, 0);
+      setCapacity(reusedRecord, 0);
+      return reusedRecord;
+    }
+  }
+
+  private int reserveFreeRecord() throws IOException {
+    ensureFreeRecordsScanned();
+    synchronized (myFreeRecordsList) {
+      return myFreeRecordsList.isEmpty() ? -1 : myFreeRecordsList.removeInt(myFreeRecordsList.size() - 1);
     }
   }
 
@@ -188,7 +204,7 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
   }
 
   protected int getOffset(int record, int section) {
-    assert record > 0;
+    assert record > 0 : "record = " + record;
     int offset = getHeaderSize() + (record - 1) * getRecordSize() + section;
     if (offset < 0) {
       throw new IllegalArgumentException("offset is negative (" + offset + "): " +

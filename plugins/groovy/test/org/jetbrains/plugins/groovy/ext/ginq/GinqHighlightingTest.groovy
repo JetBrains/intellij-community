@@ -816,8 +816,16 @@ where true
 
   void testSelectShouldBeLast() {
     testGinqHighlighting """
-from b in [1]
-<error>join</error> a in [1]
+<error>from</error> b in [1]
+join a in [1] on a == b
+"""
+  }
+
+  void testOnWithKw() {
+    testGinqHighlighting """
+from x in [1]
+join x1 in [2] on true
+select x
 """
   }
 

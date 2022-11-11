@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
 /**
  * @author Pavel.Dolgov
  */
-public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
   private final String myName;
 
   public AddAnnotationAttributeNameFix(PsiNameValuePair pair, String name) {
@@ -120,8 +121,7 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
 
           final Collection<PsiMethod> availableMethods = Arrays.stream(annotationClass.getMethods())
             .filter(PsiAnnotationMethod.class::isInstance)
-            .filter(psiMethod -> !usedNames.contains(psiMethod.getName()))
-            .collect(Collectors.toList());
+            .filter(psiMethod -> !usedNames.contains(psiMethod.getName())).toList();
 
           if (!availableMethods.isEmpty()) {
             final PsiType valueType = CreateAnnotationMethodFromUsageFix.getAnnotationValueType(value);

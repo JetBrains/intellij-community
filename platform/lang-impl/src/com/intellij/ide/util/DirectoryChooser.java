@@ -5,10 +5,7 @@ package com.intellij.ide.util;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -556,6 +553,11 @@ public class DirectoryChooser extends DialogWrapper {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myShowExisting;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

@@ -1,4 +1,4 @@
-interface <lineMarker descr="*">A</lineMarker> {
+interface <lineMarker descr="Is implemented by B C  Click or press ... to navigate">A</lineMarker> {
     fun <lineMarker descr="<html><body>Is overridden in <br>&nbsp;&nbsp;&nbsp;&nbsp;C</body></html>">foo</lineMarker>(): String = "A"
 
     val <lineMarker descr="<html><body>Is implemented in <br/>&nbsp;&nbsp;&nbsp;&nbsp;C</body></html>">some</lineMarker>: String? get() = null
@@ -8,7 +8,7 @@ interface <lineMarker descr="*">A</lineMarker> {
         set(value) {}
 }
 
-open class <lineMarker descr="*">B</lineMarker> : A
+open class <lineMarker descr="Is subclassed by C  Click or press ... to navigate">B</lineMarker> : A
 
 class C: B() {
     override val <lineMarker descr="Overrides property in 'A'">some</lineMarker>: String = "S"

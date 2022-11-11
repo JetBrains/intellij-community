@@ -35,7 +35,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     userHome = createUniqueTempDirectory()
     userCache = FileUtil.join(userHome, GRADLE_CACHE_DIR_NAME)
 
-    gradleVersion = GradleVersion.version("5.2.1")
+    gradleVersion = GradleVersion.version("5.0")
 
     earliestSdk = TestSdkGenerator.createNextSdk("1.8")
     latestSdk = TestSdkGenerator.createNextSdk("11")
@@ -96,22 +96,6 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
 
   fun assertGradleProperties(java: TestSdk?) {
     assertEquals(java?.homePath, getGradleJavaHome(project, externalProjectPath))
-  }
-
-  fun assertSuggestedGradleVersionFor(gradleVersion: GradleVersion?, javaVersionString: String) {
-    val testJdk = TestSdkGenerator.createNextSdk(javaVersionString)
-    withRegisteredSdk(testJdk, isProjectSdk = true) {
-      val actualGradleVersion = suggestGradleVersion(project)
-      assertEquals("Suggested incorrect Gradle version for $testJdk", gradleVersion, actualGradleVersion)
-      if (actualGradleVersion == null) return@withRegisteredSdk
-      val isSupported = isSupported(actualGradleVersion, javaVersionString)
-      assertTrue("Suggested incompatible Gradle version $actualGradleVersion for $testJdk", isSupported)
-    }
-  }
-
-  fun assertSuggestedGradleVersionFor(gradleVersionString: String, javaVersionString: String) {
-    val gradleVersion = GradleVersion.version(gradleVersionString)
-    assertSuggestedGradleVersionFor(gradleVersion, javaVersionString)
   }
 
   fun withServiceGradleUserHome(action: () -> Unit) {

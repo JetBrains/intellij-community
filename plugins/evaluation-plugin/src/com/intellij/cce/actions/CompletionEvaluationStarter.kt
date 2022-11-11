@@ -26,14 +26,15 @@ import java.nio.file.Paths
 import kotlin.system.exitProcess
 
 internal class CompletionEvaluationStarter : ApplicationStarter {
-  override fun getCommandName(): String = "evaluate-completion"
-  override fun isHeadless(): Boolean = true
+  override val commandName: String
+    get() = "ml-evaluate"
 
-  override fun main(args: Array<String>) =
+  override fun main(args: List<String>) {
     MainEvaluationCommand()
       .subcommands(FullCommand(), GenerateActionsCommand(), CustomCommand(),
                    MultipleEvaluations(), CompareEvaluationsInDirectory())
       .main(args.toList().subList(1, args.size))
+  }
 
   abstract class EvaluationCommand(name: String, help: String) : CliktCommand(name = name, help = help) {
     protected fun loadConfig(configPath: Path) = try {

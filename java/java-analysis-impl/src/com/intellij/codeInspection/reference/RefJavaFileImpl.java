@@ -3,6 +3,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UastContextKt;
 
@@ -15,35 +16,34 @@ public class RefJavaFileImpl extends RefFileImpl {
   public void buildReferences() {
     PsiFile file = getPsiElement();
     if (file != null && PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
-        PsiPackageStatement packageStatement = ((PsiJavaFile)file).getPackageStatement();
-        if (packageStatement != null) {
-          packageStatement.accept(new JavaRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-              super.visitReferenceElement(reference);
+      PsiPackageStatement packageStatement = ((PsiJavaFile)file).getPackageStatement();
+      if (packageStatement != null) {
+        packageStatement.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
+            processReference(reference.resolve());
+          }
+
+          @Override
+          public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
+            super.visitNameValuePair(pair);
+            PsiReference reference = pair.getReference();
+            if (reference != null) {
               processReference(reference.resolve());
             }
+          }
 
-            @Override
-            public void visitNameValuePair(PsiNameValuePair pair) {
-              super.visitNameValuePair(pair);
-              PsiReference reference = pair.getReference();
-              if (reference != null) {
-                processReference(reference.resolve());
-              }
+          private void processReference(PsiElement element) {
+            RefElement refElement = getRefManager().getReference(element);
+            if (refElement instanceof RefJavaElementImpl) {
+              addOutReference(refElement);
+              ((RefJavaElementImpl)refElement).markReferenced(RefJavaFileImpl.this, false, true, null);
             }
-
-            private void processReference(PsiElement element) {
-              RefElement refElement = getRefManager().getReference(element);
-              if (refElement instanceof RefJavaElementImpl) {
-                addOutReference(refElement);
-                ((RefJavaElementImpl)refElement).markReferenced(RefJavaFileImpl.this, false, true, null);
-              }
-            }
-          });
-        }
+          }
+        });
       }
-    getRefManager().fireBuildReferences(this);
+    }
   }
 
   @Override

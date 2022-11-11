@@ -1,1 +1,1 @@
-FirLightSimpleMethodForSymbol: foo
+SymbolLightSimpleMethod: foo

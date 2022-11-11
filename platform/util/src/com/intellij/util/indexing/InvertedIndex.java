@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

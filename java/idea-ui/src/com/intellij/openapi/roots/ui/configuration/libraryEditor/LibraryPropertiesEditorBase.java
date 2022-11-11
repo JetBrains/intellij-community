@@ -64,7 +64,9 @@ public abstract class LibraryPropertiesEditorBase<P extends LibraryProperties, T
   }
 
   protected void updateDescription() {
-    myDescriptionLabel.setText(myLibraryType.getDescription(myEditorComponent.getProperties()));
+    String description = myLibraryType.getDescription(myEditorComponent.getProperties());
+    myDescriptionLabel.setText(description);
+    myDescriptionLabel.setToolTipText(description);
   }
 
   protected abstract void edit();

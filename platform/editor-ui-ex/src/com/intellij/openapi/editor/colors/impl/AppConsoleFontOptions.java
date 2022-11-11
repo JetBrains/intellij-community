@@ -69,6 +69,7 @@ public final class AppConsoleFontOptions extends AppFontOptions<AppConsoleFontOp
     public boolean USE_EDITOR_FONT = true;
 
     ConsoleFontState() {
+      super();
     }
 
     ConsoleFontState(FontPreferences fontPreferences) {

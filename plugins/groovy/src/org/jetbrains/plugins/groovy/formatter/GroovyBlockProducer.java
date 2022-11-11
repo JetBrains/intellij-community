@@ -5,6 +5,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,12 +23,13 @@ public interface GroovyBlockProducer {
     if (!(psi instanceof GroovyPsiElement)) {
       return new GroovyBlock(node, indent, wrap, context);
     }
-    GroovyInlineASTTransformationPerformer performer = GroovyInlineTransformationUtilKt.getRootInlineTransformationPerformer((GroovyPsiElement)psi);
-    if (performer instanceof GroovyInlineASTTransformationPerformerEx) {
-      return ((GroovyInlineASTTransformationPerformerEx)performer).computeFormattingBlock(node, context);
-    } else {
-      return new GroovyBlock(node, indent, wrap, context);
+    if (!DumbService.isDumb(node.getPsi().getProject())) {
+      GroovyInlineASTTransformationPerformer performer = GroovyInlineTransformationUtilKt.getRootInlineTransformationPerformer((GroovyPsiElement)psi);
+      if (performer instanceof GroovyInlineASTTransformationPerformerEx) {
+        return ((GroovyInlineASTTransformationPerformerEx)performer).computeFormattingBlock(node, context);
+      }
     }
+    return new GroovyBlock(node, indent, wrap, context);
   };
 
   Block generateBlock(@NotNull final ASTNode node,

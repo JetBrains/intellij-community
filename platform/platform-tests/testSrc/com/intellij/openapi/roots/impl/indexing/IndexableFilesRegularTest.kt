@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.application.runWriteAction
@@ -21,7 +21,6 @@ import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexableSetContributor
 import org.junit.Test
-import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -162,7 +161,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
       }
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdk")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdk") { sdkModificator ->
       sdkModificator.addRoot(classesDir.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesDir.file, OrderRootType.SOURCES)
     }
@@ -264,14 +263,17 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
         }
       }
     }
+    val excludedFile = sourceFileExcludedByCondition.file //to avoid synchronous refresh outside EDT under read lock
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
-      override fun getAdditionalProjectLibraries(project: Project) = listOf(
-        SyntheticLibrary.newImmutableLibrary(
-          listOf(sourcesDir.file, moduleExcludedSourcesDir.file),
-          listOf(binariesDir.file, moduleExcludedBinariesDir.file),
-          setOf(sourcesExcludedDir.file, binariesExcludedDir.file)
-        ) { file -> file == sourceFileExcludedByCondition.file }
-      )
+      override fun getAdditionalProjectLibraries(project: Project): List<SyntheticLibrary> {
+        return listOf(
+          SyntheticLibrary.newImmutableLibrary(
+            listOf(sourcesDir.file, moduleExcludedSourcesDir.file),
+            listOf(binariesDir.file, moduleExcludedBinariesDir.file),
+            setOf(sourcesExcludedDir.file, binariesExcludedDir.file)
+          ) { file -> file == excludedFile }
+        )
+      }
     }
     maskAdditionalLibraryRootsProviders(additionalLibraryRootsProvider)
     assertIndexableFiles(sourceFile.file, binaryFile.file, reIncludedSource.file, reIncludedBinary.file)
@@ -347,9 +349,9 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
       }
     }
     assertIndexableFiles(contentFileToUnload.file, contentFileToRetain.file)
-    ModuleManager.getInstance(project).setUnloadedModules(Arrays.asList("moduleToUnload"))
+    ModuleManager.getInstance(project).setUnloadedModulesSync(listOf("moduleToUnload"))
     assertIndexableFiles(contentFileToRetain.file)
-    ModuleManager.getInstance(project).setUnloadedModules(Collections.emptyList())
+    ModuleManager.getInstance(project).setUnloadedModulesSync(emptyList())
     assertIndexableFiles(contentFileToUnload.file, contentFileToRetain.file)
   }
 

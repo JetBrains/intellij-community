@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
@@ -8,14 +8,12 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiJavaFile
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.allElementsToMove
-import org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.shouldFixFqName
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinAwareMoveFilesOrDirectoriesProcessor @JvmOverloads constructor(
@@ -72,20 +70,7 @@ class KotlinAwareMoveFilesOrDirectoriesProcessor @JvmOverloads constructor(
         elementsToMove.forEach { it.doMark(mark) }
     }
 
-    private fun markShouldFixFqName(value: Boolean) {
-        markPsiFiles { (this as? PsiJavaFile)?.shouldFixFqName = value }
-    }
-
     private fun markScopeToMove(allElementsToMove: List<PsiElement>?) {
         markPsiFiles { (this as? KtFile)?.allElementsToMove = allElementsToMove }
-    }
-
-    override fun performRefactoring(usages: Array<UsageInfo>) {
-        try {
-            markShouldFixFqName(true)
-            super.performRefactoring(usages)
-        } finally {
-            markShouldFixFqName(false)
-        }
     }
 }

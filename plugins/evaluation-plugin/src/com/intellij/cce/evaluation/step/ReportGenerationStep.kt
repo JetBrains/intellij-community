@@ -47,7 +47,7 @@ class ReportGenerationStep(
     val strategies = configs.map { it.actions.strategy }
     val featuresStorages = workspaces.map { it.featuresStorage }
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
-    val isCodeGolfEvaluation = strategies.map { it.codeGolf }.allEquals()
+    val isCompletionGolfEvaluation = strategies.map { it.completionGolf }.allEquals()
     var iteration = 0
     for (filter in sessionsFilters) {
       val sessionStorages = workspaces.map { FilteredSessionsStorage(filter, it.sessionsStorage) }
@@ -68,7 +68,7 @@ class ReportGenerationStep(
             comparisonStorage.reportName,
             suggestionsComparators,
             featuresStorages,
-            isCodeGolfEvaluation
+            isCompletionGolfEvaluation
           )
         )
         if (ApplicationManager.getApplication().isUnitTestMode) reportGenerators.add(

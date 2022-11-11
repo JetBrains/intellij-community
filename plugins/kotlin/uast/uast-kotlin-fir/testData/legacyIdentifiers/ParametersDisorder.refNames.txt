@@ -61,6 +61,7 @@ Float -> USimpleNameReferenceExpression (identifier = Float) from KtNameReferenc
 String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
 Int -> USimpleNameReferenceExpression (identifier = Int) from KtNameReferenceExpression
 Parent -> USimpleNameReferenceExpression (identifier = Parent) from KtObjectLiteralExpression
-Parent -> UObjectLiteralExpression from KtNameReferenceExpression
+Parent -> USimpleNameReferenceExpression (identifier = Parent) from KtSuperTypeCallEntry
+Parent -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) from KtNameReferenceExpression
 b -> USimpleNameReferenceExpression (identifier = b) from KtNameReferenceExpression
 a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression

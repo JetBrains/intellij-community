@@ -1,6 +1,6 @@
 package sample
 
-interface <lineMarker descr="*">S</lineMarker><T> {
+interface <lineMarker descr="Is implemented by S1 S2  Click or press ... to navigate">S</lineMarker><T> {
     fun <lineMarker descr="<html><body>Is implemented in <br>&nbsp;&nbsp;&nbsp;&nbsp;sample.S2</body></html>">foo</lineMarker>(t: T): T
 
     val <lineMarker descr="<html><body>Is implemented in <br/>&nbsp;&nbsp;&nbsp;&nbsp;sample.S2</body></html>">some</lineMarker>: T? get
@@ -10,7 +10,7 @@ interface <lineMarker descr="*">S</lineMarker><T> {
         set
 }
 
-open abstract class <lineMarker descr="*">S1</lineMarker> : S<String>
+open abstract class <lineMarker descr="Is subclassed by S2  Click or press ... to navigate">S1</lineMarker> : S<String>
 
 class S2 : S1() {
     override val <lineMarker descr="Implements property in 'S&lt;T&gt;'">some</lineMarker>: String = "S"

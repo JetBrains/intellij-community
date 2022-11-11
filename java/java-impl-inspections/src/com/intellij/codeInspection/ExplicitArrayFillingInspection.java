@@ -50,7 +50,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitForStatement(PsiForStatement statement) {
+      public void visitForStatement(@NotNull PsiForStatement statement) {
         super.visitForStatement(statement);
         CountingLoop loop = CountingLoop.from(statement);
         if (loop == null || loop.isIncluding() || loop.isDescending()) return;

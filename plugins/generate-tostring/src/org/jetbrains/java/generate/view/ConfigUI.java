@@ -64,7 +64,6 @@ public class ConfigUI extends JPanel {
      * Constructor.
      *
      * @param config Configuration for this UI to display.
-     * @param project
      */
     public ConfigUI(Config config, Project project) {
         super(new BorderLayout());

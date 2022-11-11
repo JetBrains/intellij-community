@@ -6,7 +6,8 @@ import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : RowsRange {
+@ApiStatus.NonExtendable
+internal open class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : RowsRange {
 
   var endIndex = 0
 

@@ -113,7 +113,7 @@ internal class ModifiableContentEntryBridge(
 
     if (excludeUrl !in currentContentEntry.value.entity.excludedUrls) {
       updateContentEntry {
-        excludedUrls = excludedUrls + excludeUrl
+        excludedUrls.add(excludeUrl)
       }
     }
 
@@ -133,7 +133,7 @@ internal class ModifiableContentEntryBridge(
         error("Exclude folder ${excludeFolder.url} is not under content entry $contentEntryUrl")
       }
 
-      excludedUrls = excludedUrls.filter { url -> url != virtualFileUrl }
+      excludedUrls.removeIf { url -> url == virtualFileUrl }
     }
   }
 
@@ -148,7 +148,7 @@ internal class ModifiableContentEntryBridge(
     if (!excludedUrls.contains(virtualFileUrl)) return false
 
     updateContentEntry {
-      this.excludedUrls = excludedUrls.filter { excludedUrl -> excludedUrl != virtualFileUrl }
+      this.excludedUrls.removeIf { excludedUrl -> excludedUrl == virtualFileUrl }
     }
 
     return true
@@ -156,25 +156,25 @@ internal class ModifiableContentEntryBridge(
 
   override fun clearExcludeFolders() {
     updateContentEntry {
-      excludedUrls = emptyList()
+      excludedUrls = mutableListOf()
     }
   }
 
   override fun addExcludePattern(pattern: String) {
     updateContentEntry {
-      excludedPatterns = if (excludedPatterns.contains(pattern)) excludedPatterns else (excludedPatterns + pattern)
+      if (!excludedPatterns.contains(pattern)) excludedPatterns.add(pattern)
     }
   }
 
   override fun removeExcludePattern(pattern: String) {
     updateContentEntry {
-      excludedPatterns = emptyList()
+      excludedPatterns = mutableListOf()
     }
   }
 
   override fun setExcludePatterns(patterns: MutableList<String>) {
     updateContentEntry {
-      excludedPatterns = patterns.toList()
+      excludedPatterns = patterns.toMutableList()
     }
   }
 

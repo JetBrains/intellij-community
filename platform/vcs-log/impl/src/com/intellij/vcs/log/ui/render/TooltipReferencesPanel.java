@@ -9,11 +9,13 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.details.commit.ReferencesPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +73,13 @@ class TooltipReferencesPanel extends ReferencesPanel {
   @NotNull
   private static Icon createEmptyIcon(int height) {
     return EmptyIcon.create(LabelIcon.getWidth(height, 2), height);
+  }
+
+  @Override
+  protected @NotNull JBLabel createLabel(@Nls @NotNull String text, @Nullable Icon icon) {
+    JBLabel label = super.createLabel(text, icon);
+    label.setForeground(UIUtil.getToolTipForeground());
+    return label;
   }
 
   @NotNull

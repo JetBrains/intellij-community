@@ -321,6 +321,7 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
             before(ELVIS).spaces(1)
             after(ELVIS).spacesNoLineBreak(1)
             around(RANGE).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
+            around(RANGE_UNTIL).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
 
             after(MODIFIER_LIST).spaces(1)
 

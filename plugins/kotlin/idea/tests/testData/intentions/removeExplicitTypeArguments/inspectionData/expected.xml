@@ -233,4 +233,14 @@
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
     <description>Remove explicit type arguments</description>
   </problem>
+
+  <problem>
+    <file>betweenLambdaArguments.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>betweenLambdaArguments</package>
+    <entry_point TYPE="method" FQNAME="betweenLambdaArguments.A void test()" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Remove explicit type arguments</description>
+  </problem>
 </problems>

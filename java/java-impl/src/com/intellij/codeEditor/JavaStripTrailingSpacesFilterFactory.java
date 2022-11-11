@@ -34,7 +34,7 @@ public class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingS
       if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(psiFile)) return;
       psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
           if (expression.isTextBlock()) {
             disableRange(expression.getTextRange(), false);
           }

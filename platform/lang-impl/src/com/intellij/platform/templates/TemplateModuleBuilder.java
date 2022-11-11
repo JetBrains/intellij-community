@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.application.options.CodeStyle;
@@ -34,7 +34,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,7 +71,7 @@ import java.util.zip.ZipInputStream;
 * @author Dmitry Avdeev
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
-  private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
+  private static final Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
 
   private final ModuleType<?> myType;
   private final List<WizardInputField<?>> myAdditionalFields;
@@ -96,14 +96,13 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return builder.createFinishingSteps(wizardContext, modulesProvider);
   }
 
-  @NotNull
   @Override
-  protected List<WizardInputField<?>> getAdditionalFields() {
+  protected @NotNull List<WizardInputField<?>> getAdditionalFields() {
     return myAdditionalFields;
   }
 
   @Override
-  public Module commitModule(@NotNull final Project project, ModifiableModuleModel model) {
+  public Module commitModule(final @NotNull Project project, ModifiableModuleModel model) {
     if (myProjectMode) {
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       if (modules.length > 0) {
@@ -141,9 +140,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  @NotNull
   @Override
-  public @NonNls String getBuilderId() {
+  public @NotNull @NonNls String getBuilderId() {
     return myTemplate.getName();
   }
 
@@ -162,9 +160,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return true;
   }
 
-  @NotNull
   @Override
-  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
     final ExistingModuleLoader loader = ExistingModuleLoader.setUpLoader(getModuleFilePath());
@@ -215,8 +212,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     RunManager.getInstance(project).setSelectedConfiguration(selectedConfiguration);
   }
 
-  @Nullable
-  private WizardInputField<?> getBasePackageField() {
+  private @Nullable WizardInputField<?> getBasePackageField() {
     for (WizardInputField<?> field : getAdditionalFields()) {
       if (ProjectTemplateParameterFactory.IJ_BASE_PACKAGE.equals(field.getId())) {
         return field;
@@ -341,8 +337,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  @NotNull
-  private static String getPathFragment(@NotNull String value) {
+  private static @NotNull String getPathFragment(@NotNull String value) {
     return "/" + value.replace('.', '/') + "/";
   }
 
@@ -387,10 +382,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return myType.createModuleBuilder().isSuitableSdkType(sdkType);
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, @NotNull String path) {
-    Path baseDir = Paths.get(path);
+  public @Nullable Project createProject(String name, @NotNull String path) {
+    Path baseDir = Path.of(path);
     LOG.assertTrue(Files.isDirectory(baseDir));
 
     List<Path> children;
@@ -415,7 +409,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           cleanup();
           if (indicator.isCanceled() && !isSomehowOverwriting) {
             try {
-              FileUtil.delete(baseDir);
+              NioFiles.deleteRecursively(baseDir);
             }
             catch (IOException e) {
               LOG.error(e);

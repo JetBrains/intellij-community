@@ -45,7 +45,7 @@ public final class LookupElementBuilder extends LookupElement {
                                @Nullable SmartPsiElementPointer<?> psiElement,
                                @NotNull Set<String> allLookupStrings,
                                boolean caseSensitive) {
-    myLookupString = lookupString;
+    myLookupString = validate(lookupString);
     myObject = object;
     myInsertHandler = insertHandler;
     myRenderer = renderer;
@@ -54,6 +54,11 @@ public final class LookupElementBuilder extends LookupElement {
     myPsiElement = psiElement;
     myAllLookupStrings = Collections.unmodifiableSet(allLookupStrings);
     myCaseSensitive = caseSensitive;
+  }
+
+  private String validate(String string) {
+    StringUtil.assertValidSeparators(string);
+    return string;
   }
 
   private LookupElementBuilder(@NotNull String lookupString, @NotNull Object object) {
@@ -375,7 +380,7 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     if (myRenderer != null) {
       myRenderer.renderElement(this, presentation);
     }

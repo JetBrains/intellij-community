@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
@@ -12,9 +12,9 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.StackFrame
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
-import org.jetbrains.kotlin.idea.debugger.safeStackFrame
-import org.jetbrains.kotlin.idea.debugger.safeThreadProxy
-import org.jetbrains.kotlin.idea.debugger.wrapEvaluateException
+import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
+import org.jetbrains.kotlin.idea.debugger.base.util.safeThreadProxy
+import org.jetbrains.kotlin.idea.debugger.base.util.wrapEvaluateException
 
 class SkipCoroutineStackFrameProxyImpl(
     threadProxy: ThreadReferenceProxyImpl,

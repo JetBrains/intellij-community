@@ -35,12 +35,12 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
   }
 
   @Override
-  protected void createSuppression(@NotNull final Project project,
-                                   @NotNull final PsiElement element,
-                                   @NotNull final PsiElement container) throws IncorrectOperationException {
+  protected void createSuppression(@NotNull Project project,
+                                   @NotNull PsiElement element,
+                                   @NotNull PsiElement container) throws IncorrectOperationException {
     PsiElement declaredElement = getElementToAnnotate(element, container);
     if (declaredElement == null) {
-      WriteCommandAction.runWriteCommandAction(project, null, null, () -> suppressWithComment(project, element, container), container.getContainingFile());
+      WriteCommandAction.runWriteCommandAction(project, null, null, () -> super.createSuppression(project, element, container), container.getContainingFile());
     }
     else {
       JavaSuppressionUtil.addSuppressAnnotation(project, container, (PsiVariable)declaredElement, myID);
@@ -48,17 +48,13 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
   }
 
   @Override
-  protected boolean replaceSuppressionComments(PsiElement container) {
+  protected boolean replaceSuppressionComments(@NotNull PsiElement container) {
     if (getElementToAnnotate(container, container) != null) return false;
     return super.replaceSuppressionComments(container);
   }
 
   @Nullable
-  protected PsiElement getElementToAnnotate(PsiElement element, PsiElement container) {
+  protected PsiElement getElementToAnnotate(@NotNull PsiElement element, @NotNull PsiElement container) {
     return JavaSuppressionUtil.getElementToAnnotate(element, container);
-  }
-
-  protected void suppressWithComment(Project project, PsiElement element, PsiElement container) {
-    super.createSuppression(project, element, container);
   }
 }

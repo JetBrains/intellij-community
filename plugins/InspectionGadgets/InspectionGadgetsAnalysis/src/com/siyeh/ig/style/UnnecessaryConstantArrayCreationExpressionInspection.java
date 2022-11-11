@@ -78,7 +78,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
   private static class UnnecessaryConstantArrayCreationExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
       final PsiElement parent = expression.getParent();
       if (!(parent instanceof PsiNewExpression)) {

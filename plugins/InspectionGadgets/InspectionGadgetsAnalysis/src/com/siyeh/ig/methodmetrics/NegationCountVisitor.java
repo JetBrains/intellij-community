@@ -51,7 +51,7 @@ class NegationCountVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitAssertStatement(PsiAssertStatement statement) {
+  public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
     if (myIgnoreInAssertStatements) {
       ignoring = true;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.conventionNameCalls
 
@@ -16,4 +16,14 @@ fun KtExpression.isAnyEquals(): Boolean {
 fun FunctionDescriptor.isAnyEquals(): Boolean {
     val overriddenDescriptors = findOriginalTopMostOverriddenDescriptors()
     return overriddenDescriptors.any { it.fqNameUnsafe.asString() == "kotlin.Any.equals" }
+}
+
+fun FunctionDescriptor.isAnyHashCode(): Boolean {
+    val overriddenDescriptors = findOriginalTopMostOverriddenDescriptors()
+    return overriddenDescriptors.any { it.fqNameUnsafe.asString() == "kotlin.Any.hashCode" }
+}
+
+fun FunctionDescriptor.isAnyToString(): Boolean {
+    val overriddenDescriptors = findOriginalTopMostOverriddenDescriptors()
+    return overriddenDescriptors.any { it.fqNameUnsafe.asString() == "kotlin.Any.toString" }
 }

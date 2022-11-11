@@ -18,7 +18,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.BranchChangeListener
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction
+import com.intellij.openapi.vcs.actions.commit.CommonCheckinProjectAction
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -93,7 +93,7 @@ object GitLessonsUtil {
       this.usePulsation = usePulsation
     }.componentPart { ui: VcsLogGraphTable ->
       val rowIndexes = (0 until ui.rowCount).toList().toIntArray()
-      val startCommitRow = ui.model.getCommitMetadata(rowIndexes).indexOfFirst(startCommitPredicate)
+      val startCommitRow = ui.model.createSelection(rowIndexes).cachedMetadata.indexOfFirst(startCommitPredicate)
       if (startCommitRow >= 0) {
         ui.getRectForSubsequentCommits(startCommitRow, sequenceLength)
       }

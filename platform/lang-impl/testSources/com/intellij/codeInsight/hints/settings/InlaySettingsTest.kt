@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
+import com.intellij.codeInsight.hints.InlayHintsProviderExtension
+import com.intellij.codeInsight.hints.InlayHintsProviderExtensionBean
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.lang.Language
@@ -93,5 +95,23 @@ class InlaySettingsTest : LightPlatformTestCase() {
 
     val settingsRepeated = hintsSettings.findSettings(key, Language.ANY, createSettings = { 5 }) // uses not the lambda, but cached
     TestCase.assertEquals(10, settingsRepeated)
+  }
+
+  fun testDisabledByDefault() {
+    val hintsSettings = InlayHintsSettings()
+    val key = SettingsKey<Int>("foo")
+    val inlayProviderName = InlayHintsProviderExtension.inlayProviderName
+    val bean = InlayHintsProviderExtensionBean()
+    bean.isEnabledByDefault = false
+    bean.settingsKeyId = "foo"
+    bean.language = Language.ANY.id
+    inlayProviderName.point.registerExtension(bean, testRootDisposable)
+
+
+    TestCase.assertFalse("Disabled by default hints must be disabled", hintsSettings.hintsEnabled(key, Language.ANY))
+
+    hintsSettings.changeHintTypeStatus(key, Language.ANY, true)
+
+    TestCase.assertTrue("After enabling even disabled hints must be enabled", hintsSettings.hintsEnabled(key, Language.ANY))
   }
 }

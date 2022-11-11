@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
@@ -28,9 +28,9 @@ class BrowserLink(icon: Icon?, @Nls text: String?, @Nls tooltip: String?, @NonNl
     text?.let { setText(it) }
     tooltip?.let { toolTipText = it }
 
-    ActionManagerEx.doWithLazyActionManager { instance ->
+    ActionManagerEx.withLazyActionManager(scope = null) {
       val group = DefaultActionGroup(OpenLinkInBrowser(url), CopyLinkAction(url))
-      componentPopupMenu = instance.createActionPopupMenu("popup@browser.link.context.menu", group).component
+      componentPopupMenu = it.createActionPopupMenu("popup@browser.link.context.menu", group).component
     }
   }
 }

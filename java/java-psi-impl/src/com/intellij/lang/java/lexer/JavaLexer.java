@@ -293,10 +293,15 @@ public final class JavaLexer extends LexerBase {
 
   private char locateCharAt(int offset) {
     mySymbolLength = 1;
-    int pos = offset;
-    char first = charAt(pos);
+    char first = charAt(offset);
     if (first != '\\') return first;
-    if (++pos >= myBufferEndOffset || charAt(pos) != 'u') return first;
+    int pos = offset + 1;
+    if (pos < myBufferEndOffset && charAt(pos) == '\\') return first;
+    boolean escaped = true;
+    int i = offset;
+    while (--i >= 0 && charAt(i) == '\\') escaped = !escaped;
+    if (!escaped) return first;
+    if (pos < myBufferEndOffset && charAt(pos) != 'u') return first;
     //noinspection StatementWithEmptyBody
     while (++pos < myBufferEndOffset && charAt(pos) == 'u');
     if (pos + 3 >= myBufferEndOffset) return first;

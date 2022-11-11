@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
@@ -24,14 +24,13 @@ import kotlin.sequences.SequencesKt;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection;
+import org.jetbrains.kotlin.codegen.GenerationUtils;
 import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings;
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories;
-import org.jetbrains.kotlin.idea.codegen.GenerationUtils;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager;
-import org.jetbrains.kotlin.idea.debugger.KotlinPositionManagerFactory;
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches;
+import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory;
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockLocation;
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockVirtualMachine;
 import org.jetbrains.kotlin.idea.debugger.test.mock.SmartMockReferenceTypeContext;
@@ -46,6 +45,8 @@ import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,18 +74,9 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
     }
 
     @NotNull
-    private static KotlinPositionManager createPositionManager(
-            @NotNull DebugProcess process,
-            @NotNull List<KtFile> files,
-            @NotNull GenerationState state
-    ) {
+    private static KotlinPositionManager createPositionManager(@NotNull DebugProcess process) {
         KotlinPositionManager positionManager = (KotlinPositionManager) new KotlinPositionManagerFactory().createPositionManager(process);
         assertNotNull(positionManager);
-
-        for (KtFile file : files) {
-            KotlinDebuggerCaches.Companion.addTypeMapper(file, state.getTypeMapper());
-        }
-
         return positionManager;
     }
 
@@ -107,7 +99,13 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
 
     @NotNull
     private static String getPath(@NotNull String fileName) {
-        return StringsKt.substringAfter(fileName, DEBUGGER_TESTDATA_PATH_BASE, fileName);
+        String path;
+        try {
+            path = new File(fileName).getCanonicalPath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return StringsKt.substringAfter(path, DEBUGGER_TESTDATA_PATH_BASE, path);
     }
 
     private void performTest() {
@@ -129,14 +127,13 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
                 Collections.singletonMap(JvmAnalysisFlags.getSuppressMissingBuiltinsError(), true)
         ));
 
-        GenerationState state =
-                GenerationUtils.compileFiles(files, configuration, ClassBuilderFactories.TEST, scope -> PackagePartProvider.Empty.INSTANCE);
+        GenerationState state = getCompileFiles(files, configuration);
 
         Map<String, ReferenceType> referencesByName = getReferenceMap(state.getFactory());
 
         debugProcess = createDebugProcess(referencesByName);
 
-        PositionManager positionManager = createPositionManager(debugProcess, files, state);
+        PositionManager positionManager = createPositionManager(debugProcess);
 
         ApplicationManager.getApplication().runReadAction(() -> {
             try {
@@ -149,6 +146,11 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
             }
         });
 
+    }
+
+    @NotNull
+    protected GenerationState getCompileFiles(List<KtFile> files, CompilerConfiguration configuration) {
+        return GenerationUtils.compileFiles(files, configuration, ClassBuilderFactories.TEST, scope -> PackagePartProvider.Empty.INSTANCE);
     }
 
     @Override

@@ -63,4 +63,11 @@ object IdeProductImp : IdeProduct {
     platformPrefix = "Python",
     executableFileName = "pycharm"
   )
+
+  /** CLion */
+  override val CL: IdeInfo = IdeInfo(
+    productCode = "CL",
+    platformPrefix = "CLion",
+    executableFileName = "clion"
+  )
 }

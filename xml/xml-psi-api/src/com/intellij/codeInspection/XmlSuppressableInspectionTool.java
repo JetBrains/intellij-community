@@ -41,7 +41,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
   public abstract static class XmlSuppressFix implements InjectionAwareSuppressQuickFix, ContainerBasedSuppressQuickFix {
 
     protected final String myId;
-    protected final XmlSuppressionProvider myProvider;
+    @SafeFieldForPreview protected final XmlSuppressionProvider myProvider;
     private ThreeState myShouldBeAppliedToInjectionHost = ThreeState.UNSURE;
 
     protected XmlSuppressFix(String inspectionId, XmlSuppressionProvider suppressionProvider) {

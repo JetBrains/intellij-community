@@ -1192,7 +1192,7 @@ public final class PyCallExpressionHelper {
   }
 
   private static @NotNull <E> List<@NotNull E> dropNotMatchedOverloadsOrLeaveAsIs(@NotNull List<@NotNull E> elements,
-                                                                                  @NotNull Function<@NotNull ? super E, @Nullable PsiElement> mapper,
+                                                                                  @NotNull Function<? super @NotNull E, ? extends @Nullable PsiElement> mapper,
                                                                                   @NotNull PyCallSiteExpression callSite,
                                                                                   @NotNull TypeEvalContext context) {
     final List<E> filtered = ContainerUtil.filter(elements, it -> !notMatchedOverload(mapper.apply(it), callSite, context));

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
+import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -9,6 +10,7 @@ import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
 import com.intellij.util.ui.tree.AbstractTreeModel
+import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitBranch
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
@@ -41,6 +43,10 @@ class GitBranchesTreeModelImpl(
     localBranchesTree = LazyBranchesSubtreeHolder(repository.branches.localBranches, branchComparator, matcher)
     remoteBranchesTree = LazyBranchesSubtreeHolder(repository.branches.remoteBranches, branchComparator, matcher)
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
+  }
+
+  override var isPrefixGrouping: Boolean by equalVetoingObservable(branchManager.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
+    branchNameMatcher = null // rebuild tree
   }
 
   init {
@@ -144,7 +150,7 @@ class GitBranchesTreeModelImpl(
       add(root)
       add(branchType)
     }
-    val nameParts = branch.name.split('/')
+    val nameParts = if (isPrefixGrouping) branch.name.split('/') else listOf(branch.name)
     val currentPrefix = mutableListOf<String>()
     for (prefixPart in nameParts.init()) {
       currentPrefix.add(prefixPart)
@@ -172,7 +178,7 @@ class GitBranchesTreeModelImpl(
 
     val tree: Map<String, Any> by lazy {
       val branchesList = matchingResult.first.sortedWith(comparator)
-      buildSubTree(branchesList.map { it.name.split('/') to it })
+      buildSubTree(branchesList.map { (if (isPrefixGrouping) it.name.split('/') else listOf(it.name)) to it })
     }
 
     val topMatch: Pair<GitBranch, Int>?

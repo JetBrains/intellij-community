@@ -18,7 +18,7 @@ fun main(args: Array<String>) {
 
     // RESUME: 1
     val c = inlineFunVoid {
-        // STEP_OVER: 2
+        // STEP_OVER: 3
         //Breakpoint!
         val aa = 1
     }

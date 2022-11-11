@@ -18,7 +18,7 @@ fun EntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
         childrenIds.forEach {
             existingChildren.remove(it.id)
         }
-        existingChildren.forEach { removeEntity(it) }
+        existingChildren.forEach { removeEntityByEntityId(it) }
     }
     refs.updateOneToManyChildrenOfParent(connectionId, parentId.arrayId, childrenIds)
 }
@@ -56,7 +56,7 @@ fun EntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionId, parent
     val childId = (childEntity as? WorkspaceEntityBase)?.id?.asChild()
     val existingChildId = extractOneToOneChildIds(connectionId, parentId)
     if (!connectionId.isParentNullable && existingChildId != null && (childId == null || childId.id != existingChildId)) {
-        removeEntity(existingChildId)
+        removeEntityByEntityId(existingChildId)
     }
     if (childId != null) {
         refs.updateOneToOneChildOfParent(connectionId, parentId.arrayId, childId)

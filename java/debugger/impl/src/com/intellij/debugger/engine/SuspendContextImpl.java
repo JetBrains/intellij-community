@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -109,7 +109,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   protected abstract void resumeImpl();
 
-  protected void resume(){
+  void resume(boolean callResume) {
     assertNotResumed();
     if (isEvaluating()) {
       LOG.error("Resuming context while evaluating", ThreadDumper.dumpThreadsToString());
@@ -127,8 +127,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
       for(SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
         cmd.notifyCancelled();
       }
-
-      resumeImpl();
+      if (callResume) {
+        resumeImpl();
+      }
     }
     finally {
       myIsResumed = true;

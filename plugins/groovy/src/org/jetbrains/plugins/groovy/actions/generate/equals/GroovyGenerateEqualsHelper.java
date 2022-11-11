@@ -171,22 +171,30 @@ public class GroovyGenerateEqualsHelper {
     FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
   }
 
-  private void addInstanceOfToText(@NonNls StringBuffer buffer, String returnValue) {
+  private void addInstanceOfToText(@NonNls StringBuffer buffer) {
     if (myCheckParameterWithInstanceof) {
-      buffer.append("if (!(").append(myParameterName).append(" instanceof ").append(myClass.getName()).append(")) " + "return ")
-        .append(returnValue).append('\n');
+      buffer
+        .append("if (!(")
+        .append(myParameterName)
+        .append(" instanceof ")
+        .append(myClass.getName())
+        .append(")) return false\n");
     } else {
-      buffer.append("if (").append("getClass() != ").append(myParameterName).append(".class) " + "return ").append(returnValue)
-        .append('\n');
+      buffer
+        .append("if (")
+        .append(myParameterName)
+        .append(" == null || getClass() != ")
+        .append(myParameterName)
+        .append(".class) return false\n");
     }
   }
 
   private void addEqualsPrologue(@NonNls StringBuffer buffer) {
     buffer.append("if (this.is(").append(myParameterName).append(")").append(") return true\n");
     if (!superMethodExists(getEqualsSignature(myProject, myClass.getResolveScope()))) {
-      addInstanceOfToText(buffer, Boolean.toString(false));
+      addInstanceOfToText(buffer);
     } else {
-      addInstanceOfToText(buffer, Boolean.toString(false));
+      addInstanceOfToText(buffer);
       buffer.append("if (!super.equals(");
       buffer.append(myParameterName);
       buffer.append(")) return false\n");

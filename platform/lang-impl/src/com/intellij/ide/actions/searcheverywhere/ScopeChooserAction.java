@@ -108,6 +108,11 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (button == null || !button.isValid()) return;

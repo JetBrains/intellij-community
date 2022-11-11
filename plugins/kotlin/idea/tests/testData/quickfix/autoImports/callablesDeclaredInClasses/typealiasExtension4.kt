@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'Obj.ext'" "true"
 package p
 
 object Obj

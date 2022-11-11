@@ -77,3 +77,5 @@ fun main() {
     filterNestedInlineFunctions()
     filterInlineFunctionsInClass()
 }
+
+// IGNORE_K2

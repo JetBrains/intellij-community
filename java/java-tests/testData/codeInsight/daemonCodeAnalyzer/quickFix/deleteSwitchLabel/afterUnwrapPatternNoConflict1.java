@@ -1,4 +1,4 @@
-// "Remove unreachable branches" "true"
+// "Remove unreachable branches" "true-preview"
 import java.util.concurrent.ThreadLocalRandom;
 
 class Test {

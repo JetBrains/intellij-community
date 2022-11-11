@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
@@ -29,6 +29,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import groovy.lang.Script;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -132,7 +133,7 @@ public final class PatternCompiler {
           }
         }
 
-        private void collectNode(PsiElement element, Object handler) {
+        private void collectNode(PsiElement element, MatchingHandler handler) {
           if (handler instanceof DelegatingHandler) {
             handler = ((DelegatingHandler)handler).getDelegate();
           }
@@ -204,7 +205,7 @@ public final class PatternCompiler {
     final Pattern[] patterns = new Pattern[applicablePrefixes.length];
 
     for (int i = 0; i < applicablePrefixes.length; i++) {
-      patterns[i] = Pattern.compile(StructuralSearchUtil.shieldRegExpMetaChars(applicablePrefixes[i]) + "\\w+\\b");
+      patterns[i] = Pattern.compile(MatchUtil.shieldRegExpMetaChars(applicablePrefixes[i]) + "\\w+\\b");
     }
 
     final int[] varEndOffsets = findAllTypedVarOffsets(file, patterns);
@@ -585,17 +586,17 @@ public final class PatternCompiler {
     throws MalformedPatternException {
     final String scriptCodeConstraint = constraint.getScriptCodeConstraint();
     if (scriptCodeConstraint.length() > 2) {
-      final String script = StringUtil.unquoteString(scriptCodeConstraint);
-      final String problem = ScriptSupport.checkValidScript(script, matchOptions);
-      if (problem != null) {
+      final String scriptText = StringUtil.unquoteString(scriptCodeConstraint);
+      try {
+        final Script script = ScriptSupport.buildScript(name, scriptText, matchOptions);
+        addPredicate(handler, new ScriptPredicate(project, name, script, variableNames));
+      } catch (MalformedPatternException e) {
         if (checkForErrors) {
-          throw new MalformedPatternException(SSRBundle.message("error.script.constraint.for.0.has.problem.1", constraint.getName(), problem));
-        }
-        else {
-          return;
+          throw new MalformedPatternException(
+            SSRBundle.message("error.script.constraint.for.0.has.problem.1", constraint.getName(), e.getLocalizedMessage())
+          );
         }
       }
-      addPredicate(handler, new ScriptPredicate(project, name, script, variableNames, matchOptions));
     }
   }
 

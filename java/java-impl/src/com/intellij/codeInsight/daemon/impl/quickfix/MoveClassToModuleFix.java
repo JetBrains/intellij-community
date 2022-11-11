@@ -29,6 +29,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,29 +40,29 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MoveClassToModuleFix implements IntentionAction {
+class MoveClassToModuleFix implements IntentionAction {
   private final Map<PsiClass, Module> myModules = new LinkedHashMap<>();
   private final String myReferenceName;
   private final Module myCurrentModule;
   private final PsiDirectory mySourceRoot;
   private static final Logger LOG = Logger.getInstance(MoveClassToModuleFix.class);
 
-  public MoveClassToModuleFix(String referenceName, Module currentModule, PsiDirectory root, PsiElement psiElement) {
+  private MoveClassToModuleFix(@NotNull String referenceName, @NotNull Module currentModule, @NotNull PsiDirectory root, @NotNull PsiElement psiElement) {
     myReferenceName = referenceName;
     myCurrentModule = currentModule;
     mySourceRoot = root;
-    final Project project = psiElement.getProject();
-    final PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    for (final PsiClass aClass : classes) {
+    Project project = psiElement.getProject();
+    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    for (PsiClass aClass : classes) {
       if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
-      final PsiFile psiFile = aClass.getContainingFile();
+      PsiFile psiFile = aClass.getContainingFile();
       if (!(psiFile instanceof PsiJavaFile)) continue;
       if (aClass.getQualifiedName() == null) continue;
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile == null) continue;
-      final Module classModule = fileIndex.getModuleForFile(virtualFile);
+      Module classModule = fileIndex.getModuleForFile(virtualFile);
       if (classModule != null && classModule != currentModule && !ModuleRootManager.getInstance(currentModule).isDependsOn(classModule)) {
         myModules.put(aClass, classModule);
       }
@@ -72,7 +73,7 @@ public class MoveClassToModuleFix implements IntentionAction {
   @NotNull
   public String getText() {
     if (myModules.size() == 1) {
-      final PsiClass aClass = myModules.keySet().iterator().next();
+      PsiClass aClass = myModules.keySet().iterator().next();
       return QuickFixBundle
         .message("move.0.from.module.1.to.2", aClass.getQualifiedName(), myModules.get(aClass).getName(), myCurrentModule.getName());
     }
@@ -86,12 +87,12 @@ public class MoveClassToModuleFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return !myModules.isEmpty() && myModules.keySet().stream().allMatch(PsiElement::isValid);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return !myModules.isEmpty() && ContainerUtil.all(myModules.keySet(), PsiElement::isValid);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (myModules.size() == 1) {
       moveClass(project, editor, file, myModules.keySet().iterator().next());
     }
@@ -115,7 +116,7 @@ public class MoveClassToModuleFix implements IntentionAction {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChosenCallback((value) -> moveClass(project, editor, file, value))
+        .setItemChosenCallback(value -> moveClass(project, editor, file, value))
         .createPopup()
         .showInBestPositionFor(editor);
     }
@@ -124,7 +125,7 @@ public class MoveClassToModuleFix implements IntentionAction {
   private void moveClass(Project project, Editor editor, PsiFile file, PsiClass aClass) {
     RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     DataContext dataContext = EditorUtil.getEditorDataContext(editor);
-    final String fqName = aClass.getQualifiedName();
+    String fqName = aClass.getQualifiedName();
     LOG.assertTrue(fqName != null);
     PsiDirectory directory = PackageUtil
       .findOrCreateDirectoryForPackage(myCurrentModule, StringUtil.getPackageName(fqName), mySourceRoot, true);
@@ -135,7 +136,7 @@ public class MoveClassToModuleFix implements IntentionAction {
     PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
     PsiClass newClass = JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.moduleScope(myCurrentModule));
     if (reference != null && newClass != null) {
-      final QuestionAction action = new AddImportAction(project, reference, editor, newClass);
+      QuestionAction action = new AddImportAction(project, reference, editor, newClass);
       action.execute();
     }
   }
@@ -145,11 +146,11 @@ public class MoveClassToModuleFix implements IntentionAction {
     return false;
   }
 
-  public static void registerFixes(QuickFixActionRegistrar registrar, final PsiJavaCodeReferenceElement reference) {
-    final PsiElement psiElement = reference.getElement();
-    @NonNls final String referenceName = reference.getRangeInElement().substring(psiElement.getText());
+  public static void registerFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiJavaCodeReferenceElement reference) {
+    PsiElement psiElement = reference.getElement();
+    @NonNls String referenceName = reference.getRangeInElement().substring(psiElement.getText());
     Project project = psiElement.getProject();
-    final PsiFile containingFile = psiElement.getContainingFile();
+    PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return;
     PsiDirectory dir = containingFile.getContainingDirectory();
     if (dir == null) return;
@@ -157,17 +158,17 @@ public class MoveClassToModuleFix implements IntentionAction {
     VirtualFile classVFile = containingFile.getVirtualFile();
     if (classVFile == null) return;
 
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final Module currentModule = fileIndex.getModuleForFile(classVFile);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return;
     List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(currentModule).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
     if (sourceRoots.isEmpty()) return;
-    final PsiDirectory sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceRoots.get(0));
+    PsiDirectory sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceRoots.get(0));
     if (sourceDirectory == null) return;
 
     VirtualFile vsourceRoot = fileIndex.getSourceRootForFile(classVFile);
     if (vsourceRoot == null) return;
-    final PsiDirectory sourceRoot = PsiManager.getInstance(project).findDirectory(vsourceRoot);
+    PsiDirectory sourceRoot = PsiManager.getInstance(project).findDirectory(vsourceRoot);
     if (sourceRoot == null) return;
 
     registrar.register(new MoveClassToModuleFix(referenceName, currentModule, sourceRoot, psiElement));

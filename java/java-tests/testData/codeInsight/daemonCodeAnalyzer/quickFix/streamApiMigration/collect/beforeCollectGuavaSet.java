@@ -1,4 +1,4 @@
-// "Replace with toArray" "true"
+// "Replace with toArray" "true-preview"
 package com.google.common.collect;
 
 import java.util.*;

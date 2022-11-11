@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.panels.Wrapper;
@@ -50,7 +51,10 @@ public class TextEditorHolder extends EditorHolder {
         }
       }
 
-      if (CommonDataKeys.EDITOR.is(dataId)) {
+      if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+        return editor;
+      }
+      else if (CommonDataKeys.EDITOR.is(dataId)) {
         return editor;
       }
       else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {

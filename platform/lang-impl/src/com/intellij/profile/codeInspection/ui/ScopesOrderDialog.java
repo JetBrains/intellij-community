@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -16,9 +17,10 @@ import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +64,11 @@ public class ScopesOrderDialog extends DialogWrapper {
         public void actionPerformed(@NotNull AnActionEvent e) {
           ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
           reloadScopeList();
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
       })
       .disableRemoveAction()

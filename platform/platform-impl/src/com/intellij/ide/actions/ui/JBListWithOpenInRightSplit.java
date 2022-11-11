@@ -2,10 +2,13 @@
 package com.intellij.ide.actions.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.OpenInRightSplitAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -21,8 +24,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
-import static com.intellij.openapi.actionSystem.AnActionEvent.createFromDataContext;
 
 public class JBListWithOpenInRightSplit<T> extends JBList<T> {
 
@@ -77,7 +78,7 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
     public void mousePressed(MouseEvent e) {
       Point point = e.getPoint();
       int index = locationToIndex(point);
-      
+
       //alt + click is "OpenInRightSplit", or click the icon
       if (index != -1 && getIconRectangle(index).contains(point)) {
         invokeAction();
@@ -191,10 +192,9 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
 
   protected void invokeAction() {
     HelpTooltip.dispose(this);
-    
+
     AnAction action = ActionManager.getInstance().getAction(getActionId());
-    DataContext context = DataManager.getInstance().getDataContext(this);
-    action.actionPerformed(createFromDataContext(getClass().getName(), null, context));
+    ActionUtil.invokeAction(action, this, getClass().getName(), null, null);
   }
 
   @Override

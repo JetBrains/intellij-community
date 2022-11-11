@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.replaceWith
 
@@ -7,11 +7,12 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.quickfix.CleanupFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
@@ -24,7 +25,8 @@ class DeprecatedSymbolUsageFix(
 
     override fun invoke(replacementStrategy: UsageReplacementStrategy, project: Project, editor: Editor?) {
         val element = element ?: return
-        val result = replacementStrategy.createReplacer(element)?.invoke() ?: return
+        val replacer = replacementStrategy.createReplacer(element) ?: return
+        val result = replacer() ?: return
 
         if (editor != null) {
             val offset = (result.getCalleeExpressionIfAny() ?: result).textOffset

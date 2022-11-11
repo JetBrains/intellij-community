@@ -61,11 +61,11 @@ public abstract class PsiElementFinder {
   }
 
   /**
-   * Returns the list of subpackages of the specified package in the specified search scope.
+   * Returns the array of subpackages of the specified package in the specified search scope.
    *
    * @param psiPackage the package to return the list of subpackages for.
    * @param scope the scope in which subpackages are searched.
-   * @return the list of subpackages.
+   * @return the array of subpackages.
    * @see PsiPackage#getSubPackages(GlobalSearchScope)
    */
   public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
@@ -73,11 +73,11 @@ public abstract class PsiElementFinder {
   }
 
   /**
-   * Returns the list of classes in the specified package and in the specified search scope.
+   * Returns the array of classes in the specified package and in the specified search scope.
    *
    * @param psiPackage the package to return the list of classes in.
    * @param scope the scope in which classes are searched.
-   * @return the list of classes.
+   * @return the array of classes.
    * @see PsiPackage#getClasses(GlobalSearchScope)
    */
   public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
@@ -95,11 +95,11 @@ public abstract class PsiElementFinder {
   }
 
   /**
-   * Returns a list of files belonging to the specified package which are not located in any of the package directories.
+   * Returns a array of files belonging to the specified package which are not located in any of the package directories.
    *
    * @param psiPackage the package to return the list of files for.
    * @param scope      the scope in which files are searched.
-   * @return the list of files.
+   * @return the array of files.
    */
   public PsiFile @NotNull [] getPackageFiles(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return PsiFile.EMPTY_ARRAY;
@@ -155,12 +155,12 @@ public abstract class PsiElementFinder {
   }
 
   /**
-   * Returns the list of classes in the specified package and in the specified search scope.
+   * Returns the array of classes in the specified package and in the specified search scope.
    *
    * @param className short name of the class
    * @param psiPackage the package to return the list of classes in.
    * @param scope the scope in which classes are searched.
-   * @return the list of classes.
+   * @return the array of classes.
    * @see PsiPackage#getClasses(GlobalSearchScope)
    */
   public PsiClass @NotNull [] getClasses(@Nullable String className, @NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {

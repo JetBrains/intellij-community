@@ -19,7 +19,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.tree.TreeUtil
@@ -117,8 +116,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
     }, root, CheckPolicy(true, true, true, false)) {
       override fun installSpeedSearch() {
-        TreeSpeedSearch(this, Convertor { getName(it.lastPathComponent as DefaultMutableTreeNode,
-                                                  it.parentPath?.lastPathComponent as DefaultMutableTreeNode?) }, true)
+        TreeSpeedSearch(this, true) { getName(it.lastPathComponent as DefaultMutableTreeNode,
+                                              it.parentPath?.lastPathComponent as DefaultMutableTreeNode?) }
       }
     }
     tree.addTreeSelectionListener(

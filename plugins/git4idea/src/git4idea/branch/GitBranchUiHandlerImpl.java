@@ -5,6 +5,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -20,6 +21,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
@@ -92,20 +94,31 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public void showUnmergedFilesNotification(@NotNull final String operationName, @NotNull final Collection<? extends GitRepository> repositories) {
+  public void showUnmergedFilesNotification(@NotNull final String operationName,
+                                            @NotNull final Collection<? extends GitRepository> repositories) {
     String title = unmergedFilesErrorTitle(operationName);
     String description = unmergedFilesErrorNotificationDescription(operationName);
-    VcsNotifier.getInstance(myProject).notifyError(UNRESOLVED_CONFLICTS, title, description,
-                                                   new NotificationListener() {
+    VcsNotifier.getInstance(myProject).notifyError(
+      UNRESOLVED_CONFLICTS, title, description,
+      new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification,
                                     @NotNull HyperlinkEvent event) {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals(RESOLVE_HREF_ATTRIBUTE)) {
-            GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
-              setMergeDescription(GitBundle.message("branch.ui.handler.merge.notification.description", operationName)).
-              setErrorNotificationTitle(GitBundle.message("branch.ui.handler.merge.error.notification.title"));
-            new GitConflictResolver(myProject, GitUtil.getRootsFromRepositories(repositories), params).merge();
+            new Task.Backgroundable(myProject, GitBundle.message("apply.changes.resolving.conflicts.progress.title")) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                showMergeDialog();
+              }
+            }.queue();
           }
+        }
+
+        private void showMergeDialog() {
+          GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
+            setMergeDescription(GitBundle.message("branch.ui.handler.merge.notification.description", operationName)).
+            setErrorNotificationTitle(GitBundle.message("branch.ui.handler.merge.error.notification.title"));
+          new GitConflictResolver(myProject, GitUtil.getRootsFromRepositories(repositories), params).merge();
         }
       }
     );

@@ -855,7 +855,6 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   /**
    *
-   * @param methodSignature
    * @return Visibility
    */
   @PsiModifier.ModifierConstant
@@ -975,7 +974,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    @Override public void visitThisExpression(PsiThisExpression expression) {
+    @Override public void visitThisExpression(@NotNull PsiThisExpression expression) {
       ClassInstanceScanner.processNonArrayExpression(myInstanceVisitor, expression, null);
     }
   }
@@ -986,7 +985,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       super(InheritanceToDelegationProcessor.this.myClass, usageInfoStorage, instanceScanner);
     }
 
-    @Override public void visitMethod(PsiMethod method) {
+    @Override public void visitMethod(@NotNull PsiMethod method) {
       if (!myOverriddenMethods.contains(method)) {
         super.visitMethod(method);
       }
@@ -1098,7 +1097,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    @Override public void visitThisExpression(final PsiThisExpression expression) {
+    @Override public void visitThisExpression(final @NotNull PsiThisExpression expression) {
       class Visitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
         @Override
         public void visitQualifier(PsiReferenceExpression qualified, PsiExpression instanceRef, PsiElement referencedInstance) {

@@ -111,7 +111,13 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     // 2) we dispose FileBasedIndex before PersistentFS disposing
     PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstance();
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    Disposable disposable = () -> new FileBasedIndexImpl.MyShutDownTask().run();
+    // anonymous class is required to make sure the new instance is created
+    Disposable disposable = new Disposable() {
+      @Override
+      public void dispose() {
+        new FileBasedIndexImpl.MyShutDownTask().run();
+      }
+    };
     ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), disposable);
     Disposer.register(fs, disposable);
     myFileBasedIndex.setUpShutDownTask();
@@ -227,7 +233,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       }
     }
 
-    boolean dropFilenameIndex = Registry.is("indexing.filename.over.vfs") && indicesToDrop.contains(FilenameIndex.NAME.getName());
+    boolean dropFilenameIndex = FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX &&
+                                indicesToDrop.contains(FilenameIndex.NAME.getName());
     if (!exceptionThrown) {
       for (ID<?, ?> key : ids) {
         if (dropFilenameIndex && key == FilenameIndex.NAME) continue;

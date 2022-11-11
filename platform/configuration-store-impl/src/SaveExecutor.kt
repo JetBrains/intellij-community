@@ -1,16 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.util.SmartList
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 internal interface SaveExecutor {
   /**
@@ -52,13 +53,11 @@ open class SaveSessionProducerManager : SaveExecutor {
   }
 
   fun collectSaveSessions(result: MutableList<SaveSession>) {
-    processSaveSessions {
-      result.add(it)
-    }
+    processSaveSessions(result::add)
   }
 
   override suspend fun save(): SaveResult {
-    val saveSessions = SmartList<SaveSession>()
+    val saveSessions = ArrayList<SaveSession>()
     collectSaveSessions(saveSessions)
     if (saveSessions.isEmpty()) {
       return SaveResult.EMPTY
@@ -71,7 +70,7 @@ open class SaveSessionProducerManager : SaveExecutor {
     }
 
     if (isVfsRequired) {
-      return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      return withContext(Dispatchers.EDT) {
         runWriteAction(task)
       }
     }
@@ -96,6 +95,9 @@ internal fun executeSave(session: SaveSession, result: SaveResult) {
     result.addReadOnlyFile(SaveSessionAndFile(e.session ?: session, e.file))
   }
   catch (e: ProcessCanceledException) {
+    throw e
+  }
+  catch (e: CancellationException) {
     throw e
   }
   catch (e: Exception) {

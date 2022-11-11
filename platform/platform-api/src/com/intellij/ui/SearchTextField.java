@@ -445,5 +445,10 @@ public class SearchTextField extends JPanel {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getData(KEY) != null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 }

@@ -67,7 +67,7 @@ public class GitFetcher {
 
   /**
    * Invokes 'git fetch'.
-   * @return true if fetch was successful, false in the case of error.
+   *
    * @deprecated Use {@link GitFetchSupport}
    */
   @Deprecated(forRemoval = true)
@@ -177,7 +177,7 @@ public class GitFetcher {
   private static GitFetchResult fetchNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @Nullable String branch) {
     Git git = Git.getInstance();
     String[] additionalParams = branch != null ?
-                                new String[]{ getFetchSpecForBranch(branch, remote.getName()) } :
+                                new String[]{getFetchSpecForBranch(branch, remote.getName())} :
                                 ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     GitFetchPruneDetector pruneDetector = new GitFetchPruneDetector();
@@ -227,7 +227,8 @@ public class GitFetcher {
                              GitBundle.message("notification.content.fetched.successfully") + result.getAdditionalInfo());
     }
     else if (result.isCancelled()) {
-      notifier.notifyMinorWarning(GitNotificationIdsHolder.FETCH_CANCELLED, GitBundle.message("notification.content.fetch.cancelled.by.user") + result.getAdditionalInfo());
+      notifier.notifyMinorWarning(GitNotificationIdsHolder.FETCH_CANCELLED,
+                                  GitBundle.message("notification.content.fetch.cancelled.by.user") + result.getAdditionalInfo());
     }
     else if (result.isNotAuthorized()) {
       if (errorNotificationTitle != null) {
@@ -251,10 +252,11 @@ public class GitFetcher {
    * Fetches all specified roots.
    * Once a root has failed, stops and displays the notification.
    * If needed, displays the successful notification at the end.
-   * @param roots                   roots to fetch.
-   * @param errorNotificationTitle  if specified, this notification title will be used instead of the standard "Fetch failed".
-   *                                Use this when fetch is a part of a compound process.
-   * @param notifySuccess           if set to {@code true} successful notification will be displayed.
+   *
+   * @param roots                  roots to fetch.
+   * @param errorNotificationTitle if specified, this notification title will be used instead of the standard "Fetch failed".
+   *                               Use this when fetch is a part of a compound process.
+   * @param notifySuccess          if set to {@code true} successful notification will be displayed.
    * @return true if all fetches were successful, false if at least one fetch failed.
    * @deprecated Use {@link GitFetchSupport}
    */
@@ -282,7 +284,8 @@ public class GitFetcher {
     }
 
     if (!additionalInfo.asString().isEmpty()) {
-      VcsNotifier.getInstance(myProject).notifyMinorInfo(FETCH_DETAILS, GitBundle.message("notification.title.fetch.details"), additionalInfo.asString());
+      VcsNotifier.getInstance(myProject)
+        .notifyMinorInfo(FETCH_DETAILS, GitBundle.message("notification.title.fetch.details"), additionalInfo.asString());
     }
 
     return true;

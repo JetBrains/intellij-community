@@ -57,7 +57,7 @@ internal var CommitContext.isCommitRenamesSeparately: Boolean by commitProperty(
 private val HierarchyEvent.isShowingChanged get() = (changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L
 private val HierarchyEvent.isParentChanged get() = (changeFlags and HierarchyEvent.PARENT_CHANGED.toLong()) != 0L
 
-private val CheckinProjectPanel.commitAuthorTracker: CommitAuthorTracker? get() = commitWorkflowHandler as? CommitAuthorTracker
+private val CheckinProjectPanel.commitAuthorTracker: CommitAuthorTracker? get() = commitWorkflowHandler.commitAuthorTracker
 
 class GitCommitOptionsUi(
   private val commitPanel: CheckinProjectPanel,

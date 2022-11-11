@@ -2,16 +2,16 @@
 package org.jetbrains.kotlin.idea.performance.tests.utils.project
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.TestApplicationManager
-import org.jetbrains.kotlin.idea.caches.project.getAllProjectSdks
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
-import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 
 fun initApp(rootDisposable: Disposable): TestApplicationManager {
     val application = TestApplicationManager.getInstance()
@@ -38,11 +38,13 @@ fun initSdk(rootDisposable: Disposable): Sdk {
         val internal = javaSdk.createJdk("IDEA jdk", jdk11Home ?: jdk8Home ?: javaHome)
         val gradle = javaSdk.createJdk(GRADLE_JDK_NAME, jdk11Home ?: jdk8Home ?: javaHome)
 
-        val jdkTable = getProjectJdkTableSafe()
-        arrayOf(jdk8, jdk11, internal, gradle).forEach { jdkTable.addJdk(it, rootDisposable) }
-        KotlinSdkType.setUpIfNeeded()
+        runReadAction {
+            val jdkTable = ProjectJdkTable.getInstance()
+            arrayOf(jdk8, jdk11, internal, gradle).forEach { jdkTable.addJdk(it, rootDisposable) }
+            KotlinSdkType.setUpIfNeeded()
 
-        logMessage { "all sdks = ${getAllProjectSdks().joinToString("\n")}" }
+            logMessage { jdkTable.allJdks.joinToString("\n") }
+        }
 
         jdk11
     }

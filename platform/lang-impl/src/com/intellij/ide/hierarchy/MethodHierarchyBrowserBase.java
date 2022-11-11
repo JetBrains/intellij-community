@@ -21,20 +21,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  /** @deprecated Use {@link #HIERARCHY_BROWSER} data key instead. */
-  @Deprecated(forRemoval = true)
-  public static final DataKey<MethodHierarchyBrowserBase> DATA_KEY = DataKey.create("com.intellij.ide.hierarchy.MethodHierarchyBrowserBase");
-
   public MethodHierarchyBrowserBase(Project project, PsiElement method) {
     super(project, method);
-  }
-
-  @Override
-  public Object getData(@NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return super.getData(dataId);
   }
 
   @Override
@@ -119,6 +107,10 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
       super.update(event);
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
+    }
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

@@ -22,6 +22,7 @@ public class JavaTypeRenameValidator implements RenameInputValidator {
 
   @Override
   public boolean isInputValid(@NotNull String newName, @NotNull PsiElement element, @NotNull ProcessingContext context) {
+    if (!element.isValid()) return false;
     Project project = element.getProject();
     LanguageLevel level = PsiUtil.getLanguageLevel(element);
     return PsiNameHelper.getInstance(project).isIdentifier(newName, level) &&

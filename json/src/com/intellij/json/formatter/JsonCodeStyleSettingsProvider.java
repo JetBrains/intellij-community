@@ -22,7 +22,7 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
                                                            @NotNull CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, JsonBundle.message("settings.display.name.json")) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings) {
         final Language language = JsonLanguage.INSTANCE;
         final CodeStyleSettings currentSettings = getCurrentSettings();
         return new TabbedLanguageCodeStylePanel(language, currentSettings, settings) {
@@ -51,7 +51,7 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new JsonCodeStyleSettings(settings);
   }
 

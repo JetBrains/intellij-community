@@ -19,7 +19,7 @@ import org.jetbrains.io.send
  */
 abstract class WebServerPathHandler {
   abstract fun process(path: String,
-                       project: Project,
+                       project: Project?,
                        request: FullHttpRequest,
                        context: ChannelHandlerContext,
                        projectName: String,
@@ -35,9 +35,9 @@ internal fun redirectToDirectory(request: HttpRequest, channel: Channel, path: S
 }
 
 abstract class WebServerPathHandlerAdapter : WebServerPathHandler() {
-  protected abstract fun process(path: String, project: Project, request: FullHttpRequest, context: ChannelHandlerContext): Boolean
+  protected abstract fun process(path: String, project: Project?, request: FullHttpRequest, context: ChannelHandlerContext): Boolean
   override fun process(path: String,
-                       project: Project,
+                       project: Project?,
                        request: FullHttpRequest,
                        context: ChannelHandlerContext,
                        projectName: String,

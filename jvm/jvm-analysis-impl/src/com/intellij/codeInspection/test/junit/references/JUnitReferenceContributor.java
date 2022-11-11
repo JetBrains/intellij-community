@@ -109,7 +109,11 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
       UElement element = type.getUastParent();
       boolean parameterFound = false;
       for (int i = 0; i < 5 && element != null; i++) {
-        if (element instanceof UFile) {
+        if (element instanceof UFile || 
+            element instanceof UDeclaration || 
+            element instanceof UDeclarationsExpression || 
+            element instanceof UJumpExpression || 
+            element instanceof UBlockExpression) {
           return false;
         }
         if (element instanceof UNamedExpression) {
@@ -119,9 +123,6 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
             return false;
           }
           parameterFound = true;
-        }
-        if (element instanceof UDeclarationsExpression) {
-          return false;
         }
         if (element instanceof UAnnotation) {
           UAnnotation annotation = (UAnnotation)element;

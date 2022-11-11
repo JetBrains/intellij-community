@@ -18,19 +18,6 @@ if (window.__IntelliJTools === undefined) {
     finally {}
   };
 
-  var icons = document.getElementsByClassName('run-icon')
-  window.__IntelliJTools.messagePipe.subscribe("layoutChange", function (layout) {
-    let add = layout !== "SHOW_PREVIEW"
-
-    for (const icon of icons) {
-      if (add) {
-        icon.classList.add('hidden')
-      } else {
-        icon.classList.remove('hidden')
-      }
-    }
-  })
-
   window.document.addEventListener("click", function(e) {
     let target = e.target;
     while (target && target.tagName !== 'A') {
@@ -53,6 +40,4 @@ if (window.__IntelliJTools === undefined) {
       return false;
     }
   });
-  window.addEventListener("IdeReady", () => window.__IntelliJTools.messagePipe.post("pageReady", ""));
-
 })();

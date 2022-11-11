@@ -62,7 +62,7 @@ public class UtilityClassWithPublicConstructorInspection
     public String getName() {
       return InspectionGadgetsBundle.message(
         "utility.class.with.public.constructor.make.quickfix",
-        Integer.valueOf(m_multipleConstructors ? 1 : 2));
+        Integer.valueOf(m_multipleConstructors ? 2 : 1));
     }
 
     @NotNull

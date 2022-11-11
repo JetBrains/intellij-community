@@ -8,12 +8,10 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -37,13 +35,7 @@ class KotlinBundledUsageDetector(private val project: Project) {
 
             val changes = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
             val isDistUsedInLibraries = changes.asSequence()
-                .mapNotNull {
-                    when (it) {
-                        is EntityChange.Added -> it.entity
-                        is EntityChange.Removed -> null
-                        is EntityChange.Replaced -> it.newEntity
-                    }
-                }
+                .mapNotNull { it.newEntity }
                 .flatMap { it.roots }
                 .any { it.url.url.isStartsWithDistPrefix }
 
@@ -91,4 +83,4 @@ class KotlinBundledUsageDetector(private val project: Project) {
 private val Project.detectorInstance: KotlinBundledUsageDetector get() = service()
 
 private val String.isStartsWithDistPrefix: Boolean
-    get() = File(JpsPathUtil.urlToPath(this)).startsWith(KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX)
+    get() = File(JpsPathUtil.urlToPath(this)).startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX)

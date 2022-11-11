@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.Platform;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
@@ -13,12 +12,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;

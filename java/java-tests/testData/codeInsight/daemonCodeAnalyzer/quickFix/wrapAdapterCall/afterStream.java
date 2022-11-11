@@ -1,4 +1,4 @@
-// "Adapt using 'Arrays.stream()'" "true"
+// "Adapt using 'Arrays.stream()'" "true-preview"
 import java.util.*;
 import java.util.stream.Stream;
 

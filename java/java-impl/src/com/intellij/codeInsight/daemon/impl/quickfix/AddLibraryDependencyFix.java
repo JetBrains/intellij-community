@@ -1,8 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.nls.NlsMessages;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -12,6 +15,8 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -29,10 +34,10 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   private final DependencyScope myScope;
   private final boolean myExported;
 
-  AddLibraryDependencyFix(PsiReference reference,
-                          Module currentModule,
-                          Map<Library, String> libraries,
-                          DependencyScope scope,
+  AddLibraryDependencyFix(@NotNull PsiReference reference,
+                          @NotNull Module currentModule,
+                          @NotNull Map<Library, String> libraries,
+                          @NotNull DependencyScope scope,
                           boolean exported) {
     super(reference);
     myCurrentModule = currentModule;
@@ -100,5 +105,19 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     if (qName != null && editor != null) {
       importClass(myCurrentModule, editor, restoreReference(), qName);
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    Library firstItem = ContainerUtil.getFirstItem(myLibraries.keySet());
+    String refName = StringUtil.getShortName(myLibraries.get(firstItem));
+    
+    return new IntentionPreviewInfo.Html(
+      HtmlChunk.text(JavaBundle.message("adds.library.preview",
+                                         myLibraries.size(),
+                                         firstItem.getName(),
+                                         NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getName() + "'")),
+                                         myCurrentModule.getName(),
+                                         refName)));
   }
 }

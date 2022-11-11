@@ -2,14 +2,16 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -21,7 +23,7 @@ import org.jetbrains.kotlin.types.isDefinitelyNotNullType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
-class CastExpressionFix(element: KtExpression, type: KotlinType) : KotlinQuickFixAction<KtExpression>(element) {
+class CastExpressionFix(element: KtExpression, type: KotlinType) : KotlinQuickFixAction<KtExpression>(element), LowPriorityAction {
     private val typePresentation = IdeDescriptorRenderers.SOURCE_CODE_TYPES_WITH_SHORT_NAMES.renderType(type)
     private val typeSourceCode = IdeDescriptorRenderers.SOURCE_CODE_TYPES.renderType(type).let {
         if (type.isDefinitelyNotNullType) "($it)" else it
@@ -46,7 +48,7 @@ class CastExpressionFix(element: KtExpression, type: KotlinType) : KotlinQuickFi
         editor?.caretModel?.moveToOffset(newExpression.endOffset)
     }
 
-    abstract class Factory : KotlinSingleIntentionActionFactoryWithDelegate<KtExpression, KotlinType>() {
+    abstract class Factory : KotlinSingleIntentionActionFactoryWithDelegate<KtExpression, KotlinType>(IntentionActionPriority.LOW) {
         override fun getElementOfInterest(diagnostic: Diagnostic) = diagnostic.psiElement as? KtExpression
         override fun createFix(originalElement: KtExpression, data: KotlinType) = CastExpressionFix(originalElement, data)
     }

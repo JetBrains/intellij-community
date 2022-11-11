@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE.txt file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -40,10 +38,23 @@ public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightJavaIn
            "}");
   }
 
+  public void testSealed() {
+    doTest("sealed interface Fooy {\n" +
+           "    String foo();\n" +
+           "}\n" +
+           "\n" +
+           "final class X implements Fooy {\n" +
+           "    @Override\n" +
+           "    public String foo() {\n" +
+           "        return null;\n" +
+           "    }\n" +
+           "}");
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_17;
   }
 
   public void testAnnotationType() {

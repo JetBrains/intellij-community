@@ -34,10 +34,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ClassToBindProperty extends Property<RadRootContainer, String> {
   private final ClassToBindRenderer myRenderer;
   private final MyEditor myEditor;

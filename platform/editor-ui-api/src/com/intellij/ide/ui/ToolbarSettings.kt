@@ -15,6 +15,8 @@ interface ToolbarSettings : PersistentStateComponent<ExperimentalToolbarSettings
     fun getInstance(): ToolbarSettings = ApplicationManager.getApplication().getService(ToolbarSettings::class.java)
   }
 
+  val isAvailable: Boolean
+
   var isEnabled: Boolean
 
   var isVisible: Boolean

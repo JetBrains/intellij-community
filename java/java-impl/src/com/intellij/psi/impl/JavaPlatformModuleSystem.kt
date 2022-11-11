@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls
  * Checks package accessibility according to JLS 7 "Packages and Modules".
  *
  * @see <a href="https://docs.oracle.com/javase/specs/jls/se9/html/jls-7.html">JLS 7 "Packages and Modules"</a>
- * @see <a href="http://openjdk.java.net/jeps/261">JEP 261: Module System</a>
+ * @see <a href="http://openjdk.org/jeps/261">JEP 261: Module System</a>
  */
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")
@@ -85,11 +85,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean): ErrorWithFixes? {
     val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
-
-    var useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
-    if (useModule is LightJavaModule) {
-      useModule = null
-    }
+    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place).let { if (it is LightJavaModule) null else it }
 
     if (targetModule != null) {
       if (targetModule == useModule) {
@@ -106,21 +102,19 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           return null  // a target is not on the mandatory module path
         }
 
-        var javaModuleNotIncludedInGraph = targetName.startsWith("java.") &&
-                                           targetName != PsiJavaModule.JAVA_BASE &&
-                                           !inAddedModules(module, targetName) &&
-                                           !hasUpgrade(module, targetName, packageName, place)
-        if (javaModuleNotIncludedInGraph) {
+        if (targetName.startsWith("java.") &&
+            targetName != PsiJavaModule.JAVA_BASE &&
+            !inAddedModules(module, targetName) &&
+            !hasUpgrade(module, targetName, packageName, place)) {
           val root = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
-            JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope) 
+            JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
           }
-
-          javaModuleNotIncludedInGraph = root != null && !JavaModuleGraphUtil.reads(root, targetModule)
-        }
-        if (javaModuleNotIncludedInGraph) {
-          return if (quick) ERR else ErrorWithFixes(
-            JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
-            listOf(AddModulesOptionFix(module, targetName)))
+          if (root != null && !JavaModuleGraphUtil.reads(root, targetModule)) {
+            return if (quick) ERR
+            else ErrorWithFixes(
+              JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
+              listOf(AddModulesOptionFix(module, targetName)))
+          }
         }
       }
 

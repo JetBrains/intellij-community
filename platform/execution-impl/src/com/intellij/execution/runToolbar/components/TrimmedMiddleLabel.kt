@@ -41,7 +41,10 @@ open class TrimmedMiddleLabel : JLabel() {
       for (nChars in 0 until stringLength) {
         w += fm.charWidth(charArray[nChars])
         if (w > avW) {
-          g.drawString(StringUtil.trimMiddle(text, nChars - 1), x, offsetY)
+          val ind = nChars - 1
+          if(ind > 0) {
+            g.drawString(StringUtil.trimMiddle(text, ind), x, offsetY)
+          } else super.paintComponent(g)
           return
         }
       }

@@ -26,12 +26,12 @@
                 language="XML"
                 level="WEAK WARNING"/>
 
-        <packagesearch.projectModuleOperationProvider
+        <packagesearch.coroutineProjectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenProjectModuleOperationProvider"/>
         <packagesearch.coroutineModuleTransformer
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenModuleTransformer"/>
 
-        <packagesearch.moduleChangesSignalProvider
+        <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenSyncSignalProvider"/>
 
         <packagesearch.flowModuleChangesSignalProvider

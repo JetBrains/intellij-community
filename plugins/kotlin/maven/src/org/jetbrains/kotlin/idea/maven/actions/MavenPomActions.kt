@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.maven.actions
 
@@ -16,8 +16,8 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
-import org.jetbrains.kotlin.idea.versions.MAVEN_STDLIB_ID
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.utils.PathUtil
 
 class GenerateMavenCompileExecutionAction :
     PomFileActionBase(KotlinMavenExecutionProvider(PomFile.KotlinGoals.Compile, PomFile.DefaultPhases.Compile))
@@ -128,5 +128,7 @@ private fun DomElement.findPlugin(): MavenDomPlugin? =
 private fun MavenDomPlugin.isKotlinMavenPlugin() = groupId.stringValue == KotlinMavenConfigurator.GROUP_ID
         && artifactId.stringValue == KotlinMavenConfigurator.MAVEN_PLUGIN_ID
 
-private fun MavenDomDependency.isKotlinStdlib() = groupId.stringValue == KotlinMavenConfigurator.GROUP_ID
-        && artifactId.stringValue == MAVEN_STDLIB_ID
+private fun MavenDomDependency.isKotlinStdlib(): Boolean {
+    return groupId.stringValue == KotlinMavenConfigurator.GROUP_ID
+            && artifactId.stringValue == PathUtil.KOTLIN_JAVA_STDLIB_NAME
+}

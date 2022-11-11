@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.icons.CopyableIcon;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,6 +18,18 @@ public class IconWrapperWithToolTip implements IconWithToolTip, CopyableIcon, Re
   public IconWrapperWithToolTip(Icon icon, Supplier<@NlsContexts.Tooltip String> toolTip) {
     myIcon = icon;
     myToolTip = toolTip;
+  }
+
+  @Contract(pure = true)
+  protected IconWrapperWithToolTip(@NotNull IconWrapperWithToolTip another) {
+    myIcon = another.myIcon;
+    myToolTip = another.myToolTip;
+  }
+
+  @NotNull
+  @Override
+  public IconWrapperWithToolTip replaceBy(@NotNull IconReplacer replacer) {
+    return new IconWrapperWithToolTip(replacer.replaceIcon(myIcon), myToolTip);
   }
 
   @Override

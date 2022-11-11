@@ -29,9 +29,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.*;
 import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.impl.RegExpGroupImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -230,6 +232,19 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpGroup(RegExpGroup group) {
+    if (RegExpGroupImpl.isPcreConditionalGroup(group.getNode())) {
+      if (RegExpGroupImpl.isPcreDefine(group.getNode())) {
+        RegExpConditional conditional = ObjectUtils.tryCast(group.getParent(), RegExpConditional.class);
+        if (conditional != null) {
+          RegExpBranch[] branches = PsiTreeUtil.getChildrenOfType(conditional, RegExpBranch.class);
+          if (branches != null && branches.length > 1) {
+            myHolder.newAnnotation(HighlightSeverity.ERROR,
+                                   RegExpBundle.message("error.define.subpattern.contains.more.than.one.branch")).create();
+          }
+        }
+      }
+      return;
+    }
     final RegExpPattern pattern = group.getPattern();
     final RegExpBranch[] branches = pattern.getBranches();
     if (isEmpty(branches) && group.getNode().getLastChildNode().getElementType() == RegExpTT.GROUP_END) {

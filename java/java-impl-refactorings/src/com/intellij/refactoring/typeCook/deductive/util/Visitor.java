@@ -16,12 +16,13 @@
 package com.intellij.refactoring.typeCook.deductive.util;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author db
  */
 public abstract class Visitor extends JavaRecursiveElementWalkingVisitor {
-  @Override public void visitPackage(final PsiPackage aPackage) {
+  @Override public void visitPackage(final @NotNull PsiPackage aPackage) {
     final PsiDirectory[] dirs = aPackage.getDirectories();
 
     for (PsiDirectory dir : dirs) {

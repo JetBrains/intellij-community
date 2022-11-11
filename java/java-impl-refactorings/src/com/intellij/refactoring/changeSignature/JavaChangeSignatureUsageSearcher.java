@@ -5,6 +5,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -12,6 +13,7 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.refactoring.RefactoringBundle;
@@ -27,10 +29,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
@@ -67,8 +66,58 @@ class JavaChangeSignatureUsageSearcher {
       }
     }
 
+    PsiDeconstructionPattern[] deconstructions = findDeconstructionUsages(method, result);
+
     //Parameter name changes are not propagated
-    findParametersUsage(method, result, overridingMethods);
+    findParametersUsage(method, result, overridingMethods, deconstructions);
+  }
+
+  private static PsiDeconstructionPattern[] findDeconstructionUsages(final PsiMethod method, final ArrayList<? super UsageInfo> result) {
+    if (!(JavaPsiRecordUtil.isCompactConstructor(method) ||
+          JavaPsiRecordUtil.isExplicitCanonicalConstructor(method) ||
+          method instanceof LightRecordCanonicalConstructor)) {
+      return PsiDeconstructionPattern.EMPTY_ARRAY;
+    }
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) {
+      return PsiDeconstructionPattern.EMPTY_ARRAY;
+    }
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    List<PsiDeconstructionPattern> deconstructions = new ArrayList<>();
+    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(method.getProject());
+    for (PsiReference reference : ReferencesSearch.search(aClass, projectScope)) {
+      PsiElement element = reference.getElement();
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiTypeElement)) {
+        continue;
+      }
+      PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiDeconstructionPattern) {
+        if (isSuitableDeconstruction((PsiDeconstructionPattern)grandParent, parameters)) {
+          result.add(new DeconstructionUsageInfo((PsiDeconstructionPattern)grandParent));
+          deconstructions.add((PsiDeconstructionPattern)grandParent);
+        }
+      }
+    }
+    return deconstructions.toArray(PsiDeconstructionPattern.EMPTY_ARRAY);
+  }
+
+  private static boolean isSuitableDeconstruction(PsiDeconstructionPattern deconstruction, PsiParameter[] parameters) {
+    PsiPattern[] components = deconstruction.getDeconstructionList().getDeconstructionComponents();
+    if (components.length != parameters.length) {
+      return false;
+    }
+    for (int i = 0; i < components.length; i++) {
+      PsiPattern component = components[i];
+      if (!(component instanceof PsiTypeTestPattern)) {
+        return false;
+      }
+      PsiPatternVariable patternVar = ((PsiTypeTestPattern)component).getPatternVariable();
+      if (patternVar == null || !patternVar.getType().equals(parameters[i].getType())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void findUsagesInCallers(final ArrayList<? super UsageInfo> usages) {
@@ -145,7 +194,10 @@ class JavaChangeSignatureUsageSearcher {
     }
   }
 
-  private void findParametersUsage(final PsiMethod method, ArrayList<? super UsageInfo> result, PsiMethod[] overriders) {
+  private void findParametersUsage(final PsiMethod method,
+                                   ArrayList<? super UsageInfo> result,
+                                   PsiMethod[] overriders,
+                                   PsiDeconstructionPattern[] deconstructions) {
     if (JavaLanguage.INSTANCE.equals(myChangeInfo.getLanguage())) {
       PsiClass aClass = method.getContainingClass();
       PsiRecordComponent[] components = null;
@@ -163,6 +215,13 @@ class JavaChangeSignatureUsageSearcher {
               PsiParameter parameter1 = overrider.getParameterList().getParameters()[info.getOldIndex()];
               if (parameter1 != null && Comparing.strEqual(parameter.getName(), parameter1.getName())) {
                 addParameterUsages(parameter1, result, info);
+              }
+            }
+            for (PsiDeconstructionPattern deconstruction : deconstructions) {
+              PsiPattern[] component = deconstruction.getDeconstructionList().getDeconstructionComponents();
+              PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(component[info.getOldIndex()]);
+              if (patternVariable != null && Comparing.strEqual(parameter.getName(), patternVariable.getName())) {
+                addParameterUsages(patternVariable, result, info);
               }
             }
           }

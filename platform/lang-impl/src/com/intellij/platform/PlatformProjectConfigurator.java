@@ -23,6 +23,7 @@ final class PlatformProjectConfigurator implements DirectoryProjectConfigurator 
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
     if (modules.length != 0) {
+      moduleRef.set(modules[0]);
       LOG.info("PlatformProjectConfigurator is not applicable because modules are already configured (module count: " + modules.length + ")");
       return;
     }

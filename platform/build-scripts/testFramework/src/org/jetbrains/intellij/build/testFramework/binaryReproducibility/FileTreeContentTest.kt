@@ -19,7 +19,16 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     @JvmStatic
     fun main(args: Array<String>) {
       require(args.count() == 2)
-      val assertion = FileTreeContentTest().assertTheSameContent(Path.of(args[0]), Path.of(args[1]))
+      val path1 = Path.of(args[0])
+      val path2 = Path.of(args[1])
+      require(path1.exists())
+      require(path2.exists())
+      val test = FileTreeContentTest()
+      val assertion = when {
+        path1.isDirectory() && path2.isDirectory() -> test.assertTheSameDirectoryContent(path1, path2)
+        path1.isRegularFile() && path2.isRegularFile() -> test.assertTheSameFile(path1, path2)
+        else -> throw IllegalArgumentException()
+      }
       if (assertion != null) throw assertion
     }
   }
@@ -33,9 +42,13 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     ((firstIteration - nextIteration) + (nextIteration - firstIteration))
       .filterNot { it.name == ".DS_Store" }
 
-  fun assertTheSame(relativeFilePath: Path, dir1: Path, dir2: Path): AssertionError? {
+  fun assertTheSameFile(relativeFilePath: Path, dir1: Path, dir2: Path): AssertionError? {
     val path1 = dir1.resolve(relativeFilePath)
     val path2 = dir2.resolve(relativeFilePath)
+    return assertTheSameFile(path1, path2, "$relativeFilePath")
+  }
+
+  private fun assertTheSameFile(path1: Path, path2: Path, relativeFilePath: String = path1.name): AssertionError? {
     if (!Files.exists(path1) ||
         !Files.exists(path2) ||
         !path1.isRegularFile() ||
@@ -44,14 +57,15 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
       return null
     }
     println("Failed for $relativeFilePath")
-    val contentError = when (relativeFilePath.extension) {
-      "tar.gz", "gz", "tar" -> assertTheSameContent(
+    require(path1.extension == path2.extension)
+    val contentError = when (path1.extension) {
+      "tar.gz", "gz", "tar" -> assertTheSameDirectoryContent(
         path1.unpackingDir().also { Decompressor.Tar(path1).extract(it) },
         path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) }
       ) ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
-      "zip", "jar", "ijx" -> assertTheSameContent(
-        path1.unpackingDir().also { Decompressor.Zip(path1).extract(it) },
-        path2.unpackingDir().also { Decompressor.Zip(path2).extract(it) }
+      "zip", "jar", "ijx" -> assertTheSameDirectoryContent(
+        path1.unpackingDir().also { Decompressor.Zip(path1).withZipExtensions().extract(it) },
+        path2.unpackingDir().also { Decompressor.Zip(path2).withZipExtensions().extract(it) }
       ) ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
       else -> if (path1.checksum() != path2.checksum()) {
         saveDiff(relativeFilePath, path1, path2)
@@ -67,9 +81,9 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     return contentError
   }
 
-  private fun saveDiff(relativePath: Path, file1: Path, file2: Path) {
+  private fun saveDiff(relativePath: String, file1: Path, file2: Path) {
     fun fileIn(subdir: String): Path {
-      val textFileName = relativePath.name.removeSuffix(".txt") + ".txt"
+      val textFileName = relativePath.removeSuffix(".txt") + ".txt"
       val target = diffDir.resolve(subdir)
         .resolve(relativePath)
         .resolveSibling(textFileName)
@@ -125,12 +139,14 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     return output
   }
 
-  fun assertTheSameContent(dir1: Path, dir2: Path): AssertionError? {
+  fun assertTheSameDirectoryContent(dir1: Path, dir2: Path): AssertionError? {
+    require(dir1.isDirectory())
+    require(dir2.isDirectory())
     val listing1 = Files.walk(dir1).use { it.toList() }
     val listing2 = Files.walk(dir2).use { it.toList() }
     val relativeListing1 = listing1.map(dir1::relativize)
     val listingDiff = listingDiff(relativeListing1.toSet(), listing2.map(dir2::relativize).toSet())
-    val contentComparisonFailures = relativeListing1.mapNotNull { assertTheSame(it, dir1, dir2) }
+    val contentComparisonFailures = relativeListing1.mapNotNull { assertTheSameFile(it, dir1, dir2) }
     return when {
       listingDiff.isNotEmpty() -> AssertionError(listingDiff.joinToString(prefix = "Listing diff for $dir1 and $dir2:\n", separator = "\n"))
       contentComparisonFailures.isNotEmpty() -> AssertionError("$dir1 doesn't match $dir2")

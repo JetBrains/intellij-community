@@ -2,13 +2,11 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
@@ -21,10 +19,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 
-
-public class ExtractMethodIntentionAction implements IntentionAction, Iconable {
+public class ExtractMethodIntentionAction implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
@@ -71,10 +67,5 @@ public class ExtractMethodIntentionAction implements IntentionAction, Iconable {
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
-  }
-
-  @Override
-  public Icon getIcon(int flags) {
-    return AllIcons.Actions.RefactoringBulb;
   }
 }

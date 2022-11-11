@@ -58,7 +58,7 @@ public class SwitchStatementWithTooManyBranchesInspection extends BaseInspection
 
   private class SwitchStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       processSwitch(expression);
     }
 

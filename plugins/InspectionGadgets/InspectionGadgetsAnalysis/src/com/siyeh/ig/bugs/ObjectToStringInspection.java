@@ -65,7 +65,7 @@ public class ObjectToStringInspection extends BaseInspection {
   private class ObjectToStringVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       if (!ExpressionUtils.hasStringType(expression)) {
         return;
@@ -92,7 +92,7 @@ public class ObjectToStringInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String name = methodExpression.getReferenceName();

@@ -40,11 +40,6 @@ class DumbServiceHeavyActivities {
     };
   }
 
-  boolean isSuspended() {
-    ProgressSuspender suspender = myCurrentSuspender;
-    return suspender != null && suspender.isSuspended();
-  }
-
   void resumeProgressIfPossible() {
     ProgressSuspender suspender = myCurrentSuspender;
     if (suspender != null && suspender.isSuspended()) {

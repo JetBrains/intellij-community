@@ -11,6 +11,7 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -53,6 +54,9 @@ import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +84,8 @@ public class CodeCompletionHandlerBase {
   final boolean synchronous;
   final boolean autopopup;
   private static int ourAutoInsertItemTimeout = Registry.intValue("ide.completion.auto.insert.item.timeout", 2000);
+
+  private final Tracer completionTracer = TraceManager.INSTANCE.getTracer("codeCompletion");
 
   public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
     return createHandler(completionType, true, false, true);
@@ -136,67 +142,66 @@ public class CodeCompletionHandlerBase {
 
   public final void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers) {
     clearCaretMarkers(editor);
-    invokeCompletion(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
+    invokeCompletionWithTracing(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
   }
 
   private void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
-    markCaretAsProcessed(caret);
+      markCaretAsProcessed(caret);
 
-    if (invokedExplicitly) {
-      StatisticsUpdate.applyLastCompletionStatisticsUpdate();
-    }
-
-    checkNoWriteAccess();
-
-    CompletionAssertions.checkEditorValid(editor);
-
-    int offset = editor.getCaretModel().getOffset();
-    if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
-      editor.getDocument().fireReadOnlyModificationAttempt();
-      EditorModificationUtil.checkModificationAllowed(editor);
-      return;
-    }
-
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-      return;
-    }
-
-    CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-    boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor);
-
-    final int newTime = phase.newCompletionStarted(time, repeated);
-    if (invokedExplicitly) {
-      time = newTime;
-    }
-    final int invocationCount = time;
-    if (CompletionServiceImpl.isPhase(CompletionPhase.InsertedSingleItem.class)) {
-      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-    }
-    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass(), CompletionPhase.CommittingDocuments.class);
-
-    if (invocationCount > 1 && completionType == CompletionType.BASIC) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
-    }
-
-    long startingTime = System.currentTimeMillis();
-
-    Runnable initCmd = () -> {
-      WriteAction.run(() -> EditorUtil.fillVirtualSpaceUntilCaret(editor));
-      CompletionInitializationContextImpl context = withTimeout(calcSyncTimeOut(startingTime), () ->
-        CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType));
-
-      boolean hasValidContext = context != null;
-      if (!hasValidContext) {
-        final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(caret, project);
-        context = new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount);
+      if (invokedExplicitly) {
+        StatisticsUpdate.applyLastCompletionStatisticsUpdate();
       }
 
-      doComplete(context, hasModifiers, hasValidContext, startingTime);
-    };
+      checkNoWriteAccess();
+
+      CompletionAssertions.checkEditorValid(editor);
+
+      int offset = editor.getCaretModel().getOffset();
+      if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
+        editor.getDocument().fireReadOnlyModificationAttempt();
+        EditorModificationUtil.checkModificationAllowed(editor);
+        return;
+      }
+
+      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
+        return;
+      }
+      CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+      boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor);
+
+      final int newTime = phase.newCompletionStarted(time, repeated);
+      if (invokedExplicitly) {
+        time = newTime;
+      }
+      final int invocationCount = time;
+      if (CompletionServiceImpl.isPhase(CompletionPhase.InsertedSingleItem.class)) {
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      }
+      CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass(), CompletionPhase.CommittingDocuments.class);
+
+      if (invocationCount > 1 && completionType == CompletionType.BASIC) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
+      }
+
+      long startingTime = System.currentTimeMillis();
+      Runnable initCmd = () -> {
+        WriteAction.run(() -> EditorUtil.fillVirtualSpaceUntilCaret(editor));
+        CompletionInitializationContextImpl context = withTimeout(calcSyncTimeOut(startingTime), () ->
+          CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType));
+
+        boolean hasValidContext = context != null;
+        if (!hasValidContext) {
+          final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(caret, project);
+          context = new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount);
+        }
+
+        doComplete(context, hasModifiers, hasValidContext, startingTime);
+      };
     try {
       if (autopopup) {
         CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
-      } else {
+      }
+      else {
         CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument());
       }
     }
@@ -204,6 +209,22 @@ public class CodeCompletionHandlerBase {
       if (invokedExplicitly) {
         DumbService.getInstance(project).showDumbModeNotification(CodeInsightBundle.message("completion.not.available.during.indexing"));
       }
+      throw e;
+    }
+  }
+
+  private void invokeCompletionWithTracing(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
+    Span invokeCompletionSpan = completionTracer.spanBuilder("invokeCompletion")
+      .setAttribute("project", project.getName())
+      .setAttribute("caretOffset", caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset())
+      .startSpan();
+    try (Scope ignored = invokeCompletionSpan.makeCurrent()) {
+      invokeCompletion(project, editor, time, hasModifiers, caret);
+    } catch (IndexNotReadyException e) {
+      invokeCompletionSpan.recordException(e);
+    }
+    finally {
+      invokeCompletionSpan.end();
     }
   }
 
@@ -429,7 +450,7 @@ public class CodeCompletionHandlerBase {
 
       Caret nextCaret = getNextCaretToProcess(indicator.getEditor());
       if (nextCaret != null) {
-        invokeCompletion(indicator.getProject(), indicator.getEditor(), indicator.getInvocationCount(), hasModifiers, nextCaret);
+        invokeCompletionWithTracing(indicator.getProject(), indicator.getEditor(), indicator.getInvocationCount(), hasModifiers, nextCaret);
       }
       else {
         indicator.handleEmptyLookup(true);

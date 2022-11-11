@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTestCase
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -12,11 +14,19 @@ import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
 abstract class AbstractHighLevelMultiFileJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestCase() {
+    override fun isFirPlugin(): Boolean = true
 
     override val testDataDirectory: File
         get() = super.testDataDirectory.resolve(getTestName(false))
 
     override val captureExceptions: Boolean = false
+
+    override fun tearDown() {
+        runAll(
+            { project.invalidateCaches() },
+            { super.tearDown() },
+        )
+    }
 
     override fun executeTest(test: () -> Unit) {
         IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON) {

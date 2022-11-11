@@ -3,6 +3,8 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * An object that returns annotations for {@link PsiType}. Since computing type annotations might be computationally expensive sometimes,
  * this object is used to delay the calculation until annotations are really needed,
@@ -41,7 +43,11 @@ public interface TypeAnnotationProvider {
 
     @NotNull
     public static TypeAnnotationProvider create(PsiAnnotation @NotNull [] annotations) {
-      return annotations.length == 0 ? EMPTY : new Static(annotations);
+      if (annotations.length == 0) return EMPTY;
+      for (PsiAnnotation annotation : annotations) {
+        Objects.requireNonNull(annotation);
+      }
+      return new Static(annotations);
     }
   }
 }

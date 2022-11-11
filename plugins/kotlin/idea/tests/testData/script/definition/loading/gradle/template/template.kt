@@ -16,7 +16,7 @@ class TestDependenciesResolver : AsyncDependenciesResolver {
             )
             else -> DependenciesResolver.ResolveResult.Success(
                 dependencies = ScriptDependencies(
-                    classpath = listOf(environment["template-classes"] as File),
+                    classpath = environment["template-classes"] as List<File>,
                     imports = listOf("x_" + text.replace(Regex("#IGNORE_IN_CONFIGURATION"), ""))
                 ),
                 reports = listOf(ScriptReport(text))

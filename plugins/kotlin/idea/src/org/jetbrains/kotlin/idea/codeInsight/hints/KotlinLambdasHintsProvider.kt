@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import javax.swing.JComponent
 
 class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHintsProvider.Settings>() {
@@ -33,7 +33,6 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
 
     override val key: SettingsKey<Settings> = SettingsKey("kotlin.lambdas.hints")
     override val name: String = KotlinBundle.message("hints.settings.lambdas")
-    override val hintsArePlacedAtTheEndOfLine = false
 
     override val group: InlayGroup
         get() = InlayGroup.LAMBDAS_GROUP

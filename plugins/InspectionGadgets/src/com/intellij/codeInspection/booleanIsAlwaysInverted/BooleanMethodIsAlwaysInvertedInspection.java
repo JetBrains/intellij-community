@@ -165,7 +165,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     final PsiMethod psiMethod = (PsiMethod)psiElement;
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression = call.getMethodExpression();
         if (methodExpression.isReferenceTo(psiMethod)) {
@@ -175,7 +175,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         super.visitMethodReferenceExpression(expression);
         if (expression.isReferenceTo(psiElement)) {
           refMethod.putUserData(ALWAYS_INVERTED, Boolean.FALSE);

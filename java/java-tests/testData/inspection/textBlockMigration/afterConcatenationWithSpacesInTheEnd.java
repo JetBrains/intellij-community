@@ -7,7 +7,7 @@ class TextBlockMigration {
             <html> \s
               <body>
               </body>
-            </html> \s""";
+            </html>  """;
   }
 
 }

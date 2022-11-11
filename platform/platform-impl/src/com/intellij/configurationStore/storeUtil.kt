@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.impl.runBlockingUnderModalProgress
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.notification.NotificationGroupManager
@@ -20,11 +22,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -33,49 +34,52 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stor
 
 /**
  * Only for Java clients.
- * Kotlin clients should use corresponding package-level suspending functions.
+ * Clients in kotlin should use corresponding package-level suspending functions.
  */
-class StoreUtil private constructor() {
-  companion object {
-    /**
-     * Do not use this method in tests, instead directly save using state store.
-     */
-    @JvmOverloads
-    @JvmStatic
-    @CalledInAny
-    fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
-      runInAutoSaveDisabledMode {
-        runBlocking {
-          com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
-        }
+object StoreUtil {
+  /**
+   * Do not use this method in tests, instead directly save using state store.
+   */
+  @JvmOverloads
+  @JvmStatic
+  @CalledInAny
+  fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
+    runInAutoSaveDisabledMode {
+      runUnderModalProgressIfIsEdt {
+        com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
       }
     }
+  }
 
-    /**
-     * Save all unsaved documents and project settings. Must be called from EDT.
-     * Use with care because it blocks EDT. Any new usage should be reviewed.
-     */
-    @RequiresEdt
-    @JvmStatic
-    fun saveDocumentsAndProjectSettings(project: Project) {
+  /**
+   * Save all unsaved documents and project settings. Must be called from EDT.
+   * Use with care because it blocks EDT. Any new usage should be reviewed.
+   */
+  @RequiresEdt
+  @JvmStatic
+  fun saveDocumentsAndProjectSettings(project: Project) {
+    runInAutoSaveDisabledMode {
       FileDocumentManager.getInstance().saveAllDocuments()
-      saveSettings(project)
+      runBlockingUnderModalProgress {
+        com.intellij.configurationStore.saveSettings(project)
+      }
     }
+  }
 
-    /**
-     * Save all unsaved documents, project and application settings. Must be called from EDT.
-     * Use with care because it blocks EDT. Any new usage should be reviewed.
-     *
-     * @param forceSavingAllSettings if `true` [Storage.useSaveThreshold] attribute will be ignored and settings of all components will be saved
-     */
-    @RequiresEdt
-    @JvmStatic
-    fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
-      runInAutoSaveDisabledMode {
-        FileDocumentManager.getInstance().saveAllDocuments()
-        runBlocking {
-          saveProjectsAndApp(forceSavingAllSettings)
-        }
+  /**
+   * Save all unsaved documents, project and application settings. Must be called from EDT.
+   * Use with care because it blocks EDT. Any new usage should be reviewed.
+   *
+   * @param forceSavingAllSettings if `true` [Storage.useSaveThreshold] attribute will be ignored and settings of all components will be saved
+   */
+  @RequiresEdt
+  @JvmStatic
+  @Internal
+  fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
+    runInAutoSaveDisabledMode {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      runBlockingUnderModalProgress {
+        saveProjectsAndApp(forceSavingAllSettings)
       }
     }
   }
@@ -106,20 +110,23 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
     }
 
     val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName,
-                                           (if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(e) + "</p>" else ""))
+                                           (if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(
+                                             e) + "</p>"
+                                           else ""))
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
     val group = NotificationGroupManager.getInstance().getNotificationGroup("Settings Error")
     val notification = if (pluginId == null || (ApplicationInfo.getInstance() as ApplicationInfoEx).isEssentialPlugin(pluginId)) {
       group.createNotification(IdeBundle.message("notification.title.unable.to.save.settings"),
-                   IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
-                   NotificationType.ERROR)
+                               IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
+                               NotificationType.ERROR)
     }
     else {
       PluginManagerCore.disablePlugin(pluginId)
       group.createNotification(IdeBundle.message("notification.title.unable.to.save.plugin.settings"),
-                   IdeBundle.message("notification.content.plugin.failed.to.save.settings.and.has.been.disabled", pluginId.idString, messagePostfix),
-                   NotificationType.ERROR)
+                               IdeBundle.message("notification.content.plugin.failed.to.save.settings.and.has.been.disabled",
+                                                 pluginId.idString, messagePostfix),
+                               NotificationType.ERROR)
     }
     notification.notify(componentManager as? Project)
   }
@@ -156,7 +163,7 @@ fun getStateSpec(originalClass: Class<*>): State? {
  *
  * *NB:* Don't use this method without a strict reason: the storage location is an implementation detail.
  */
-@ApiStatus.Internal
+@Internal
 fun getPersistentStateComponentStorageLocation(clazz: Class<*>): Path? {
   return getDefaultStoragePathSpec(clazz)?.let { fileSpec ->
     ApplicationManager.getApplication().getService(IComponentStore::class.java).storageManager.expandMacro(fileSpec)
@@ -175,22 +182,26 @@ fun getDefaultStoragePathSpec(state: State): String? {
   return storage?.let { getStoragePathSpec(storage) }
 }
 
-fun getStoragePathSpec(storage: Storage): String {
-  @Suppress("DEPRECATION")
+private fun getStoragePathSpec(storage: Storage): String {
+  @Suppress("DEPRECATION", "removal")
   val pathSpec = storage.value.ifEmpty { storage.file }
   return if (storage.roamingType == RoamingType.PER_OS) getOsDependentStorage(pathSpec) else pathSpec
 }
 
+@Internal
 fun getOsDependentStorage(storagePathSpec: String): String {
-  return getPerOsSettingsStorageFolderName() + "/" + storagePathSpec
+  return "${getPerOsSettingsStorageFolderName()}/$storagePathSpec"
 }
 
+@Internal
 fun getPerOsSettingsStorageFolderName(): String {
-  if (SystemInfo.isMac) return "mac"
-  if (SystemInfo.isWindows) return "windows"
-  if (SystemInfo.isLinux) return "linux"
-  if (SystemInfo.isFreeBSD) return "freebsd"
-  return if (SystemInfo.isUnix) "unix" else "other_os"
+  return when {
+    SystemInfoRt.isMac -> "mac"
+    SystemInfoRt.isWindows -> "windows"
+    SystemInfoRt.isLinux -> "linux"
+    SystemInfoRt.isFreeBSD -> "freebsd"
+    else -> if (SystemInfoRt.isUnix) "unix" else "other_os"
+  }
 }
 
 /**
@@ -198,20 +209,26 @@ fun getPerOsSettingsStorageFolderName(): String {
  */
 @CalledInAny
 suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
-  StoreReloadManager.getInstance().reloadChangedStorageFiles()
+  val storeReloadManager = StoreReloadManager.getInstance()
+  storeReloadManager.reloadChangedStorageFiles()
+  storeReloadManager.blockReloadingProjectOnExternalChanges()
+  try {
+    val start = System.currentTimeMillis()
+    saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
+    if (onlyProject == null) {
+      saveAllProjects(forceSavingAllSettings)
+    }
+    else {
+      saveSettings(onlyProject, forceSavingAllSettings = true)
+    }
 
-  val start = System.currentTimeMillis()
-  saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
-  if (onlyProject == null) {
-    saveAllProjects(forceSavingAllSettings)
+    val duration = System.currentTimeMillis() - start
+    if (duration > 1000 || LOG.isDebugEnabled) {
+      LOG.info("saveProjectsAndApp took $duration ms")
+    }
   }
-  else {
-    saveSettings(onlyProject, forceSavingAllSettings = true)
-  }
-
-  val duration = System.currentTimeMillis() - start
-  if (duration > 1000 || LOG.isDebugEnabled) {
-    LOG.info("saveProjectsAndApp took $duration ms")
+  finally {
+    storeReloadManager.unblockReloadingProjectOnExternalChanges()
   }
 }
 

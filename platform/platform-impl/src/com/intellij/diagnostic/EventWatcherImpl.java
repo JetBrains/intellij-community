@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -62,28 +61,17 @@ final class EventWatcherImpl implements EventWatcher, Disposable {
   private @Nullable ScheduledFuture<?> myFuture;
 
   EventWatcherImpl() {
-    Application application = ApplicationManager.getApplication();
-    if (application == null ||
-        application.isDisposed() ||
-        application.isHeadlessEnvironment()) {
-      throw ExtensionNotApplicableException.create();
-    }
+    Application app = ApplicationManager.getApplication();
+    app.getMessageBus().connect(this).subscribe(TOPIC, myLogFileWriter);
 
-    application.getMessageBus()
-      .connect(this)
-      .subscribe(TOPIC, myLogFileWriter);
-
-    myThreshold = application.getService(RegistryManager.class)
-      .get("ide.event.queue.dispatch.threshold");
+    myThreshold = app.getService(RegistryManager.class).get("ide.event.queue.dispatch.threshold");
 
     myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Events Logger", 1);
     myFuture = scheduleDumping();
   }
 
   @Override
-  public void logTimeMillis(@NotNull String processId,
-                            long startedAt,
-                            @NotNull Class<? extends Runnable> runnableClass) {
+  public void logTimeMillis(@NotNull String processId, long startedAt, @NotNull Class<? extends Runnable> runnableClass) {
     InvocationDescription description = new InvocationDescription(processId,
                                                                   startedAt,
                                                                   System.currentTimeMillis());

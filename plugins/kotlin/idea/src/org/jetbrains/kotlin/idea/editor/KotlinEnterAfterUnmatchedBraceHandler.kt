@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceAfter
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -34,7 +34,7 @@ class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() 
         if (element !is PsiWhiteSpace) {
             return EnterHandlerDelegate.Result.Continue
         }
-        val prevElement = CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceAfter(file, caretOffset)
+        val prevElement = getElementAtOffsetIgnoreWhitespaceAfter(file, caretOffset)
         if (prevElement != null && prevElement.node.elementType == KtTokens.LBRACE) {
             return super.preprocessEnter(file, editor, Ref(prevElement.startOffset + 1), caretAdvance, dataContext, originalHandler)
         }

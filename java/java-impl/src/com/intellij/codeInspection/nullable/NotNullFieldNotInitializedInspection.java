@@ -45,7 +45,7 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
         NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(field);
         if (info == null ||

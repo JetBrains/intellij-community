@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.lang.parser
 
 import org.intellij.markdown.IElementType
+import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
@@ -20,6 +21,7 @@ import org.intellij.markdown.parser.sequentialparsers.SequentialParser
 import org.intellij.markdown.parser.sequentialparsers.SequentialParserManager
 import org.intellij.markdown.parser.sequentialparsers.impl.*
 import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterHeaderMarkerProvider
+import org.intellij.plugins.markdown.ui.preview.html.HeaderGeneratingProvider
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 
@@ -61,6 +63,14 @@ class GFMCommentAwareFlavourDescriptor(
     providers[DefinitionListMarkerProvider.TERM] = SimpleInlineTagProvider("dt")
     providers[DefinitionListMarkerProvider.DEFINITION_MARKER] = TransparentInlineHolderProvider()
     providers[FrontMatterHeaderMarkerProvider.FRONT_MATTER_HEADER] = ExcludedElementProvider()
+    providers[MarkdownElementTypes.ATX_1] = HeaderGeneratingProvider("h1")
+    providers[MarkdownElementTypes.ATX_2] = HeaderGeneratingProvider("h2")
+    providers[MarkdownElementTypes.ATX_3] = HeaderGeneratingProvider("h3")
+    providers[MarkdownElementTypes.ATX_4] = HeaderGeneratingProvider("h4")
+    providers[MarkdownElementTypes.ATX_5] = HeaderGeneratingProvider("h5")
+    providers[MarkdownElementTypes.ATX_6] = HeaderGeneratingProvider("h6")
+    providers[MarkdownElementTypes.SETEXT_1] = HeaderGeneratingProvider("h1")
+    providers[MarkdownElementTypes.SETEXT_2] = HeaderGeneratingProvider("h2")
   }
 
   private class ExcludedElementProvider: GeneratingProvider {

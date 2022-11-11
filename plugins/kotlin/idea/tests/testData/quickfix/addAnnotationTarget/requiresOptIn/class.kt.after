@@ -1,0 +1,11 @@
+// "Add annotation target" "true"
+// WITH_STDLIB
+// DISABLE-ERRORS
+@file:MyExperimentalAPI
+
+@MyExperimentalAPI
+class Test
+
+@RequiresOptIn
+@Target(AnnotationTarget.FIELD, AnnotationTarget.CLASS)
+annotation class MyExperimentalAPI

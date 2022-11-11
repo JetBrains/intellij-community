@@ -114,7 +114,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
   private static class CompareToAndEqualsNotPairedVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       if (aClass.isInterface() || aClass.isRecord() || aClass.isEnum()) {
         // the problem can't be fixed for an interface, so let's not report it

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.kotlin
 
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
@@ -59,6 +60,15 @@ class KotlinUObjectLiteralExpression(
         superClassConstructorCall?.let {
             baseResolveProviderService.getArgumentForParameter(it, i, this)
         }
+
+    /**
+     * `super` call in the fake-constructor of anonymous class
+     */
+    val constructorCall: UExpression?
+        get() = this.declaration.methods.asSequence().filterIsInstance<KotlinConstructorUMethod>()
+             .singleOrNull()?.uastBody?.safeAs<KotlinLazyUBlockExpression>()
+             ?.expressions
+             ?.firstOrNull()
 
     private class ObjectLiteralClassReference(
         override val sourcePsi: KtSuperTypeCallEntry,

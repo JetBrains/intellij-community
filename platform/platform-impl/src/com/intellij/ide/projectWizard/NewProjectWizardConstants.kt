@@ -27,5 +27,13 @@ object NewProjectWizardConstants {
     val ALL = arrayOf(INTELLIJ, GRADLE, MAVEN, SBT)
   }
 
+  object Generators {
+    const val EMPTY_PROJECT = "empty-project"
+    const val EMPTY_WEB_PROJECT = "empty-web-project"
+    const val SIMPLE_PROJECT = "simple-project"
+    const val SIMPLE_MODULE = "simple-module"
+  }
+
   const val OTHER = "other"
+  const val NULL = "null"
 }

@@ -26,13 +26,13 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.isEnumCompanionPropertyWithEntryConflict
-import org.jetbrains.kotlin.idea.core.unquote
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.checkSuperMethodsWithPopup
 import org.jetbrains.kotlin.idea.refactoring.dropOverrideKeywordIfNecessary
@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.codeUsageScope
+import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -443,7 +443,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         usages: Array<UsageInfo>,
         listener: RefactoringElementListener?
     ) {
-        val newNameUnquoted = newName.unquote()
+        val newNameUnquoted = newName.unquoteKotlinIdentifier()
         if (element is KtLightMethod) {
             if (element.modifierList.hasAnnotation(DescriptorUtils.JVM_NAME.asString())) {
                 return super.renameElement(element, newName, usages, listener)

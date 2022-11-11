@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.whole
 
@@ -11,6 +11,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.perf.suite.DefaultProfile
 import org.jetbrains.kotlin.idea.perf.suite.EmptyProfile
 import org.jetbrains.kotlin.idea.perf.suite.suite
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.performance.tests.utils.relativePath
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 import java.io.File

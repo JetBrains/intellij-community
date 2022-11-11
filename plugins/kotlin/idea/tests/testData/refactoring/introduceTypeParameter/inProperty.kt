@@ -1,3 +1,5 @@
+// WITH_STDLIB
+
 class A
 
 val List<<selection>A</selection>>.foo: (A) -> Int

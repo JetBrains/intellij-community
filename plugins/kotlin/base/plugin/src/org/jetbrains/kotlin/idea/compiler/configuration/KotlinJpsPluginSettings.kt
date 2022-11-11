@@ -10,8 +10,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.io.exists
+import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -19,7 +22,8 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_JPS_PLUGIN_SETTINGS_SECTION
 import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import java.nio.file.Path
+import kotlin.io.path.bufferedReader
 
 @State(name = KOTLIN_JPS_PLUGIN_SETTINGS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<JpsPluginSettings>(project) {
@@ -42,7 +46,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         val fallbackVersionForOutdatedCompiler: String get() = "1.6.21"
 
         @JvmStatic
-        val bundledVersion: IdeKotlinVersion get() = KotlinPluginLayout.instance.standaloneCompilerVersion
+        val bundledVersion: IdeKotlinVersion get() = KotlinPluginLayout.standaloneCompilerVersion
 
         @JvmStatic
         val jpsMinimumSupportedVersion: KotlinVersion = IdeKotlinVersion.get("1.6.0").kotlinVersion
@@ -52,11 +56,6 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         fun validateSettings(project: Project) {
             val jpsPluginSettings = project.service<KotlinJpsPluginSettings>()
-            if (!isUnbundledJpsExperimentalFeatureEnabled(project)) {
-                // Delete compiler version in kotlinc.xml when feature flag is off
-                jpsPluginSettings.dropExplicitVersion()
-                return
-            }
 
             if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.buildNumber == null) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
@@ -65,14 +64,13 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             }
         }
 
-        fun jpsVersion(project: Project): String? = getInstance(project)?.settings?.versionWithFallback
+        fun jpsVersion(project: Project): String = getInstance(project).settings.versionWithFallback
 
+        /**
+         * @see readFromKotlincXmlOrIpr
+         */
         @JvmStatic
-        fun getInstance(project: Project): KotlinJpsPluginSettings? =
-            project.takeIf { isUnbundledJpsExperimentalFeatureEnabled(it) }?.service()
-
-        @JvmStatic
-        fun isUnbundledJpsExperimentalFeatureEnabled(project: Project): Boolean = isUnitTestMode() || !project.isDefault
+        fun getInstance(project: Project): KotlinJpsPluginSettings = project.service()
 
         /**
          * @param jpsVersion version to parse
@@ -116,8 +114,24 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             return null
         }
 
+        /**
+         * Replacement for [getInstance] for cases when it's not possible to use [getInstance] (e.g. project isn't yet initialized).
+         *
+         * Please, prefer [getInstance] if possible.
+         */
+        fun readFromKotlincXmlOrIpr(path: Path) =
+            path.takeIf { it.fileIsNotEmpty() }
+                ?.let { JDOMUtil.load(path) }
+                ?.children
+                ?.singleOrNull { it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName }
+                ?.let { xmlElement ->
+                    JpsPluginSettings().apply {
+                        XmlSerializer.deserializeInto(this, xmlElement)
+                    }
+                }
+
         fun supportedJpsVersion(project: Project, onUnsupportedVersion: (String) -> Unit): String? {
-            val version = jpsVersion(project) ?: return null
+            val version = jpsVersion(project)
             return when (val error = checkJpsVersion(version, fromFile = true)) {
                 is OutdatedCompilerVersion -> fallbackVersionForOutdatedCompiler
 
@@ -134,7 +148,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
          * @param isDelegatedToExtBuild `true` if compiled with Gradle/Maven. `false` if compiled with JPS
          */
         fun importKotlinJpsVersionFromExternalBuildSystem(project: Project, rawVersion: String, isDelegatedToExtBuild: Boolean) {
-            val instance = getInstance(project) ?: return
+            val instance = getInstance(project)
             if (rawVersion == rawBundledVersion) {
                 instance.setVersion(rawVersion)
                 return
@@ -234,3 +248,5 @@ private fun showNotificationUnsupportedJpsPluginVersion(
         .setImportant(true)
         .notify(project)
 }
+
+fun Path.fileIsNotEmpty() = exists() && bufferedReader().use { it.readLine() != null }

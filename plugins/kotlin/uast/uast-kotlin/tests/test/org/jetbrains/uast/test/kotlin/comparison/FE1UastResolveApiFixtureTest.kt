@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.kotlin.comparison
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -87,6 +87,18 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkAssigningArrayElementType(myFixture)
     }
 
+    fun testMapFunctions() {
+        checkMapFunctions(myFixture)
+    }
+
+    fun testListIterator() {
+        checkListIterator(myFixture)
+    }
+
+    fun testStringJVM() {
+        checkStringJVM(myFixture)
+    }
+
     fun testArgumentMappingDefaultValue() {
         checkArgumentMappingDefaultValue(myFixture)
     }
@@ -115,7 +127,36 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkSyntheticEnumMethods(myFixture)
     }
 
+    fun testImplicitReceiverType() {
+        checkImplicitReceiverType(myFixture)
+    }
+
     fun testSubstitutedReceiverType() {
         checkSubstitutedReceiverType(myFixture)
     }
+
+    fun testCallKindOfSamConstructor() {
+        checkCallKindOfSamConstructor(myFixture)
+    }
+
+    fun testArrayAccessOverloads() {
+        checkArrayAccessOverloads(myFixture)
+    }
+
+    fun testOperatorOverloads() {
+        checkOperatorOverloads(myFixture)
+    }
+
+    fun testResolveSyntheticJavaPropertyAccessor() {
+        checkResolveSyntheticJavaPropertyAccessor(myFixture)
+    }
+
+    fun testResolveKotlinPropertyAccessor() {
+        checkResolveKotlinPropertyAccessor(myFixture)
+    }
+
+    fun testResolveToSubstituteOverride() {
+        checkResolveToSubstituteOverride(myFixture)
+    }
+
 }

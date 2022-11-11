@@ -36,10 +36,6 @@ import javax.swing.text.JTextComponent;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class Generator {
   private static final Logger LOG = Logger.getInstance(Generator.class);
 

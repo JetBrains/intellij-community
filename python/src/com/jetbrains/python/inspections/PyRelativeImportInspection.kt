@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -99,6 +100,11 @@ class PyRelativeImportInspection : PyInspection() {
       }
       undoableAction.redo()
       UndoManager.getInstance(project).undoableActionPerformed(undoableAction)
+    }
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      // The quick fix updates a directory's properties in the project structure, nothing changes in the current file
+      return IntentionPreviewInfo.EMPTY
     }
   }
 

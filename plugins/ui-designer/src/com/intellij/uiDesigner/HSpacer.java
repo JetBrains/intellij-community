@@ -5,10 +5,6 @@ import com.intellij.ui.paint.LinePainter2D;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class HSpacer extends DesignSpacer{
   public HSpacer(){
     setSize(50,getHandleHeight());

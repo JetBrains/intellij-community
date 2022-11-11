@@ -78,7 +78,7 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
 
   private static class SimplifiableConditionalExpressionVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       ConditionalModel model = ConditionalModel.from(expression);
       if (model == null) return;

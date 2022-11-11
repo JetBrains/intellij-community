@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -24,8 +24,8 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ import java.util.Objects;
 import static com.intellij.openapi.util.NotNullLazyValue.atomicLazy;
 import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
 
-public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAnnotationMethod {
+public final class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAnnotationMethod {
   private final NotNullLazyValue<PsiTypeElement> myReturnType;
   private final NullableLazyValue<PsiAnnotationMemberValue> myDefaultValue;
 
@@ -77,8 +77,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
+  public @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
   }
 
@@ -93,8 +92,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
+  public @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
@@ -110,8 +108,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
   }
 
@@ -121,14 +118,12 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public PsiParameterList getParameterList() {
+  public @NotNull PsiParameterList getParameterList() {
     return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.PARAMETER_LIST)).getPsi();
   }
 
   @Override
-  @NotNull
-  public PsiReferenceList getThrowsList() {
+  public @NotNull PsiReferenceList getThrowsList() {
     return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.THROWS_LIST)).getPsi();
   }
 
@@ -163,8 +158,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+  public @NotNull MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
@@ -250,13 +244,11 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
     return true;
   }
 
-  @Nullable
-  public PsiMethod getSourceMirrorMethod() {
+  public @Nullable PsiMethod getSourceMirrorMethod() {
     return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calcSourceMirrorMethod());
   }
 
-  @Nullable
-  private PsiMethod calcSourceMirrorMethod() {
+  private @Nullable PsiMethod calcSourceMirrorMethod() {
     PsiClass mirrorClass = ((ClsClassImpl)getParent()).getSourceMirrorClass();
     if (mirrorClass != null) {
       for (PsiMethod sourceMethod: mirrorClass.findMethodsByName(getName(), false)) {
@@ -269,8 +261,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
         PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
@@ -305,8 +296,10 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
 
   @Override
   public Icon getElementIcon(final int flags) {
-    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.ABSTRACT_METHOD_ICON : PlatformIcons.METHOD_ICON;
-    RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(this, methodIcon, ElementPresentationUtil.getFlags(this, false));
+    IconManager iconManager = IconManager.getInstance();
+    Icon methodIcon =
+      iconManager.getPlatformIcon(hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.AbstractMethod : PlatformIcons.Method);
+    RowIcon baseIcon = iconManager.createLayeredIcon(this, methodIcon, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
@@ -316,8 +309,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
 

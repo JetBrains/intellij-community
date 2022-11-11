@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.importing
 
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   @Test
-  fun `test project open`() {
+  fun `test project open`() = runBlocking {
     val projectInfo = generateProject("A")
     waitForImport {
       openProjectFrom(projectInfo.projectFile)
@@ -17,7 +18,7 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   }
 
   @Test
-  fun `test project import`() {
+  fun `test project import`() = runBlocking {
     val projectInfo = generateProject("A")
     waitForImport {
       importProjectFrom(projectInfo.projectFile)
@@ -29,7 +30,7 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   }
 
   @Test
-  fun `test project attach`() {
+  fun `test project attach`() = runBlocking {
     val projectInfo = generateProject("A")
     openPlatformProjectFrom(projectInfo.projectFile.parent).use {
       waitForImport {
@@ -42,7 +43,7 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   }
 
   @Test
-  fun `test project import from script`() {
+  fun `test project import from script`() = runBlocking {
     val projectInfo = generateProject("A")
     openPlatformProjectFrom(projectInfo.projectFile.parent).use {
       waitForImport {
@@ -55,7 +56,7 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   }
 
   @Test
-  fun `test module attach`() {
+  fun `test module attach`() = runBlocking{
     val projectInfo = generateProject("A")
     val linkedProjectInfo = generateProject("L")
     waitForImport {
@@ -72,7 +73,7 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   }
 
   @Test
-  fun `test project re-open`() {
+  fun `test project re-open`() = runBlocking {
     val projectInfo = generateProject("A")
     val linkedProjectInfo = generateProject("L")
     waitForImport {
@@ -94,7 +95,7 @@ interface ExternalSystemSetupProjectTest : ExternalSystemSetupProjectTestCase {
   }
 
   @Test
-  fun `test project re-import deprecation`() {
+  fun `test project re-import deprecation`() = runBlocking {
     val projectInfo = generateProject("A")
     val linkedProjectInfo = generateProject("L")
 

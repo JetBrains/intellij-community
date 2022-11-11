@@ -23,10 +23,14 @@ import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextAware;
-import com.intellij.util.*;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ImageLoader;
+import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
+import kotlin.Pair;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -223,21 +227,6 @@ public final class AppUIUtil {
     else {
       application.invokeLater(runnable, expired);
     }
-  }
-
-  public static void updateFrameClass() {
-    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
-      return;
-    }
-
-    try {
-      Toolkit toolkit = Toolkit.getDefaultToolkit();
-      Class<? extends Toolkit> aClass = toolkit.getClass();
-      if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
-        ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
-      }
-    }
-    catch (Exception ignore) { }
   }
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass

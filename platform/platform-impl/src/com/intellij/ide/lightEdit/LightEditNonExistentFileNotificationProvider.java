@@ -31,7 +31,8 @@ public class LightEditNonExistentFileNotificationProvider extends EditorNotifica
     if (LightEdit.owns(project)) {
       @NlsSafe String creationMessage = file.getUserData(LightEditUtil.CREATION_MESSAGE);
       if (creationMessage != null) {
-        EditorNotificationPanel notificationPanel = new EditorNotificationPanel(fileEditor).text(creationMessage);
+        EditorNotificationPanel notificationPanel =
+          new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Error).text(creationMessage);
         notificationPanel.createActionLabel(ApplicationBundle.message("light.edit.file.creation.failed.hide.message"), () -> {
           file.putUserData(LightEditUtil.CREATION_MESSAGE, null);
           EditorNotifications.getInstance(project).updateNotifications(file);

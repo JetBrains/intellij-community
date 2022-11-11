@@ -11,6 +11,7 @@
     <toolWindow id="Commander" anchor="right" icon="AllIcons.Toolwindows.ToolWindowCommander"
                 factoryClass="com.intellij.ide.commander.CommanderToolWindowFactory"/>
     <projectService serviceImplementation="com.intellij.ide.commander.Commander"/>
+    <customizableActionGroupProvider implementation="com.intellij.ide.actions.CommanderCustomizableActionGroupProvider"/>
   </extensions>
 
   <actions>
@@ -30,7 +31,7 @@
 
     <group id="ImagesCommanderActions2">
       <reference id="Images.ShowThumbnails"/>
-      <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
+      <add-to-group anchor="last" group-id="CommanderPopupMenu"/>
     </group>
   </actions>
 </idea-plugin>

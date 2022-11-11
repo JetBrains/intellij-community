@@ -33,15 +33,14 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
-import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
@@ -96,13 +95,10 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         postTasks: MutableList<MavenProjectsProcessorTask>
     ) {
 
-        if (changes.plugins) {
+        if (changes.hasPluginsChanges()) {
             contributeSourceDirectories(mavenProject, module, rootModel)
         }
 
-        if (!KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(module.project)) {
-            return
-        }
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
         val currentVersion = mavenPlugin.compilerVersion
         val accumulatorVersion = module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)
@@ -116,17 +112,18 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
         super.postProcess(module, mavenProject, changes, modifiableModelsProvider)
-        module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
+        val project = module.project
+        project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
             KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
-                module.project,
+                project,
                 version.rawVersion,
-                isDelegatedToExtBuild = MavenRunner.getInstance(module.project).settings.isDelegateBuildToMaven
+                isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven
             )
 
-            module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
+            project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
         }
 
-        if (changes.dependencies) {
+        if (changes.hasDependencyChanges()) {
             scheduleDownloadStdlibSources(mavenProject, module)
 
             val targetLibraryKind = detectPlatformByExecutions(mavenProject)?.tooling?.libraryKind
@@ -134,7 +131,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
                 modifiableModelsProvider.getModifiableRootModel(module).orderEntries().forEachLibrary { library ->
                     if ((library as LibraryEx).kind == null) {
                         val model = modifiableModelsProvider.getModifiableLibraryModel(library) as LibraryEx.ModifiableModelEx
-                        detectLibraryKind(model.getFiles(OrderRootType.CLASSES))?.let { model.kind = it }
+                        detectLibraryKind(library, project)?.let { model.kind = it }
                     }
                     true
                 }
@@ -282,8 +279,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         NotificationGroupManager.getInstance()
           .getNotificationGroup("Kotlin Maven project import")
           .createNotification(
-            KotlinBundle.message("configuration.maven.jvm.target.1.6.title"),
-            KotlinBundle.message("configuration.maven.jvm.target.1.6.content"),
+            KotlinMavenBundle.message("configuration.maven.jvm.target.1.6.title"),
+            KotlinMavenBundle.message("configuration.maven.jvm.target.1.6.content"),
             NotificationType.WARNING,
           )
           .setImportant(true)
@@ -299,7 +296,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     )
 
     private val MavenPlugin.compilerVersion: IdeKotlinVersion
-        get() = version?.let(IdeKotlinVersion::opt) ?: KotlinPluginLayout.instance.standaloneCompilerVersion
+        get() = version?.let(IdeKotlinVersion::opt) ?: KotlinPluginLayout.standaloneCompilerVersion
 
     private fun MavenProject.findKotlinMavenPlugin(): MavenPlugin? = findPlugin(
         KotlinMavenConfigurator.GROUP_ID,
@@ -319,12 +316,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         // TODO There should be a way to figure out the correct platform version
         val platform = detectPlatform(mavenProject)?.defaultPlatform
 
-        kotlinFacet.configureFacet(
-            compilerVersion,
-            platform,
-            modifiableModelsProvider,
-            emptySet()
-        )
+        kotlinFacet.configureFacet(compilerVersion, platform, modifiableModelsProvider)
 
         val facetSettings = kotlinFacet.configuration.settings
         val configuredPlatform = kotlinFacet.configuration.settings.targetPlatform!!

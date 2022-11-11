@@ -4,6 +4,7 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.Predicates;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public abstract class ConfigurableVisitor implements Predicate<Configurable> {
-  public static final Predicate<Configurable> ALL = configurable -> true;
+  public static final Predicate<Configurable> ALL = Predicates.alwaysTrue();
 
   @Override
   public boolean test(Configurable configurable) {
@@ -91,28 +92,6 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
       if (configurable instanceof Configurable.Composite) {
         collect(visitor, ((Configurable.Composite)configurable).getConfigurables());
       }
-    }
-  }
-
-  /**
-   * @deprecated Use {@link #findById}
-   */
-  @Deprecated(forRemoval = true)
-  public static final class ByID extends ConfigurableVisitor {
-    private final String id;
-
-    public ByID(@NotNull String id) {
-      this.id = id;
-    }
-
-    @Override
-    protected boolean accept(@NotNull Configurable configurable) {
-      return id.equals(getId(configurable));
-    }
-
-    @Nullable
-    public Configurable find(@NotNull List<? extends ConfigurableGroup> groups) {
-      return find(this, groups);
     }
   }
 

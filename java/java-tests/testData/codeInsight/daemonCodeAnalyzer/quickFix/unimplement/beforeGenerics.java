@@ -1,4 +1,4 @@
-// "Unimplement Interface" "true"
+// "Unimplement" "true-preview"
 class A implements II<S<caret>tring> {
   public String toString() {
     return super.toString();

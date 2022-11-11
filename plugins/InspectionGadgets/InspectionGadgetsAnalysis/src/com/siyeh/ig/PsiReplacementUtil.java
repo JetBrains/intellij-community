@@ -193,10 +193,9 @@ public final class PsiReplacementUtil {
 
   /**
    * Replaces the specified boolean PsiExpression with a negated expression created from the specified string.
-   * The expression is negated by surrounding with {@code !(...)} or if already surrounded removes the {@oce !(...)}.
+   * The expression is negated by surrounding with {@code !(...)} or if already surrounded removes the {@code !(...)}.
    * @param expression  a boolean PsiExpression
    * @param newExpression  text for the new expression, which will be negated/inverted.
-   * @param tracker
    */
   public static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression expression,
                                                             @NotNull String newExpression,

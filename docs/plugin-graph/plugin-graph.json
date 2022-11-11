@@ -1730,42 +1730,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "Hm",
-    "name": "intellij.jboss.seam",
-    "n": "i.jboss.seam",
-    "package": "com.intellij.seam",
-    "sourceModule": "intellij.jboss.seam",
-    "descriptor": "plugins/frameworks/jboss/seam/seam-core/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.seam",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "Ng",
-    "name": "intellij.jboss.seam.navigation",
-    "n": "i.jboss.seam.navigation",
-    "package": "com.intellij.seam.pages",
-    "sourceModule": "intellij.jboss.seam.navigation",
-    "descriptor": "plugins/frameworks/jboss/seam/seam-navigation/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.seam.pages",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "vY",
-    "name": "intellij.jboss.seam.pageflow",
-    "n": "i.jboss.seam.pageflow",
-    "package": "com.intellij.seam.pageflow",
-    "sourceModule": "intellij.jboss.seam.pageflow",
-    "descriptor": "plugins/frameworks/jboss/seam/seam-pageflow/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.seam.pageflow",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "v4",
     "name": "intellij.less",
     "n": "i.less",

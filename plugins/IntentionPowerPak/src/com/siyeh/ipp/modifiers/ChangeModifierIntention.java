@@ -72,6 +72,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private AccessModifier myTarget;
 
   // Necessary to register an extension
+  @SuppressWarnings("unused")
   public ChangeModifierIntention() {
     this(false);
   }
@@ -91,11 +92,13 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (modifiers.isEmpty()) return false;
     if (!myErrorFix && !ContainerUtil.exists(modifiers, mod -> mod.hasModifier(member))) return false;
     modifiers.removeIf(mod -> mod.hasModifier(member));
-    AccessModifier target = null;
     if (modifiers.isEmpty()) return false;
+    AccessModifier target = null;
     if (modifiers.size() == 1) {
       target = modifiers.get(0);
-      setText(IntentionPowerPackBundle.message("change.modifier.text", identifier.getText(), target));
+      String name = identifier.getText();
+      if (member instanceof PsiMethod) name += "()";
+      setText(IntentionPowerPackBundle.message("change.modifier.text", name, target));
     }
     else {
       setText(getFamilyName());

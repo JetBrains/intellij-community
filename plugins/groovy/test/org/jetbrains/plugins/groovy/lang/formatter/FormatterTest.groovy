@@ -1020,6 +1020,10 @@ class Scratch {
 }""")
   }
 
+  void testSafeIndex() {
+    checkFormatting("[1]?[2]","[1]?[2]")
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES

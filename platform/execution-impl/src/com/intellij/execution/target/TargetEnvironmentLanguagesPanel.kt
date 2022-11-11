@@ -2,6 +2,7 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.Configurable
@@ -150,6 +151,8 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
       val lastLanguage = languagesList.resolvedConfigs().none { it != language }
       e.presentation.isEnabled = !lastLanguage
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
   private data class LanguagePanel(val language: LanguageRuntimeConfiguration,

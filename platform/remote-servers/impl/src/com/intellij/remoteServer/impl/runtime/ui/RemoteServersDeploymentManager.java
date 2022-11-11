@@ -21,6 +21,7 @@ import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.remoteServer.util.CloudApplicationRuntime;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,7 +177,8 @@ public final class RemoteServersDeploymentManager {
   }
 
   @Nullable
-  private RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
+  @ApiStatus.Internal
+  public RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
     for (RemoteServersServiceViewContributor contributor : myContributors.keySet()) {
       if (contributor.accept(server)) {
         return contributor;
@@ -261,7 +263,7 @@ public final class RemoteServersDeploymentManager {
       }
     }
 
-    private AbstractTreeNode<?> findDeployment(RemoteServersServiceViewContributor contributor,
+    public AbstractTreeNode<?> findDeployment(RemoteServersServiceViewContributor contributor,
                                                ServerConnection<?> connection,
                                                String deploymentName) {
       RemoteServerNode serverNode = new RemoteServerNode(myProject, connection.getServer(), contributor);

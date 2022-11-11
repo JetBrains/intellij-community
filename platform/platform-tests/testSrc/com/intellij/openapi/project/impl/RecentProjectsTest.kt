@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -11,12 +14,13 @@ import com.intellij.ui.DeferredIconImpl
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
-import java.nio.file.Paths
+import java.util.*
 
 class RecentProjectsTest {
   companion object {
@@ -42,7 +46,7 @@ class RecentProjectsTest {
   val tempDir = TemporaryDirectory()
 
   @Test
-  fun testMostRecentOnTop() {
+  fun testMostRecentOnTop() = runBlocking {
     val p1 = createAndOpenProject("p1")
     val p2 = createAndOpenProject("p2")
     val p3 = createAndOpenProject("p3")
@@ -55,7 +59,7 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun testGroupsOrder() {
+  fun testGroupsOrder() = runBlocking {
     val p1 = createAndOpenProject("p1")
     val p2 = createAndOpenProject("p2")
     val p3 = createAndOpenProject("p3")
@@ -79,19 +83,24 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun timestampForOpenProjectUpdatesWhenGetStateCalled() {
+  fun timestampForOpenProjectUpdatesWhenGetStateCalled(): Unit = runBlocking {
     val z1 = tempDir.newPath("z1")
-    var project = PlatformTestUtil.loadAndOpenProject(z1, disposableRule.disposable)
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    var project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
     try {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      project = PlatformTestUtil.loadAndOpenProject(z1, disposableRule.disposable)
+      val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+      recentProjectManager.runProjectPostStartupActivity(project)
+
       val timestamp = getProjectOpenTimestamp("z1")
-      RecentProjectsManagerBase.instanceEx.updateLastProjectPath()
+      projectManager.forceCloseProjectAsync(project)
+      project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+      recentProjectManager.runProjectPostStartupActivity(project)
+      recentProjectManager.updateLastProjectPath()
       // "Timestamp for opened project has not been updated"
       assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
     }
     finally {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      projectManager.forceCloseProjectAsync(project)
     }
   }
 
@@ -100,7 +109,7 @@ class RecentProjectsTest {
     // For Rider
     val rpm = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
 
-    val projectDir = Paths.get("${PlatformTestUtil.getPlatformTestDataPath()}/recentProjects/dotNetSampleRecent/Povysh")
+    val projectDir = Path.of("${PlatformTestUtil.getPlatformTestDataPath()}/recentProjects/dotNetSampleRecent/Povysh")
     val slnFile = projectDir.resolve("Povysh.sln")
 
     val icon = (rpm.getProjectIcon(slnFile.toString(), false) as DeferredIconImpl<*>).evaluate()
@@ -109,7 +118,7 @@ class RecentProjectsTest {
   }
 
   private fun getProjectOpenTimestamp(@Suppress("SameParameterValue") projectName: String): Long {
-    val additionalInfo = RecentProjectsManagerBase.instanceEx.state.additionalInfo
+    val additionalInfo = RecentProjectsManagerBase.getInstanceEx().state.additionalInfo
     for (s in additionalInfo.keys) {
       if (s.endsWith(projectName) || s.substringBeforeLast('_').endsWith(projectName)) {
         return additionalInfo.get(s)!!.projectOpenTimestamp
@@ -118,15 +127,24 @@ class RecentProjectsTest {
     return -1
   }
 
-  private fun doReopenCloseAndCheck(projectPath: Path, vararg results: String) {
-    val project = PlatformTestUtil.loadAndOpenProject(projectPath, disposableRule.disposable)
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+  private suspend fun doReopenCloseAndCheck(projectPath: Path, vararg results: String) {
+    openProjectAndClose(projectPath)
     checkRecents(*results)
   }
 
-  private fun doReopenCloseAndCheckGroups(projectPath: Path, results: List<String>) {
-    val project = PlatformTestUtil.loadAndOpenProject(projectPath, disposableRule.disposable)
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+  private suspend fun openProjectAndClose(projectPath: Path) {
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    val project = projectManager.openProjectAsync(projectPath, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+    try {
+      RecentProjectsManagerBase.getInstanceEx().runProjectPostStartupActivity(project)
+    }
+    finally {
+      projectManager.forceCloseProjectAsync(project)
+    }
+  }
+
+  private suspend fun doReopenCloseAndCheckGroups(projectPath: Path, results: List<String>) {
+    openProjectAndClose(projectPath)
     checkGroups(results)
   }
 
@@ -148,17 +166,21 @@ class RecentProjectsTest {
     assertThat(recentGroups).isEqualTo(groups)
   }
 
-  private fun createAndOpenProject(name: String): Path {
+  private suspend fun createAndOpenProject(name: String): Path {
     val path = tempDir.newPath(name)
-    var project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    var project = projectManager.openProjectAsync(path, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
     try {
+      val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+      recentProjectManager.runProjectPostStartupActivity(project)
       project.stateStore.saveComponent(RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      project = PlatformTestUtil.loadAndOpenProject(path, disposableRule.disposable)
+      projectManager.forceCloseProjectAsync(project)
+      project = projectManager.openProjectAsync(path, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+      recentProjectManager.runProjectPostStartupActivity(project)
       return path
     }
     finally {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      projectManager.forceCloseProjectAsync(project)
     }
   }
 }

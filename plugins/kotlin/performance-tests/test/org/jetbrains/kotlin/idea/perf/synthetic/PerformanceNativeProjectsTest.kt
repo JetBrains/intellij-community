@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
@@ -10,10 +10,10 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfoRt.*
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
-import org.jetbrains.kotlin.idea.caches.project.isMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
 import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
 import org.jetbrains.kotlin.idea.testFramework.Stats
@@ -291,7 +291,7 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
         val nativeModules: Map<Module, Set<String>> = runReadAction {
             project.allModules().mapNotNull { module ->
                 val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return@mapNotNull null
-                if (!facetSettings.isMPPModule || !facetSettings.targetPlatform.isNative()) return@mapNotNull null
+                if (!facetSettings.isMultiPlatformModule || !facetSettings.targetPlatform.isNative()) return@mapNotNull null
 
                 // ex: "myProject.commonTest" -> "commonTest"
                 val moduleName = module.name.removePrefix(project.name).removePrefix(".")
@@ -304,7 +304,7 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
                     .asSequence()
                     .filterIsInstance<LibraryOrderEntry>()
                     .mapNotNull { it.library }
-                    .filter { detectLibraryKind(it.getFiles(OrderRootType.CLASSES)) == NativeLibraryKind }
+                    .filter { detectLibraryKind(it, module.project) == KotlinNativeLibraryKind }
                     .mapNotNull inner@{ library ->
                         val libraryNameParts = parseIDELibraryName(library.name.orEmpty()) ?: return@inner null
                         val (_, pureLibraryName, platformPart) = libraryNameParts

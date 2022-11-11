@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codegen;
 
@@ -9,26 +9,19 @@ import kotlin.io.FilesKt;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.codegen.ClassFileFactory;
-import org.jetbrains.kotlin.codegen.GeneratedClassLoader;
-import org.jetbrains.kotlin.idea.TestHelperGeneratorKt;
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
+import org.jetbrains.kotlin.codegen.ClassFileFactory;
+import org.jetbrains.kotlin.codegen.GeneratedClassLoader;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
-import org.jetbrains.kotlin.idea.test.Directives;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
-import org.jetbrains.kotlin.idea.test.ConfigurationKind;
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.TestHelperGeneratorKt;
+import org.jetbrains.kotlin.idea.test.*;
+import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestJdkKind;
-import org.jetbrains.kotlin.psi.KtFile;
-import org.jetbrains.kotlin.test.*;
-import org.jetbrains.kotlin.idea.test.TestFiles;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
-import org.jetbrains.kotlin.idea.test.KotlinBaseTest;
-import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +47,7 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
                 configurationKind,
                 TestJdkKind.MOCK_JDK,
                 getBackend(),
-                Collections.singletonList(KotlinArtifacts.getInstance().getJetbrainsAnnotations()),
+                Collections.singletonList(TestKotlinArtifacts.getJetbrainsAnnotations()),
                 ArraysKt.filterNotNull(javaSourceRoots),
                 Collections.emptyList()
         );
@@ -66,16 +59,20 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
 
     @Override
     protected void tearDown() throws Exception {
-        myFiles = null;
-        myEnvironment = null;
-        classFileFactory = null;
+        try {
+            myFiles = null;
+            myEnvironment = null;
+            classFileFactory = null;
 
-        if (initializedClassLoader != null) {
-            initializedClassLoader.dispose();
-            initializedClassLoader = null;
+            if (initializedClassLoader != null) {
+                initializedClassLoader.dispose();
+                initializedClassLoader = null;
+            }
+        } catch (Throwable e) {
+            addSuppressedException(e);
+        } finally {
+            super.tearDown();
         }
-
-        super.tearDown();
     }
 
     protected void loadMultiFiles(@NotNull List<TestFile> files) {

@@ -63,6 +63,7 @@ public final class HighlightUtils {
     if (elementCollection.isEmpty()) {
       return;
     }
+    if (!elementCollection.iterator().next().isPhysical()) return;
 
     Editor selectedTextEditor =
       FileEditorManager.getInstance(ContainerUtil.getFirstItem(elementCollection).getProject()).getSelectedTextEditor();
@@ -112,7 +113,6 @@ public final class HighlightUtils {
   public static void showRenameTemplate(PsiElement context,
                                         PsiNameIdentifierOwner element,
                                         PsiReference... references) {
-    if (!element.isPhysical()) return;
     context = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(
       context);
     final Project project = context.getProject();

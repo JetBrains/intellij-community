@@ -7,4 +7,5 @@ class MyClass {
     fun get(i: Int): Int = 1
 }
 
+// DISALLOW_METHOD_CALLS
 // EXPECTED: null

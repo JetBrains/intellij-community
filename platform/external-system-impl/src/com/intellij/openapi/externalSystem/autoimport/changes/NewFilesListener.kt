@@ -2,18 +2,18 @@
 package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.*
 
-abstract class NewFilesListener : AsyncFileChangeListenerBase() {
+abstract class NewFilesListener : VirtualFileChangesListener {
 
   abstract fun fireNewFilesCreated()
 
   private var isCreatedNewFiles = false
 
-  override val processRecursively = false
+  override fun isProcessRecursively() = false
 
   override fun init() {
     isCreatedNewFiles = false
@@ -38,10 +38,10 @@ abstract class NewFilesListener : AsyncFileChangeListenerBase() {
 
   companion object {
     fun whenNewFilesCreated(action: () -> Unit, parentDisposable: Disposable) {
-      VirtualFileManager.getInstance()
-        .addAsyncFileListener(object : NewFilesListener() {
-          override fun fireNewFilesCreated() = action()
-        }, parentDisposable)
+      val listener = object : NewFilesListener() {
+        override fun fireNewFilesCreated() = action()
+      }
+      installAsyncVirtualFileListener(listener, parentDisposable)
     }
   }
 }

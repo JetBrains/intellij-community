@@ -102,7 +102,7 @@ interface StatsPerIndexer {
   val totalNumberOfFiles: Int
   val totalNumberOfFilesIndexedByExtensions: Int
   val totalBytes: BytesNumber
-  val totalIndexingTimeInAllThreads: TimeNano
+  val totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano
   val snapshotInputMappingStats: SnapshotInputMappingStats
 }
 

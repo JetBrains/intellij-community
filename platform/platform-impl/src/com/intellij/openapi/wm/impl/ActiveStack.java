@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
  * after the another tool window was closed. This stack is cleared every time you active the editor.
  * 2. Permanent stack. It is the same as the first one, but it's not cleared when editor is being
  * activated. It used to provide id of last active tool window.
- *
- * @author Vladimir Kondratyev
  */
 final class ActiveStack {
   /**

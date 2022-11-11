@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,15 +141,13 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   void alignToValidBoundaries() {
     Document document = getDocument();
-    int start = intervalStart();
-    int end = intervalEnd();
-    if (DocumentUtil.isInsideCharacterPair(document, start)) {
-      setIntervalStart(start - 1);
+    long alignedRange = TextRangeScalarUtil.deltaScalarRange(toScalarRange(),
+    DocumentUtil.isInsideCharacterPair(document, getStartOffset()) ? -1 : 0,
+    DocumentUtil.isInsideCharacterPair(document, getEndOffset()) ? -1 : 0);
+    if (alignedRange != toScalarRange()) {
       myEditor.getFoldingModel().myComplexDocumentChange = true;
     }
-    if (DocumentUtil.isInsideCharacterPair(document, end)) {
-      setIntervalEnd(end - 1);
-    }
+    setRange(alignedRange);
   }
 
   @Override

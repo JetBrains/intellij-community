@@ -1,4 +1,4 @@
-// "Make 'a.f' not final" "true"
+// "Make 'a.f()' not final" "true-preview"
 import java.io.*;
 
 class a {

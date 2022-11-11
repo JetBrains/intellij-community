@@ -195,8 +195,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   /**
    * Returns root node, fake parent suite for all tests and suites
    *
-   * @param testsRoot
-   * @return
    */
   @Override
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {

@@ -19,7 +19,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         final PsiExpression qualifierExpression = expression.getQualifierExpression();
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
         doCheckCall(expression, () -> expression.resolve(), qualifierExpression, referenceNameElement,
@@ -27,7 +27,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambdaExpression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambdaExpression) {
         PsiElement body = lambdaExpression.getBody();
         PsiExpression asMethodReference = LambdaCanBeMethodReferenceInspection
           .canBeMethodReferenceProblem(body, lambdaExpression.getParameterList().getParameters(), lambdaExpression.getFunctionalInterfaceType(), null);

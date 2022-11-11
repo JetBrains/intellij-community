@@ -27,7 +27,10 @@ public final class SystemInfo {
 
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
-    return Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
+    if (rtVersion != null && Character.isDigit(rtVersion.charAt(0))) {
+      return rtVersion;
+    }
+    return fallback;
   }
 
   public static final boolean isWindows = SystemInfoRt.isWindows;
@@ -106,6 +109,7 @@ public final class SystemInfo {
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
   public static final boolean isMacOSBigSur = isMac && isOsVersionAtLeast("10.16");
   public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
+  public static final boolean isMacOSVentura = isMac && isOsVersionAtLeast("13.0");
 
   /**
    * Build number is the only more or less stable approach to get comparable win version.
@@ -168,8 +172,12 @@ public final class SystemInfo {
     return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
   }
 
+  public static String getOsName() {
+    return isMac ? "macOS" : OS_NAME;
+  }
+
   public static String getOsNameAndVersion() {
-    return (isMac ? "macOS" : OS_NAME) + ' ' + OS_VERSION;
+    return getOsName() + ' ' + OS_VERSION;
   }
 
   private static int normalize(int number) {
@@ -186,10 +194,6 @@ public final class SystemInfo {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean IS_AT_LEAST_JAVA9 = JavaVersion.current().feature >= 9;
 
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
@@ -228,16 +232,6 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
 
-  /** @deprecated trivial and mostly outdated */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isMacIntel64 = isMac && CpuArch.isIntel64();
-
-  /** @deprecated always false */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isAppleJvm = false;
-
   /** @deprecated always true (Java 8 requires macOS 10.9+) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
@@ -253,9 +247,5 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval
   public static final boolean isWinVistaOrNewer = isWindows;
 
-  /** @deprecated always true */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean areSymLinksSupported = isUnix || isWindows;
   //</editor-fold>
 }

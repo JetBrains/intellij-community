@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
@@ -9,7 +9,6 @@ import javax.swing.*;
 import java.util.List;
 
 public class SwitcherTest extends FileEditorManagerTestCase {
-
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getPlatformTestDataPath() + "fileEditorManager";
@@ -27,9 +26,9 @@ public class SwitcherTest extends FileEditorManagerTestCase {
 
   private void testTabPlacement(int tabPlacement, boolean goForward) {
     UISettings.getInstance().getState().setEditorTabPlacement(tabPlacement);
-    myManager.openFile(getFile("/src/1.txt"), true);
-    myManager.openFile(getFile("/src/2.txt"), true);
-    myManager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/1.txt"), true);
+    manager.openFile(getFile("/src/2.txt"), true);
+    manager.openFile(getFile("/src/3.txt"), true);
     List<?> filesToShow = Switcher.SwitcherPanel.getFilesToShowForTest(getProject());
     int selectedItem = Switcher.SwitcherPanel.getFilesSelectedIndexForTest(getProject(), goForward);
 

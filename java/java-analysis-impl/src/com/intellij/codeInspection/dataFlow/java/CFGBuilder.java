@@ -257,6 +257,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder splice(int count, int... replacement) {
+    if (count == 0 && replacement.length == 0) return this;
     return add(new SpliceInstruction(count, replacement));
   }
 

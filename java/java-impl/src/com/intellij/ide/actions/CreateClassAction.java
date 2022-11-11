@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -27,14 +28,15 @@ import java.util.Map;
  */
 public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> implements DumbAware {
   public CreateClassAction() {
-    super("", JavaBundle.message("action.create.new.class.description"), PlatformIcons.CLASS_ICON, true);
+    super("", JavaBundle.message("action.create.new.class.description"),
+          IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), true);
   }
 
   @Override
   protected void buildDialog(final Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(JavaBundle.message("action.create.new.class"))
-      .addKind(JavaPsiBundle.message("node.class.tooltip"), PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
+      .addKind(JavaPsiBundle.message("node.class.tooltip"), IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
       .addKind(JavaPsiBundle.message("node.interface.tooltip"), PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
     if (HighlightingFeature.RECORDS.isAvailable(directory)) {
       builder.addKind(JavaPsiBundle.message("node.record.tooltip"), PlatformIcons.RECORD_ICON, JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME);

@@ -1,17 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.TestApplicationManager;
+import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -44,8 +45,6 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
         if (suiteStarted == 0) {
           if (!includeFirstLast) return;
           suiteStarted = System.nanoTime();
-          Logger.setFactory(TestLoggerFactory.class);
-          IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
           String tempDirectory = FileUtilRt.getTempDirectory();
           String[] list = new File(tempDirectory).list();
           assert list != null;
@@ -100,7 +99,7 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
                                ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
                              }
                              else {
-                               TestApplicationManagerKt.disposeApplicationAndCheckForLeaks();
+                               TestApplicationManager.disposeApplicationAndCheckForLeaks();
                              }
                            },
                            () -> {

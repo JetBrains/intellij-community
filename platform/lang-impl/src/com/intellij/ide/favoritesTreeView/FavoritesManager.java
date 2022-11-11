@@ -201,8 +201,7 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
   }
 
   public synchronized boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {
-    Collection<AbstractTreeNode<?>> nodes = AddToFavoritesAction.createNodes(myProject, moduleContext, elements, true, getViewSettings());
-    return !nodes.isEmpty() && addRoots(name, nodes);
+    return true;
   }
 
   @Nullable

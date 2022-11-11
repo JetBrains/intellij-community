@@ -37,6 +37,11 @@ public class MoveModulesToGroupAction extends AnAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   protected static String whatToMove(Module @NotNull [] modules) {
     return modules.length == 1 ? IdeBundle.message("message.module", modules[0].getName()) : IdeBundle.message("message.modules");
   }

@@ -54,15 +54,6 @@ public interface TemplateOptionalProcessor {
    * @return whether a checkbox for this template should be shown in the configuration dialog, with the given template context.
    */
   default boolean isVisible(@NotNull Template template, @NotNull TemplateContext context) {
-    //noinspection deprecation
-    return isVisible(template);
-  }
-
-  /**
-   * @deprecated Please override {@link #isVisible(Template, TemplateContext)}
-   */
-  @Deprecated(forRemoval = true)
-  default boolean isVisible(final Template template) {
     return true;
   }
 }

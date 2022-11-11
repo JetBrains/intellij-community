@@ -30,10 +30,6 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class UIFormEditor extends UserDataHolderBase implements FileEditor, PossiblyDumbAware {
   private final VirtualFile myFile;
   private final GuiEditor myEditor;

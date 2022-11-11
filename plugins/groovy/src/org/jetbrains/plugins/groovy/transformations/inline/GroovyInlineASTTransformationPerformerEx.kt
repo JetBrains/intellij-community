@@ -4,9 +4,9 @@ package org.jetbrains.plugins.groovy.transformations.inline
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.formatting.Block
+import com.intellij.formatting.Indent
 import com.intellij.lang.ASTNode
 import org.jetbrains.plugins.groovy.formatter.FormattingContext
-import org.jetbrains.plugins.groovy.formatter.blocks.GroovyMacroBlock
 
 interface GroovyInlineASTTransformationPerformerEx : GroovyInlineASTTransformationPerformer {
 
@@ -26,5 +26,5 @@ interface GroovyInlineASTTransformationPerformerEx : GroovyInlineASTTransformati
    * **Note:** There may be parts of the transformable code within the plain Groovy one.
    * In that case, you can customize the behavior of [FormattingContext.createBlock]
    */
-  fun computeFormattingBlock(node: ASTNode, context: FormattingContext): Block = GroovyMacroBlock(node, context)
+  fun computeFormattingBlock(node: ASTNode, context: FormattingContext): Block = context.createBlock(node, Indent.getNormalIndent(), null)
 }

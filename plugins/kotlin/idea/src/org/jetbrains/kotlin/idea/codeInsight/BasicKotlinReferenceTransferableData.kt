@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -20,10 +20,6 @@ class BasicKotlinReferenceTransferableData(
     val locationFqName: String?
 ) : TextBlockTransferableData, Cloneable, Serializable {
     override fun getFlavor() = dataFlavor
-    override fun getOffsetCount() = 0
-
-    override fun getOffsets(offsets: IntArray?, index: Int) = index
-    override fun setOffsets(offsets: IntArray?, index: Int) = index
 
     public override fun clone(): BasicKotlinReferenceTransferableData {
         try {

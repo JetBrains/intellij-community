@@ -29,6 +29,8 @@ public class TableLayout extends TabLayout {
 
   public TablePassInfo myLastTableLayout;
 
+  private boolean myWithScrollBar = false;
+
   public TableLayout(final JBTabsImpl tabs) {
     myTabs = tabs;
   }
@@ -54,7 +56,7 @@ public class TableLayout extends TabLayout {
     int requiredRowsPinned = 0;
     int requiredRowsUnpinned = 0;
 
-    final int maxX = data.moreRect.x - 1;
+    final int maxX = data.moreRect.x;
     ActionToolbar entryPointToolbar = myTabs.myEntryPointToolbar;
 
     int hGap = myTabs.getTabHGap();
@@ -148,7 +150,7 @@ public class TableLayout extends TabLayout {
         else {
           calculateRawLengths(unpinned, data);
           if (getTotalLength(unpinned, data) > standardLengthToFit) {
-            int moreWidth = myTabs.isSingleRow() ? myTabs.myMoreToolbar.getComponent().getPreferredSize().width : 0;
+            int moreWidth = getMoreRectAxisSize();
             int entryPointsWidth = pinned.isEmpty() ? myTabs.getEntryPointPreferredSize().width : 0;
             data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth - entryPointsWidth, /*data.toFitRec.y*/myTabs.getLayoutInsets().top, moreWidth, myTabs.myHeaderFitSize.height /*- myTabs.getSeparatorWidth()*/);
             calculateRawLengths(unpinned, data);
@@ -162,11 +164,20 @@ public class TableLayout extends TabLayout {
     else {//both scrollable and multi-row
       calculateRawLengths(data.myVisibleInfos, data);
       if (getTotalLength(data.myVisibleInfos, data) > standardLengthToFit) {
-        int moreWidth = myTabs.isSingleRow() ? myTabs.myMoreToolbar.getComponent().getPreferredSize().width : 0;
+        int moreWidth = getMoreRectAxisSize();
         data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, data.toFitRec.y, moreWidth, myTabs.myHeaderFitSize.height);
         calculateRawLengths(data.myVisibleInfos, data);
       }
     }
+  }
+
+  public void setWithScrollBar(boolean withScrollBar) {
+    myWithScrollBar = withScrollBar;
+  }
+
+  private int getMoreRectAxisSize() {
+    if (myWithScrollBar) return 0;
+    return myTabs.isSingleRow() ? myTabs.myMoreToolbar.getComponent().getPreferredSize().width : 0;
   }
 
   private static int getTotalLength(@NotNull List<TabInfo> list, @NotNull TablePassInfo data) {

@@ -10,19 +10,19 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.awt.DevicePoint
 import java.awt.Dimension
-import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.SwingConstants
 
-internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
-  private val leftStripe = Stripe(SwingConstants.LEFT)
-  private val rightStripe = Stripe(SwingConstants.RIGHT)
-  private val bottomStripe = Stripe(SwingConstants.BOTTOM)
-  private val topStripe = Stripe(SwingConstants.TOP)
+internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButtonManager {
+  private val leftStripe = Stripe(paneId, SwingConstants.LEFT)
+  private val rightStripe = Stripe(paneId, SwingConstants.RIGHT)
+  private val bottomStripe = Stripe(paneId, SwingConstants.BOTTOM)
+  private val topStripe = Stripe(paneId, SwingConstants.TOP)
 
   private val stripes = java.util.List.of(topStripe, leftStripe, bottomStripe, rightStripe)
 
@@ -105,7 +105,7 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
 
   override fun revalidateNotEmptyStripes() {
     for (stripe in stripes) {
-      if (!stripe.getButtons().isEmpty()) {
+      if (stripe.getButtons().isNotEmpty()) {
         stripe.revalidate()
       }
     }
@@ -113,7 +113,7 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
 
   override fun getBottomHeight() = if (bottomStripe.isVisible) bottomStripe.height else 0
 
-  override fun getStripeFor(anchor: ToolWindowAnchor): Stripe {
+  override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): Stripe {
     return when(anchor) {
       ToolWindowAnchor.TOP -> topStripe
       ToolWindowAnchor.BOTTOM -> bottomStripe
@@ -123,14 +123,29 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
     }
   }
 
-  override fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
+  override fun getStripeFor(devicePoint: DevicePoint, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
+    val screenPoint = devicePoint.getLocationOnScreen(pane)
     if (Rectangle(pane.locationOnScreen, pane.size).contains(screenPoint)) {
+      // Find the stripe that owns this point. Depending on implementation, this could be just the physical bounds of the stripe, or could
+      // include the virtual bounds of the drop area for the stripe. Because these bounds might overlap, check the preferred stripe first
       if (preferred.containsPoint(screenPoint)) {
         return preferred
       }
       return stripes.firstOrNull { it.containsPoint(screenPoint)  }
     }
     return null
+  }
+
+  override fun getStripeWidth(anchor: ToolWindowAnchor): Int {
+    val stripe = getStripeFor(anchor, null)
+    return if (stripe.isVisible && stripe.isShowing) stripe.width else 0
+  }
+
+  override fun getStripeHeight(anchor: ToolWindowAnchor): Int {
+    // We no longer support the top stripe
+    if (anchor == ToolWindowAnchor.TOP) return 0
+    val stripe = getStripeFor(anchor, null)
+    return if (stripe.isVisible && stripe.isShowing) stripe.height else 0
   }
 
   override fun startDrag() {
@@ -157,10 +172,10 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
     val button = StripeButton(toolWindow)
     button.isSelected = info.isVisible
     button.updatePresentation()
-    val stripe = getStripeFor(info.anchor)
+    val stripe = getStripeFor(info.anchor, info.isSplit)
     val manager = object : StripeButtonManager {
-      override val id: String
-        get() = toolWindow.id
+      override val id: String = toolWindow.id
+      override val toolWindow = toolWindow
 
       override val windowDescriptor: WindowInfo
         get() = toolWindow.windowInfo
@@ -180,11 +195,18 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
         button.updateIcon(icon)
       }
 
-      override fun remove() {
+      override fun remove(anchor: ToolWindowAnchor, split: Boolean) {
         stripe.removeButton(this)
       }
     }
     stripe.addButton(manager)
     return manager
+  }
+
+  override fun hasButtons(): Boolean {
+    return leftStripe.getButtons().isNotEmpty()
+           || rightStripe.getButtons().isNotEmpty()
+           || bottomStripe.getButtons().isNotEmpty()
+           || topStripe.getButtons().isNotEmpty()
   }
 }

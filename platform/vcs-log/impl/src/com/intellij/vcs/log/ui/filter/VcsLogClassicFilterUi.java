@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.Consumer;
@@ -223,7 +224,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       if (vcsLogUi == null) return;
 
       Component actionComponent = UIUtil.uiTraverser(vcsLogUi.getToolbar()).traverse().find(component -> {
-        return UIUtil.getClientProperty(component, ACTION_KEY) == this;
+        return ClientProperty.get(component, ACTION_KEY) == this;
       });
       if (actionComponent instanceof VcsLogPopupComponent) {
         ((VcsLogPopupComponent)actionComponent).showPopupMenu();

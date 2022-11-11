@@ -219,10 +219,10 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
       isCandidateFromReferer = true
     }
     return false
-  }) ?: candidateByDirectoryName ?: return false
+  }) ?: candidateByDirectoryName
 
   if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active")) {
-    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), project)
+    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), project) { }
     return false
   }
 
@@ -268,6 +268,8 @@ fun HttpRequest.isSignedRequest(): Boolean {
   return token != null && tokens.getIfPresent(token) != null
 }
 
+private val KNOWN_ICON_PATHS = listOf("favicon.ico", "apple-touch-icon.png", "apple-touch-icon-precomposed.png")
+
 fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean): HttpHeaders? {
   if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
     return EmptyHttpHeaders.INSTANCE
@@ -289,7 +291,7 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
   }
 
   val urlDecoder = QueryStringDecoder(request.uri())
-  if (!urlDecoder.path().endsWith("/favicon.ico")) {
+  if (KNOWN_ICON_PATHS.none { urlDecoder.path().endsWith("/$it") || !urlDecoder.path().endsWith("/$it/") }) {
     val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
     SwingUtilities.invokeAndWait {
       ProjectUtil.focusProjectWindow(null, true)

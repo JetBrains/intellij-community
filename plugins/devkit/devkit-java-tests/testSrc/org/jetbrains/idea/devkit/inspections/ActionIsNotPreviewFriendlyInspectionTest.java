@@ -33,9 +33,19 @@ public class ActionIsNotPreviewFriendlyInspectionTest extends LightJavaCodeInsig
                        "    return null;\n" +
                        "  }\n" +
                        "}");
+    myFixture.addClass("package com.intellij.codeInsight.intention;\n" +
+                       "\n" +
+                       "import com.intellij.codeInsight.intention.*;\n" +
+                       "\n" +
+                       "public interface IntentionAction extends FileModifier {\n" +
+                       "}");
   }
 
   public void testMyQuickFix() {
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testMyIntentionAction() {
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 

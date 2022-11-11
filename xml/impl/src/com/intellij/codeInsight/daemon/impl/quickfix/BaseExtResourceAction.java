@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
@@ -55,7 +56,7 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
     throws IncorrectOperationException;
 
   @Nullable
-  public static String findUri(PsiFile file, int offset) {
+  public static @NlsSafe String findUri(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element == null ||
         element instanceof PsiWhiteSpace ) {
@@ -69,10 +70,5 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
       return currentRef.getCanonicalText();
     }
     return null;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof ManuallySetupExtResourceAction;
   }
 }

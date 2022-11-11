@@ -72,7 +72,6 @@ extra["versions.trove4j"] = "1.0.20181211"
 
 val isTeamcityBuild = false
 val effectSystemEnabled by extra(false)
-val newInferenceEnabled by extra(false)
 
 val intellijSeparateSdks = false
 

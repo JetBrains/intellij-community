@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 
 import com.intellij.json.JsonBundle;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
 public class JsonSchemaReader {
   private static final int MAX_SCHEMA_LENGTH = FileUtilRt.LARGE_FOR_CONTENT_LOADING;
   public static final Logger LOG = Logger.getInstance(JsonSchemaReader.class);
-  public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
+  public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroupManager.getInstance().getNotificationGroup("JSON Schema");
 
   private final Map<String, JsonSchemaObject> myIds = new HashMap<>();
   private final ArrayDeque<Pair<JsonSchemaObject, JsonValueAdapter>> myQueue;

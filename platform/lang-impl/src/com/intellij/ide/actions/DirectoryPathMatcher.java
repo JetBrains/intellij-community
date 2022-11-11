@@ -172,8 +172,8 @@ final class DirectoryPathMatcher {
       Collections.addAll(roots, ModuleRootManager.getInstance(module).getContentRoots());
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (entry instanceof LibraryOrSdkOrderEntry) {
-          Collections.addAll(roots, entry.getFiles(OrderRootType.CLASSES));
-          Collections.addAll(roots, entry.getFiles(OrderRootType.SOURCES));
+          Collections.addAll(roots, ((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));
+          Collections.addAll(roots, ((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.SOURCES));
         }
       }
     }

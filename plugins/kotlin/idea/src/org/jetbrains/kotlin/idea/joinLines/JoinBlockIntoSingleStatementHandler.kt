@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.joinLines
 
@@ -7,9 +7,9 @@ import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JO
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
 import org.jetbrains.kotlin.idea.intentions.MergeIfsIntention
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset

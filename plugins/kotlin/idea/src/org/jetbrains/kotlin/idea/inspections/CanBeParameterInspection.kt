@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -18,23 +17,25 @@ import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES
 import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.search.usagesSearch.getAccessorNames
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 internal val CONSTRUCTOR_VAL_VAR_MODIFIERS = listOf(
     OPEN_KEYWORD, FINAL_KEYWORD, OVERRIDE_KEYWORD,
     PUBLIC_KEYWORD, INTERNAL_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD,
     LATEINIT_KEYWORD
 )
+
 
 class CanBeParameterInspection : AbstractKotlinInspection() {
     private fun PsiReference.usedAsPropertyIn(klass: KtClass): Boolean {
@@ -102,7 +103,6 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
             holder.registerProblem(
                 valOrVar,
                 KotlinBundle.message("constructor.parameter.is.never.used.as.a.property"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 RemoveValVarFix(parameter)
             )
         })

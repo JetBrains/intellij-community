@@ -1,4 +1,4 @@
-// "Create inner class 'ClassB'" "true"
+// "Create inner class 'ClassB'" "true-preview"
 public class ClassA
 {
     public void mA(Object arg)

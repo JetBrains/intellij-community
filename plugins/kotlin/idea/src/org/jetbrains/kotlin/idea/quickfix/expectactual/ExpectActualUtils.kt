@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.expectactual
 
@@ -10,30 +10,27 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.findOrCreateDirectoryForPackage
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
-import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EMPTY_OR_TEMPLATE
-import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.NO_BODY
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EmptyOrTemplate
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.NoBody
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.Companion.create
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeNotActual
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.inspections.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.hasInlineModifier
-import org.jetbrains.kotlin.idea.util.isEffectivelyActual
-import org.jetbrains.kotlin.idea.util.mustHaveValOrVar
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -68,7 +65,7 @@ fun createFileForDeclaration(module: Module, declaration: KtNamedDeclaration): K
             if (existingFile.declarations.isNotEmpty() &&
                 existingPackageDirective?.fqName != packageDirective?.fqName
             ) {
-                val newName = KotlinNameSuggester.suggestNameByName(fileName) {
+                val newName = Fe10KotlinNameSuggester.suggestNameByName(fileName) {
                     directory.findFile("$it.kt") == null
                 } + ".kt"
                 createKotlinFile(newName, directory, packageName)
@@ -171,7 +168,7 @@ internal fun KtPsiFactory.generateClassOrObject(
         }
         generatedClass.addDeclaration(generatedDeclaration)
     }
-    if (!originalClass.isAnnotation() && !originalClass.hasInlineModifier()) {
+    if (!originalClass.isAnnotation() && originalClass.safeAs<KtClass>()?.isInlineOrValue() == false) {
         for (originalProperty in originalClass.primaryConstructorParameters) {
             if (!originalProperty.hasValOrVar() || !originalProperty.hasActualModifier()) continue
             val descriptor = originalProperty.toDescriptor() as? PropertyDescriptor ?: continue
@@ -274,7 +271,7 @@ internal fun generateCallable(
     descriptor.checkAccessibility(checker)
     val memberChooserObject = create(
         originalDeclaration, descriptor, descriptor,
-        if (generateExpect || descriptor.modality == Modality.ABSTRACT) NO_BODY else EMPTY_OR_TEMPLATE
+        if (generateExpect || descriptor.modality == Modality.ABSTRACT) NoBody else EmptyOrTemplate
     )
     return memberChooserObject.generateMember(
         targetClass = generatedClass,

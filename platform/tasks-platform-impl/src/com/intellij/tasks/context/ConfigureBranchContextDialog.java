@@ -1,7 +1,8 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -12,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ConfigureBranchContextDialog extends DialogWrapper {
-
   private final Project myProject;
   private JPanel myPanel;
   private JBCheckBox myReloadContext;
@@ -28,7 +28,7 @@ public class ConfigureBranchContextDialog extends DialogWrapper {
 
     myShowNotification.setEnabled(myReloadContext.isSelected());
     myShowNotification.setSelected(
-      NotificationsConfigurationImpl.getSettings(BranchContextTracker.NOTIFICATION.getDisplayId()).getDisplayType() !=
+      NotificationsConfiguration.getNotificationsConfiguration().getDisplayType(BranchContextTracker.NOTIFICATION.getDisplayId()) !=
       NotificationDisplayType.NONE);
 
     init();
@@ -45,8 +45,7 @@ public class ConfigureBranchContextDialog extends DialogWrapper {
     VcsConfiguration.getInstance(myProject).RELOAD_CONTEXT = myReloadContext.isSelected();
 
     NotificationDisplayType displayType = myShowNotification.isSelected() ? NotificationDisplayType.BALLOON : NotificationDisplayType.NONE;
-    NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
-    configuration.changeSettings(BranchContextTracker.NOTIFICATION.getDisplayId(), displayType, true, false);
+    NotificationsConfiguration.getNotificationsConfiguration().changeSettings(BranchContextTracker.NOTIFICATION.getDisplayId(), displayType, true, false);
 
     super.doOKAction();
   }

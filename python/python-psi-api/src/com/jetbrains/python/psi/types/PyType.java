@@ -37,8 +37,6 @@ public interface PyType {
    *
    * @param name      attribute name
    * @param location  the expression of type qualifierType on which the member is being resolved (optional)
-   * @param direction
-   * @param resolveContext
    * @return null if name definitely cannot be found (e.g. in a qualified reference),
    *         or an empty list if name is not found but other contexts are worth looking at,
    *         or a list of elements that define the name, a la multiResolve().

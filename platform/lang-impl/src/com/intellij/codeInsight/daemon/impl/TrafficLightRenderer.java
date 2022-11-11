@@ -15,10 +15,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -55,7 +52,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.analysis.problemsView.toolWindow.ProblemsView.toggleCurrentFileProblems;
 
@@ -160,19 +156,20 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     @Override
     public String toString() {
-      String s = "DS: finished=" + errorAnalyzingFinished
-      +"; pass statuses: "+passes.size()+"; ";
+      StringBuilder s = new StringBuilder("DS: finished=" + errorAnalyzingFinished
+                                          + "; pass statuses: " + passes.size() + "; ");
       for (ProgressableTextEditorHighlightingPass passStatus : passes) {
-        s += String.format("(%s %2.0f%% %b)", passStatus.getPresentableName(), passStatus.getProgress() * 100, passStatus.isFinished());
+        s.append(
+          String.format("(%s %2.0f%% %b)", passStatus.getPresentableName(), passStatus.getProgress() * 100, passStatus.isFinished()));
       }
-      s += "; error counts: " + errorCounts.length + ": " + new IntArrayList(errorCounts);
+      s.append("; error counts: ").append(errorCounts.length).append(": ").append(new IntArrayList(errorCounts));
       if (reasonWhyDisabled != null) {
-        s += "; reasonWhyDisabled="+reasonWhyDisabled;
+        s.append("; reasonWhyDisabled=").append(reasonWhyDisabled);
       }
       if (reasonWhySuspended != null) {
-        s += "; reasonWhySuspended"+reasonWhySuspended;
+        s.append("; reasonWhySuspended").append(reasonWhySuspended);
       }
-      return s;
+      return s.toString();
     }
   }
 
@@ -388,7 +385,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       }
     }
 
-    private @NotNull List<@NotNull LanguageHighlightLevel> initLevels(@NotNull PsiFile psiFile) {
+    private static @NotNull List<@NotNull LanguageHighlightLevel> initLevels(@NotNull PsiFile psiFile) {
       List<LanguageHighlightLevel> result = new ArrayList<>();
       if (!psiFile.getProject().isDisposed()) {
         FileViewProvider viewProvider = psiFile.getViewProvider();
@@ -440,8 +437,14 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     public void fillHectorPanels(@NotNull Container container, @NotNull GridBag gc) {
       PsiFile psiFile = getPsiFile();
       if (psiFile != null) {
-        myAdditionalPanels = HectorComponentPanelsProvider.EP_NAME.extensions(getProject()).
-          map(hp -> hp.createConfigurable(psiFile)).filter(p -> p != null).collect(Collectors.toList());
+        List<HectorComponentPanel> list = new ArrayList<>();
+        for (HectorComponentPanelsProvider hp : HectorComponentPanelsProvider.EP_NAME.getExtensionList(getProject())) {
+          HectorComponentPanel configurable = hp.createConfigurable(psiFile);
+          if (configurable != null) {
+            list.add(configurable);
+          }
+        }
+        myAdditionalPanels = list;
 
         for (HectorComponentPanel p : myAdditionalPanels) {
           JComponent c;
@@ -538,6 +541,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         PsiFile psiFile = getPsiFile();
         return psiFile != null && myDaemonCodeAnalyzer.isImportHintsEnabled(psiFile);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {

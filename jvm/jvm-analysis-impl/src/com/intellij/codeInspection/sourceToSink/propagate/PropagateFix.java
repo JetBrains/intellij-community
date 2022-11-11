@@ -3,6 +3,7 @@ package com.intellij.codeInspection.sourceToSink.propagate;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.sourceToSink.MarkAsSafeFix;
 import com.intellij.codeInspection.sourceToSink.TaintAnalyzer;
@@ -82,6 +83,13 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
     toolWindow.activate(null);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(
+      JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.preview")
+    );
   }
 
   @Override

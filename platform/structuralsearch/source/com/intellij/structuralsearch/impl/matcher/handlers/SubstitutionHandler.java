@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
@@ -17,8 +17,8 @@ import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +83,10 @@ public class SubstitutionHandler extends MatchingHandler {
     this.subtype = subtype;
   }
 
+  public void setRepeatedVar(boolean repeatedVar) {
+    myRepeatedVar = repeatedVar;
+  }
+
   public void setPredicate(@NotNull MatchPredicate handler) {
     predicate = handler;
   }
@@ -91,27 +95,31 @@ public class SubstitutionHandler extends MatchingHandler {
     return predicate;
   }
 
+  /**
+   * @deprecated Use {@link SubstitutionHandler#findPredicate instead}
+   */
   @Nullable
+  @Deprecated(forRemoval = true)
   public RegExpPredicate findRegExpPredicate() {
-    return findRegExpPredicate(getPredicate());
+    return findPredicate(getPredicate(), RegExpPredicate.class);
   }
 
-  public void setRepeatedVar(boolean repeatedVar) {
-    myRepeatedVar = repeatedVar;
+  public @Nullable <T extends MatchPredicate> T findPredicate(@NotNull Class<T> aClass) {
+    return findPredicate(getPredicate(), aClass);
   }
 
-  private static RegExpPredicate findRegExpPredicate(MatchPredicate start) {
-    if (start==null) return null;
-    if (start instanceof RegExpPredicate) return (RegExpPredicate)start;
-
-    if(start instanceof AndPredicate) {
-      final AndPredicate binary = (AndPredicate)start;
-      final RegExpPredicate result = findRegExpPredicate(binary.getFirst());
-      if (result!=null) return result;
-
-      return findRegExpPredicate(binary.getSecond());
+  @Contract("null, _ -> null")
+  private static @Nullable <T extends MatchPredicate> T findPredicate(@Nullable MatchPredicate start, @NotNull Class<T> aClass) {
+    if (start == null) return null;
+    if (aClass.isInstance(start)) return aClass.cast(start);
+    if (start instanceof AndPredicate) {
+      final AndPredicate binaryPredicate = (AndPredicate)start;
+      final T firstBranchCheck = findPredicate(binaryPredicate.getFirst(), aClass);
+      if (firstBranchCheck != null) return firstBranchCheck;
+      return findPredicate(binaryPredicate.getSecond(), aClass);
     } else if (start instanceof NotPredicate) {
-      return null;
+      final NotPredicate notPredicate = (NotPredicate)start;
+      return findPredicate(notPredicate.getPredicate(), aClass);
     }
     return null;
   }
@@ -208,7 +216,7 @@ public class SubstitutionHandler extends MatchingHandler {
             target
           );
 
-          substitution.setMatchRef(new SmartPsiPointer(match));
+          substitution.setMatch(match);
           substitution.setMultipleMatch(true);
 
           if (substitution.isScopeMatch()) {
@@ -250,26 +258,18 @@ public class SubstitutionHandler extends MatchingHandler {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(match);
     assert profile != null;
     final String image = profile.getText(match, start, end);
-    final SmartPsiPointer ref = new SmartPsiPointer(match);
 
-    final MatchResultImpl result = myNestedResult == null ? new MatchResultImpl(
-      name,
-      image,
-      ref,
-      start,
-      end,
-      target
-    ) : myNestedResult;
-
-    if (myNestedResult != null) {
-      myNestedResult.setName(name);
-      myNestedResult.setMatchImage(image);
-      myNestedResult.setMatchRef(ref);
-      myNestedResult.setStart(start);
-      myNestedResult.setEnd(end);
-      myNestedResult.setTarget(target);
-      myNestedResult = null;
+    if (myNestedResult == null) {
+      return new MatchResultImpl(name, image, match, start, end, target);
     }
+    final MatchResultImpl result = myNestedResult;
+    result.setName(name);
+    result.setMatchImage(image);
+    result.setMatch(match);
+    result.setStart(start);
+    result.setEnd(end);
+    result.setTarget(target);
+    myNestedResult = null;
 
     return result;
   }

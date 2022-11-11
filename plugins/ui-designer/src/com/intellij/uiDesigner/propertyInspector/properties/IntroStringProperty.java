@@ -24,10 +24,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntroStringProperty extends IntrospectedProperty<StringDescriptor> {
   private static final Logger LOG = Logger.getInstance(IntroStringProperty.class);
 

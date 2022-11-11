@@ -1,4 +1,4 @@
-// "Replace with forEach" "true"
+// "Replace with forEach" "true-preview"
 
 import java.util.stream.IntStream;
 

@@ -111,6 +111,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class GoBackwardAction extends AnAction {
@@ -130,6 +135,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex > 0);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -151,6 +161,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
         enabled = !((XValueNodeImpl)component).isLeaf();
       }
       e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

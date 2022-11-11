@@ -41,7 +41,7 @@
     <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
 
     <applicationService serviceInterface="com.intellij.history.LocalHistory"
-                        serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
+                        serviceImplementation="com.intellij.history.integration.LocalHistoryImpl"/>
 
     <virtualFileManagerListener implementation="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryFileManagerListener"/>
     <advancedSetting id="localHistory.daysToKeep" default="5" groupKey="group.advanced.settings.ide"/>

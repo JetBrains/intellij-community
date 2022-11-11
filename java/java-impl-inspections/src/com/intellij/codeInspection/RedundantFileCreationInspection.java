@@ -24,7 +24,7 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
     return new JavaElementVisitor() {
 
       @Override
-      public void visitNewExpression(PsiNewExpression newExpression) {
+      public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
         super.visitNewExpression(newExpression);
 
         final List<String> targetTypes = Arrays.asList(

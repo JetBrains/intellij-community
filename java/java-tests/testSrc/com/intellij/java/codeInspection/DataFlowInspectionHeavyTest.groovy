@@ -16,6 +16,7 @@
 package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection
 import com.intellij.codeInspection.dataFlow.DataFlowInspection
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootManager
@@ -69,7 +70,7 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
       }
       '''
     myFixture.configureFromExistingVirtualFile(testFile.virtualFile)
-    myFixture.enableInspections(new DataFlowInspection())
+    myFixture.enableInspections(new ConstantValueInspection())
     myFixture.checkHighlighting()
   }
 

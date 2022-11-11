@@ -372,8 +372,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * Patches command line before virtualenv patchers.
    * Default implementation does nothing.
    *
-   * @param commandLine
-   * @param sdkHome
    */
   protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -383,8 +381,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * Patches command line after virtualenv patchers.
    * Default implementation does nothing.
    *
-   * @param commandLine
-   * @param sdkHome
    */
   protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -393,8 +389,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   /**
    * Alters PATH so that a virtualenv is activated, if present.
    *
-   * @param commandLine
-   * @param sdk
    */
   protected void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
     PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk);

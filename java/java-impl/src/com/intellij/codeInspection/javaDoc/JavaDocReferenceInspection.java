@@ -4,6 +4,7 @@ package com.intellij.codeInspection.javaDoc;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -69,29 +70,29 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitJavaFile(@NotNull PsiJavaFile file) {
         if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
           checkComment(PsiTreeUtil.getChildOfType(file, PsiDocComment.class), file, holder, isOnTheFly);
         }
       }
 
       @Override
-      public void visitModule(PsiJavaModule module) {
+      public void visitModule(@NotNull PsiJavaModule module) {
         checkComment(module.getDocComment(), module, holder, isOnTheFly);
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         checkComment(aClass.getDocComment(), aClass, holder, isOnTheFly);
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         checkComment(field.getDocComment(), field, holder, isOnTheFly);
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         checkComment(method.getDocComment(), method, holder, isOnTheFly);
       }
     };
@@ -103,12 +104,12 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     JavadocManager javadocManager = JavadocManager.getInstance(holder.getProject());
     comment.accept(new JavaElementVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         visitRefElement(reference, context, isOnTheFly, holder);
       }
 
       @Override
-      public void visitDocTag(PsiDocTag tag) {
+      public void visitDocTag(@NotNull PsiDocTag tag) {
         super.visitDocTag(tag);
         visitRefInDocTag(tag, javadocManager, context, holder, isOnTheFly);
       }
@@ -296,6 +297,19 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
           LookupManager.getInstance(project).showLookup(editor, items.toArray(LookupElement.EMPTY_ARRAY));
         }
       });
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      String firstUnbound = myUnboundParams.stream().findFirst().orElse(null);
+      if (firstUnbound == null) return IntentionPreviewInfo.EMPTY;
+      PsiElement reference = previewDescriptor.getPsiElement();
+      PsiElement firstUnboundReference = PsiElementFactory.getInstance(project)
+        .createDocTagFromText("@param " + firstUnbound)
+        .getValueElement();
+      if (firstUnboundReference == null) return IntentionPreviewInfo.EMPTY;
+      reference.replace(firstUnboundReference);
+      return IntentionPreviewInfo.DIFF;
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester
 
 import com.intellij.openapi.Disposable
@@ -27,12 +27,19 @@ abstract class FeatureSuggesterTest : BasePlatformTestCase() {
   }
 
   override fun tearDown() {
-    Disposer.dispose(disposable)
-    super.tearDown()
+    try {
+      Disposer.dispose(disposable)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun assertSuggestedCorrectly() {
-    TestCase.assertTrue(expectedSuggestion is PopupSuggestion)
+    TestCase.assertTrue(expectedSuggestion.javaClass.name, expectedSuggestion is PopupSuggestion)
     TestCase.assertEquals(testingSuggesterId, (expectedSuggestion as PopupSuggestion).suggesterId)
   }
 }

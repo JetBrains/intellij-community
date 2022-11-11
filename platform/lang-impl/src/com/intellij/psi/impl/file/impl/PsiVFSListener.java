@@ -4,6 +4,7 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.application.Topics;
+import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -21,10 +22,11 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
-import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.startup.InitProjectActivityJavaShim;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,7 +70,7 @@ public final class PsiVFSListener implements BulkFileListener {
     myFileManager = (FileManagerImpl)myManager.getFileManager();
   }
 
-  static final class MyStartUpActivity implements StartupActivity {
+  static final class MyStartUpActivity extends InitProjectActivityJavaShim {
     @Override
     public void runActivity(@NotNull Project project) {
       MessageBusConnection connection = project.getMessageBus().connect();
@@ -505,12 +507,22 @@ public final class PsiVFSListener implements BulkFileListener {
 
       final VirtualFile vFile = event.getFile();
 
-      final PsiDirectory oldParentDir = myFileManager.findDirectory(event.getOldParent());
-      final PsiDirectory newParentDir = myFileManager.findDirectory(event.getNewParent());
+      PsiDirectory oldParentDir = myFileManager.findDirectory(event.getOldParent());
+      PsiDirectory newParentDir = myFileManager.findDirectory(event.getNewParent());
 
-      final PsiElement oldElement = vFile.isDirectory()
-                                    ? myFileManager.getCachedDirectory(vFile)
-                                    : myFileManager.getCachedPsiFileInner(vFile);
+      PsiElement oldElement = vFile.isDirectory()
+                              ? myFileManager.getCachedDirectory(vFile)
+                              : myFileManager.getCachedPsiFileInner(vFile);
+      Project oldProject = ProjectLocator.getInstance().guessProjectForFile(vFile);
+      if (oldProject != null && oldProject != myProject) {
+        // file moved between projects, remove all associations to the old project
+        myFileManager.removeFilesAndDirsRecursively(vFile);
+        // avoid crash in filePointer.getElement()
+        PsiCopyPasteManager.getInstance().fileMovedOutsideProject(vFile);
+        oldElement = null;
+        oldParentDir = null;
+        newParentDir = null;
+      }
       oldElements.add(oldElement);
       oldParentDirs.add(oldParentDir);
       newParentDirs.add(newParentDir);

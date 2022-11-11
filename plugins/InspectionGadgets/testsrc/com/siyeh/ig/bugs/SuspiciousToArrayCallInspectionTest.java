@@ -136,6 +136,29 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
            "class Bar extends Foo {}");
   }
 
+  public void testTypeParameter() {
+    doTest("import java.util.stream.*;\n" +
+           "import java.util.function.*;\n" +
+           "abstract class AbstractStreamWrapper<T extends Cloneable> implements Stream<T> {\n" +
+           "    private final Stream<T> delegate;\n" +
+           "\n" +
+           "    AbstractStreamWrapper(Stream<T> delegate) {\n" +
+           "        this.delegate = delegate;\n" +
+           "    }\n" +
+           "\n" +
+           "    @Override\n" +
+           "    public <A> A[] toArray(IntFunction<A[]> generator) {\n" +
+           "        return delegate.toArray(generator);\n" +
+           "    }\n" +
+           "    public <A extends CharSequence> A[] toArray2(IntFunction<A[]> generator) {\n" +
+           "        return delegate.toArray(/*Array of type 'java.lang.Cloneable[]' expected, 'A[]' found*/generator/**/);\n" +
+           "    }\n" +
+           "    public <A extends Cloneable> A[] toArray3(IntFunction<A[]> generator) {\n" +
+           "        return delegate.toArray(generator);\n" +
+           "    }\n" +
+           "}");
+  }
+
   public void testStreamFilter() {
     doTest("import java.util.Arrays;\n" +
            "class Parent {}\n" +

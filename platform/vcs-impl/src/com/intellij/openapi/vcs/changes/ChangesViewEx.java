@@ -2,15 +2,17 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
-import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nullable;
 
 public interface ChangesViewEx extends ChangesViewI {
   void refreshImmediately();
 
-  @Nullable
-  @CalledInAny
-  ChangesViewCommitWorkflowHandler getCommitWorkflowHandler();
-
   boolean isAllowExcludeFromCommit();
+
+  /**
+   * @deprecated Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.
+   */
+  @Deprecated
+  @Nullable
+  ChangesViewCommitWorkflowHandler getCommitWorkflowHandler();
 }

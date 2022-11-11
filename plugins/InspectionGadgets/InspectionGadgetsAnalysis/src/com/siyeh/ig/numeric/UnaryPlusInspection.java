@@ -102,7 +102,7 @@ public final class UnaryPlusInspection extends BaseInspection {
   private class UnaryPlusVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression prefixExpression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression prefixExpression) {
       super.visitPrefixExpression(prefixExpression);
       if (!ConvertDoubleUnaryToPrefixOperationFix.isDesiredPrefixExpression(prefixExpression, true)) {
         return;

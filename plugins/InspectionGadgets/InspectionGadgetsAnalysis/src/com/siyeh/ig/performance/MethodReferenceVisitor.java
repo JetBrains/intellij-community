@@ -44,7 +44,7 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
     final PsiClass aClass = ObjectUtils.tryCast(reference.resolve(), PsiClass.class);
     if (aClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC) && aClass.getScope() instanceof PsiClass) {

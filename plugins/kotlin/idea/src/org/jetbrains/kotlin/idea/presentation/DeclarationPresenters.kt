@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.presentation
 
@@ -9,8 +9,9 @@ import com.intellij.navigation.ItemPresentationProvider
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.KotlinIconProviderBase
+import com.intellij.ui.ExperimentalUI
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -31,7 +32,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
         if ((declaration is KtFunction && declaration.isLocal) || (declaration is KtClassOrObject && declaration.isLocal)) {
             val containingDeclaration = declaration.getStrictParentOfType<KtNamedDeclaration>() ?: return null
             val containerName = containingDeclaration.fqName ?: containingDeclaration.name
-            return KotlinBundle.message("presentation.text.in.container.paren", containerName.toString())
+            return getPresentationInContainer(containerName.toString())
         }
 
         val name = declaration.fqName
@@ -50,10 +51,10 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
         val receiverTypeRef = (declaration as? KtCallableDeclaration)?.receiverTypeReference
         return when {
             receiverTypeRef != null -> {
-                KotlinBundle.message("presentation.text.for.receiver.in.container.paren", receiverTypeRef.text, containerText)
+                getPresentationTextForReceiver(receiverTypeRef.text, containerText)
             }
-            parent is KtFile -> KotlinBundle.message("presentation.text.paren", containerText)
-            else -> KotlinBundle.message("presentation.text.in.container.paren", containerText)
+            parent is KtFile -> getPresentationText(containerText)
+            else -> getPresentationInContainer(containerText)
         }
     }
 
@@ -65,7 +66,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
     }
 
     override fun getIcon(unused: Boolean): Icon? {
-        val instance = IconProvider.EXTENSION_POINT_NAME.findFirstSafe { it is KotlinIconProviderBase }
+        val instance = IconProvider.EXTENSION_POINT_NAME.findFirstSafe { it is KotlinIconProvider }
         return instance?.getIcon(declaration, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
     }
 }
@@ -93,7 +94,7 @@ open class KotlinFunctionPresentation(
     override fun getLocationString(): String? {
         if (function is KtConstructor<*>) {
             val name = function.getContainingClassOrObject().fqName ?: return null
-            return KotlinBundle.message("presentation.text.in.container.paren", name)
+            return getPresentationInContainer(name)
         }
 
         return super.getLocationString()
@@ -107,3 +108,28 @@ class KtFunctionPresenter : ItemPresentationProvider<KtFunction> {
         return KotlinFunctionPresentation(function)
     }
 }
+
+private fun getPresentationInContainer(param: Any): String {
+    if (ExperimentalUI.isNewUI()) {
+        return KotlinBundle.message("presentation.text.in.container.paren.no.brackets", param)
+    } else {
+        return KotlinBundle.message("presentation.text.in.container.paren", param)
+    }
+}
+
+private fun getPresentationText(param: Any): String {
+    if (ExperimentalUI.isNewUI()) {
+        return KotlinBundle.message("presentation.text.paren.no.brackets", param)
+    } else {
+        return KotlinBundle.message("presentation.text.paren", param)
+    }
+}
+
+private fun getPresentationTextForReceiver(vararg params: Any): String {
+    if (ExperimentalUI.isNewUI()) {
+        return KotlinBundle.message("presentation.text.for.receiver.in.container.paren.no.brackets", *params)
+    } else {
+        return KotlinBundle.message("presentation.text.for.receiver.in.container.paren", *params)
+    }
+}
+

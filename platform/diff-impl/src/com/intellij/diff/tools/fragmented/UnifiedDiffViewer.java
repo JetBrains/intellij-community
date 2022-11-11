@@ -492,8 +492,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   }
 
   private static IntUnaryOperator mergeLineConverters(@Nullable IntUnaryOperator contentConvertor,
-                                                  @NotNull IntUnaryOperator unifiedConvertor,
-                                                  @NotNull IntUnaryOperator foldingConvertor) {
+                                                      @NotNull IntUnaryOperator unifiedConvertor,
+                                                      @NotNull IntUnaryOperator foldingConvertor) {
     return DiffUtil.mergeLineConverters(DiffUtil.mergeLineConverters(contentConvertor, unifiedConvertor), foldingConvertor);
   }
 
@@ -685,6 +685,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
         // consume shortcut even if there are nothing to do - avoid calling some other action
@@ -858,23 +863,23 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
   }
 
   @NotNull
-  protected List<? extends DocumentContent> getContents() {
-    //noinspection unchecked
+  public List<? extends DocumentContent> getContents() {
+    //noinspection unchecked,rawtypes
     return (List)myRequest.getContents();
   }
 
   @NotNull
-  protected DocumentContent getContent(@NotNull Side side) {
+  public DocumentContent getContent(@NotNull Side side) {
     return side.select(getContents());
   }
 
   @NotNull
-  protected DocumentContent getContent1() {
+  public DocumentContent getContent1() {
     return getContent(Side.LEFT);
   }
 
   @NotNull
-  protected DocumentContent getContent2() {
+  public DocumentContent getContent2() {
     return getContent(Side.RIGHT);
   }
 
@@ -924,7 +929,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     return getContent(side).getDocument();
   }
 
-  protected boolean isStateIsOutOfDate() {
+  public boolean isStateIsOutOfDate() {
     return myStateIsOutOfDate;
   }
 

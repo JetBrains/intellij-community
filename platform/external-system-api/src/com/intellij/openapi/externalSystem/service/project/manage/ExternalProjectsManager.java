@@ -31,7 +31,6 @@ public interface ExternalProjectsManager {
    * during which query to {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#getExternalProjectInfo(Project, ProjectSystemId, String) ExternalSystemUtil#getExternalProjectInfo}
    * will return null. Use this method to postpone such queries.
    *
-   * @param runnable
    */
   void runWhenInitialized(Runnable runnable);
 

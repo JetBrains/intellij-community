@@ -1,5 +1,7 @@
+import org.jetbrains.annotations.Range;
+
 interface Date {
 
-  <spot>@Range(from = 1, to = 12)</spot>
+  @Range(from = 1, to = 12)
   int getMonth();
 }

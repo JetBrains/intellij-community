@@ -107,15 +107,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
       return true;
     }
 
-    SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-    if (mlService != null) {
-      double mlWeight = mlService.getMlWeight(this, element, degree);
-
-      if (mlWeight >= 0.0 && mlService.shouldOrderByMl()) {
-        return consumer.process(new FoundItemDescriptor<>(element, degree, mlWeight));
-      }
-    }
-
     return consumer.process(new FoundItemDescriptor<>(element, degree));
   }
 

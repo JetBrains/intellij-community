@@ -345,13 +345,17 @@ public class FilePathCompletionContributor extends CompletionContributor {
         if (fileReferencePair != null) {
           FileReference ref = fileReferencePair.getFirst();
           context.setTailOffset(ref.getRangeInElement().getEndOffset() + ref.getElement().getTextRange().getStartOffset());
-          ref.bindToElement(myFile);
+          if (ref instanceof FileReferenceWithExtendedCompletion) {
+            ((FileReferenceWithExtendedCompletion)ref).bindToExtendedElement(myFile);
+          } else {
+            ref.bindToElement(myFile);
+          }
         }
       }
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       final String relativePath = getRelativePath();
 
       final StringBuilder sb = new StringBuilder();

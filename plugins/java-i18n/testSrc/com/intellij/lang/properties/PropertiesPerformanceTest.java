@@ -57,7 +57,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
     assertNotNull(aClass);
     PlatformTestUtil.startPerformanceTest(getTestName(false), 4000, () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         PsiReference[] references = expression.getReferences();
         for (PsiReference reference : references) {
           reference.resolve();
@@ -96,7 +96,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
 
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         expression.getNode();
       }
     });

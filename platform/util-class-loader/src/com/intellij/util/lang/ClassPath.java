@@ -85,6 +85,7 @@ public final class ClassPath {
     Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException;
   }
 
+  @SuppressWarnings("unused")
   public @Nullable Function<Path, ResourceFile> getResourceFileFactory() {
     return resourceFileFactory;
   }
@@ -107,10 +108,6 @@ public final class ClassPath {
         this.files.add(files.get(i));
       }
     }
-  }
-
-  public interface ResourceFileFactory {
-    ResourceFile create(Path file) throws IOException;
   }
 
   public synchronized void reset(@NotNull List<Path> paths) {

@@ -1,4 +1,4 @@
-// "Make 'getNumber' return 'java.lang.String'" "false"
+// "Make 'getNumber()' return 'java.lang.String'" "false"
 public class Test {
   int number;
 

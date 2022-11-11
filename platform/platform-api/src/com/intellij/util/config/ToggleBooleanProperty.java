@@ -16,6 +16,7 @@
 
 package com.intellij.util.config;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.NlsActions;
@@ -36,6 +37,11 @@ public class ToggleBooleanProperty extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return myProperty.get(myProperties).booleanValue();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

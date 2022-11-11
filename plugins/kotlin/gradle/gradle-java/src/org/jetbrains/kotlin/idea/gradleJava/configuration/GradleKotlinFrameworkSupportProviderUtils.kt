@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
@@ -47,7 +47,6 @@ internal fun addBrowserSupport(module: Module) {
         )
     }
 
-
     getNewFileWriter(module, "src/main/kotlin", "main.kt")?.use {
         it.write(
             """
@@ -61,20 +60,27 @@ internal fun addBrowserSupport(module: Module) {
     }
 }
 
-internal fun browserConfiguration(): String {
+internal fun browserConfiguration(kotlinDsl: Boolean): String {
+    val receiver = if (kotlinDsl) "" else "it."
     return """
         webpackTask {
-            cssSupport.enabled = true
+            cssSupport {
+                ${receiver}enabled.set(true)
+            }
         }
         
         runTask {
-            cssSupport.enabled = true
+            cssSupport {
+                ${receiver}enabled.set(true)
+            }
         }
         
         testTask {
             useKarma {
                 useChromeHeadless()
-                webpackConfig.cssSupport.enabled = true
+                webpackConfig.cssSupport {
+                    ${receiver}enabled.set(true)
+                }
             }
         }
     """.trimIndent()

@@ -16,7 +16,6 @@ import com.intellij.util.application
 import com.intellij.util.fragmentParameters
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Experimental
@@ -62,13 +61,12 @@ object CodeWithMeGuestLauncher {
             }
           }
 
-          val pair = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
-          if (pair == null) return
+          val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
+          if (extractedJetBrainsClientData == null) return
 
           clientLifetime = runDownloadedClient(
             lifetime = project?.createLifetime() ?: Lifetime.Eternal,
-            pathToClient = pair.first,
-            pathToJre = pair.second,
+            extractedJetBrainsClientData = extractedJetBrainsClientData,
             urlForThinClient = url,
             product = product,
             progressIndicator = progressIndicator
@@ -92,13 +90,13 @@ object CodeWithMeGuestLauncher {
     })
   }
 
-  fun runDownloadedClient(lifetime: Lifetime, pathToClient: Path, pathToJre: Path, urlForThinClient: String,
+  fun runDownloadedClient(lifetime: Lifetime, extractedJetBrainsClientData: ExtractedJetBrainsClientData, urlForThinClient: String,
                           @NlsContexts.DialogTitle product: String, progressIndicator: ProgressIndicator?): Lifetime {
     // todo: offer to connect as-is?
     try {
       progressIndicator?.text = RemoteDevUtilBundle.message("launcher.launch.client")
-      progressIndicator?.text2 = pathToClient.toString()
-      val thinClientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(lifetime, urlForThinClient, pathToClient, pathToJre)
+      progressIndicator?.text2 = extractedJetBrainsClientData.clientDir.toString()
+      val thinClientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(lifetime, urlForThinClient, extractedJetBrainsClientData)
 
       // Wait a bit until process will be launched and only after that finish task
       Thread.sleep(3000)

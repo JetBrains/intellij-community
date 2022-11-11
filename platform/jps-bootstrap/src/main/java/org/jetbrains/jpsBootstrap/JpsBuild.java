@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jpsBootstrap;
 
 import com.intellij.openapi.application.PathManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import jetbrains.buildServer.messages.serviceMessages.PublishArtifacts;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.build.Standalone;
@@ -17,29 +18,29 @@ import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 
-public class JpsBuild {
+public final class JpsBuild {
   public static final String CLASSES_FROM_JPS_BUILD_ENV_NAME = "JPS_BOOTSTRAP_CLASSES_FROM_JPS_BUILD";
 
   private final JpsModel myModel;
   private final Set<String> myModuleNames;
-  private final File myDataStorageRoot;
+  private final Path myDataStorageRoot;
   private final Path myJpsLogDir;
 
   public JpsBuild(BuildDependenciesCommunityRoot communityRoot, JpsModel model, Path jpsBootstrapWorkDir, Path kotlincHome) throws Exception {
     myModel = model;
     myModuleNames = myModel.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
-    myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data").toFile();
+    myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data");
 
     System.setProperty("aether.connector.resumeDownloads", "false");
     System.setProperty("jps.kotlin.home", kotlincHome.toString());
@@ -71,11 +72,20 @@ public class JpsBuild {
   }
 
   public void buildModules(Set<JpsModule> modules) throws Exception {
-    runBuild(modules.stream().map(JpsNamedElement::getName).collect(Collectors.toSet()));
+    runBuild(modules.stream().map(JpsNamedElement::getName).collect(Collectors.toSet()), false);
   }
 
+  /**
+   * @see com.intellij.space.java.jps.SpaceDependencyAuthenticationDataProvider
+   */
   public void resolveProjectDependencies() throws Exception {
     info("Resolving project dependencies...");
+    var spaceUsername = System.getProperty("jps.auth.spaceUsername");
+    var spacePassword = System.getProperty("jps.auth.spacePassword");
+    if (spaceUsername == null || spaceUsername.isBlank() || spacePassword == null || spacePassword.isBlank()) {
+      warn("Space credentials are not provided via -Djps.auth.spaceUsername and -Djps.auth.spacePassword. " +
+        "Private Space Maven dependencies, if not available locally, will fail to be resolved.");
+    }
 
     final long buildStart = System.currentTimeMillis();
 
@@ -93,7 +103,7 @@ public class JpsBuild {
 
     Standalone.runBuild(
       () -> myModel,
-      myDataStorageRoot,
+      myDataStorageRoot.toFile(),
       messageHandler,
       scopes,
       false
@@ -104,7 +114,7 @@ public class JpsBuild {
     messageHandler.assertNoErrors();
   }
 
-  private void runBuild(Set<String> modules) throws Exception {
+  private void runBuild(Set<String> modules, boolean rebuild) throws Exception {
     final long buildStart = System.currentTimeMillis();
 
     JpsMessageHandler messageHandler = new JpsMessageHandler();
@@ -117,8 +127,8 @@ public class JpsBuild {
 
     Standalone.runBuild(
       () -> myModel,
-      myDataStorageRoot,
-      false,
+      myDataStorageRoot.toFile(),
+      rebuild,
       modules,
       false,
       Collections.emptyList(),
@@ -128,13 +138,21 @@ public class JpsBuild {
 
     System.out.println("Finished building '" + String.join(" ", modules) + "' in " + (System.currentTimeMillis() - buildStart) + " ms");
 
-    messageHandler.assertNoErrors();
+    List<String> errors = new ArrayList<>(messageHandler.myErrors);
+    if (!errors.isEmpty() && !rebuild) {
+      warn("Incremental build finished with errors. Forcing rebuild. Compilation errors:\n" + String.join("\n", errors));
+      BuildDependenciesUtil.cleanDirectory(myDataStorageRoot);
+      runBuild(modules, true);
+    }
+    else {
+      messageHandler.assertNoErrors();
+    }
   }
 
   private class JpsMessageHandler implements MessageHandler {
     private boolean myExplicitlyVerbose;
 
-    private final AtomicReference<String> myFirstError = new AtomicReference<>();
+    private final List<String> myErrors = new CopyOnWriteArrayList<>();
     private final AtomicReference<String> myLastMessage = new AtomicReference<>();
 
     public void setExplicitlyVerbose() {
@@ -168,8 +186,8 @@ public class JpsBuild {
           break;
         case ERROR:
         case INTERNAL_BUILDER_ERROR:
-          error(text);
-          myFirstError.compareAndSet(null, text);
+          // Do not log since we may call rebuild later and teamcity will fail on the first error
+          myErrors.add(text);
           break;
         default:
           if (!msg.getMessageText().isBlank()) {
@@ -185,10 +203,15 @@ public class JpsBuild {
     }
 
     public void assertNoErrors() {
-      String firstErrorText = myFirstError.get();
-      if (firstErrorText != null) {
+      List<String> errors = new ArrayList<>(myErrors);
+      if (!errors.isEmpty()) {
         System.out.println(new PublishArtifacts(myJpsLogDir + "=>jps-bootstrap-jps-logs.zip").asString());
-        throw new IllegalStateException("Build finished with errors. See TC artifacts for build log. First error:\n" + firstErrorText);
+
+        for (String error : errors) {
+          error(error);
+        }
+
+        throw new IllegalStateException("Build finished with errors. See TC artifacts for build log. First error:\n" + errors.get(0));
       }
     }
   }

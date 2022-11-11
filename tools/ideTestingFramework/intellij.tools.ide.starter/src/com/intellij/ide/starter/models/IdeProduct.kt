@@ -27,4 +27,7 @@ interface IdeProduct {
 
   /** PyCharm Professional */
   val PY: IdeInfo
+
+  /** CLion */
+  val CL: IdeInfo
 }
