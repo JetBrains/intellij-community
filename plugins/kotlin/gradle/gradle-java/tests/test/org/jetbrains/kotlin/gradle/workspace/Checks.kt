@@ -7,10 +7,12 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleI
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
-fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(project: Project, testDataDir: File) {
+fun MultiplePluginVersionGradleImportingTestCase.checkWorkspaceModel(
+    project: Project, testDataDir: File, testClassifier: String? = null
+) {
     val kotlinClassifier = with(kotlinPluginVersion) { "$major.$minor.$patch" }
     val gradleClassifier = gradleVersion
-    val matchingFiles = findMatchingFiles(testDataDir, kotlinClassifier, gradleClassifier)
+    val matchingFiles = findMatchingFiles(testDataDir, kotlinClassifier, gradleClassifier, testClassifier)
 
     check(matchingFiles.isNotEmpty()) {
         """No expected files found for workspace model checks (KGP ${kotlinClassifier}, Gradle: ${gradleClassifier}).
@@ -35,13 +37,14 @@ private fun findMostSpecificExistingFile(
     testDataDir: File,
     kotlinClassifier: String,
     gradleClassifier: String,
+    testClassifier: String?,
     mode: WorkspacePrintingMode,
 ): File? {
     val prioritisedClassifyingParts = sequenceOf(
-        listOf(kotlinClassifier, gradleClassifier),
-        listOf(kotlinClassifier),
-        listOf(gradleClassifier),
-        emptyList(),
+        listOfNotNull(kotlinClassifier, gradleClassifier, testClassifier),
+        listOfNotNull(kotlinClassifier, testClassifier),
+        listOfNotNull(gradleClassifier, testClassifier),
+        listOfNotNull(testClassifier),
     )
 
     return prioritisedClassifyingParts
@@ -53,8 +56,9 @@ private fun findMatchingFiles(
     testDataDir: File,
     kotlinClassifier: String,
     gradleClassifier: String,
+    testClassifier: String?
 ): List<Pair<File, WorkspacePrintingMode>> = WorkspacePrintingMode.values().mapNotNull { mode ->
-    findMostSpecificExistingFile(testDataDir, kotlinClassifier, gradleClassifier, mode)?.let { file ->
+    findMostSpecificExistingFile(testDataDir, kotlinClassifier, gradleClassifier, testClassifier, mode)?.let { file ->
         file to mode
     }
 }
