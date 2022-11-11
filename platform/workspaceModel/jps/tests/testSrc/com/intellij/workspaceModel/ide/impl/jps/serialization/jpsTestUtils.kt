@@ -119,13 +119,17 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
   UsefulTestCase.assertEmpty(expectedFiles.keys - actualFiles.keys)
 }
 
-internal fun createProjectSerializers(projectDir: File,
-                                      virtualFileManager: VirtualFileUrlManager): Pair<JpsProjectSerializersImpl, JpsProjectConfigLocation> {
+internal fun createProjectSerializers(
+  projectDir: File,
+  virtualFileManager: VirtualFileUrlManager,
+  externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null
+): Pair<JpsProjectSerializersImpl, JpsProjectConfigLocation> {
   val configLocation = toConfigLocation(projectDir.toPath(), virtualFileManager)
   val reader = CachingJpsFileContentReader(configLocation)
   val externalStoragePath = projectDir.toPath().resolve("cache")
   val serializer = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, reader, externalStoragePath,
-                                                                     virtualFileManager) as JpsProjectSerializersImpl
+                                                                     virtualFileManager,
+                                                                     externalStorageConfigurationManager) as JpsProjectSerializersImpl
   return serializer to configLocation
 }
 
