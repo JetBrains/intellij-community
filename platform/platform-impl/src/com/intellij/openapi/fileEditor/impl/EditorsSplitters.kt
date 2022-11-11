@@ -311,7 +311,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
     runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
       val component = UIBuilder(this).process(state, topPanel)
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.EDT) {
         runActivity("editor reopening post-processing") {
           component.isFocusable = false
           removeAll()
@@ -365,6 +365,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun openFilesAsync(): Job {
+    @Suppress("DEPRECATION")
     return manager.project.coroutineScope.launch {
       restoreEditors(requestFocus = false)
     }
@@ -468,6 +469,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         }
       }
     }
+
     val project = manager.project
     val frame = getFrame(project) ?: return
     val file = currentFile
@@ -475,24 +477,29 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       frame.setFileTitle(null, null)
     }
     else {
-      val ioFile = try {
-        if (file is LightVirtualFileBase) null else Path.of(file.presentableUrl)
-      }
-      catch (ignored: InvalidPathException) {
-        null
-      }
+      @Suppress("DEPRECATION")
+      project.coroutineScope.launch {
+        val title = readAction {
+          FrameTitleBuilder.getInstance().getFileTitle(project, file)
+        }
 
-      ReadAction.nonBlocking<String> { FrameTitleBuilder.getInstance().getFileTitle(project, file) }
-        .expireWith(this)
-        .finishOnUiThread(ModalityState.any()) { title: @NlsContexts.TabTitle String? -> frame.setFileTitle(title, ioFile) }
-        .submit(NonUrgentExecutor.getInstance())
+        val ioFile = try {
+          if (file is LightVirtualFileBase) null else Path.of(file.presentableUrl)
+        }
+        catch (ignored: InvalidPathException) {
+          null
+        }
+        withContext(Dispatchers.EDT) {
+          frame.setFileTitle(title, ioFile)
+        }
+      }
     }
   }
 
   protected open fun getFrame(project: Project): IdeFrameEx? {
     val frame = WindowManagerEx.getInstanceEx().getFrameHelper(project)
-    LOG.assertTrue((ApplicationManager.getApplication().isUnitTestMode
-                    || ApplicationManager.getApplication().isHeadlessEnvironment) || frame != null)
+    val app = ApplicationManager.getApplication()
+    LOG.assertTrue((app.isUnitTestMode || app.isHeadlessEnvironment) || frame != null)
     return frame
   }
 
@@ -500,6 +507,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     get() = insideChange > 0
 
   fun updateFileBackgroundColorAsync(file: VirtualFile) {
+    @Suppress("DEPRECATION")
     manager.project.coroutineScope.launch {
       val color = readAction {
         EditorTabPresentationUtil.getEditorTabBackgroundColor(manager.project, file)
@@ -933,10 +941,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
         val document = readAction {
           fileDocumentManager.getDocument(virtualFile)
         }
-        (fileEditorManager as FileEditorManagerImpl).openFileOnStartup(window = window,
-                                                                         virtualFile = virtualFile,
-                                                                         entry = entry,
-                                                                         options = openOptions)
+        fileEditorManager.openFileOnStartup(window = window, virtualFile = virtualFile, entry = entry, options = openOptions)
         // This is just to make sure document reference is kept on stack till this point
         // so that document is available for folding state deserialization in HistoryEntry constructor
         // and that document will be created only once during file opening
@@ -961,6 +966,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     }
     else {
       fileEditorManager.addSelectionRecord(focusedFile, window)
+      @Suppress("DEPRECATION")
       fileEditorManager.project.coroutineScope.launch(Dispatchers.EDT) {
         window.getComposite(focusedFile)?.let {
           window.setComposite(it, true)

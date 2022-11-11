@@ -5,8 +5,6 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.util.RunOnceUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -17,6 +15,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -24,7 +23,7 @@ internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl
                                         editorComponent: EditorsSplitters,
                                         project: Project,
                                         frameHelper: ProjectFrameHelper) {
-  withContext(ModalityState.any().asContextElement()) {
+  coroutineScope {
     launch {
       editorComponent.restoreEditors(requestFocus = true)
     }
@@ -34,7 +33,7 @@ internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl
     }
   }
 
-  val hasOpenFiles = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+  val hasOpenFiles = withContext(Dispatchers.EDT) {
     frameHelper.installPainters()
     fileEditorManager.hasOpenFiles()
   }

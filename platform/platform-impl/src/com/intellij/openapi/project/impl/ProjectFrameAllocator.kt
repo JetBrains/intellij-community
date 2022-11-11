@@ -12,9 +12,6 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.impl.withModalContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -88,7 +85,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
   override suspend fun <T : Any> run(task: suspend CoroutineScope.(saveTemplateJob: Job?) -> T): T {
     return coroutineScope {
-      val deferredWindow = async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val deferredWindow = async(Dispatchers.EDT) {
         val frameManager = createFrameManager()
         val frameHelper = frameManager.createFrameHelper(this@ProjectUiFrameAllocator)
         frameHelper.init(installPainters = false)
@@ -102,21 +99,18 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         window
       }
 
-      withModalContext {
-        // execute saveTemplateAsync under modal progress - write-safe context for saving template settings
-        val saveTemplateDeferred = saveTemplateAsync(options)
+      val saveTemplateDeferred = saveTemplateAsync(options)
 
-        val showIndicatorJob = showModalIndicatorForProjectLoading(
-          windowDeferred = deferredWindow,
-          title = getProgressTitle(),
-          isVisibleManaged = options.isVisibleManaged,
-        )
-        try {
-          task(saveTemplateDeferred)
-        }
-        finally {
-          showIndicatorJob.cancel()
-        }
+      val showIndicatorJob = showModalIndicatorForProjectLoading(
+        windowDeferred = deferredWindow,
+        title = getProgressTitle(),
+        isVisibleManaged = options.isVisibleManaged,
+      )
+      try {
+        task(saveTemplateDeferred)
+      }
+      finally {
+        showIndicatorJob.cancel()
       }
     }
   }
@@ -196,7 +190,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
           toolWindowManager.init(frameHelper = frameHelper, reopeningEditorsJob = reopeningEditorJob)
         }
         @Suppress("DEPRECATION")
-        project.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        project.coroutineScope.launch(Dispatchers.EDT) {
           val rootPane = frameHelper.rootPane!!
           runActivity("north components updating") {
             rootPane.updateNorthComponents()

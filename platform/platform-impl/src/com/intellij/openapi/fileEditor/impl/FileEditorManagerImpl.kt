@@ -7,7 +7,6 @@ import com.intellij.ProjectTopics
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.current
-import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.ClientId.Companion.localId
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
@@ -153,6 +152,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     if (file == null || !file.isValid) {
       return@Runnable
     }
+
     fileToUpdateTitle = null
     for (each in getAllSplitters()) {
       each.updateFileName(file)
@@ -574,10 +574,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     fileToUpdateTitle = SoftReference(file)
   }
 
-  private fun updateFrameTitle() {
-    getActiveSplittersAsync().thenAccept { it?.updateFileName(null) }
-  }
-
   @Suppress("removal")
   override fun getFile(editor: FileEditor): VirtualFile? {
     val editorComposite = getComposite(editor)
@@ -665,7 +661,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   override fun hasOpenedFile(): Boolean = splitters.currentWindow?.selectedComposite != null
 
   override fun getCurrentFile(): VirtualFile? {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getSelectedFile()
     }
     return activeSplittersSync.currentFile
@@ -674,7 +670,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   override fun getActiveWindow(): CompletableFuture<EditorWindow?> = getActiveSplittersAsync().thenApply { it?.currentWindow }
 
   override fun getCurrentWindow(): EditorWindow? {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       return null
     }
     if (!ApplicationManager.getApplication().isDispatchThread) {
@@ -685,7 +681,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override fun setCurrentWindow(window: EditorWindow?) {
-    if (isCurrentlyUnderLocalId) {
+    if (ClientId.isCurrentlyUnderLocalId) {
       activeSplittersSync.setCurrentWindow(window = window, requestFocus = true)
     }
   }
@@ -713,7 +709,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   @RequiresEdt
   fun closeFile(file: VirtualFile, moveFocus: Boolean, closeAllCopies: Boolean) {
     if (!closeAllCopies) {
-      if (isCurrentlyUnderLocalId) {
+      if (ClientId.isCurrentlyUnderLocalId) {
         CommandProcessor.getInstance().executeCommand(project, {
           openFileSetModificationCount.incrementAndGet()
           val activeSplitters = activeSplittersSync
@@ -907,7 +903,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
                              options: FileEditorOpenOptions): FileEditorComposite {
     assert(ApplicationManager.getApplication().isDispatchThread ||
            !ApplicationManager.getApplication().isReadAccessAllowed) { "must not attempt opening files under read action" }
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       val clientManager = clientFileEditorManager ?: return EMPTY
       val result = clientManager.openFile(file = _file, forceCreate = false)
       val allEditors = result.map { it.fileEditor }
@@ -1137,7 +1133,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   @Contract("_, _ -> new")
   protected fun createCompositeInstance(file: VirtualFile,
                                         editorsWithProviders: List<FileEditorWithProvider>): EditorComposite? {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.createComposite(file, editorsWithProviders)
     }
     // the only place this class in created, won't be needed when we get rid of EditorWithProviderComposite usages
@@ -1184,7 +1180,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override fun setSelectedEditor(file: VirtualFile, fileEditorProviderId: String) {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       clientFileEditorManager?.setSelectedEditor(file, fileEditorProviderId)
       return
     }
@@ -1341,7 +1337,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   override fun getSelectedTextEditor(): Editor? = getSelectedTextEditor(false)
 
   fun getSelectedTextEditor(isLockFree: Boolean): Editor? {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       val selectedEditor = (clientFileEditorManager ?: return null).getSelectedEditor()
       return if (selectedEditor is TextEditor) selectedEditor.editor else null
     }
@@ -1363,7 +1359,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override fun isFileOpen(file: VirtualFile): Boolean {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       return (clientFileEditorManager ?: return false).isFileOpen(file)
     }
     return openedComposites.any { it.file == file }
@@ -1373,7 +1369,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   val openedFiles: List<VirtualFile>
     get() {
-      if (!isCurrentlyUnderLocalId) {
+      if (!ClientId.isCurrentlyUnderLocalId) {
         return clientFileEditorManager?.getAllFiles() ?: emptyList()
       }
 
@@ -1398,7 +1394,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   override fun hasOpenFiles(): Boolean = !openedComposites.isEmpty()
 
   override fun getSelectedFiles(): Array<VirtualFile> {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       return (clientFileEditorManager ?: return VirtualFile.EMPTY_ARRAY).getSelectedFiles().toTypedArray()
     }
 
@@ -1414,7 +1410,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override fun getSelectedEditors(): Array<FileEditor> {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getSelectedEditors()?.toTypedArray() ?: FileEditor.EMPTY_ARRAY
     }
     val selectedEditors = SmartHashSet<FileEditor>()
@@ -1442,7 +1438,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override fun getSelectedEditor(): FileEditor? {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getSelectedEditor()
     }
 
@@ -1490,7 +1486,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   @RequiresEdt
   override fun getComposite(file: VirtualFile): EditorComposite? {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getComposite(file)
     }
 
@@ -1509,7 +1505,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   fun getAllComposites(file: VirtualFile): List<EditorComposite> {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getAllComposites(file) ?: ArrayList()
     }
     val result = ArrayList<EditorComposite>()
@@ -1641,7 +1637,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   internal fun disposeComposite(composite: EditorComposite) {
-    if (!isCurrentlyUnderLocalId) {
+    if (!ClientId.isCurrentlyUnderLocalId) {
       clientFileEditorManager?.removeComposite(composite)
       return
     }
@@ -1917,7 +1913,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       }
 
       // "Show full paths in window header"
-      updateFrameTitle()
+      getActiveSplittersAsync().thenAccept { it?.updateFileName(null) }
     }
   }
 
