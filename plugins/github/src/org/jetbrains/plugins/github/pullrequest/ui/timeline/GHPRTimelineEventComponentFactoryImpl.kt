@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHLabel
@@ -18,6 +17,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createDescriptionComponent
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createItem
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -49,9 +49,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
 
   private abstract inner class EventComponentFactory<T : GHPRTimelineEvent> : GHPRTimelineEventComponentFactory<T> {
     protected fun eventItem(event: GHPRTimelineEvent, detailsText: @Nls String): JComponent {
-      val content = HtmlEditorPane(detailsText).apply {
-        border = JBUI.Borders.empty(2, 0)
-      }
+      val content = createDescriptionComponent(detailsText)
       return createItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
     }
 
@@ -64,9 +62,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
         JPanel(VerticalLayout(4)).apply {
           isOpaque = false
           add(titlePane)
-          add(HtmlEditorPane(detailsText).apply {
-            border = JBUI.Borders.empty(2, 0)
-          })
+          add(createDescriptionComponent(detailsText))
         }
       }
       return createItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)

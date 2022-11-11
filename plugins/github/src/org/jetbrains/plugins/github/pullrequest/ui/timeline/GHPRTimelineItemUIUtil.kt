@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.scale.JBUIScale
@@ -11,6 +13,7 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -83,5 +86,11 @@ object GHPRTimelineItemUIUtil {
         .gapTop("${JBUIScale.scale(4)}")
         .minWidth("0").maxWidth("$maxContentWidth"))
     }
+  }
+
+  //language=HTML
+  fun createDescriptionComponent(text: @Nls String, type: StatusMessageType = StatusMessageType.INFO): JComponent {
+    val textPane = HtmlEditorPane(text)
+    return StatusMessageComponentFactory.create(textPane, type)
   }
 }

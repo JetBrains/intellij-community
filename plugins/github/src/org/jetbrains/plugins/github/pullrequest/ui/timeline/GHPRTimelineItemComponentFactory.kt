@@ -4,6 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
 import com.intellij.collaboration.ui.codereview.setHtmlBody
+import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.HorizontalLayout
@@ -18,8 +20,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.JBDateFormat
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUI.Borders
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -109,8 +109,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       .toString()
 
     val commitPane = HtmlEditorPane(commitText).apply {
-      border = JBUI.Borders.empty(2, 0)
-
       removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
       onHyperlinkActivated {
         val href = it.description
@@ -126,7 +124,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val contentPanel = JPanel(VerticalLayout(4)).apply {
       isOpaque = false
       add(HtmlEditorPane(GithubBundle.message("pull.request.timeline.commit.added")))
-      add(commitPane)
+      add(StatusMessageComponentFactory.create(commitPane))
     }
 
     return createItem(gitCommit.author?.user ?: ghostUser, gitCommit.author?.date, contentPanel)
@@ -196,6 +194,12 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       PENDING -> GithubBundle.message("pull.request.timeline.started.review")
       COMMENTED, DISMISSED -> GithubBundle.message("pull.request.timeline.reviewed")
     }
+    val stateType = when (review.state) {
+      APPROVED -> StatusMessageType.SUCCESS
+      CHANGES_REQUESTED -> StatusMessageType.ERROR
+      PENDING -> StatusMessageType.SECONDARY_INFO
+      COMMENTED, DISMISSED -> StatusMessageType.INFO
+    }
 
     val contentPanel = JPanel(null).apply {
       isOpaque = false
@@ -204,17 +208,14 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                            .flowY()
                            .gridGap("0", "0")
                            .insets("0", "0", "0", "0"))
-      val statePane = HtmlEditorPane(stateText).apply {
-        border = Borders.empty(2, 0)
-      }
-      add(statePane, CC().grow().push()
-        .minWidth("0").maxWidth("${GHPRTimelineItemUIUtil.maxTimelineItemTextWidth}"))
-
       if (panelHandle != null) {
-        add(panelHandle.panel, CC().grow().push()
-          .minWidth("0").maxWidth("${GHPRTimelineItemUIUtil.maxTimelineItemTextWidth}")
-          .gapBottom("${JBUIScale.scale(8)}"))
+        val commentPanel = panelHandle.panel
+        add(commentPanel, CC().grow().push()
+          .minWidth("0").maxWidth("${GHPRTimelineItemUIUtil.maxTimelineItemTextWidth}"))
       }
+
+      add(StatusMessageComponentFactory.create(HtmlEditorPane(stateText), stateType), CC().grow().push()
+        .minWidth("0").maxWidth("${GHPRTimelineItemUIUtil.maxTimelineItemTextWidth}"))
 
       val threadsPanel = GHPRReviewThreadsPanel.create(reviewThreadsModel) {
         GHPRReviewThreadComponent.createWithDiff(project, it,
@@ -223,7 +224,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                  selectInToolWindowHelper, suggestedChangeHelper,
                                                  currentUser)
       }
-      add(threadsPanel, CC().grow().push().minWidth("0"))
+      add(threadsPanel, CC().grow().push()
+        .minWidth("0")
+        .gapTop("${JBUIScale.scale(8)}"))
     }
     return GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, review.author ?: ghostUser, review.createdAt,
                                              contentPanel, Int.MAX_VALUE, actionsPanel)
