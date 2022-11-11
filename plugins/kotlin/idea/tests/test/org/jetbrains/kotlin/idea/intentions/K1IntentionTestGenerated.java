@@ -11328,6 +11328,31 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/introduceVariable/afterExpression.kt");
         }
 
+        @TestMetadata("afterExpression2.kt")
+        public void testAfterExpression2() throws Exception {
+            runTest("testData/intentions/introduceVariable/afterExpression2.kt");
+        }
+
+        @TestMetadata("afterExpression3.kt")
+        public void testAfterExpression3() throws Exception {
+            runTest("testData/intentions/introduceVariable/afterExpression3.kt");
+        }
+
+        @TestMetadata("afterExpression4.kt")
+        public void testAfterExpression4() throws Exception {
+            runTest("testData/intentions/introduceVariable/afterExpression4.kt");
+        }
+
+        @TestMetadata("afterExpression5.kt")
+        public void testAfterExpression5() throws Exception {
+            runTest("testData/intentions/introduceVariable/afterExpression5.kt");
+        }
+
+        @TestMetadata("afterExpression6.kt")
+        public void testAfterExpression6() throws Exception {
+            runTest("testData/intentions/introduceVariable/afterExpression6.kt");
+        }
+
         @TestMetadata("atExpressionEnd.kt")
         public void testAtExpressionEnd() throws Exception {
             runTest("testData/intentions/introduceVariable/atExpressionEnd.kt");
