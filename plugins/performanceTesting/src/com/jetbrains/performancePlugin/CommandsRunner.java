@@ -24,7 +24,7 @@ public class CommandsRunner {
 
   //TODO: add methode with project in parameter? AT-114
   public static void doRunScript(@NotNull String text) {
-    runScript(ProjectManager.getInstance().getOpenProjects()[0], text.replace("~", "\r\n"));
+    runScript(ProjectManager.getInstance().getOpenProjects()[0], text);
   }
 
   public static void setStartActionCallback(ActionCallback actionCallback) {
