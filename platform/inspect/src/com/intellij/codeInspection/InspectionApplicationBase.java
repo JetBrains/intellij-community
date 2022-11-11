@@ -745,13 +745,16 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     if (profilePath != null && !profilePath.isEmpty()) {
       if (YamlInspectionProfileImpl.isYamlFile(profilePath)) {
+        if (!new File(profilePath).isFile()) {
+          throw new InspectionApplicationException("Inspection profile '" + profilePath + "' does not exist");
+        }
         try {
           return YamlInspectionProfileImpl.loadFrom(project, profilePath).buildEffectiveProfile();
         }
         catch (ParserException e) {
           // snakeyaml doesn't provide any information about where the YAML stream comes from,
           // its StreamReader constructor hardcodes the name to "'reader'".
-          throw new InspectionApplicationException("Parse error in " + profilePath + ": " + e);
+          throw new InspectionApplicationException("Parse error in '" + profilePath + "': " + e);
         }
       }
       InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
