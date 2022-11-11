@@ -1,17 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.property
 
-import com.intellij.openapi.project.Project
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.openapi.Disposable
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectSerializersImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.createProjectSerializers
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAllEntities
@@ -19,48 +16,38 @@ import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+@TestApplication
 class ImlCreationPropertyTest {
-  @Rule
-  @JvmField
-  var disposableRule = DisposableRule()
+  @TestDisposable
+  lateinit var disposableRule: Disposable
 
-  private val temporaryDirectoryRule: TempDirectory
-    get() = projectModel.baseProjectDir
+  @TempDir
+  lateinit var tempDir: Path
 
-  @Rule
-  @JvmField
-  val projectModel = ProjectModelRule()
-
-  private lateinit var project: Project
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
-
-  lateinit var rootFolder: Path
 
   lateinit var serializers: JpsProjectSerializersImpl
   lateinit var configLocation: JpsProjectConfigLocation
 
-  @Before
+  @BeforeEach
   fun prepareProject() {
-    project = projectModel.project
-    virtualFileManager = VirtualFileUrlManager.getInstance(project)
+    virtualFileManager = VirtualFileUrlManagerImpl()
 
-    val tempDir = temporaryDirectoryRule.newDirectoryPath()
-    rootFolder = tempDir.resolve("testProject")
-
+    val rootFolder = tempDir.resolve("testProject")
     val info = createProjectSerializers(rootFolder.toFile(), virtualFileManager)
     serializers = info.first
     configLocation = info.second
@@ -136,12 +123,6 @@ class ImlCreationPropertyTest {
         this.module = moduleEntity
       }
     }
-  }
-
-  companion object {
-    @ClassRule
-    @JvmField
-    val application = ApplicationRule()
   }
 }
 
