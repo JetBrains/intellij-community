@@ -30,15 +30,14 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     return ReadAction.compute(() -> {
       ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
 
       final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
       if (myToDoSettings.isModulesShown()) {
-        for (Iterator i = myBuilder.getAllFiles(); i.hasNext(); ) {
-          final PsiFile psiFile = (PsiFile)i.next();
+        for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
+          final PsiFile psiFile = i.next();
           if (psiFile == null) { // skip invalid PSI files
             continue;
           }
@@ -49,18 +48,18 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
       else {
         if (myToDoSettings.getIsPackagesShown()) {
           if (myBuilder instanceof CurrentFileTodosTreeBuilder) {
-            final Iterator allFiles = myBuilder.getAllFiles();
+            final Iterator<? extends PsiFile> allFiles = myBuilder.getAllFiles();
             if (allFiles.hasNext()) {
-              children.add(new TodoFileNode(myProject, (PsiFile)allFiles.next(), myBuilder, false));
-
+              children.add(new TodoFileNode(myProject, allFiles.next(), myBuilder, false));
+            }
           }
-          }else {
+          else {
             TodoTreeHelper.getInstance(getProject()).addPackagesToChildren(children, null, myBuilder);
           }
         }
         else {
-          for (Iterator i = myBuilder.getAllFiles(); i.hasNext(); ) {
-            final PsiFile psiFile = (PsiFile)i.next();
+          for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
+            final PsiFile psiFile = i.next();
             if (psiFile == null) { // skip invalid PSI files
               continue;
             }
@@ -72,7 +71,6 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
         }
       }
       children.sort(TodoFileDirAndModuleComparator.INSTANCE);
-
       return children;
     });
   }
