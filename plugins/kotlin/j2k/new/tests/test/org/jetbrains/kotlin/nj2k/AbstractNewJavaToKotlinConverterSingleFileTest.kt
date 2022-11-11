@@ -81,7 +81,6 @@ abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKo
         if (withLibraryDirective.isNotEmpty())
             mockLibraryFacility = MockLibraryFacility(
                 source = File(LIBRARY_SOURCE_DIR, withLibraryDirective.single()),
-                attachSources = false,
                 options = extraOptions
             )
     }

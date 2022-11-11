@@ -1177,6 +1177,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/comments/commentsForConstructors.java");
         }
 
+        @TestMetadata("enumValuesWithComments.java")
+        public void testEnumValuesWithComments() throws Exception {
+            runTest("testData/newJ2k/comments/enumValuesWithComments.java");
+        }
+
         @TestMetadata("fieldWithEndOfLineComment.java")
         public void testFieldWithEndOfLineComment() throws Exception {
             runTest("testData/newJ2k/comments/fieldWithEndOfLineComment.java");
@@ -1969,6 +1974,26 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("enumValueOf.java")
         public void testEnumValueOf() throws Exception {
             runTest("testData/newJ2k/enum/enumValueOf.java");
+        }
+
+        @TestMetadata("enumValues.java")
+        public void testEnumValues() throws Exception {
+            runTest("testData/newJ2k/enum/enumValues.java");
+        }
+
+        @TestMetadata("enumValuesOldVersion.java")
+        public void testEnumValuesOldVersion() throws Exception {
+            runTest("testData/newJ2k/enum/enumValuesOldVersion.java");
+        }
+
+        @TestMetadata("enumValuesWithExternalJavaLibrary.java")
+        public void testEnumValuesWithExternalJavaLibrary() throws Exception {
+            runTest("testData/newJ2k/enum/enumValuesWithExternalJavaLibrary.java");
+        }
+
+        @TestMetadata("enumValuesWithExternalKotlinLibrary.java")
+        public void testEnumValuesWithExternalKotlinLibrary() throws Exception {
+            runTest("testData/newJ2k/enum/enumValuesWithExternalKotlinLibrary.java");
         }
 
         @TestMetadata("enumWithNameField.java")

@@ -98,4 +98,3 @@ inline fun <reified T : JKTreeElement> T.copyTreeAndDetach(): T =
     copyTree().also {
         if (it.parent != null) it.detach(it.parent!!)
     }
-

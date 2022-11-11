@@ -169,12 +169,12 @@ class JKLambdaExpression(
 }
 
 abstract class JKCallExpression : JKExpression(), JKTypeArgumentListOwner {
-    abstract val identifier: JKMethodSymbol
+    abstract var identifier: JKMethodSymbol
     abstract var arguments: JKArgumentList
 }
 
 class JKDelegationConstructorCall(
-    override val identifier: JKMethodSymbol,
+    override var identifier: JKMethodSymbol,
     expression: JKExpression,
     arguments: JKArgumentList,
     override val expressionType: JKType? = null,
@@ -186,7 +186,7 @@ class JKDelegationConstructorCall(
 }
 
 class JKCallExpressionImpl(
-    override val identifier: JKMethodSymbol,
+    override var identifier: JKMethodSymbol,
     arguments: JKArgumentList = JKArgumentList(),
     typeArgumentList: JKTypeArgumentList = JKTypeArgumentList(),
     override val expressionType: JKType? = null,

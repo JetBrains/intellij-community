@@ -18,7 +18,9 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.ENUM
 import org.jetbrains.kotlin.nj2k.types.JKVarianceTypeParameterType.Variance
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtParameter
@@ -128,6 +130,14 @@ fun JKType.isStringType(): Boolean =
 fun JKClassSymbol.isStringType(): Boolean =
     fqName == CommonClassNames.JAVA_LANG_STRING
             || fqName == StandardNames.FqNames.string.asString()
+
+fun JKSymbol.isEnumType(): Boolean =
+    when (val target = target) {
+        is JKClass -> target.classKind == ENUM
+        is KtClass -> target.isEnum()
+        is PsiClass -> target.isEnum
+        else -> false
+    }
 
 fun JKJavaPrimitiveType.toLiteralType(): JKLiteralExpression.LiteralType? =
     when (this) {
