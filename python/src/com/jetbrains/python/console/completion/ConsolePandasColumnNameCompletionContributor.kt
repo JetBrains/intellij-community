@@ -34,6 +34,7 @@ class ConsolePandasColumnNameCompletionContributor : CompletionContributor(), Du
         val project = parameters.editor.project ?: return
         val editor = parameters.editor
         val virtualFile = parameters.originalFile.virtualFile
+        if (virtualFile.fileType.defaultExtension != "py") return
 
         if (!checkIfAvailableAndShowHint(editor)) return
         val existingConsole = getDescriptorIfExist(virtualFile, project, editor) ?: return
