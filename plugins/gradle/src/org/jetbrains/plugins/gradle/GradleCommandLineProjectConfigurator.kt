@@ -89,9 +89,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   private fun importProjects(project: Project) {
     if (!GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) {
-      Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(false)
-      AutoImportProjectTracker.getInstance(project).scheduleProjectRefresh()
-      Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(true)
+      AutoImportProjectTracker.getInstance(project).scheduleProjectRefresh(true)
     }
   }
 

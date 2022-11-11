@@ -138,7 +138,6 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
               // do not override the last successful import data which was received before this data storage initialization
               return oldInfo.getLastSuccessfulImportTimestamp() > 0 ? oldInfo : info;
             });
-          assert merged != null;
           if (merged.getLastImportTimestamp() != merged.getLastSuccessfulImportTimestamp()) {
             markDirty(merged.getExternalProjectPath());
           }

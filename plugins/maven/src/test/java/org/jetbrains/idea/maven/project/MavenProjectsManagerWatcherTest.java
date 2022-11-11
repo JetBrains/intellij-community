@@ -142,7 +142,7 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
 
   private void scheduleProjectImportAndWait() {
     assertTrue(myNotificationAware.isNotificationVisible());
-    myProjectTracker.scheduleProjectRefresh();
+    myProjectTracker.scheduleProjectRefresh(false);
     waitForImportCompletion();
     if(!isNewImportingProcess) {
       MavenUtil.invokeAndWait(myProject, () -> {

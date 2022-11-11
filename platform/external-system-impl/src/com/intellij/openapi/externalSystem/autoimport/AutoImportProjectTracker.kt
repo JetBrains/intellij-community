@@ -74,9 +74,9 @@ class AutoImportProjectTracker(
       }
     }
 
-  override fun scheduleProjectRefresh() {
+  override fun scheduleProjectRefresh(force: Boolean) {
     LOG.debug("Schedule project reload", Throwable())
-    schedule(priority = 0, dispatchIterations = 1) { reloadProject(smart = false) }
+    schedule(priority = 0, dispatchIterations = 1) { reloadProject(force, explicitReload = true) }
   }
 
   override fun scheduleChangeProcessing() {
@@ -94,7 +94,7 @@ class AutoImportProjectTracker(
    */
   private fun scheduleDelayedSmartProjectReload() {
     LOG.debug("Schedule delayed project reload")
-    schedule(priority = 2, dispatchIterations = 9) { reloadProject(smart = true) }
+    schedule(priority = 2, dispatchIterations = 9) { reloadProject(false, explicitReload = false) }
   }
 
   private fun schedule(priority: Int, dispatchIterations: Int, action: () -> Unit) {
@@ -124,13 +124,13 @@ class AutoImportProjectTracker(
     }
   }
 
-  private fun reloadProject(smart: Boolean) {
+  private fun reloadProject(force: Boolean, explicitReload: Boolean) {
     LOG.debug("Incremental project reload")
 
     val projectsToReload = projectDataMap.values
-      .filter { (!smart || it.isActivated) && !it.isUpToDate() }
+      .filter { (explicitReload || it.isActivated) && !it.isUpToDate() }
 
-    if (isDisabledAutoReload() || projectsToReload.isEmpty()) {
+    if ((isDisabledAutoReload() || projectsToReload.isEmpty()) && !force) {
       LOG.debug("Skipped all projects reload")
       updateProjectNotification()
       return
@@ -140,7 +140,7 @@ class AutoImportProjectTracker(
       LOG.debug("${projectData.projectAware.projectId.debugName}: Project reload")
       val hasUndefinedModifications = !projectData.status.isUpToDate()
       val settingsContext = projectData.settingsTracker.getSettingsContext()
-      val context = ProjectReloadContext(!smart, hasUndefinedModifications, settingsContext)
+      val context = ProjectReloadContext(explicitReload, hasUndefinedModifications, settingsContext)
       projectData.projectAware.reloadProject(context)
     }
   }

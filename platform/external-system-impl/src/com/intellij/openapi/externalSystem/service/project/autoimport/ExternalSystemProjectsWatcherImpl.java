@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
       for (Contributor contributor : EP_NAME.getExtensions()) {
         contributor.markDirtyAllExternalProjects(project);
       }
-      projectTracker.scheduleProjectRefresh();
+      projectTracker.scheduleProjectRefresh(false);
     }, project.getDisposed());
   }
 
@@ -63,7 +64,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
       for (Contributor contributor : EP_NAME.getExtensions()) {
         contributor.markDirty(module);
       }
-      projectTracker.scheduleProjectRefresh();
+      projectTracker.scheduleProjectRefresh(false);
     }, module.getDisposed());
   }
 
@@ -78,7 +79,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
       for (Contributor contributor : EP_NAME.getExtensions()) {
         contributor.markDirty(projectPath);
       }
-      projectTracker.scheduleProjectRefresh();
+      projectTracker.scheduleProjectRefresh(false);
     }, project.getDisposed());
   }
 
