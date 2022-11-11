@@ -18,10 +18,10 @@ class ScopeIdMapperImpl : ScopeIdMapper() {
       PROJECT_PRODUCTION_FILES_SCOPE_ID -> GlobalSearchScopesCore.getProjectProductionFilesScopeName()
       PROJECT_TEST_FILES_SCOPE_ID -> GlobalSearchScopesCore.getProjectTestFilesScopeName()
       SCRATCHES_AND_CONSOLES_SCOPE_ID -> ScratchesNamedScope.scratchesAndConsoles()
-      RECENTLY_VIEWED_FILES_SCOPE_ID -> PredefinedSearchScopeProviderImpl.getRecentlyViewedFilesScopeName()
-      RECENTLY_CHANGED_FILES_SCOPE_ID -> PredefinedSearchScopeProviderImpl.getRecentlyChangedFilesScopeName()
+      RECENTLY_VIEWED_FILES_SCOPE_ID -> PredefinedSearchScopeProviderBase.getRecentlyViewedFilesScopeName()
+      RECENTLY_CHANGED_FILES_SCOPE_ID -> PredefinedSearchScopeProviderBase.getRecentlyChangedFilesScopeName()
       OPEN_FILES_SCOPE_ID -> OpenFilesScope.getNameText()
-      CURRENT_FILE_SCOPE_ID -> PredefinedSearchScopeProviderImpl.getCurrentFileScopeName()
+      CURRENT_FILE_SCOPE_ID -> PredefinedSearchScopeProviderBase.getCurrentFileScopeName()
       else -> scopeId
     }
 
@@ -33,9 +33,9 @@ class ScopeIdMapperImpl : ScopeIdMapper() {
     if (presentableScopeName == GlobalSearchScopesCore.getProjectProductionFilesScopeName()) return PROJECT_PRODUCTION_FILES_SCOPE_ID
     if (presentableScopeName == GlobalSearchScopesCore.getProjectTestFilesScopeName()) return PROJECT_TEST_FILES_SCOPE_ID
     if (presentableScopeName == ScratchesNamedScope.scratchesAndConsoles()) return SCRATCHES_AND_CONSOLES_SCOPE_ID
-    if (presentableScopeName == PredefinedSearchScopeProviderImpl.getRecentlyViewedFilesScopeName()) return RECENTLY_VIEWED_FILES_SCOPE_ID
-    if (presentableScopeName == PredefinedSearchScopeProviderImpl.getRecentlyChangedFilesScopeName()) return RECENTLY_CHANGED_FILES_SCOPE_ID
+    if (presentableScopeName == PredefinedSearchScopeProviderBase.getRecentlyViewedFilesScopeName()) return RECENTLY_VIEWED_FILES_SCOPE_ID
+    if (presentableScopeName == PredefinedSearchScopeProviderBase.getRecentlyChangedFilesScopeName()) return RECENTLY_CHANGED_FILES_SCOPE_ID
     if (presentableScopeName == OpenFilesScope.getNameText()) return OPEN_FILES_SCOPE_ID
-    return if (presentableScopeName == PredefinedSearchScopeProviderImpl.getCurrentFileScopeName()) CURRENT_FILE_SCOPE_ID else presentableScopeName
+    return if (presentableScopeName == PredefinedSearchScopeProviderBase.getCurrentFileScopeName()) CURRENT_FILE_SCOPE_ID else presentableScopeName
   }
 }

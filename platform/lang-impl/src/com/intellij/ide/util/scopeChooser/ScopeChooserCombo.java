@@ -39,6 +39,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -113,28 +114,19 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     combo.setRenderer(createDefaultRenderer());
     combo.setSwingPopup(false);
 
-    if (selection != null) {
-      var provider = PredefinedSearchScopeProvider.getInstance();
-      var scopes = provider.getPredefinedScopes(project,
-                                                null,
-                                                suggestSearchInLibs,
-                                                prevSearchWholeFiles,
-                                                false,
-                                                false,
-                                                false);
-      for (SearchScope s : scopes) {
-        if (selection.equals(s.getDisplayName())) {
-          preselectedScope = s;
-          break;
-        }
-      }
-    }
-
-    return myCoroutineHelper.scheduleRebuildModelAndSelectScope(selection);
+    return myCoroutineHelper.schedulePreselectScopeRebuildModelAndSelectScope(selection);
   }
 
   protected final boolean accepts(@NotNull ScopeDescriptor descriptor) {
     return myScopeFilter == null || myScopeFilter.value(descriptor);
+  }
+
+  protected final @NotNull Project getProject() {
+    return myProject;
+  }
+
+  protected final int getOptions() {
+    return myOptions;
   }
 
   protected final @Nullable SearchScope getPreselectedScope() {
@@ -201,35 +193,22 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                                       @NotNull DataContext dataContext,
                                       @MagicConstant(flagsFromClass = ScopeChooserCombo.class) int options,
                                       @NotNull Processor<? super ScopeDescriptor> processor) {
-    List<? extends SearchScope> scopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
-      project, dataContext,
-      BitUtil.isSet(options, OPT_LIBRARIES),
-      BitUtil.isSet(options, OPT_SEARCH_RESULTS),
-      BitUtil.isSet(options, OPT_FROM_SELECTION),
-      BitUtil.isSet(options, OPT_USAGE_VIEW),
-      BitUtil.isSet(options, OPT_EMPTY_SCOPES)
-    );
+    Collection<? extends SearchScope> scopes = PredefinedSearchScopeProvider.getInstance(project)
+      .getPredefinedScopes(dataContext,
+                           BitUtil.isSet(options, OPT_LIBRARIES),
+                           BitUtil.isSet(options, OPT_SEARCH_RESULTS),
+                           BitUtil.isSet(options, OPT_FROM_SELECTION),
+                           BitUtil.isSet(options, OPT_USAGE_VIEW),
+                           BitUtil.isSet(options, OPT_EMPTY_SCOPES));
     return SlowOperations.allowSlowOperations(() -> ReadAction.compute(() -> {
       return doProcessScopes(project, dataContext, scopes, processor);
     }));
   }
 
-  protected final @NotNull Promise<List<? extends SearchScope>> getPredefinedScopesAsync(@NotNull DataContext dataContext) {
-    @MagicConstant(flagsFromClass = ScopeChooserCombo.class) int options = myOptions;
-    return PredefinedSearchScopeProvider.getInstance()
-      .getPredefinedScopesAsync(myProject,
-                                dataContext,
-                                BitUtil.isSet(options, OPT_LIBRARIES),
-                                BitUtil.isSet(options, OPT_SEARCH_RESULTS),
-                                BitUtil.isSet(options, OPT_FROM_SELECTION),
-                                BitUtil.isSet(options, OPT_USAGE_VIEW),
-                                BitUtil.isSet(options, OPT_EMPTY_SCOPES));
-  }
-
   @RequiresBackgroundThread
   @RequiresReadLock
   protected final @NotNull Boolean doProcessScopes(@NotNull DataContext dataContext,
-                                                   @NotNull List<? extends SearchScope> predefinedScopes,
+                                                   @NotNull Collection<? extends SearchScope> predefinedScopes,
                                                    @NotNull Processor<? super ScopeDescriptor> processor) {
     return doProcessScopes(myProject,
                            dataContext,
@@ -242,7 +221,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   @RequiresReadLock
   public static @NotNull Boolean doProcessScopes(@NotNull Project project,
                                                  @NotNull DataContext dataContext,
-                                                 @NotNull List<? extends SearchScope> predefinedScopes,
+                                                 @NotNull Collection<? extends SearchScope> predefinedScopes,
                                                  @NotNull Processor<? super ScopeDescriptor> processor) {
     for (SearchScope searchScope : predefinedScopes) {
       if (!processor.process(new ScopeDescriptor(searchScope))) return false;

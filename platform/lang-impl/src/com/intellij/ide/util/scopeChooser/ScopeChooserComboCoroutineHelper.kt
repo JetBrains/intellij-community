@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.search.PredefinedSearchScopeProvider
+import com.intellij.util.BitUtil
 import com.intellij.util.CommonProcessors
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -30,21 +32,19 @@ private class ScopeChooserComboCoroutineHelper(private val chooserCombo: ScopeCh
     scope.cancel()
   }
 
-  fun scheduleRebuildModelAndSelectScope(selection: Any?): Promise<*> = scope.launch(Dispatchers.EDT) {
-    val model = DefaultComboBoxModel<ScopeDescriptor>()
+  fun schedulePreselectScopeRebuildModelAndSelectScope(selection: Any?): Promise<*> = scope.launch(Dispatchers.EDT) {
+    if (selection != null) {
+      chooserCombo.preselectScope(selection)
+    }
 
-    val dataContext = DataManager.getInstance()
-      .dataContextFromFocusAsync
-      .await()
-      .toAsync()
-    val descriptors = chooserCombo.processScopes(dataContext)
-
-    chooserCombo.updateModel(model, descriptors)
-    chooserCombo.comboBox.model = model
-
-    chooserCombo.selectItem(selection)
-    chooserCombo.preselectedScope = null
+    chooserCombo.rebuildModelAndSelectScope(selection)
   }.asPromise()
+
+  fun scheduleRebuildModelAndSelectScope(selection: Any?) {
+    scope.launch(Dispatchers.EDT) {
+      chooserCombo.rebuildModelAndSelectScope(selection)
+    }
+  }
 
   @RequiresEdt
   fun scheduleProcessScopes(dataContext: DataContext): Promise<*> {
@@ -57,8 +57,32 @@ private class ScopeChooserComboCoroutineHelper(private val chooserCombo: ScopeCh
 }
 
 @RequiresEdt
+private suspend fun ScopeChooserCombo.rebuildModelAndSelectScope(selection: Any?) {
+  val model = DefaultComboBoxModel<ScopeDescriptor>()
+
+  val dataContext = DataManager.getInstance()
+    .dataContextFromFocusAsync
+    .await()
+    .toAsync()
+  val descriptors = processScopes(dataContext)
+
+  updateModel(model, descriptors)
+  comboBox.model = model
+
+  selectItem(selection)
+  preselectedScope = null
+}
+
+@RequiresEdt
 private suspend fun ScopeChooserCombo.processScopes(dataContext: DataContext): List<ScopeDescriptor> {
-  val predefinedScopes = getPredefinedScopesAsync(dataContext).await()
+  val predefinedScopes = PredefinedSearchScopeProvider.getInstance(project).getPredefinedScopesAsync(
+    dataContext,
+    suggestSearchInLibs,
+    prevSearchFiles,
+    isSet(ScopeChooserCombo.OPT_FROM_SELECTION),
+    isSet(ScopeChooserCombo.OPT_USAGE_VIEW),
+    isSet(ScopeChooserCombo.OPT_EMPTY_SCOPES),
+  )
 
   return readAction {
     val processor = CommonProcessors.CollectProcessor<ScopeDescriptor>()
@@ -71,5 +95,22 @@ private suspend fun ScopeChooserCombo.processScopes(dataContext: DataContext): L
       .filter { accepts(it) }
   }
 }
+
+private suspend fun ScopeChooserCombo.preselectScope(selection: Any?) {
+  preselectedScope = PredefinedSearchScopeProvider.getInstance(project).getPredefinedScopesAsync(
+    null,
+    suggestSearchInLibs,
+    prevSearchFiles,
+    false,
+    false,
+    false,
+  ).find { it.displayName == selection }
+}
+
+private val ScopeChooserCombo.suggestSearchInLibs: Boolean get() = isSet(ScopeChooserCombo.OPT_LIBRARIES)
+
+private val ScopeChooserCombo.prevSearchFiles: Boolean get() = isSet(ScopeChooserCombo.OPT_SEARCH_RESULTS)
+
+private fun ScopeChooserCombo.isSet(mask: Int): Boolean = BitUtil.isSet(options, mask)
 
 private fun DataContext.toAsync() = Utils.wrapToAsyncDataContext(this)

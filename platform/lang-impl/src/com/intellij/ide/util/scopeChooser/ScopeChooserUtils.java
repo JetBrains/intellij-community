@@ -41,15 +41,16 @@ public final class ScopeChooserUtils {
       return intersectWithContentScope(project, GlobalSearchScopes.openFilesScope(project));
     }
 
-    if (PredefinedSearchScopeProviderImpl.getCurrentFileScopeName().equals(scopePresentableName)) {
+    String currentFileScopeName = PredefinedSearchScopeProviderBase.getCurrentFileScopeName();
+    if (currentFileScopeName.equals(scopePresentableName)) {
       VirtualFile[] array = FileEditorManager.getInstance(project).getSelectedFiles();
       List<VirtualFile> files = ContainerUtil.createMaybeSingletonList(ArrayUtil.getFirstElement(array));
-      GlobalSearchScope scope = GlobalSearchScope.filesScope(project, files, PredefinedSearchScopeProviderImpl.getCurrentFileScopeName());
+      GlobalSearchScope scope = GlobalSearchScope.filesScope(project, files, currentFileScopeName);
       return intersectWithContentScope(project, scope);
     }
 
-    PredefinedSearchScopeProvider scopeProvider = PredefinedSearchScopeProvider.getInstance();
-    for (SearchScope scope : scopeProvider.getPredefinedScopes(project, null, false, false, false, false, true)) {
+    PredefinedSearchScopeProvider scopeProvider = PredefinedSearchScopeProvider.getInstance(project);
+    for (SearchScope scope : scopeProvider.getPredefinedScopes(null, false, false, false, false, true)) {
       if (scope instanceof GlobalSearchScope && scope.getDisplayName().equals(scopePresentableName)) {
         if (scope instanceof ScratchesSearchScope) {
           return (ScratchesSearchScope)scope;
