@@ -67,7 +67,7 @@
       <add-to-group group-id="SettingsEntryPointGroup" anchor="after" relative-to-action="WelcomeScreen.Plugins"/>
     </action>
 
-    <action id="SettingsSyncOpenSettingsAction" class="com.intellij.settingsSync.config.SettingsSyncOpenSettingsAction">
+    <action id="SettingsSyncOpenSettingsAction" class="com.intellij.settingsSync.config.SettingsSyncOpenSettingsAction$Simple">
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
   </actions>
