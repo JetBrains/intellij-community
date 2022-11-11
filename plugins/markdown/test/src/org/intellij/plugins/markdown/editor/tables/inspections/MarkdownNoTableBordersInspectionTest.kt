@@ -79,6 +79,17 @@ class MarkdownNoTableBordersInspectionTest: LightPlatformCodeInsightFixture4Test
     doTest(expected)
   }
 
+  @Test
+  fun `no inspection for table inside block quote`() {
+    // language=Markdown
+    val expected = """
+    > | none | none |
+    > |------|------|
+    > | some | some |
+    """.trimIndent()
+    doTest(expected)
+  }
+
   private fun doTest(expected: String) {
     TableTestUtils.runWithChangedSettings(myFixture.project) {
       myFixture.configureByText("some.md", expected)

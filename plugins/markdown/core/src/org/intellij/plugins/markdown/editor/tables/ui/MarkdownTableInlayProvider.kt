@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
+import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTextRange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
@@ -57,20 +58,10 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
 
     private fun PsiElement.calculateStartOffsetForInlay(): Int {
       return when (this) {
-        is MarkdownTableSeparatorRow -> calculateStartOffsetForInlay()
+        is MarkdownTableSeparatorRow -> calculateActualTextRange().startOffset
         is MarkdownTableRow -> startOffset
         else -> error("This method should not be called on anything other than MarkdownTableRow or MarkdownTableSeparatorRow")
       }
-    }
-
-    /**
-     * This is a quick fix for calculating the correct start offset of table separator row.
-     * Currently, if the table is indented, the table separator element will contain line indentation as well.
-     * The problem only occurs with table separator row - regular rows elements don't include leading indents.
-     */
-    private fun MarkdownTableSeparatorRow.calculateStartOffsetForInlay(): Int {
-      val nonWhitespaceIndex = text.indexOfFirst { !it.isWhitespace() }
-      return startOffset + nonWhitespaceIndex.coerceAtLeast(0)
     }
   }
 

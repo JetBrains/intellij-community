@@ -175,4 +175,20 @@ object TableUtils {
            MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled &&
            file !in CodeStyle.getSettings(file).excludedFiles
   }
+
+  /**
+   * This is a quick fix for calculating the correct text range of table separator row.
+   * Currently, if the table is indented, the table separator element will contain line indentation as well.
+   * The problem only occurs with table separator row - regular rows elements don't include leading indents.
+   */
+  internal fun MarkdownTableSeparatorRow.calculateActualTextRange(): TextRange {
+    val text = text
+    val first = text.indexOfFirst { !it.isWhitespace() && it != '>'}
+    val last = text.indexOfLast { !it.isWhitespace() }
+    val end = when (last) {
+      -1 -> this.textLength
+      else -> last + 1
+    }
+    return TextRange(first.coerceAtLeast(0), end).shiftRight(startOffset)
+  }
 }

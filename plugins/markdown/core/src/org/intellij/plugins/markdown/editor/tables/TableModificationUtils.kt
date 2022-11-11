@@ -9,6 +9,7 @@ import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.containers.ContainerUtil
+import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTextRange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsCount
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
@@ -333,11 +334,11 @@ object TableModificationUtils {
   }
 
   fun MarkdownTableSeparatorRow.hasCorrectBorders(): Boolean {
-    val text = text
+    val range = calculateActualTextRange().shiftLeft(startOffset)
+    val text = range.substring(text)
     val first = text.firstOrNull { !it.isWhitespace() }
     val last = text.lastOrNull { !it.isWhitespace() }
     return first == TableProps.SEPARATOR_CHAR && last == TableProps.SEPARATOR_CHAR
-    //return text.let { it.startsWith(TableProps.SEPARATOR_CHAR) && it.endsWith(TableProps.SEPARATOR_CHAR) }
   }
 
   fun MarkdownTable.hasCorrectBorders(): Boolean {
