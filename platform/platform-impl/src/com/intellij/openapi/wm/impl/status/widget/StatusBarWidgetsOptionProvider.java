@@ -19,18 +19,26 @@ import java.util.function.Consumer;
 final class StatusBarWidgetsOptionProvider implements SearchTopHitProvider {
   @Override
   public void consumeTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
-    if (project == null) return;
+    if (project == null) {
+      return;
+    }
 
     StatusBarWidgetsManager manager = project.getService(StatusBarWidgetsManager.class);
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    if (statusBar == null) return;
+    if (statusBar == null) {
+      return;
+    }
 
     WordPrefixMatcher matcher = new WordPrefixMatcher(pattern);
     for (StatusBarWidgetFactory factory : manager.getWidgetFactories()) {
-      if (!factory.isConfigurable() || !factory.isAvailable(project) || !manager.canBeEnabledOnStatusBar(factory, statusBar)) continue;
+      if (!factory.isConfigurable() || !factory.isAvailable(project) || !manager.canBeEnabledOnStatusBar(factory, statusBar)) {
+        continue;
+      }
 
       String name = IdeBundle.message("label.show.status.bar.widget", factory.getDisplayName());
-      if (matcher.matches(name)) collector.accept(new StatusBarWidgetOption(factory, name));
+      if (matcher.matches(name)) {
+        collector.accept(new StatusBarWidgetOption(factory, name));
+      }
     }
   }
 
