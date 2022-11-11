@@ -355,20 +355,8 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
 }
 
 private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>): Runnable? {
-  var showSplash = false
-  for (arg in args) {
-    if (CommandLineArgs.SPLASH == arg) {
-      showSplash = true
-      break
-    }
-    else if (CommandLineArgs.NO_SPLASH == arg) {
-      return null
-    }
-  }
-
   // products may specify `splash` VM property; `nosplash` is deprecated and should be checked first
-  if (!showSplash &&
-      (java.lang.Boolean.getBoolean(CommandLineArgs.NO_SPLASH) || !java.lang.Boolean.getBoolean(CommandLineArgs.SPLASH))) {
+  if (!CommandLineArgs.isSplashNeeded(args)) {
     return null
   }
 
