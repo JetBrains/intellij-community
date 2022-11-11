@@ -1,27 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.ucache
 
-import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.ide.scratch.ScratchUtil
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.applyIf
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.BuilderSnapshot
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
 
@@ -37,16 +34,15 @@ fun KotlinScriptEntity.listDependencies(rootTypeId: KotlinScriptLibraryRootTypeI
     .filter { it.isValid }
     .toList()
 
-/**
- *  Warning! Function requires platform write-lock acquisition to complete.
- */
+@RequiresWriteLock
 internal fun Project.syncScriptEntities(actualScriptFiles: Sequence<VirtualFile>) {
-    var replaced: CompletableFuture<Boolean>
+    var replaced: Boolean
+    val wsModel = WorkspaceModel.getInstance(this)
     do {
-        val snapshot = WorkspaceModel.getInstance(this).getBuilderSnapshot()
+        val snapshot = wsModel.getBuilderSnapshot()
         snapshot.syncScriptEntities(actualScriptFiles, this)
-        replaced = snapshot.replaceModelWithSelf(this)
-    } while (!replaced.get())
+        replaced = wsModel.replaceProjectModel(snapshot.getStorageReplacement())
+    } while (!replaced)
 }
 
 private fun BuilderSnapshot.syncScriptEntities(filesToAddOrUpdate: Sequence<VirtualFile>, project: Project) {
@@ -82,11 +78,6 @@ private fun BuilderSnapshot.syncScriptEntities(filesToAddOrUpdate: Sequence<Virt
         }
     }
 }
-
-private fun BuilderSnapshot.replaceModelWithSelf(project: Project): CompletableFuture<Boolean> = CompletableFuture.supplyAsync(
-    { runWriteAction { WorkspaceModel.getInstance(project).replaceProjectModel(getStorageReplacement()) } },
-    CompletableFutureUtil.getEDTExecutor(ModalityState.NON_MODAL)
-)
 
 private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: VirtualFile, project: Project): List<KotlinScriptLibraryEntity> {
     val configurationManager = ScriptConfigurationManager.getInstance(project)
