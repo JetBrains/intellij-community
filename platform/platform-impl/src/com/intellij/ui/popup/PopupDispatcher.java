@@ -78,7 +78,14 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
 
     while (true) {
       if (eachParent.isDisposed() || !eachParent.getContent().isShowing()) {
-        getActiveRoot().cancel();
+        WizardPopup currentActiveRoot = getActiveRoot();
+        if (eachParent.getParent() == currentActiveRoot) {
+          currentActiveRoot.cancel();
+        }
+        else {
+          //explicitly set visible active root to correctly dispatch subsequent events
+          setShowing(currentActiveRoot);
+        }
         return false;
       }
 
