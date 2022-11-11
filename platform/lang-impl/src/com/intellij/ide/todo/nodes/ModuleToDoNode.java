@@ -31,28 +31,26 @@ public class ModuleToDoNode extends BaseToDoNode<Module> {
 
   @Override
   public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
-    return ReadAction.compute(() -> {
-      ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
-      if (myToDoSettings.getIsPackagesShown()) {
-        TodoTreeHelper.getInstance(getProject()).addPackagesToChildren(children, getValue(), myBuilder);
-      }
-      else {
-        for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
-          final PsiFile psiFile = i.next();
-          if (psiFile == null) { // skip invalid PSI files
-            continue;
-          }
-          final VirtualFile virtualFile = psiFile.getVirtualFile();
-          final boolean isInContent = ModuleRootManager.getInstance(getValue()).getFileIndex().isInContent(virtualFile);
-          if (!isInContent) continue;
-          TodoFileNode fileNode = new TodoFileNode(getProject(), psiFile, myBuilder, false);
-          if (getTreeStructure().accept(psiFile) && !children.contains(fileNode)) {
-            children.add(fileNode);
-          }
+    ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
+    if (myToDoSettings.getIsPackagesShown()) {
+      TodoTreeHelper.getInstance(getProject()).addPackagesToChildren(children, getValue(), myBuilder);
+    }
+    else {
+      for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
+        final PsiFile psiFile = i.next();
+        if (psiFile == null) { // skip invalid PSI files
+          continue;
+        }
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        final boolean isInContent = ModuleRootManager.getInstance(getValue()).getFileIndex().isInContent(virtualFile);
+        if (!isInContent) continue;
+        TodoFileNode fileNode = new TodoFileNode(getProject(), psiFile, myBuilder, false);
+        if (getTreeStructure().accept(psiFile) && !children.contains(fileNode)) {
+          children.add(fileNode);
         }
       }
-      return children;
-    });
+    }
+    return children;
   }
 
   @Override
