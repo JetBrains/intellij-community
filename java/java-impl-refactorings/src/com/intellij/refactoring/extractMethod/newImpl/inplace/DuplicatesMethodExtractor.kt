@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
@@ -104,7 +105,10 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
     val oldMethodCall = findMethodCallInside(calls.firstOrNull()) ?: throw IllegalStateException()
     val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull()) ?: throw IllegalStateException()
     fun confirmChangeSignature(): Boolean {
-      val dialog = SignatureSuggesterPreviewDialog(method, parametrizedExtraction.method, oldMethodCall, newMethodCall, duplicates.size)
+      val manager = CodeStyleManager.getInstance(project)
+      val initialMethod = manager.reformat(method.copy()) as PsiMethod
+      val parametrizedMethod = manager.reformat(parametrizedExtraction.method) as PsiMethod
+      val dialog = SignatureSuggesterPreviewDialog(initialMethod, parametrizedMethod, oldMethodCall, newMethodCall, duplicates.size)
       return dialog.showAndGet()
     }
     val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> {default} } ?: ::confirmChangeSignature
