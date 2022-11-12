@@ -14,10 +14,11 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 class KotlinUnresolvedReferenceQuickFixProvider: UnresolvedReferenceQuickFixProvider<PsiReference>() {
     override fun registerFixes(reference: PsiReference, registrar: QuickFixActionRegistrar) {
         val element = reference.element as? KtElement ?: return
+        val file = runReadAction { element.containingFile }
         val project = element.project
         val bindingContext = runReadAction { element.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS) }
         val diagnostics = bindingContext.diagnostics.filter {
-            it.severity == Severity.ERROR
+            it.severity == Severity.ERROR && runReadAction { it.psiElement.containingFile == file }
         }.ifEmpty { return }
 
         val quickFixProvider = Fe10QuickFixProvider.getInstance(project)
