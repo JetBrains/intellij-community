@@ -190,7 +190,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       require(modules.isNotEmpty()) {
         "No modules found for artifacts ${artifacts.map { it.name }}"
       }
-      context.messages.warning("Building $modules")
+      context.messages.warning("Building ${modules.joinToString()}")
       runBuild(moduleSet = modules,
                allModules = false,
                artifactNames = artifacts.map { it.name },
@@ -426,7 +426,7 @@ private class JpsMessageHandler(private val context: CompilationContext) : Messa
   }
 }
 
-private class BackedLogger constructor(category: String?, private val fileLogger: Logger?) : DefaultLogger(category) {
+private class BackedLogger(category: String?, private val fileLogger: Logger?) : DefaultLogger(category) {
   override fun error(@Nls message: @NonNls String?, t: Throwable?, vararg details: String) {
     if (t == null) {
       messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
@@ -442,11 +442,11 @@ private class BackedLogger constructor(category: String?, private val fileLogger
     fileLogger?.warn(message, t)
   }
 
-  override fun info(message: String) {
+  override fun info(message: String?) {
     fileLogger?.info(message)
   }
 
-  override fun info(message: String, t: Throwable?) {
+  override fun info(message: String?, t: Throwable?) {
     fileLogger?.info(message, t)
   }
 
@@ -454,7 +454,7 @@ private class BackedLogger constructor(category: String?, private val fileLogger
     return fileLogger != null && fileLogger.isDebugEnabled
   }
 
-  override fun debug(message: String) {
+  override fun debug(message: String?) {
     fileLogger?.debug(message)
   }
 
@@ -462,7 +462,7 @@ private class BackedLogger constructor(category: String?, private val fileLogger
     fileLogger?.debug(t)
   }
 
-  override fun debug(message: String, t: Throwable?) {
+  override fun debug(message: String?, t: Throwable?) {
     fileLogger?.debug(message, t)
   }
 
@@ -470,7 +470,7 @@ private class BackedLogger constructor(category: String?, private val fileLogger
     return fileLogger != null && fileLogger.isTraceEnabled
   }
 
-  override fun trace(message: String) {
+  override fun trace(message: String?) {
     fileLogger?.trace(message)
   }
 
