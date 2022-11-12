@@ -54,13 +54,13 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
   public static @Nullable IdeFrameDecorator decorate(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     try {
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         return new MacMainFrameDecorator(frame, parentDisposable);
       }
-      else if (SystemInfo.isWindows) {
+      else if (SystemInfoRt.isWindows) {
         return new WinMainFrameDecorator(frame);
       }
-      else if (SystemInfo.isXWindow) {
+      else if (SystemInfoRt.isXWindow) {
         if (X11UiUtil.isFullScreenSupported()) {
           return new EWMHFrameDecorator(frame, parentDisposable);
         }
@@ -165,7 +165,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         // KDE sends an unexpected MapNotify event if a window is deiconified.
         // suppress.focus.stealing fix handles the MapNotify event differently
         // if the application is not active
-        final WindowAdapter deIconifyListener = new WindowAdapter() {
+        WindowAdapter deIconifyListener = new WindowAdapter() {
           @Override
           public void windowDeiconified(WindowEvent event) {
             frame.toFront();
@@ -216,17 +216,22 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
     // Cache the initial value received from settings, because this value doesn't support change in runtime (we can't redraw frame headers
     // of frames already created, and changing this setting during any frame lifetime will cause weird effects).
-    return isCustomDecorationActiveCache.updateAndGet(
-      cached -> {
-        if (cached != null) return cached;
-        if (!isCustomDecorationAvailable()) return false;
-        Boolean override = UISettings.getMergeMainMenuWithWindowTitleOverrideValue();
-        if (override != null) return override;
-        return settings.getMergeMainMenuWithWindowTitle();
-      });
+    return isCustomDecorationActiveCache.updateAndGet(cached -> {
+      if (cached != null) {
+        return cached;
+      }
+      if (!isCustomDecorationAvailable()) {
+        return false;
+      }
+      Boolean override = UISettings.getMergeMainMenuWithWindowTitleOverrideValue();
+      if (override != null) {
+        return override;
+      }
+      return settings.getMergeMainMenuWithWindowTitle();
+    });
   }
 
   private static boolean getDefaultCustomDecorationState() {
-    return SystemInfo.isWindows && !Objects.equals(UISettings.getMergeMainMenuWithWindowTitleOverrideValue(), false);
+    return SystemInfoRt.isWindows && !Objects.equals(UISettings.getMergeMainMenuWithWindowTitleOverrideValue(), false);
   }
 }

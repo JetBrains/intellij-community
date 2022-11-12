@@ -35,6 +35,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -166,7 +167,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private JComponent myTargetComponent;
   private boolean myReservePlaceAutoPopupIcon = true;
   private boolean myShowSeparatorTitles;
-  private PopupHandler myPopupHandler;
+  private final PopupHandler myPopupHandler;
   private Image myCachedImage;
 
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(this);
@@ -244,7 +245,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     if (popupActionGroup == null) {
       myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
-    } else {
+    }
+    else {
       myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), place);
     }
   }
@@ -1232,8 +1234,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @ApiStatus.Internal
+  @RequiresEdt
   public void updateActionsImmediately(boolean includeInvisible) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (getParent() == null && myTargetComponent == null && !isTestMode && !includeInvisible) {
       LOG.warn(new Throwable("'" + myPlace + "' toolbar manual update is ignored. " +

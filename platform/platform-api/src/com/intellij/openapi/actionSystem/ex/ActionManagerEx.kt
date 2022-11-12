@@ -3,10 +3,7 @@ package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.PluginId
@@ -64,6 +61,7 @@ abstract class ActionManagerEx : ActionManager() {
       val app = ApplicationManager.getApplication()
       val created = app.serviceIfCreated<ActionManager>()
       if (created == null) {
+        @Suppress("DEPRECATION")
         (scope ?: app.coroutineScope).launch {
           val actionManager = (app as ComponentManagerEx).getServiceAsync(ActionManager::class.java).await()
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {

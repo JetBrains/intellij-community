@@ -129,12 +129,10 @@ public final class AppMode {
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
   }
 
-  @ApiStatus.Internal
   public static boolean isDevServer() {
     return Boolean.getBoolean("idea.use.dev.build.server");
   }
 
-  @ApiStatus.Internal
   public static String getDevBuildRunDirName(@NotNull String platformPrefix) {
     String result = System.getProperty("dev.build.dir");
     if (result == null) {

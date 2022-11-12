@@ -40,10 +40,6 @@ internal class FrameInfoHelper {
   @Volatile
   var isDirty = false
 
-  fun setInfoInDeviceSpace(info: FrameInfo) {
-    this.info = info
-  }
-
   fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame) {
     info = updateFrameInfo(frameHelper, frame, null, info)
   }
