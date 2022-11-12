@@ -197,7 +197,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
       if (entityClass == provider.getEntityClass()) {
         //noinspection unchecked
         builders.addAll(
-          ((IndexableEntityProvider<E>)provider).getReplacedEntityIteratorBuilders(oldEntity, newEntity));
+          ((IndexableEntityProvider<E>)provider).getReplacedEntityIteratorBuilders(oldEntity, newEntity, project));
       }
       if (provider instanceof IndexableEntityProvider.ParentEntityDependent &&
           entityClass == ((IndexableEntityProvider.ParentEntityDependent<?, ?>)provider).getParentEntityClass()) {

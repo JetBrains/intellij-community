@@ -61,7 +61,8 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
    */
   @NotNull
   Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull E oldEntity,
-                                                                                   @NotNull E newEntity);
+                                                                                   @NotNull E newEntity,
+                                                                                   @NotNull Project project);
 
   /**
    * Provides builders of iterators to index files after {@code entity} was removed

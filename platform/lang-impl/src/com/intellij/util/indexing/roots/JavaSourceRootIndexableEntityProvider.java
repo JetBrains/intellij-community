@@ -31,7 +31,8 @@ class JavaSourceRootIndexableEntityProvider implements ParentEntityDependent<Jav
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaSourceRootPropertiesEntity oldEntity,
-                                                                                                   @NotNull JavaSourceRootPropertiesEntity newEntity) {
+                                                                                                   @NotNull JavaSourceRootPropertiesEntity newEntity,
+                                                                                                   @NotNull Project project) {
     return collectBuildersOnReplacedEntityWithDataExtractor(oldEntity, newEntity,
                                                             JavaSourceRootIndexableEntityProvider::getDataForBuilders);
   }

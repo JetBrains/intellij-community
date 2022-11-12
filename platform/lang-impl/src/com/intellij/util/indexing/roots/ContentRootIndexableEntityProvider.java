@@ -64,7 +64,8 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ContentRootEntity oldEntity,
-                                                                                                   @NotNull ContentRootEntity newEntity) {
+                                                                                                   @NotNull ContentRootEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (!(newEntity.getExcludedPatterns().equals(oldEntity.getExcludedPatterns()))) {
       return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getSymbolicId(), newEntity.getUrl());
     }

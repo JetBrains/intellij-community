@@ -26,7 +26,8 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider implements ParentEn
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity oldEntity,
-                                                                                                   @NotNull ModuleCustomImlDataEntity newEntity) {
+                                                                                                   @NotNull ModuleCustomImlDataEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (shouldBeRescanned(oldEntity, newEntity)) {
       return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getModule().getSymbolicId());
     }

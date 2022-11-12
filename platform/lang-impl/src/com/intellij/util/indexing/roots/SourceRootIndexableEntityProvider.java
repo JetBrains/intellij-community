@@ -83,7 +83,8 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull SourceRootEntity oldEntity,
-                                                                                                   @NotNull SourceRootEntity newEntity) {
+                                                                                                   @NotNull SourceRootEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (!(newEntity.getUrl().equals(oldEntity.getUrl())) || !newEntity.getRootType().equals(oldEntity.getRootType())) {
       return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getContentRoot().getModule().getSymbolicId(),
                                                                newEntity.getUrl());
