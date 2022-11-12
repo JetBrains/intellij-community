@@ -1,3 +1,4 @@
+// PROBLEM: none
 // WITH_STDLIB
 fun test(){
     1.apply {
