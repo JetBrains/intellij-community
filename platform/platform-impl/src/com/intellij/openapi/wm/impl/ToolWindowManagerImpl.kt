@@ -59,15 +59,13 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.BitUtil
-import com.intellij.util.EventDispatcher
-import com.intellij.util.SingleAlarm
-import com.intellij.util.SystemProperties
+import com.intellij.util.*
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -476,10 +474,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   suspend fun init(frameHelper: ProjectFrameHelper, reopeningEditorsJob: Job) {
-    // Make sure we haven't already created the root tool window pane. We might have created panes for secondary frames, as they get
-    // registered differently, but we shouldn't have the main pane yet
-    LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
-    doInit(frameHelper, project.messageBus.connect(this), reopeningEditorsJob)
+    doInit(frameHelper = frameHelper, connection = project.messageBus.connect(this), reopeningEditorsJob = reopeningEditorsJob)
   }
 
   @VisibleForTesting
@@ -487,6 +482,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       frameState = frameHelper
+
+      // Make sure we haven't already created the root tool window pane. We might have created panes for secondary frames, as they get
+      // registered differently, but we shouldn't have the main pane yet
+      LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
 
       val toolWindowPane = frameHelper.rootPane!!.getToolWindowPane()
       // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
@@ -498,13 +497,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        ApplicationManager.getApplication().invokeLater({
-                                                          focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
-                                                            if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
-                                                              focusToolWindowByDefault()
-                                                            }
-                                                          })
-                                                        }, project.disposed)
+        @Suppress("DEPRECATION")
+        project.coroutineScope.launch(Dispatchers.EDT) {
+          focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
+            if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
+              focusToolWindowByDefault()
+            }
+          })
+        }.cancelOnDispose(this@ToolWindowManagerImpl)
       }
     })
   }

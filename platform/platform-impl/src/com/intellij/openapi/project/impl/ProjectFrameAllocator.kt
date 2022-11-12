@@ -9,7 +9,10 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.idea.AppMode
+import com.intellij.idea.CommandLineArgs
 import com.intellij.idea.SplashManager
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -33,6 +36,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
@@ -42,11 +46,14 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Frame
 import java.awt.Image
-import java.awt.Window
 import java.io.EOFException
 import java.nio.file.Path
+import javax.swing.JFrame
 import javax.swing.SwingUtilities
+import kotlin.coroutines.coroutineContext
 import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
   open suspend fun <T : Any> run(task: suspend CoroutineScope.(saveTemplateJob: Job?) -> T): T {
@@ -82,17 +89,23 @@ private fun CoroutineScope.saveTemplateAsync(options: OpenProjectTask): Job? {
 
 internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
+  @Volatile
+  private var deferredToolbarActionGroups: Deferred<List<Pair<ActionGroup, String>>>? = null
+
+  private var windowIsShown = false
 
   override suspend fun <T : Any> run(task: suspend CoroutineScope.(saveTemplateJob: Job?) -> T): T {
     return coroutineScope {
+      val isFrameNeededToBeShownImmediately = options.showFrameAsap || options.implOptions == null
       val deferredWindow = async(Dispatchers.EDT) {
         val frameManager = createFrameManager()
         val frameHelper = frameManager.createFrameHelper(this@ProjectUiFrameAllocator)
         frameHelper.init(installPainters = false)
         val window = frameManager.getWindow()
         // implOptions == null - not via recents project - show frame immediately
-        if (options.showFrameAsap || options.implOptions == null) {
-          frameManager.getWindow().isVisible = true
+        if (isFrameNeededToBeShownImmediately) {
+          windowIsShown = true
+          window.isVisible = true
         }
 
         deferredProjectFrameHelper.complete(frameHelper)
@@ -101,11 +114,27 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
       val saveTemplateDeferred = saveTemplateAsync(options)
 
-      val showIndicatorJob = showModalIndicatorForProjectLoading(
-        windowDeferred = deferredWindow,
-        title = getProgressTitle(),
-        isVisibleManaged = options.isVisibleManaged,
-      )
+      @Suppress("DEPRECATION")
+      deferredToolbarActionGroups = ApplicationManager.getApplication().coroutineScope.async {
+        runActivity("toolbar action groups computing") {
+          MainToolbar.computeActionGroups()
+        }
+      }
+
+      val showIndicatorJob = launch(Dispatchers.IO) {
+        val duration = if (isFrameNeededToBeShownImmediately ||
+                           options.isVisibleManaged ||
+                           AppMode.isLightEdit() ||
+                           !CommandLineArgs.isSplashNeeded(emptyList())) {
+          300.milliseconds
+        }
+        else {
+          3.seconds
+        }
+        delay(duration)
+        val window = deferredWindow.await()
+        showModalIndicatorForProjectLoading(window = window, setVisible = !isFrameNeededToBeShownImmediately && !options.isVisibleManaged)
+      }
       try {
         task(saveTemplateDeferred)
       }
@@ -162,7 +191,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
       service<StartUpPerformanceService>().addActivityListener(project)
 
-      withContext(Dispatchers.EDT) {
+      val editorComponent = withContext(Dispatchers.EDT) {
         runActivity("project frame assigning") {
           windowManager.assignFrame(frameHelper, project)
           frameHelper.setProject(project)
@@ -170,41 +199,53 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
         val editorComponent = fileEditorManager.init()
         frameHelper.rootPane!!.getToolWindowPane().setDocumentComponent(editorComponent)
-        // not as a part of a project modal dialog
-        @Suppress("DEPRECATION")
-        val reopeningEditorJob = project.coroutineScope.launchAndMeasure("editor reopening") {
-          restoreOpenedFiles(fileEditorManager = fileEditorManager,
-                             editorComponent = editorComponent,
-                             project = project,
-                             frameHelper = frameHelper)
+        editorComponent
+      }
+
+      // not as a part of a project loading dialog
+      @Suppress("DEPRECATION")
+      val reopeningEditorJob = project.coroutineScope.launchAndMeasure("editor reopening") {
+        restoreOpenedFiles(fileEditorManager = fileEditorManager,
+                           editorComponent = editorComponent,
+                           project = project,
+                           frameHelper = frameHelper)
+      }
+
+      @Suppress("DEPRECATION")
+      with(project.coroutineScope) {
+        initFrame(frameHelper, project, reopeningEditorJob)
+      }
+
+      reopeningEditorJob
+    }
+  }
+
+  private fun CoroutineScope.initFrame(frameHelper: ProjectFrameHelper, project: Project, reopeningEditorJob: Job) {
+    launch {
+      frameHelper.installDefaultProjectStatusBarWidgets(project)
+      frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project))
+    }
+
+    launchAndMeasure("tool window pane creation") {
+      val toolWindowManager = project.serviceAsync<ToolWindowManager>().await() as? ToolWindowManagerImpl ?: return@launchAndMeasure
+      toolWindowManager.init(frameHelper = frameHelper, reopeningEditorsJob = reopeningEditorJob)
+    }
+
+    launch {
+      val toolbarActionGroups = deferredToolbarActionGroups!!.await()
+      withContext(Dispatchers.EDT) {
+        runActivity("toolbar init") {
+          frameHelper.rootPane!!.initOrCreateToolbar(toolbarActionGroups)
         }
 
-        async {
-          frameHelper.installDefaultProjectStatusBarWidgets(project)
-          frameHelper.updateTitle(FrameTitleBuilder.getInstance().getProjectTitle(project))
+        runActivity("north components updating") {
+          frameHelper.rootPane!!.updateNorthComponents()
         }
 
-        @Suppress("DEPRECATION")
-        project.coroutineScope.launchAndMeasure("tool window pane creation") {
-          val toolWindowManager = ToolWindowManager.getInstance(project = project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
-          toolWindowManager.init(frameHelper = frameHelper, reopeningEditorsJob = reopeningEditorJob)
+        if (!options.isVisibleManaged && !windowIsShown) {
+          windowIsShown = true
+          frameHelper.frameOrNull?.isVisible = true
         }
-        @Suppress("DEPRECATION")
-        project.coroutineScope.launch(Dispatchers.EDT) {
-          val rootPane = frameHelper.rootPane!!
-          runActivity("north components updating") {
-            rootPane.updateNorthComponents()
-          }
-
-          runActivity("toolbar updating") {
-            rootPane.initOrCreateToolbar(project)
-          }
-
-          if (!options.isVisibleManaged) {
-            frameHelper.frameOrNull?.isVisible = true
-          }
-        }
-        reopeningEditorJob
       }
     }
   }
@@ -238,18 +279,10 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       }
     }
   }
-}
 
-@Suppress("DuplicatedCode")
-private fun CoroutineScope.showModalIndicatorForProjectLoading(
-  windowDeferred: Deferred<Window>,
-  title: @NlsContexts.ProgressTitle String,
-  isVisibleManaged: Boolean,
-): Job {
-  return launch(Dispatchers.IO) {
-    delay(300L)
-    val mainJob = this@showModalIndicatorForProjectLoading.coroutineContext.job
-    val window = windowDeferred.await()
+  @Suppress("DuplicatedCode")
+  private suspend fun showModalIndicatorForProjectLoading(window: JFrame, setVisible: Boolean) {
+    val mainJob = coroutineContext.job
     withContext(Dispatchers.EDT) {
       val ui = ProgressDialogUI()
       ui.progressBar.isIndeterminate = true
@@ -257,17 +290,18 @@ private fun CoroutineScope.showModalIndicatorForProjectLoading(
         mainJob.cancel("button cancel")
       }
       ui.backgroundButton.isVisible = false
-      ui.updateTitle(title)
+      ui.updateTitle(getProgressTitle())
       val dialog = ProgressDialogWrapper(
         panel = ui.panel,
         cancelAction = {
           mainJob.cancel("dialog cancel")
         },
-        peerFactory = { GlassPaneDialogWrapperPeer(window, it) }
+        peerFactory = { GlassPaneDialogWrapperPeer(it, window.glassPane as IdeGlassPaneEx) }
       )
       dialog.setUndecorated(true)
       dialog.pack()
-      launch { // will be run in an inner event loop
+      launch {
+        // will be run in an inner event loop
         val focusComponent = ui.cancelButton
         val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
         focusComponent.requestFocusInWindow()
@@ -280,7 +314,8 @@ private fun CoroutineScope.showModalIndicatorForProjectLoading(
       }.invokeOnCompletion {
         dialog.close(DialogWrapper.OK_EXIT_CODE)
       }
-      if (!isVisibleManaged) {
+      if (setVisible && !windowIsShown) {
+        windowIsShown = true
         window.isVisible = true
       }
       // will spin an inner event loop
@@ -337,7 +372,7 @@ internal interface ProjectUiFrameManager {
   // executed in EDT
   suspend fun createFrameHelper(allocator: ProjectUiFrameAllocator): ProjectFrameHelper
 
-  fun getWindow(): Window
+  fun getWindow(): JFrame
 }
 
 private class SplashProjectUiFrameManager(private val frame: IdeFrameImpl) : ProjectUiFrameManager {

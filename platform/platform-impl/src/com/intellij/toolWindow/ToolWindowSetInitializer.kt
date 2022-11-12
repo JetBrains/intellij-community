@@ -102,11 +102,13 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       val tasks = ref.get()
       LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
       ref.set(null)
-      createAndLayoutToolWindows(manager, tasks ?: return, reopeningEditorsJob)
+      createAndLayoutToolWindows(manager = manager, tasks = tasks ?: return, reopeningEditorsJob = reopeningEditorsJob)
       // separate EDT task - ensure that more important tasks like editor restoring maybe executed
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        while (true) {
-          (pendingTasks.poll() ?: break).run()
+        runActivity("toolwindow init pending tasks processing") {
+          while (true) {
+            (pendingTasks.poll() ?: break).run()
+          }
         }
       }
     }

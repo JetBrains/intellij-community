@@ -7,6 +7,7 @@ import com.apple.eawt.FullScreenListener;
 import com.apple.eawt.FullScreenUtilities;
 import com.apple.eawt.event.FullScreenEvent;
 import com.intellij.ide.ActiveWindowsWatcher;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -116,8 +117,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         public void windowExitedFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = myFrame.getRootPane();
-          if (ExperimentalUI.isNewUI() && MainToolbarKt.isToolbarInHeader()) {
-            ToolbarUtil.removeSystemTitleBar(rootPane);
+          if (ExperimentalUI.isNewUI() && MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
+            ToolbarUtil.removeMacSystemTitleBar(rootPane);
           }
           else {
             ToolbarUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {

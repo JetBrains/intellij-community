@@ -5,21 +5,16 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
@@ -27,6 +22,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMe
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.UIUtil
@@ -46,18 +42,39 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton() else null
   }
 
+  companion object {
+    suspend fun computeActionGroups(): List<Pair<ActionGroup, String>> {
+      val app = ApplicationManager.getApplication() as ComponentManagerEx
+      app.getServiceAsync(ActionManager::class.java).await()
+      val customActionSchema = app.getServiceAsync(CustomActionsSchema::class.java).await()
+      return computeActionGroups(customActionSchema)
+    }
+
+    fun computeActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, String>> {
+      return sequenceOf(
+        HorizontalLayout.LEFT to "MainToolbarLeft",
+        HorizontalLayout.CENTER to "MainToolbarCenter",
+        HorizontalLayout.RIGHT to "MainToolbarRight",
+      )
+        .mapNotNull { (position, id) ->
+          (customActionSchema.getCorrectedAction(id) as ActionGroup?)?.let {
+            it to position
+          }
+        }
+        .toList()
+    }
+  }
+
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
-  fun init(project: Project?) {
+  @RequiresEdt
+  fun init(actionGroups: List<Pair<ActionGroup, String>>) {
     mainMenuButton?.let {
       addWidget(it.button, HorizontalLayout.LEFT)
     }
 
-    ActionManagerEx.withLazyActionManager(project?.coroutineScope ?: ApplicationManager.getApplication()?.coroutineScope) {
-      val customActionSchema = CustomActionsSchema.getInstance()
-      createActionBar("MainToolbarLeft", customActionSchema)?.let { addWidget(it, HorizontalLayout.LEFT) }
-      createActionBar("MainToolbarCenter", customActionSchema)?.let { addWidget(it, HorizontalLayout.CENTER) }
-      createActionBar("MainToolbarRight", customActionSchema)?.let { addWidget(it, HorizontalLayout.RIGHT) }
+    for ((actionGroup, position) in actionGroups) {
+      addWidget(widget = createActionBar(actionGroup), position = position)
     }
   }
 
@@ -76,8 +93,11 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     (widget as? Disposable)?.let { Disposer.register(disposable, it) }
   }
 
-  private fun createActionBar(groupId: String, customActionSchema: CustomActionsSchema): JComponent? {
-    val toolbar = createToolbar(groupId, customActionSchema) ?: return null
+  private fun createActionBar(group: ActionGroup): JComponent {
+    val toolbar = MyActionToolbarImpl(group = group)
+    toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
+    toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
+
     toolbar.setMinimumButtonSize(ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE)
     toolbar.targetComponent = null
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
@@ -87,14 +107,6 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     return component
   }
 
-  private fun createToolbar(groupId: String, schema: CustomActionsSchema): ActionToolbar? {
-    val group = schema.getCorrectedAction(groupId) as ActionGroup? ?: return null
-
-    return MyActionToolbarImpl(group).apply {
-      setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
-      setCustomButtonLook(HeaderToolbarButtonLook())
-    }
-  }
 }
 
 private val lightThemeDarkHeaderDisableFilter: Supplier<RGBImageFilter> = Supplier {
@@ -102,7 +114,6 @@ private val lightThemeDarkHeaderDisableFilter: Supplier<RGBImageFilter> = Suppli
 }
 
 private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
-
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
     for (i in 0 until bounds.size) fitRectangle(bounds[i], getComponent(i))
@@ -144,9 +155,9 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
   }
 }
 
-@JvmOverloads internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
-  return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos", true))
-          || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle)) && IdeFrameDecorator.isCustomDecorationAvailable()
+internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
+  return IdeFrameDecorator.isCustomDecorationAvailable() &&
+         (SystemInfoRt.isMac || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle))
 }
 
-internal fun isDarkHeader() = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
+internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))

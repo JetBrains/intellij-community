@@ -94,8 +94,9 @@ internal class MenuFrameHeader(frame: JFrame,
   override fun uninstallListeners() {
     ideMenu.selectionModel.removeChangeListener(changeListener)
     disposable?.let {
-      if (!Disposer.isDisposed(it))
+      if (!Disposer.isDisposed(it)) {
         Disposer.dispose(it)
+      }
       disposable = null
     }
 

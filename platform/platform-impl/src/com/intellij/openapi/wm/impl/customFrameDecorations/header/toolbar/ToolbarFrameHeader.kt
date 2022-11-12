@@ -3,16 +3,17 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
-import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
@@ -73,11 +74,20 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     override fun getMinimumSize(): Dimension = comp.preferredSize
   }
 
+  override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
+    doUpdateToolbar(toolbarActionGroups)
+  }
+
   override fun updateToolbar() {
+    doUpdateToolbar(MainToolbar.computeActionGroups(CustomActionsSchema.getInstance()))
+  }
+
+  @RequiresEdt
+  private fun doUpdateToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
     removeToolbar()
 
     val toolbar = MainToolbar()
-    toolbar.init((frame as? IdeFrame)?.project)
+    toolbar.init(toolbarActionGroups)
     toolbar.isOpaque = false
     toolbar.addComponentListener(contentResizeListener)
     this.toolbar = toolbar

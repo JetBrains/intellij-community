@@ -81,7 +81,6 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     vmParameters.addProperty("idea.is.internal", "true")
     vmParameters.addProperty("fus.internal.test.mode", "true")
     vmParameters.addProperty("jbScreenMenuBar.enabled", "true")
-    vmParameters.addProperty("apple.laf.useScreenMenuBar", "true")
     vmParameters.addProperty("jdk.attach.allowAttachSelf")
     vmParameters.addProperty("idea.initially.ask.config", "true")
   }
