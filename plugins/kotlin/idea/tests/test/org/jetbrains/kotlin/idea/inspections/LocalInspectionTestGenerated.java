@@ -14570,6 +14570,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/simplifyNestedEachInScope/apply3.kt");
         }
 
+        @TestMetadata("applyExplicitThis.kt")
+        public void testApplyExplicitThis() throws Exception {
+            runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyExplicitThis.kt");
+        }
+
+        @TestMetadata("applyExplicitThis2.kt")
+        public void testApplyExplicitThis2() throws Exception {
+            runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyExplicitThis2.kt");
+        }
+
         @TestMetadata("applyFunctionReference.kt")
         public void testApplyFunctionReference() throws Exception {
             runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyFunctionReference.kt");
@@ -14580,14 +14590,24 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyFunctionReferenceWithParentheses.kt");
         }
 
+        @TestMetadata("applyImplicitThis.kt")
+        public void testApplyImplicitThis() throws Exception {
+            runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyImplicitThis.kt");
+        }
+
+        @TestMetadata("applyImplicitThis2.kt")
+        public void testApplyImplicitThis2() throws Exception {
+            runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyImplicitThis2.kt");
+        }
+
         @TestMetadata("applyLabel.kt")
         public void testApplyLabel() throws Exception {
             runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyLabel.kt");
         }
 
-        @TestMetadata("applyLabel2.kt")
-        public void testApplyLabel2() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyLabel2.kt");
+        @TestMetadata("applyNestedApply.kt")
+        public void testApplyNestedApply() throws Exception {
+            runTest("testData/inspectionsLocal/simplifyNestedEachInScope/applyNestedApply.kt");
         }
     }
 
