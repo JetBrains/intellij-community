@@ -64,4 +64,29 @@ public class OverloadedVarargsMethodInspectionTest extends LightJavaInspectionTe
            "        }" +
            "    }");
   }
+
+  public void testNoWarningBecauseOfTypes() {
+    doTest("class Overload {" +
+           "  public void method() {}" +
+           "  public void method(int p1) {}" +
+           "  public void method(int p1, int p2) {}" +
+           "  public void method(int p1, String p2, int p3) {}" +
+           "  public void method(int p1, String p2, String p3, int p4) {}" +
+           "  public void method(int p1, String p2, String... p3) {}" +
+           "}");
+  }
+
+  public void testWarningForConvertibleArgumentTypes() {
+    doTest("class Overload {" +
+           "  public void method(Number p1, String p2) {}" +
+           "  public void /*Overloaded varargs method 'method()'*/method/**/(Integer p1, String p2, String... p3) {}" +
+           "}");
+  }
+
+  public void testWarningWithOneArgument() {
+    doTest("class Overload {" +
+           "  public void method() {}" +
+           "  public void /*Overloaded varargs method 'method()'*/method/**/(String... p1) {}" +
+           "}");
+  }
 }
