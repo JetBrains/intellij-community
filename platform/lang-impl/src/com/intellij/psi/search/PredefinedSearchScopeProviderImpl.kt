@@ -13,7 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.usages.UsageViewManager
 import kotlinx.coroutines.*
 
-class PredefinedSearchScopeProviderImpl(project: Project) : PredefinedSearchScopeProviderBase(project),
+open class PredefinedSearchScopeProviderImpl(project: Project) : PredefinedSearchScopeProviderBase(project),
                                                             Disposable {
 
   private val scope = CoroutineScope(SupervisorJob())
