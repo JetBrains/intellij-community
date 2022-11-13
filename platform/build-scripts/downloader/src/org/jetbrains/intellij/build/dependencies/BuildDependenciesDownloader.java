@@ -410,21 +410,26 @@ public final class BuildDependenciesDownloader {
   private static HttpResponse<Path> getResponseFollowingRedirects(URI uri, Path tempFile, String bearerToken) throws Exception {
     HttpRequest request = createBuildScriptDownloaderRequest(uri, bearerToken);
     HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
-
+    String originHost = uri.getHost();
     int REDIRECT_LIMIT = 10;
     for (int i = 0; i < REDIRECT_LIMIT; i++) {
       int statusCode = response.statusCode();
-      if (!(statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308))
+      if (!(statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308)) {
         return response;
+      }
 
       Optional<String> locationHeader = response.headers().firstValue("Location");
       if (locationHeader.isEmpty()) {
         locationHeader = response.headers().firstValue("location");
-        if (locationHeader.isEmpty())
+        if (locationHeader.isEmpty()) {
           return response;
+        }
       }
 
-      request = createBuildScriptDownloaderRequest(new URI(locationHeader.get()), bearerToken);
+      URI newUri = new URI(locationHeader.get());
+      request = newUri.getHost().equals(originHost)
+                ? createBuildScriptDownloaderRequest(newUri, bearerToken)
+                : createBuildScriptDownloaderRequest(newUri, null);
       response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
     }
 
