@@ -407,6 +407,11 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     if (result == null) {
       return NODE_ICON_RUNNING;
     }
+
+    if (result instanceof MessageEventResult) {
+      return getIcon(((MessageEventResult) result).getKind());
+    }
+
     if (isFailed(result)) {
       return NODE_ICON_ERROR;
     }
