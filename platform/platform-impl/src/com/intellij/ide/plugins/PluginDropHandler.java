@@ -35,6 +35,17 @@ public final class PluginDropHandler extends CustomFileDropHandler {
     JComponent parent = editor != null ? editor.getComponent() : null;
     List<? extends File> files = FileCopyPasteUtil.getFileList(transferable);
     return !ContainerUtil.isEmpty(files) &&
-           ContainerUtil.process(files, file -> PluginInstaller.installFromDisk(file, project, parent));
+           ContainerUtil.process(files, file -> installFromDisk(file, project, parent));
+  }
+
+  private static boolean installFromDisk(@NotNull File file,
+                                         @Nullable Project project,
+                                         @Nullable JComponent parentComponent) {
+    return PluginInstaller.installFromDisk(new InstalledPluginsTableModel(project),
+                                           PluginEnabler.HEADLESS,
+                                           file,
+                                           parentComponent,
+                                           callbackData -> PluginInstaller.installPluginFromCallbackData(callbackData, project,
+                                                                                                         parentComponent));
   }
 }
