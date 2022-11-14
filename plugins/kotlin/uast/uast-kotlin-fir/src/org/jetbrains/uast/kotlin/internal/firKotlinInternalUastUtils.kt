@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.type.MapPsiToAsmDesc
-import org.jetbrains.kotlin.types.typeUtil.TypeNullability
+import org.jetbrains.kotlin.types.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedLightMethod

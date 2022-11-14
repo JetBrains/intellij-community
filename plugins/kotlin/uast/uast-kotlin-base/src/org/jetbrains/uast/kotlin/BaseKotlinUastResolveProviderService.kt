@@ -4,7 +4,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.types.typeUtil.TypeNullability
+import org.jetbrains.kotlin.types.TypeNullability
 import org.jetbrains.uast.*
 
 interface BaseKotlinUastResolveProviderService {

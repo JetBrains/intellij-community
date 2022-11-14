@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
-import org.jetbrains.kotlin.types.typeUtil.TypeNullability
+import org.jetbrains.kotlin.types.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 
 /**

@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.collectFunctions
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeNullability
 import org.jetbrains.kotlin.types.TypeSubstitutor
-import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.isValidOperator
 import org.jetbrains.kotlin.utils.addIfNotNull
