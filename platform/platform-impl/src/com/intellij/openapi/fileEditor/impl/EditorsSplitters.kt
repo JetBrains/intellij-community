@@ -147,7 +147,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   private val windows = CopyOnWriteArraySet<EditorWindow>()
 
   // temporarily used during initialization
-  private val state = AtomicReference<EditorSplittersState?>()
+  private val state = AtomicReference<EditorSplitterState?>()
 
   @JvmField
   internal var insideChange: Int = 0
@@ -372,8 +372,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun readExternal(element: Element) {
-    val editorSplittersState = EditorSplittersState(element)
-    state.set(editorSplittersState)
+    state.set(EditorSplitterState(element))
   }
 
   fun getSelectedEditors(): Array<FileEditor> {
@@ -819,16 +818,16 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
   override fun canImport(comp: JComponent, transferFlavors: Array<DataFlavor>) = fileDropHandler.canHandleDrop(transferFlavors)
 }
 
-internal class EditorSplittersState(element: Element) {
+internal class EditorSplitterState(element: Element) {
   @JvmField
   val first: Element?
   @JvmField
   val second: Element?
 
   @JvmField
-  val firstSplitter: EditorSplittersState?
+  val firstSplitter: EditorSplitterState?
   @JvmField
-  val secondSplitter: EditorSplittersState?
+  val secondSplitter: EditorSplitterState?
 
   @JvmField
   val files: List<FileEntry>
@@ -852,8 +851,8 @@ internal class EditorSplittersState(element: Element) {
     first = splitterElement?.getChild("split-first")
     second = splitterElement?.getChild("split-second")
 
-    firstSplitter = first?.let { EditorSplittersState(it) }
-    secondSplitter = second?.let { EditorSplittersState(it) }
+    firstSplitter = first?.let { EditorSplitterState(it) }
+    secondSplitter = second?.let { EditorSplitterState(it) }
 
     isVertical = splitterElement?.getAttributeValue("split-orientation") == "vertical"
     proportion = splitterElement?.getAttributeValue("split-proportion")?.toFloat() ?: 0.5f
@@ -871,13 +870,13 @@ internal class EditorSplittersState(element: Element) {
 }
 
 private class UIBuilder(private val splitters: EditorsSplitters) {
-  suspend fun process(state: EditorSplittersState, context: JPanel?): JPanel {
+  suspend fun process(state: EditorSplitterState, context: JPanel?): JPanel {
     if (state.firstSplitter != null && state.secondSplitter != null) {
       return processSplitter(state, context)
     }
 
     val files = state.files
-    val trimmedFiles: List<EditorSplittersState.FileEntry>
+    val trimmedFiles: List<EditorSplitterState.FileEntry>
     var toRemove = files.size - EditorWindow.tabLimit
     if (toRemove <= 0) {
       trimmedFiles = files
@@ -897,7 +896,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     return processFiles(fileEntries = trimmedFiles, tabSizeLimit = state.tabSizeLimit, context = context)
   }
 
-  private suspend fun processFiles(fileEntries: List<EditorSplittersState.FileEntry>, tabSizeLimit: Int, context: JPanel?): JPanel {
+  private suspend fun processFiles(fileEntries: List<EditorSplitterState.FileEntry>, tabSizeLimit: Int, context: JPanel?): JPanel {
     val window = withContext(Dispatchers.EDT) {
       var editorWindow = context?.let(splitters::findWindowWith)
       if (editorWindow == null) {
@@ -976,7 +975,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     return window.panel
   }
 
-  suspend fun processSplitter(state: EditorSplittersState, context: JPanel?): JPanel {
+  suspend fun processSplitter(state: EditorSplitterState, context: JPanel?): JPanel {
     if (context == null) {
       val firstComponent = process(state = state.firstSplitter!!, context = null)
       val secondComponent = process(state = state.secondSplitter!!, context = null)

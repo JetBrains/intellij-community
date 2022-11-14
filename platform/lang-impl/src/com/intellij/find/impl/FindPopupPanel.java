@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -294,7 +295,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
       JRootPane root = ((RootPaneContainer)dialogWindow).getRootPane();
 
-      IdeGlassPaneImpl glass = (IdeGlassPaneImpl)myDialog.getRootPane().getGlassPane();
+      IdeGlassPaneEx glass = (IdeGlassPaneEx)myDialog.getRootPane().getGlassPane();
       WindowResizeListener resizeListener = new WindowResizeListener(
         root,
         JBUI.insets(4),

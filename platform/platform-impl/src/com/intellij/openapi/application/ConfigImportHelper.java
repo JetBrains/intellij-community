@@ -477,7 +477,7 @@ public final class ConfigImportHelper {
 
       if (home.equals(newConfigDir.getParent()) &&
           ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED &&
-          ProjectManagerEx.isChildProcessPath(newConfigDir)) {
+          ProjectManagerEx.Companion.isChildProcessPath(newConfigDir)) {
         exactCandidates.add(home);
         break;
       }

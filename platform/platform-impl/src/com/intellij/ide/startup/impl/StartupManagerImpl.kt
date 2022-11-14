@@ -157,7 +157,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
   }
 
-  suspend fun runStartupActivities() {
+  suspend fun runPostStartupActivities() {
     // opened on startup
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
     // opened from the welcome screen

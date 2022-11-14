@@ -52,6 +52,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.BalloonImpl
@@ -487,7 +488,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       // registered differently, but we shouldn't have the main pane yet
       LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
 
-      val toolWindowPane = frameHelper.rootPane!!.getToolWindowPane()
+      val toolWindowPane = frameHelper.rootPane.getToolWindowPane()
       // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
       // reopening other frames, their tool window panes will be already added, but we still need to initialise the tool windows themselves.
       toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
@@ -559,7 +560,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   fun projectClosed() {
-    (frameState ?: return).releaseFrame()
+    WindowManagerEx.getInstanceEx().releaseFrame(frameState ?: return)
 
     toolWindowPanes.values.forEach { it.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, null) }
 
@@ -741,7 +742,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
   override val activeToolWindowId: String?
     get() {
-      val frame = toolWindowPanes.values.firstOrNull { it.frame.isActive }?.frame ?: frameState?.frameOrNull ?: return null
+      val frame = toolWindowPanes.values.firstOrNull { it.frame.isActive }?.frame ?: frameState?.frame ?: return null
       if (frame.isActive) {
         return getToolWindowIdForComponent(frame.mostRecentFocusOwner)
       }

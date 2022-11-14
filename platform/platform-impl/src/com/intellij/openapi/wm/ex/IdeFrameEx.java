@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.wm.IdeFrame;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ public interface IdeFrameEx extends IdeFrame {
   void setFileTitle(@Nullable String fileTitle, @Nullable Path ioFile);
 
   @NotNull
-  CompletableFuture<?> toggleFullScreen(boolean state);
+  Job toggleFullScreen(boolean state);
 
   @Nullable
   JComponent getNorthExtension(@NotNull String key);

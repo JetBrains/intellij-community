@@ -28,7 +28,7 @@ final class WindowShadowPainter extends AbstractPainter {
           if (root != null) {
             Component pane = root.getGlassPane();
             if (pane instanceof IdeGlassPaneImpl) {
-              WindowShadowPainter painter = (WindowShadowPainter)((IdeGlassPaneImpl)pane).windowShadowPainter;
+              WindowShadowPainter painter = (WindowShadowPainter)((IdeGlassPaneImpl)pane).getWindowShadowPainter$intellij_platform_ide_impl();
               if (painter != null && pane == painter.myComponent) {
                 List<Rectangle> shadows = painter.myShadows;
                 painter.myShadows = getShadows(pane, (Window)c);

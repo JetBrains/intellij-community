@@ -1,589 +1,667 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+@file:Suppress("ReplacePutWithAssignment")
 
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.dnd.DnDAware;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.ui.AbstractPainter;
-import com.intellij.openapi.ui.Divider;
-import com.intellij.openapi.ui.Painter;
-import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.Weighted;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyClipboardOwner;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.wm.impl
 
-import javax.swing.*;
-import javax.swing.text.html.HTMLEditorKit;
-import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.*;
-import java.util.List;
-import java.util.*;
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.IdeTooltipManager
+import com.intellij.ide.RemoteDesktopService
+import com.intellij.ide.dnd.DnDAware
+import com.intellij.idea.AppMode
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.ui.AbstractPainter
+import com.intellij.openapi.ui.Divider
+import com.intellij.openapi.ui.Painter
+import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.TransparentLayeredPane
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.Weighted
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.JBColor
+import com.intellij.util.cancelOnDispose
+import com.intellij.util.ui.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import java.awt.*
+import java.awt.datatransfer.StringSelection
+import java.awt.event.*
+import java.util.*
+import javax.swing.*
+import javax.swing.text.html.HTMLEditorKit
+import kotlin.time.Duration.Companion.milliseconds
 
-public final class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
-  private static final Logger LOG = Logger.getInstance(IdeGlassPaneImpl.class);
-  private static final String PREPROCESSED_CURSOR_KEY = "SuperCursor";
+class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
+  private val mouseListeners = ArrayList<EventListener>()
 
-  private final List<EventListener> myMouseListeners = new ArrayList<>();
-
-  private final Set<EventListener> mySortedMouseListeners = new TreeSet<>((o1, o2) -> {
-    double weight1 = o1 instanceof Weighted w1 ? w1.getWeight() : 0;
-    double weight2 = o2 instanceof Weighted w2 ? w2.getWeight() : 0;
-    return weight1 > weight2 ? 1 : weight1 < weight2 ? -1 : myMouseListeners.indexOf(o1) - myMouseListeners.indexOf(o2);
-  });
-
-  private final JRootPane myRootPane;
-
-  private final Map<String, PaintersHelper> myNamedPainters = new HashMap<>();
-
-  private boolean myPreprocessorActive;
-  private final Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<>();
-
-  private Component myLastCursorComponent;
-  private Cursor myLastOriginalCursor;
-  private MouseEvent myPrevPressEvent;
-
-  AbstractPainter windowShadowPainter;
-  private boolean paintersInstalled;
-
-  public IdeGlassPaneImpl(JRootPane rootPane) {
-    this(rootPane, false);
+  private val sortedMouseListeners = TreeSet<EventListener> { o1, o2 ->
+    val weight1 = if (o1 is Weighted) o1.weight else 0.0
+    val weight2 = if (o2 is Weighted) o2.weight else 0.0
+    if (weight1 > weight2) 1 else if (weight1 < weight2) -1 else mouseListeners.indexOf(o1) - mouseListeners.indexOf(o2)
   }
 
-  public IdeGlassPaneImpl(JRootPane rootPane, boolean installPainters) {
-    myRootPane = rootPane;
-    setOpaque(false);
-    setVisible(false);
+  private val pane: JRootPane
+  private val namedPainters = HashMap<String, PaintersHelper>()
+  private var isPreprocessorActive = false
+  private val listenerToCursor = LinkedHashMap<Any, Cursor>()
+  private var lastCursorComponent: Component? = null
+  private var lastOriginalCursor: Cursor? = null
+  private var prevPressEvent: MouseEvent? = null
+  internal var windowShadowPainter: AbstractPainter? = null
+  private var paintersInstalled = false
+  private var loadingIndicator: IdePaneLoadingLayer? = null
+
+  @JvmOverloads
+  constructor(rootPane: JRootPane, installPainters: Boolean = false) {
+    pane = rootPane
+    isOpaque = false
+    isVisible = false
     // workaround to fix cursor when some semi-transparent 'highlighting area' overrides it to default
-    setEnabled(false);
-    setLayout(null);
+    isEnabled = false
+    layout = null
     if (installPainters) {
-      installPainters();
+      installPainters()
     }
   }
 
-  void installPainters() {
-    if (paintersInstalled) {
-      return;
-    }
+  internal constructor(rootPane: JRootPane, loadingState: FrameLoadingState?, parentDisposable: Disposable) {
+    pane = rootPane
+    isOpaque = false
 
-    paintersInstalled = true;
-
-    IdeBackgroundUtil.initFramePainters(this);
-    IdeBackgroundUtil.initEditorPainters(this);
-
-    if (SystemInfoRt.isWindows && Boolean.getBoolean("ide.window.shadow.painter")) {
-      windowShadowPainter = new WindowShadowPainter();
-      getPainters().addPainter(windowShadowPainter, null);
-    }
-  }
-
-  @Override
-  public boolean dispatch(@NotNull final AWTEvent e) {
-    return e instanceof MouseEvent && dispatchMouseEvent((MouseEvent)e);
-  }
-
-  private boolean dispatchMouseEvent(@NotNull MouseEvent event) {
-    JRootPane eventRootPane = myRootPane;
-
-    Window eventWindow = ComponentUtil.getWindow(event.getComponent());
-    if (isContextMenu(eventWindow)) {
-      return false;
-    }
-
-    Window thisGlassWindow = SwingUtilities.getWindowAncestor(myRootPane);
-    if (eventWindow != thisGlassWindow) {
-      return false;
-    }
-
-    if (event.getID() == MouseEvent.MOUSE_DRAGGED) {
-      if (ApplicationManager.getApplication() != null) {
-        IdeTooltipManager.getInstance().hideCurrent(event);
-      }
-    }
-
-    boolean dispatched;
-    if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED || event.getID() == MouseEvent.MOUSE_CLICKED) {
-      dispatched = preprocess(event, false, eventRootPane);
-    }
-    else if (event.getID() == MouseEvent.MOUSE_MOVED || event.getID() == MouseEvent.MOUSE_DRAGGED) {
-      dispatched = preprocess(event, true, eventRootPane);
-    }
-    else if (event.getID() == MouseEvent.MOUSE_EXITED || event.getID() == MouseEvent.MOUSE_ENTERED) {
-      dispatched = preprocess(event, false, eventRootPane);
+    // workaround to fix cursor when some semi-transparent 'highlighting area' overrides it to default
+    isEnabled = false
+    layout = null
+    if (AppMode.isHeadless() ||
+        loadingState == null ||
+        loadingState.loading.isCompleted ||
+        ApplicationManager.getApplication().isHeadlessEnvironment) {
+      isVisible = false
+      installPainters()
     }
     else {
-      return false;
-    }
-
-    Component meComponent = event.getComponent();
-    if (!dispatched && meComponent != null) {
-      if (eventWindow != SwingUtilities.getWindowAncestor(myRootPane)) {
-        return false;
-      }
-
-      int button1 = InputEvent.BUTTON1_MASK | InputEvent.BUTTON1_DOWN_MASK;
-      boolean pureMouse1Event = (event.getModifiersEx() | button1) == button1;
-      if (pureMouse1Event && event.getClickCount() <= 1 && !event.isPopupTrigger()) {
-        Container parent = myRootPane.getContentPane().getParent();
-        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), parent);
-        Component target = SwingUtilities.getDeepestComponentAt(parent, point.x, point.y);
-        dispatched = target instanceof DnDAware && dispatchForDnDAware(event, point, target);
+      isVisible = true
+      loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState, parentDisposable = parentDisposable) {
+        loadingIndicator = null
       }
     }
-
-    if (isVisible() && getComponentCount() == 0) {
-      boolean cursorSet = false;
-      if (meComponent != null) {
-        Container parent = myRootPane.getContentPane().getParent();
-        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), parent);
-        Component target = SwingUtilities.getDeepestComponentAt(parent, point.x, point.y);
-        if (target != null) {
-          UIUtil.setCursor(this, target.getCursor());
-          cursorSet = true;
-        }
-      }
-
-      if (!cursorSet) {
-        UIUtil.setCursor(this, Cursor.getDefaultCursor());
-      }
-    }
-
-    return dispatched;
   }
 
-  private boolean dispatchForDnDAware(@NotNull MouseEvent event, @NotNull Point point, @NotNull Component target) {
-    Point targetPoint = SwingUtilities.convertPoint(myRootPane.getContentPane().getParent(), point.x, point.y, target);
-    boolean overSelection = ((DnDAware)target).isOverSelection(targetPoint);
-    if (!overSelection) {
-      return false;
+  companion object {
+    private const val PREPROCESSED_CURSOR_KEY = "SuperCursor"
+
+    private fun isContextMenu(window: Window?): Boolean {
+      if (window is JWindow) {
+        for (component in window.layeredPane.components) {
+          if (component is JPanel && component.components.any { it is JPopupMenu }) {
+            return true
+          }
+        }
+      }
+      return false
     }
 
-    boolean dispatched = false;
-    switch (event.getID()) {
-      case MouseEvent.MOUSE_PRESSED -> {
-        if (target.isFocusable()) {
-          IdeFocusManager.getGlobalInstance()
-            .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(target, true));
+    private fun setCursor(target: Component, cursor: Cursor) {
+      if (target is EditorComponentImpl) {
+        target.editor.setCustomCursor(IdeGlassPaneImpl::class.java, cursor)
+      }
+      else {
+        if (target is JComponent) {
+          savePreProcessedCursor(target, target.getCursor())
         }
-        boolean consumed = false;
-        MouseEvent mouseEvent = MouseEventAdapter.convert(event, target);
-        for (MouseListener listener : target.getListeners(MouseListener.class)) {
-          String className = listener.getClass().getName();
+        UIUtil.setCursor(target, cursor)
+      }
+    }
+
+    private fun resetCursor(target: Component, lastCursor: Cursor?) {
+      if (target is EditorComponentImpl) {
+        target.editor.setCustomCursor(IdeGlassPaneImpl::class.java, null)
+      }
+      else {
+        var cursor: Cursor? = null
+        if (target is JComponent) {
+          cursor = target.getClientProperty(PREPROCESSED_CURSOR_KEY) as Cursor?
+          target.putClientProperty(PREPROCESSED_CURSOR_KEY, null)
+        }
+        UIUtil.setCursor(target, cursor ?: lastCursor)
+      }
+    }
+
+    private fun canProcessCursorFor(target: Component?): Boolean {
+      return target !is JMenuItem &&
+             target !is Divider &&
+             target !is JSeparator &&
+             !(target is JEditorPane && target.editorKit is HTMLEditorKit)
+    }
+
+    private fun getCompWithCursor(c: Component?): Component? {
+      var eachParentWithCursor = c
+      while (eachParentWithCursor != null) {
+        if (eachParentWithCursor.isCursorSet) {
+          return eachParentWithCursor
+        }
+        eachParentWithCursor = eachParentWithCursor.parent
+      }
+      return null
+    }
+
+    @JvmStatic
+    fun hasPreProcessedCursor(component: JComponent): Boolean {
+      return component.getClientProperty(PREPROCESSED_CURSOR_KEY) != null
+    }
+
+    @JvmStatic
+    fun savePreProcessedCursor(component: JComponent, cursor: Cursor): Boolean {
+      if (hasPreProcessedCursor(component)) {
+        return false
+      }
+      component.putClientProperty(PREPROCESSED_CURSOR_KEY, cursor)
+      return true
+    }
+
+    fun forgetPreProcessedCursor(component: JComponent) {
+      component.putClientProperty(PREPROCESSED_CURSOR_KEY, null)
+    }
+
+    private fun fireMouseEvent(listener: MouseListener, event: MouseEvent) {
+      when (event.id) {
+        MouseEvent.MOUSE_PRESSED -> listener.mousePressed(event)
+        MouseEvent.MOUSE_RELEASED -> listener.mouseReleased(event)
+        MouseEvent.MOUSE_ENTERED -> listener.mouseEntered(event)
+        MouseEvent.MOUSE_EXITED -> listener.mouseExited(event)
+        MouseEvent.MOUSE_CLICKED -> listener.mouseClicked(event)
+      }
+    }
+
+    private fun fireMouseMotion(listener: MouseMotionListener, event: MouseEvent) {
+      when (event.id) {
+        MouseEvent.MOUSE_DRAGGED -> {
+          listener.mouseDragged(event)
+          listener.mouseMoved(event)
+        }
+        MouseEvent.MOUSE_MOVED -> listener.mouseMoved(event)
+      }
+    }
+
+    private fun findComponent(e: MouseEvent, container: Container): Component? {
+      val lpPoint = SwingUtilities.convertPoint(e.component, e.point, container)
+      return SwingUtilities.getDeepestComponentAt(container, lpPoint.x, lpPoint.y)
+    }
+  }
+
+  override fun doLayout() {
+    loadingIndicator?.icon?.setBounds(0, 0, width, height)
+  }
+
+  fun installPainters() {
+    if (paintersInstalled) {
+      return
+    }
+
+    paintersInstalled = true
+    IdeBackgroundUtil.initFramePainters(this)
+    IdeBackgroundUtil.initEditorPainters(this)
+    if (SystemInfoRt.isWindows && java.lang.Boolean.getBoolean("ide.window.shadow.painter")) {
+      windowShadowPainter = WindowShadowPainter()
+      painters.addPainter(windowShadowPainter!!, null)
+    }
+  }
+
+  override fun dispatch(e: AWTEvent): Boolean {
+    if (e !is InputEvent) {
+      return false
+    }
+
+    loadingIndicator?.let {
+      if (it.handleInputEvent(e)) {
+        return true
+      }
+    }
+    return  e is MouseEvent && dispatchMouseEvent(e)
+  }
+
+  private fun dispatchMouseEvent(event: MouseEvent): Boolean {
+    val eventRootPane = pane
+    val eventWindow = ComponentUtil.getWindow(event.component)
+    if (isContextMenu(eventWindow)) {
+      return false
+    }
+
+    val thisGlassWindow = SwingUtilities.getWindowAncestor(pane)
+    if (eventWindow !== thisGlassWindow) {
+      return false
+    }
+
+    if (event.id == MouseEvent.MOUSE_DRAGGED) {
+      if (ApplicationManager.getApplication() != null) {
+        IdeTooltipManager.getInstance().hideCurrent(event)
+      }
+    }
+
+    var dispatched: Boolean
+    dispatched = when (event.id) {
+      MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_CLICKED -> preprocess(event, false, eventRootPane)
+      MouseEvent.MOUSE_MOVED, MouseEvent.MOUSE_DRAGGED -> preprocess(event, true, eventRootPane)
+      MouseEvent.MOUSE_EXITED, MouseEvent.MOUSE_ENTERED -> preprocess(event, false, eventRootPane)
+      else -> return false
+    }
+
+    val meComponent = event.component
+    if (!dispatched && meComponent != null) {
+      if (eventWindow !== SwingUtilities.getWindowAncestor(pane)) {
+        return false
+      }
+
+      @Suppress("DEPRECATION")
+      val button1 = InputEvent.BUTTON1_MASK or InputEvent.BUTTON1_DOWN_MASK
+      val pureMouse1Event = event.modifiersEx or button1 == button1
+      if (pureMouse1Event && event.clickCount <= 1 && !event.isPopupTrigger) {
+        val parent = pane.contentPane.parent
+        val point = SwingUtilities.convertPoint(meComponent, event.point, parent)
+        val target = SwingUtilities.getDeepestComponentAt(parent, point.x, point.y)
+        dispatched = target is DnDAware && dispatchForDnDAware(event, point, target)
+      }
+    }
+    if (isVisible && componentCount == 0) {
+      var cursorSet = false
+      if (meComponent != null) {
+        val parent = pane.contentPane.parent
+        val point = SwingUtilities.convertPoint(meComponent, event.point, parent)
+        val target = SwingUtilities.getDeepestComponentAt(parent, point.x, point.y)
+        if (target != null) {
+          UIUtil.setCursor(this, target.cursor)
+          cursorSet = true
+        }
+      }
+      if (!cursorSet) {
+        UIUtil.setCursor(this, Cursor.getDefaultCursor())
+      }
+    }
+    return dispatched
+  }
+
+  private fun dispatchForDnDAware(event: MouseEvent, point: Point, target: Component): Boolean {
+    val targetPoint = SwingUtilities.convertPoint(pane.contentPane.parent, point.x, point.y, target)
+    val overSelection = (target as DnDAware).isOverSelection(targetPoint)
+    if (!overSelection) {
+      return false
+    }
+
+    when (event.id) {
+      MouseEvent.MOUSE_PRESSED -> {
+        if (target.isFocusable) {
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
+            IdeFocusManager.getGlobalInstance().requestFocus(target, true)
+          }
+        }
+
+        var consumed = false
+        val mouseEvent = MouseEventAdapter.convert(event, target)
+        for (listener in target.getListeners(MouseListener::class.java)) {
+          val className = listener.javaClass.name
           if (className.contains("BasicTreeUI$") || className.contains("MacTreeUI$")) {
-            continue;
+            continue
           }
 
-          fireMouseEvent(listener, mouseEvent);
-          if (mouseEvent.isConsumed()) {
-            consumed = true;
-            break;
+          fireMouseEvent(listener = listener, event = mouseEvent)
+          if (mouseEvent.isConsumed) {
+            consumed = true
+            break
           }
         }
-        if (!mouseEvent.isConsumed()) {
-          AWTEventListener[] eventListeners = Toolkit.getDefaultToolkit().getAWTEventListeners(AWTEvent.MOUSE_EVENT_MASK);
-          if (eventListeners != null && eventListeners.length > 0) {
-            for (AWTEventListener eventListener : eventListeners) {
-              eventListener.eventDispatched(event);
-              if (event.isConsumed()) {
-                break;
+
+        if (!mouseEvent.isConsumed) {
+          val eventListeners = Toolkit.getDefaultToolkit().getAWTEventListeners(AWTEvent.MOUSE_EVENT_MASK)
+          if (eventListeners != null && eventListeners.isNotEmpty()) {
+            for (eventListener in eventListeners) {
+              eventListener.eventDispatched(event)
+              if (event.isConsumed) {
+                break
               }
             }
-
-            if (event.isConsumed()) {
-              break;
+            if (event.isConsumed) {
+              return false
             }
           }
         }
         if (consumed) {
-          event.consume();
+          event.consume()
         }
         else {
-          myPrevPressEvent = mouseEvent;
+          prevPressEvent = mouseEvent
         }
-        dispatched = true;
+        return true
       }
-      case MouseEvent.MOUSE_RELEASED -> {
-        return dispatchMouseReleased(event, target);
+      MouseEvent.MOUSE_RELEASED -> {
+        return dispatchMouseReleased(event, target)
       }
-      default -> myPrevPressEvent = null;
+      else -> {
+        prevPressEvent = null
+        return false
+      }
     }
-    return dispatched;
   }
 
-  private boolean dispatchMouseReleased(@NotNull MouseEvent event, @NotNull Component target) {
-    MouseEvent mouseEvent = MouseEventAdapter.convert(event, target);
-    if (myPrevPressEvent == null || myPrevPressEvent.getComponent() != target) {
-      return false;
+  private fun dispatchMouseReleased(event: MouseEvent, target: Component): Boolean {
+    val mouseEvent = MouseEventAdapter.convert(event, target)
+    if (prevPressEvent == null || prevPressEvent!!.component !== target) {
+      return false
     }
 
-    for (MouseListener listener : target.getListeners(MouseListener.class)) {
-      String className = listener.getClass().getName();
+    for (listener in target.getListeners(MouseListener::class.java)) {
+      val className = listener.javaClass.name
       if (className.contains("BasicTreeUI$") || className.contains("MacTreeUI$")) {
-        fireMouseEvent(listener, myPrevPressEvent);
-        fireMouseEvent(listener, mouseEvent);
-        if (mouseEvent.isConsumed()) {
-          break;
+        fireMouseEvent(listener, prevPressEvent!!)
+        fireMouseEvent(listener, mouseEvent)
+        if (mouseEvent.isConsumed) {
+          break
         }
       }
-
-      fireMouseEvent(listener, mouseEvent);
-      if (mouseEvent.isConsumed()) {
-        break;
+      fireMouseEvent(listener, mouseEvent)
+      if (mouseEvent.isConsumed) {
+        break
       }
     }
-
-    if (mouseEvent.isConsumed()) {
-      event.consume();
+    if (mouseEvent.isConsumed) {
+      event.consume()
     }
-
-    myPrevPressEvent = null;
-    return true;
+    prevPressEvent = null
+    return true
   }
 
-  private static boolean isContextMenu(Window window) {
-    if (window instanceof JWindow) {
-      JLayeredPane layeredPane = ((JWindow)window).getLayeredPane();
-      for (Component component : layeredPane.getComponents()) {
-        if (component instanceof JPanel
-            && ContainerUtil.findInstance(((JPanel)component).getComponents(), JPopupMenu.class) != null) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private boolean preprocess(@NotNull MouseEvent e, boolean motion, JRootPane eventRootPane) {
+  private fun preprocess(e: MouseEvent, motion: Boolean, eventRootPane: JRootPane): Boolean {
     try {
-      if (ComponentUtil.getWindow(this) != ComponentUtil.getWindow(e.getComponent())) {
-        return false;
+      if (ComponentUtil.getWindow(this) !== ComponentUtil.getWindow(e.component)) {
+        return false
       }
 
-      MouseEvent event = MouseEventAdapter.convert(e, eventRootPane);
-      if (event.isAltDown() && SwingUtilities.isLeftMouseButton(event) && event.getID() == MouseEvent.MOUSE_PRESSED) {
-        Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
-        Component component =
-          ComponentUtil.findParentByCondition(c, comp -> ClientProperty.isTrue(comp, UIUtil.TEXT_COPY_ROOT));
-        if (component != null) {
-          component.getToolkit().getSystemClipboard()
-            .setContents(new StringSelection(UIUtil.getDebugText(component)), EmptyClipboardOwner.INSTANCE);
-        }
+      val event = MouseEventAdapter.convert(e, eventRootPane)
+      if (event.isAltDown && SwingUtilities.isLeftMouseButton(event) && event.id == MouseEvent.MOUSE_PRESSED) {
+        val c = SwingUtilities.getDeepestComponentAt(e.component, e.x, e.y)
+        val component = ComponentUtil.findParentByCondition(c) { ClientProperty.isTrue(it, UIUtil.TEXT_COPY_ROOT) }
+        component?.toolkit?.systemClipboard?.setContents(StringSelection(UIUtil.getDebugText(component)), EmptyClipboardOwner.INSTANCE)
       }
 
       if (!IdeGlassPaneUtil.canBePreprocessed(e)) {
-        return false;
+        return false
       }
 
-      for (EventListener each : mySortedMouseListeners) {
-        if (motion && each instanceof MouseMotionListener) {
-          fireMouseMotion((MouseMotionListener)each, event);
+      for (each in sortedMouseListeners) {
+        if (motion && each is MouseMotionListener) {
+          fireMouseMotion(each, event)
         }
-        else if (!motion && each instanceof MouseListener) {
-          fireMouseEvent((MouseListener)each, event);
+        else if (!motion && each is MouseListener) {
+          fireMouseEvent(each, event)
         }
-
-        if (event.isConsumed()) {
-          e.consume();
-          return true;
+        if (event.isConsumed) {
+          e.consume()
+          return true
         }
       }
-
-      return false;
+      return false
     }
     finally {
-      if (eventRootPane == myRootPane) {
-        Cursor cursor;
-        if (!myListener2Cursor.isEmpty()) {
-          cursor = myListener2Cursor.values().iterator().next();
-
-          final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myRootPane.getContentPane());
-          Component target =
-            SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
-
+      if (eventRootPane === pane) {
+        if (!listenerToCursor.isEmpty()) {
+          val cursor = listenerToCursor.values.iterator().next()
+          val point = SwingUtilities.convertPoint(e.component, e.point, pane.contentPane)
+          var target = SwingUtilities.getDeepestComponentAt(pane.contentPane.parent, point.x, point.y)
           if (canProcessCursorFor(target)) {
-            target = getCompWithCursor(target);
-
-            restoreLastComponent(target);
-
+            target = getCompWithCursor(target)
+            restoreLastComponent(target)
             if (target != null) {
-              if (myLastCursorComponent != target) {
-                myLastCursorComponent = target;
-                myLastOriginalCursor = target.getCursor();
+              if (lastCursorComponent !== target) {
+                lastCursorComponent = target
+                lastOriginalCursor = target.cursor
               }
-
-              if (cursor != null && !cursor.equals(target.getCursor())) {
-                setCursor(target, cursor);
+              if (cursor != target.cursor) {
+                setCursor(target, cursor)
               }
             }
-
-            UIUtil.setCursor(getRootPane(), cursor);
+            UIUtil.setCursor(pane, cursor)
           }
         }
-        else if (!e.isConsumed() && e.getID() != MouseEvent.MOUSE_DRAGGED) {
-          cursor = Cursor.getDefaultCursor();
-          JRootPane rootPane = getRootPane();
-          if (rootPane != null) {
-            UIUtil.setCursor(rootPane, cursor);
-          } else {
-            LOG.warn("Root pane is null. Event: " + e);
-          }
-          restoreLastComponent(null);
-          myLastOriginalCursor = null;
-          myLastCursorComponent = null;
+        else if (!e.isConsumed && e.id != MouseEvent.MOUSE_DRAGGED) {
+          val cursor = Cursor.getDefaultCursor()
+          UIUtil.setCursor(pane, cursor)
+          restoreLastComponent(null)
+          lastOriginalCursor = null
+          lastCursorComponent = null
         }
-        myListener2Cursor.clear();
+        listenerToCursor.clear()
       }
     }
   }
 
-  private static void setCursor(@NotNull Component target, Cursor cursor) {
-    if (target instanceof EditorComponentImpl) {
-      ((EditorComponentImpl)target).getEditor().setCustomCursor(IdeGlassPaneImpl.class, cursor);
-    }
-    else {
-      if (target instanceof JComponent) {
-        savePreProcessedCursor((JComponent)target, target.getCursor());
-      }
-      UIUtil.setCursor(target, cursor);
+  private fun restoreLastComponent(newC: Component?) {
+    if (lastCursorComponent != null && lastCursorComponent !== newC) {
+      resetCursor(lastCursorComponent!!, lastOriginalCursor)
     }
   }
 
-  private static void resetCursor(@NotNull Component target, Cursor lastCursor) {
-    if (target instanceof EditorComponentImpl) {
-      ((EditorComponentImpl)target).getEditor().setCustomCursor(IdeGlassPaneImpl.class, null);
-    }
-    else {
-      Cursor cursor = null;
-      if (target instanceof JComponent jComponent) {
-        cursor = (Cursor)jComponent.getClientProperty(PREPROCESSED_CURSOR_KEY);
-        jComponent.putClientProperty(PREPROCESSED_CURSOR_KEY, null);
-      }
-      cursor = cursor == null ? lastCursor : cursor;
-      UIUtil.setCursor(target, cursor);
-    }
-  }
-
-  private static boolean canProcessCursorFor(Component target) {
-    return !(target instanceof JMenuItem) &&
-           !(target instanceof Divider) &&
-           !(target instanceof JSeparator) &&
-           !(target instanceof JEditorPane && ((JEditorPane)target).getEditorKit() instanceof HTMLEditorKit);
-  }
-
-  private static Component getCompWithCursor(Component c) {
-    Component eachParentWithCursor = c;
-    while (eachParentWithCursor != null) {
-      if (eachParentWithCursor.isCursorSet()) return eachParentWithCursor;
-      eachParentWithCursor = eachParentWithCursor.getParent();
-    }
-
-    return null;
-  }
-
-  private void restoreLastComponent(Component newC) {
-    if (myLastCursorComponent != null && myLastCursorComponent != newC) {
-      resetCursor(myLastCursorComponent, myLastOriginalCursor);
-    }
-  }
-
-  public static boolean hasPreProcessedCursor(@NotNull  JComponent component) {
-    return component.getClientProperty(PREPROCESSED_CURSOR_KEY) != null;
-  }
-
-  public static boolean savePreProcessedCursor(@NotNull  JComponent component, @NotNull Cursor cursor) {
-    if (hasPreProcessedCursor(component)) {
-      return false;
-    }
-
-    component.putClientProperty(PREPROCESSED_CURSOR_KEY, cursor);
-    return true;
-  }
-
-  public static void forgetPreProcessedCursor(@NotNull JComponent component) {
-    component.putClientProperty(PREPROCESSED_CURSOR_KEY, null);
-  }
-
-  @Override
-  public void setCursor(Cursor cursor, @NotNull Object requestor) {
+  override fun setCursor(cursor: Cursor?, requestor: Any) {
     if (cursor == null) {
-      myListener2Cursor.remove(requestor);
+      listenerToCursor.remove(requestor)
     }
     else {
-      myListener2Cursor.put(requestor, cursor);
+      listenerToCursor.put(requestor, cursor)
     }
   }
 
-  private static void fireMouseEvent(final MouseListener listener, final MouseEvent event) {
-    switch (event.getID()) {
-      case MouseEvent.MOUSE_PRESSED -> listener.mousePressed(event);
-      case MouseEvent.MOUSE_RELEASED -> listener.mouseReleased(event);
-      case MouseEvent.MOUSE_ENTERED -> listener.mouseEntered(event);
-      case MouseEvent.MOUSE_EXITED -> listener.mouseExited(event);
-      case MouseEvent.MOUSE_CLICKED -> listener.mouseClicked(event);
+  override fun addMousePreprocessor(listener: MouseListener, parent: Disposable) {
+    doAddListener(listener, parent)
+  }
+
+  override fun addMouseMotionPreprocessor(listener: MouseMotionListener, parent: Disposable) {
+    doAddListener(listener, parent)
+  }
+
+  private fun doAddListener(listener: EventListener, parent: Disposable) {
+    mouseListeners.add(listener)
+    Disposer.register(parent) { EdtInvocationManager.invokeLaterIfNeeded { removeListener(listener) } }
+    updateSortedList()
+    activateIfNeeded()
+  }
+
+  private fun removeListener(listener: EventListener) {
+    if (mouseListeners.remove(listener)) {
+      updateSortedList()
     }
+    deactivateIfNeeded()
   }
 
-  private static void fireMouseMotion(@NotNull MouseMotionListener listener, @NotNull MouseEvent event) {
-    switch (event.getID()) {
-      case MouseEvent.MOUSE_DRAGGED:
-        listener.mouseDragged(event);
-      case MouseEvent.MOUSE_MOVED:
-        listener.mouseMoved(event);
+  private fun updateSortedList() {
+    sortedMouseListeners.clear()
+    sortedMouseListeners.addAll(mouseListeners)
+  }
+
+  private fun deactivateIfNeeded() {
+    if (isPreprocessorActive && mouseListeners.isEmpty()) {
+      isPreprocessorActive = false
     }
+    applyActivationState()
   }
 
-  @Override
-  public void addMousePreprocessor(@NotNull final MouseListener listener, @NotNull Disposable parent) {
-    _addListener(listener, parent);
-  }
-
-  @Override
-  public void addMouseMotionPreprocessor(@NotNull MouseMotionListener listener, @NotNull Disposable parent) {
-    _addListener(listener, parent);
-  }
-
-  private void _addListener(@NotNull EventListener listener, @NotNull Disposable parent) {
-    myMouseListeners.add(listener);
-    Disposer.register(parent, () -> UIUtil.invokeLaterIfNeeded(() -> removeListener(listener)));
-    updateSortedList();
-
-    activateIfNeeded();
-  }
-
-  private void removeListener(@NotNull EventListener listener) {
-    if (myMouseListeners.remove(listener)) {
-      updateSortedList();
+  private fun activateIfNeeded() {
+    if (!isPreprocessorActive && !mouseListeners.isEmpty()) {
+      isPreprocessorActive = true
     }
-    deactivateIfNeeded();
+    applyActivationState()
   }
 
-  private void updateSortedList() {
-    mySortedMouseListeners.clear();
-    mySortedMouseListeners.addAll(myMouseListeners);
-  }
-
-  private void deactivateIfNeeded() {
-    if (myPreprocessorActive && myMouseListeners.isEmpty()) {
-      myPreprocessorActive = false;
-    }
-
-    applyActivationState();
-  }
-
-  private void activateIfNeeded() {
-    if (!myPreprocessorActive && !myMouseListeners.isEmpty()) {
-      myPreprocessorActive = true;
-    }
-
-    applyActivationState();
-  }
-
-  private void applyActivationState() {
-    boolean wasVisible = isVisible();
-    boolean hasWork = getPainters().hasPainters() || getComponentCount() > 0;
-
+  private fun applyActivationState() {
+    val wasVisible = isVisible
+    val hasWork = painters.hasPainters() || componentCount > 0
     if (wasVisible != hasWork) {
-      setVisible(hasWork);
+      isVisible = hasWork
     }
-
-    IdeEventQueue queue = IdeEventQueue.getInstance();
-    if (!queue.containsDispatcher(this) && (myPreprocessorActive || isVisible())) {
-      queue.addDispatcher(this, null);
+    val queue = IdeEventQueue.getInstance()
+    if (!queue.containsDispatcher(this) && (isPreprocessorActive || isVisible)) {
+      queue.addDispatcher(this, null)
     }
-    else if (queue.containsDispatcher(this) && !myPreprocessorActive && !isVisible()) {
-      queue.removeDispatcher(this);
+    else if (queue.containsDispatcher(this) && !isPreprocessorActive && !isVisible) {
+      queue.removeDispatcher(this)
     }
-
-    if (wasVisible != isVisible()) {
-      revalidate();
-      repaint();
+    if (wasVisible != isVisible) {
+      revalidate()
+      repaint()
     }
   }
 
-  @NotNull PaintersHelper getNamedPainters(@NotNull String name) {
-    return myNamedPainters.computeIfAbsent(name, key -> new PaintersHelper(this));
+  internal fun getNamedPainters(name: String): PaintersHelper {
+    return namedPainters.computeIfAbsent(name) { PaintersHelper(this) }
   }
 
-  private @NotNull PaintersHelper getPainters() {
-    return getNamedPainters("glass");
+  private val painters: PaintersHelper
+    get() = getNamedPainters("glass")
+
+  override fun addPainter(component: Component?, painter: Painter, parent: Disposable) {
+    painters.addPainter(painter, component)
+    activateIfNeeded()
+    Disposer.register(parent) { SwingUtilities.invokeLater { removePainter(painter) } }
   }
 
-  @Override
-  public void addPainter(@Nullable Component component, @NotNull Painter painter, @NotNull Disposable parent) {
-    getPainters().addPainter(painter, component);
-    activateIfNeeded();
-    Disposer.register(parent, () -> SwingUtilities.invokeLater(() -> removePainter(painter)));
+  private fun removePainter(painter: Painter) {
+    painters.removePainter(painter)
+    deactivateIfNeeded()
   }
 
-  private void removePainter(@NotNull Painter painter) {
-    getPainters().removePainter(painter);
-    deactivateIfNeeded();
+  override fun addImpl(comp: Component, constraints: Any?, index: Int) {
+    super.addImpl(comp, constraints, index)
+
+    SwingUtilities.invokeLater(::activateIfNeeded)
   }
 
+  override fun remove(comp: Component) {
+    super.remove(comp)
 
-  @Override
-  protected void addImpl(Component comp, Object constraints, int index) {
-    super.addImpl(comp, constraints, index);
-
-    SwingUtilities.invokeLater(this::activateIfNeeded);
+    SwingUtilities.invokeLater(::deactivateIfNeeded)
   }
 
-  @Override
-  public void remove(final Component comp) {
-    super.remove(comp);
-
-    SwingUtilities.invokeLater(this::deactivateIfNeeded);
+  override fun isInModalContext(): Boolean {
+    return components.any { it is TransparentLayeredPane }
   }
 
-  @Override
-  public boolean isInModalContext() {
-    for (Component component : getComponents()) {
-      if (component instanceof GlassPaneDialogWrapperPeer.TransparentLayeredPane) {
-        return true;
+  override fun paintComponent(g: Graphics) {
+    painters.paint(g)
+  }
+
+  fun getTargetComponentFor(e: MouseEvent): Component {
+    return findComponent(e = e, container = pane.layeredPane)
+           ?: findComponent(e, pane.contentPane)
+           ?: e.component
+  }
+
+  override fun isOptimizedDrawingEnabled(): Boolean {
+    return !painters.hasPainters() && super.isOptimizedDrawingEnabled()
+  }
+}
+
+private class IdePaneLoadingLayer(
+  private val pane: JComponent,
+  private val loadingState: FrameLoadingState,
+  parentDisposable: Disposable,
+  private val onFinish: () -> Unit,
+) {
+  companion object {
+    private const val ALPHA = 0.5f
+  }
+
+  private var currentAlpha = ALPHA
+
+  val icon: AsyncProcessIcon = object : AsyncProcessIcon.Big("Loading") {
+    init {
+      isOpaque = false
+      suspend()
+      isVisible = false
+    }
+
+    override fun paintComponent(g: Graphics) {
+      if (currentAlpha != 0f) {
+        (g as Graphics2D).composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha)
+
+        g.setColor(JBColor.PanelBackground)
+        g.fillRect(0, 0, width, height)
       }
+
+      super.paintComponent(g)
     }
-    return false;
   }
 
-  @Override
-  protected void paintComponent(final Graphics g) {
-    getPainters().paint(g);
+  private fun setAlpha(alpha: Float) {
+    currentAlpha = alpha
+    icon.paintImmediately(icon.bounds)
   }
 
-  public Component getTargetComponentFor(MouseEvent e) {
-    Component candidate = findComponent(e, myRootPane.getLayeredPane());
-    if (candidate != null) {
-      return candidate;
+  init {
+    pane.add(icon)
+
+    val scheduledTime = System.currentTimeMillis()
+
+    @Suppress("DEPRECATION")
+    ApplicationManager.getApplication().coroutineScope.launch {
+      delay((300 - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
+
+      if (loadingState.loading.isCompleted) {
+        return@launch
+      }
+
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        icon.isVisible = true
+        icon.resume()
+      }
+
+      loadingState.loading.join()
+
+      object : SimpleAnimator() {
+        override fun paintCycleStart() {
+          onFinish()
+          icon.suspend()
+        }
+
+        override fun paintNow(frame: Int, totalFrames: Int) {
+          setAlpha(ALPHA - (((frame + 1).toFloat() / totalFrames.toFloat()) * ALPHA))
+        }
+
+        override fun paintCycleEnd() {
+          pane.remove(icon)
+          pane.repaint()
+        }
+      }.run(totalFrames = 10, cycle = (if (RemoteDesktopService.isRemoteSession()) 2500 else 500).milliseconds)
+    }.cancelOnDispose(parentDisposable)
+  }
+
+  fun handleInputEvent(event: InputEvent): Boolean {
+    if (loadingState.loading.isCompleted) {
+      return false
     }
-    candidate = findComponent(e, myRootPane.getContentPane());
-    if (candidate != null) {
-      return candidate;
+
+    @Suppress("DuplicatedCode")
+    return when (event) {
+      is MouseEvent -> {
+        event.consume()
+        true
+      }
+      is KeyEvent -> {
+        @Suppress("DEPRECATION")
+        if (event.getID() == KeyEvent.KEY_PRESSED && event.keyCode == KeyEvent.VK_ESCAPE && event.modifiers == 0) {
+          loadingState.loading.cancel()
+        }
+
+        event.consume()
+        true
+      }
+      else -> false
     }
-    return e.getComponent();
   }
+}
 
-  private static Component findComponent(final MouseEvent e, final Container container) {
-    Point lpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), container);
-    return SwingUtilities.getDeepestComponentAt(container, lpPoint.x, lpPoint.y);
-  }
-
-  @Override
-  public boolean isOptimizedDrawingEnabled() {
-    return !getPainters().hasPainters() && super.isOptimizedDrawingEnabled();
-  }
+internal interface FrameLoadingState {
+  val loading: Job
 }

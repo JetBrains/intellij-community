@@ -358,7 +358,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       val siblings = getSiblings()
       val target = siblings[0]
       if (virtualFile != null) {
-        syncCaretIfPossible(fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null).allEditors)
+        syncCaretIfPossible(fileEditorManager.openFileImpl4(window = target,
+                                                            _file = virtualFile,
+                                                            entry = null,
+                                                            options = FileEditorOpenOptions(requestFocus = focusNew)).allEditors)
       }
       return target
     }

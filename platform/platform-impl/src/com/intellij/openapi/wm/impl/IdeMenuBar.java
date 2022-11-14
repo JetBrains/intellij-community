@@ -71,7 +71,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   private final @Nullable ClockPanel myClockPanel;
   private final @Nullable MyExitFullScreenButton myButton;
-  private final @Nullable Animator myAnimator;
+  private final @Nullable MyAnimator myAnimator;
   private final @Nullable Timer myActivationWatcher;
   private final Alarm myUpdateAlarm = new Alarm();
   private @NotNull State myState = State.EXPANDED;

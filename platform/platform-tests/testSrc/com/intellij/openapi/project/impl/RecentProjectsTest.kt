@@ -91,12 +91,12 @@ class RecentProjectsTest {
     var project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
     try {
       val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
-      recentProjectManager.runProjectPostStartupActivity(project)
+      recentProjectManager.projectOpened(project)
 
       val timestamp = getProjectOpenTimestamp("z1")
       projectManager.forceCloseProjectAsync(project)
       project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
-      recentProjectManager.runProjectPostStartupActivity(project)
+      recentProjectManager.projectOpened(project)
       recentProjectManager.updateLastProjectPath()
       // "Timestamp for opened project has not been updated"
       assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
@@ -146,7 +146,7 @@ class RecentProjectsTest {
     val projectManager = ProjectManagerEx.getInstanceEx()
     val project = projectManager.openProjectAsync(projectPath, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
     try {
-      RecentProjectsManagerBase.getInstanceEx().runProjectPostStartupActivity(project)
+      RecentProjectsManagerBase.getInstanceEx().projectOpened(project)
     }
     finally {
       projectManager.forceCloseProjectAsync(project)
@@ -182,11 +182,11 @@ class RecentProjectsTest {
     var project = projectManager.openProjectAsync(path, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
     try {
       val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
-      recentProjectManager.runProjectPostStartupActivity(project)
+      recentProjectManager.projectOpened(project)
       project.stateStore.saveComponent(RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
       projectManager.forceCloseProjectAsync(project)
       project = projectManager.openProjectAsync(path, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
-      recentProjectManager.runProjectPostStartupActivity(project)
+      recentProjectManager.projectOpened(project)
       return path
     }
     finally {

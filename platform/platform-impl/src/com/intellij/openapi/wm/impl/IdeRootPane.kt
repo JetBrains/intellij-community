@@ -40,13 +40,9 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.mac.MacWinTabsHandler
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.jetbrains.JBR
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
@@ -59,10 +55,11 @@ private const val EXTENSION_KEY = "extensionKey"
 @ApiStatus.Internal
 open class IdeRootPane internal constructor(frame: JFrame,
                                             frameHelper: IdeFrame,
-                                            parentDisposable: Disposable) : JRootPane(), UISettingsListener {
+                                            parentDisposable: Disposable,
+                                            loadingState: FrameLoadingState?) : JRootPane(), UISettingsListener {
   private var toolbar: JComponent? = null
 
-  var statusBar: IdeStatusBarImpl? = null
+  internal var statusBar: IdeStatusBarImpl? = null
     private set
 
   private var statusBarDisposed = false
@@ -137,7 +134,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       updateScreenState(frameHelper)
     }
 
-    val glassPane = IdeGlassPaneImpl(this, false)
+    val glassPane = IdeGlassPaneImpl(rootPane = this, loadingState = loadingState, parentDisposable = parentDisposable)
     setGlassPane(glassPane)
     glassPaneInitialized = true
     if (frame is IdeFrameImpl) {
@@ -145,7 +142,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
 
     UIUtil.decorateWindowHeader(this)
-    glassPane.isVisible = false
 
     border = UIManager.getBorder("Window.border")
 
@@ -452,19 +448,23 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
   }
 
-  fun setProject(project: Project?) {
+  fun setProject(project: Project) {
     selectedEditorFilePath?.project = project
+    installNorthComponents(project)
+    statusBar?.let {
+      project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
+    }
   }
 
   @RequiresEdt
-  internal open fun installNorthComponents(project: Project) {
+  protected open fun installNorthComponents(project: Project) {
     northExtensions = IdeRootPaneNorthExtension.EP_NAME.extensionList
     if (northExtensions.isEmpty()) {
       return
     }
 
     for (extension in northExtensions) {
-      val component = extension.createComponent(project, false) ?: continue
+      val component = extension.createComponent(/* project = */ project, /* isDocked = */ false) ?: continue
       component.putClientProperty(EXTENSION_KEY, extension.key)
       northPanel.add(component)
 

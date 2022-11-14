@@ -11,6 +11,7 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.ClientId.Companion.localId
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.MaximizeEditorInSplitAction.Companion.getSplittersToMaximize
@@ -130,10 +131,7 @@ import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
-@State(name = "FileEditorManager", storages = [
-  Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
-])
+@State(name = "FileEditorManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 open class FileEditorManagerImpl(private val project: Project) : FileEditorManagerEx(), PersistentStateComponent<Element?>, Disposable {
   enum class OpenMode {
     NEW_WINDOW, RIGHT_SPLIT, DEFAULT
@@ -880,14 +878,14 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
    * passed file is valid.
    * @param entry   map between FileEditorProvider and FileEditorState. If this parameter
    */
-  fun openFileImpl3(window: EditorWindow,
-                    file: VirtualFile,
-                    focusEditor: Boolean,
-                    entry: HistoryEntry?): FileEditorComposite {
+  internal fun openFileImpl3(window: EditorWindow,
+                             file: VirtualFile,
+                             focusEditor: Boolean,
+                             entry: HistoryEntry?): FileEditorComposite {
     return openFileImpl4(window = window, _file = file, entry = entry, options = FileEditorOpenOptions(requestFocus = focusEditor))
   }
 
-  protected val clientFileEditorManager: ClientFileEditorManager?
+  private val clientFileEditorManager: ClientFileEditorManager?
     get() {
       val clientId = current
       LOG.assertTrue(!clientId.isLocal, "Trying to get ClientFileEditorManager for local ClientId")
@@ -1009,8 +1007,10 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     val newEditor = composite == null
     if (newEditor) {
       LOG.assertTrue(newProviders != null)
-      composite = createComposite(file, newProviders!!, builders) ?: return EMPTY
-      project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file)
+      composite = createComposite(file = file, providers = newProviders!!, builders = builders) ?: return EMPTY
+      runActivity("beforeFileOpened event executing") {
+        project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file)
+      }
       openedComposites.add(composite)
     }
 
@@ -1025,8 +1025,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
 
     // restore selected editor
-    val provider = if (entry == null) getInstanceImpl().getSelectedFileEditorProvider(composite)
-    else entry.selectedProvider
+    val provider = if (entry == null) getInstanceImpl().getSelectedFileEditorProvider(composite) else entry.selectedProvider
     if (provider != null) {
       composite.setSelectedEditor(provider.editorTypeId)
     }
@@ -1560,7 +1559,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   @ApiStatus.Internal
-  @RequiresEdt
   fun init(): EditorsSplitters {
     FileStatusManager.getInstance(project)?.addFileStatusListener(MyFileStatusListener(), project)
     val connection = project.messageBus.connect(this)
@@ -2026,11 +2024,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       catch (e: CancellationException) {
         throw e
       }
-      catch (e: Exception) {
-        LOG.error(e)
-        null
-      }
-      catch (e: AssertionError) {
+      catch (e: Throwable) {
         LOG.error(e)
         null
       }

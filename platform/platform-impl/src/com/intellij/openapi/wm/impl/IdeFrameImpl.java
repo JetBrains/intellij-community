@@ -203,6 +203,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @Override
   public void notifyProjectActivation() {
     ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper(this);
-    if (helper != null) helper.notifyProjectActivation();
+    if (helper != null) {
+      helper.notifyProjectActivation();
+    }
   }
 }

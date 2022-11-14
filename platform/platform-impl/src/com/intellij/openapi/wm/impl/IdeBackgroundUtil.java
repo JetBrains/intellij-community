@@ -93,7 +93,7 @@ public final class IdeBackgroundUtil {
       }
     }
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
+    PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters$intellij_platform_ide_impl(paintersName) : null;
     if (helper == null || !helper.needsRepaint()) {
       return MyGraphics.unwrap(g);
     }
@@ -101,11 +101,11 @@ public final class IdeBackgroundUtil {
   }
 
   static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PaintersHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
+    PaintersHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters$intellij_platform_ide_impl(EDITOR_PROP));
   }
 
   static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PaintersHelper painters = glassPane.getNamedPainters(FRAME_PROP);
+    PaintersHelper painters = glassPane.getNamedPainters$intellij_platform_ide_impl(FRAME_PROP);
     PaintersHelper.initWallpaperPainter(FRAME_PROP, painters);
 
     painters.addPainter(new AbstractPainter() {

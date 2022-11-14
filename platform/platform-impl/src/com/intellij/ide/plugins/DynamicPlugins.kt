@@ -903,7 +903,7 @@ private fun clearTemporaryLostComponent() {
     clearMethod.isAccessible = true
     loop@ for (frame in WindowManager.getInstance().allProjectFrames) {
       val window = when (frame) {
-        is ProjectFrameHelper -> frame.frameOrNull
+        is ProjectFrameHelper -> frame.frame
         is Window -> frame
         else -> continue@loop
       }

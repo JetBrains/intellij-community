@@ -33,7 +33,7 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
       project.replaceService(ToolWindowManager::class.java, manager!!, testRootDisposable)
 
       val frame = withContext(Dispatchers.EDT) {
-        val frame = ProjectFrameHelper(IdeFrameImpl(), null)
+        val frame = ProjectFrameHelper(IdeFrameImpl())
         frame.init()
         frame
       }

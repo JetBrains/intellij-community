@@ -50,7 +50,7 @@ internal class FrameInfoHelper {
 
   fun update(project: Project, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl) {
     val frameHelper = windowManager.getFrameHelper(project) ?: return
-    updateAndGetInfo(frameHelper, frameHelper.frameOrNull ?: return, lastNormalFrameBounds, windowManager)
+    updateAndGetInfo(frameHelper, frameHelper.frame, lastNormalFrameBounds, windowManager)
   }
 
   fun updateAndGetInfo(frameHelper: ProjectFrameHelper,

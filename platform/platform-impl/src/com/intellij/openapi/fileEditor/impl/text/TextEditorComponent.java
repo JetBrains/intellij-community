@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -77,7 +78,8 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
     TextEditorProvider.putTextEditor(myEditor, myTextEditor);
     myEditor.getComponent().setFocusable(false);
 
-    loadingDecorator = new LoadingDecorator(myEditor.getComponent(), textEditor, 300);
+    // don't show yet another loading indicator on project open - use 3-second delay
+    loadingDecorator = new LoadingDecorator(myEditor.getComponent(), textEditor, EditorsSplitters.isOpenedInBulk(file) ? 3_000 : 300);
     super.add(loadingDecorator.getComponent(), BorderLayout.CENTER);
 
     myModified = isModifiedImpl();
