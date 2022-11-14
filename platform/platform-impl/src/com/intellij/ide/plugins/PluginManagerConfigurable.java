@@ -11,7 +11,6 @@ import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -27,7 +26,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -284,7 +282,16 @@ public final class PluginManagerConfigurable
         }
       }
     });
-    actions.add(new InstallFromDiskAction());
+
+    actions.add(new InstallFromDiskAction(myPluginModel,
+                                          myPluginModel,
+                                          myCardPanel) {
+      @Override
+      protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData,
+                                               @Nullable Project project) {
+        PluginManagerConfigurable.this.onPluginInstalledFromDisk(callbackData);
+      }
+    });
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
@@ -1874,35 +1881,6 @@ public final class PluginManagerConfigurable
     myForceShowInstalledTabForTag = true;
     if (myTabHeaderComponent != null) {
       updateSelectionTab(INSTALLED_TAB);
-    }
-  }
-
-  private final class InstallFromDiskAction extends DumbAwareAction {
-
-    private InstallFromDiskAction() {
-      super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
-        Messages.showErrorDialog(project,
-                                 IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"),
-                                 IdeBundle.message("action.InstallFromDiskAction.text"));
-        return;
-      }
-
-      PluginInstaller.chooseAndInstall(project, myCardPanel, (file, parent) -> {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          PluginInstaller.installFromDisk(myPluginModel, myPluginModel, file, parent, callbackData -> {
-                                            ApplicationManager.getApplication().invokeLater(() -> {
-                                              onPluginInstalledFromDisk(callbackData);
-                                            });
-                                          }
-          );
-        }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project, parent);
-      });
     }
   }
 

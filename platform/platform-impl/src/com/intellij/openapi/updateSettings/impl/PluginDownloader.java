@@ -330,6 +330,7 @@ public final class PluginDownloader {
     }
   }
 
+  @RequiresBackgroundThread
   public boolean installDynamically(@Nullable JComponent ownerComponent) throws IOException {
     assert myDescriptor instanceof IdeaPluginDescriptorImpl;
     IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)myDescriptor;
