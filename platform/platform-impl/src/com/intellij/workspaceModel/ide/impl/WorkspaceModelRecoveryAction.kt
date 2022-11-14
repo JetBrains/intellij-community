@@ -44,7 +44,7 @@ class WorkspaceModelRecoveryAction : RecoveryAction {
           useDefaultProjectAsTemplate = true
         }
       )
-      AsyncRecoveryResult(ProjectRecoveryScope(r!!), emptyList())
+      result.complete(AsyncRecoveryResult(ProjectRecoveryScope(r!!), emptyList()))
     }
     return result
   }
