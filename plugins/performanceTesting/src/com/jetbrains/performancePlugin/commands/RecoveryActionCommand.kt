@@ -2,7 +2,9 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.actions.cache.ProjectRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.util.indexing.RefreshIndexableFilesAction
@@ -20,7 +22,7 @@ class RecoveryActionCommand(text: String, line: Int) : AbstractCommand(text, lin
 
   companion object {
     const val PREFIX = CMD_PREFIX + "recovery"
-    private val ALLOWED_ACTIONS = listOf("REFRESH", "RESCAN", "REINDEX")
+    private val ALLOWED_ACTIONS = listOf("REFRESH", "RESCAN", "REINDEX", "REOPEN")
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
@@ -34,6 +36,7 @@ class RecoveryActionCommand(text: String, line: Int) : AbstractCommand(text, lin
       "REOPEN" -> WorkspaceModelRecoveryAction()
       else -> error("The argument ${args[1]} to the command is incorrect. Allowed actions: $ALLOWED_ACTIONS")
     }
+    context.setProject(null)
     recoveryAction.perform(ProjectRecoveryScope(project)).handle { res, err ->
       if (err != null) {
         LOG.error(err)
@@ -45,6 +48,7 @@ class RecoveryActionCommand(text: String, line: Int) : AbstractCommand(text, lin
                   res.problems.take(10).joinToString(", ") { it.message })
       }
       LOG.info("Command $PREFIX ${args[1]} finished")
+      context.setProject(res.scope.project)
       actionCallback.setDone()
     }
     return actionCallback.toPromise()
