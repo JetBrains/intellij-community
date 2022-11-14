@@ -124,10 +124,8 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         val blockingType = resultArgumentResolvedDescriptor.isBlockFriendlyDispatcher()
         if (blockingType != Unsure) return blockingType
 
-        if (firstArgument is KtBinaryExpression) {
-            if (isCoroutineContextPlus(resultArgumentResolvedDescriptor)) {
-                return firstArgument.hasBlockFriendlyDispatcher()
-            }
+        if (isCoroutineContextPlus(resultArgumentResolvedDescriptor)) {
+            return firstArgument.hasBlockFriendlyDispatcher()
         }
         return Unsure
     }

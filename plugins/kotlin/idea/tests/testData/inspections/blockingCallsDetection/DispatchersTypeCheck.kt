@@ -18,4 +18,14 @@ suspend fun withIoDispatcher() {
         //no warning since IO dispatcher type used
         Thread.sleep(42)
     }
+
+    withContext(Dispatchers.IO.plus(CoroutineName("My coroutine 1"))) {
+        //no warning since IO dispatcher type used
+        Thread.sleep(42)
+    }
+
+    withContext(CoroutineName("My coroutine 2").plus(Dispatchers.IO)) {
+        //no warning since IO dispatcher type used
+        Thread.sleep(42)
+    }
 }
