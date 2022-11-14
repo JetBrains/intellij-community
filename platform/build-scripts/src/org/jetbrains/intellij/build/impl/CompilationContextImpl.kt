@@ -362,7 +362,7 @@ private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, proj
 
 private fun defineJavaSdk(context: CompilationContext) {
   val homePath = context.stableJdkHome
-  val jbrVersionName = "11"
+  val jbrVersionName = "jbr-17"
   defineJdk(global = context.projectModel.global, jdkName = jbrVersionName, homeDir = homePath)
   readModulesFromReleaseFile(model = context.projectModel, sdkName = jbrVersionName, sdkHome = homePath)
 
@@ -390,7 +390,7 @@ private fun defineJavaSdk(context: CompilationContext) {
 }
 
 private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome: Path) {
-  val additionalSdk = model.global.libraryCollection.findLibrary(sdkName) ?: throw IllegalStateException("Sdk '$sdkName' is not found")
+  val additionalSdk = model.global.libraryCollection.findLibrary(sdkName) ?: error("Sdk '$sdkName' is not found")
   val urls = additionalSdk.getRoots(JpsOrderRootType.COMPILED).mapTo(HashSet()) { it.url }
   for (it in readModulesFromReleaseFile(sdkHome)) {
     if (!urls.contains(it)) {
