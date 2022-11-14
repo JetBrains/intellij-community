@@ -29,7 +29,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Pavel.Dolgov
@@ -89,7 +88,7 @@ public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements I
     final String name = new VariableNameGenerator(myStatement, VariableKind.LOCAL_VARIABLE)
       .byName("it", "iter", "iterator").generate(true);
     PsiForStatement newForLoop = (PsiForStatement)elementFactory.createStatementFromText(
-      "for (Iterator " + name + " = initializer; " + name + ".hasNext();) { Object next = " + name + ".next(); }", myStatement);
+      "for (Iterator " + name + " = initializer; " + name + ".hasNext();) { var next = " + name + ".next(); }", myStatement);
 
     final PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)newForLoop.getInitialization();
     if (newDeclaration == null) return;
@@ -104,8 +103,11 @@ public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements I
 
     final PsiDeclarationStatement newFirstStatement = (PsiDeclarationStatement)newBodyBlock.getStatements()[0];
     final PsiLocalVariable newItemVariable = (PsiLocalVariable)newFirstStatement.getDeclaredElements()[0];
-    final PsiTypeElement newItemTypeElement = elementFactory.createTypeElement(iterationParameter.getType());
-    newItemVariable.getTypeElement().replace(newItemTypeElement);
+    PsiTypeElement typeElement = iterationParameter.getTypeElement();
+    if (typeElement == null || !typeElement.isInferredType()) {
+      final PsiTypeElement newItemTypeElement = elementFactory.createTypeElement(iterationParameter.getType());
+      newItemVariable.getTypeElement().replace(newItemTypeElement);
+    }
     newItemVariable.setName(iterationParameterName);
     final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
     if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
