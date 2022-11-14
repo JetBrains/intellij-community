@@ -66,6 +66,7 @@ internal class SettingsSyncPluginInstallerImpl(private val notifyErrors: Boolean
 
     private val collectedInstallers = ArrayList<PluginDownloader>()
 
+    @RequiresBackgroundThread
     override fun run() {
       val indicator = ProgressManager.getInstance().progressIndicator
       pluginIds.forEach {
@@ -74,6 +75,7 @@ internal class SettingsSyncPluginInstallerImpl(private val notifyErrors: Boolean
       }
     }
 
+    @RequiresBackgroundThread
     private fun prepareToInstall(pluginId: PluginId, indicator: ProgressIndicator) {
       val descriptor = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(pluginId, indicator = indicator)
       if (descriptor != null) {

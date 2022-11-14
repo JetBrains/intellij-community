@@ -37,6 +37,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -755,6 +756,7 @@ public final class ConfigImportHelper {
     }
   }
 
+  @RequiresBackgroundThread
   static void doImport(@NotNull Path oldConfigDir,
                        @NotNull Path newConfigDir,
                        @Nullable Path oldIdeHome,
@@ -832,6 +834,7 @@ public final class ConfigImportHelper {
     return List.of();
   }
 
+  @RequiresBackgroundThread
   private static void migratePlugins(@NotNull Path oldPluginsDir,
                                      @NotNull Path oldConfigDir,
                                      @NotNull Path newPluginsDir,
@@ -966,6 +969,7 @@ public final class ConfigImportHelper {
     }
   }
 
+  @RequiresBackgroundThread
   private static void downloadUpdatesForIncompatiblePlugins(@NotNull Path newPluginsDir,
                                                             @NotNull ConfigImportOptions options,
                                                             @NotNull List<? extends IdeaPluginDescriptor> incompatiblePlugins) {
@@ -987,6 +991,7 @@ public final class ConfigImportHelper {
     }
   }
 
+  @RequiresBackgroundThread
   private static void downloadUpdatesForIncompatiblePlugins(@NotNull Path newPluginsDir,
                                                             @NotNull ConfigImportOptions options,
                                                             @NotNull List<? extends IdeaPluginDescriptor> incompatiblePlugins,
