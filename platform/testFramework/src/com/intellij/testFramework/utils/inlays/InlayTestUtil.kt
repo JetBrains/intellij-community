@@ -15,6 +15,7 @@ internal object InlayTestUtil {
   internal fun dumpHintsInternal(
     sourceText: String,
     fixture: CodeInsightTestFixture,
+    filter: ((Inlay<*>) -> Boolean)? = null,
     renderer: (EditorCustomElementRenderer, Inlay<*>) -> String = { r, _ -> r.toString() }
   ): String {
     val file = fixture.file!!
@@ -33,6 +34,11 @@ internal object InlayTestUtil {
     return buildString {
       var currentOffset = 0
       for (inlay in inlays) {
+        if (filter != null) {
+          if (!filter(inlay.inlay)) {
+            continue
+          }
+        }
         val nextOffset = inlay.effectiveOffset(document)
         append(sourceText.subSequence(currentOffset, nextOffset))
         append(inlay.render(renderer))

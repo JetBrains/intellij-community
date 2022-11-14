@@ -226,7 +226,35 @@ public class Chains {
           R call(T t);
         }
       }
-    """.trimIndent(), JavaMethodChainsDeclarativeInlayProvider.PROVIDER_ID, JavaMethodChainsDeclarativeInlayProvider(), JavaLanguage.INSTANCE)
+    """.trimIndent(), JavaMethodChainsDeclarativeInlayProvider.PROVIDER_ID, JavaMethodChainsDeclarativeInlayProvider(),
+                  JavaLanguage.INSTANCE)
+  }
+
+  fun test() {
+    check("""
+      abstract class Foo<T> {
+        void main() {
+          Foo
+            .getFoo(1)
+            .filter(it -> it % 2 == 0)
+            .map(it -> it * 2)
+            .map(it -> "item: " + it)
+            .forEach(this::println);
+        }
+        
+        static <T> Foo<T> getFoo(T t) {
+          return null;        
+        }
+
+        abstract Void println(Object any);
+        abstract Foo<Integer> listOf(int... args);
+        abstract Foo<T> filter(Function<T, Boolean> isAccepted);
+        abstract <R> Foo<R> map(Function<T, R> mapper);
+        abstract void forEach(Function<T, Void> fun);
+        interface Function<T, R> {
+          R call(T t);
+        }
+      }""")
   }
 
   fun check(@Language("Java") text: String) {

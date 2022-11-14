@@ -6,17 +6,21 @@ import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import com.intellij.testFramework.utils.inlays.InlayTestUtil
-import java.util.regex.Pattern
 
 abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
+  protected open val onlyCodeVisionHintsAllowed: Boolean
+    get() = false
+
+
   override fun setUp() {
     Registry.get("editor.codeVision.new").setValue(true, testRootDisposable)
+    TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
+    CodeVisionHost.isCodeVisionTestKey
     super.setUp()
   }
 
@@ -33,6 +37,11 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
     val editor = myFixture.editor
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
+    codeVisionHost.providers.forEach {
+      if (it.id == "vcs.code.vision" && enabledProviderIds.contains(it.id)) {
+        it.preparePreview(myFixture.editor, myFixture.file)
+      }
+    }
     myFixture.doHighlighting()
 
     codeVisionHost.calculateCodeVisionSync(editor, testRootDisposable)
@@ -42,8 +51,12 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
   }
 
   private fun dumpCodeVisionHints(sourceText: String): String {
-    return InlayTestUtil.dumpHintsInternal(sourceText, myFixture) { _, inlay ->
-      inlay.getUserData(CodeVisionListData.KEY)?.visibleLens?.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }!!
+    return InlayTestUtil.dumpHintsInternal(sourceText, myFixture, {
+      val rendererSupported = it.renderer is CodeVisionRenderer
+      if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
+      rendererSupported
+    }) { _, inlay ->
+      inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
     }
   }
 }
