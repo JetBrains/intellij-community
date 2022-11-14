@@ -28,8 +28,9 @@ class DeclarativeHintsProviderSettingsModel(
 
   private fun loadOptionsFromSettings(): List<MutableOption> = providerDescription.options
     .map {
-      val enabled = settings.isOptionEnabled(it.getOptionId(), providerDescription.requiredProviderId()) ?: it.enabledByDefault
-      MutableOption(it, enabled)
+      val enabledByDefault = it.enabledByDefault
+      val enabled = settings.isOptionEnabled(it.getOptionId(), providerDescription.requiredProviderId()) ?: enabledByDefault
+      MutableOption(it, enabled, enabledByDefault)
     }
 
   private val _cases: List<ImmediateConfigurable.Case> = options.map { option ->
@@ -97,9 +98,9 @@ class DeclarativeHintsProviderSettingsModel(
   }
 
   override fun isModified(): Boolean {
-    if (settings.isProviderEnabled(id) != isEnabled) return true
+    if (providerDescription.isEnabledByDefault != isEnabled && settings.isProviderEnabled(id) != isEnabled) return true
     if (customSettingsProvider.isDifferentFrom(project, savedSettings)) return true
-    return options.any { it.isEnabled != (isOptionEnabled(it.description)) }
+    return options.any { it.isEnabledByDefault != it.isEnabled && it.isEnabled != isOptionEnabled(it.description) }
   }
 
   private fun isOptionEnabled(option: InlayProviderOption) =
@@ -119,7 +120,7 @@ class DeclarativeHintsProviderSettingsModel(
   override val cases: List<ImmediateConfigurable.Case>
     get() = _cases
 
-  private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean)
+  private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean, val isEnabledByDefault: Boolean)
 
   private class DefaultSettingsProvider : InlayHintsCustomSettingsProvider<Unit> {
     private val component by lazy { JPanel() }
