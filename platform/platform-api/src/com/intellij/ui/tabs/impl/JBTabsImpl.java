@@ -2025,6 +2025,7 @@ public class JBTabsImpl extends JComponent
         } else {
           eComponent.setBounds(new Rectangle());
         }
+        eComponent.putClientProperty(LAYOUT_DONE, true);
       }
 
       if (myLayout instanceof SingleRowLayout) {
@@ -2138,6 +2139,7 @@ public class JBTabsImpl extends JComponent
     else {
       mComponent.setBounds(new Rectangle());
     }
+    mComponent.putClientProperty(LAYOUT_DONE, true);
   }
 
   void moveDraggedTabLabel() {
