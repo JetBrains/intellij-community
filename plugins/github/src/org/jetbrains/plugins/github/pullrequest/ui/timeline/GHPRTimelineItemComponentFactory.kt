@@ -66,7 +66,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   override fun createComponent(item: GHPRTimelineItem): JComponent {
     try {
       return when (item) {
-        is GHPullRequestCommitShort -> createComponent(item)
+        is GHPullRequestCommitShort -> createComponent(listOf(item))
+        is GHPRTimelineGroupedCommits -> createComponent(item.items)
 
         is GHIssueComment -> createComponent(item)
         is GHPullRequestReview -> createComponent(item)
@@ -82,52 +83,68 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
   }
 
-  private fun createComponent(commit: GHPullRequestCommitShort): JComponent {
-    val gitCommit = commit.commit
+  private fun createComponent(commits: List<GHPullRequestCommitShort>): JComponent {
+    val commitsPanels = commits.asSequence()
+      .map { it.commit }
+      .map {
+        val builder = HtmlBuilder()
+          .append(HtmlChunk.p()
+                    .children(
+                      HtmlChunk.link("$COMMIT_HREF_PREFIX${it.abbreviatedOid}", it.abbreviatedOid),
+                      HtmlChunk.nbsp(),
+                      HtmlChunk.raw(it.messageHeadlineHTML)
+                    ))
 
-    //language=HTML
-    val commitText = HtmlBuilder()
-      .append(HtmlChunk.p()
-                .children(
-                  HtmlChunk.link("commit://${gitCommit.abbreviatedOid}", gitCommit.abbreviatedOid),
-                  HtmlChunk.nbsp(),
-                  HtmlChunk.raw(gitCommit.messageHeadlineHTML)))
-      .apply {
-        gitCommit.author?.let { author ->
+        val author = it.author
+        if (author != null) {
           val actor = author.user ?: ghostUser
           val date = author.date
-          val authorParagraph = HtmlChunk.p().buildChildren {
+          val chunk = HtmlChunk.p().buildChildren {
             append(HtmlChunk.link(actor.url, actor.getPresentableName()))
             if (date != null) {
               append(HtmlChunk.nbsp())
               append(JBDateFormat.getFormatter().formatPrettyDateTime(date))
             }
           }
-          append(authorParagraph)
+          builder.append(chunk)
+        }
+        builder.toString()
+      }.map { text ->
+        HtmlEditorPane(text).apply {
+          removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+          onHyperlinkActivated {
+            val href = it.description
+            if (href.startsWith(COMMIT_HREF_PREFIX)) {
+              selectInToolWindowHelper.selectCommit(href.removePrefix(COMMIT_HREF_PREFIX))
+            }
+            else {
+              BrowserUtil.browse(href)
+            }
+          }
+        }
+      }.fold(JPanel(VerticalLayout(4)).apply { isOpaque = false }) { panel, commitPane ->
+        panel.apply {
+          add(commitPane)
         }
       }
-      .toString()
 
-    val commitPane = HtmlEditorPane(commitText).apply {
-      removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-      onHyperlinkActivated {
-        val href = it.description
-        if (href.startsWith(COMMIT_HREF_PREFIX)) {
-          selectInToolWindowHelper.selectCommit(href.removePrefix(COMMIT_HREF_PREFIX))
-        }
-        else {
-          BrowserUtil.browse(href)
-        }
-      }
-    }
+    val commitsCount = commits.size
 
     val contentPanel = JPanel(VerticalLayout(4)).apply {
       isOpaque = false
-      add(HtmlEditorPane(GithubBundle.message("pull.request.timeline.commit.added")))
-      add(StatusMessageComponentFactory.create(commitPane))
-    }
 
-    return createItem(gitCommit.author?.user ?: ghostUser, gitCommit.author?.date, contentPanel)
+      val titleText = if (commitsCount == 1) {
+        GithubBundle.message("pull.request.timeline.commit.added")
+      }
+      else {
+        GithubBundle.message("pull.request.timeline.commits.added", commitsCount)
+      }
+
+      add(HtmlEditorPane(titleText))
+      add(StatusMessageComponentFactory.create(commitsPanels))
+    }
+    val actor = commits.singleOrNull()?.commit?.author?.user ?: prAuthor ?: ghostUser
+    return createItem(actor, commits.singleOrNull()?.commit?.author?.date, contentPanel)
   }
 
   fun createComponent(details: GHPullRequestShort): JComponent {
