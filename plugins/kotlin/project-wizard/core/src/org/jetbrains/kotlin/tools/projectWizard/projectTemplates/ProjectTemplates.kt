@@ -84,7 +84,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
 
         private val extensionTemplates: List<ProjectTemplate>
             get() = mutableListOf<ProjectTemplate>().also { list ->
-                ProjectTemplatesProvider.EP_NAME.forEachExtensionSafe { list.addAll(it.getTemplates()) }
+                ProjectTemplatesProvider.EP_NAME.extensionsIfPointIsRegistered.forEach { list.addAll(it.getTemplates()) }
             }
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {
