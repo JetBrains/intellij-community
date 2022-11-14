@@ -8,14 +8,12 @@ class SettingsSyncEventsStatistics : CounterUsagesCollector() {
   companion object {
     val GROUP: EventLogGroup = EventLogGroup("settings.sync.events", 1)
 
-    val ENABLED_MANUALLY = GROUP.registerEvent("enabled_manually", EventFields.Enum("enabled_method", EnabledMethod::class.java))
-    val DISABLED_MANUALLY = GROUP.registerEvent("disabled_manually", EventFields.Enum("disabled_method", DisabledMethod::class.java))
-    val DISABLED_BECAUSE_REMOVED_FROM_SERVER = GROUP.registerEvent("disabled_from_server")
-    val DISABLED_BECAUSE_OF_EXCEPTION = GROUP.registerEvent("disabled_by_exception")
-    val MIGRATED_FROM_OLD_PLUGIN = GROUP.registerEvent("migrated_from_old_plugin")
-    val MIGRATED_FROM_SETTINGS_REPOSITORY = GROUP.registerEvent("migrated_from_settings_repository")
-    val SETTINGS_REPOSITORY_NOTIFICATION_ACTION =
-      GROUP.registerEvent("settings_repository_notification_action", EventFields.Enum("action", SettingsRepositoryMigrationNotificationAction::class.java))
+    val ENABLED_MANUALLY = GROUP.registerEvent("enabled.manually", EventFields.Enum("method", EnabledMethod::class.java))
+    val DISABLED_MANUALLY = GROUP.registerEvent("disabled.manually", EventFields.Enum("method", ManualDisableMethod::class.java))
+    val DISABLED_AUTOMATICALLY = GROUP.registerEvent("disabled.automatically", EventFields.Enum("reason", AutomaticDisableReason::class.java))
+    val MIGRATED_FROM_OLD_PLUGIN = GROUP.registerEvent("migrated.from.old.plugin")
+    val MIGRATED_FROM_SETTINGS_REPOSITORY = GROUP.registerEvent("migrated.from.settings.repository")
+    val SETTINGS_REPOSITORY_NOTIFICATION_ACTION = GROUP.registerEvent("invoked.settings.repository.notification.action", EventFields.Enum("action", SettingsRepositoryMigrationNotificationAction::class.java))
   }
 
   enum class EnabledMethod {
@@ -25,10 +23,15 @@ class SettingsSyncEventsStatistics : CounterUsagesCollector() {
     CANCELED
   }
 
-  enum class DisabledMethod {
+  enum class ManualDisableMethod {
     DISABLED_ONLY,
     DISABLED_AND_REMOVED_DATA_FROM_SERVER,
     CANCEL
+  }
+
+  enum class AutomaticDisableReason {
+    REMOVED_FROM_SERVER,
+    EXCEPTION
   }
 
   enum class SettingsRepositoryMigrationNotificationAction {
