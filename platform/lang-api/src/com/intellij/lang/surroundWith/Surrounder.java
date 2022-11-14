@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.surroundWith;
 
+import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @see SurroundDescriptor
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/surround-with.html">Surround With (IntelliJ Platform Docs)</a>
  */
-public interface Surrounder {
+public interface Surrounder extends WriteActionAware {
   Surrounder[] EMPTY_ARRAY = new Surrounder[0];
   ArrayFactory<Surrounder> myArrayFactory = count -> count == 0 ? EMPTY_ARRAY : new Surrounder[count];
 

@@ -20,6 +20,7 @@ import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -187,7 +188,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       if (elements.length > 0) {
         for (Surrounder descriptorSurrounder : descriptor.getSurrounders()) {
           if (surrounder.getClass().equals(descriptorSurrounder.getClass())) {
-            WriteCommandAction.runWriteCommandAction(project, () -> doSurround(project, editor, surrounder, elements));
+            doSurround(project, editor, surrounder, elements);
             return;
           }
         }
@@ -210,20 +211,27 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       LogicalPosition pos = new LogicalPosition(0, 0);
       editor.getCaretModel().moveToLogicalPosition(pos);
     }
-    TextRange range = surrounder.surroundElements(project, editor, elements);
-    if (range != CARET_IS_OK) {
-      if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null &&
-          InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
-        LogicalPosition pos1 = new LogicalPosition(line, col);
-        editor.getCaretModel().moveToLogicalPosition(pos1);
-      }
-      if (range != null) {
-        int offset = range.getStartOffset();
-        editor.getCaretModel().removeSecondaryCarets();
-        editor.getCaretModel().moveToOffset(offset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-      }
+    if (surrounder.startInWriteAction()) {
+      WriteCommandAction.runWriteCommandAction(project, CodeInsightBundle.message("surround.with.chooser.title"), null, () -> {
+          TextRange range = surrounder.surroundElements(project, editor, elements);
+          if (range != CARET_IS_OK) {
+            if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null &&
+                InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
+              LogicalPosition pos1 = new LogicalPosition(line, col);
+              editor.getCaretModel().moveToLogicalPosition(pos1);
+            }
+            if (range != null) {
+              int offset = range.getStartOffset();
+              editor.getCaretModel().removeSecondaryCarets();
+              editor.getCaretModel().moveToOffset(offset);
+              editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+              editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+            }
+          }
+        }
+      );
+    } else {
+      ReadAction.run(() -> surrounder.surroundElements(project, editor, elements));
     }
   }
 
@@ -291,7 +299,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       if (myElements != null && myElements.length != 0) {
         language = myElements[0].getLanguage();
       }
-      WriteCommandAction.runWriteCommandAction(myProject, () -> doSurround(myProject, myEditor, mySurrounder, myElements));
+      doSurround(myProject, myEditor, mySurrounder, myElements);
       SurroundWithLogger.logSurrounder(mySurrounder, language, myProject);
     }
   }
