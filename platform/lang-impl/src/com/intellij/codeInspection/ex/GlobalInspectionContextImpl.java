@@ -116,7 +116,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     myContentManager = contentManager;
   }
 
-  private @NotNull InspectListener getEventPublisher() {
+  protected @NotNull InspectListener getEventPublisher() {
     return getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
   }
 
@@ -295,6 +295,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     initializeTools(globalTools, localTools, globalSimpleTools);
     appendPairedInspectionsForUnfairTools(globalTools, globalSimpleTools, localTools);
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
+    runExternalTools(scope);
 
     if (runGlobalToolsOnly || localTools.isEmpty() && globalSimpleTools.isEmpty()) return;
 
@@ -431,6 +432,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       }
     });
   }
+
+  protected void runExternalTools(@NotNull AnalysisScope scope) {}
 
   private static @NotNull TextRange getEffectiveRange(@NotNull SearchScope searchScope, @NotNull PsiFile file) {
     if (searchScope instanceof LocalSearchScope) {
