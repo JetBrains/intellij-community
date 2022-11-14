@@ -10,10 +10,12 @@ class FullLineGenerationConfig(
   val numBeams: Int = 5,
   val lenNormBase: Double = 5.0,
   val lenNormPow: Double = 0.7,
-  val oneTokenMode: Boolean = false,
   val filename: String = "",
   val filenameSplitSymbol: Char = '₣',
   val metaInfoSplitSymbol: String = "𐌼",
+  val oneTokenMode: Boolean = false,
+  val stashRegex: Regex = Regex("\\W+"),
+  val terminateRegex: Regex = Regex("\n"),
   val addLang: Boolean = false,
   val language: String = "",
   val bosString: String = "<BOS>"

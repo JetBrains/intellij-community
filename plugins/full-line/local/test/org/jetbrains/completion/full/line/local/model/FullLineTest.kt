@@ -53,4 +53,30 @@ class FullLineTest : UsefulTestCase() {
 
     assertContainsElements(completions.map { it.text }, "__name__ == \"__main__\":")
   }
+
+  fun `test long token python completion failure`() {
+    val completionModel = CompletionModelFactory.createFullLineCompletionModel(
+      modelFiles.tokenizer,
+      modelFiles.model,
+      modelFiles.config
+    )
+    val content = """
+from src.some_classes import SomeClass
+def modify_state(obj: SomeClass):
+    obj.super_long_counter_name_1 += 1
+    obj.super_long_counter_name_2 += 1
+    obj.super_long_counter_name_3 += 1
+    obj.super_long_counter_name_4 += 1
+    obj.
+    """
+    val prefix = ""
+
+    val completions = completionModel.generateCompletions(
+      content, prefix,
+      FullLineCompletionPipelineConfig(maxLen = 8, filename = "main.py"),
+      TestExecutionContext.default
+    )
+
+    assertEmpty(completions.filter { it.text.trim().isNotEmpty() && it.info.probs.reduce(Double::times) > 0.1 })
+  }
 }

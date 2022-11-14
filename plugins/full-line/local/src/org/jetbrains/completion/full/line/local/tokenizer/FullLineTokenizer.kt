@@ -192,12 +192,20 @@ class FullLineTokenizer(modelFile: File, nThreads: Int) : Tokenizer {
     return decode(listOf(ids.toList()))[0]
   }
 
+  override fun decode(ids: IntArray, separator: String): String {
+    return ids.map { decode(it) }.joinToString(separator)
+  }
+
   override fun decode(id: Int): String {
     return encoder.idToSubword(id, true)
   }
 
   override fun isValidString(s: String): Boolean {
     return true
+  }
+  
+  override fun idsByRegex(regex: Regex): Set<Int> {
+    return vocab.filterKeys { it.contains(regex) }.values.toSet()
   }
 
   override val vocab: Map<String, Int> = encoder.vocabulary().mapIndexed { index, s -> Pair(s, index) }.toMap()
