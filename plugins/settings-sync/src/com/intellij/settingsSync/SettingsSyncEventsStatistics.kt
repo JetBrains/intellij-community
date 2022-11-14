@@ -2,9 +2,9 @@ package com.intellij.settingsSync
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-class SettingsSyncEventsStatistics : FeatureUsagesCollector() {
+class SettingsSyncEventsStatistics : CounterUsagesCollector() {
   companion object {
     val GROUP: EventLogGroup = EventLogGroup("settingsSyncEvents", 1)
 
