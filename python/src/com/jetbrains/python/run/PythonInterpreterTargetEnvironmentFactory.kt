@@ -1,9 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginAware
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,7 +21,7 @@ import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface PythonInterpreterTargetEnvironmentFactory {
+interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   fun getPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest?
 
   fun getTargetType(): TargetEnvironmentType<*>
@@ -53,6 +57,25 @@ interface PythonInterpreterTargetEnvironmentFactory {
    * For some modules target is obvious (like ``\\wsl$\``)
    */
   fun guessTargetConfigurationByModuleImpl(module: Module): TargetEnvironmentConfiguration? = null
+
+  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
+    if (!service<Available>().isAvailable(this, pluginDescriptor)) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  /**
+   * Overriding this service allows to disable some Run-Target based Python interpreters in different IDEs without touching code of
+   * every [PythonInterpreterTargetEnvironmentFactory].
+   */
+  interface Available {
+    fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean
+
+    /** It is supposed that PyCharm Pro supports all available Run Target interpreters. */
+    class Default : Available {
+      override fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean = true
+    }
+  }
 
   companion object {
     const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
