@@ -2894,6 +2894,30 @@
                      language="kotlin"
                      key="inspection.replace.with.string.builder.append.range.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.NonExternalClassifierExtendingStateOrPropsInspection"
+                     groupPath="Kotlin,React"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="non.external.classifier.extending.state.or.props.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.NonVarPropertyInExternalInterfaceInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="external.interface.contains.val.property.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.NonNullableBooleanPropertyInExternalInterfaceInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="false"
+                     level="WARNING"
+                     language="kotlin"
+                     key="external.interface.contains.non.nullable.property.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 
 </idea-plugin>
