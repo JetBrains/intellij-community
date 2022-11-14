@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actionMacro.ActionMacro;
@@ -722,7 +723,7 @@ public final class ActionsTreeUtil {
         adjusted = (ActionGroup)action;
       }
       else {
-        LOG.error("not an ActionGroup: " + action + " id=" + id);
+        PluginException.logPluginError(LOG, "not an ActionGroup: " + action + " id=" + id, null, action.getClass());
       }
     }
     return adjusted instanceof DefaultActionGroup
