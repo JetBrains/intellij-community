@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -182,7 +183,11 @@ public class MavenProgressIndicator {
 
         @Override
         public void cancel() {
-          myProject.getService(MavenProgressTracker.class).remove(indicator);
+          try {
+            myProject.getService(MavenProgressTracker.class).remove(indicator);
+          }
+          catch (AlreadyDisposedException ignore) {
+          }
         }
       });
     }
