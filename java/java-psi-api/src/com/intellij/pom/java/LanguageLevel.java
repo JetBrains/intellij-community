@@ -5,8 +5,6 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.psi.FilePropertyKey;
-import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +48,6 @@ public enum LanguageLevel {
    * Should point to the last released JDK.
    */
   public static final LanguageLevel HIGHEST = JDK_19;
-  public static final FilePropertyKey<LanguageLevel> KEY = FilePropertyKeyImpl.createPersistentEnumKey("LANGUAGE_LEVEL",
-                                                                                                       "language_level_persistence", 3,
-                                                                                                       LanguageLevel.class);
 
   private final Supplier<@Nls String> myPresentableText;
   private final JavaVersion myVersion;

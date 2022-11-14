@@ -13,12 +13,18 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.FilePropertyKey;
+import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<LanguageLevel> {
+
+  private static final FilePropertyKey<LanguageLevel> KEY = FilePropertyKeyImpl.createPersistentEnumKey("LANGUAGE_LEVEL",
+                                                                                                        "language_level_persistence", 3,
+                                                                                                        LanguageLevel.class);
+
   public static void pushLanguageLevel(@NotNull final Project project) {
     JavaLanguageLevelPusher pusher = EP_NAME.findExtension(JavaLanguageLevelPusher.class);
     PushedFilePropertiesUpdater.getInstance(project).pushAll(pusher);
@@ -27,7 +33,7 @@ public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<Langua
   @Override
   @NotNull
   public FilePropertyKey<LanguageLevel> getFileDataKey() {
-    return LanguageLevel.KEY;
+    return KEY;
   }
 
   @Override
@@ -85,6 +91,6 @@ public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<Langua
 
   @Nullable
   public static LanguageLevel getPushedLanguageLevel(@NotNull VirtualFile file) {
-    return LanguageLevel.KEY.getPersistentValue(file.getParent());
+    return KEY.getPersistentValue(file.getParent());
   }
 }

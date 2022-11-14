@@ -64,6 +64,9 @@
     <applicationService serviceImplementation="org.jetbrains.java.generate.GenerateToStringContext"/>
     <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringActionHandler"
                         serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
+    <applicationService serviceInterface="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService"
+                        serviceImplementation="com.intellij.openapi.roots.impl.InternalPersistentJavaLanguageLevelReaderServiceImpl"
+                        overrides="true"/>
     <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
