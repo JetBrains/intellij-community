@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class SettingsSyncEventsStatistics : CounterUsagesCollector() {
   companion object {
-    val GROUP: EventLogGroup = EventLogGroup("settingsSyncEvents", 1)
+    val GROUP: EventLogGroup = EventLogGroup("settings.sync.events", 1)
 
     val ENABLED_MANUALLY = GROUP.registerEvent("enabled_manually", EventFields.Enum("enabled_method", EnabledMethod::class.java))
     val DISABLED_MANUALLY = GROUP.registerEvent("disabled_manually", EventFields.Enum("disabled_method", DisabledMethod::class.java))
