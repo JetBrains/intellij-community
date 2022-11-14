@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMapWrapper;
 import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.repository.WorkspaceReader;
 import org.sonatype.aether.repository.WorkspaceRepository;
@@ -24,6 +25,7 @@ import org.sonatype.aether.repository.WorkspaceRepository;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Sergey Evdokimov
@@ -32,10 +34,10 @@ public class Maven30WorkspaceReader implements WorkspaceReader {
 
   private final WorkspaceRepository myRepository = new WorkspaceRepository();
 
-  private final MavenWorkspaceMap myWorkspaceMap;
+  private final MavenWorkspaceMapWrapper myWorkspaceMap;
 
   public Maven30WorkspaceReader(MavenWorkspaceMap workspaceMap) {
-    myWorkspaceMap = workspaceMap;
+    myWorkspaceMap = new MavenWorkspaceMapWrapper(workspaceMap);
   }
 
   @Override
@@ -51,16 +53,12 @@ public class Maven30WorkspaceReader implements WorkspaceReader {
     return resolved.getFile(artifact.getExtension());
   }
 
-  private static boolean equals(String s1, String s2) {
-    return s1 == null ? s2 == null : s1.equals(s2);
-  }
-
   @Override
   public List<String> findVersions(Artifact artifact) {
-    List<String> res = new ArrayList<String>();
+    List<String> res = new ArrayList<>();
 
-    for (MavenId id : myWorkspaceMap.getAvailableIds()) {
-      if (equals(id.getArtifactId(), artifact.getArtifactId()) && equals(id.getGroupId(), artifact.getGroupId())) {
+    for (MavenId id : myWorkspaceMap.getAvailableIdsForArtifactId(artifact.getArtifactId())) {
+      if (Objects.equals(id.getGroupId(), artifact.getGroupId())) {
         String version = id.getVersion();
 
         if (version != null) {

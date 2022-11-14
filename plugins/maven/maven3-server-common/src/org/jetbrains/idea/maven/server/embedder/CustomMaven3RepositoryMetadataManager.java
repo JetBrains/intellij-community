@@ -20,13 +20,16 @@ import org.apache.maven.artifact.repository.metadata.*;
 import org.codehaus.plexus.component.annotations.Component;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMapWrapper;
+
+import java.util.Objects;
 
 @Component(role = RepositoryMetadataManager.class, hint = "ide")
 public class CustomMaven3RepositoryMetadataManager extends DefaultRepositoryMetadataManager {
-  private MavenWorkspaceMap myWorkspaceMap;
+  private MavenWorkspaceMapWrapper myWorkspaceMap;
 
   public void customize(MavenWorkspaceMap workspaceMap) {
-    myWorkspaceMap = workspaceMap;
+    myWorkspaceMap = new MavenWorkspaceMapWrapper(workspaceMap);
   }
 
   public void reset() {
@@ -37,7 +40,7 @@ public class CustomMaven3RepositoryMetadataManager extends DefaultRepositoryMeta
   public void resolve(RepositoryMetadata metadata, RepositoryRequest request) throws RepositoryMetadataResolutionException {
     super.resolve(metadata, request);
 
-    MavenWorkspaceMap map = myWorkspaceMap;
+    MavenWorkspaceMapWrapper map = myWorkspaceMap;
     if (map == null) return;
 
     Metadata data = metadata.getMetadata();
@@ -46,8 +49,8 @@ public class CustomMaven3RepositoryMetadataManager extends DefaultRepositoryMeta
       data.setVersioning(versioning = new Versioning());
     }
 
-    for (MavenId each : map.getAvailableIds()) {
-      if (each.equals(data.getGroupId(), data.getArtifactId())) {
+    for (MavenId each : map.getAvailableIdsForArtifactId(data.getArtifactId())) {
+      if (Objects.equals(each.getGroupId(), data.getGroupId())) {
         versioning.addVersion(each.getVersion());
       }
     }
