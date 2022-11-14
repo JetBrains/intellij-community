@@ -39,6 +39,32 @@ class JSSupporterTest : BasePlatformTestCase() {
     assertEquals(result, template.string)
   }
 
+  fun `test missing brackets`() {
+    val expected = StringBuilder()
+    val result = StringBuilder()
+
+    val file = myFixture.configureByText(
+      JavaScriptFileType.INSTANCE,
+      FilesTest.readFile("supporter/missing-braces.js", "js")
+    )
+    val supporter = JSSupporter()
+
+    Regex("[^\r\n]+").findAll(file.text).forEach {
+      if (!it.value.startsWith("//")) {
+        val suggestion = it.value
+        val offset = it.range.last + 1
+        val fixed = supporter.getMissingBraces(suggestion, file.findElementAt(offset), offset)
+                      ?.joinToString("")
+                      ?.let { suggestion + it }
+                    ?: suggestion
+        result.append(fixed).append('\n')
+        expected.append(it.next()!!.value.drop(3)).append('\n')
+      }
+    }
+
+    assertEquals(expected.toString(), result.toString())
+  }
+
   @ParameterizedTest
   @MethodSource("firstTokenData")
   fun `test first token`(line: String, expectedToken: String?) {
