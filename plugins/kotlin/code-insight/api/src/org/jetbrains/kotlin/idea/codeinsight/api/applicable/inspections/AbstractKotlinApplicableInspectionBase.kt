@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
  * [AbstractKotlinApplicableInspectionBase] is a base implementation for [AbstractKotlinApplicableInspection] and
  * [AbstractKotlinApplicableInspectionWithContext].
  */
-sealed class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
+abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
 ) : KotlinSingleElementInspection<ELEMENT>(elementType), KotlinApplicableToolBase<ELEMENT> {
     /**

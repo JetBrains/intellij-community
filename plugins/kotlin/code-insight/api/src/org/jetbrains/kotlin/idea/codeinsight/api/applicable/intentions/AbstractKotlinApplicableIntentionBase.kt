@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
  * Note: A [familyNameGetter] for [SelfTargetingIntention] does not have to be set because inheritors of
  * [AbstractKotlinApplicableIntentionBase] must override [getFamilyName].
  */
-sealed class AbstractKotlinApplicableIntentionBase<ELEMENT : KtElement>(
+abstract class AbstractKotlinApplicableIntentionBase<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
 ) : SelfTargetingIntention<ELEMENT>(elementType.java, { "" }), KotlinApplicableToolBase<ELEMENT> {
     /**
