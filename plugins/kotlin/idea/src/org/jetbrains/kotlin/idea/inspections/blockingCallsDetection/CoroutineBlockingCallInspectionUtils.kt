@@ -100,4 +100,5 @@ internal object CoroutineBlockingCallInspectionUtils {
     const val FLOW_PACKAGE_FQN = "kotlinx.coroutines.flow"
     private const val FLOW_FQN = "kotlinx.coroutines.flow.Flow"
     const val WITH_CONTEXT_FQN = "kotlinx.coroutines.withContext"
+    const val COROUTINE_NAME = "kotlinx.coroutines.CoroutineName"
 }

@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.receiverValue
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.BLOCKING_EXECUTOR_ANNOTATION
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.COROUTINE_CONTEXT
+import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.COROUTINE_NAME
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.COROUTINE_SCOPE
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.DEFAULT_DISPATCHER_FQN
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.FLOW_PACKAGE_FQN
@@ -117,8 +118,25 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         (this.constructor.supertypes + this).any { it.fqName?.asString() == COROUTINE_CONTEXT }
 
     private fun checkBlockFriendlyDispatcherParameter(call: ResolvedCall<*>): ContextType {
-        val argumentDescriptor = call.getFirstArgument()?.resolveToCall()?.resultingDescriptor ?: return Unsure
-        return argumentDescriptor.isBlockFriendlyDispatcher()
+        val firstArgument = call.getFirstArgument()
+        val resultArgumentResolvedDescriptor = firstArgument?.resolveToCall()?.resultingDescriptor ?: return Unsure
+
+        val blockingType = resultArgumentResolvedDescriptor.isBlockFriendlyDispatcher()
+        if (blockingType != Unsure) return blockingType
+
+        if (firstArgument is KtBinaryExpression) {
+            if (isCoroutineContextPlus(resultArgumentResolvedDescriptor)) {
+                return firstArgument.hasBlockFriendlyDispatcher()
+            }
+        }
+        return Unsure
+    }
+
+    private fun isCoroutineContextPlus(descriptor: CallableDescriptor): Boolean {
+        if (descriptor.name.asString() != "plus") return false
+        return generateSequence(listOf(descriptor)) { d -> d.flatMap { it.overriddenDescriptors }.takeIf { it.isNotEmpty() } }
+            .flatten()
+            .any { it.containingDeclaration.fqNameOrNull()?.asString() == COROUTINE_CONTEXT}
     }
 
     private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): ContextType {
@@ -175,6 +193,8 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
         if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, BLOCKING_EXECUTOR_ANNOTATION)) return Blocking
         if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, NONBLOCKING_EXECUTOR_ANNOTATION)) return NonBlocking.INSTANCE
+
+        if (this is ConstructorDescriptor && constructedClass.fqNameOrNull()?.asString() == COROUTINE_NAME) return Unsure
 
         val fqnOrNull = fqNameOrNull()?.asString() ?: return NonBlocking.INSTANCE
         return when(fqnOrNull) {

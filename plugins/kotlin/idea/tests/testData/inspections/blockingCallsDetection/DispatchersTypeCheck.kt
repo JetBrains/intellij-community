@@ -1,6 +1,7 @@
 @file:Suppress("UNUSED_PARAMETER")
 package kotlinx.coroutines
 
+import java.lang.Thread
 import java.lang.Thread.sleep
 
 suspend fun withIoDispatcher() {
@@ -12,17 +13,9 @@ suspend fun withIoDispatcher() {
     withContext(Dispatchers.Default) {
         Thread.<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">sleep</warning>(1)
     }
-}
 
-class CoroutineDispatcher()
-object Dispatchers {
-    val IO: kotlinx.coroutines.CoroutineDispatcher = TODO()
-    val Default: kotlinx.coroutines.CoroutineDispatcher = TODO()
-}
-
-suspend fun <T> withContext(
-    context: CoroutineDispatcher,
-    f: suspend () -> T
-) {
-    TODO()
+    withContext(Dispatchers.IO + CoroutineName("My coroutine")) {
+        //no warning since IO dispatcher type used
+        Thread.sleep(42)
+    }
 }
