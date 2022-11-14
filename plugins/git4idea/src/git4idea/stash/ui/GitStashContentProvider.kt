@@ -4,7 +4,6 @@ package git4idea.stash.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.help.HelpManager
@@ -27,8 +26,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.Content
 import git4idea.i18n.GitBundle
 import git4idea.stash.GitStashTracker
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -46,11 +43,11 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     val savedPatchesUi = GitSavedPatchesUi(disposable!!)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
-        savedPatchesUi.updateLayout(isVertical(), isEditorDiffPreview())
+        savedPatchesUi.updateLayout()
       }
     })
     project.messageBus.connect(disposable!!).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun stateChanged(toolWindowManager: ToolWindowManager) = savedPatchesUi.updateLayout(isVertical(), isEditorDiffPreview())
+      override fun stateChanged(toolWindowManager: ToolWindowManager) = savedPatchesUi.updateLayout()
     })
     return savedPatchesUi
   }
@@ -58,8 +55,10 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
   private inner class GitSavedPatchesUi(parent: Disposable) : SavedPatchesUi(project,
                                                                              listOf(GitStashProvider(project, parent),
                                                                                     ShelfProvider(project, parent)),
-                                                                             isVertical(), isEditorDiffPreview(),
-                                                                             ::returnFocusToToolWindow, parent) {
+                                                                             isVertical = ::isVertical,
+                                                                             isEditorDiffPreview = ::isEditorDiffPreview,
+                                                                             focusMainUi = ::returnFocusToToolWindow,
+                                                                             parent) {
     init {
       tree.emptyText
         .appendLine("")

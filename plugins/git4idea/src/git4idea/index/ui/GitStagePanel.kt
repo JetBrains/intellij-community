@@ -70,8 +70,8 @@ import java.util.*
 import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
-                             isVertical: Boolean,
-                             isEditorDiffPreview: Boolean,
+                             private val isVertical: () -> Boolean,
+                             private val isEditorDiffPreview: () -> Boolean,
                              disposableParent: Disposable,
                              private val activate: () -> Unit) :
   JPanel(BorderLayout()), DataProvider, Disposable {
@@ -155,7 +155,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     add(commitDiffSplitter, BorderLayout.CENTER)
     add(changesStatusPanel, BorderLayout.SOUTH)
 
-    updateLayout(isVertical, isEditorDiffPreview, forceDiffPreview = true)
+    updateLayout(isInitial = true)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
     val busConnection = project.messageBus.connect(this)
@@ -207,18 +207,25 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     return null
   }
 
-  fun updateLayout(isVertical: Boolean, canUseEditorDiffPreview: Boolean, forceDiffPreview: Boolean = false) {
-    val isEditorDiffPreview = canUseEditorDiffPreview || isVertical
-    val isMessageSplitterVertical = isVertical || !isEditorDiffPreview
+  fun updateLayout() {
+    updateLayout(isInitial = false)
+  }
+
+  private fun updateLayout(isInitial: Boolean) {
+    val isVertical = isVertical()
+    val isEditorDiffPreview = isEditorDiffPreview()
+    val isInEditor = isEditorDiffPreview || isVertical
+    val isMessageSplitterVertical = !isEditorDiffPreview || isVertical
     if (treeMessageSplitter.orientation != isMessageSplitterVertical) {
       treeMessageSplitter.orientation = isMessageSplitterVertical
     }
-    setDiffPreviewInEditor(isEditorDiffPreview, forceDiffPreview)
+    setDiffPreviewInEditor(isInEditor, isInitial)
   }
 
-  private fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
+  private fun setDiffPreviewInEditor(isInEditor: Boolean, isInitial: Boolean) {
     if (disposableFlag.isDisposed) return
-    if (!force && (isInEditor == (editorTabPreview != null))) return
+    val needUpdatePreviews = isInEditor != (editorTabPreview != null)
+    if (!isInitial && !needUpdatePreviews) return
 
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
     diffPreviewProcessor = GitStageDiffPreview(project, _tree, tracker, isInEditor, this)
