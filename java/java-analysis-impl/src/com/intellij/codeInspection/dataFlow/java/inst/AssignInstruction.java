@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
@@ -19,6 +18,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -77,27 +77,21 @@ public class AssignInstruction extends ExpressionPushingInstruction {
       stateBefore.push(dfaDest);
       return nextStates(interpreter, stateBefore);
     }
-    if (!(dfaDest instanceof DfaVariableValue &&
-          ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
-          dfaSource instanceof DfaVariableValue &&
-          (ControlFlow.isTempVariable((DfaVariableValue)dfaSource) ||
-           ((DfaVariableValue)dfaSource).getDescriptor().isCall()))) {
+    if (!(dfaDest instanceof DfaVariableValue destVar && PsiUtil.isJvmLocalVariable(destVar.getPsiVariable()))) {
       JavaDfaHelpers.dropLocality(dfaSource, stateBefore);
     }
 
-    if (dfaDest instanceof DfaVariableValue) {
-      DfaVariableValue var = (DfaVariableValue) dfaDest;
-
+    if (dfaDest instanceof DfaVariableValue var) {
       PsiElement psi = var.getPsiVariable();
       if (dfaSource instanceof DfaTypeValue &&
-          ((psi instanceof PsiField && ((PsiField)psi).hasModifierProperty(PsiModifier.STATIC)) ||
+          ((psi instanceof PsiField field && field.hasModifierProperty(PsiModifier.STATIC)) ||
            (var.getQualifier() != null && !stateBefore.getDfType(var.getQualifier()).isLocal()))) {
         DfType dfType = dfaSource.getDfType();
         if (dfType instanceof DfReferenceType) {
           dfaSource = dfaSource.getFactory().fromDfType(((DfReferenceType)dfType).dropLocality());
         }
       }
-      if (!(psi instanceof PsiField) || !((PsiField)psi).hasModifierProperty(PsiModifier.VOLATILE)) {
+      if (!(psi instanceof PsiField field && field.hasModifierProperty(PsiModifier.VOLATILE))) {
         stateBefore.setVarValue(var, dfaSource);
       }
       if (DfaNullability.fromDfType(var.getInherentType()) == DfaNullability.NULLABLE &&
