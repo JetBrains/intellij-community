@@ -787,6 +787,11 @@ public class ShelvedChangesViewManager implements Disposable {
       boolean isEditorPreview = isEditorPreview(myProject);
       boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
 
+      //noinspection DoubleNegation
+      boolean needUpdatePreviews = isEditorPreview != (myEditorChangeProcessor != null) ||
+                                   hasSplitterPreview != (mySplitterChangeProcessor != null);
+      if (!needUpdatePreviews) return;
+
       if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
 
@@ -796,6 +801,7 @@ public class ShelvedChangesViewManager implements Disposable {
         myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor, hasSplitterPreview);
       }
       else {
+        myEditorChangeProcessor = null;
         myEditorDiffPreview = null;
       }
 
@@ -805,6 +811,7 @@ public class ShelvedChangesViewManager implements Disposable {
         mySplitterDiffPreview = installSplitterPreview(mySplitterChangeProcessor);
       }
       else {
+        mySplitterChangeProcessor = null;
         mySplitterDiffPreview = null;
       }
     }
