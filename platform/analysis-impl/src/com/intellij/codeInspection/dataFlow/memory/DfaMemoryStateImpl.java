@@ -82,11 +82,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     copy.flushFields(new QualifierStatusMap(null, true));
     copy.emptyStack();
     for (DfaValue value : getFactory().getValues().toArray(new DfaValue[0])) {
-      if (value instanceof DfaVariableValue) {
-        DfType type = copy.getDfType(value);
+      if (value instanceof DfaVariableValue var) {
+        DfType type = copy.getDfType(var);
         DfType newType = type.correctForClosure();
         if (newType != type) {
-          copy.setDfType(value, newType);
+          copy.recordVariableType(var, newType);
         }
       }
     }
@@ -749,6 +749,23 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public void setDfType(@NotNull DfaValue value, @NotNull DfType dfType) {
     if (value instanceof DfaVariableValue) {
       recordVariableType((DfaVariableValue)value, dfType);
+    }
+  }
+
+  @Override
+  public void updateDfType(@NotNull DfaValue value, @NotNull UnaryOperator<@NotNull DfType> updater) {
+    if (!(value instanceof DfaVariableValue var)) return;
+    EqClass values = getEqClass(var);
+    Iterable<DfaVariableValue> vars = values == null ? List.of(var) : values;
+    for (@NotNull DfaVariableValue eqVar : vars) {
+      DfType type = getRecordedType(eqVar);
+      if (type == null) {
+        type = eqVar.getInherentType();
+      }
+      DfType newType = updater.apply(type);
+      if (!newType.equals(type)) {
+        recordVariableType(eqVar, newType);
+      }
     }
   }
 
