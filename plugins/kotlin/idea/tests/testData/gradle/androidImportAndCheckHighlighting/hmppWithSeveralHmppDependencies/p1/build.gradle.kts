@@ -32,19 +32,18 @@ kotlin {
     iosArm64Main.dependsOn(iosMain)
 
     commonMain.dependencies {
-        api("org.jetbrains.kotlinx:atomicfu:0.15.1")
-        implementation("io.ktor:ktor-client-core:1.5.1")
-        api("io.ktor:ktor-client-json:1.5.1")
-        compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2-native-mt")
+        api("org.jetbrains.kotlinx:atomicfu:0.18.5")
+        implementation("io.ktor:ktor-client-core:2.1.3")
+        compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     }
 
     jvmAndAndroidMain.dependencies {
-        implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.1")
-        compileOnly("io.reactivex.rxjava3:rxjava:3.0.10")
+        implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0")
+        compileOnly("io.reactivex.rxjava3:rxjava:3.1.5")
     }
 
     androidMain.dependencies {
-        runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2")
+        runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     }
 
     targets.all {
