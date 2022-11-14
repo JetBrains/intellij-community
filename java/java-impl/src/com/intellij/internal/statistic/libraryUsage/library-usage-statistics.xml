@@ -232,7 +232,7 @@
   <technology name="documents4j" root="com.documents4j"/>
   <technology name="ebean" root="io.ebean"/>
   <technology name="napier" root="io.github.aakira.napier"/>
-  <technology name="сlikt" root="com.github.ajalt.clikt"/>
+  <technology name="clikt" root="com.github.ajalt.clikt"/>
   <technology name="avro" root="org.apache.avro"/>
   <technology name="apollo" root="com.apollographql.apollo"/>
   <technology name="decompose" root="com.arkivanov.decompose"/>
