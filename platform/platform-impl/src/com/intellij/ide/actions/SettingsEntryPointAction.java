@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
@@ -282,17 +281,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public void disposeWidget(@NotNull StatusBarWidget widget) {
-      Disposer.dispose(widget);
-    }
-
-    @Override
     public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
       return isAvailableInStatusBar();
     }
   }
 
-  private static class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
+  private static final class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
     private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
     private StatusBar myStatusBar;
 
@@ -307,17 +301,17 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public @Nullable WidgetPresentation getPresentation() {
+    public @NotNull WidgetPresentation getPresentation() {
       return this;
     }
 
     @Override
-    public @Nullable @NlsContexts.Tooltip String getTooltipText() {
+    public @NlsContexts.Tooltip @NotNull String getTooltipText() {
       return getActionTooltip();
     }
 
     @Override
-    public @Nullable Consumer<MouseEvent> getClickConsumer() {
+    public @NotNull Consumer<MouseEvent> getClickConsumer() {
       return event -> {
         resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
@@ -342,7 +336,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return getActionIcon();
     }
 

@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -69,11 +68,6 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new VfsRefreshWidget();
-  }
-
-  @Override
-  public void disposeWidget(@NotNull StatusBarWidget widget) {
-    Disposer.dispose(widget);
   }
 
   @RequiresEdt

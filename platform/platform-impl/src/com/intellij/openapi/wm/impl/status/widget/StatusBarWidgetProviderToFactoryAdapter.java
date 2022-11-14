@@ -15,12 +15,12 @@ import java.util.Objects;
 @ApiStatus.Internal
 public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarWidgetFactory {
   private final Project myProject;
-  @SuppressWarnings("deprecation") final StatusBarWidgetProvider provider;
+  @SuppressWarnings("removal") final StatusBarWidgetProvider provider;
 
   private boolean widgetWasCreated;
   private @Nullable StatusBarWidget myWidget;
 
-  public StatusBarWidgetProviderToFactoryAdapter(@NotNull Project project, @SuppressWarnings("deprecation") @NotNull StatusBarWidgetProvider provider) {
+  public StatusBarWidgetProviderToFactoryAdapter(@NotNull Project project, @SuppressWarnings("removal") @NotNull StatusBarWidgetProvider provider) {
     myProject = project;
     this.provider = provider;
   }
@@ -51,6 +51,7 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   @Override
   public boolean isAvailable(@NotNull Project project) {
     IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
+    //noinspection removal
     return frame != null && provider.isCompatibleWith(frame) && getWidget() != null;
   }
 
@@ -71,6 +72,7 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
 
   private @Nullable StatusBarWidget getWidget() {
     if (!widgetWasCreated) {
+      //noinspection removal
       myWidget = provider.getWidget(myProject);
       widgetWasCreated = true;
     }
@@ -85,6 +87,7 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   }
 
   public @NotNull String getAnchor() {
+    //noinspection removal
     return provider.getAnchor();
   }
 
