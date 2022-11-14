@@ -161,7 +161,14 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
         // Already set, no need to detect
         condaPathTextBoxRwProp.get().isNotBlank()
       }) return
-    val condaPath = suggestCondaPath(targetConfiguration) ?: return
+    val condaPath = suggestCondaPath(targetConfiguration)
+    if (condaPath == null) {
+      withContext(uiContext) {
+        condaPathTextBoxRwProp.set("")
+      }
+      return
+    }
+
     withContext(uiContext) {
       condaPathTextBoxRwProp.set(condaPath)
       // Since path is set, lets click button on behalf of user
