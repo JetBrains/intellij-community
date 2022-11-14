@@ -47,10 +47,11 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
 
   @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
-    if (location.getPosition() == null || !(element instanceof PsiClass)) {
+    if (location.getPosition() == null) {
       return null;
     }
-    if (isTooGeneral((PsiClass)element)) return false;
+
+    if (!(element instanceof PsiClass) || isTooGeneral((PsiClass)element)) return false;
 
     Set<String> superClasses = PLACE_SUPER_CLASSES.getValue(location);
     if (superClasses.isEmpty()) {
