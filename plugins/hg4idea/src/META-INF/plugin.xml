@@ -59,7 +59,7 @@
 
     <statusBarWidgetFactory id="hgWidget"
                             implementation="org.zmlx.hg4idea.status.ui.HgStatusWidget$Factory"
-                            order="after codeStyleWidget,before readOnlyWidget"/>
+                            order="after CodeStyleStatusBarWidget,before ReadOnlyAttribute"/>
     <statusBarWidgetFactory id="InHgIncomingOutgoingWidget"
                             implementation="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$IncomingFactory"
                             order="after hgWidget"/>

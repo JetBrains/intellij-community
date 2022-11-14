@@ -679,7 +679,7 @@
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
     <statusBarWidgetFactory id="gitWidget"
                             implementation="git4idea.ui.branch.GitBranchWidget$Factory"
-                            order="after codeStyleWidget,before readOnlyWidget"/>
+                            order="after CodeStyleStatusBarWidget,before ReadOnlyAttribute"/>
 
     <vcsBulkMovesOnlyChangesFilter implementation="git4idea.GitBulkMovesOnlyChangesFilter"/>
 

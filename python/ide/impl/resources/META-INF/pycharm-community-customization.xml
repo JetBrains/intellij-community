@@ -33,7 +33,7 @@
 
     <statusBarWidgetFactory id="pythonInterpreterWidget"
                             implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
-                            order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
+                            order="after CodeStyleStatusBarWidget, before gitWidget, before hgWidget, before Notifications"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
