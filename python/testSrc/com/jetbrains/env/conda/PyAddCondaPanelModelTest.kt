@@ -17,6 +17,8 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import org.hamcrest.MatcherAssert
+import org.hamcrest.Matchers.*
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -52,6 +54,9 @@ class PyAddCondaPanelModelTest {
     model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
     model.condaActionCreateNewEnvRadioRwProp.set(true)
     model.condaActionUseExistingEnvRadioRwProp.set(false)
+
+    MatcherAssert.assertThat("No 3.9 suggested", model.languageLevels, hasItem(LanguageLevel.PYTHON39))
+    MatcherAssert.assertThat("2.6 suggested", model.languageLevels, not(hasItem(LanguageLevel.PYTHON26)))
     model.newEnvLanguageLevelRwProperty.set(LanguageLevel.PYTHON38)
     Assert.assertNotNull("Empty conda env name didn't lead to validation", model.getValidationError())
     model.newEnvNameRwProperty.set("d     f --- ")
@@ -82,8 +87,7 @@ class PyAddCondaPanelModelTest {
     model.condaActionUseExistingEnvRadioRwProp.set(false)
     model.newEnvLanguageLevelRwProperty.set(LanguageLevel.PYTHON38)
     model.newEnvNameRwProperty.set(name)
-    Assert.assertEquals("Name duplicate should lead to error",
-                        PyBundle.message("python.sdk.conda.problem.env.name.used"),
+    Assert.assertEquals("Name duplicate should lead to error", PyBundle.message("python.sdk.conda.problem.env.name.used"),
                         model.getValidationError())
 
   }

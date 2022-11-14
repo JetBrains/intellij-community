@@ -45,7 +45,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * Python versions for new environment
    */
-  val languageLevels: List<LanguageLevel> = LanguageLevel.values().toList()
+  val languageLevels: List<LanguageLevel> = condaSupportedLanguages
 
   val condaPathFileChooser: FileChooserDescriptor = object : FileChooserDescriptor(true, false, false, false, false, false) {
     override fun isFileVisible(file: VirtualFile?, showHiddenFiles: Boolean): Boolean =

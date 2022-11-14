@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -24,6 +25,14 @@ import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
+
+/**
+ * Levels to be used for new conda envs
+ */
+val condaSupportedLanguages: List<LanguageLevel>
+  get() = LanguageLevel.SUPPORTED_LEVELS
+    .asReversed()
+    .filter { it < LanguageLevel.PYTHON311 }
 
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
