@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -141,27 +142,29 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     VirtualFile dir = getDirectoryToSave(project, moduleToSave);
     List<LocalArchivedTemplate.RootDescription> roots = collectStructure(project, moduleToSave);
     LocalArchivedTemplate.RootDescription basePathRoot = findOrAddBaseRoot(roots, dir);
-    PathKt.createDirectories(zipFile.getParent());
-    try (Compressor stream = new Compressor.Zip(zipFile.toFile())) {
-      writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, basePathRoot.myRelativePath, stream, true);
+    try {
+      NioFiles.createDirectories(zipFile.getParent());
+      try (Compressor stream = new Compressor.Zip(zipFile)) {
+        writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, basePathRoot.myRelativePath, stream, true);
 
-      if (replaceParameters) {
-        String text = getInputFieldsText(parameters);
-        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, basePathRoot.myRelativePath, stream, false);
-      }
+        if (replaceParameters) {
+          String text = getInputFieldsText(parameters);
+          writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, basePathRoot.myRelativePath, stream, false);
+        }
 
-      String metaDescription = getTemplateMetaText(shouldEscape, roots);
-      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, basePathRoot.myRelativePath, stream, true);
+        String metaDescription = getTemplateMetaText(shouldEscape, roots);
+        writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, basePathRoot.myRelativePath, stream, true);
 
-      FileIndex index = moduleToSave == null
-                        ? ProjectRootManager.getInstance(project).getFileIndex()
-                        : ModuleRootManager.getInstance(moduleToSave).getFileIndex();
-      MyContentIterator iterator = new MyContentIterator(indicator, stream, project, parameters, shouldEscape);
-      for (LocalArchivedTemplate.RootDescription root : roots) {
-        String prefix = LocalArchivedTemplate.ROOT_FILE_NAME + root.myIndex;
-        VirtualFile rootFile = root.myFile;
-        iterator.setRootAndPrefix(rootFile, prefix);
-        index.iterateContentUnderDirectory(rootFile, iterator);
+        FileIndex index = moduleToSave == null
+                          ? ProjectRootManager.getInstance(project).getFileIndex()
+                          : ModuleRootManager.getInstance(moduleToSave).getFileIndex();
+        MyContentIterator iterator = new MyContentIterator(indicator, stream, project, parameters, shouldEscape);
+        for (LocalArchivedTemplate.RootDescription root : roots) {
+          String prefix = LocalArchivedTemplate.ROOT_FILE_NAME + root.myIndex;
+          VirtualFile rootFile = root.myFile;
+          iterator.setRootAndPrefix(rootFile, prefix);
+          index.iterateContentUnderDirectory(rootFile, iterator);
+        }
       }
     }
     catch (ProcessCanceledException ignored) { }
