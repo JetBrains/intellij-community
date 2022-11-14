@@ -8,11 +8,13 @@ import com.intellij.psi.PsiElementVisitor
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasValidAlignment
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.isCorrectlyFormatted
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.intentions.FixCellAlignmentIntention
 import org.intellij.plugins.markdown.editor.tables.intentions.ReformatTableIntention
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.jetbrains.annotations.ApiStatus
 
@@ -36,12 +38,17 @@ class MarkdownIncorrectTableFormattingInspection: LocalInspectionTool() {
 
       override fun visitElement(element: PsiElement) {
         super.visitElement(element)
-        if ((element as? MarkdownTableCell)?.hasValidAlignment() == false) {
-          holder.registerProblem(
-            element,
-            MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.local.cell.description"),
-            FixCellAlignmentFix()
-          )
+        val cell = element as? MarkdownTableCell ?: return
+        val table = cell.parentTable ?: return
+        val alignment = table.getColumnAlignment(cell.columnIndex)
+        if (alignment != MarkdownTableSeparatorRow.CellAlignment.NONE) {
+          if (!cell.hasValidAlignment()) {
+            holder.registerProblem(
+              element,
+              MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.local.cell.description"),
+              FixCellAlignmentFix()
+            )
+          }
         }
       }
     }
