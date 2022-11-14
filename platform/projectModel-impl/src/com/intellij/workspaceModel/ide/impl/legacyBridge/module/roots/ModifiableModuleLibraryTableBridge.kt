@@ -17,13 +17,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGene
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntityWithExcludes
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridgeImpl)
@@ -209,9 +203,9 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       // but original bridge will be disposed in during events handling. This method will be called the last thus both of them will be disposed
       if (copyBridge.isDisposed && originBridge.isDisposed) return@forEach
 
-      val (actualBridge, outdatedBridge) = if (storage.current.libraryMap.getEntities(copyBridge).isNotEmpty()) {
+      val (actualBridge, outdatedBridge) = if (storage.current.libraryMap.getFirstEntity(copyBridge) != null) {
         copyBridge to originBridge
-      } else if (storage.current.libraryMap.getEntities(originBridge).isNotEmpty()) {
+      } else if (storage.current.libraryMap.getFirstEntity(originBridge) != null) {
         originBridge to copyBridge
       } else {
         error("Unexpected state that both bridges are not actual")
