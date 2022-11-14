@@ -115,10 +115,10 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
                 )
             }
 
-            val factory = KtPsiFactory.contextual(context)
-            val className = runReadAction { referenced.containingClass?.qualifiedName }
-            val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
             val file = runReadAction {
+                val factory = KtPsiFactory.contextual(context)
+                val className = referenced.containingClass?.qualifiedName
+                val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
                 factory.createFile("dummy.kt", text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}")
                     .also { it.addImports(j2kResult.importsToAdd) }
             }
