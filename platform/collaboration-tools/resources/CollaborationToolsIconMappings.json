@@ -1,0 +1,15 @@
+{
+  "icons": {
+    "expui": {
+      "review": {
+        "commentUnread.svg": "icons/review/commentUnread.svg",
+        "fileUnread.svg": "icons/review/fileUnread.svg"
+      },
+      "addEmoji.svg": "icons/addEmoji.svg",
+      "comment.svg": [
+        "icons/comment.svg",
+        "icons/review/commentUnresolved.svg"
+      ]
+    }
+  }
+}
