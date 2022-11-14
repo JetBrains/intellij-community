@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
 import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
 import org.editorconfig.plugincomponents.SettingsProviderComponent
@@ -24,6 +25,7 @@ class EditorSettingsManager : EditorFactoryListener {
     fun applyEditorSettings(editor: Editor) {
       val document = editor.document
       val file = FileDocumentManager.getInstance().getFile(document) ?: return
+      if (file is LightVirtualFile) return
       val project = editor.project ?: return
       if (!Utils.isEnabled(CodeStyle.getSettings(project))) return
       val properties = SettingsProviderComponent.getInstance(project).getProperties(file)
