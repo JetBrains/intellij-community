@@ -21,13 +21,9 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryFilesPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +80,12 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new LibraryElementPresentation(getMyLibraryName(), getMyLevel(), getMyModuleName(), findLibrary(context), context);
+    if (myStorage == null) {
+      new LibraryElementPresentation(myLibraryName, myLevel, myModuleName, findLibrary(context), context);
+    }
+    LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
+    return new LibraryElementPresentation(getMyLibraryName(entity), getMyLevel(entity), getMyModuleName(entity), findLibrary(context),
+                                          context);
   }
 
   @Override
@@ -92,13 +93,28 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     if (!(element instanceof LibraryPackagingElement)) {
       return false;
     }
+    String level;
+    String libraryName;
+    String moduleName;
+
+
+    if (myStorage == null) {
+      level = myLevel;
+      libraryName = myLibraryName;
+      moduleName = myModuleName;
+    }
+    else {
+      LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
+      level = getMyLevel(entity);
+      libraryName = getMyLibraryName(entity);
+      moduleName = getMyModuleName(entity);
+    }
 
     LibraryPackagingElement packagingElement = (LibraryPackagingElement)element;
-    String level = getMyLevel();
-    String libraryName = getMyLibraryName();
+
     return level != null && libraryName != null && level.equals(packagingElement.getLevel())
            && libraryName.equals(packagingElement.getLibraryName())
-           && Objects.equals(getMyModuleName(), packagingElement.getModuleName());
+           && Objects.equals(moduleName, packagingElement.getModuleName());
   }
 
   @Override
@@ -115,16 +131,15 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
   @Attribute(LIBRARY_LEVEL_ATTRIBUTE)
   public String getLevel() {
-    return getMyLevel();
+    return myStorage == null ? myLevel : getMyLevel((LibraryFilesPackagingElementEntity)getThisEntity());
   }
 
   public void setLevel(String level) {
-    String levelBefore = getMyLevel();
+    String levelBefore = getLevel();
     this.update(
       () -> myLevel = level,
       (builder, entity) -> {
         if (levelBefore.equals(level)) return;
-
         builder.modifyEntity(LibraryFilesPackagingElementEntity.Builder.class, entity, ent -> {
           LibraryId libraryId = ent.getLibrary();
           if (libraryId != null) {
@@ -148,7 +163,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
   @Attribute(LIBRARY_NAME_ATTRIBUTE)
   public String getLibraryName() {
-    return getMyLibraryName();
+    return myStorage == null ? myLibraryName : getMyLibraryName((LibraryFilesPackagingElementEntity)getThisEntity());
   }
 
   public void setLibraryName(String libraryName) {
@@ -168,16 +183,16 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
   @Attribute(MODULE_NAME_ATTRIBUTE)
   public String getModuleName() {
-    return getMyModuleName();
+    return myStorage == null ? myModuleName : getMyModuleName((LibraryFilesPackagingElementEntity)getThisEntity());
   }
 
   public void setModuleName(String moduleName) {
-    String moduleNameBefore = getMyModuleName();
+    String moduleNameBefore = getModuleName();
     this.update(
       () -> myModuleName = moduleName,
       (builder, entity) -> {
-        if (moduleNameBefore.equals(moduleName)) return;
 
+        if (Objects.equals(moduleNameBefore, moduleName)) return;
         builder.modifyEntity(LibraryFilesPackagingElementEntity.Builder.class, entity, ent -> {
           LibraryId libraryId = ent.getLibrary();
           if (libraryId != null) {
@@ -192,7 +207,19 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
   @Override
   public String toString() {
-    return "lib:" + getMyLibraryName() + "(" + (getMyModuleName() != null ? "module " + getMyModuleName() : getMyLevel()) + ")";
+    String level = myLevel;
+    String libraryName = myLibraryName;
+    String moduleName = myModuleName;
+
+
+    if (myStorage != null) {
+      LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
+      level = getMyLevel(entity);
+      libraryName = getMyLibraryName(entity);
+      moduleName = getMyModuleName(entity);
+    }
+
+    return "lib:" + libraryName + "(" + (moduleName != null ? "module " + moduleName : level) + ")";
   }
 
   @Override
@@ -225,13 +252,23 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
   @Nullable
   public Library findLibrary(@NotNull PackagingElementResolvingContext context) {
-    String level = getMyLevel();
-    String myLibraryName1 = getMyLibraryName();
-    if (getMyModuleName() == null && level != null && myLibraryName1 != null) {
+    String level = myLevel;
+    String myLibraryName1 = myLibraryName;
+    String moduleName = myModuleName;
+
+
+    if (myStorage != null) {
+      LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
+      level = getMyLevel(entity);
+      myLibraryName1 = getMyLibraryName(entity);
+      moduleName = getMyModuleName(entity);
+    }
+
+    if (moduleName == null && level != null && myLibraryName1 != null) {
       return context.findLibrary(level, myLibraryName1);
     }
     final ModulesProvider modulesProvider = context.getModulesProvider();
-    final Module module = modulesProvider.getModule(getMyModuleName());
+    final Module module = modulesProvider.getModule(moduleName);
     if (module != null) {
       for (OrderEntry entry : modulesProvider.getRootModel(module).getOrderEntries()) {
         if (entry instanceof LibraryOrderEntry) {
@@ -262,71 +299,50 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     return new PackagingElementOutputKind(containsDirectories, containsJars);
   }
 
-  private @Nullable String getMyLevel() {
-    if (myStorage == null) {
-      return myLevel;
+  private @Nullable String getMyLevel(LibraryFilesPackagingElementEntity entity) {
+
+    LibraryId library = entity.getLibrary();
+    String level = null;
+    if (library != null) {
+      level = library.getTableId().getLevel();
+      if (!Objects.equals(level, myLevel)) {
+        myLevel = level;
+      }
     }
     else {
-      LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
-      LibraryId library = entity.getLibrary();
-      String level = null;
-      if (library != null) {
-        level = library.getTableId().getLevel();
-        if (!Objects.equals(level, myLevel)) {
-          myLevel = level;
-        }
+      if (myLevel != null) {
+        myLevel = null;
       }
-      else {
-        if (myLevel != null) {
-          myLevel = null;
-        }
-      }
-      return level;
     }
+    return level;
   }
 
-  private @Nullable String getMyLibraryName() {
-    if (myStorage == null) {
-      return myLibraryName;
+  private @Nullable String getMyLibraryName(LibraryFilesPackagingElementEntity entity) {
+    LibraryId library = entity.getLibrary();
+    String libraryName = null;
+    if (library != null) {
+      libraryName = library.getName();
+      if (!Objects.equals(libraryName, myLibraryName)) {
+        myLibraryName = libraryName;
+      }
     }
     else {
-      LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
-      LibraryId library = entity.getLibrary();
-      String libraryName = null;
-      if (library != null) {
-        libraryName = library.getName();
-        if (!Objects.equals(libraryName, myLibraryName)) {
-          myLibraryName = libraryName;
-        }
+      if (myLibraryName != null) {
+        myLibraryName = null;
       }
-      else {
-        if (myLibraryName != null) {
-          myLibraryName = null;
-        }
-      }
-      return libraryName;
     }
+    return libraryName;
   }
 
-  private @Nullable String getMyModuleName() {
-    if (myStorage == null) {
-      return myModuleName;
-    }
-    else {
-      LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
-      LibraryId library = entity.getLibrary();
-      String moduleName = null;
-      if (library != null) {
-        LibraryTableId tableId = library.getTableId();
-        if (tableId instanceof LibraryTableId.ModuleLibraryTableId) {
-          moduleName = ((LibraryTableId.ModuleLibraryTableId)tableId).getModuleId().getName();
-          if (!Objects.equals(moduleName, myModuleName)) {
-            myModuleName = moduleName;
-          }
-        } else {
-          if (myModuleName != null) {
-            myModuleName = null;
-          }
+  private @Nullable String getMyModuleName(LibraryFilesPackagingElementEntity entity) {
+    LibraryId library = entity.getLibrary();
+    String moduleName = null;
+    if (library != null) {
+      LibraryTableId tableId = library.getTableId();
+      if (tableId instanceof LibraryTableId.ModuleLibraryTableId) {
+        moduleName = ((LibraryTableId.ModuleLibraryTableId)tableId).getModuleId().getName();
+        if (!Objects.equals(moduleName, myModuleName)) {
+          myModuleName = moduleName;
         }
       }
       else {
@@ -334,7 +350,12 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
           myModuleName = null;
         }
       }
-      return moduleName;
     }
+    else {
+      if (myModuleName != null) {
+        myModuleName = null;
+      }
+    }
+    return moduleName;
   }
 }
