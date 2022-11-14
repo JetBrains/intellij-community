@@ -7749,6 +7749,100 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/nonExternalClassifierExtendingStateOrProps")
+    public static class NonExternalClassifierExtendingStateOrProps extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("externalClassProps.kt")
+        public void testExternalClassProps() throws Exception {
+            runTest("testData/inspectionsLocal/nonExternalClassifierExtendingStateOrProps/externalClassProps.kt");
+        }
+
+        @TestMetadata("externalClassState.kt")
+        public void testExternalClassState() throws Exception {
+            runTest("testData/inspectionsLocal/nonExternalClassifierExtendingStateOrProps/externalClassState.kt");
+        }
+
+        @TestMetadata("externalInterfaceProps.kt")
+        public void testExternalInterfaceProps() throws Exception {
+            runTest("testData/inspectionsLocal/nonExternalClassifierExtendingStateOrProps/externalInterfaceProps.kt");
+        }
+
+        @TestMetadata("externalInterfaceState.kt")
+        public void testExternalInterfaceState() throws Exception {
+            runTest("testData/inspectionsLocal/nonExternalClassifierExtendingStateOrProps/externalInterfaceState.kt");
+        }
+
+        @TestMetadata("nonExternalInterfaceProps.kt")
+        public void testNonExternalInterfaceProps() throws Exception {
+            runTest("testData/inspectionsLocal/nonExternalClassifierExtendingStateOrProps/nonExternalInterfaceProps.kt");
+        }
+
+        @TestMetadata("nonExternalInterfaceState.kt")
+        public void testNonExternalInterfaceState() throws Exception {
+            runTest("testData/inspectionsLocal/nonExternalClassifierExtendingStateOrProps/nonExternalInterfaceState.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/nonNullableBooleanPropertyInExternalInterface")
+    public static class NonNullableBooleanPropertyInExternalInterface extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("externalInterface.kt")
+        public void testExternalInterface() throws Exception {
+            runTest("testData/inspectionsLocal/nonNullableBooleanPropertyInExternalInterface/externalInterface.kt");
+        }
+
+        @TestMetadata("externalInterfaceProps.kt")
+        public void testExternalInterfaceProps() throws Exception {
+            runTest("testData/inspectionsLocal/nonNullableBooleanPropertyInExternalInterface/externalInterfaceProps.kt");
+        }
+
+        @TestMetadata("externalInterfaceState.kt")
+        public void testExternalInterfaceState() throws Exception {
+            runTest("testData/inspectionsLocal/nonNullableBooleanPropertyInExternalInterface/externalInterfaceState.kt");
+        }
+
+        @TestMetadata("nonExternalInterface.kt")
+        public void testNonExternalInterface() throws Exception {
+            runTest("testData/inspectionsLocal/nonNullableBooleanPropertyInExternalInterface/nonExternalInterface.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/nonVarPropertyInExternalInterface")
+    public static class NonVarPropertyInExternalInterface extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("externalInterfaceNotReact.kt")
+        public void testExternalInterfaceNotReact() throws Exception {
+            runTest("testData/inspectionsLocal/nonVarPropertyInExternalInterface/externalInterfaceNotReact.kt");
+        }
+
+        @TestMetadata("externalInterfaceProps.kt")
+        public void testExternalInterfaceProps() throws Exception {
+            runTest("testData/inspectionsLocal/nonVarPropertyInExternalInterface/externalInterfaceProps.kt");
+        }
+
+        @TestMetadata("externalInterfaceState.kt")
+        public void testExternalInterfaceState() throws Exception {
+            runTest("testData/inspectionsLocal/nonVarPropertyInExternalInterface/externalInterfaceState.kt");
+        }
+
+        @TestMetadata("nonExternalInterface.kt")
+        public void testNonExternalInterface() throws Exception {
+            runTest("testData/inspectionsLocal/nonVarPropertyInExternalInterface/nonExternalInterface.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/nullChecksToSafeCall")
     public static class NullChecksToSafeCall extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
