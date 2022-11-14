@@ -157,7 +157,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myToolbarWrapper.setVisible(false);
     MyEditorLayeredComponentWrapper layeredPane = new MyEditorLayeredComponentWrapper(panel);
     myComponent = layeredPane;
-    LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(myComponent, new DefaultActionGroup(myToolbarWrapper.getRightToolbar().getActions()));
+    LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(myComponent, myToolbarWrapper.getRightToolbar().getActionGroup());
     Disposer.register(this, toolbar);
     layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER);
     myComponent.add(toolbar, JLayeredPane.POPUP_LAYER);
@@ -414,11 +414,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   protected @NotNull ActionToolbar createRightToolbar() {
-    final ActionGroup viewActions = createViewActionGroup();
+    final AnAction[] viewActions = createViewActionGroup().getChildren(null);
+    final ActionGroup viewActionsGroup = new ConditionalActionGroup(viewActions, () -> !isShowActionsInTabs());
     final ActionGroup group = createRightToolbarActionGroup();
     final ActionGroup rightToolbarActions = group == null
-                                            ? viewActions
-                                            : new DefaultActionGroup(group, Separator.create(), viewActions);
+                                            ? viewActionsGroup
+                                            : new DefaultActionGroup(group, Separator.create(), viewActionsGroup);
     return ActionManager.getInstance().createActionToolbar(TEXT_EDITOR_WITH_PREVIEW, rightToolbarActions, true);
   }
 
@@ -435,13 +436,16 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   @Override
-  public @Nullable ActionGroup getTabActions() {
-    if (!isShowActionsInTabs()) return null;
-    return new DefaultActionGroup(
+  public final @NotNull ActionGroup getTabActions() {
+    return new ConditionalActionGroup(createTabActions(), () -> isShowActionsInTabs());
+  }
+
+  protected AnAction @NotNull [] createTabActions() {
+    return new AnAction[]{
       getSingleChangeViewModeAction(),
       Separator.create(),
       createTabViewModesPopupActionGroup()
-    );
+    };
   }
 
   private @NotNull ActionGroup createTabViewModesPopupActionGroup() {
@@ -610,6 +614,21 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
+  private static class ConditionalActionGroup extends ActionGroup {
+    private final AnAction[] myActions;
+    private final Supplier<Boolean> myCondition;
+
+    ConditionalActionGroup(AnAction[] actions, Supplier<Boolean> condition) {
+      myActions = actions;
+      myCondition = condition;
+    }
+
+    @Override
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      return myCondition.get() ? myActions : AnAction.EMPTY_ARRAY;
+    }
+  }
+
   private @NotNull String getLayoutPropertyName() {
     return myName + "Layout";
   }
@@ -700,8 +719,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      if (!isShowFloatingToolbar()) return;
-
       try {
         var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
         if (myComponent.getMousePosition() != null) {
