@@ -218,7 +218,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       (builder, packagingElementEntity) -> {
         MutableExternalEntityMapping<PackagingElement<?>> mapping =
           builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
-        WorkspaceEntity entity = ContainerUtil.getFirstItem(mapping.getEntities(child));
+        WorkspaceEntity entity = mapping.getFirstEntity(child);
         if (entity != null) {
           builder.removeEntity(entity);
         }
@@ -239,7 +239,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         MutableExternalEntityMapping<PackagingElement<?>> mapping =
           builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
         children.stream()
-          .map(o -> ContainerUtil.getFirstItem(mapping.getEntities(o)))
+          .map(o -> mapping.getFirstEntity(o))
           .filter(Objects::nonNull)
           .forEach(o -> builder.removeEntity(o));
       }
@@ -253,12 +253,11 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     }
     else {
       ExternalEntityMapping<Object> mapping = myStorage.getBase().getExternalMapping("intellij.artifacts.packaging.elements");
-      List<WorkspaceEntity> mappedEntities = mapping.getEntities(this);
-      if (mappedEntities.isEmpty()) {
+      PackagingElementEntity packagingElementEntity = (PackagingElementEntity)mapping.getFirstEntity(this);
+      if (packagingElementEntity == null) {
         throw new RuntimeException(
           this.getClass().getName() + " - " + myStorage.getBase().getClass().getName() + " - " + myStorage.getClass().getName());
       }
-      PackagingElementEntity packagingElementEntity = (PackagingElementEntity)mappedEntities.get(0);
       if (packagingElementEntity instanceof CompositePackagingElementEntity) {
         CompositePackagingElementEntity entity = (CompositePackagingElementEntity)packagingElementEntity;
         return ContainerUtil.map(entity.getChildren().iterator(), o -> {

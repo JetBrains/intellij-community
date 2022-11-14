@@ -444,7 +444,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
     @JvmStatic
     @Deprecated("Use ModuleBridgeUtils#findModuleEntity instead")
-    fun EntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
+    fun EntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getFirstEntity(module) as ModuleEntity?
 
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
@@ -531,7 +531,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
         override fun getIn(m: Module): Iterator<Module> {
           val moduleMap = storage.moduleMap
-          val entity = moduleMap.getEntities(m as ModuleBridge).firstOrNull() as ModuleEntity?
+          val entity = moduleMap.getFirstEntity(m as ModuleBridge) as ModuleEntity?
           return (entity?.dependencies?.asSequence() ?: emptySequence())
             .filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>()
             .filter { includeTests || it.scope != ModuleDependencyItem.DependencyScope.TEST }
