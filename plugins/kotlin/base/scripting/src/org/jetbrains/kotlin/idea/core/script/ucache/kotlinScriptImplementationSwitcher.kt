@@ -25,20 +25,23 @@ val scriptsAsEntities: Boolean
 fun getScriptDependenciesClassFilesScope(project: Project, ktFile: KtFile): GlobalSearchScope {
     require(ktFile.isScript()) { "argument must be a script: ${ktFile.virtualFilePath}" }
 
+    val vFile = ktFile.virtualFile ?: ktFile.viewProvider.virtualFile
+
     return if (scriptsAsEntities) {
+        val vFilePath = (ktFile.virtualFilePath as String?) ?: vFile.path
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
-        val scriptEntity = entityStorage.resolve(ScriptId(ktFile.virtualFilePath))
+        val scriptEntity = entityStorage.resolve(ScriptId(vFilePath))
 
         if (scriptEntity == null) {
             // WorkspaceModel doesn't know about the file yet. But once the latest sync is over it will.
             // We cannot synchronously call its syncScriptEntities() because it requires platform write-lock acquisition and this function
             // is called under platform read-lock.
-            ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(ktFile.virtualFile)
+            ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(vFile)
         } else {
             NonClasspathDirectoriesScope.compose(scriptEntity.listDependencies(KotlinScriptLibraryRootTypeId.COMPILED))
         }
     } else {
-        ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(ktFile.virtualFile)
+        ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(vFile)
     }
 }
 
