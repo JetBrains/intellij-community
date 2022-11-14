@@ -62,8 +62,13 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   RefreshSessionImpl(boolean async, List<? extends VFileEvent> events) {
-    this(async, false, null, ModalityState.defaultModalityState());
+    this(async, false, null, getSafeModalityState());
     myEvents.addAll(events);
+  }
+
+  private static ModalityState getSafeModalityState() {
+    ModalityState state = ModalityState.defaultModalityState();
+    return state != ModalityState.any() ? state : ModalityState.NON_MODAL;
   }
 
   @Override
