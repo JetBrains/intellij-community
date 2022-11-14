@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
+import com.intellij.openapi.vcs.actions.ShowDiffFromAnnotation
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -340,8 +341,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   }
 
   private fun TaskContext.highlightShowDiffMenuItem(clearPreviousHighlights: Boolean = false) {
-    val showDiffText = ActionsBundle.message("action.Diff.ShowDiff.text")
-    return highlightMenuItem(clearPreviousHighlights) { it.text?.contains(showDiffText) == true }
+    return highlightMenuItem(clearPreviousHighlights) { it.anAction is ShowDiffFromAnnotation }
   }
 
   private fun TaskContext.highlightMenuItem(clearPreviousHighlights: Boolean, predicate: (ActionMenuItem) -> Boolean) {
