@@ -180,10 +180,12 @@ class CompilationContextImpl private constructor(
                                            messages = messages,
                                            paths = buildPaths,
                                            options = options)
-      if (isCompilationRequired) {
-        spanBuilder("define JDK").useWithScope2 {
-          defineJavaSdk(context)
-        }
+      /**
+       * [defineJavaSdk] may be skipped using [CompiledClasses.isCompilationRequired]
+       * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
+       */
+      spanBuilder("define JDK").useWithScope2 {
+        defineJavaSdk(context)
       }
       spanBuilder("prepare for build").useWithScope2 {
         context.prepareForBuild()
