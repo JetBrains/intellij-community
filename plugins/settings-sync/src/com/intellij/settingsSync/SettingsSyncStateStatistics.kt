@@ -28,9 +28,9 @@ class SettingsSyncStateStatistics : ApplicationUsagesCollector() {
     }
     val disabledSubcategories = settings.state.disabledSubcategories
     if (true == disabledSubcategories[SettingsCategory.PLUGINS]?.contains(BUNDLED_PLUGINS_ID)) {
-      BUNDLED_PLUGINS_DISABLED.metric(true)
+      result += BUNDLED_PLUGINS_DISABLED.metric(true)
     }
-    EDITOR_FONT_STATE.metric(true == disabledSubcategories[SettingsCategory.UI]?.contains(EDITOR_FONT_SUBCATEGORY_ID))
+    result += EDITOR_FONT_STATE.metric(true == disabledSubcategories[SettingsCategory.UI]?.contains(EDITOR_FONT_SUBCATEGORY_ID))
     return result
   }
 
