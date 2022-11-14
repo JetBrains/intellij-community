@@ -105,6 +105,7 @@ public class JavaWithCastSurrounder extends JavaExpressionSurrounder {
 
   @Override
   public String getTemplateDescription() {
+    //noinspection DialogTitleCapitalization
     return CodeInsightBundle.message("surround.with.cast.template");
   }
 }
