@@ -783,6 +783,10 @@ public class FileUtilRt {
   }
 
   static void deleteRecursively(@NotNull Path path, @SuppressWarnings("BoundedWildcard") @Nullable final Consumer<Path> callback) throws IOException {
+    if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+      return;
+    }
+
     try {
       Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
         @Override

@@ -18,12 +18,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertSame;
 
 public class NioFilesTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -37,18 +35,48 @@ public class NioFilesTest {
 
   @Test
   public void deleteRecursively() throws IOException {
-    Path dir = Files.createDirectory(memoryFs.getFs().getPath("/dir"));
-    Path file1 = Files.createFile(dir.resolve("file1")), file2 = Files.createFile(dir.resolve("file2"));
-    try (Stream<Path> stream = Files.list(dir)) {
-      assertThat(stream).containsExactlyInAnyOrder(file1, file2);
-    }
-
+    var dir = Files.createDirectory(tempDir.getRootPath().resolve("dir"));
+    Files.createFile(dir.resolve("file1"));
+    Files.createFile(dir.resolve("file2"));
+    NioFiles.deleteRecursively(dir.resolve("no_such_file"));
+    assertThat(dir).isDirectory();
     NioFiles.deleteRecursively(dir);
     assertThat(dir).doesNotExist();
 
-    Path nonExisting = memoryFs.getFs().getPath("non-existing");
-    assertThat(nonExisting).doesNotExist();
-    NioFiles.deleteRecursively(nonExisting);
+    var file = Files.createFile(tempDir.getRootPath().resolve("file"));
+    NioFiles.deleteRecursively(file.resolve("no_such_file"));
+    assertThat(file).isRegularFile();
+    NioFiles.deleteRecursively(file);
+    assertThat(file).doesNotExist();
+  }
+
+  @Test
+  public void deleteLinksRecursively() throws IOException {
+    var dir = Files.createDirectory(tempDir.getRootPath().resolve("dir"));
+    var file = Files.createFile(dir.resolve("file"));
+    var subDir = Files.createDirectory(dir.resolve("subDir"));
+    Files.createFile(subDir.resolve("subFile"));
+    var link = Files.createSymbolicLink(tempDir.getRootPath().resolve("link"), dir);
+    NioFiles.deleteRecursively(link.resolve(subDir.getFileName()));
+    assertThat(subDir).doesNotExist();
+    NioFiles.deleteRecursively(link.resolve(file.getFileName()));
+    assertThat(file).doesNotExist();
+    NioFiles.deleteRecursively(link);
+    assertThat(link).doesNotExist();
+    assertThat(dir).isDirectory();
+
+    var anotherFile = Files.createFile(tempDir.getRootPath().resolve("file"));
+    var fileLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("link"), anotherFile);
+    NioFiles.deleteRecursively(fileLink.resolve("no_such_file"));
+    assertThat(fileLink).isSymbolicLink();
+    NioFiles.deleteRecursively(fileLink);
+    assertThat(fileLink).doesNotExist();
+
+    var nonExistingLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("link"), tempDir.getRootPath().resolve("no_such_file"));
+    NioFiles.deleteRecursively(nonExistingLink.resolve("no_such_file"));
+    assertThat(nonExistingLink).isSymbolicLink();
+    NioFiles.deleteRecursively(nonExistingLink);
+    assertThat(nonExistingLink).doesNotExist();
   }
 
   @Test
