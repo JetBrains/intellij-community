@@ -4,6 +4,7 @@ package com.intellij.psi.stubs;
 import com.google.common.util.concurrent.Futures;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -414,7 +415,9 @@ public final class StubIndexImpl extends StubIndexEx {
   public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType) {
     return () -> {
       if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+        ReadAction.run(() -> {
+          ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+        });
       }
       return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementType);
     };
