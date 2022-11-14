@@ -596,7 +596,7 @@ final class ActionUpdater {
     }
 
     if (!hasEnabled && hideDisabled || !hasVisible && hideEmpty) {
-      return Collections.emptyList();
+      return canBePerformed ? List.of(group) : Collections.emptyList();
     }
     else if (isPopup) {
       return Collections.singletonList(!hideDisabledBase || child instanceof CompactActionGroup ? group :
