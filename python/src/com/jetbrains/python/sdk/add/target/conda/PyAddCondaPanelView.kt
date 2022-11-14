@@ -17,8 +17,10 @@ import com.intellij.openapi.ui.emptyText
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
 import com.jetbrains.python.sdk.add.PyAddSdkStateListener
+import com.jetbrains.python.sdk.add.target.ProjectSync
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkView
 import com.jetbrains.python.sdk.add.target.addBrowseFolderListener
 import icons.PythonIcons
@@ -38,6 +40,11 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
 
   override val icon: Icon = PythonIcons.Python.Anaconda
   private val condaPathField = TextFieldWithBrowseButton()
+
+  /**
+   * Encapsulates the work with the files synchronization options.
+   */
+  private var projectSync: ProjectSync? = null
   private val panel = panel {
 
     row(PyBundle.message("python.add.sdk.panel.path.to.conda.field") + ":") {
@@ -87,6 +94,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
       comboBox(model.languageLevels).bindItem(model.newEnvLanguageLevelRwProperty)
     }.visibleIf(model.showCreateNewEnvPanelRoProp)
 
+    projectSync = projectSyncRows(model.project, model.targetConfiguration)
   }.also { it.registerValidators(disposable) }
 
   private fun showError(@Nls title: String, @Nls error: String) {
@@ -120,6 +128,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
 
   override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? =
     runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
+      if (targetEnvironmentConfiguration != null) projectSync?.apply(targetEnvironmentConfiguration)
       model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), progressSink,
                                     targetEnvironmentConfiguration).onFailure {
         logger<PyAddCondaPanelModel>().warn(it)
