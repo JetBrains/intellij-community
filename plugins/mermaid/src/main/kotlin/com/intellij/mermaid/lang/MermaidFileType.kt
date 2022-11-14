@@ -1,5 +1,6 @@
 package com.intellij.mermaid.lang
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.LanguageFileType
 import javax.swing.Icon
 
@@ -10,5 +11,5 @@ object MermaidFileType: LanguageFileType(MermaidLanguage) {
 
   override fun getDefaultExtension(): String = "mermaid"
 
-  override fun getIcon(): Icon? = null
+  override fun getIcon(): Icon = AllIcons.FileTypes.Any_type
 }
