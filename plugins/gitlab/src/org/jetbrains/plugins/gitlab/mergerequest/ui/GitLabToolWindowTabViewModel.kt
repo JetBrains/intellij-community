@@ -110,6 +110,7 @@ internal class GitLabToolWindowTabViewModel(private val scope: CoroutineScope,
         account = connection.account,
         avatarIconsProvider = avatarIconsProvider,
         accountManager = accountManager,
+        tokenRefreshFlow = connection.tokenRefreshFlow,
         loaderSupplier = { filtersValue ->
           GitLabMergeRequestsListLoader(connection.apiClient, connection.repo.repository, filtersValue.toSearchQuery())
         }

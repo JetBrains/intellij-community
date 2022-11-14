@@ -49,6 +49,7 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override val account: GitLabAccount,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   override val accountManager: GitLabAccountManager,
+  private val tokenRefreshFlow: Flow<Unit>,
   private val loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestShortDTO>)
   : GitLabMergeRequestsListViewModel {
 
@@ -95,6 +96,13 @@ internal class GitLabMergeRequestsListViewModelImpl(
           doReset()
           requestMore()
         }
+    }
+
+    scope.launch {
+      tokenRefreshFlow.collect {
+        doReset()
+        requestMore()
+      }
     }
   }
 

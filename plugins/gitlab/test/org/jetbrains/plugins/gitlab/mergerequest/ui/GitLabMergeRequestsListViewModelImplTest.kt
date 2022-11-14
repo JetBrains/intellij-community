@@ -32,6 +32,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
                                                   account = mock(),
                                                   avatarIconsProvider = mock(),
                                                   accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
                                                   delayingLoader { emptyList<GitLabMergeRequestShortDTO>() to true })
 
     with(vm) {
@@ -55,6 +56,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
                                                   account = mock(),
                                                   avatarIconsProvider = mock(),
                                                   accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
                                                   delayingLoader { emptyList<GitLabMergeRequestShortDTO>() to true })
 
     with(vm) {
@@ -80,6 +82,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
                                                   account = mock(),
                                                   avatarIconsProvider = mock(),
                                                   accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
                                                   delayingLoader { emptyList<GitLabMergeRequestShortDTO>() to true })
 
     with(vm) {
@@ -106,6 +109,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
                                                   account = mock(),
                                                   avatarIconsProvider = mock(),
                                                   accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
                                                   delayingLoader { throw CancellationException() })
 
     with(vm) {
@@ -128,6 +132,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
                                                   account = mock(),
                                                   avatarIconsProvider = mock(),
                                                   accountManager = mock(),
+                                                  tokenRefreshFlow = mock(),
                                                   delayingLoader { error("test") })
 
     with(vm) {

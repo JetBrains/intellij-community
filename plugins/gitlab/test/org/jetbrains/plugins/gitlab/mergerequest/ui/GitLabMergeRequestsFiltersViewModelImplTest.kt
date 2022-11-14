@@ -43,6 +43,7 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
                                          account = mock(),
                                          avatarIconsProvider = mock(),
                                          accountManager = mock(),
+                                         tokenRefreshFlow = mock(),
                                          loaderSupplier = loaderSupplierMock)
     verify(loaderSupplierMock, times(1)).invoke(GitLabMergeRequestsFiltersValue.DEFAULT)
     clearInvocations(loaderSupplierMock)
@@ -77,6 +78,7 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
                                          account = mock(),
                                          avatarIconsProvider = mock(),
                                          accountManager = mock(),
+                                         tokenRefreshFlow = mock(),
                                          loaderSupplier = loaderSupplierMock)
 
     val filterValueStateMerged = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.MERGED)
@@ -104,6 +106,7 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
                                          account = mock(),
                                          avatarIconsProvider = mock(),
                                          accountManager = mock(),
+                                         tokenRefreshFlow = mock(),
                                          loaderSupplier = loaderSupplierMock)
 
     val user = GitLabUserDTO(id = "", username = "", name = "", avatarUrl = "", webUrl = "")
