@@ -6,22 +6,25 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
-public class InstallFromDiskAction extends DumbAwareAction {
+final class InstallFromDiskAction extends DumbAwareAction {
 
-  public InstallFromDiskAction() {
-    super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"), AllIcons.Nodes.Plugin);
+  InstallFromDiskAction() {
+    super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"),
+          AllIcons.Nodes.Plugin);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
-      e.getPresentation().setEnabled(false);
-      e.getPresentation().setDescription(IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"));
+      Presentation presentation = e.getPresentation();
+      presentation.setEnabled(false);
+      presentation.setDescription(IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"));
     }
   }
 
@@ -33,9 +36,10 @@ public class InstallFromDiskAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-
     if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
-      Messages.showErrorDialog(project, IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"), IdeBundle.message("action.InstallFromDiskAction.text"));
+      Messages.showErrorDialog(project,
+                               IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"),
+                               IdeBundle.message("action.InstallFromDiskAction.text"));
       return;
     }
 
