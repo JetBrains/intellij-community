@@ -199,23 +199,24 @@ abstract class FullLineLanguageSupporterBase(extraMatchers: List<LocationMatcher
 
   private fun inComment(element: PsiElement): Boolean = element is PsiComment
 
+  val STRING_MARKERS = arrayListOf('"', '\'')
+
+  var CLOSE_TO_OPEN = hashMapOf(
+    // TODO: Bring back handling such angle brackets when element will be extended with psi.
+    // '>' to '<',
+    ')' to '(',
+    ']' to '[',
+    '}' to '{',
+    '"' to '"',
+    '\'' to '\'',
+  )
+
+  private val OPEN_TO_CLOSE by lazy { CLOSE_TO_OPEN.entries.associate { (k, v) -> v to k } }
+
+  private val OPENERS by lazy { OPEN_TO_CLOSE.keys }
+
   companion object {
     const val ESCAPE_SYMBOL = '\\'
-    val STRING_MARKERS = arrayListOf('"', '\'')
-
-    var CLOSE_TO_OPEN = hashMapOf(
-      // TODO: Bring back handling such angle brackets when element will be extended with psi.
-      // '>' to '<',
-      ')' to '(',
-      ']' to '[',
-      '}' to '{',
-      '"' to '"',
-      '\'' to '\'',
-    )
-
-    var OPEN_TO_CLOSE = CLOSE_TO_OPEN.entries.associate { (k, v) -> v to k }
-
-    var OPENERS = OPEN_TO_CLOSE.keys
 
     private fun defaultMatchers(): List<LocationMatcher> {
       return listOf(EndOfLineMatcher)

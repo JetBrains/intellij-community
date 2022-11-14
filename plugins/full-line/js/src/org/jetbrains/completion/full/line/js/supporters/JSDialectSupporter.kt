@@ -16,6 +16,12 @@ import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.completion.full.line.language.supporters.FullLineLanguageSupporterBase
 
 abstract class JSDialectSupporter : FullLineLanguageSupporterBase() {
+  init {
+    STRING_MARKERS.addAll(listOf('`', '/'))
+    CLOSE_TO_OPEN['`'] = '`'
+    CLOSE_TO_OPEN['/'] = '/'
+  }
+  
   override fun createCodeFragment(file: PsiFile, text: String, isPhysical: Boolean): PsiFile? {
     return JSExpressionCodeFragmentImpl(file.project, file.name, text, isPhysical, null)
   }
