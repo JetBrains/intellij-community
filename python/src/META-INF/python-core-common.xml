@@ -493,6 +493,10 @@
     <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
 
     <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.management.PythonPackagesUpdater"/>
+
+    <applicationService
+      serviceInterface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available"
+      serviceImplementation="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available$Default"/>
   </extensions>
 
   <extensionPoints>
