@@ -40,7 +40,7 @@ internal class GitLabToolWindowTabController(private val project: Project,
 
         val component = when (vm) {
           is NestedViewModel.Selectors -> createSelectorsComponent(scope, vm)
-          is NestedViewModel.MergeRequests -> createMergeRequestsComponent(scope, vm)
+          is NestedViewModel.MergeRequests -> createMergeRequestsComponent(project, scope, vm)
         }
 
         CollaborationToolsUIUtil.setComponentPreservingFocus(content, component)
@@ -91,8 +91,8 @@ internal class GitLabToolWindowTabController(private val project: Project,
     }
   }
 
-  private fun createMergeRequestsComponent(scope: CoroutineScope, vm: NestedViewModel.MergeRequests): JComponent =
-    GitLabMergeRequestsPanelFactory().create(scope, vm.listVm)
+  private fun createMergeRequestsComponent(project: Project, scope: CoroutineScope, vm: NestedViewModel.MergeRequests): JComponent =
+    GitLabMergeRequestsPanelFactory().create(project, scope, vm.listVm)
 
   private fun createLoginButtons(scope: CoroutineScope, vm: GitLabRepositoryAndAccountSelectorViewModel)
     : List<JButton> {

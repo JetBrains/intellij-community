@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
@@ -19,7 +20,7 @@ import javax.swing.event.ChangeEvent
 
 internal class GitLabMergeRequestsPanelFactory {
 
-  fun create(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
+  fun create(project: Project, scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
     val listModel = collectMergeRequests(scope, listVm)
     val listMergeRequests = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider)
 
@@ -38,7 +39,7 @@ internal class GitLabMergeRequestsPanelFactory {
 
     val searchPanel = createSearchPanel(scope, listVm)
 
-    GitLabMergeRequestsListController(scope, listVm, listMergeRequests.emptyText, listLoaderPanel, progressStripe)
+    GitLabMergeRequestsListController(project, scope, listVm, listMergeRequests.emptyText, listLoaderPanel, progressStripe)
 
     return JBUI.Panels.simplePanel(progressStripe)
       .addToTop(searchPanel)
