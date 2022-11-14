@@ -22,7 +22,7 @@ object JavaTypeHintsFactory {
   private fun PresentationTreeBuilder.typeHint(level: Int, type: PsiType) {
     when (type) {
       is PsiArrayType -> {
-        typeHint(level + 1, type)
+        typeHint(level + 1, type.componentType)
         text("[]")
       }
       is PsiClassType -> classTypeHint(level, type)
