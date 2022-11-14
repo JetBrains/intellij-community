@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.awt.BorderLayout
+import java.util.*
 import javax.swing.Icon
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
@@ -62,16 +63,17 @@ internal fun createSingleImportAction(
 ): KotlinAddImportAction {
     val file = element.containingKtFile
     val prioritizer = Prioritizer(file)
-    val variants = fqNames.asSequence().mapNotNull { fqName ->
+    val variants = TreeSet<VariantWithPriority>(compareBy({ it.priority }, { it.variant.hint }))
+    for (fqName in fqNames) {
         val sameFqNameDescriptors = file.resolveImportReference(fqName)
         val priority = sameFqNameDescriptors.minOfOrNull {
             prioritizer.priority(it, file.languageVersionSettings)
-        } ?: return@mapNotNull null
+        } ?: continue
 
-        VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
+        variants += VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
     }
 
-    return KotlinAddImportAction(project, editor, element, variants)
+    return KotlinAddImportAction(project, editor, element, variants.asSequence())
 }
 
 internal fun createSingleImportActionForConstructor(
