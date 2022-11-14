@@ -15,6 +15,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -429,9 +430,12 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
                 }
 
                 if (restartAnalyzer) {
+                    KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
                     // this required only for "pause" state
-                    val ktFile = PsiManager.getInstance(project).findFile(it)
-                    if (ktFile != null) DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                    PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
+                        DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                    }
+
                 }
 
                 EditorNotifications.getInstance(project).updateAllNotifications()
