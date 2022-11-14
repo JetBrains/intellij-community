@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.conda
 
+import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressSink
@@ -8,14 +9,19 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.io.exists
 import com.jetbrains.getPythonVersion
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelModel
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import org.hamcrest.MatcherAssert
+import org.hamcrest.Matchers.*
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
@@ -73,6 +79,9 @@ class PyAddCondaPanelModelTest {
       model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
       model.condaActionCreateNewEnvRadioRwProp.set(true)
       model.condaActionUseExistingEnvRadioRwProp.set(false)
+
+      MatcherAssert.assertThat("No 3.9 suggested", model.languageLevels, hasItem(LanguageLevel.PYTHON39))
+      MatcherAssert.assertThat("2.6 suggested", model.languageLevels, not(hasItem(LanguageLevel.PYTHON26)))
       model.newEnvLanguageLevelRwProperty.set(LanguageLevel.PYTHON38)
       Assert.assertNotNull("Empty conda env name didn't lead to validation", model.getValidationError())
       model.newEnvNameRwProperty.set("d     f --- ")
@@ -86,6 +95,28 @@ class PyAddCondaPanelModelTest {
       Assert.assertEquals("Wrong conda name", condaName, newName)
       Assert.assertTrue("No output provided for sink", mockSink.out.toString().isNotEmpty())
     }
+  }
+
+  @Test
+  fun testCondaCantUseNameUsedAlready(): Unit = runTest {
+    val name = "cond_env_" + Math.random().toString().replace('.', '_')
+
+    // Create env
+    PyCondaEnv.createEnv(condaRule.condaCommand,
+                         NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON38, name)).map { it.getResultStdoutStr() }.getOrThrow()
+
+    val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
+
+    // Trying to create env with same name
+    model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
+    model.onLoadEnvsClicked(coroutineContext)
+    model.condaActionCreateNewEnvRadioRwProp.set(true)
+    model.condaActionUseExistingEnvRadioRwProp.set(false)
+    model.newEnvLanguageLevelRwProperty.set(LanguageLevel.PYTHON38)
+    model.newEnvNameRwProperty.set(name)
+    Assert.assertEquals("Name duplicate should lead to error", PyBundle.message("python.sdk.conda.problem.env.name.used"),
+                        model.getValidationError())
+
   }
 
   @Test
