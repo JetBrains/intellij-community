@@ -21,7 +21,7 @@ class SettingsSyncUpdateChecker(private val remoteCommunicator: SettingsSyncRemo
       }
       is UpdateResult.FileDeletedFromServer -> {
         SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeletedOnCloud)
-        SettingsSyncEventsStatistics.DISABLED_BECAUSE_REMOVED_FROM_SERVER.log()
+        SettingsSyncEventsStatistics.DISABLED_AUTOMATICALLY.log(SettingsSyncEventsStatistics.AutomaticDisableReason.REMOVED_FROM_SERVER)
       }
       is UpdateResult.NoFileOnServer -> {
         LOG.info("Settings update requested, but there was no file on the server.")
