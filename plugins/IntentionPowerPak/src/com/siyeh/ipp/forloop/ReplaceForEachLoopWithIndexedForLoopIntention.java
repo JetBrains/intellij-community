@@ -79,7 +79,8 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     if (JavaCodeStyleSettings.getInstance(statement.getContainingFile()).GENERATE_FINAL_LOCALS) {
       newStatement.append("final ");
     }
-    newStatement.append(type.getCanonicalText());
+    PsiTypeElement typeElement = iterationParameter.getTypeElement();
+    newStatement.append(typeElement != null && typeElement.isInferredType() ? PsiKeyword.VAR : type.getCanonicalText());
     newStatement.append(' ');
     newStatement.append(iterationParameter.getName());
     newStatement.append('=');
