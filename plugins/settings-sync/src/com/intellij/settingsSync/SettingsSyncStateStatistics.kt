@@ -13,10 +13,10 @@ class SettingsSyncStateStatistics : ApplicationUsagesCollector() {
   companion object {
     val GROUP: EventLogGroup = EventLogGroup("settings.sync.state", 1)
 
-    val SETTINGS_SYNC_ENABLED_STATE = GROUP.registerEvent("settings_sync_state", EventFields.Boolean("enabled"))
-    val DISABLED_CATEGORIES = GROUP.registerEvent("disabled_categories", EventFields.Enum("category", SettingsCategory::class.java))
-    val BUNDLED_PLUGINS_DISABLED = GROUP.registerEvent("bundled_plugins_disabled", EventFields.Boolean("disabled"))
-    val EDITOR_FONT_STATE = GROUP.registerEvent("editor_font_state", EventFields.Boolean("enabled"))
+    val SETTINGS_SYNC_ENABLED_STATE = GROUP.registerEvent("general.state", EventFields.Boolean("enabled"))
+    val DISABLED_CATEGORIES = GROUP.registerEvent("disabled.categories", EventFields.Enum("category", SettingsCategory::class.java))
+    val BUNDLED_PLUGINS_DISABLED = GROUP.registerEvent("disabled.bundled.plugins", EventFields.Boolean("disabled"))
+    val EDITOR_FONT_STATE = GROUP.registerEvent("editor.font.state", EventFields.Boolean("enabled"))
   }
 
   override fun getMetrics(): Set<MetricEvent> {
