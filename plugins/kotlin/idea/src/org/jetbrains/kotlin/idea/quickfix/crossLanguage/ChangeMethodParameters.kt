@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.ChangeParametersRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
@@ -10,6 +11,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.SourceElement
@@ -129,10 +132,17 @@ internal class ChangeMethodParameters(
         get() = (existingParameter as? KtLightElement<*, *>)?.kotlinOrigin as? KtParameter
 
 
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+        doChangeParameter(project, PsiTreeUtil.findSameElementInCopy(element, file))
+        return IntentionPreviewInfo.DIFF
+    }
+
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         if (!request.isValid) return
+        doChangeParameter(project, element ?: return)
+    }
 
-        val target = element ?: return
+    private fun doChangeParameter(project: Project, target: KtNamedFunction) {
         val functionDescriptor = target.resolveToDescriptorIfAny(BodyResolveMode.FULL) ?: return
 
         val parameterActions = getParametersModifications(target, target.valueParameters, request.expectedParameters)
