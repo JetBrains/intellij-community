@@ -693,6 +693,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/multiDeclarationExtensionComponentNoOperator.test");
             }
 
+            @TestMetadata("multiFunctionCandidate.test")
+            public void testMultiFunctionCandidate() throws Exception {
+                runTest("testData/quickfix/autoImports/multiFunctionCandidate.test");
+            }
+
             @TestMetadata("nestedClass.before.Main.kt")
             public void testNestedClass() throws Exception {
                 runTest("testData/quickfix/autoImports/nestedClass.before.Main.kt");
