@@ -21,9 +21,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.ConstantNode;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -56,8 +55,8 @@ public class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     assert expr.isValid();
     PsiType[] types = ActionUtil.underModalProgress(
       project,
-      JavaBundle.message("action.guessing.types"),
-      () -> GuessManager.getInstance(project).guessTypeToCast(expr)
+      CodeInsightBundle.message("surround.with.cast.modal.title"),
+      () ->  GuessManager.getInstance(project).guessTypeToCast(expr)
     );
     final boolean parenthesesNeeded = expr instanceof PsiPolyadicExpression ||
                                       expr instanceof PsiConditionalExpression ||
@@ -72,7 +71,7 @@ public class JavaWithCastSurrounder extends JavaExpressionSurrounder {
       if (rangeMarker == null) return null;
       range = rangeMarker.getTextRange();
     }
-    WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("surround.with.cast"), null, () -> {
+    WriteAction.run(() -> {
       final Template template = generateTemplate(project, exprText, types);
       editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
       editor.getCaretModel().moveToOffset(range.getStartOffset());

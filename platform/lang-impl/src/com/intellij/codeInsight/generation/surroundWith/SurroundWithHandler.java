@@ -21,6 +21,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -214,24 +215,31 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     if (surrounder.startInWriteAction()) {
       WriteCommandAction.runWriteCommandAction(project, CodeInsightBundle.message("surround.with.chooser.title"), null, () -> {
           TextRange range = surrounder.surroundElements(project, editor, elements);
-          if (range != CARET_IS_OK) {
-            if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null &&
-                InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
-              LogicalPosition pos1 = new LogicalPosition(line, col);
-              editor.getCaretModel().moveToLogicalPosition(pos1);
-            }
-            if (range != null) {
-              int offset = range.getStartOffset();
-              editor.getCaretModel().removeSecondaryCarets();
-              editor.getCaretModel().moveToOffset(offset);
-              editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-              editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-            }
-          }
+          updateRange(project, editor, range, line, col);
         }
       );
     } else {
-      ReadAction.run(() -> surrounder.surroundElements(project, editor, elements));
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        TextRange range = ReadAction.compute(() -> surrounder.surroundElements(project, editor, elements));
+        updateRange(project, editor, range, line, col);
+      }, CodeInsightBundle.message("surround.with.chooser.title"), null);
+    }
+  }
+
+  private static void updateRange(Project project, Editor editor, TextRange range, int line, int col) {
+    if (range != CARET_IS_OK) {
+      if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null &&
+          InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
+        LogicalPosition pos1 = new LogicalPosition(line, col);
+        editor.getCaretModel().moveToLogicalPosition(pos1);
+      }
+      if (range != null) {
+        int offset = range.getStartOffset();
+        editor.getCaretModel().removeSecondaryCarets();
+        editor.getCaretModel().moveToOffset(offset);
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      }
     }
   }
 
