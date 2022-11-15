@@ -17,7 +17,7 @@ import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.generate.UastElementFactory;
@@ -29,7 +29,7 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-public class UseCoupleInspection extends DevKitInspectionBase {
+public class UseCoupleInspection extends DevKitUastInspectionBase {
   private static final String PAIR_CLASS_NAME = Pair.class.getName();
   private static final String COUPLE_CLASS_NAME = Couple.class.getName();
 
