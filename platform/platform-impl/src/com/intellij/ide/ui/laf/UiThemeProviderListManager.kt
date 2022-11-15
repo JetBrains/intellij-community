@@ -22,36 +22,38 @@ internal class UiThemeProviderListManager {
 
     private const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
 
-    var lafNameOrder: Map<String, Int> = if (ExperimentalUI.isNewUI()) {
-      java.util.Map.of(
-        "Light", 0,
-        "Dark", 1,
-        "High contrast", 2
-      )
-    }
-    else if (PlatformUtils.isRider()) {
-      java.util.Map.of(
-        "Rider Dark", 0,
-        "Rider Light", 1,
-        "IntelliJ Light", 2,
-        "macOS Light", 3,
-        "Windows 10 Light", 3,
-        "Darcula", 4,
-        "High contrast", 5
-      )
-    }
-    else {
-      java.util.Map.of(
-        "IntelliJ Light", 0,
-        "macOS Light", 1,
-        "Windows 10 Light", 1,
-        "Darcula", 2,
-        "High contrast", 3
-      )
+    var lafNameOrder: Map<String, Int> = when {
+      ExperimentalUI.isNewUI() -> {
+        java.util.Map.of(
+          "Light", 0,
+          "Dark", 1,
+          "High contrast", 2
+        )
+      }
+      PlatformUtils.isRider() -> {
+        java.util.Map.of(
+          "Rider Dark", 0,
+          "Rider Light", 1,
+          "IntelliJ Light", 2,
+          "macOS Light", 3,
+          "Windows 10 Light", 3,
+          "Darcula", 4,
+          "High contrast", 5
+        )
+      }
+      else -> {
+        java.util.Map.of(
+          "IntelliJ Light", 0,
+          "macOS Light", 1,
+          "Windows 10 Light", 1,
+          "Darcula", 2,
+          "High contrast", 3
+        )
+      }
     }
 
     val excludedThemes: List<String>
-      get() = if (!ExperimentalUI.isNewUI()) listOf("Light", "Dark", "New Dark") else emptyList()
+      get() = if (ExperimentalUI.isNewUI()) emptyList() else listOf("Light", "Dark", "New Dark")
 
     fun sortThemes(list: MutableList<out LookAndFeelInfo>) {
       list.sortWith { t1, t2 ->
