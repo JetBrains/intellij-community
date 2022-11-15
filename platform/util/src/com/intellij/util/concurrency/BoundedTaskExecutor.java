@@ -322,9 +322,9 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public String toString() {
-    List<Runnable> queued = new ArrayList<>(myTaskQueue);
+    int size = myTaskQueue.size();
     return "BoundedExecutor(" + myMaxThreads + ")" + (isShutdown() ? " SHUTDOWN " : "") +
-           "; inProgress: " + getTasksInProgress(myStatus.get()) + (queued.isEmpty() ? "" : "; queue: " + queued.size()) +
+           "; inProgress: " + getTasksInProgress(myStatus.get()) + (size == 0 ? "" : "; queue: " + size) +
            "; name: " + myName;
   }
 }
