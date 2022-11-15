@@ -469,9 +469,17 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         override fun getFamilyName(): String = QuickFixBundle.message("change.type.family")
 
+        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+            doChangeType(PsiTreeUtil.findSameElementInCopy(pointer.element ?: return IntentionPreviewInfo.EMPTY, file))
+            return IntentionPreviewInfo.DIFF
+        }
+
         override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
             if (!request.isValid) return
-            val target = pointer.element ?: return
+            doChangeType(pointer.element ?: return)
+        }
+
+        private fun doChangeType(target: KtCallableDeclaration) {
             val oldType = target.typeReference
             val typeName = primitiveTypeMapping.getOrDefault(request.qualifiedName, request.qualifiedName ?: target.typeName() ?: return)
             val psiFactory = KtPsiFactory(target)
