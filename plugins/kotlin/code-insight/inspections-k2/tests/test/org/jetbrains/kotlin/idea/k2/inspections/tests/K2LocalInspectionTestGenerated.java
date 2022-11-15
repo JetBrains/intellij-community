@@ -1788,6 +1788,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/divSanityTest.kt");
             }
 
+            @TestMetadata("doubleFloat.kt")
+            public void testDoubleFloat() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/doubleFloat.kt");
+            }
+
             @TestMetadata("dynamicEquals.kt")
             public void testDynamicEquals() throws Exception {
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/dynamicEquals.kt");
@@ -1811,6 +1816,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("equalsDoubleSmartCast.kt")
             public void testEqualsDoubleSmartCast() throws Exception {
                 runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsDoubleSmartCast.kt");
+            }
+
+            @TestMetadata("equalsDoubleSmartCast2.kt")
+            public void testEqualsDoubleSmartCast2() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsDoubleSmartCast2.kt");
+            }
+
+            @TestMetadata("equalsDoubleSmartCast3.kt")
+            public void testEqualsDoubleSmartCast3() throws Exception {
+                runTest("testData/inspectionsLocal/replaceCallWithBinaryOperator/equalsDoubleSmartCast3.kt");
             }
 
             @TestMetadata("equalsDoubleSmartCastFromGeneric.kt")

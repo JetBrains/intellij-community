@@ -1,60 +1,80 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
-import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
-internal sealed class ReplaceSizeCheckInspectionBase : LocalInspectionTool() {
+internal sealed class ReplaceSizeCheckInspectionBase :
+    AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>(
+        KtBinaryExpression::class
+    ) {
 
-    protected enum class EmptinessCheckMethod(val callString: String) {
-        IS_EMPTY("isEmpty()"),
-        IS_NOT_EMPTY("isNotEmpty()")
+    enum class EmptinessCheckMethod(val callString: String) {
+        IS_EMPTY("isEmpty()"), IS_NOT_EMPTY("isNotEmpty()")
     }
 
     protected abstract val methodToReplaceWith: EmptinessCheckMethod
 
     protected abstract fun extractTargetExpressionFromPsi(expr: KtBinaryExpression): KtExpression?
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        binaryExpressionVisitor { expr ->
-            val target = extractTargetExpressionFromPsi(expr) ?: return@binaryExpressionVisitor
-            val replacement = getReplacementIfApplicable(target) ?: return@binaryExpressionVisitor
-            val message = KotlinBundle.message("replace.size.check.with.0", replacement.fixMessage())
-            holder.registerProblem(expr, message, ReplaceSizeCheckFix(replacement))
+    override fun getApplicabilityRange() = ApplicabilityRanges.SELF
+
+    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
+        return extractTargetExpressionFromPsi(element) != null
+    }
+
+    context(KtAnalysisSession)
+    final override fun prepareContext(element: KtBinaryExpression): ReplacementInfo? {
+        val target = extractTargetExpressionFromPsi(element) ?: return null
+        return getReplacementIfApplicable(target)
+    }
+
+    override fun apply(element: KtBinaryExpression, context: ReplacementInfo, project: Project, editor: Editor?) {
+        val target = extractTargetExpressionFromPsi(element) as? KtDotQualifiedExpression
+        val replacedCheck = KtPsiFactory(project).createExpression(context.expressionString(target))
+        element.replace(replacedCheck)
+    }
+
+    data class ReplacementInfo(val method: EmptinessCheckMethod, val negate: Boolean) {
+
+        fun expressionString(expr: KtDotQualifiedExpression?) = buildString {
+            if (negate) append("!")
+            if (expr != null) append("${expr.receiverExpression.text}.")
+            append(method.callString)
         }
 
-    private fun getReplacementIfApplicable(target: KtExpression): ReplacementInfo? =
-        analyze(target) {
-            val resolvedCall = target.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>() ?: return null
-            val replaceableCall = findReplaceableOverride(resolvedCall) ?: return null
+        fun fixMessage(): String = expressionString(null)
+    }
 
-            val replaceWithNegatedIsEmpty = methodToReplaceWith == EmptinessCheckMethod.IS_NOT_EMPTY && !replaceableCall.hasIsNotEmpty
-            val dotQualifiedSmartPointerOrNull = (target as? KtDotQualifiedExpression)?.createSmartPointer()
-            return if (replaceWithNegatedIsEmpty) {
-                // Some classes (like *Progression) don't have isNotEmpty() (KT-51560), we use !isEmpty() instead
-                ReplacementInfo(dotQualifiedSmartPointerOrNull, EmptinessCheckMethod.IS_EMPTY, negate = true)
-            } else {
-                ReplacementInfo(dotQualifiedSmartPointerOrNull, methodToReplaceWith, negate = false)
-            }
+    context(KtAnalysisSession)
+    private fun getReplacementIfApplicable(target: KtExpression): ReplacementInfo? {
+        val resolvedCall = target.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>() ?: return null
+        val replaceableCall = resolvedCall.findReplaceableOverride() ?: return null
+
+        val replaceWithNegatedIsEmpty = methodToReplaceWith == EmptinessCheckMethod.IS_NOT_EMPTY && !replaceableCall.hasIsNotEmpty
+        return if (replaceWithNegatedIsEmpty) {
+            // Some classes (like *Progression) don't have isNotEmpty() (KT-51560), so we use !isEmpty() instead
+            ReplacementInfo(EmptinessCheckMethod.IS_EMPTY, negate = true)
+        } else {
+            ReplacementInfo(methodToReplaceWith, negate = false)
         }
+    }
 
-    private fun KtAnalysisSession.findReplaceableOverride(call: KtCallableMemberCall<*, *>): ReplaceableCall? {
-        val partiallyAppliedSymbol = call.partiallyAppliedSymbol
+    context(KtAnalysisSession)
+    private fun KtCallableMemberCall<*, *>.findReplaceableOverride(): ReplaceableCall? {
+        val partiallyAppliedSymbol = this.partiallyAppliedSymbol
         val receiverType = (partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver)
             ?.type
             ?: return null
@@ -63,13 +83,12 @@ internal sealed class ReplaceSizeCheckInspectionBase : LocalInspectionTool() {
             yield(partiallyAppliedSymbol.symbol)
             yieldAll(partiallyAppliedSymbol.symbol.getAllOverriddenSymbols())
         }
-        val matchingReplacement = symbolWithOverrides.firstNotNullOfOrNull { symbol ->
-            when (call) {
+        val replaceableCall = symbolWithOverrides.firstNotNullOfOrNull { symbol ->
+            when (this) {
                 is KtVariableAccessCall -> REPLACEABLE_FIELDS_BY_CALLABLE_ID[symbol.callableIdIfNonLocal]
 
                 is KtFunctionCall -> REPLACEABLE_COUNT_CALL.takeIf {
-                    symbol.callableIdIfNonLocal == REPLACEABLE_COUNT_CALL.callableId &&
-                            call.partiallyAppliedSymbol.signature.valueParameters.isEmpty()
+                    symbol.callableIdIfNonLocal == REPLACEABLE_COUNT_CALL.callableId && this.partiallyAppliedSymbol.signature.valueParameters.isEmpty()
                 }
             }
         } ?: return null
@@ -78,40 +97,10 @@ internal sealed class ReplaceSizeCheckInspectionBase : LocalInspectionTool() {
             yield(receiverType)
             yieldAll(receiverType.getAllSuperTypes())
         }
-        if (receiverTypeAndSuperTypes.any { it.expandedClassSymbol?.classIdIfNonLocal in matchingReplacement.supportedReceivers }) {
-            return matchingReplacement
+        if (receiverTypeAndSuperTypes.any { it.expandedClassSymbol?.classIdIfNonLocal in replaceableCall.supportedReceivers }) {
+            return replaceableCall
         } else {
             return null
-        }
-    }
-
-    @SafeTypeForPreview
-    private data class ReplacementInfo(
-        val target: SmartPsiElementPointer<KtDotQualifiedExpression>?,
-        val method: EmptinessCheckMethod,
-        val negate: Boolean
-    ) {
-        private fun messageWithExpression(expr: KtDotQualifiedExpression?) = buildString {
-            if (negate) append("!")
-            if (expr != null) append("${expr.receiverExpression.text}.")
-            append(method.callString)
-        }
-
-        fun fixMessage(): String = messageWithExpression(null)
-        fun expressionString(): String = messageWithExpression(target?.element)
-    }
-
-
-    private class ReplaceSizeCheckFix(val info: ReplacementInfo) : LocalQuickFix {
-        override fun getFamilyName(): String = KotlinBundle.message("replace.size.check.with.0", info.fixMessage())
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val expr = descriptor.psiElement
-            if (info.target != null && info.target.element == null) {
-                return
-            }
-            val replacedCheck = KtPsiFactory(project).createExpression(info.expressionString())
-            expr.replace(replacedCheck)
         }
     }
 }

@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
@@ -15,8 +15,9 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
-import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -27,60 +28,45 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-class ReplaceCallWithBinaryOperatorInspection : LocalInspectionTool() {
+class ReplaceCallWithBinaryOperatorInspection :
+    AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceCallWithBinaryOperatorInspection.Context>(
+        KtDotQualifiedExpression::class
+    ) {
 
     @FileModifier.SafeTypeForPreview
-    private data class Context(
-        val operation: KtSingleValueToken,
-        val isFloatingPointEquals: Boolean,
-    )
+    data class Context(val operation: KtSingleValueToken, val isFloatingPointEquals: Boolean)
 
-    private class ReplaceCallWithOperatorFix(val context: Context) : LocalQuickFix {
-        override fun getFamilyName() = KotlinBundle.message("replace.with.binary.operator")
+    override fun getActionFamilyName(): String = KotlinBundle.message("replace.with.binary.operator")
 
-        override fun getName(): String {
-            // The `a == b` for Double/Float is IEEE 754 equality, so it might change the behavior.
-            // In this case, we show a different quick fix message with 'INFORMATION' highlight type.
-            if (context.isFloatingPointEquals) {
-                return KotlinBundle.message("replace.total.order.equality.with.ieee.754.equality")
-            }
-            return KotlinBundle.message("replace.with.0", context.operation.value)
+    override fun getProblemDescription(element: KtDotQualifiedExpression, context: Context) =
+        KotlinBundle.message("call.replaceable.with.binary.operator")
+
+    override fun getActionName(element: KtDotQualifiedExpression, context: Context): String {
+        // The `a == b` for Double/Float is IEEE 754 equality, so it might change the behavior.
+        // In this case, we show a different quick fix message with 'INFORMATION' highlight type.
+        if (context.isFloatingPointEquals) {
+            return KotlinBundle.message("replace.total.order.equality.with.ieee.754.equality")
         }
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val element = descriptor.psiElement as? KtDotQualifiedExpression ?: return
-            val receiver = element.receiverExpression
-            val argument = element.callExpression?.singleArgumentExpression() ?: return
-
-            val expressionToReplace = getReplacementTarget(element, context.operation) ?: return
-            val factory = KtPsiFactory(project)
-            val newExpression = factory.createExpressionByPattern("$0 ${context.operation.value} $1", receiver, argument, reformat = false)
-
-            expressionToReplace.replace(newExpression)
-        }
-
-        private fun getReplacementTarget(element: KtDotQualifiedExpression, operation: KtSingleValueToken): KtExpression? {
-            return when (operation) {
-                KtTokens.EXCLEQ -> element.getWrappingPrefixExpressionOrNull()
-                in OperatorConventions.COMPARISON_OPERATIONS -> element.parent as? KtBinaryExpression
-                else -> element
-            }
-        }
+        return KotlinBundle.message("replace.with.0", context.operation.value)
     }
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        dotQualifiedExpressionVisitor { element ->
-            val context = getContextIfIsApplicable(element) ?: return@dotQualifiedExpressionVisitor
-            holder.registerProblem(
-                element,
-                KotlinBundle.message("call.replaceable.with.binary.operator"),
-                inspectionHighlightType(element, context),
-                inspectionHighlightRangeInElement(element),
-                ReplaceCallWithOperatorFix(context)
-            )
-        }
+    override fun getApplicabilityRange() = applicabilityTarget<KtDotQualifiedExpression> { element ->
+        element.callExpression?.calleeExpression
+    }
 
-    private fun getContextIfIsApplicable(element: KtDotQualifiedExpression): Context? {
+    override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean {
+        if (element.receiverExpression is KtSuperExpression) return false
+        val callExpression = element.selectorExpression as? KtCallExpression ?: return false
+        if (callExpression.valueArguments.size != 1) return false
+        val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return false
+        val identifier = calleeExpression.getReferencedNameAsName()
+        return (identifier == OperatorNameConventions.EQUALS
+                || identifier == OperatorNameConventions.COMPARE_TO
+                || identifier in OperatorNameConventions.BINARY_OPERATION_NAMES)
+    }
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return null
         val receiver = element.receiverExpression
@@ -99,7 +85,26 @@ class ReplaceCallWithBinaryOperatorInspection : LocalInspectionTool() {
         }
     }
 
-    private fun inspectionHighlightType(element: KtDotQualifiedExpression, context: Context): ProblemHighlightType {
+    override fun apply(element: KtDotQualifiedExpression, context: Context, project: Project, editor: Editor?) {
+        val receiver = element.receiverExpression
+        val argument = element.callExpression?.singleArgumentExpression() ?: return
+
+        val expressionToReplace = element.getReplacementTarget(context.operation) ?: return
+        val factory = KtPsiFactory(project)
+        val newExpression = factory.createExpressionByPattern("$0 ${context.operation.value} $1", receiver, argument, reformat = false)
+
+        expressionToReplace.replace(newExpression)
+    }
+
+    private fun KtDotQualifiedExpression.getReplacementTarget(operation: KtSingleValueToken): KtExpression? {
+        return when (operation) {
+            KtTokens.EXCLEQ -> this.getWrappingPrefixExpressionOrNull()
+            in OperatorConventions.COMPARISON_OPERATIONS -> this.parent as? KtBinaryExpression
+            else -> this
+        }
+    }
+
+    override fun getProblemHighlightType(element: KtDotQualifiedExpression, context: Context): ProblemHighlightType {
         if (context.isFloatingPointEquals) {
             return ProblemHighlightType.INFORMATION
         }
@@ -119,9 +124,6 @@ class ReplaceCallWithBinaryOperatorInspection : LocalInspectionTool() {
             else -> ProblemHighlightType.INFORMATION
         }
     }
-
-    private fun inspectionHighlightRangeInElement(element: KtDotQualifiedExpression): TextRange? =
-        element.callExpression?.calleeExpression?.textRangeIn(element)
 
     context(KtAnalysisSession)
     private fun KtQualifiedExpression.isReceiverExpressionWithValue(): Boolean {
@@ -191,7 +193,6 @@ private fun KtExpression.isAnyEquals(): Boolean {
     val resolvedCall = resolveCall()?.successfulCallOrNull<KtSimpleFunctionCall>() ?: return false
     return resolvedCall.symbol.isAnyEquals()
 }
-
 
 /**
  * This function tries to determine when `first == second` expression is considered valid.
