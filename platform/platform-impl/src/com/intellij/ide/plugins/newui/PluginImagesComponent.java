@@ -193,7 +193,14 @@ public class PluginImagesComponent extends JPanel {
             HttpRequests.request(Urls.newFromEncoded(screenShot)).productNameAsUserAgent().saveToFile(imageFile, null);
           }
           try (InputStream stream = new FileInputStream(imageFile)) {
-            images.add(ImageIO.read(stream));
+            BufferedImage image = ImageIO.read(stream);
+            if (image == null) {
+              Logger.getInstance(PluginImagesComponent.class)
+                .info("=== Plugin: " + node.getPluginId() + " screenshot: " + name + " not loaded ===");
+            }
+            else {
+              images.add(image);
+            }
           }
         }
         catch (IOException e) {
