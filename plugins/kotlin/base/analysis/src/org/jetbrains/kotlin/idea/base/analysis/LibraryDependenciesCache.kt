@@ -400,6 +400,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun calculate(key: Module): LibraryDependencyCandidatesAndSdkInfos =
+            //computeLibrariesAndSdksUsedIn(key)
             throw UnsupportedOperationException("calculate(Module) should not be invoked due to custom impl of get()")
 
         override fun checkKeyValidity(key: Module) {
