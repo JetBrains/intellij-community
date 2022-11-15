@@ -4,7 +4,7 @@
             "kotlin": {
                 "idea": {
                     "icons": {
-                         "expui": {
+                        "expui": {
                             "abstractExtensionFunction.svg": "org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg",
                             "abstractClassKotlin.svg": "org/jetbrains/kotlin/idea/icons/abstractClassKotlin.svg",
                             "actual.svg": "org/jetbrains/kotlin/idea/icons/actual.svg",
@@ -16,14 +16,14 @@
                             "fieldValue.svg": "org/jetbrains/kotlin/idea/icons/field_value.svg",
                             "fieldVariable.svg": "org/jetbrains/kotlin/idea/icons/field_variable.svg",
                             "interfaceKotlin.svg": "org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg",
-                             "kotlin.svg": [
-                                 "org/jetbrains/kotlin/idea/icons/kotlin.svg",
-                                 "org/jetbrains/kotlin/idea/icons/kotlin_file.svg"
-                             ],
-                            "kotlin13.svg": "org/jetbrains/kotlin/idea/icons/kotlin13.svg",
+                            "kotlin.svg": [
+                                "org/jetbrains/kotlin/idea/icons/kotlin.svg",
+                                "org/jetbrains/kotlin/idea/icons/kotlin_file.svg",
+                                "org/jetbrains/kotlin/idea/icons/kotlin_launch_configuration.svg"
+                            ],
+                            "kotlinToolWindow.svg": "org/jetbrains/kotlin/idea/icons/kotlin13.svg",
                             "kotlinGradleScript.svg": "org/jetbrains/kotlin/idea/icons/kotlin_gradle_script.svg",
                             "kotlinJs.svg": "org/jetbrains/kotlin/idea/icons/kotlin_js.svg",
-                            "kotlinLaunchConfiguration.svg": "org/jetbrains/kotlin/idea/icons/kotlin_launch_configuration.svg",
                             "kotlinScript.svg": "org/jetbrains/kotlin/idea/icons/kotlin_script.svg",
                             "lambda.svg": "org/jetbrains/kotlin/idea/icons/lambda.svg",
                             "objectKotlin.svg": "org/jetbrains/kotlin/idea/icons/objectKotlin.svg",
