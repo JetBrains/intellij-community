@@ -8,6 +8,7 @@ import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
@@ -76,7 +77,13 @@ data class HeaderSymbol(
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> {
     val virtualFile = file.virtualFile ?: return emptyList()
-    return listOf(MarkdownSourceNavigationTarget(virtualFile, range.startOffset, text))
+    return listOf(HeaderNavigationTarget(virtualFile, range.startOffset))
+  }
+
+  private inner class HeaderNavigationTarget(file: VirtualFile, offset: Int): MarkdownSourceNavigationTarget(file, offset) {
+    override fun presentation(): TargetPresentation {
+      return this@HeaderSymbol.presentation()
+    }
   }
 
   companion object {
