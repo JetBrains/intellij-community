@@ -17,12 +17,12 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.MarkdownIcons
-import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderContent
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.model.psi.MarkdownSourceNavigationTarget
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
+import org.intellij.plugins.markdown.model.psi.withLocationIn
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -63,16 +63,8 @@ data class HeaderSymbol(
     get() = UsageHandler.createEmptyUsageHandler(anchorText)
 
   override fun presentation(): TargetPresentation {
-    val virtualFile = file.containingFile.virtualFile
     val builder = TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Header_level_up)
-    val presentation = when (virtualFile) {
-      null -> builder
-      else -> when (virtualFile.fileType) {
-        MarkdownFileType.INSTANCE -> builder.locationText(virtualFile.name, MarkdownIcons.MarkdownPlugin)
-        else -> builder.locationText(virtualFile.name)
-      }
-    }
-    return presentation.presentation()
+    return builder.withLocationIn(file).presentation()
   }
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> {

@@ -23,6 +23,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownShortReferenceLink
 import org.intellij.plugins.markdown.model.psi.MarkdownSourceNavigationTarget
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
+import org.intellij.plugins.markdown.model.psi.withLocationIn
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -58,7 +59,8 @@ data class LinkLabelSymbol(
     get() = text
 
   override fun presentation(): TargetPresentation {
-    return TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Link).presentation()
+    val builder = TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Link)
+    return builder.withLocationIn(file).presentation()
   }
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> {
