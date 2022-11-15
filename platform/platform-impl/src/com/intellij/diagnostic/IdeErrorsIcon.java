@@ -29,35 +29,5 @@ final class IdeErrorsIcon extends JLabel {
   }
 
   void setState(@NotNull MessagePool.State state) {
-    Icon myUnreadIcon = myEnableBlink ? new Blinking(AllIcons.Ide.FatalError) : AllIcons.Ide.FatalError;
-    if (state != MessagePool.State.NoErrors) {
-      setIcon(state == MessagePool.State.ReadErrors ? AllIcons.Ide.FatalErrorRead : myUnreadIcon);
-      setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
-      getAccessibleContext().setAccessibleDescription(StringUtil.removeHtmlTags(DiagnosticBundle.message("error.notification.tooltip")));
-      if (!myEnableBlink) {
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      }
-    }
-    else {
-      setIcon(ICON_16);
-      setToolTipText(null);
-      if (!myEnableBlink) {
-        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-      }
-    }
-
-    if (myBlinkTimeoutQueue != null) {
-      if (state == MessagePool.State.UnreadErrors) {
-        myBlinkTimeoutQueue.queue(new Update(myBlinkTimeoutQueue) {
-          @Override
-          public void run() {
-            setIcon(AllIcons.Ide.FatalError);
-          }
-        });
-      }
-      else {
-        myBlinkTimeoutQueue.cancelAllUpdates();
-      }
-    }
   }
 }
