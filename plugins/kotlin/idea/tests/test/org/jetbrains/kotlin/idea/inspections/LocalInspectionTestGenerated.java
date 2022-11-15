@@ -14123,6 +14123,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/setterBackingFieldAssignment/noAssignment4.kt");
         }
 
+        @TestMetadata("noAssignment5.kt")
+        public void testNoAssignment5() throws Exception {
+            runTest("testData/inspectionsLocal/setterBackingFieldAssignment/noAssignment5.kt");
+        }
+
         @TestMetadata("noBackingField.kt")
         public void testNoBackingField() throws Exception {
             runTest("testData/inspectionsLocal/setterBackingFieldAssignment/noBackingField.kt");
