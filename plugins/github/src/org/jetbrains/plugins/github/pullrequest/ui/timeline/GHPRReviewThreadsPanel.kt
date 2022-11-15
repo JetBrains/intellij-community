@@ -15,7 +15,7 @@ import javax.swing.event.ListDataListener
 object GHPRReviewThreadsPanel {
 
   fun create(model: GHPRReviewThreadsModel, threadComponentFactory: (GHPRReviewThreadModel) -> JComponent): JComponent {
-    val panel = JPanel(VerticalLayout(12)).apply {
+    val panel = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
     }
 

@@ -34,6 +34,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEv
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
@@ -189,6 +190,27 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
   private fun createComponent(review: GHPullRequestReview): JComponent {
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
+    val threadsPanel = GHPRReviewThreadsPanel.create(reviewThreadsModel) {
+      val content = GHPRReviewThreadComponent.createWithDiff(project, it,
+                                                             reviewDataProvider, avatarIconsProvider,
+                                                             reviewDiffComponentFactory,
+                                                             selectInToolWindowHelper, suggestedChangeHelper,
+                                                             ghostUser, currentUser)
+      val firstComment: GHPRReviewCommentModel = (if (it.size <= 0) null else it.getElementAt(0))
+                                                 ?: return@create JPanel(null)
+      GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, firstComment.author ?: ghostUser, firstComment.dateCreated,
+                                        content, Int.MAX_VALUE)
+    }
+
+    val reviewItem = createReviewContentItem(review)
+    return JPanel(VerticalLayout(0, VerticalLayout.FILL)).apply {
+      isOpaque = false
+      add(threadsPanel)
+      add(reviewItem)
+    }
+  }
+
+  private fun createReviewContentItem(review: GHPullRequestReview): JComponent {
     val panelHandle: GHEditableHtmlPaneHandle?
     if (review.body.isNotEmpty()) {
       val textPane = HtmlEditorPane(review.body.convertToHtml(project))
@@ -234,17 +256,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
       add(StatusMessageComponentFactory.create(HtmlEditorPane(stateText), stateType), CC().grow().push()
         .minWidth("0").maxWidth("$TIMELINE_CONTENT_WIDTH"))
-
-      val threadsPanel = GHPRReviewThreadsPanel.create(reviewThreadsModel) {
-        GHPRReviewThreadComponent.createWithDiff(project, it, reviewDataProvider,
-                                                 avatarIconsProvider, reviewDiffComponentFactory,
-                                                 selectInToolWindowHelper, suggestedChangeHelper,
-                                                 ghostUser, currentUser)
-      }
-      add(threadsPanel, CC().grow().push()
-        .minWidth("0")
-        .gapTop("8"))
     }
+
     return GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, review.author ?: ghostUser, review.createdAt,
                                              contentPanel, Int.MAX_VALUE, actionsPanel)
   }
