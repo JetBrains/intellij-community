@@ -84,5 +84,19 @@
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.JoinParameterListIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.JoinArgumentListIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
   </extensions>
 </idea-plugin>

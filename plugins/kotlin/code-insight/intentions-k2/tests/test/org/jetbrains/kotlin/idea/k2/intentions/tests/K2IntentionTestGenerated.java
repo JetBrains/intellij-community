@@ -2037,6 +2037,127 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/joinArgumentList")
+    public static class JoinArgumentList extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("hasEndOfLineComment.kt")
+        public void testHasEndOfLineComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/hasEndOfLineComment.kt");
+        }
+
+        @TestMetadata("hasLineBreakBeforeFirstArg.kt")
+        public void testHasLineBreakBeforeFirstArg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/hasLineBreakBeforeFirstArg.kt");
+        }
+
+        @TestMetadata("hasLineBreaks.kt")
+        public void testHasLineBreaks() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/hasLineBreaks.kt");
+        }
+
+        @TestMetadata("hasLineBreaksWithTrailingComma.kt")
+        public void testHasLineBreaksWithTrailingComma() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/hasLineBreaksWithTrailingComma.kt");
+        }
+
+        @TestMetadata("noArg.kt")
+        public void testNoArg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/noArg.kt");
+        }
+
+        @TestMetadata("noLineBreak.kt")
+        public void testNoLineBreak() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/noLineBreak.kt");
+        }
+
+        @TestMetadata("onNestedArgumentList.kt")
+        public void testOnNestedArgumentList() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/onNestedArgumentList.kt");
+        }
+
+        @TestMetadata("onNestedArgumentList2.kt")
+        public void testOnNestedArgumentList2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/onNestedArgumentList2.kt");
+        }
+
+        @TestMetadata("onNestedArgumentList3.kt")
+        public void testOnNestedArgumentList3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/onNestedArgumentList3.kt");
+        }
+
+        @TestMetadata("onNestedArgumentList4.kt")
+        public void testOnNestedArgumentList4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/onNestedArgumentList4.kt");
+        }
+
+        @TestMetadata("onRightParenthesis.kt")
+        public void testOnRightParenthesis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/onRightParenthesis.kt");
+        }
+
+        @TestMetadata("oneArg.kt")
+        public void testOneArg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinArgumentList/oneArg.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/joinParameterList")
+    public static class JoinParameterList extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("hasEndOfLineComment.kt")
+        public void testHasEndOfLineComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinParameterList/hasEndOfLineComment.kt");
+        }
+
+        @TestMetadata("hasLineBreakBeforeFirstParam.kt")
+        public void testHasLineBreakBeforeFirstParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinParameterList/hasLineBreakBeforeFirstParam.kt");
+        }
+
+        @TestMetadata("hasLineBreaks.kt")
+        public void testHasLineBreaks() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinParameterList/hasLineBreaks.kt");
+        }
+
+        @TestMetadata("hasLineBreaksWithTrailingComma.kt")
+        public void testHasLineBreaksWithTrailingComma() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinParameterList/hasLineBreaksWithTrailingComma.kt");
+        }
+
+        @TestMetadata("longParameters.kt")
+        public void testLongParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinParameterList/longParameters.kt");
+        }
+
+        @TestMetadata("longParameters2.kt")
+        public void testLongParameters2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinParameterList/longParameters2.kt");
+        }
+
+        @TestMetadata("noLineBreak.kt")
+        public void testNoLineBreak() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinParameterList/noLineBreak.kt");
+        }
+
+        @TestMetadata("noParam.kt")
+        public void testNoParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinParameterList/noParam.kt");
+        }
+
+        @TestMetadata("oneParam.kt")
+        public void testOneParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/joinParameterList/oneParam.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments")
     public abstract static class AddNamesInCommentToJavaCallArguments extends AbstractK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
