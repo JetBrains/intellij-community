@@ -48,11 +48,12 @@ object GHPRReviewThreadComponent {
              reviewDataProvider: GHPRReviewDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider,
              suggestedChangeHelper: GHPRSuggestedChangeHelper,
+             ghostUser: GHUser,
              currentUser: GHUser): JComponent {
     val panel = JPanel(VerticalLayout(12)).apply {
       isOpaque = false
     }
-    panel.add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(project, thread,
+    panel.add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                                               reviewDataProvider, avatarIconsProvider,
                                                                                               suggestedChangeHelper)))
 
@@ -69,6 +70,7 @@ object GHPRReviewThreadComponent {
                      diffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                      selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
                      suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                     ghostUser: GHUser,
                      currentUser: GHUser): JComponent {
 
     val collapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover,
@@ -94,7 +96,7 @@ object GHPRReviewThreadComponent {
 
         val commentsComponent = JPanel(VerticalLayout(12)).apply {
           isOpaque = false
-          val reviewCommentComponent = GHPRReviewCommentComponent.factory(project, thread,
+          val reviewCommentComponent = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                           reviewDataProvider, avatarIconsProvider,
                                                                           suggestedChangeHelper,
                                                                           false)
@@ -232,7 +234,7 @@ object GHPRReviewThreadComponent {
     val toggleModel = SingleValueModel(false)
     val textFieldModel = GHCommentTextFieldModel(project) { text ->
       reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
-        thread.addComment(GHPRReviewCommentModel.convert(it))
+        thread.addComment(it)
         toggleModel.value = false
       }
     }

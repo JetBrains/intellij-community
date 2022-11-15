@@ -20,12 +20,7 @@ class GHPRReviewCommentModel(comment: GHPullRequestReviewComment) {
     private set
   var body = comment.body
     private set
-  var authorUsername = comment.author?.login
-    private set
-  var authorLinkUrl = comment.author?.url
-    private set
-  var authorAvatarUrl = comment.author?.avatarUrl
-    private set
+  val author = comment.author
 
   var isFirstInResolvedThread by equalVetoingObservable(false) {
     changeEventDispatcher.multicaster.eventOccurred()
@@ -49,12 +44,6 @@ class GHPRReviewCommentModel(comment: GHPullRequestReviewComment) {
     if (body != comment.body)
       updated = true
     body = comment.body
-
-    if (authorUsername != comment.author?.login)
-      updated = true
-    authorUsername = comment.author?.login
-    authorLinkUrl = comment.author?.url
-    authorAvatarUrl = comment.author?.avatarUrl
 
     if (updated) changeEventDispatcher.multicaster.eventOccurred()
     return updated

@@ -14,6 +14,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
@@ -37,15 +38,17 @@ object GHPRReviewCommentComponent {
   fun create(project: Project,
              thread: GHPRReviewThreadModel,
              comment: GHPRReviewCommentModel,
+             ghostUser: GHUser,
              reviewDataProvider: GHPRReviewDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider,
              suggestedChangeHelper: GHPRSuggestedChangeHelper,
              showResolvedMarker: Boolean = true): JComponent {
 
+    val author = comment.author ?: ghostUser
     val avatarLabel = ActionLink("") {
-      comment.authorLinkUrl?.let { BrowserUtil.browse(it) }
+      BrowserUtil.browse(author.url)
     }.apply {
-      icon = avatarIconsProvider.getIcon(comment.authorAvatarUrl, AVATAR_SIZE)
+      icon = avatarIconsProvider.getIcon(author.avatarUrl, AVATAR_SIZE)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
@@ -68,7 +71,7 @@ object GHPRReviewCommentComponent {
     }
 
     Controller(project,
-               thread, comment,
+               thread, comment, ghostUser,
                suggestedChangeHelper,
                titlePane, pendingLabel, resolvedLabel, commentPanel,
                showResolvedMarker)
@@ -108,6 +111,7 @@ object GHPRReviewCommentComponent {
   private class Controller(private val project: Project,
                            private val thread: GHPRReviewThreadModel,
                            private val comment: GHPRReviewCommentModel,
+                           private val ghostUser: GHUser,
                            private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                            private val titlePane: HtmlEditorPane,
                            private val pendingLabel: JComponent,
@@ -136,8 +140,9 @@ object GHPRReviewCommentComponent {
       commentPanel.removeAll()
       commentPanel.add(commentComponent)
 
+      val author = comment.author ?: ghostUser
       val authorLink = HtmlBuilder()
-        .appendLink(comment.authorLinkUrl.orEmpty(), comment.authorUsername ?: GithubBundle.message("user.someone"))
+        .appendLink(author.url, author.login)
         .toString()
 
       when (comment.state) {
@@ -159,6 +164,7 @@ object GHPRReviewCommentComponent {
 
   fun factory(project: Project,
               thread: GHPRReviewThreadModel,
+              ghostUser: GHUser,
               reviewDataProvider: GHPRReviewDataProvider,
               avatarIconsProvider: GHAvatarIconsProvider,
               suggestedChangeHelper: GHPRSuggestedChangeHelper,
@@ -167,7 +173,7 @@ object GHPRReviewCommentComponent {
     return { comment ->
       create(
         project,
-        thread, comment,
+        thread, comment, ghostUser,
         reviewDataProvider, avatarIconsProvider,
         suggestedChangeHelper,
         showResolvedMarkerOnFirstComment)

@@ -25,14 +25,14 @@ internal constructor(private val project: Project,
                      private val avatarIconsProvider: GHAvatarIconsProvider,
                      private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                     private val ghostUser: GHUser,
                      private val currentUser: GHUser)
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
-    GHPRReviewThreadComponent.create(project, thread,
-                                     reviewDataProvider, avatarIconsProvider,
-                                     suggestedChangeHelper,
-                                     currentUser).apply {
+    GHPRReviewThreadComponent.create(project, thread, reviewDataProvider,
+                                     avatarIconsProvider, suggestedChangeHelper,
+                                     ghostUser, currentUser).apply {
       border = JBUI.Borders.empty(8, 8)
     }.let { ReviewUIUtil.createEditorInlayPanel(it) }
 

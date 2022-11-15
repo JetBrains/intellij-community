@@ -236,11 +236,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         .minWidth("0").maxWidth("$TIMELINE_CONTENT_WIDTH"))
 
       val threadsPanel = GHPRReviewThreadsPanel.create(reviewThreadsModel) {
-        GHPRReviewThreadComponent.createWithDiff(project, it,
-                                                 reviewDataProvider, avatarIconsProvider,
-                                                 reviewDiffComponentFactory,
+        GHPRReviewThreadComponent.createWithDiff(project, it, reviewDataProvider,
+                                                 avatarIconsProvider, reviewDiffComponentFactory,
                                                  selectInToolWindowHelper, suggestedChangeHelper,
-                                                 currentUser)
+                                                 ghostUser, currentUser)
       }
       add(threadsPanel, CC().grow().push()
         .minWidth("0")

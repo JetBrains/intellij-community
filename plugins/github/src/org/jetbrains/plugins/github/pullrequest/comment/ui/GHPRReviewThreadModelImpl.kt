@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.ui.CollectionListModel
 import com.intellij.util.EventDispatcher
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 
 class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
@@ -79,8 +80,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     }
   }
 
-  override fun addComment(comment: GHPRReviewCommentModel) {
-    add(comment)
+  override fun addComment(comment: GHPullRequestReviewComment) {
+    add(GHPRReviewCommentModel.convert(comment))
   }
 
   override fun addAndInvokeStateChangeListener(listener: () -> Unit) =
