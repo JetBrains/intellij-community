@@ -3,6 +3,11 @@
   "fixed": false,
   "ui": [
     {
+      "key": "ActionButton.separatorColor",
+      "description": "ActionButton separator line color",
+      "since": "2023.1"
+    },
+    {
       "key": "Banner.infoBackground"
     },
     {
@@ -1331,6 +1336,11 @@
       "key": "ToolBar.horizontalToolbarInsets",
       "description": "Default insets for horizontal action toolbars",
       "since": "2022.1"
+    },
+    {
+      "key": "ToolBar.separatorColor",
+      "description": "ToolBar separator line color",
+      "since": "2023.1"
     },
     {
       "key": "ToolBar.verticalToolbarInsets",

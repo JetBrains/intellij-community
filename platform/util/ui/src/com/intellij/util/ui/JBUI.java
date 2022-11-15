@@ -350,6 +350,8 @@ public final class JBUI {
       public static @NotNull Color hoverSeparatorColor() {
         return JBColor.namedColor("ActionButton.hoverSeparatorColor", new JBColor(Gray.xB3, Gray.x6B));
       }
+
+      public static final Color SEPARATOR_COLOR = JBColor.namedColor("ActionButton.separatorColor", CustomFrameDecorations.separatorForeground());
     }
 
     public static final class ActionsList {
@@ -820,6 +822,8 @@ public final class JBUI {
     }
 
     public static final class Toolbar {
+
+      public static final Color SEPARATOR_COLOR = JBColor.namedColor("ToolBar.separatorColor", CustomFrameDecorations.separatorForeground());
 
       public static Insets toolbarButtonInsets(boolean isMainToolbar) {
         return isMainToolbar ? mainToolbarButtonInsets() : toolbarButtonInsets();

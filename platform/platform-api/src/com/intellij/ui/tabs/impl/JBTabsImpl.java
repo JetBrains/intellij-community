@@ -2735,7 +2735,7 @@ public class JBTabsImpl extends JComponent
     @Override
     protected void paintComponent(Graphics g) {
       Graphics2D g2d = (Graphics2D)g;
-      g2d.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      g2d.setColor(JBUI.CurrentTheme.ActionButton.SEPARATOR_COLOR);
       LinePainter2D.paint(g2d, 0, 0, 0, getHeight());
     }
 

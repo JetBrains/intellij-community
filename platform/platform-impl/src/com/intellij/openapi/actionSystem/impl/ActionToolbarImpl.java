@@ -1084,7 +1084,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected @NotNull Color getSeparatorColor() {
-    return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
+    return JBUI.CurrentTheme.Toolbar.SEPARATOR_COLOR;
   }
 
   protected int getSeparatorHeight() {
