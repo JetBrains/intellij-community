@@ -348,6 +348,84 @@ public class ForCanBeForEach {
           }
       }
   }
+
+  private static String[] staticArg = new String[]{};
+
+  public void testArrayShouldIgnore(String[] arr) {
+    int newLength = 1;
+    int oldLength = arr.length;
+    if (oldLength < newLength) {
+      arr = Arrays.copyOf(arr, newLength);
+    }
+
+    for (int i = 0; i < oldLength; i++) {
+      String s = arr[i];
+      System.out.println(s);
+    }
+  }
+
+  public void testArrayShouldIgnore2() {
+    int newLength = 1;
+    int oldLength = staticArg.length;
+    if (oldLength < newLength) {
+      staticArg = Arrays.copyOf(staticArg, newLength);
+    }
+
+    for (int i = 0; i < oldLength; i++) {
+      String s = staticArg[i];
+      System.out.println(s);
+    }
+  }
+
+  public void testArrayShouldIgnore3() {
+    int oldLength = staticArg.length;
+    notPureMethod1();
+
+    for (int i = 0; i < oldLength; i++) {
+      String s = staticArg[i];
+      System.out.println(s);
+    }
+  }
+
+  private void notPureMethod1() {
+    staticArg = new String[]{"11"};
+  }
+
+  public void testListShouldIgnore1(List<String> lists) {
+    int oldSize = lists.size();
+
+    lists = new ArrayList<>();
+
+    for (int i = 0; i < oldSize; i++) {
+      String s = lists.get(i);
+      System.out.println(s);
+    }
+  }
+
+  public void testListShouldIgnore2(List<String> lists) {
+    int oldSize = lists.size();
+
+    lists.add("1");
+
+    for (int i = 0; i < oldSize; i++) {
+      String s = lists.get(i);
+      System.out.println(s);
+    }
+  }
+
+  void sideEffectsWith2Methods(List<String> ls) {
+    int size = ls.size();
+    method1(ls);
+    method1(ls);
+    for (int i = (0); (i < (size)); (i)++) {
+      Object o = ls.get(i);
+      System.out.println("o = " + o);
+    }
+  }
+
+  private void method1(List<String> ls) {
+    ls.add("1");
+  }
 }
 class OuterClass
 {
