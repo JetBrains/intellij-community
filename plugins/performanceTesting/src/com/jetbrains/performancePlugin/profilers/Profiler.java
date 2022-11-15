@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -25,7 +26,8 @@ public interface Profiler {
 
   static Profiler getCurrentProfilerHandler() {
     List<Profiler> all = ContainerUtil.findAll(EP_NAME.getExtensionList(), it -> it.isEnabled());
-    assert all.size() == 1;
+    //this relies on the naming, but we want a determined order and independent plugins/profilers; by default, we choose async
+    all.sort(Comparator.comparing(p -> p.getClass().getSimpleName()));
     return all.get(0);
   }
 
