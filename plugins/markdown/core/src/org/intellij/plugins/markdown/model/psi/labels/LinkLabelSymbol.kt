@@ -3,7 +3,9 @@ package org.intellij.plugins.markdown.model.psi.labels
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
-import com.intellij.navigation.*
+import com.intellij.navigation.NavigatableSymbol
+import com.intellij.navigation.NavigationTarget
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -18,6 +20,7 @@ import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownShortReferenceLink
+import org.intellij.plugins.markdown.model.psi.MarkdownSourceNavigationTarget
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
 import org.jetbrains.annotations.ApiStatus
 
@@ -26,7 +29,7 @@ data class LinkLabelSymbol(
   override val file: PsiFile,
   override val range: TextRange,
   val text: String
-): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol, NavigationTarget {
+): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol {
   override fun createPointer(): Pointer<out LinkLabelSymbol> {
     val project = file.project
     val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, range)
@@ -57,13 +60,9 @@ data class LinkLabelSymbol(
     return TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Link).presentation()
   }
 
-  override fun navigationRequest(): NavigationRequest? {
-    val virtualFile = file.virtualFile?.takeIf { it.isValid } ?: return null
-    return NavigationService.instance().sourceNavigationRequest(virtualFile, range.startOffset)
-  }
-
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> {
-    return listOf(this)
+    val virtualFile = file.virtualFile ?: return emptyList()
+    return listOf(MarkdownSourceNavigationTarget(virtualFile, range.startOffset, text))
   }
 
   companion object {

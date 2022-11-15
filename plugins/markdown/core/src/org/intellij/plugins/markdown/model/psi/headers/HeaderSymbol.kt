@@ -3,7 +3,9 @@ package org.intellij.plugins.markdown.model.psi.headers
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
-import com.intellij.navigation.*
+import com.intellij.navigation.NavigatableSymbol
+import com.intellij.navigation.NavigationTarget
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -18,6 +20,7 @@ import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderContent
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
+import org.intellij.plugins.markdown.model.psi.MarkdownSourceNavigationTarget
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,7 +30,7 @@ data class HeaderSymbol(
   override val range: TextRange,
   val text: String,
   val anchorText: String
-): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol, NavigationTarget {
+): MarkdownSymbolWithUsages, SearchTarget, RenameTarget, NavigatableSymbol {
   override fun createPointer(): Pointer<out HeaderSymbol> {
     val project = file.project
     val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, range)
@@ -71,13 +74,9 @@ data class HeaderSymbol(
     return presentation.presentation()
   }
 
-  override fun navigationRequest(): NavigationRequest? {
-    val virtualFile = file.virtualFile?.takeIf { it.isValid } ?: return null
-    return NavigationService.instance().sourceNavigationRequest(virtualFile, range.startOffset)
-  }
-
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> {
-    return listOf(this)
+    val virtualFile = file.virtualFile ?: return emptyList()
+    return listOf(MarkdownSourceNavigationTarget(virtualFile, range.startOffset, text))
   }
 
   companion object {
