@@ -64,7 +64,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   private void addToCache(FilteringNode node, boolean duplicate) {
     Object delegate = node.getDelegate();
     Object[] delegates = myBaseStructure.getChildElements(delegate);
-    if (delegates == null || delegates.length == 0 || duplicate) {
+    if (delegates.length == 0 || duplicate) {
       myLeaves.add(node);
     } else {
       ArrayList<FilteringNode> nodes = new ArrayList<>(delegates.length);
@@ -223,12 +223,11 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     @Override
     protected void doUpdate() {
       clearColoredText();
-      if (myDelegate instanceof PresentableNodeDescriptor) {
-        PresentableNodeDescriptor node = (PresentableNodeDescriptor)myDelegate;
+      if (myDelegate instanceof PresentableNodeDescriptor<?> node) {
         node.update();
         apply(node.getPresentation());
       } else if (myDelegate != null) {
-        NodeDescriptor descriptor = myBaseStructure.createDescriptor(myDelegate, getParentDescriptor());
+        NodeDescriptor<?> descriptor = myBaseStructure.createDescriptor(myDelegate, getParentDescriptor());
         descriptor.update();
         setUniformIcon(descriptor.getIcon());
         setPlainText(myDelegate.toString());
