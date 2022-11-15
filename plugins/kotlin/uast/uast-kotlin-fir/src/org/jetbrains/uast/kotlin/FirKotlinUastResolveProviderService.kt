@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
 import org.jetbrains.uast.kotlin.internal.*
@@ -516,7 +515,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun nullability(psiElement: PsiElement): TypeNullability? {
+    override fun nullability(psiElement: PsiElement): KtTypeNullability? {
         if (psiElement is KtTypeReference) {
             analyzeForUast(psiElement) {
                 nullability(psiElement.getKtType())?.let { return it }

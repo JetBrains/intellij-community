@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
+    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="RUNTIME" />
   </component>
