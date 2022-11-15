@@ -10,7 +10,7 @@ class Clazz {
     Map<String, Integer> aux = list.stream().collect(() -> new HashMap<>(), (a, b) -> a.put(b, b.length()), Map::putAll);
     if (<warning descr="Condition 'aux.isEmpty()' is always 'false'">aux.isEmpty()</warning>) {}
     Map<String, Integer> aux2 = list2.stream().collect(() -> new HashMap<>(), (a, b) -> a.put(b, b.length()), Map::putAll);
-    if (aux.isEmpty()) {}
+    if (aux2.isEmpty()) {}
   }
   
   public void passNull(Collection<?> c) {
