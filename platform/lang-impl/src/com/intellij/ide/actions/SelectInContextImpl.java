@@ -11,16 +11,21 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.ui.ClientProperty;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +36,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 public final class SelectInContextImpl extends FileSelectInContext {
+  public static final Key<ContextEditorProvider> CONTEXT_EDITOR_PROVIDER_KEY = Key.create("CONTEXT_EDITOR_PROVIDER");
   private final Object mySelector;
 
   private SelectInContextImpl(@NotNull PsiFile psiFile, @NotNull Object selector) {
@@ -47,9 +53,14 @@ public final class SelectInContextImpl extends FileSelectInContext {
   @Nullable
   public static SelectInContext createContext(AnActionEvent event) {
     Project project = event.getProject();
-    FileEditor editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
-    if (editor == null) {
-      editor = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
+    FileEditor editor;
+    final var contextComponent = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    final var contextEditorProvider = ClientProperty.get(contextComponent, CONTEXT_EDITOR_PROVIDER_KEY);
+    if (contextEditorProvider != null) {
+      editor = contextEditorProvider.getContextEditor(event);
+    }
+    else {
+      editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
     }
     VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
 
@@ -210,4 +221,9 @@ public final class SelectInContextImpl extends FileSelectInContext {
       return component instanceof JComponent ? (JComponent)component : null;
     }
   }
+
+  public interface ContextEditorProvider {
+    @Nullable FileEditor getContextEditor(@NotNull AnActionEvent event);
+  }
+
 }
