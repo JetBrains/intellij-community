@@ -3,6 +3,8 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
