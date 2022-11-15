@@ -16,6 +16,9 @@ import java.util.List;
 public class JavaCStyleCommentSpaceConverterFormatProcessor implements PostFormatProcessor {
   @Override
   public @NotNull PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
+    if (source.getContainingFile().getLanguage() != JavaLanguage.INSTANCE) {
+      return source;
+    }
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     CommonCodeStyleSettings.IndentOptions indentOptions = commonSettings.getIndentOptions();
 
@@ -53,6 +56,9 @@ public class JavaCStyleCommentSpaceConverterFormatProcessor implements PostForma
 
   @Override
   public @NotNull TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
+    if (source.getContainingFile().getLanguage() != JavaLanguage.INSTANCE) {
+      return rangeToReformat;
+    }
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     CommonCodeStyleSettings.IndentOptions indentOptions = commonSettings.getIndentOptions();
 
