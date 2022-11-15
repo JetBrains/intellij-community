@@ -220,13 +220,6 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       return myDelegate instanceof PresentableNodeDescriptor && ((PresentableNodeDescriptor<?>)myDelegate).isHighlightableContentNode(kid);
     }
 
-
-
-    @Override
-    protected void updateFileStatus() {
-      // DO NOTHING
-    }
-
     @Override
     protected void doUpdate() {
       clearColoredText();

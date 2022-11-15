@@ -65,10 +65,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor());
   }
 
-  private FileStatus getFileStatus() {
-    return FileStatus.NOT_CHANGED;
-  }
-
   @Nullable
   protected Object updateElement() {
     return getElement();
@@ -88,7 +84,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     List<ColoredFragment> oldFragments = new ArrayList<>(presentation.getColoredText());
 
     myColor = UIUtil.getTreeForeground();
-    updateFileStatus();
 
     doUpdate();
 
@@ -100,15 +95,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
 
     presentation.setForcedTextForeground(myColor);
     presentation.setIcon(getIcon());
-  }
-
-  protected void updateFileStatus() {
-    assert getFileStatus() != null : getClass().getName() + ' ' + toString();
-
-    Color fileStatusColor = getFileStatus().getColor();
-    if (fileStatusColor != null) {
-      myColor = fileStatusColor;
-    }
   }
 
   /**
