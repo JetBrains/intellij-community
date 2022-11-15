@@ -632,8 +632,10 @@ object CodeWithMeClientDownloader {
     }
 
     // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
-    listOfNotNull(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir).forEach { path ->
-      Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
+    if (config.clientVersionManagementEnabled) {
+      listOfNotNull(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir).forEach { path ->
+        Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
+      }
     }
 
     val parameters = if (CodeWithMeGuestLauncher.isUnattendedModeUri(URI(url))) listOf("thinClient", url, remoteDevYouTrackFlag) else listOf("thinClient", url)
