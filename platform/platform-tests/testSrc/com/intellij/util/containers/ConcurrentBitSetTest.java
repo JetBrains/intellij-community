@@ -16,9 +16,11 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,9 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
@@ -87,7 +91,7 @@ class ConcurrentBitSetTest {
     PlatformTestUtil.assumeEnoughParallelism();
     int L = 128;
     int N = 100_000;
-    PlatformTestUtil.startPerformanceTest("testStressFineGrainedSmallSetModifications", 80_000, () -> tortureParallelSetClear(L, N)).assertTiming();
+    PlatformTestUtil.startPerformanceTest("testStressFineGrainedSmallSetModifications", 220_000, () -> tortureParallelSetClear(L, N)).assertTiming();
   }
 
   @Test
@@ -97,7 +101,7 @@ class ConcurrentBitSetTest {
     // todo ARM64 is slow for some reason
     int N = CpuArch.isArm64() ? 300 : 1000;
 
-    PlatformTestUtil.startPerformanceTest("testStressCoarseGrainedBigSet", 80_000, () -> tortureParallelSetClear(L, N)).assertTiming();
+    PlatformTestUtil.startPerformanceTest("testStressCoarseGrainedBigSet", 100_000, () -> tortureParallelSetClear(L, N)).assertTiming();
   }
 
   private static void tortureParallelSetClear(int L, int N) {
@@ -106,33 +110,37 @@ class ConcurrentBitSetTest {
     long distinctIndexNumber = Arrays.stream(indicesToSet).distinct().count();
     ExecutorService executor = create4ThreadsExecutor();
     try {
+      Set<Thread> threadUsed = ContainerUtil.newConcurrentSet();
+      Semaphore threadReady = new Semaphore();
       IntStream.range(0, N).forEach(__-> {
         ConcurrentBitSet bitSet = ConcurrentBitSet.create();
         assertEquals(-1, bitSet.nextSetBit(0));
-        boundedParallelRun(executor, L, i -> {
+        boundedParallelRun(executor, threadUsed, threadReady, L, i -> {
           bitSet.set(i);
           assertTrue(bitSet.get(i));
         });
         assertEquals(L, bitSet.nextClearBit(0));
-        boundedParallelRun(executor, L, i -> {
+        boundedParallelRun(executor, threadUsed, threadReady, L, i -> {
           bitSet.clear(i);
           assertFalse(bitSet.get(i));
         });
         assertEquals(-1, bitSet.nextSetBit(0));
 
-        boundedParallelRun(executor, L / 2, i -> bitSet.set(indicesToSet[i]));
+        boundedParallelRun(executor, threadUsed, threadReady, L / 2, i -> bitSet.set(indicesToSet[i]));
         assertEquals(distinctIndexNumber, bitSet.cardinality());
-        boundedParallelRun(executor, L, i -> {
+        boundedParallelRun(executor, threadUsed, threadReady, L, i -> {
           assertEquals(indexMask[i], bitSet.get(i));
           bitSet.set(i);
         });
-        boundedParallelRun(executor, L / 2, i -> bitSet.clear(indicesToSet[i]));
+        boundedParallelRun(executor, threadUsed, threadReady, L / 2, i -> bitSet.clear(indicesToSet[i]));
         assertEquals(distinctIndexNumber, L-bitSet.cardinality());
-        boundedParallelRun(executor, L, i -> {
+        boundedParallelRun(executor, threadUsed, threadReady, L, i -> {
           assertEquals(!indexMask[i], bitSet.get(i));
         });
         bitSet.clear();
+        assertEquals(-1, bitSet.nextSetBit(0));
       });
+      System.out.println("threadUsed = " + threadUsed);
     }
     finally {
       executor.shutdownNow();
@@ -142,25 +150,33 @@ class ConcurrentBitSetTest {
   @NotNull
   private static ExecutorService create4ThreadsExecutor() {
     // because TC usually has no more than 4 cores
+    AtomicInteger cnt = new AtomicInteger();
     return new ThreadPoolExecutor(4, 4, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-                                  ConcurrencyUtil.newNamedThreadFactory("com.intellij.util.containers.ConcurrentBitSetTest.tortureParallelSetClear"));
+                                  r -> new Thread(r, "ConcurrentBitSetTest.tortureParallelSetClear-"+cnt.getAndIncrement()));
   }
 
   // feeds indices [0..L) to consumer in parallel with parallelism = exactly 4, to make tests run more/less uniformly, locally and on TC
-  static void boundedParallelRun(ExecutorService executor, int L, IntConsumer index) {
+  static void boundedParallelRun(ExecutorService executor, Set<? super Thread> threadUsed, Semaphore threadReady, int L, IntConsumer index) {
     assert L % 4 == 0;
+    threadUsed.clear();
+    threadReady.down();threadReady.down();threadReady.down();threadReady.down();
     List<? extends Future<?>> futures = IntStream.range(0, 4).mapToObj(chunk ->
-      executor.submit(() -> {
-        for (int i = L / 4 * chunk; i < L / 4 * chunk + L / 4; i++) {
-          index.accept(i);
-        }
-      })).toList();
+     executor.submit(() -> {
+      threadUsed.add(Thread.currentThread());
+      threadReady.up();
+      threadReady.waitFor();
+      for (int i = L / 4 * chunk; i < L / 4 * chunk + L / 4; i++) {
+        index.accept(i);
+      }
+    })).toList();
     try {
       ConcurrencyUtil.getAll(futures);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+    assertTrue(threadReady.isUp());
+    assertEquals(4, threadUsed.size(), threadUsed.size() + " :\n" + StringUtil.join(threadUsed, "\n"));
   }
 
   @Test
@@ -180,7 +196,9 @@ class ConcurrentBitSetTest {
 
     ExecutorService executor = create4ThreadsExecutor();
     PlatformTestUtil.startPerformanceTest("testParallelReadPerformance", 35_000, ()-> {
-      boundedParallelRun(executor, N, __-> {
+      Semaphore threadReady = new Semaphore();
+      Set<Thread> threadUsed = ContainerUtil.newConcurrentSet();
+      boundedParallelRun(executor, threadUsed, threadReady, N, __-> {
         int r = 0;
         for (int j = 0; j < len; j++) {
           r += set.get(j)?1:0;
