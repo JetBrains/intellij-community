@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ResourceUtil
 import javax.swing.JComponent
@@ -54,6 +53,7 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     row {
       label(CodeVisionBundle.message("CodeVisionConfigurable.column.name.position"))
       positionComboBox = comboBox(CodeVisionGlobalSettingsProvider.supportedAnchors, anchorRenderer).component
+      positionComboBox.item = settings.getPositionForGroup(id)
     }
   }
 
@@ -70,8 +70,10 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
 
   override fun isModified(): Boolean {
     return (isEnabled != (settings.isProviderEnabled(id) && settings.codeVisionEnabled)
-            || positionComboBox.item != (settings.getPositionForGroup(id) ?: CodeVisionAnchorKind.Default))
+            || (positionComboBox.item != null && positionComboBox.item != getPositionForGroup()))
   }
+
+  private fun getPositionForGroup() = settings.getPositionForGroup(id) ?: CodeVisionAnchorKind.Default
 
   override fun apply() {
     settings.setProviderEnabled(id, isEnabled)
