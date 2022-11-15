@@ -2,9 +2,9 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2022" minor="3" eap="true"/>
+  <version major="2022" minor="3" eap="false" suffix="RC"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com" copyrightStart="2010"/>
-  <build number="PC-__BUILD__" date="__BUILD_DATE__"/>
+  <build number="PC-__BUILD__" date="__BUILD_DATE__"  majorReleaseDate="20221130"/>
   <logo url="/pycharm_core_logo.png" textcolor="ffffff" progressColor="ffffff" progressY="396" progressHeight="4"/>
   <about url="/pycharm_core_about.png" logoX="540" logoY="300" logoW="100" logoH="100" foreground="ffffff"
          copyrightForeground="ffffff" linkColor="589bf2"/>
