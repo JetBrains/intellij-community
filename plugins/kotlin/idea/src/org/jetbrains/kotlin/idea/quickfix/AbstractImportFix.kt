@@ -189,20 +189,14 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
             } else if (kind.groupedByPackage) {
                 KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), firstName, 0)
             } else {
-                val groupBy = sortedNames.map { it.name }.toSortedSet().groupBy {
-                    val endIndex = it.indexOf(".")
-                    if (endIndex > 0) it.substring(0, endIndex) else it
-                }
+                val groupBy = sortedNames.map { it.name }.toSortedSet().groupBy { it.substringBefore('.') }
                 val value = groupBy.entries.first().value
                 val first = value.first()
                 val multiple = if (value.size == 1) 0 else 1
-                if (groupBy.size == 1) {
-                    if (value.size == 2) {
-                        KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind.toText(value.size), first, value.last())
-                    } else
-                    KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), first, multiple)
-                } else {
-                    KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), first.substring(first.indexOf(".") + 1), multiple)
+                when {
+                    groupBy.size != 1 -> KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), first.substringAfter('.'), multiple)
+                    value.size == 2 -> KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind.toText(value.size), first, value.last())
+                    else -> KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), first, multiple)
                 }
             }
         } else {
