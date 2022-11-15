@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -60,7 +61,9 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
 
   init {
     contentType = UIUtil.HTML_MIME
-    editorKit = HTMLEditorKitBuilder().build()
+    editorKit = HTMLEditorKitBuilder()
+      .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP)
+      .build()
 
     // JEditorPane.setText updates cursor and requests scrolling to cursor position if scrollable is used. Disable it
     (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
@@ -191,8 +194,6 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
 
     when (maxLineLength) {
       MAX_LINE_LENGTH_NO_WRAP -> styles.add("body, p {white-space:nowrap;}")
-      // Unfortunately Java doesn't support wrapping of long words via word-wrap, didn't find any good solution
-      // MAX_LINE_LENGTH_WORD_WRAP -> styles.add("body, p {word-wrap:break-word;}")
     }
 
     return styles.joinToString(" ", "<head><style type='text/css'>", "</style></head>")
