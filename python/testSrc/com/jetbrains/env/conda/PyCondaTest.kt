@@ -4,22 +4,34 @@ package com.jetbrains.env.conda
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
+import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
+import com.intellij.util.io.exists
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.*
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameter
+import org.junit.runners.Parameterized.Parameters
+import java.nio.file.Path
 
+@RunWith(Parameterized::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class PyCondaTest {
 
@@ -32,6 +44,38 @@ internal class PyCondaTest {
   @Rule
   @JvmField
   internal val chain = RuleChain.outerRule(ProjectRule()).around(condaRule).around(yamlRule)
+
+  @Parameter(0)
+  @JvmField
+  var useLegacy: Boolean = false
+
+  companion object {
+    @JvmStatic
+    @Parameters
+    fun data(): Collection<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
+  }
+
+  @Before
+  fun before() {
+    Registry.get("use.python.for.local.conda").setValue(useLegacy)
+    Logger.getInstance(PyCondaSdkTest::class.java).info("Legacy: $useLegacy")
+  }
+
+  @Test
+  fun testBasePython(): Unit = runTest {
+    val baseConda = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
+      .first { (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true }
+    val targetRequest = LocalTargetEnvironmentRequest()
+    val commandLineBuilder = TargetedCommandLineBuilder(targetRequest)
+    addCondaPythonToTargetCommandLine(commandLineBuilder, baseConda, null)
+    commandLineBuilder.addParameter("-c")
+    commandLineBuilder.addParameter("import conda; print(conda.CONDA_PACKAGE_ROOT)")
+    val targetEnv = targetRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
+    val condaPackageRoot = targetEnv.createProcess(commandLineBuilder.build())
+      .getResultStdoutStr()
+      .getOrThrow()
+    Assert.assertTrue("Script should return path to conda packages", Path.of(condaPackageRoot).exists())
+  }
 
   @Test
   fun testCondaCreateByYaml() = runTest {
@@ -73,7 +117,7 @@ internal class PyCondaTest {
 
   private suspend fun getPythonVersion(condaEnv: PyCondaEnv): String {
     val req = LocalTargetEnvironmentRequest()
-    val commandLine = TargetedCommandLineBuilder(req).also { condaEnv.addCondaToTargetBuilder(sdk = null, it) }
+    val commandLine = TargetedCommandLineBuilder(req).also { condaEnv.addCondaToTargetBuilder(it) }
     commandLine.addParameter("python")
     return getPythonVersion(commandLine, CondaEnvSdkFlavor.getInstance(), req) ?: error("No version for $condaEnv")
   }

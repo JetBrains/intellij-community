@@ -2,7 +2,9 @@
 package com.jetbrains.env.conda
 
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.io.exists
 import com.jetbrains.getPythonVersion
@@ -15,11 +17,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.nio.file.Path
 
 
+@RunWith(Parameterized::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class PyAddCondaPanelModelTest {
 
@@ -30,6 +36,23 @@ class PyAddCondaPanelModelTest {
   @JvmField
   @Rule
   val projectRule: ProjectRule = ProjectRule()
+
+
+  @Parameterized.Parameter(0)
+  @JvmField
+  var useLegacy: Boolean = false
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters
+    fun data(): Collection<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
+  }
+
+  @Before
+  fun before() {
+    Registry.get("use.python.for.local.conda").setValue(useLegacy)
+    Logger.getInstance(PyCondaSdkTest::class.java).info("Legacy: $useLegacy")
+  }
 
 
   @Test
