@@ -13,7 +13,7 @@ import java.util.*;
 @SuppressWarnings("NotNullFieldNotInitialized")
 public class FeatureDescriptor {
   @NotNull private String myId;
-  @NotNull private String myDisplayName;
+  @Nullable private String myDisplayName;
   @Nullable private final String myGroupId;
   @Nullable private String myTipId;
   @Nullable private Set<String> myDependencies;
@@ -90,7 +90,6 @@ public class FeatureDescriptor {
   private void readExternal(Element element) {
     myId = Objects.requireNonNull(element.getAttributeValue(ATTRIBUTE_ID));
     myTipId = element.getAttributeValue(ATTRIBUTE_TIP_ID);
-    myDisplayName = FeatureStatisticsBundle.message(myId);
     String needToBeShownInGuide = element.getAttributeValue(ATTRIBUTE_SHOW_IN_GUIDE);
     if (needToBeShownInGuide != null) {
       myNeedToBeShownInGuide = Boolean.parseBoolean(needToBeShownInGuide);
@@ -153,6 +152,9 @@ public class FeatureDescriptor {
 
   @NotNull
   public String getDisplayName() {
+    if (myDisplayName == null) {
+      myDisplayName = FeatureStatisticsBundle.message(myId);
+    }
     return myDisplayName;
   }
 
