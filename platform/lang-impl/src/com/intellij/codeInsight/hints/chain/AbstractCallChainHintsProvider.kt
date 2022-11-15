@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.panel
 import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
@@ -22,6 +22,8 @@ import javax.swing.text.DefaultFormatter
 
 abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElement, ExpressionType, TypeComputationContext> :
   InlayHintsProvider<AbstractCallChainHintsProvider.Settings> {
+
+  protected data class ExpressionWithType<ExpressionType>(val expression: PsiElement, val type: ExpressionType)
 
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector? {
     if (file.project.isDefault) return null
@@ -35,36 +37,12 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
                                              ?.takeIf { it.getParentDotQualifiedExpression() == null }
                                             ?: return true
 
-        data class ExpressionWithType(val expression: PsiElement, val type: ExpressionType)
-
         val context = getTypeComputationContext(topmostDotQualifiedExpression)
 
-        var someTypeIsUnknown = false
-        val reversedChain =
-          generateSequence<PsiElement>(topmostDotQualifiedExpression) {
-            it.skipParenthesesAndPostfixOperatorsDown()?.safeCastUsing(dotQualifiedClass)?.getReceiver()
-          }
-            .drop(1) // Except last to avoid builder.build() which has obvious type
-            .filter { it.nextSibling.asSafely<PsiWhiteSpace>()?.textContains('\n') == true }
-            .map { it to it.getType(context) }
-            .takeWhile { (_, type) -> (type != null).also { if (!it) someTypeIsUnknown = true } }
-            .map { (expression, type) -> ExpressionWithType(expression, type!!) }
-            .windowed(2, partialWindows = true) { it.first() to it.getOrNull(1) }
-            .filter { (expressionWithType, prevExpressionWithType) ->
-              if (prevExpressionWithType == null) {
-                // Show type for expression in call chain on the first line only if it's dot qualified
-                dotQualifiedClass.isInstance(expressionWithType.expression.skipParenthesesAndPostfixOperatorsDown())
-              }
-              else {
-                expressionWithType.type != prevExpressionWithType.type ||
-                !dotQualifiedClass.isInstance(prevExpressionWithType.expression.skipParenthesesAndPostfixOperatorsDown())
-              }
-            }
-            .map { it.first }
-            .toList()
-        if (someTypeIsUnknown) return true
+        val reversedChain = topmostDotQualifiedExpression.assembleChainCall(context)
+        if (reversedChain == null) return true
 
-        if (reversedChain.asSequence().distinctBy { it.type }.count() < settings.uniqueTypeCount) return true
+        if (checkIfShouldSkip(reversedChain, settings)) return true
 
         for ((expression, type) in reversedChain) {
           sink.addInlineElement(
@@ -115,6 +93,37 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
     }
   }
 
+  protected fun DotQualifiedExpression.assembleChainCall(context: TypeComputationContext): List<ExpressionWithType<ExpressionType>>? {
+    var someTypeIsUnknown = false
+    val reversedChain =
+      generateSequence<PsiElement>(this) {
+        it.skipParenthesesAndPostfixOperatorsDown()?.safeCastUsing(dotQualifiedClass)?.getReceiver()
+      }
+        .drop(1) // Except last to avoid builder.build() which has obvious type
+        .filter { it.nextSibling.asSafely<PsiWhiteSpace>()?.textContains('\n') == true }
+        .map { it to it.getType(context) }
+        .takeWhile { (_, type) -> (type != null).also { if (!it) someTypeIsUnknown = true } }
+        .map { (expression, type) -> ExpressionWithType<ExpressionType>(expression, type!!) }
+        .windowed(2, partialWindows = true) { it.first() to it.getOrNull(1) }
+        .filter { (expressionWithType, prevExpressionWithType) ->
+          if (prevExpressionWithType == null) {
+            // Show type for expression in call chain on the first line only if it's dot qualified
+            dotQualifiedClass.isInstance(expressionWithType.expression.skipParenthesesAndPostfixOperatorsDown())
+          }
+          else {
+            expressionWithType.type != prevExpressionWithType.type ||
+            !dotQualifiedClass.isInstance(prevExpressionWithType.expression.skipParenthesesAndPostfixOperatorsDown())
+          }
+        }
+        .map { it.first }
+        .toList()
+    return if (someTypeIsUnknown) null else reversedChain
+  }
+
+  protected fun checkIfShouldSkip(chain: List<ExpressionWithType<ExpressionType>>, settings: Settings): Boolean {
+    return chain.asSequence().distinctBy { it.type }.count() < settings.uniqueTypeCount
+  }
+
   protected abstract fun ExpressionType.getInlayPresentation(
     expression: PsiElement,
     factory: PresentationFactory,
@@ -137,7 +146,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
 
   protected abstract fun getTypeComputationContext(topmostDotQualifiedExpression: DotQualifiedExpression): TypeComputationContext
 
-  private fun <T> Any.safeCastUsing(clazz: Class<T>) = if (clazz.isInstance(this)) clazz.cast(this) else null
+  protected fun <T> Any.safeCastUsing(clazz: Class<T>) = if (clazz.isInstance(this)) clazz.cast(this) else null
 
   final override fun createSettings() = Settings()
 
