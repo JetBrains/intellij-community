@@ -185,7 +185,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   }
 
   private static @Nullable StubFileElementType determineCurrentFileElementType(IndexedFile indexedFile) {
-    if (shouldSkipFile(indexedFile)) return null;
+    if (shouldSkipFile(indexedFile.getFile())) return null;
     var stubBuilderType = StubTreeBuilder.getStubBuilderType(indexedFile, true);
     if (stubBuilderType == null) return null;
     return stubBuilderType.getStubFileElementType();
@@ -212,15 +212,18 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   /**
    * There is no need to process binary files (e.g. .class), so we should just skip them.
    * Their processing might trigger content read which is expensive.
-   * Also, we should not process files which weren't indexed by StubIndex yet.
+   * Also, we should not process files which weren't indexed by StubIndex yet (or won't be, such as large files).
    */
-  private static boolean shouldSkipFile(IndexedFile indexedFile) {
+  private static boolean shouldSkipFile(VirtualFile file) {
+    if (((FileBasedIndexImpl)FileBasedIndex.getInstance()).isTooLarge(file)) {
+      return true;
+    }
     { // this code snippet is taken from StubTreeBuilder#getStubBuilderType
-      FileType fileType = indexedFile.getFileType();
+      FileType fileType = file.getFileType();
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       if (builder != null) return true;
     }
-    if (!StubUpdatingIndex.canHaveStub(indexedFile.getFile())) return true;
+    if (!StubUpdatingIndex.canHaveStub(file)) return true;
     return false;
   }
 }
