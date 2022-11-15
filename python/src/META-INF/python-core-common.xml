@@ -26,6 +26,10 @@
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="use.python.for.local.conda"
+                 defaultValue="true"
+                 restartRequired="false"
+                 description="Use bare python instead of conda run for conda"/>
     <iconMapper mappingFile="PythonIconMappings.json"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <roots.watchedRootsProvider implementation="com.jetbrains.python.target.targetWithVfs.TargetVfsWatchedRootsProvider"/>

@@ -15,10 +15,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.RANKING_AWARE_PACKAGE_NAME_COMPARATOR
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
-import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
@@ -54,9 +51,7 @@ class CondaPackageCache : PythonPackageCache<String> {
       val helpersPath = helpers.apply(targetEnv)
 
       // SDK associated with another conda env, not the base one, so we do not pass it not to activate wrong conda
-      baseConda.addCondaToTargetBuilder(null, commandLineBuilder)
-
-      commandLineBuilder.addParameter("python")
+      addCondaPythonToTargetCommandLine(commandLineBuilder, baseConda, null)
       commandLineBuilder.addParameter("$helpersPath/conda_packaging_tool.py")
       commandLineBuilder.addParameter("listall")
 

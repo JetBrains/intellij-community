@@ -6,9 +6,11 @@ import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
@@ -25,12 +27,11 @@ import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.jdom.Element
-import org.junit.Assert
-import org.junit.Assume
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.rules.RuleChain
 import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,6 +40,7 @@ import java.util.*
 /**
  * Ensures conda SDK could be created
  */
+@RunWith(Parameterized::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class PyCondaSdkTest {
   private val condaRule: LocalCondaRule = LocalCondaRule()
@@ -52,12 +54,27 @@ internal class PyCondaSdkTest {
   @JvmField
   internal val chain = RuleChain.outerRule(projectRule).around(condaRule).around(yamlRule).around(tempDirRule)
 
+  @Parameterized.Parameter(0)
+  @JvmField
+  var useLegacy: Boolean = false
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters
+    fun data(): Collection<Array<Any>> = listOf(arrayOf(false), arrayOf(true))
+  }
+
+  @Before
+  fun before() {
+    Registry.get("condda").setValue(useLegacy)
+    Logger.getInstance(PyCondaSdkTest::class.java).info("Legacy: $useLegacy")
+  }
+
   private suspend fun createCondaEnv(): PyCondaEnv {
     val name = "condaForTests"
     PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON38, name)).getOrThrow().waitFor()
     return PyCondaEnv(PyCondaEnvIdentity.NamedEnv(name), condaRule.condaPathOnTarget)
   }
-
   /**
    * When we create fresh local SDK on Windows, it must be patched with env vars, see [fixCondaPathEnvIfNeeded]
    */
@@ -97,6 +114,18 @@ internal class PyCondaSdkTest {
       MatcherAssert.assertThat("No conda python in PATH", paths, Matchers.hasItem(sdkHomePath.parent))
       val binPath = Path.of(condaEnv.fullCondaPathOnTarget).parent.parent.resolve("Library").resolve("Bin")
       MatcherAssert.assertThat("No conda lib bin path in PATH", paths, Matchers.hasItem(binPath))
+    }
+  }
+
+  @Test
+  fun testExecuteCommandOnSdk(): Unit = runTest {
+    val condaEnv = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow().first()
+    val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(condaEnv.envIdentity, emptyList(), projectRule.project)
+    val request = LocalTargetEnvironmentRequest()
+
+    repeat(10) { // To measure time to compare legacy and local
+      val version = getPythonVersion(sdk, request)
+      Assert.assertNotNull("No version returned", version)
     }
   }
 

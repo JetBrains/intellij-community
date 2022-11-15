@@ -68,9 +68,8 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
 
   /**
    * Add conda prefix to [targetedCommandLineBuilder]
-   * [sdk] may be used to fetch local env vars, see implementation
    */
-  fun addCondaToTargetBuilder(sdk: Sdk?, targetedCommandLineBuilder: TargetedCommandLineBuilder) {
+  fun addCondaToTargetBuilder(targetedCommandLineBuilder: TargetedCommandLineBuilder) {
     targetedCommandLineBuilder.apply {
       setExePath(fullCondaPathOnTarget)
       addParameter("run")
@@ -86,12 +85,6 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
       }
       // Otherwise we wouldn't have interactive output (for console etc.)
       addParameter("--no-capture-output")
-    }
-
-    if (sdk != null) {
-      targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
-    } else {
-      targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(fullCondaPathOnTarget)
     }
   }
 
