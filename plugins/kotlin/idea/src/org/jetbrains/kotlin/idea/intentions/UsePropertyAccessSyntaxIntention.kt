@@ -69,7 +69,6 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtCallExpress
 
     val fqNameList = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableList()
 
-    @Suppress("CAN_BE_PRIVATE")
     private var fqNameStrings = NotPropertiesService.DEFAULT.toMutableList()
 
     override fun readSettings(node: Element) {
@@ -102,7 +101,6 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtCallExpress
         return KotlinBundle.message("use.of.0.method.instead.of.property.access.syntax", accessor.toString())
     }
 }
-
 
 class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesService {
     override fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
@@ -176,24 +174,22 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
             )
         ) return null
 
-        val isSetUsage = callExpression.valueArguments.size == 1
+        val isGetUsage = callExpression.valueArguments.size == 0
+        if (isGetUsage) return property.name
 
         val valueArgumentExpression = callExpression.valueArguments.firstOrNull()?.getArgumentExpression()?.takeUnless {
             it is KtLambdaExpression || it is KtNamedFunction || it is KtCallableReferenceExpression
         }
+        if (valueArgumentExpression == null) return null
 
-        if (isSetUsage && valueArgumentExpression == null) {
-            return null
-        }
-
-        if (isSetUsage && qualifiedExpression.isUsedAsExpression(bindingContext)) {
+        if (qualifiedExpression.isUsedAsExpression(bindingContext)) {
             // call to the setter used as expression can be converted in the only case when it's used as body expression for some declaration and its type is Unit
             val parent = qualifiedExpression.parent
             if (parent !is KtDeclarationWithBody || qualifiedExpression != parent.bodyExpression) return null
             if (function.returnType?.isUnit() != true) return null
         }
 
-        if (isSetUsage && property.type != function.valueParameters.single().type) {
+        if (property.type != function.valueParameters.single().type) {
             val qualifiedExpressionCopy = qualifiedExpression.copied()
             val callExpressionCopy =
                 ((qualifiedExpressionCopy as? KtQualifiedExpression)?.selectorExpression ?: qualifiedExpressionCopy) as KtCallExpression
