@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.dependencies.hasGradleDependency
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
@@ -211,20 +212,32 @@ abstract class ScriptClassRootsUpdater(
 
                         scriptingDebugLog { "kotlin.script.dependencies from ${updates.oldRoots} to ${updates.newRoots}" }
 
-                        AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
-                            project,
-                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies"),
-                            updates.oldSdkRoots,
-                            updates.newSdkRoots,
+                        val dependencySdkLibraryName = if (updates.newSdkRoots.hasGradleDependency()) {
+                            KotlinBaseScriptingBundle.message("script.name.gradle.script.sdk.dependencies")
+                        } else {
                             KotlinBaseScriptingBundle.message("script.name.kotlin.script.sdk.dependencies")
-                        )
+                        }
 
                         AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
                             project,
-                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies"),
+                            dependencySdkLibraryName,
+                            updates.oldSdkRoots,
+                            updates.newSdkRoots,
+                            dependencySdkLibraryName
+                        )
+
+                        val dependencyLibraryName = if (updates.newRoots.hasGradleDependency()) {
+                            KotlinBaseScriptingBundle.message("script.name.gradle.script.dependencies")
+                        } else {
+                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies")
+                        }
+
+                        AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
+                            project,
+                            dependencyLibraryName,
                             updates.oldRoots,
                             updates.newRoots,
-                            KotlinBaseScriptingBundle.message("script.name.kotlin.script.dependencies")
+                            dependencyLibraryName
                         )
 
                         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
