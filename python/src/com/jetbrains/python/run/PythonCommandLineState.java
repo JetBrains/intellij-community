@@ -68,6 +68,7 @@ import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvide
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -654,7 +655,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       env.putAll(runParams.getEnvs());
     }
     boolean addPyCharmHosted = true;
-    if (sdk != null) {
+    if (sdk != null && !CondaPythonExecKt.getUsePythonForLocalConda()) {
       addPyCharmHosted = PySdkExtKt.getOrCreateAdditionalData(sdk).getFlavor().providePyCharmHosted();
     }
     addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env, addPyCharmHosted);
