@@ -40,34 +40,12 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   private static final boolean NOTIFICATIONS_ENABLED = Registry.intValue("ea.indicator.blinking.timeout", -1) < 0;
   private static final String GROUP_ID = "IDE-errors";
 
-  private final IdeErrorsIcon myIcon;
-  private final IdeFrame myFrame;
-  private final MessagePool myMessagePool;
-
   private Balloon myBalloon;
   private IdeErrorsDialog myDialog;
   private boolean myOpeningInProgress;
 
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     super(new BorderLayout());
-
-    myIcon = new IdeErrorsIcon(frame != null);
-    myIcon.setVerticalAlignment(SwingConstants.CENTER);
-    add(myIcon, BorderLayout.CENTER);
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        openErrorsDialog(null);
-        return true;
-      }
-    }.installOn(myIcon);
-
-    myFrame = frame;
-
-    myMessagePool = messagePool;
-    messagePool.addListener(this);
-
-    updateIconAndNotify();
   }
 
   @Override
@@ -82,8 +60,6 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
 
   @Override
   public void dispose() {
-    UIUtil.dispose(myIcon);
-    myMessagePool.removeListener(this);
   }
 
   @Override
@@ -94,69 +70,19 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     return this;
   }
 
-  public void openErrorsDialog(@Nullable LogMessage message) {
-    if (myDialog != null) return;
-    if (myOpeningInProgress) return;
-    myOpeningInProgress = true;
-
-    new Runnable() {
-      @Override
-      public void run() {
-        if (!isOtherModalWindowActive()) {
-          try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
-            // always show IDE errors to the host
-            doOpenErrorsDialog(message);
-          }
-          finally {
-            myOpeningInProgress = false;
-          }
-        }
-        else if (myDialog == null) {
-          EdtExecutorService.getScheduledExecutorInstance().schedule(this, 300L, TimeUnit.MILLISECONDS);
-        }
-      }
-    }.run();
-  }
-
-  private void doOpenErrorsDialog(@Nullable LogMessage message) {
-    Project project = myFrame != null ? myFrame.getProject() : null;
-    myDialog = new IdeErrorsDialog(myMessagePool, project, message) {
-      @Override
-      protected void dispose() {
-        super.dispose();
-        myDialog = null;
-        updateIconAndNotify();
-      }
-
-      @Override
-      protected void updateOnSubmit() {
-        super.updateOnSubmit();
-        updateIcon(myMessagePool.getState());
-      }
-    };
-    myDialog.show();
-  }
-
-  private void updateIcon(MessagePool.State state) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      myIcon.setState(state);
-      setVisible(state != MessagePool.State.NoErrors);
-    });
-  }
-
   @Override
   public void newEntryAdded() {
-    updateIconAndNotify();
+
   }
 
   @Override
   public void poolCleared() {
-    updateIconAndNotify();
+
   }
 
   @Override
   public void entryWasRead() {
-    updateIconAndNotify();
+
   }
 
   private boolean isOtherModalWindowActive() {
@@ -166,23 +92,6 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
            (myDialog == null || myDialog.getWindow() != activeWindow);
   }
 
-  private void updateIconAndNotify() {
-    MessagePool.State state = myMessagePool.getState();
-    updateIcon(state);
-
-    if (state == MessagePool.State.NoErrors) {
-      if (myBalloon != null) {
-        Disposer.dispose(myBalloon);
-      }
-    }
-    else if (state == MessagePool.State.UnreadErrors && myBalloon == null && isActive(myFrame) && NOTIFICATIONS_ENABLED) {
-      Project project = myFrame.getProject();
-      if (project != null) {
-        ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project), project.getDisposed());
-      }
-    }
-  }
-
   private static boolean isActive(@Nullable IdeFrame frame) {
     if (frame instanceof ProjectFrameHelper) {
       frame = ((ProjectFrameHelper)frame).getFrame();
@@ -190,35 +99,4 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     return frame instanceof Window && ((Window)frame).isActive();
   }
 
-  @RequiresEdt
-  private void showErrorNotification(@NotNull Project project) {
-    if (myBalloon != null) return;
-
-    NotificationDisplayType displayType = NotificationsConfiguration.getNotificationsConfiguration().getDisplayType(GROUP_ID);
-    if (displayType == NotificationDisplayType.NONE) {
-      return;
-    }
-
-    BalloonLayout layout = myFrame.getBalloonLayout();
-    if (layout == null) {
-      Logger.getInstance(IdeMessagePanel.class).error("frame=" + myFrame + " (" + myFrame.getClass() + ')');
-      return;
-    }
-
-    Notification notification = new Notification(GROUP_ID, DiagnosticBundle.message("error.new.notification.title"), NotificationType.ERROR)
-      .setIcon(AllIcons.Ide.FatalError)
-      .addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.new.notification.link"), () -> openErrorsDialog(null)));
-
-    BalloonLayoutData layoutData = BalloonLayoutData.createEmpty();
-    layoutData.fadeoutTime = displayType == NotificationDisplayType.STICKY_BALLOON ? 300000 : 10000;
-    layoutData.textColor = JBUI.CurrentTheme.Notification.Error.FOREGROUND;
-    layoutData.fillColor = JBUI.CurrentTheme.Notification.Error.BACKGROUND;
-    layoutData.borderColor = JBUI.CurrentTheme.Notification.Error.BORDER_COLOR;
-    layoutData.closeAll = () -> ((BalloonLayoutImpl)layout).closeAll();
-    layoutData.showSettingButton = true;
-
-    myBalloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
-    Disposer.register(myBalloon, () -> myBalloon = null);
-    layout.add(myBalloon);
-  }
 }
