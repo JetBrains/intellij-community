@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -77,12 +78,26 @@ private class AssignBackingFieldFix : LocalQuickFix {
         val setter = descriptor.psiElement as? KtPropertyAccessor ?: return
         val parameter = setter.valueParameters.firstOrNull() ?: return
         val bodyExpression = setter.bodyBlockExpression ?: return
-        bodyExpression.lBrace
+
+        bodyExpression.removeRedundantWhiteSpace()
+
+        val psiFactory = KtPsiFactory(setter)
+        val assignment = psiFactory.createExpression("field = ${parameter.name}")
+        val lastStatement = bodyExpression.statements.lastOrNull()
+        if (lastStatement != null) {
+            bodyExpression.addAfter(assignment, lastStatement)
+            bodyExpression.addAfter(psiFactory.createNewLine(), lastStatement)
+            bodyExpression.reformatted()
+        } else {
+            bodyExpression.addBefore(assignment, bodyExpression.rBrace)
+        }
+    }
+
+    private fun KtBlockExpression.removeRedundantWhiteSpace() {
+        lBrace
             ?.siblings(withItself = false)
-            ?.takeWhile { it != bodyExpression.rBrace }
+            ?.takeWhile { it != rBrace }
             ?.singleOrNull { it is PsiWhiteSpace }
             ?.also { it.delete() }
-
-        bodyExpression.addBefore(KtPsiFactory(setter).createExpression("field = ${parameter.name}"), bodyExpression.rBrace)
     }
 }
