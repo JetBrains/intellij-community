@@ -37,13 +37,6 @@ import java.util.concurrent.TimeUnit;
 public final class IdeMessagePanel extends NonOpaquePanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
 
-  private static final boolean NOTIFICATIONS_ENABLED = Registry.intValue("ea.indicator.blinking.timeout", -1) < 0;
-  private static final String GROUP_ID = "IDE-errors";
-
-  private Balloon myBalloon;
-  private IdeErrorsDialog myDialog;
-  private boolean myOpeningInProgress;
-
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     super(new BorderLayout());
   }
@@ -83,20 +76,6 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   @Override
   public void entryWasRead() {
 
-  }
-
-  private boolean isOtherModalWindowActive() {
-    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    return activeWindow instanceof JDialog &&
-           ((JDialog)activeWindow).isModal() &&
-           (myDialog == null || myDialog.getWindow() != activeWindow);
-  }
-
-  private static boolean isActive(@Nullable IdeFrame frame) {
-    if (frame instanceof ProjectFrameHelper) {
-      frame = ((ProjectFrameHelper)frame).getFrame();
-    }
-    return frame instanceof Window && ((Window)frame).isActive();
   }
 
 }
