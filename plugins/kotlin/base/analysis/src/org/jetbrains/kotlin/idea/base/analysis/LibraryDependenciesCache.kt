@@ -19,9 +19,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
@@ -148,6 +150,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val connection = project.messageBus.connect(this)
             connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
+            connection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         }
 
@@ -185,17 +188,31 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 validityCondition = null
             )
         }
+
+        inner class ModelChangeListener : WorkspaceEntityChangeListener<ModuleEntity, Module>(project) {
+            override val entityClass: Class<ModuleEntity>
+                get() = ModuleEntity::class.java
+
+            override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
+                entity.findModule(storage)
+
+            override fun entitiesChanged(outdated: List<Module>) {
+                invalidate()
+            }
+        }
+
     }
 
     private inner class ModuleDependenciesCache :
         SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project),
+        WorkspaceModelChangeListener,
         ProjectJdkTable.Listener,
         LibraryInfoListener,
         ModuleRootListener {
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
-            connection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
+            connection.subscribe(WorkspaceModelTopics.CHANGED, this)
             connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
@@ -388,6 +405,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun calculate(key: Module): LibraryDependencyCandidatesAndSdkInfos =
+            //computeLibrariesAndSdksUsedIn(key)
             throw UnsupportedOperationException("calculate(Module) should not be invoked due to custom impl of get()")
 
         override fun checkKeyValidity(key: Module) {
@@ -419,16 +437,26 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             )
         }
 
-        inner class ModelChangeListener : WorkspaceEntityChangeListener<ModuleEntity, Module>(project) {
-            override val entityClass: Class<ModuleEntity>
-                get() = ModuleEntity::class.java
+        override fun beforeChanged(event: VersionedStorageChange) {
+            val storageBefore = event.storageBefore
+            val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
 
-            override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
-                entity.findModule(storage)
+            val outdatedModules = mutableSetOf<Module>()
+            for (change in changes) {
+                val moduleEntity = change.oldEntity ?: continue
+                collectOutdatedModules(moduleEntity, storageBefore, outdatedModules)
+            }
 
-            override fun entitiesChanged(outdated: List<Module>) {
-                // TODO: incorrect in case of transitive module dependency
-                invalidateKeys(outdated) { _, _ -> false }
+            invalidateKeys(outdatedModules)
+        }
+
+        private fun collectOutdatedModules(moduleEntity: ModuleEntity, storage: EntityStorage, outdatedModules: MutableSet<Module>) {
+            val module = moduleEntity.findModule(storage) ?: return
+
+            if (!outdatedModules.add(module)) return
+
+            storage.referrers(moduleEntity.symbolicId, ModuleEntity::class.java).forEach {
+                collectOutdatedModules(it, storage, outdatedModules)
             }
         }
 

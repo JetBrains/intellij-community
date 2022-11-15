@@ -455,15 +455,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             dLibInfo,
         )
 
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
-
         assertDependencies(
             lib = s0LibInfo,
             aLibInfo,
@@ -577,15 +568,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             d.production,
             dLibInfo,
         )
-
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
 
         assertDependencies(
             lib = s0LibInfo,
@@ -734,16 +716,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             m1.production,
             m6LibInfo,
         )
-
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                "LibraryInfo '${lib.name}' dependencies",
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
 
         assertDependencies(
             lib = m0LibInfo,
@@ -934,16 +906,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             m8LibInfo,
         )
 
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                "LibraryInfo '${lib.name}' dependencies",
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
-
         assertDependencies(
             lib = m01LibInfo,
             m01LibInfo, m0LibInfo, m10LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo, m8LibInfo
@@ -1088,16 +1050,6 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             m7LibInfo,
         )
 
-        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
-        fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
-            val dependencies = dependenciesCache.getLibraryDependencies(lib)
-            assertEquals(
-                "LibraryInfo '${lib.name}' dependencies",
-                expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-                dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
-            )
-        }
-
         assertDependencies(
             lib = m0LibInfo,
             m0LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
@@ -1109,7 +1061,198 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
                 m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
             )
         }
+
+        // drop module in the middle of the loop
+        ModuleRootModificationUtil.updateModel(m4) { model: ModifiableRootModel ->
+            val entry = model.findModuleOrderEntry(m5) ?: error("unable to find m5")
+            model.removeOrderEntry(entry)
+        }
+
+        m4.production.assertDependenciesEqual(
+            m4.production,
+            // m5 is dropped
+            // m5.production,
+            m4LibInfo,
+        )
+
+        assertDependencies(lib = m1LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo)
+        assertDependencies(lib = m2LibInfo, m2LibInfo, m3LibInfo, m4LibInfo)
+        assertDependencies(lib = m3LibInfo, m3LibInfo, m4LibInfo)
+        assertDependencies(lib = m4LibInfo, m4LibInfo)
+
+        assertDependencies(lib = m6LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m6LibInfo, m7LibInfo)
+        assertDependencies(lib = m7LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m7LibInfo)
     }
+
+    fun testModuleChainInvalidation() {
+        /**
+        ```mermaid
+        graph
+        M0 --> M1
+        M1 --> M2
+        M2 --> M3
+        M3 --> M4
+        M1 --> M5
+        M5 --> M6
+        M5 --> M7
+        ```
+         */
+        val m0 = module("m0")
+        val m1 = module("m1")
+        val m2 = module("m2")
+        val m3 = module("m3")
+        val m4 = module("m4")
+        val m5 = module("m5")
+        val m6 = module("m6")
+        val m7 = module("m7")
+
+        m0.addDependency(m1)
+        m1.addDependency(m2)
+        m2.addDependency(m3)
+        m3.addDependency(m4)
+        m1.addDependency(m5)
+        m5.addDependency(m6)
+        m5.addDependency(m7)
+
+        val m0Lib = projectLibrary("m0Lib", classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        val m0LibInfo = m0Lib.toLibraryInfo()
+
+        m0.addDependency(m0Lib)
+
+        val m1Lib = projectLibrary("m1Lib", classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot)
+        val m1LibInfo = m1Lib.toLibraryInfo()
+
+        m1.addDependency(m1Lib)
+
+        val m2Lib = projectLibrary("m2Lib", classesRoot = TestKotlinArtifacts.kotlinAnnotationsJvm.jarRoot)
+        val m2LibInfo = m2Lib.toLibraryInfo()
+
+        m2.addDependency(m2Lib)
+
+        val m3Lib = projectLibrary("m3Lib", classesRoot = TestKotlinArtifacts.kotlinTestJunit.jarRoot)
+        val m3LibInfo = m3Lib.toLibraryInfo()
+
+        m3.addDependency(m3Lib)
+
+        val m4Lib = projectLibrary("m4Lib", classesRoot = TestKotlinArtifacts.parcelizeRuntime.jarRoot)
+        val m4LibInfo = m4Lib.toLibraryInfo()
+
+        m4.addDependency(m4Lib)
+
+        val m5Lib = projectLibrary("m5Lib", classesRoot = TestKotlinArtifacts.jsr305.jarRoot)
+        val m5LibInfo = m5Lib.toLibraryInfo()
+
+        m5.addDependency(m5Lib)
+
+        val m6Lib = projectLibrary("m6Lib", classesRoot = TestKotlinArtifacts.kotlinTest.jarRoot)
+        val m6LibInfo = m6Lib.toLibraryInfo()
+
+        m6.addDependency(m6Lib)
+
+        val m7Lib = projectLibrary("m7Lib", classesRoot = TestKotlinArtifacts.kotlinScriptRuntime.jarRoot)
+        val m7LibInfo = m7Lib.toLibraryInfo()
+
+        m7.addDependency(m7Lib)
+
+        m0.production.assertDependenciesEqual(
+            m0.production,
+            m1.production,
+            m0LibInfo,
+        )
+
+        m1.production.assertDependenciesEqual(
+            m1.production,
+            m2.production,
+            m5.production,
+            m1LibInfo,
+        )
+
+        m2.production.assertDependenciesEqual(
+            m2.production,
+            m3.production,
+            m2LibInfo,
+        )
+
+        m3.production.assertDependenciesEqual(
+            m3.production,
+            m4.production,
+            m3LibInfo,
+        )
+
+        m4.production.assertDependenciesEqual(
+            m4.production,
+            m4LibInfo,
+        )
+
+        m5.production.assertDependenciesEqual(
+            m5.production,
+            m6.production,
+            m7.production,
+            m5LibInfo,
+        )
+
+        m6.production.assertDependenciesEqual(
+            m6.production,
+            m6LibInfo,
+        )
+
+        m7.production.assertDependenciesEqual(
+            m7.production,
+            m7LibInfo,
+        )
+
+        assertDependencies(
+            lib = m0LibInfo,
+            m0LibInfo, m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
+        )
+
+        assertDependencies(
+            lib = m1LibInfo,
+            m1LibInfo, m2LibInfo, m3LibInfo, m4LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
+        )
+
+        assertDependencies(
+            lib = m2LibInfo,
+            m2LibInfo, m3LibInfo, m4LibInfo
+        )
+
+        assertDependencies(
+            lib = m3LibInfo,
+            m3LibInfo, m4LibInfo
+        )
+
+        assertDependencies(
+            lib = m5LibInfo,
+            m5LibInfo, m6LibInfo, m7LibInfo
+        )
+
+        // it has to drop m2, m1, m0
+        ModuleRootModificationUtil.updateModel(m1) { model: ModifiableRootModel ->
+            val entry = model.findModuleOrderEntry(m2) ?: error("unable to find m2")
+            model.removeOrderEntry(entry)
+        }
+
+        assertDependencies(
+            lib = m1LibInfo,
+            m1LibInfo, m5LibInfo, m6LibInfo, m7LibInfo
+        )
+
+        assertDependencies(
+            lib = m2LibInfo,
+            m2LibInfo, m3LibInfo, m4LibInfo
+        )
+
+        assertDependencies(
+            lib = m3LibInfo,
+            m3LibInfo, m4LibInfo
+        )
+
+        assertDependencies(
+            lib = m5LibInfo,
+            m5LibInfo, m6LibInfo, m7LibInfo
+        )
+    }
+
 
     fun testExportedDependency() {
         val (a, b, c) = modules()
@@ -1760,6 +1903,15 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         }
 
         error("Couldn't find source folder in ${module.name}")
+    }
+
+    private fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
+        val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(lib)
+        assertEquals(
+            "LibraryInfo '${lib.name}' dependencies",
+            expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
+            dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
+        )
     }
 
     private fun createFileInProject(fileName: String): VirtualFile {
