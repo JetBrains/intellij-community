@@ -731,6 +731,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setBounds(bounds);
       }
 
+      DialogWrapper wrapper = myDialogWrapper == null ? null : myDialogWrapper.get();
+      if (wrapper != null) {
+        wrapper.beforeShowCallback();
+      }
+
       // Workaround for switching workspaces on dialog show
       if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing", false) && !dialogWrapper.isModalProgress()) {
         final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject.get());

@@ -107,6 +107,7 @@ private class AlertDialog(project: Project?,
   private val myCloseButton: JComponent?
   private val myButtons = ArrayList<JButton>()
   private var myHelpButton: JButton? = null
+  private var myInitSize: Dimension? = null
 
   init {
     title = myTitle
@@ -219,7 +220,27 @@ private class AlertDialog(project: Project?,
     }
   }
 
+  override fun beforeShowCallback() {
+    if (SystemInfoRt.isMac) {
+      val initSize = myInitSize!!
+      if (!size.equals(initSize)) {
+        setSize(initSize.width, initSize.height)
+        val location = initialLocation
+        if (location != null) {
+          setLocation(location.x, location.y)
+        }
+      }
+    }
+  }
+
   override fun getInitialSize(): Dimension {
+    if (myInitSize == null) {
+      myInitSize = calculateInitialSize()
+    }
+    return myInitSize!!
+  }
+
+  private fun calculateInitialSize(): Dimension {
     val buttonsWidth = myButtonsPanel.preferredSize.width
 
     if (buttonsWidth > JBUI.scale(348)) {

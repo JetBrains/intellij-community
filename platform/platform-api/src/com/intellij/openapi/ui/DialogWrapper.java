@@ -1692,6 +1692,9 @@ public abstract class DialogWrapper {
     myInitialLocationCallback = callback;
   }
 
+  public void beforeShowCallback() {
+  }
+
   private void registerKeyboardShortcuts() {
     JRootPane rootPane = getRootPane();
     if (rootPane == null) return;
