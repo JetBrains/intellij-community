@@ -11,5 +11,5 @@ object MermaidFileType: LanguageFileType(MermaidLanguage) {
 
   override fun getDefaultExtension(): String = "mermaid"
 
-  override fun getIcon(): Icon = AllIcons.FileTypes.Any_type
+  override fun getIcon(): Icon = AllIcons.FileTypes.Diagram
 }
