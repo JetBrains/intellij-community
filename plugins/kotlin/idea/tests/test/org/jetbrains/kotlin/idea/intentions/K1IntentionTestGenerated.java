@@ -17793,6 +17793,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/getSafeCall.kt");
         }
 
+        @TestMetadata("getWithPublicFieldNameMatchingPropertyName.kt")
+        public void testGetWithPublicFieldNameMatchingPropertyName() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getWithPublicFieldNameMatchingPropertyName.kt");
+        }
+
         @TestMetadata("isGet.kt")
         public void testIsGet() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/isGet.kt");
