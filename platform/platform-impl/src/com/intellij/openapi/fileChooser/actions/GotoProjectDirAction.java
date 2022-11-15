@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.ide.ui.ProductIcons;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-public final class GotoProjectDirAction extends FileChooserAction {
+final class GotoProjectDirAction extends FileChooserAction {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
     boolean enabled = getProjectPath(e) != null;

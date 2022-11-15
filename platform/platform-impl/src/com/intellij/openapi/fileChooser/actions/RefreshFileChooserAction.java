@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import org.jetbrains.annotations.NotNull;
 
-public class RefreshFileChooserAction extends FileChooserAction implements LightEditCompatible {
+class RefreshFileChooserAction extends FileChooserAction implements LightEditCompatible {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) { }
 
