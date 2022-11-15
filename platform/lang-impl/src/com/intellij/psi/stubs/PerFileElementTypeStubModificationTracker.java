@@ -3,11 +3,15 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -133,10 +138,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
             null // see SingleEntryIndexForwardIndexAccessor#getDiffBuilder
           );
         // file might be deleted from actual fs, but still be "valid" in vfs (e.g. that happen sometimes in tests)
-        final FileContent fileContent;
-        try {
-          fileContent = FileContentImpl.createByFile(info.file, info.project);
-        } catch (FileNotFoundException ignored) {
+        final FileContent fileContent = getTransientAwareFileContent(info);
+        if (fileContent == null) {
           registerModificationFor(info.type);
           continue;
         }
@@ -153,6 +156,23 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
         FileBasedIndexImpl.unmarkBeingIndexed();
       }
     }
+  }
+
+  private static @Nullable FileContent getTransientAwareFileContent(FileInfo info) throws IOException {
+    Document doc = FileDocumentManager.getInstance().getDocument(info.file);
+    if (doc == null || info.project == null) {
+      try {
+        return FileContentImpl.createByFile(info.file, info.project);
+      } catch (FileNotFoundException ignored) {
+        return null;
+      }
+    }
+    PsiFile psi = PsiDocumentManager.getInstance(info.project).getPsiFile(doc);
+    DocumentContent content = FileBasedIndexImpl.findLatestContent(doc, psi);
+    return FileContentImpl.createByContent(info.file, () -> {
+      var text = content.getText();
+      return text.toString().getBytes(StandardCharsets.UTF_8);
+    }, info.project);
   }
 
   public void dispose() {

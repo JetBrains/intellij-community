@@ -1035,8 +1035,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     });
   }
 
+  @ApiStatus.Internal
   @NotNull
-  private static DocumentContent findLatestContent(@NotNull Document document, @Nullable PsiFile dominantContentFile) {
+  public static DocumentContent findLatestContent(@NotNull Document document, @Nullable PsiFile dominantContentFile) {
     // TODO seems we should choose the source with highest stamp!
     return dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() != document.getModificationStamp()
            ? new PsiContent(document, dominantContentFile)
