@@ -41,8 +41,11 @@ class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQ
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         fun makeStaticAndReformat(declaration: KtNamedDeclaration, editor: Editor?) {
-            AddJvmStaticIntention().applyTo(declaration, editor)
-            runWriteAction { CodeStyleManager.getInstance(declaration.project).reformat(declaration, true) }
+            val intention = AddJvmStaticIntention()
+            if (intention.applicabilityRange(declaration) != null) {
+                intention.applyTo(declaration, editor)
+                runWriteAction { CodeStyleManager.getInstance(declaration.project).reformat(declaration, true) }
+            }
         }
 
         val containingClass = declaration.containingClassOrObject ?: return
