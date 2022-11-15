@@ -34,6 +34,7 @@ interface JetBrainsClientDownloaderConfigurationProvider {
   val clientDownloadUrl: URI
   val jreDownloadUrl: URI
   val clientCachesDir: Path
+  val clientVersionManagementEnabled: Boolean
 
   val verifySignature: Boolean
 
@@ -61,6 +62,8 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     }
     return getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
   }
+  override val clientVersionManagementEnabled: Boolean
+    get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled().value
   override val verifySignature: Boolean = true
 
   private val ytKey = "application.info.youtrack.url"
@@ -97,6 +100,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override var clientDownloadUrl: URI = URI("https://download.jetbrains.com/idea/code-with-me/")
   override var jreDownloadUrl: URI = URI("https://download.jetbrains.com/idea/jbr/")
   override var clientCachesDir: Path = Files.createTempDirectory("")
+  override var clientVersionManagementEnabled: Boolean = true
   override var verifySignature: Boolean = true
 
   override val clientLaunched: Signal<Unit> = Signal()
