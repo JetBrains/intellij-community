@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase() {
@@ -178,22 +179,22 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     private fun <T> computeUnderProgressIndicatorAndWait(compute: () -> T): T {
         val result = CompletableFuture<T>()
         val progressIndicator = ProgressIndicatorBase()
-        var exceptionDuringCompute: Throwable? = null
         try {
             val task = object : Task.Backgroundable(project, "isApplicable", false) {
                 override fun run(indicator: ProgressIndicator) {
                     try {
                         result.complete(compute())
                     } catch (e: Throwable) {
-                        exceptionDuringCompute = e
+                        result.completeExceptionally(e)
                     }
                 }
             }
             ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator)
-            return result.get(10, TimeUnit.SECONDS)
+            return result.get(/*10, TimeUnit.SECONDS*/)
+        } catch (e: ExecutionException) {
+            throw e.cause!!
         } finally {
             progressIndicator.cancel()
-            exceptionDuringCompute?.let { throw it }
         }
     }
 

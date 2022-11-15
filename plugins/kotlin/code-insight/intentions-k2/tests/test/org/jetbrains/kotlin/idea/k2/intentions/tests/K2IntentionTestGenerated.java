@@ -2316,6 +2316,104 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/movePropertyToConstructor")
+    public static class MovePropertyToConstructor extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationTarget.kt")
+        public void testAnnotationTarget() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/annotationTarget.kt");
+        }
+
+        @TestMetadata("annotationWithUseSite.kt")
+        public void testAnnotationWithUseSite() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/annotationWithUseSite.kt");
+        }
+
+        @TestMetadata("declaredInInterface.kt")
+        public void testDeclaredInInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/declaredInInterface.kt");
+        }
+
+        @TestMetadata("delegated.kt")
+        public void testDelegated() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/delegated.kt");
+        }
+
+        @TestMetadata("expectClass.kt")
+        public void testExpectClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/expectClass.kt");
+        }
+
+        @TestMetadata("functionReference.kt")
+        public void testFunctionReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/functionReference.kt");
+        }
+
+        @TestMetadata("getter.kt")
+        public void testGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/getter.kt");
+        }
+
+        @TestMetadata("javaAnnotation.kt")
+        public void testJavaAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/javaAnnotation.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/lambda.kt");
+        }
+
+        @TestMetadata("lambdaWithoutParameters.kt")
+        public void testLambdaWithoutParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/lambdaWithoutParameters.kt");
+        }
+
+        @TestMetadata("lateinit.kt")
+        public void testLateinit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/lateinit.kt");
+        }
+
+        @TestMetadata("local.kt")
+        public void testLocal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/local.kt");
+        }
+
+        @TestMetadata("map.kt")
+        public void testMap() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/map.kt");
+        }
+
+        @TestMetadata("methodReference.kt")
+        public void testMethodReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/methodReference.kt");
+        }
+
+        @TestMetadata("secondaryConstructor.kt")
+        public void testSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/secondaryConstructor.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/simple.kt");
+        }
+
+        @TestMetadata("simpleAnnotation.kt")
+        public void testSimpleAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/simpleAnnotation.kt");
+        }
+
+        @TestMetadata("withoutMatchingParameter.kt")
+        public void testWithoutMatchingParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/withoutMatchingParameter.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions")
     public abstract static class Intentions extends AbstractK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
