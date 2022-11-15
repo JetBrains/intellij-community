@@ -590,6 +590,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/multiDeclarationExtensionComponentNoOperator.test");
         }
 
+        @TestMetadata("multiFunctionCandidate.test")
+        public void testMultiFunctionCandidate() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/multiFunctionCandidate.test");
+        }
+
         @TestMetadata("nestedClass.before.Main.kt")
         public void testNestedClass() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/nestedClass.before.Main.kt");
