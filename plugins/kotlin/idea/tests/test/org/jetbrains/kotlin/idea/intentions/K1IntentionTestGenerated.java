@@ -17808,6 +17808,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/nonVoidSetter2.kt");
         }
 
+        @TestMetadata("nonVoidSetter3.kt")
+        public void testNonVoidSetter3() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/nonVoidSetter3.kt");
+        }
+
         @TestMetadata("propertyTypeIsMoreSpecific1.kt")
         public void testPropertyTypeIsMoreSpecific1() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/propertyTypeIsMoreSpecific1.kt");

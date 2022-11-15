@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
-import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.CallResolver
 import org.jetbrains.kotlin.resolve.calls.context.BasicCallResolutionContext
 import org.jetbrains.kotlin.resolve.calls.context.CheckArgumentTypesMode
@@ -182,12 +181,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         }
         if (valueArgumentExpression == null) return null
 
-        if (qualifiedExpression.isUsedAsExpression(bindingContext)) {
-            // call to the setter used as expression can be converted in the only case when it's used as body expression for some declaration and its type is Unit
-            val parent = qualifiedExpression.parent
-            if (parent !is KtDeclarationWithBody || qualifiedExpression != parent.bodyExpression) return null
-            if (function.returnType?.isUnit() != true) return null
-        }
+        if (function.returnType?.isUnit() != true) return null
 
         if (property.type != function.valueParameters.single().type) {
             val qualifiedExpressionCopy = qualifiedExpression.copied()
