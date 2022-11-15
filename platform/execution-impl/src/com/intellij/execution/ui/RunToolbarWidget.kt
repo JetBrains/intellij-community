@@ -17,7 +17,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -31,7 +30,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
@@ -63,7 +61,8 @@ import java.awt.geom.Area
 import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
-import java.util.concurrent.locks.ReentrantLock
+import java.util.*
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
@@ -71,7 +70,8 @@ import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonListener
 import javax.swing.plaf.basic.BasicButtonUI
 import javax.swing.plaf.basic.BasicGraphicsUtils
-import kotlin.concurrent.withLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 import kotlin.properties.Delegates
 
 private const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
@@ -125,7 +125,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
     }
 
     val selectedConfiguration = runManager.selectedConfiguration
-    val history = RunConfigurationStartHistory.getInstance(project)
+    val history = RunStatusHistory.getInstance(project)
     val run = history.firstOrNull(selectedConfiguration) { it.state.isRunningState() } ?: history.firstOrNull(selectedConfiguration)
     val isLoading = run?.state?.isBusyState() == true
     val lastExecutorId = run?.executorId ?: DefaultRunExecutor.EXECUTOR_ID
@@ -212,7 +212,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boo
     }
   }
   actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
-  RunConfigurationStartHistory.getInstance(project).history().mapTo(mutableSetOf()) { it.configuration }.forEach { conf ->
+  RunConfigurationStartHistory.getInstance(project).history().forEach { conf ->
     val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
     actions.add(actionGroupWithInlineActions)
   }
@@ -778,68 +778,70 @@ private class RunDropDownButtonUI : BasicButtonUI() {
 }
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
+class RunStatusHistory {
+  private val history = WeakHashMap<RunnerAndConfigurationSettings, MutableList<RunElement>>()
+
+  class RunElement(
+    val executorId: String,
+    var state: RunState
+  )
+
+  private val lock = ReentrantReadWriteLock()
+
+
+  fun changeState(setting: RunnerAndConfigurationSettings, executorId: String, state: RunState) = lock.write {
+    val runElements = history.computeIfAbsent(setting) {
+      ArrayList(5)
+    }
+    runElements.firstOrNull { it.executorId == executorId }?.let { it.state = state } ?: runElements.add(RunElement(executorId, state))
+  }
+
+  fun firstOrNull(setting: RunnerAndConfigurationSettings?, predicate: Predicate<RunElement> = Predicate { true }): RunElement? = lock.read {
+    setting ?: return null
+
+    return history[setting]?.firstOrNull { predicate.test(it) }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): RunStatusHistory = project.service()
+  }
+}
+
+@Service(Service.Level.PROJECT)
 @State(name = "RunConfigurationStartHistory", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @ApiStatus.Internal
 class RunConfigurationStartHistory(private val project: Project) : PersistentStateComponent<RunConfigurationStartHistory.State> {
   class State {
     @XCollection(style = XCollection.Style.v2)
     @OptionTag("element")
-    var history = mutableSetOf<Element>()
+    var history: MutableSet<Element>
+
+    constructor() {
+      history = mutableSetOf()
+    }
+
+    internal constructor(history: MutableSet<Element>) {
+      this.history = history
+    }
   }
 
   @Tag("element")
   data class Element(
     @Attribute
     var setting: String? = "",
-    @Attribute
-    var executorId: String = "",
-  ) {
-    @get:Transient
-    var state: RunState = RunState.UNDEFINED
-  }
+  )
 
-  class RunElement(
-    val configuration: RunnerAndConfigurationSettings,
-    val executorId: String,
-    state: RunState
-  ) {
-    var state: RunState = state
-      set(value) {
-        if (field != value) {
-          getInstance(configuration.configuration.project)._state.history.find {
-            it.setting == configuration.uniqueID && it.executorId == executorId
-          }?.apply {
-            state = value
-          }
-        }
-        field = value
-      }
-  }
-
-  fun history(): List<RunElement> {
+  fun history(): List<RunnerAndConfigurationSettings> {
     val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
-    return _state.history.mapNotNull { settings[it.setting]?.let { setting ->
-      RunElement(setting, it.executorId, it.state)
-    } }
+    return _state.history.mapNotNull { settings[it.setting] }
   }
 
-  fun register(setting: RunnerAndConfigurationSettings, executorId: String, state: RunState) {
-    _state.apply {
-      history = history.take(30).toMutableList().apply {
-        add(0, Element(setting.uniqueID, executorId).also {
-          it.state = state
-        })
-      }.toMutableSet()
-    }
-  }
-
-  fun firstOrNull(setting: RunnerAndConfigurationSettings?, predicate: Predicate<RunElement> = Predicate { true }): RunElement? {
-    setting ?: return null
-    return _state.history.firstOrNull {
-      it.setting == setting.uniqueID && predicate.test(RunElement(setting, it.executorId, it.state))
-    }?.let {
-      RunElement(setting, it.executorId, it.state)
-    }
+  fun register(setting: RunnerAndConfigurationSettings) {
+    _state = State(_state.history.take(30).toMutableList().apply {
+      add(0, Element(setting.uniqueID))
+    }.toMutableSet())
   }
 
   private var _state = State()
@@ -856,93 +858,39 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 }
 
-/**
- * Registers one [ExecutionReasonableHistory] per project and
- * disposes it with the project.
- */
 private class ExecutionReasonableHistoryManager : ProjectPostStartupActivity {
   override suspend fun execute(project: Project) {
-    ExecutionReasonableHistory(
-      project,
-      onHistoryChanged = ::processHistoryChanged,
-      onAnyChange = ::configurationHistoryStateChanged
-    )
-  }
-
-  private fun processHistoryChanged(latest: ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) {
-    if (latest != null) {
-      val (env, reason) = latest
-      getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
-        if (reason == RunState.SCHEDULED) {
-          RunConfigurationStartHistory.getInstance(env.project).register(conf, env.executor.id, reason)
-        }
-        ActivityTracker.getInstance().inc()
-      } ?: thisLogger().warn(
-        "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
-        "It won't be saved in the run history."
-      )
-    }
-  }
-
-  private fun configurationHistoryStateChanged(env: ExecutionEnvironment, reason: RunState) {
-    RunConfigurationStartHistory.getInstance(env.project).firstOrNull(
-      getPersistedConfiguration(env.runnerAndConfigurationSettings)
-    ) {
-      env.executor.id == it.executorId
-    }?.apply {
-      state = reason
-      ActivityTracker.getInstance().inc()
-    }
-  }
-}
-
-/**
- * Listens to process startup and finish.
- */
-private class ExecutionReasonableHistory(
-  project: Project,
-  onHistoryChanged: (latest: Elem<ExecutionEnvironment, RunState>?) -> Unit,
-  val onAnyChange: (ExecutionEnvironment, RunState) -> Unit
-) : ReasonableHistory<ExecutionEnvironment, RunState>(onHistoryChanged), Disposable {
-
-  init {
-    Disposer.register(project, this)
-    project.messageBus.connect(this).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
+    project.messageBus.connect(project).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {
-        if (isPersistedTask(env)) {
-          advise(env, RunState.SCHEDULED)
-        }
-        onAnyChange(env, RunState.SCHEDULED)
+        onAnyChange(executorId, env, RunState.SCHEDULED)
       }
 
       override fun processNotStarted(executorId: String, env: ExecutionEnvironment, cause: Throwable?) {
-        discard(env, RunState.NOT_STARTED)
-        onAnyChange(env, RunState.NOT_STARTED)
+        onAnyChange(executorId, env, RunState.NOT_STARTED)
       }
 
       override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
-        if (isPersistedTask(env)) {
-          advise(env, RunState.STARTED)
-        }
-        onAnyChange(env, RunState.STARTED)
+        onAnyChange(executorId, env, RunState.STARTED)
       }
 
       override fun processTerminating(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
-        if (isPersistedTask(env)) {
-          advise(env, RunState.TERMINATING)
-        }
-        onAnyChange(env, RunState.TERMINATING)
+        onAnyChange(executorId, env, RunState.TERMINATING)
       }
 
       override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
-        discard(env, RunState.TERMINATED)
-        onAnyChange(env, RunState.TERMINATED)
+        onAnyChange(executorId, env, RunState.TERMINATED)
+      }
+
+      private fun onAnyChange(executorId: String, env: ExecutionEnvironment, reason: RunState) {
+        getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
+          RunStatusHistory.getInstance(env.project).changeState(conf, executorId, reason)
+          ActivityTracker.getInstance().inc() // Not sure is it needed at all
+        } ?: thisLogger().warn(
+          "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
+          "It won't be saved in the run history."
+        )
       }
     })
-  }
-
-  override fun dispose() {
-    history.clear()
   }
 }
 
@@ -960,68 +908,6 @@ enum class RunState {
 
   fun isRunningState(): Boolean {
     return this == SCHEDULED || this == STARTED
-  }
-}
-
-/**
- * Tracks some values and returns the latest one.
- *
- * @param listener fired if current value is changed; same as [latest]
- */
-private open class ReasonableHistory<T, R>(
-  val listener: (latest: Elem<T, R>?) -> Unit
-) {
-  class Elem<T, R>(val value: T, var reason: R) {
-    operator fun component1() = value
-    operator fun component2() = reason
-  }
-  protected val history = mutableListOf<Elem<T, R>>()
-  private val lock = ReentrantLock()
-
-  /**
-   * Returns the latest value in the history.
-   */
-  private val latest: Elem<T, R>?
-    get() = lock.withLock { history.lastOrNull() }
-
-
-  /**
-   * Add a new value. If history doesn't contain the value or previous reason was different,
-   * then adds and fires [listener]. Nothing will be changed if the value is already in the history or
-   * the value is the latest but has same reason.
-   */
-  fun advise(value: T, reason: R) = lock.withLock {
-    var l = latest
-    if (l != null && l.value == value) {
-      if (l.reason != reason) {
-        l.reason = reason
-        listener(l)
-      }
-      return
-    }
-    l = history.find { it.value == value }
-    if (l != null) {
-      // just update a reason
-      l.reason = reason
-      return
-    }
-    val newValue = Elem(value, reason)
-    history += newValue
-    listener(newValue)
-  }
-
-  /**
-   * Removes value from the history. Also, if removed value was the latest, then fires [listener].
-   */
-  fun discard(value: T, reason: R) = lock.withLock {
-    if (history.lastOrNull()?.value == value) {
-      val oldValue = history.removeLast()
-      oldValue.reason = reason
-      listener(latest)
-    }
-    else {
-      history.removeIf { it.value == value }
-    }
   }
 }
 
