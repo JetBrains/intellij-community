@@ -129,6 +129,8 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
   override fun isEnabled(): Boolean = true
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+    if (commitInfo.commitContext.commitAuthor != null) return null
+
     val vcs = GitVcs.getInstance(project)
 
     val affectedRoots = getSelectedRoots(commitInfo)
