@@ -64,7 +64,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       if (!hasSupportedVcs(project, file, editor)) return@runReadAction READY_EMPTY
 
-      val virtualFile = file.virtualFile ?: return@runReadAction READY_EMPTY
+      val virtualFile = file.viewProvider.virtualFile
       if (ProjectFileIndex.getInstance(project).isInLibrarySource(virtualFile)) return@runReadAction READY_EMPTY
 
       val fileLanguage = file.language
