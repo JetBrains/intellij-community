@@ -87,7 +87,6 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
       setVisible(false);
     }
 
-    putClientProperty(PANEL_KEY, myNavigationBar);
     revalidate();
 
     uiSettingsChanged(settings);
@@ -111,6 +110,8 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
       myNavigationBar = new ReusableNavBarPanel(myProject, true);
       ((NavBarPanel)myNavigationBar).getModel().setFixedComponent(true);
     }
+    putClientProperty(PANEL_KEY, myNavigationBar);
+
     myScrollPane = ScrollPaneFactory.createScrollPane(myNavigationBar);
     updateScrollBarFlippedState(null);
 
