@@ -161,17 +161,17 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
 
   private suspend fun getDefinedUserNames(project: Project,
                                           roots: Collection<VirtualFile>,
-                                          stopWhenFoundFirst: Boolean): MutableMap<VirtualFile, Couple<String?>> {
+                                          stopWhenFoundFirst: Boolean): MutableMap<VirtualFile, Couple<String>> {
     return withContext(Dispatchers.Default) {
       runUnderIndicator {
-        val defined = HashMap<VirtualFile, Couple<String?>>()
+        val defined = HashMap<VirtualFile, Couple<String>>()
         for (root in roots) {
           try {
             val nameAndEmail = getUserNameAndEmailFromGitConfig(project, root)
-            val name = nameAndEmail.getFirst()
-            val email = nameAndEmail.getSecond()
+            val name = nameAndEmail.first
+            val email = nameAndEmail.second
             if (name != null && email != null) {
-              defined[root] = nameAndEmail
+              defined[root] = Couple.of(name, email)
               if (stopWhenFoundFirst) {
                 break
               }

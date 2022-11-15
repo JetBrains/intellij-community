@@ -13,171 +13,149 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.checkin;
+package git4idea.checkin
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import git4idea.config.GitVcsSettings;
-import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
+import com.intellij.util.SystemProperties
+import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil.*
+import git4idea.config.GitVcsSettings
+import git4idea.i18n.GitBundle
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import javax.swing.*
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+internal class GitUserNameNotDefinedDialog(
+  project: Project,
+  private val myRootsWithUndefinedProps: Collection<VirtualFile>,
+  private val myAllRootsAffectedByCommit: Collection<VirtualFile>,
+  rootsWithDefinedProps: Map<VirtualFile, Couple<String>>)
+  : DialogWrapper(project, false) {
 
-import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
-import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+  private val myProposedValues: Couple<String>?
+  private val mySettings: GitVcsSettings
 
-class GitUserNameNotDefinedDialog extends DialogWrapper {
+  private lateinit var myNameTextField: JTextField
+  private lateinit var myEmailTextField: JTextField
+  private lateinit var myGlobalCheckbox: JBCheckBox
 
-  @NotNull private final Collection<? extends VirtualFile> myRootsWithUndefinedProps;
-  @NotNull private final Collection<? extends VirtualFile> myAllRootsAffectedByCommit;
-  @Nullable private final Couple<String> myProposedValues;
-  @NotNull private final GitVcsSettings mySettings;
+  init {
+    mySettings = GitVcsSettings.getInstance(project)
 
-  private JTextField myNameTextField;
-  private JTextField myEmailTextField;
-  private JBCheckBox myGlobalCheckbox;
+    myProposedValues = calcProposedValues(rootsWithDefinedProps)
 
-  GitUserNameNotDefinedDialog(@NotNull Project project,
-                              @NotNull Collection<? extends VirtualFile> rootsWithUndefinedProps,
-                              @NotNull Collection<? extends VirtualFile> allRootsAffectedByCommit,
-                              @NotNull Map<VirtualFile, Couple<String>> rootsWithDefinedProps) {
-    super(project, false);
-    myRootsWithUndefinedProps = rootsWithUndefinedProps;
-    myAllRootsAffectedByCommit = allRootsAffectedByCommit;
-    mySettings = GitVcsSettings.getInstance(project);
+    title = GitBundle.message("title.user.name.email.not.specified")
+    setOKButtonText(GitBundle.message("button.set.name.and.commit"))
 
-    myProposedValues = calcProposedValues(rootsWithDefinedProps);
-
-    setTitle(GitBundle.message("title.user.name.email.not.specified"));
-    setOKButtonText(GitBundle.message("button.set.name.and.commit"));
-
-    init();
+    init()
   }
 
-  @Override
-  protected ValidationInfo doValidate() {
-    String message = GitBundle.message("validation.warning.set.name.email.for.git");
-    if (isEmptyOrSpaces(getUserName())) {
-      return new ValidationInfo(message, myNameTextField);
+  override fun doValidate(): ValidationInfo? {
+    val message = GitBundle.message("validation.warning.set.name.email.for.git")
+    if (isEmptyOrSpaces(userName)) {
+      return ValidationInfo(message, myNameTextField)
     }
-    String email = getUserEmail();
+    val email = userEmail
     if (isEmptyOrSpaces(email)) {
-      return new ValidationInfo(message, myEmailTextField);
+      return ValidationInfo(message, myEmailTextField)
     }
-    if(!email.contains("@")) {
-      return new ValidationInfo(GitBundle.message("validation.error.email.no.at"), myEmailTextField);
+    if (!email.contains("@")) {
+      return ValidationInfo(GitBundle.message("validation.error.email.no.at"), myEmailTextField)
     }
-    return null;
+    return null
   }
 
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myNameTextField;
+  override fun getPreferredFocusedComponent(): JComponent {
+    return myNameTextField
   }
 
-  @Nullable
-  private static Couple<String> calcProposedValues(Map<VirtualFile, Couple<String>> rootsWithDefinedProps) {
+  private fun calcProposedValues(rootsWithDefinedProps: Map<VirtualFile, Couple<String>>): Couple<String>? {
     if (rootsWithDefinedProps.isEmpty()) {
-      return null;
+      return null
     }
-    Iterator<Map.Entry<VirtualFile,Couple<String>>> iterator = rootsWithDefinedProps.entrySet().iterator();
-    Couple<String> firstValue = iterator.next().getValue();
+    val iterator = rootsWithDefinedProps.entries.iterator()
+    val firstValue = iterator.next().value
     while (iterator.hasNext()) {
       // nothing to propose if there are different values set in different repositories
-      if (!firstValue.equals(iterator.next().getValue())) {
-        return null;
+      if (firstValue != iterator.next().value) {
+        return null
       }
     }
-    return firstValue;
+    return firstValue
   }
 
-  @Override
-  protected JComponent createCenterPanel() {
+  override fun createCenterPanel(): JComponent {
 
-    JLabel icon = new JLabel(UIUtil.getWarningIcon(), SwingConstants.LEFT);
-    JLabel description = new JLabel(getMessageText());
+    val icon = JLabel(getWarningIcon(), SwingConstants.LEFT)
+    val description = JLabel(getMessageText())
 
-    myNameTextField = new JTextField(20);
-    JBLabel nameLabel = new JBLabel(GitBundle.message("label.user.name") + " ");
-    nameLabel.setLabelFor(myNameTextField);
+    myNameTextField = JTextField(20)
+    val nameLabel = JBLabel(GitBundle.message("label.user.name") + " ")
+    nameLabel.labelFor = myNameTextField
 
-    myEmailTextField = new JTextField(20);
-    JBLabel emailLabel = new JBLabel(GitBundle.message("label.user.email") + " ");
-    emailLabel.setLabelFor(myEmailTextField);
+    myEmailTextField = JTextField(20)
+    val emailLabel = JBLabel(GitBundle.message("label.user.email") + " ")
+    emailLabel.labelFor = myEmailTextField
 
     if (myProposedValues != null) {
-      myNameTextField.setText(myProposedValues.getFirst());
-      myEmailTextField.setText(myProposedValues.getSecond());
+      myNameTextField.text = myProposedValues.getFirst()
+      myEmailTextField.text = myProposedValues.getSecond()
     }
     else {
-      myNameTextField.setText(SystemProperties.getUserName());
+      myNameTextField.text = SystemProperties.getUserName()
     }
 
-    myGlobalCheckbox = new JBCheckBox(GitBundle.message("checkbox.set.config.property.globally"), mySettings.shouldSetUserNameGlobally());
+    myGlobalCheckbox = JBCheckBox(GitBundle.message("checkbox.set.config.property.globally"), mySettings.shouldSetUserNameGlobally())
 
-    JPanel rootPanel = new JPanel(new GridBagLayout());
-    GridBag g = new GridBag()
+    val rootPanel = JPanel(GridBagLayout())
+    val g = GridBag()
       .setDefaultInsets(JBUI.insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultAnchor(GridBagConstraints.LINE_START)
-      .setDefaultFill(GridBagConstraints.HORIZONTAL);
+      .setDefaultFill(GridBagConstraints.HORIZONTAL)
 
-    rootPanel.add(description, g.nextLine().next().coverLine(3).pady(DEFAULT_HGAP));
-    rootPanel.add(icon, g.nextLine().next().coverColumn(3));
-    rootPanel.add(nameLabel, g.next().fillCellNone().insets(JBUI.insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
-    rootPanel.add(myNameTextField, g.next());
-    rootPanel.add(emailLabel, g.nextLine().next().next().fillCellNone().insets(JBUI.insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
-    rootPanel.add(myEmailTextField, g.next());
-    rootPanel.add(myGlobalCheckbox, g.nextLine().next().next().coverLine(2));
+    rootPanel.add(description, g.nextLine().next().coverLine(3).pady(DEFAULT_HGAP))
+    rootPanel.add(icon, g.nextLine().next().coverColumn(3))
+    rootPanel.add(nameLabel, g.next().fillCellNone().insets(JBUI.insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)))
+    rootPanel.add(myNameTextField, g.next())
+    rootPanel.add(emailLabel, g.nextLine().next().next().fillCellNone().insets(JBUI.insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)))
+    rootPanel.add(myEmailTextField, g.next())
+    rootPanel.add(myGlobalCheckbox, g.nextLine().next().next().coverLine(2))
 
-    return rootPanel;
+    return rootPanel
   }
 
-  @Override
-  protected JComponent createNorthPanel() {
-    return null;
+  override fun createNorthPanel(): JComponent? {
+    return null
   }
 
-  @NlsContexts.Label
-  @NotNull
-  private String getMessageText() {
-    if (myAllRootsAffectedByCommit.size() == myRootsWithUndefinedProps.size()) {
-      return "";
+  private fun getMessageText(): @NlsContexts.Label String {
+    if (myAllRootsAffectedByCommit.size == myRootsWithUndefinedProps.size) {
+      return ""
     }
-    HtmlBuilder sb = new HtmlBuilder()
-      .append(GitBundle.message("label.name.email.not.defined.in.n.roots", myRootsWithUndefinedProps.size()));
-    for (VirtualFile root : myRootsWithUndefinedProps) {
-      sb.br().append(root.getPresentableUrl());
+    val sb = HtmlBuilder()
+      .append(GitBundle.message("label.name.email.not.defined.in.n.roots", myRootsWithUndefinedProps.size))
+    for (root in myRootsWithUndefinedProps) {
+      sb.br().append(root.presentableUrl)
     }
-    return sb.wrapWithHtmlBody().toString();
+    return sb.wrapWithHtmlBody().toString()
   }
 
-  public String getUserName() {
-    return myNameTextField.getText();
-  }
+  val userName: String
+    get() = myNameTextField.text
 
-  public String getUserEmail() {
-    return myEmailTextField.getText();
-  }
+  val userEmail: String
+    get() = myEmailTextField.text
 
-  public boolean isGlobal() {
-    return myGlobalCheckbox.isSelected();
-  }
-
+  val isGlobal: Boolean
+    get() = myGlobalCheckbox.isSelected
 }
