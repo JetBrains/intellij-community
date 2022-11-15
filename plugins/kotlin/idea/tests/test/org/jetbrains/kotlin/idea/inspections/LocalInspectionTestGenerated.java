@@ -8201,6 +8201,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/recursivePropertyAccessor")
+    public static class RecursivePropertyAccessor extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("extensionProperty.kt")
+        public void testExtensionProperty() throws Exception {
+            runTest("testData/inspectionsLocal/recursivePropertyAccessor/extensionProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantCompanionReference")
     public static class RedundantCompanionReference extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

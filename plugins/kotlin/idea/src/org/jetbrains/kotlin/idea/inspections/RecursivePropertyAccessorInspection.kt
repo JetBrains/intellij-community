@@ -27,11 +27,12 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return simpleNameExpressionVisitor { expression ->
             if (isRecursivePropertyAccess(expression)) {
+                val isExtensionProperty = expression.getStrictParentOfType<KtProperty>()?.receiverTypeReference != null
                 holder.registerProblem(
                     expression,
                     KotlinBundle.message("recursive.property.accessor"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    ReplaceWithFieldFix()
+                    if (isExtensionProperty) null else ReplaceWithFieldFix()
                 )
             } else if (isRecursiveSyntheticPropertyAccess(expression)) {
                 holder.registerProblem(
