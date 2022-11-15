@@ -364,12 +364,13 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
 
   // PY-55092
   public void testGenericTypedDictNoWarnings() {
-    doTestByText("from typing import TypeVar, TypedDict, Generic\n" +
-                 "T = TypeVar('T')\n" +
-                 "class Group(TypedDict, Generic[T]):\n" +
-                 "    key: T\n" +
-                 "    group: list[T]\n" +
-                 "group: Group[str] = {\"key\": 1, \"group\": ['one']}");
+    doTestByText("""
+                   from typing import TypeVar, TypedDict, Generic
+                   T = TypeVar('T')
+                   class Group(TypedDict, Generic[T]):
+                       key: T
+                       group: list[T]
+                   group: Group[str] = {"key": 1, "group": ['one']}""");
   }
 
   @NotNull

@@ -1521,7 +1521,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       float newUInormLineHeight = (float)Registry.doubleValue("ide.new.ui.editor.normalized.line.height");
       float standardNormalizedLineHeight = ExperimentalUI.isNewUI() ? newUInormLineHeight : 16.0f;
       float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
-      return normLineHeight / JBUIScale.scale((float)standardNormalizedLineHeight);
+      return normLineHeight / JBUIScale.scale(standardNormalizedLineHeight);
     }
     return 1.0f;
   }

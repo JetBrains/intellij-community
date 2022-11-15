@@ -23,13 +23,13 @@ public final class RunnerLayout  {
   public static final Key<Integer> DEFAULT_INDEX = Key.create("RunnerLayoutDefaultIndex");
   public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");
 
-  protected Map<String, ViewImpl> myViews = new LinkedHashMap<>();
+  private final Map<String, ViewImpl> myViews = new LinkedHashMap<>();
   private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<>();
 
-  protected Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
+  private final Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
   private final Int2ObjectMap<TabImpl.Default> myDefaultTabs = new Int2ObjectOpenHashMap<>();
 
-  protected General myGeneral = new General();
+  private final General myGeneral = new General();
   private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<>();
   private Set<String> myLightWeightIds = null;
 
@@ -58,7 +58,7 @@ public final class RunnerLayout  {
 
   public boolean getDefaultIsMinimized(String contentId) {
     ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
-    return viewDefault != null ? viewDefault.isMinimizedInGrid() : false;
+    return viewDefault != null && viewDefault.isMinimizedInGrid();
   }
 
   @NotNull
@@ -110,7 +110,7 @@ public final class RunnerLayout  {
   }
 
   @Nullable
-  protected TabImpl findTab(int index) {
+  private TabImpl findTab(int index) {
     for (TabImpl each : myTabs) {
       if (index == each.getIndex()) return each;
     }
