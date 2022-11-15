@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.openapi.editor.Editor
@@ -37,7 +36,6 @@ class KotlinSuppressIntentionAction(
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         if (!element.isValid) return
         val suppressAt = pointer.element ?: return
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
 
         val id = "\"$suppressionKey\""
         when (suppressAt) {
