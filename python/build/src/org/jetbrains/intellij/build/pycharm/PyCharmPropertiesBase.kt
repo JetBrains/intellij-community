@@ -1,21 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
-import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.intellij.build.*
 import java.nio.file.Path
 
 internal const val PYDEVD_PACKAGE = "pydevd_package"
 
-/**
- * That may not be easy to merge [customJvmMemoryOptions], so provide em here
- */
-abstract class PyCharmPropertiesBase(vararg customJvmOptions: Pair<String, String>) : JetBrainsProductProperties() {
+abstract class PyCharmPropertiesBase : JetBrainsProductProperties() {
   override val baseFileName: String
     get() = "pycharm"
 
   init {
-    customJvmMemoryOptions = persistentMapOf(Pair("-Dfile.encoding", "=UTF-8"), *customJvmOptions)
     reassignAltClickToMultipleCarets = true
     useSplash = true
     productLayout.mainJarName = "pycharm.jar"
@@ -28,7 +23,7 @@ abstract class PyCharmPropertiesBase(vararg customJvmOptions: Pair<String, Strin
       "intellij.platform.testFramework",
       "intellij.tools.testsBootstrap",
       "intellij.java.rt",
-    )
+      )
 
     buildCrossPlatformDistribution = true
     mavenArtifacts.additionalModules = mavenArtifacts.additionalModules.addAll(listOf(
@@ -36,13 +31,12 @@ abstract class PyCharmPropertiesBase(vararg customJvmOptions: Pair<String, Strin
       "intellij.platform.testFramework.common",
       "intellij.platform.testFramework.junit5",
       "intellij.platform.testFramework",
-    ))
+      ))
   }
 
   override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
     val tasks = BuildTasks.create(context)
-    tasks.zipSourcesOfModulesBlocking(listOf("intellij.python.community", "intellij.python.psi"),
-                                      Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"))
+    tasks.zipSourcesOfModulesBlocking(listOf("intellij.python.community", "intellij.python.psi"), Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"))
 
     FileSet(Path.of(getKeymapReferenceDirectory(context)))
       .include("*.pdf")
