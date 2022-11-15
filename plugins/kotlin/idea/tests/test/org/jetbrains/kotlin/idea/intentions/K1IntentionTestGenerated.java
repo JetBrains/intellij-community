@@ -17798,6 +17798,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/isGet.kt");
         }
 
+        @TestMetadata("isGetWithNonBooleanReturnType.kt")
+        public void testIsGetWithNonBooleanReturnType() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/isGetWithNonBooleanReturnType.kt");
+        }
+
         @TestMetadata("isSet.kt")
         public void testIsSet() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/isSet.kt");

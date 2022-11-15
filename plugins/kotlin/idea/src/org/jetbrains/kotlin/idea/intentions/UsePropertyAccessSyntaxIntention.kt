@@ -57,6 +57,7 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.types.typeUtil.isBoolean
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.shouldNotConvertToProperty
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -138,7 +139,8 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         ) return null // cannot call extensions on "super"
 
         val callee = callExpression.calleeExpression as? KtNameReferenceExpression ?: return null
-        if (!callee.getReferencedName().isSuitableAsPropertyAccessor()) return null
+        val methodName = callee.getReferencedName()
+        if (!methodName.isSuitableAsPropertyAccessor()) return null
 
         val resolutionFacade = callExpression.getResolutionFacade()
         val bindingContext = callExpression.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_FOR_COMPLETION)
@@ -174,7 +176,12 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         ) return null
 
         val isGetUsage = callExpression.valueArguments.size == 0
-        if (isGetUsage) return property.name
+        if (isGetUsage) {
+            if (methodName.startsWith("is") && function.returnType?.isBoolean() != true) {
+                return null
+            }
+            return property.name
+        }
 
         val valueArgumentExpression = callExpression.valueArguments.firstOrNull()?.getArgumentExpression()?.takeUnless {
             it is KtLambdaExpression || it is KtNamedFunction || it is KtCallableReferenceExpression
