@@ -756,7 +756,6 @@ public final class ConfigImportHelper {
     }
   }
 
-  @RequiresBackgroundThread
   static void doImport(@NotNull Path oldConfigDir,
                        @NotNull Path newConfigDir,
                        @Nullable Path oldIdeHome,
@@ -834,7 +833,6 @@ public final class ConfigImportHelper {
     return List.of();
   }
 
-  @RequiresBackgroundThread
   private static void migratePlugins(@NotNull Path oldPluginsDir,
                                      @NotNull Path oldConfigDir,
                                      @NotNull Path newPluginsDir,
