@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -22,6 +23,8 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
+    override fun startInWriteAction(): Boolean = false
+
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
         val copyDeclaration = PsiTreeUtil.findSameElementInCopy(declaration, file)
         val containingClass = copyDeclaration.containingClassOrObject ?: return IntentionPreviewInfo.EMPTY
@@ -39,7 +42,7 @@ class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQ
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         fun makeStaticAndReformat(declaration: KtNamedDeclaration, editor: Editor?) {
             AddJvmStaticIntention().applyTo(declaration, editor)
-            CodeStyleManager.getInstance(declaration.project).reformat(declaration, true)
+            runWriteAction { CodeStyleManager.getInstance(declaration.project).reformat(declaration, true) }
         }
 
         val containingClass = declaration.containingClassOrObject ?: return
@@ -57,14 +60,11 @@ class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQ
                     movedDeclaration = moveMemberToCompanionObjectIntention.doMove(
                         it, declaration, externalUsages, outerInstanceUsages, editor
                     )
-
                 }
                 movedDeclaration?.let { makeStaticAndReformat(it, editor) }
             }
         } else makeStaticAndReformat(declaration, editor)
     }
-
-
 
     override fun getText(): String = KotlinBundle.message("make.member.static.quickfix", declaration.name ?: "")
 
