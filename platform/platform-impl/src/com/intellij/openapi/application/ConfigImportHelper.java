@@ -844,7 +844,6 @@ public final class ConfigImportHelper {
 
     List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
     List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = new HashMap<>();
 
     try {
       Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginVersions;
@@ -853,13 +852,11 @@ public final class ConfigImportHelper {
                                                                           brokenPluginVersions,
                                                                           options.compatibleBuildNumber);
 
-      pluginIdMap.putAll(result.getIdMap());
       partitionNonBundled(result.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
         Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
         return brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
       });
 
-      pluginIdMap.putAll(result.getIncompleteIdMap());
       partitionNonBundled(result.getIncompleteIdMap().values(), pluginsToDownload, pluginsToMigrate, __ -> true);
     }
     catch (ExecutionException | InterruptedException e) {
