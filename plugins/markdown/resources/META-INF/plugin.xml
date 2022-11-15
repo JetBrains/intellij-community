@@ -410,7 +410,7 @@ Includes the following features:</p>
                               Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
 
     <registryKey key="markdown.experimental.frontmatter.support.enable"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enables experimental front matter support"
                  restartRequired="true"/>
 
