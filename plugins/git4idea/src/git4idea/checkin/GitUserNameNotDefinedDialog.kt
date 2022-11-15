@@ -18,7 +18,6 @@ package git4idea.checkin
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
@@ -29,6 +28,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.*
+import com.intellij.vcs.log.VcsUser
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import java.awt.GridBagConstraints
@@ -39,10 +39,10 @@ internal class GitUserNameNotDefinedDialog(
   project: Project,
   private val myRootsWithUndefinedProps: Collection<VirtualFile>,
   private val myAllRootsAffectedByCommit: Collection<VirtualFile>,
-  rootsWithDefinedProps: Map<VirtualFile, Couple<String>>)
+  rootsWithDefinedProps: Map<VirtualFile, VcsUser>)
   : DialogWrapper(project, false) {
 
-  private val myProposedValues: Couple<String>?
+  private val myProposedValues: VcsUser?
   private val mySettings: GitVcsSettings
 
   private lateinit var myNameTextField: JTextField
@@ -79,7 +79,7 @@ internal class GitUserNameNotDefinedDialog(
     return myNameTextField
   }
 
-  private fun calcProposedValues(rootsWithDefinedProps: Map<VirtualFile, Couple<String>>): Couple<String>? {
+  private fun calcProposedValues(rootsWithDefinedProps: Map<VirtualFile, VcsUser>): VcsUser? {
     if (rootsWithDefinedProps.isEmpty()) {
       return null
     }
@@ -108,8 +108,8 @@ internal class GitUserNameNotDefinedDialog(
     emailLabel.labelFor = myEmailTextField
 
     if (myProposedValues != null) {
-      myNameTextField.text = myProposedValues.getFirst()
-      myEmailTextField.text = myProposedValues.getSecond()
+      myNameTextField.text = myProposedValues.name
+      myEmailTextField.text = myProposedValues.email
     }
     else {
       myNameTextField.text = SystemProperties.getUserName()
