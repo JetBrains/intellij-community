@@ -84,6 +84,10 @@ interface BaseKotlinConverter {
             else
                 el<UField>(buildKtOpt(kotlinOrigin, ::KotlinUField))
 
+        if (element is KtNamedDeclaration && element.nameAsSafeName.isSpecial) {
+            return null
+        }
+
         return with(requiredTypes) {
             when (element) {
                 is KtLightMethod -> {
