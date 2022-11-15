@@ -17773,6 +17773,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/getImplicitReceiver.kt");
         }
 
+        @TestMetadata("getOrXXX.kt")
+        public void testGetOrXXX() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getOrXXX.kt");
+        }
+
         @TestMetadata("getReservedWord1.kt")
         public void testGetReservedWord1() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/getReservedWord1.kt");

@@ -138,7 +138,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         ) return null // cannot call extensions on "super"
 
         val callee = callExpression.calleeExpression as? KtNameReferenceExpression ?: return null
-        if (!canBePropertyAccessor(callee.getReferencedName())) return null
+        if (!callee.getReferencedName().isSuitableAsPropertyAccessor()) return null
 
         val resolutionFacade = callExpression.getResolutionFacade()
         val bindingContext = callExpression.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_FOR_COMPLETION)
@@ -203,6 +203,9 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
 
         return property.name
     }
+
+    private fun String.isSuitableAsPropertyAccessor(): Boolean =
+        canBePropertyAccessor(this) && !startsWith("getOr")
 
     private fun checkWillResolveToProperty(
         resolvedCall: ResolvedCall<out CallableDescriptor>,
