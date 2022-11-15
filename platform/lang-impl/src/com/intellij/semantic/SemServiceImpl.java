@@ -188,9 +188,10 @@ public final class SemServiceImpl extends SemService implements Disposable {
   private static @Nullable <T extends SemElement> List<T> findCached(SemKey<T> key, IntObjectMap<List<SemElement>> chunk) {
     List<T> singleList = null;
     LinkedHashSet<T> result = null;
+
     List<SemKey<?>> inheritors = key.getInheritors();
-    for (int i = 0; i < inheritors.size(); i++) {
-      List<T> cached = (List<T>)getSemElements(chunk, inheritors.get(i));
+    for (var inheritor : inheritors) {
+      List<T> cached = (List<T>)getSemElements(chunk, inheritor);
       if (cached == null) {
         return null;
       }
