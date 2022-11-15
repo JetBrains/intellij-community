@@ -18,8 +18,6 @@ import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
-import kotlin.math.max
-import kotlin.math.min
 
 class GoToNextPsiElement(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
@@ -43,28 +41,12 @@ class GoToNextPsiElement(text: String, line: Int) : AbstractCommand(text, line) 
       }
       editor.caretModel.addCaretListener(caretListener)
       actionCallback.doWhenProcessed { editor.caretModel.removeCaretListener(caretListener) }
-      psiFile?.accept(object : PsiRecursiveElementWalkingVisitor(true) {
-        override fun visitElement(element: PsiElement) {
-          if (params.contains(element.elementType?.debugName)) {
-            if (editor.caretModel.currentCaret.offset < element.startOffset) {
-              val spaceIndex = max(1, element.text.indexOf(" "))
-              val offset = min(element.endOffset, element.startOffset + spaceIndex)
-              if (editor.caretModel.offset == offset) {
-                actionCallback.setDone()
-              }
-              else {
-                editor.caretModel.moveToOffset(offset)
-                editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
-              }
-              stopWalking()
-            }
-          }
-          super.visitElement(element)
-        }
-      })
+      psiFile.goToElement(position = "into_space", actionCallback = actionCallback, editor = editor,
+                          predicate = { params.contains(it.elementType?.debugName) })
       if (params.contains(SUPPRESS_ERROR_IF_NOT_FOUND) && !actionCallback.isDone) {
-         actionCallback.setDone()
-      } else if (!actionCallback.isDone) {
+        actionCallback.setDone()
+      }
+      else if (!actionCallback.isDone) {
         actionCallback.reject("not found any element")
       }
     }
