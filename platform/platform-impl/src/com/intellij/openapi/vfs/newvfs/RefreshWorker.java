@@ -233,12 +233,10 @@ final class RefreshWorker {
     myIoTime.addAndGet(System.nanoTime() - t);
 
     Set<String> newNames = new HashSet<>(dirList.keySet());
-    for (String persistedName : vfsNames) {
-      newNames.remove(persistedName);
-    }
+    vfsNames.forEach(newNames::remove);
 
     Set<String> deletedNames = new HashSet<>(vfsNames);
-    deletedNames.removeAll(dirList.keySet());
+    dirList.keySet().forEach(deletedNames::remove);
 
     ObjectOpenCustomHashSet<String> actualNames =
       dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(dirList.keySet(), false);
