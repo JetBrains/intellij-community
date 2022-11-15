@@ -158,6 +158,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   override fun updateFromServerFinished(result: UpdateResult) {
     when (result) {
       is Success -> {
+        reset()
         SettingsSyncSettings.getInstance().syncEnabled = true
       }
       NoFileOnServer, FileDeletedFromServer -> {
