@@ -37,7 +37,6 @@ class NewThemeAction : AnAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-  @Suppress("UsePropertyAccessSyntax") // IdeView#getOrChooseDirectory is not a getter
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(LangDataKeys.IDE_VIEW) ?: return
     val dir = view.getOrChooseDirectory() ?: return

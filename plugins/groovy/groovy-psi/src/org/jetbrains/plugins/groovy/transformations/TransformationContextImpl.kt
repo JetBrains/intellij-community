@@ -210,7 +210,6 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
       method.setContainingClass(myCodeClass)
     }
     else if (method is LightMethodBuilder) {
-      @Suppress("UsePropertyAccessSyntax")
       method.setContainingClass(myCodeClass)
     }
     val signature = method.getSignature(PsiSubstitutor.EMPTY)

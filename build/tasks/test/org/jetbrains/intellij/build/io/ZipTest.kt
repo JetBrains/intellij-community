@@ -21,7 +21,6 @@ import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
 import kotlin.random.Random
 
-@Suppress("UsePropertyAccessSyntax")
 class ZipTest {
   @RegisterExtension
   @JvmField
@@ -38,7 +37,7 @@ class ZipTest {
       for (i in 0..100) {
         tasks.add(ForkJoinTask.adapt(Runnable {
           val ioThread = runInThread {
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted) {
               for (name in list) {
                 assertThat(zipFile.getResource(name)).isNotNull()
               }
@@ -217,7 +216,7 @@ class ZipTest {
       for (name in zipFile.entries) {
         val entry = zipFile.getRawEntry("samples/nested_dir/__init__.py")
         assertThat(entry).isNotNull()
-        assertThat(entry!!.isCompressed()).isFalse()
+        assertThat(entry!!.isCompressed).isFalse()
         assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
       }
     }
@@ -236,7 +235,7 @@ class ZipTest {
     HashMapZipFile.load(archiveFile).use { zipFile ->
       val entry = zipFile.getRawEntry("file")
       assertThat(entry).isNotNull()
-      assertThat(entry!!.isCompressed()).isTrue()
+      assertThat(entry!!.isCompressed).isTrue()
     }
   }
 

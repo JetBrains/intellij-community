@@ -23,7 +23,6 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
-@Suppress("UsePropertyAccessSyntax")
 class ModuleLevelLibrariesInRootModelTest {
   companion object {
     @JvmField
