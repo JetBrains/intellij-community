@@ -153,7 +153,6 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
     val dialog = GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined)
     if (!dialog.showAndGet()) return GitUserNameCommitProblem(closeWindow = true)
 
-    GitVcsSettings.getInstance(project).setUserNameGlobally(dialog.isGlobal)
     if (setUserNameUnderProgress(project, notDefined, dialog)) {
       return null
     }
@@ -185,7 +184,7 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
     val error = Ref.create<@Nls String?>()
     runModalTask(GitBundle.message("progress.setting.user.name.email"), project, true) {
       try {
-        if (dialog.isGlobal) {
+        if (dialog.isSetGlobalConfig) {
           GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_NAME, dialog.userName, "--global")
           GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_EMAIL, dialog.userEmail, "--global")
         }
