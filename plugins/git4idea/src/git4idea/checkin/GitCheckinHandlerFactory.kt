@@ -124,7 +124,7 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
 }
 
 private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(project) {
-  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.LATE
 
   override fun isEnabled(): Boolean = true
 
