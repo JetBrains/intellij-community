@@ -21,7 +21,7 @@ internal class MarkdownPdfExportProvider : MarkdownExportProvider {
 
   override fun exportFile(project: Project, mdFile: VirtualFile, outputFile: String) {
     val preview = MarkdownFileEditorUtils.findMarkdownPreviewEditor(project, mdFile, true) ?: return
-    val htmlPanel = preview.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER) ?: return
+    val htmlPanel = preview.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get() ?: return
 
     if (htmlPanel is MarkdownJCEFHtmlPanel) {
       htmlPanel.savePdf(outputFile, project) { path, ok ->
