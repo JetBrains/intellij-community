@@ -22,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.Transferable;
 import java.util.List;
 
+import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ANY_KEY;
+import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ESCAPE;
+
 public class CopyAction extends TextComponentEditorAction implements HintManagerImpl.ActionToIgnore {
 
   private static final String SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY = "editor.skip.copy.and.cut.for.empty.selection";
@@ -137,7 +140,7 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
       if (caret.hasSelection()) {
         highlightManager.addOccurrenceHighlight(editor, caret.getSelectionStart(), caret.getSelectionEnd(),
                                                 EditorColors.SEARCH_RESULT_ATTRIBUTES,
-                                                HighlightManager.HIDE_BY_ANY_KEY, null);
+                                                HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY, null);
       }
     });
   }

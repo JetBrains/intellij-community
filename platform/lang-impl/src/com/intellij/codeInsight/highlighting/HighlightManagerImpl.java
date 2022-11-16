@@ -359,12 +359,12 @@ public final class HighlightManagerImpl extends HighlightManager {
     return hidden;
   }
 
-  boolean hasHideByEscapeHighlighters(@NotNull Editor editor) {
+  boolean hasHighlightersToHide(@NotNull Editor editor, @HideFlags int mask) {
     Map<RangeHighlighter, HighlightFlags> map = getHighlightInfoMap(editor, false);
     if (map != null) {
       for (HighlightFlags info : map.values()) {
         if (!info.editor.equals(editor)) continue;
-        if ((info.flags & HIDE_BY_ESCAPE) != 0) {
+        if ((info.flags & mask) != 0) {
           return true;
         }
       }
