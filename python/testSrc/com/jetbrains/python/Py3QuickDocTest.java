@@ -19,7 +19,10 @@ import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyQuickDocTest extends LightMarkedTestCase {
+/**
+ * @author dcheryasov
+ */
+public class Py3QuickDocTest extends LightMarkedTestCase {
   private PythonDocumentationProvider myProvider;
   private DocStringFormat myFormat;
 
