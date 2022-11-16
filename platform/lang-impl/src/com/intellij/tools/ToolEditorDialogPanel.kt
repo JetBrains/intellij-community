@@ -13,7 +13,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
 import javax.swing.JPanel
 import javax.swing.JTextField
-import javax.swing.SwingUtilities
 
 private const val ADVANCED_OPTIONS_EXPANDED_KEY = "ExternalToolDialog.advanced.expanded"
 private const val ADVANCED_OPTIONS_EXPANDED_DEFAULT = false
@@ -96,19 +95,9 @@ internal class ToolEditorDialogPanel {
       }
     }.apply {
       expanded = PropertiesComponent.getInstance().getBoolean(ADVANCED_OPTIONS_EXPANDED_KEY, ADVANCED_OPTIONS_EXPANDED_DEFAULT)
+      packWindowHeight = true
       addExpandedListener {
         PropertiesComponent.getInstance().setValue(ADVANCED_OPTIONS_EXPANDED_KEY, it, ADVANCED_OPTIONS_EXPANDED_DEFAULT)
-        updateWindowHeight()
-      }
-    }
-  }
-
-  private fun updateWindowHeight() {
-    SwingUtilities.invokeLater {
-      val window = SwingUtilities.windowForComponent(panel)
-      if (window != null) {
-        val height = window.preferredSize.height
-        window.setSize(window.width, height)
       }
     }
   }

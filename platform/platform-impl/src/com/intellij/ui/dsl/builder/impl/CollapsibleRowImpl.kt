@@ -17,6 +17,7 @@ import java.awt.event.KeyEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 import javax.swing.border.EmptyBorder
 
 @ApiStatus.Internal
@@ -31,6 +32,8 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
   private var registeredKeyStroke: KeyStroke? = null
 
   override var expanded by collapsibleTitledSeparator::expanded
+
+  override var packWindowHeight = false
 
   override fun setTitle(title: String) {
     collapsibleTitledSeparator.text = title
@@ -90,6 +93,22 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
       }
     })
     updateMnemonicRegistration()
+
+    addExpandedListener {
+      packWindowHeight()
+    }
+  }
+
+  private fun packWindowHeight() {
+    if (packWindowHeight && collapsibleTitledSeparator.isShowing) {
+      SwingUtilities.invokeLater {
+        val window = SwingUtilities.windowForComponent(collapsibleTitledSeparator)
+        if (window != null && window.isShowing && collapsibleTitledSeparator.isShowing) {
+          val height = window.preferredSize.height
+          window.setSize(window.width, height)
+        }
+      }
+    }
   }
 
   private fun updateMnemonicRegistration() {
