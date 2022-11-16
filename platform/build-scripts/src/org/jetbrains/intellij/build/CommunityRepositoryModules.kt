@@ -243,9 +243,7 @@ object CommunityRepositoryModules {
       "intellij.markdown.fenceInjection",
       "intellij.markdown.frontmatter",
     )),
-    plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")) {
-      it.withProjectLibrary("JGit")
-    },
+    plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
     plugin(listOf(
       "intellij.sh",
       "intellij.sh.core",

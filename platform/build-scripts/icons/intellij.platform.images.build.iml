@@ -29,6 +29,5 @@
     <orderEntry type="module" module-name="intellij.platform.util.immutableKeyValueStore" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="JGit" level="project" />
   </component>
 </module>
