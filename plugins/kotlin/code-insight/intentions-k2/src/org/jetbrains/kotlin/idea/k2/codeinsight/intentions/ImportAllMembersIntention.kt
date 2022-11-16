@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ImportAllMembersIntention :
     AbstractKotlinApplicableIntentionWithContext<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class),
@@ -56,6 +58,8 @@ internal class ImportAllMembersIntention :
             // Import all members of an object is not supported by Kotlin.
             return null
         }
+        if (element.getQualifiedExpressionForReceiver()?.isEnumSyntheticMethodCall(target) == true) return null
+
         val shortenCommand = collectPossibleReferenceShortenings(
             element.containingKtFile,
             classShortenOption = {
@@ -66,6 +70,7 @@ internal class ImportAllMembersIntention :
                 }
             },
             callableShortenOption = {
+                if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenOption.DO_NOT_SHORTEN
                 val containingClassId = if (it is KtConstructorSymbol) {
                     it.containingClassIdIfNonLocal?.outerClassId
                 } else {
@@ -119,3 +124,13 @@ private fun KtAnalysisSession.isReferenceToObjectMemberOrUnresolved(qualifiedAcc
     if (referencedSymbol is KtConstructorSymbol) return false
     return (referencedSymbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind?.isObject ?: true
 }
+
+private val enumSyntheticMethodNames = setOf("values", "valueOf")
+
+private fun KtClassOrObjectSymbol.isEnum(): Boolean = classKind == KtClassKind.ENUM_CLASS
+
+private fun KtCallableSymbol.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
+    target.isEnum() && callableIdIfNonLocal?.callableName?.asString() in enumSyntheticMethodNames
+
+private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KtNamedClassOrObjectSymbol): Boolean =
+    target.isEnum() && callExpression?.calleeExpression?.text in enumSyntheticMethodNames

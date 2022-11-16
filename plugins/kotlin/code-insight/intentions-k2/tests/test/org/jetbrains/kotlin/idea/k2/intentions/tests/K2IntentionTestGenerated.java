@@ -931,6 +931,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumMembers.kt");
         }
 
+        @TestMetadata("EnumSyntheticMethods.kt")
+        public void testEnumSyntheticMethods() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods2.kt")
+        public void testEnumSyntheticMethods2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods2.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods3.kt")
+        public void testEnumSyntheticMethods3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods3.kt");
+        }
+
         @TestMetadata("ImportAllMembersInImport.kt")
         public void testImportAllMembersInImport() throws Exception {
             runTest("../../../idea/tests/testData/intentions/importAllMembers/ImportAllMembersInImport.kt");
