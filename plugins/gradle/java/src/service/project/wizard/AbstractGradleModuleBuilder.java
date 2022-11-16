@@ -174,7 +174,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     );
 
     buildScriptBuilder = myUseKotlinDSL
-                         ? new KotlinDslGradleBuildScriptBuilder(gradleVersion)
+                         ? KotlinDslGradleBuildScriptBuilder.create(gradleVersion)
                          : GroovyDslGradleBuildScriptBuilder.create(gradleVersion);
     buildScriptConfigurators.forEach(it -> it.accept(buildScriptBuilder));
 

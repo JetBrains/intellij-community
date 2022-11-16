@@ -6,7 +6,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.KotlinScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import kotlin.apply as applyKt
 
-class KotlinDslGradleBuildScriptBuilder(
+class KotlinDslGradleBuildScriptBuilder private constructor(
   gradleVersion: GradleVersion
 ) : AbstractGradleBuildScriptBuilder<KotlinDslGradleBuildScriptBuilder>(gradleVersion) {
 
@@ -14,11 +14,15 @@ class KotlinDslGradleBuildScriptBuilder(
 
   override fun generate() = KotlinScriptBuilder().generate(generateTree())
 
-  override fun configureTask(name: String, configure: ScriptTreeBuilder.() -> Unit) =
+  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit) =
     withPostfix {
-      val block = block(configure)
-      if (!block.isEmpty()) {
-        call("tasks.getByName<Test>", string("test"), block)
-      }
+      callIfNotEmpty("tasks.test", configure)
     }
+
+  companion object {
+
+    @JvmStatic
+    fun create(gradleVersion: GradleVersion): GradleBuildScriptBuilder<*> =
+      KotlinDslGradleBuildScriptBuilder(gradleVersion)
+  }
 }

@@ -12,8 +12,10 @@ abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScrip
   gradleVersion: GradleVersion
 ) : AbstractGradleBuildScriptBuilder<BSB>(gradleVersion) {
 
-  override fun configureTask(name: String, configure: ScriptTreeBuilder.() -> Unit) =
-    withPostfix { callIfNotEmpty(name, configure) }
+  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit) =
+    withPostfix {
+      callIfNotEmpty("test", configure)
+    }
 
   override fun generate() = GroovyScriptBuilder().generate(generateTree())
 
@@ -22,7 +24,9 @@ abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScrip
   }
 
   companion object {
+
     @JvmStatic
-    fun create(gradleVersion: GradleVersion): GroovyDslGradleBuildScriptBuilder<*> = Impl(gradleVersion)
+    fun create(gradleVersion: GradleVersion): GroovyDslGradleBuildScriptBuilder<*> =
+      Impl(gradleVersion)
   }
 }

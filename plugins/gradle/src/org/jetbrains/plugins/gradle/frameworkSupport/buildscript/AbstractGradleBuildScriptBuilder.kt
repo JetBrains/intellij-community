@@ -6,9 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
-import java.util.function.Consumer
 
 @ApiStatus.NonExtendable
 @Suppress("MemberVisibilityCanBePrivate")
@@ -26,9 +24,6 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
 
   override fun addVersion(version: String) =
     withPrefix { assign("version", version) }
-
-  override fun configureTask(name: String, configure: Consumer<ScriptTreeBuilder>) =
-    configureTask(name, configure::accept)
 
   override fun addDependency(scope: String, dependency: String, sourceSet: String?) =
     addDependency(scope, string(dependency), sourceSet)
@@ -159,11 +154,13 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     defaultJvmArgs: List<String>?
   ) = apply {
     withPlugin("application")
-    configureTask("application") {
-      assignIfNotNull("mainModule", mainModule)
-      assignIfNotNull("mainClass", mainClass)
-      assignIfNotNull("executableDir", executableDir)
-      assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
+    withPostfix {
+      callIfNotEmpty("application") {
+        assignIfNotNull("mainModule", mainModule)
+        assignIfNotNull("mainClass", mainClass)
+        assignIfNotNull("executableDir", executableDir)
+        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
+      }
     }
   }
 
@@ -180,7 +177,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     withMavenCentral()
     addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
     addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
-    configureTask("test") {
+    configureTestTask {
       call("useJUnitPlatform")
     }
   }
