@@ -6,6 +6,14 @@ use std::path::{Path, PathBuf};
 use log::{debug, warn};
 use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
+
+#[cfg(target_os = "windows")] use {
+    windows::core::GUID,
+    windows::Win32::Foundation::HANDLE,
+    windows::Win32::UI::Shell::SHGetKnownFolderPath,
+    windows::Win32::UI::Shell::KF_FLAG_CREATE
+};
+
 use crate::{get_config_home, LaunchConfiguration, ProductInfo};
 
 pub struct DefaultLaunchConfiguration {
@@ -114,7 +122,7 @@ impl DefaultLaunchConfiguration {
         let ide_bin = ide_home.join("bin");
         debug!("Resolved ide bin dir as '{ide_bin:?}'");
 
-        let config_home = get_config_home();
+        let config_home = get_config_home()?;
         debug!("Resolved config home as '{config_home:?}'");
 
         let product_info = get_product_info(&ide_home)?;
@@ -574,48 +582,82 @@ fn get_ide_home(current_exe: &Path) -> Result<PathBuf> {
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_config_home() -> PathBuf {
-    PathBuf::from("C:\\tmp")
+pub fn get_config_home() -> Result<PathBuf> {
+    unsafe {
+        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
+    }
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_cache_home() -> PathBuf {
-    PathBuf::from("C:\\tmp")
+pub fn get_cache_home() -> Result<PathBuf> {
+    unsafe {
+        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub unsafe fn get_known_folder_path(rfid: &GUID, human_readable: &str) -> Result<PathBuf> {
+    debug!("Calling SHGetKnownFolderPath");
+    let pwstr = unsafe {
+        SHGetKnownFolderPath(
+            rfid,
+            KF_FLAG_CREATE,
+            HANDLE(0)
+        )?
+    };
+
+    debug!("Converting PWSTR to u16 vec");
+    let path_wide_vec = unsafe {
+        pwstr.as_wide()
+    };
+
+    let folder_path = String::from_utf16(path_wide_vec)?;
+    debug!("SHGetKnownFolderPath path for known folder {human_readable}: {folder_path}");
+
+    Ok(PathBuf::from(folder_path))
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_config_home() -> PathBuf {
-    get_user_home()
+pub fn get_config_home() -> Result<PathBuf> {
+    let result = get_user_home()
         .join("Library")
-        .join("Application Support")
+        .join("Application Support");
+
+    Ok(result)
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_cache_home() -> PathBuf {
-    get_user_home()
+pub fn get_cache_home() -> Result<PathBuf> {
+    let result = get_user_home()
         .join("Library")
-        .join("Caches")
+        .join("Caches");
+
+    Ok(result)
 }
 
 // CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 #[cfg(target_os = "linux")]
-pub fn get_config_home() -> PathBuf {
+pub fn get_config_home() -> Result<PathBuf> {
     let xdg_config_home = get_xdg_dir("XDG_CONFIG_HOME");
 
-    match xdg_config_home {
+    let result = match xdg_config_home {
         Some(p) => { p }
         None => { get_user_home().join(".config") }
-    }
+    };
+
+    Ok(result)
 }
 
 #[cfg(target_os = "linux")]
-pub fn get_cache_home() -> PathBuf {
+pub fn get_cache_home() -> Result<PathBuf> {
     let xdg_cache_home = get_xdg_dir("XDG_CACHE_HOME");
 
-    match xdg_cache_home {
+    let result = match xdg_cache_home {
         Some(p) => { p }
         None => { get_user_home().join(".config") }
-    }
+    };
+
+    Ok(result)
 }
 
 #[cfg(target_os = "linux")]

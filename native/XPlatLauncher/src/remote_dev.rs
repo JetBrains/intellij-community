@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -65,7 +65,7 @@ impl DefaultLaunchConfiguration {
             "IDE config directory",
             "IJ_HOST_CONFIG_DIR",
             "IJ_HOST_CONFIG_BASE_DIR",
-            &get_config_home(),
+            &get_config_home()?,
             per_project_config_dir_name
         )
     }
@@ -75,7 +75,7 @@ impl DefaultLaunchConfiguration {
             "IDE system directory",
             "IJ_HOST_SYSTEM_DIR",
             "IJ_HOST_SYSTEM_BASE_DIR",
-            &get_cache_home(),
+            &get_cache_home()?,
             per_project_config_dir_name
         )
     }
@@ -243,6 +243,8 @@ impl RemoteDevLaunchConfiguration {
             .replace(":", "_");
 
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
+
+
         let system_dir = default.prepare_system_config_dir(&per_project_config_dir_name)?;
 
         let config = RemoteDevLaunchConfiguration {

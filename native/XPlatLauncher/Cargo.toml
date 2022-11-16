@@ -4,7 +4,7 @@
 name = "xplat-launcher"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.62.1"
+rust-version = "1.65.0"
 publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -32,6 +32,13 @@ path-absolutize = "3.0.13"
 utils = { version = "0.1.0", path = "utils" }
 anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
 
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.43.0", features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_System_Environment"] }
+dirs = "4.0.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "0.9.3"
+
 [build-dependencies]
 cargo-deny = "0.12.2" # checks licenses / vulns
 cargo-about = "0.5.1" # generates license report
@@ -39,12 +46,6 @@ cargo-about = "0.5.1" # generates license report
 [dev-dependencies]
 rstest = "0.15.0"
 tempfile = "3.3.0"
-
-[target.'cfg(target_os = "macos")'.dependencies]
-core-foundation = "0.9.3"
-
-[target.'cfg(target_os = "windows")'.dependencies]
-dirs = "4.0.0"
 
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 junction = "0.2.0"
