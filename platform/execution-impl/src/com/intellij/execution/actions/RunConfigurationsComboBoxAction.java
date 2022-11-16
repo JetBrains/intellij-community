@@ -58,6 +58,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       return false;
     }
 
+    if (ExperimentalUI.isNewUI()) return true;
+
     if (PlatformUtils.isIntelliJ()) return true;
     if (PlatformUtils.isPhpStorm()) return true;
     if (PlatformUtils.isWebStorm()) return true;
@@ -65,6 +67,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     if (PlatformUtils.isPyCharmPro()) return true;
     if (PlatformUtils.isPyCharmCommunity()) return true;
     if (PlatformUtils.isDataGrip()) return true;
+    if (PlatformUtils.isCLion()) return true;
 
     return Registry.is("run.current.file.item.in.run.configurations.combobox");
   }
