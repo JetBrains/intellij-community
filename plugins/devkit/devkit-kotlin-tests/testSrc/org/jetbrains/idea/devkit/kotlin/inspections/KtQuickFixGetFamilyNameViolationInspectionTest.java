@@ -1,24 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.inspections;
+package org.jetbrains.idea.devkit.kotlin.inspections;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspectionTestBase;
+import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
 
 /**
  * @author Dmitry Batkovich
  */
 @TestDataPath("$CONTENT_ROOT/testData/inspections/getFamilyNameViolation")
-public class QuickFixGetFamilyNameViolationInspectionTest extends QuickFixGetFamilyNameViolationInspectionTestBase {
+public class KtQuickFixGetFamilyNameViolationInspectionTest extends QuickFixGetFamilyNameViolationInspectionTestBase {
 
   @Override
   protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/getFamilyNameViolation";
+    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/getFamilyNameViolation";
   }
 
   @Override
   protected @NotNull String getFileExtension() {
-    return "java";
+    return "kt";
   }
 
   public void testNotViolatedByField() {
