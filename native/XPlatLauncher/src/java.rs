@@ -110,7 +110,7 @@ unsafe fn prepare_jni_env(
     debug!("Create VM result={create_jvm_result}");
 
     match create_jvm_result {
-        jni_sys::JNI_OK => { }
+        jni_sys::JNI_OK => { debug!("JNI_OK: succesfully created JNI env") }
         jni_sys::JNI_ERR => bail!("JNI_ERR: unknown error"),
         jni_sys::JNI_EDETACHED => bail!("JNI_EDETACHED: thread is not attached to JVM"),
         jni_sys::JNI_EVERSION => bail!("JNI_EVERSION: wrong JNI version"),

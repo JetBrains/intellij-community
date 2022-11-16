@@ -3,7 +3,7 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
-use log::{debug, warn};
+use log::{debug, info, warn};
 use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
 use crate::{get_config_home, LaunchConfiguration, ProductInfo};
@@ -29,6 +29,8 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         let mut result = Vec::with_capacity(vm_options_from_files.capacity() + additional_jvm_arguments.capacity());
         result.extend_from_slice(&vm_options_from_files);
         result.extend_from_slice(additional_jvm_arguments);
+
+        result.push("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5050".to_string());
 
         for i in 0..result.len() {
             result[i] = self.expand_vars(&result[i])?;
@@ -469,7 +471,7 @@ impl DefaultLaunchConfiguration {
 
     fn expand_vars(&self, value: &str) -> Result<String> {
         let (from, to) = match env::consts::OS {
-            "macos"   => ("$APP_PACKAGE", self.ide_home.parent().context("Failed to get parent folder for IDE_HOME")?.to_string_lossy()),
+            "macos"   => ("$APP_PACKAGE/Contents", self.ide_home.to_string_lossy()),
             "windows" => ("%IDE_HOME%", self.ide_home.to_string_lossy()),
             "linux"   => return Ok(value.to_string()),
             unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
