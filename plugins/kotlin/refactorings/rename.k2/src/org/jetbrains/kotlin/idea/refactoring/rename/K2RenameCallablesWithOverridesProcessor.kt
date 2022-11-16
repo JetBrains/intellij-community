@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.refactoring.KotlinK2RefactoringsBundle
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
@@ -86,6 +88,20 @@ internal class K2RenameCallablesWithOverridesProcessor : RenamePsiElementProcess
                 element.findAllOverridings().toSet()
             }
         }
+
+    override fun findReferences(
+        element: PsiElement,
+        searchScope: SearchScope,
+        searchInCommentsAndStrings: Boolean
+    ): MutableCollection<PsiReference> {
+        val correctScope = if (element is KtParameter) {
+            searchScope or element.useScopeForRename
+        } else {
+            searchScope
+        }
+
+        return super.findReferences(element, correctScope, searchInCommentsAndStrings)
+    }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun renameElement(element: PsiElement, newName: String, usages: Array<out UsageInfo>, listener: RefactoringElementListener?) {
