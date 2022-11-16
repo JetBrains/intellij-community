@@ -66,7 +66,7 @@ internal class PyCondaSdkTest {
 
   @Before
   fun before() {
-    Registry.get("condda").setValue(useLegacy)
+    Registry.get("use.python.for.local.conda").setValue(useLegacy)
     Logger.getInstance(PyCondaSdkTest::class.java).info("Legacy: $useLegacy")
   }
 
