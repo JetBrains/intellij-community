@@ -589,7 +589,6 @@ public final class PathManager {
     }
 
     // Check and fix conflicting properties.
-    sysProperties.setProperty("disableJbScreenMenuBar", "true"); // a temporary key for bundled runtime (will be removed soon)
     if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
       sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
     }
