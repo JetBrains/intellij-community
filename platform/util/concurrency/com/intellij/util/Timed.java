@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util;
 
@@ -79,9 +79,11 @@ abstract class Timed<T> implements Disposable {
   }
 
   static void disposeTimed() {
-    final Timed[] references = ourReferences.keySet().toArray(new Timed[0]);
-    for (Timed timed : references) {
-      if (timed == null) continue;
+    Timed<?>[] references = ourReferences.keySet().toArray(new Timed[0]);
+    for (Timed<?> timed : references) {
+      if (timed == null) {
+        continue;
+      }
       synchronized (timed) {
         if (timed.myLastCheckedAccessCount == timed.myAccessCount && !timed.checkLocked()) {
           Disposer.dispose(timed);
