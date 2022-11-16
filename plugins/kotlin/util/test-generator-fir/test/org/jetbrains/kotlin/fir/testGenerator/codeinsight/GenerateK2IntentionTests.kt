@@ -32,6 +32,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/joinArgumentList", pattern = pattern)
             model("${idea}intentions/joinParameterList", pattern = pattern)
             model("${idea}intentions/addNamesInCommentToJavaCallArguments", pattern = pattern)
+            model("${idea}intentions/trailingComma", pattern = pattern)
             model("code-insight/intentions-k2/tests/testData/intentions", pattern = pattern)
         }
     }
