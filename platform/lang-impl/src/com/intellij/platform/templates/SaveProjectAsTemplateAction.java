@@ -202,7 +202,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     if (PlatformUtils.isGoIde()) {
       return FileTemplateBase.getQualifiedName("Go File", "go");
     }
-    throw new IllegalStateException("Provide file header template for your IDE");
+    throw new IllegalStateException("Provide file header template for your IDE: " + PlatformUtils.getPlatformPrefix());
   }
 
   static String getNewProjectActionId() {
