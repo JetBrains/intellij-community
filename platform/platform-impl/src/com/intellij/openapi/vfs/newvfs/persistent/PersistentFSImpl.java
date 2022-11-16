@@ -1154,9 +1154,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private static void applyMultipleEvents(BulkFileListener publisher,
-                                          List<Runnable> applyActions,
-                                          List<VFileEvent> applyEvents,
+  private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
+                                          @NotNull List<? extends Runnable> applyActions,
+                                          @NotNull List<? extends VFileEvent> applyEvents,
                                           boolean excludeAsyncListeners) {
     PingProgress.interactWithEdtProgress();
     // defensive copying to cope with ill-written listeners that save the passed list for later processing
@@ -1199,14 +1199,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private static void fireBeforeEvents(BulkFileListener publisher, List<? extends VFileEvent> toSend) {
+  private static void fireBeforeEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
     Suppressions.runSuppressing(
       () -> publisher.before(toSend),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)
     );
   }
 
-  private static void fireAfterEvents(BulkFileListener publisher, List<? extends VFileEvent> toSend) {
+  private static void fireAfterEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
     Suppressions.runSuppressing(
       () -> CachedFileType.clearCache(),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
