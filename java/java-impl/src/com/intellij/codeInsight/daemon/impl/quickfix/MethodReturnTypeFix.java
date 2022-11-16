@@ -128,6 +128,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       final PsiType returnType = myMethod.getReturnType();
       if (returnType == null) return true;
       if (returnType.isValid() && !Comparing.equal(myReturnType, returnType)) {
+        if (!mySuggestSuperTypes && myReturnType.getCanonicalText().equals(returnType.getCanonicalText())) return false;
         return PsiTypesUtil.allTypeParametersResolved(myMethod, myReturnType);
       }
     }
