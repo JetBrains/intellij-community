@@ -17768,14 +17768,24 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/get.kt");
         }
 
+        @TestMetadata("getAnd.kt")
+        public void testGetAnd() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getAnd.kt");
+        }
+
+        @TestMetadata("getIf.kt")
+        public void testGetIf() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getIf.kt");
+        }
+
         @TestMetadata("getImplicitReceiver.kt")
         public void testGetImplicitReceiver() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/getImplicitReceiver.kt");
         }
 
-        @TestMetadata("getOrXXX.kt")
-        public void testGetOrXXX() throws Exception {
-            runTest("testData/intentions/usePropertyAccessSyntax/getOrXXX.kt");
+        @TestMetadata("getOr.kt")
+        public void testGetOr() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getOr.kt");
         }
 
         @TestMetadata("getReservedWord1.kt")
@@ -17808,6 +17818,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/isGetWithNonBooleanReturnType.kt");
         }
 
+        @TestMetadata("isGetWithNullableBooleanReturnType.kt")
+        public void testIsGetWithNullableBooleanReturnType() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/isGetWithNullableBooleanReturnType.kt");
+        }
+
         @TestMetadata("isSet.kt")
         public void testIsSet() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/isSet.kt");
@@ -17826,6 +17841,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("nonVoidSetter3.kt")
         public void testNonVoidSetter3() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/nonVoidSetter3.kt");
+        }
+
+        @TestMetadata("nonVoidSetter4.kt")
+        public void testNonVoidSetter4() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/nonVoidSetter4.kt");
+        }
+
+        @TestMetadata("nonVoidSetter5.kt")
+        public void testNonVoidSetter5() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/nonVoidSetter5.kt");
         }
 
         @TestMetadata("propertyTypeIsMoreSpecific1.kt")

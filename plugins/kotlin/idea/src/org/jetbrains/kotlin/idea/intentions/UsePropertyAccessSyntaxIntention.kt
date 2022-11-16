@@ -188,7 +188,9 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         }
         if (valueArgumentExpression == null) return null
 
-        if (function.returnType?.isUnit() != true) return null
+        if (callExpression.parent is KtQualifiedExpression && function.returnType?.isUnit() != true) {
+            return null
+        }
 
         if (property.type != function.valueParameters.single().type) {
             val qualifiedExpressionCopy = qualifiedExpression.copied()
@@ -212,7 +214,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
     }
 
     private fun String.isSuitableAsPropertyAccessor(): Boolean =
-        canBePropertyAccessor(this) && !startsWith("getOr")
+        canBePropertyAccessor(this) && commonGetterLikePrefixes.none { prefix -> this.startsWith(prefix) }
 
     private fun checkWillResolveToProperty(
         resolvedCall: ResolvedCall<out CallableDescriptor>,
@@ -299,3 +301,9 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         }
     }
 }
+
+private val commonGetterLikePrefixes: Set<String> = setOf(
+    "getOr",
+    "getAnd",
+    "getIf",
+)
