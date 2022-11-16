@@ -4889,6 +4889,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithoutOverrideForList.kt");
         }
 
+        @TestMetadata("listOfCallOnArray.kt")
+        public void testListOfCallOnArray() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/listOfCallOnArray.kt");
+        }
+
+        @TestMetadata("listOfCallOnVararg.kt")
+        public void testListOfCallOnVararg() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/listOfCallOnVararg.kt");
+        }
+
+        @TestMetadata("listOfCallWithTwoArguments.kt")
+        public void testListOfCallWithTwoArguments() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/listOfCallWithTwoArguments.kt");
+        }
+
         @TestMetadata("methodReferenceNonSuitableForList.kt")
         public void testMethodReferenceNonSuitableForList() throws Exception {
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/methodReferenceNonSuitableForList.kt");
@@ -4932,6 +4947,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("staticImportWithAlias.kt")
         public void testStaticImportWithAlias() throws Exception {
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/staticImportWithAlias.kt");
+        }
+
+        @TestMetadata("toListCall.kt")
+        public void testToListCall() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/toListCall.kt");
         }
 
         @TestMetadata("valuesMethodReference.kt")

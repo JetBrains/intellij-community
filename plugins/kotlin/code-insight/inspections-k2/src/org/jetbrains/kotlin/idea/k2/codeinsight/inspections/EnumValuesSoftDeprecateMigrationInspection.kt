@@ -18,12 +18,12 @@ internal class EnumValuesSoftDeprecateMigrationInspection : EnumValuesSoftDeprec
         return isOptInAllowed(element, annotationClassId, element.languageVersionSettings)
     }
 
-    override fun createQuickFix(castToArrayNeeded: Boolean, enumClassQualifiedName: String): LocalQuickFix {
-        return K2ReplaceFix(castToArrayNeeded, enumClassQualifiedName)
+    override fun createQuickFix(fixType: ReplaceFixType, enumClassQualifiedName: String): LocalQuickFix {
+        return K2ReplaceFix(fixType, enumClassQualifiedName)
     }
 
-    private class K2ReplaceFix(castToArrayNeeded: Boolean, enumClassQualifiedName: String) :
-        ReplaceFix(castToArrayNeeded, enumClassQualifiedName) {
+    private class K2ReplaceFix(fixType: ReplaceFixType, enumClassQualifiedName: String) :
+        ReplaceFix(fixType, enumClassQualifiedName) {
         override fun shortenReferences(element: KtElement) {
             shortenReferences(element, callableShortenOption = { ShortenOption.SHORTEN_IF_ALREADY_IMPORTED })
         }
