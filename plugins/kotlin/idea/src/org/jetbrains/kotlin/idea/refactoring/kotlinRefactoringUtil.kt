@@ -327,7 +327,7 @@ fun PsiFile.getLineEndOffset(line: Int): Int? {
     return document?.getLineEndOffset(line)
 }
 
-@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.GeneralPsiElementUtilsKt.getLineNumber instead",)
+@Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead",)
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
    return _getLineNumber(start)
 }
