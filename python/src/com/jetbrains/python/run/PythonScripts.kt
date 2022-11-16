@@ -29,7 +29,6 @@ import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.targetAdditionalData
@@ -43,7 +42,6 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
                                              interpreterParameters: List<String>,
                                              isUsePty: Boolean = false): TargetedCommandLine {
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
-  commandLineBuilder.addEnvironmentVariable(PythonEnvUtil.PYTHONIOENCODING, charset.name())
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
   charset?.let { commandLineBuilder.setCharset(it) }
   inputFile?.let { commandLineBuilder.setInputFile(TargetValue.fixed(it.absolutePath)) }

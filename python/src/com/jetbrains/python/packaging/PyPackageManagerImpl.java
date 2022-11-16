@@ -263,7 +263,6 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       final GeneralCommandLine commandLine =
         new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(PySdkUtil.activateVirtualEnv(getSdk()));
       final Map<String, String> environment = commandLine.getEnvironment();
-      PySdkUtil.configureCharset(commandLine);
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
       PythonEnvUtil.resetHomePathChanges(homePath, environment);
