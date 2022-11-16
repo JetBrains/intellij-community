@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.j2k
+package org.jetbrains.kotlin.idea.j2k.old.post.processing
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.search.LocalSearchScope
@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
+import org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrar
+import org.jetbrains.kotlin.idea.j2k.J2kPostProcessing
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
 import org.jetbrains.kotlin.idea.quickfix.asKotlinIntentionActionsFactory
@@ -39,8 +41,9 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.mapToIndex
+import java.util.*
 
-object J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
+internal class J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
     private val myProcessings = ArrayList<J2kPostProcessing>()
 
     override val processings: Collection<J2kPostProcessing>

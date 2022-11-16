@@ -123,5 +123,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.searching.base" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.old.post-processing" scope="TEST" />
   </component>
 </module>
