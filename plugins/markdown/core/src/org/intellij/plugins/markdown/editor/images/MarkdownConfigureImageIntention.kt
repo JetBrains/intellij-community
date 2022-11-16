@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -25,6 +26,10 @@ internal class MarkdownConfigureImageIntention: PsiElementBaseIntentionAction() 
     ApplicationManager.getApplication().invokeLater {
       provider.performAction(targetElement)
     }
+  }
+
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    return IntentionPreviewInfo.EMPTY
   }
 
   override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
