@@ -17898,6 +17898,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/setSafeCall.kt");
         }
 
+        @TestMetadata("setWithProtectedSuperField.kt")
+        public void testSetWithProtectedSuperField() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/setWithProtectedSuperField.kt");
+        }
+
         @TestMetadata("smartCast.kt")
         public void testSmartCast() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/smartCast.kt");
