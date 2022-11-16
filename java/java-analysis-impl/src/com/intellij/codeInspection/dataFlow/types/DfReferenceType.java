@@ -85,7 +85,7 @@ public interface DfReferenceType extends DfType {
   /**
    * @return this type without special field knowledge, or simply this type if it's a constant
    */
-  default DfReferenceType dropSpecialField() {
+  default @NotNull DfReferenceType dropSpecialField() {
     return this;
   }
 

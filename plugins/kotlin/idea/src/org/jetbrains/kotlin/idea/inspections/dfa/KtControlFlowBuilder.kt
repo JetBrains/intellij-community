@@ -1659,10 +1659,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (typeReference == null) return DfType.TOP
         val kotlinType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
         if (kotlinType == null || kotlinType.constructor.declarationDescriptor is TypeParameterDescriptor) return DfType.TOP
-        if (kotlinType.isMarkedNullable) return kotlinType.toDfType()
-        // makeNullable to convert primitive to boxed
-        val dfType = kotlinType.makeNullable().toDfType().meet(DfTypes.NOT_NULL_OBJECT)
-        return if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
+        val result = if (kotlinType.isMarkedNullable) kotlinType.toDfType()
+        else {
+            // makeNullable to convert primitive to boxed
+            val dfType = kotlinType.makeNullable().toDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
+        }
+        return if (result is DfReferenceType)
+            result.dropTypeConstraint().meet(result.constraint.convert(KtClassDef.typeConstraintFactory(typeReference)).asDfType())
+        else
+            result
     }
 
     private fun processIfExpression(ifExpression: KtIfExpression) {
