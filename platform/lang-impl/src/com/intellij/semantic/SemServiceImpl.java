@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,8 @@ import java.util.function.BiFunction;
 import static java.util.Collections.emptyList;
 
 public final class SemServiceImpl extends SemService implements Disposable {
-  private static final Key<CachedValue<IntObjectMap<List<SemElement>>>> SEM_CACHE_KEY = Key.create("SEM");
+  @ApiStatus.Internal
+  public static final Key<CachedValue<IntObjectMap<List<SemElement>>>> SEM_CACHE_KEY = Key.create("SEM");
   private static final CachedValueProvider<IntObjectMap<List<SemElement>>> SEM_CACHE_PROVIDER = () ->
     Result.create(createSemCache(), PsiModificationTracker.MODIFICATION_COUNT);
 
