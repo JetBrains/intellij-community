@@ -24,6 +24,9 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinK2RefactoringsBundle
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 
 /**
  * That processor has two main purposes:
@@ -38,7 +41,8 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
  */
 internal class K2RenameCallablesWithOverridesProcessor : RenamePsiElementProcessor() {
     override fun canProcessElement(element: PsiElement): Boolean {
-        return element.unwrapped is KtCallableDeclaration
+        val unwrapped = element.unwrapped as? KtCallableDeclaration
+        return unwrapped is KtNamedFunction || unwrapped is KtParameter || unwrapped is KtProperty
     }
 
     override fun substituteElementToRename(element: PsiElement, editor: Editor?): PsiElement? {
