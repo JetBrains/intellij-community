@@ -41,6 +41,10 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
     private var addSampleCode by addSampleCodeProperty
 
+    init {
+      useKotlinDsl = false
+    }
+
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
       with(builder) {

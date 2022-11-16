@@ -43,10 +43,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         private val addSampleCode by addSampleCodeProperty
 
-        init {
-            useKotlinDsl = true
-        }
-
         override fun setupSettingsUI(builder: Panel) {
             super.setupSettingsUI(builder)
             with(builder) {

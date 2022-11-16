@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -35,7 +36,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         ParentStep : NewProjectWizardBaseData {
 
   final override val sdkProperty = propertyGraph.property<Sdk?>(null)
-  final override val useKotlinDslProperty = propertyGraph.property(false)
+  final override val useKotlinDslProperty = propertyGraph.property(true)
+    .bindBooleanStorage("NewProjectWizard.useKotlinDslState")
 
   final override var sdk by sdkProperty
   final override var useKotlinDsl by useKotlinDslProperty
@@ -58,7 +60,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
             else -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
           }
         }
-        segmentedButton(listOf(false, true), renderer)
+        segmentedButton(listOf(true, false), renderer)
           .bind(useKotlinDslProperty)
           .whenItemSelectedFromUi { logDslChanged(it) }
       }.bottomGap(BottomGap.SMALL)
