@@ -3,8 +3,8 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.DialogPanel
+import com.intellij.util.ui.UIUtil
 
 /**
  * See [docs](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
@@ -24,10 +24,7 @@ inline fun panel(vararg constraints: LCFlags, @NlsContexts.DialogTitle title: St
   builder.init()
 
   val panel = DialogPanel(title, layout = null)
-  val bgcolor = Registry.getColor("ui.kotlin.ui.dsl.deprecated.panel.color", null)
-  bgcolor?.let {
-    panel.background = it
-  }
+  UIUtil.applyDeprecatedBackground(panel)
   builder.builder.build(panel, constraints)
   initPanel(builder, panel)
   return panel

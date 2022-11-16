@@ -3500,4 +3500,15 @@ public final class UIUtil {
     // This is heuristics to detect using Cygwin/X or other build of X.Org server on Windows in a WSL 2 environment
     return SystemInfo.isXWindow && !SystemInfo.isWayland && System.getenv("WSLENV") != null;
   }
+
+  public static void applyDeprecatedBackground(@NotNull JComponent component) {
+    Color color = getDeprecatedBackground();
+    if (color != null) {
+      component.setBackground(color);
+    }
+  }
+
+  private static @Nullable Color getDeprecatedBackground() {
+    return Registry.getColor("ui.deprecated.components.color", null);
+  }
 }
