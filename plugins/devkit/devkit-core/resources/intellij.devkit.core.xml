@@ -209,7 +209,7 @@
                      enabledByDefault="false" isInternal="true"
                      level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"
                      key="inspection.highlight.visitor.internal.display.name"/>
-    <localInspection language="JAVA" shortName="QuickFixGetFamilyNameViolation"
+    <localInspection language="UAST" shortName="QuickFixGetFamilyNameViolation"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true"
                      level="WARNING"
