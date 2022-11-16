@@ -193,7 +193,10 @@ public final class IndexUpdateRunner {
         }
         Throwable error = indexingJob.myError.get();
         if (error instanceof ProcessCanceledException) {
-          throw (ProcessCanceledException) error;
+          // original error has happened in a different thread. Make stacktrace easier to understand by wrapping PCE into PCE
+          ProcessCanceledException pce = new ProcessCanceledException();
+          pce.addSuppressed(error);
+          throw pce;
         }
         if (error != null) {
           throw new RuntimeException("Indexing of " + project.getName() + " has failed", error);
