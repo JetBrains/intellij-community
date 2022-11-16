@@ -323,7 +323,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
       return status.errorAnalyzingFinished ? result :
              result.withAnalyzingType(AnalyzingType.PARTIAL).
-             withPasses(ContainerUtil.map(status.passes, pass -> new PassWrapper(pass.getPresentableName(), pass.getProgress(), pass.isFinished())));
+             withPasses(ContainerUtil.map(status.passes, pass -> new PassWrapper(pass.getPresentableName(), toPercent(pass.getProgress(), pass.isFinished()))));
     }
     if (StringUtil.isNotEmpty(status.reasonWhyDisabled)) {
       return new AnalyzerStatus(AllIcons.General.InspectionsTrafficOff,
@@ -351,19 +351,25 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     return new AnalyzerStatus(AllIcons.General.InspectionsEye, DaemonBundle.message("no.errors.or.warnings.found"), details, this::createUIController).
       withTextStatus(DaemonBundle.message("iw.status.analyzing")).
       withAnalyzingType(AnalyzingType.EMPTY).
-      withPasses(ContainerUtil.map(status.passes, pass -> new PassWrapper(pass.getPresentableName(), pass.getProgress(), pass.isFinished())));
+      withPasses(ContainerUtil.map(status.passes, pass -> new PassWrapper(pass.getPresentableName(), toPercent(pass.getProgress(), pass.isFinished()))));
   }
 
+  private static int toPercent(double progress, boolean finished) {
+    int percent = (int)(progress * 100);
+    return percent == 100 && !finished ? 99 : percent;
+  }
+
+
   protected @NotNull UIController createUIController() {
-    return new SimplifiedUIController();
+    return new AbstractUIController();
   }
 
   protected final @NotNull UIController createUIController(@NotNull Editor editor) {
     boolean mergeEditor = editor.getUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG) == Boolean.TRUE;
-    return editor.getEditorKind() == EditorKind.DIFF && !mergeEditor ? new SimplifiedUIController() : new DefaultUIController();
+    return editor.getEditorKind() == EditorKind.DIFF && !mergeEditor ? new AbstractUIController() : new DefaultUIController();
   }
 
-  protected abstract class AbstractUIController implements UIController {
+  protected class AbstractUIController implements UIController {
     private final boolean inLibrary;
     @NotNull
     private final List<LanguageHighlightLevel> myLevelList;
@@ -506,7 +512,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     catch (ConfigurationException ignored) {}
   }
 
-  public class DefaultUIController extends AbstractUIController {
+  protected class DefaultUIController extends AbstractUIController {
     private final List<AnAction> myMenuActions = initActions();
 
     private @NotNull List<AnAction> initActions() {
@@ -526,7 +532,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     @Override
-    public boolean enableToolbar() {
+    public boolean isToolbarEnabled() {
       return true;
     }
 
@@ -567,18 +573,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       public boolean isDumbAware() {
         return true;
       }
-    }
-  }
-
-  public class SimplifiedUIController extends AbstractUIController {
-    @Override
-    public boolean enableToolbar() {
-      return false;
-    }
-
-    @Override
-    public @NotNull List<AnAction> getActions() {
-      return Collections.emptyList();
     }
   }
 }

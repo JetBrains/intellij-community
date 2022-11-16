@@ -324,7 +324,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() && analyzerStatus.getController().enableToolbar();
+        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() && analyzerStatus.getController().isToolbarEnabled();
 
         updateTrafficLightVisibility();
       }
@@ -489,9 +489,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     analyzerStatus = newStatus;
     smallIconLabel.setIcon(analyzerStatus.getIcon());
 
-    if (showToolbar != analyzerStatus.getController().enableToolbar()) {
+    if (showToolbar != analyzerStatus.getController().isToolbarEnabled()) {
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
-                    analyzerStatus.getController().enableToolbar();
+                    analyzerStatus.getController().isToolbarEnabled();
       updateTrafficLightVisibility();
     }
 
@@ -1845,7 +1845,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(analyzerStatus.getController().enableToolbar());
+      e.getPresentation().setEnabled(analyzerStatus.getController().isToolbarEnabled());
     }
 
     @Override
