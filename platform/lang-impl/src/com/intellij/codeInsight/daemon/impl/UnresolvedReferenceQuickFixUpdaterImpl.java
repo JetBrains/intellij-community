@@ -115,18 +115,22 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
             return;
           }
           AtomicBoolean changed = new AtomicBoolean();
-          UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info) {
-            @Override
-            void doRegister(@NotNull IntentionAction action,
-                            @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String displayName,
-                            @Nullable TextRange fixRange,
-                            @Nullable HighlightDisplayKey key) {
-              super.doRegister(action, displayName, fixRange, key);
-              changed.set(true);
-            }
-          });
-          info.setUnresolvedReferenceQuickFixesComputed();
-          reference.getElement().putUserData(JOB, null);
+          try {
+            UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info) {
+              @Override
+              void doRegister(@NotNull IntentionAction action,
+                              @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String displayName,
+                              @Nullable TextRange fixRange,
+                              @Nullable HighlightDisplayKey key) {
+                super.doRegister(action, displayName, fixRange, key);
+                changed.set(true);
+              }
+            });
+            info.setUnresolvedReferenceQuickFixesComputed();
+          }
+          finally {
+            reference.getElement().putUserData(JOB, null);
+          }
           if (changed.get()) {
             VirtualFile virtualFile = file.getVirtualFile();
             boolean isInContent = ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
