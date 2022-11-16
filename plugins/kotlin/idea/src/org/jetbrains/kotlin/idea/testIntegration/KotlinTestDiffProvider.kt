@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration
 
-import com.intellij.execution.testframework.actions.TestDiffProvider
+import com.intellij.execution.testframework.JvmTestDiffProvider
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.siyeh.ig.testFrameworks.UAssertHint
@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.toUElementOfType
 
-class KotlinTestDiffProvider : TestDiffProvider {
+class KotlinTestDiffProvider : JvmTestDiffProvider() {
     override fun findExpected(project: Project, stackTrace: String): PsiElement? {
         return null
     }
