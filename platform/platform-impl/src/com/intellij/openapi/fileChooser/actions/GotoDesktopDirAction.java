@@ -31,7 +31,7 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
 
   private final NullableLazyValue<VirtualFile> myDesktopDirectory = lazyNullable(() -> {
     Path path = myDesktopPath.getValue();
-    return path != null ? LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path) : null;
+    return path != null ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
   });
 
   @Override
