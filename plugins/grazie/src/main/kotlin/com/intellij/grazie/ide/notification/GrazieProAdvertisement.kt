@@ -1,0 +1,69 @@
+package com.intellij.grazie.ide.notification
+
+import com.intellij.grazie.GrazieBundle
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationAction.createSimpleExpiring
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import com.intellij.util.application
+
+private val grazieProfessionalPluginId
+  get() = PluginId.getId("com.intellij.grazie.pro")
+
+private const val NOTIFICATION_SHOWN = "Grazie.Professional.Advertisement.Shown"
+private const val IGNORE_DELAY = 1000 * 60 * 60 * 24 * 14
+
+private fun shouldShow(): Boolean {
+  val timestamp = PropertiesComponent.getInstance().getInt(NOTIFICATION_SHOWN, 0)
+  if (timestamp < 0) {
+    return false
+  }
+  val current = System.currentTimeMillis()
+  return current - timestamp > IGNORE_DELAY
+}
+
+private fun markDelayed() {
+  PropertiesComponent.getInstance().setValue(NOTIFICATION_SHOWN, System.currentTimeMillis().toString())
+}
+
+private fun markShown() {
+  PropertiesComponent.getInstance().setValue(NOTIFICATION_SHOWN, "-1")
+}
+
+internal fun advertiseGrazieProfessional(project: Project) {
+  if (application.isUnitTestMode || !shouldShow()) {
+    return
+  }
+  markDelayed()
+  invokeLater {
+    val text = GrazieBundle.message("grazie.notification.pro.advertisement.text")
+    val remindLaterAction = createSimpleExpiring(GrazieBundle.message("grazie.notification.pro.advertisement.remind.later.action.text")) {
+      markDelayed()
+    }
+    val ignoreAction = createSimpleExpiring(GrazieBundle.message("grazie.notification.pro.advertisement.ignore.action.text")) {
+      markShown()
+    }
+    val group = GrazieToastNotifications.GENERAL_GROUP
+    group.createNotification(text, NotificationType.INFORMATION)
+      .addAction(InstallGrazieProfessionalAction())
+      .addAction(remindLaterAction)
+      .addAction(ignoreAction)
+      .setSuggestionType(true)
+      .notify(project)
+  }
+}
+
+private class InstallGrazieProfessionalAction: NotificationAction(GrazieBundle.message("grazie.notification.pro.advertisement.install.action.text")) {
+  override fun actionPerformed(event: AnActionEvent, notification: Notification) {
+    val project = event.project
+    installAndEnable(project, setOf(grazieProfessionalPluginId), true) {
+      notification.expire()
+    }
+  }
+}

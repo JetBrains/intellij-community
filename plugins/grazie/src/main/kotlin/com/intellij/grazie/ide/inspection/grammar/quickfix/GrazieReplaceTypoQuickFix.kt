@@ -13,6 +13,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
+import com.intellij.grazie.ide.notification.advertiseGrazieProfessional
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextContent
@@ -38,7 +39,7 @@ object GrazieReplaceTypoQuickFix {
     }
   }
 
-  private class ChangeToVariantAction(
+  private open class ChangeToVariantAction(
     private val rule: Rule,
     override val index: Int,
     @IntentionFamilyName private val family: String,
@@ -64,17 +65,21 @@ object GrazieReplaceTypoQuickFix {
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean = replacements.all { it.first.range != null }
 
-    override fun getFileModifierForPreview(target: PsiFile): FileModifier = this
+    override fun getFileModifierForPreview(target: PsiFile): FileModifier {
+      return ForPreview(rule, index, family, suggestion, replacements, underlineRanges, toHighlight)
+    }
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+      advertiseGrazieProfessional(project)
+      performFix(project, file, editor)
+    }
+
+    protected fun performFix(project: Project, file: PsiFile, editor: Editor?) {
       GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
-
       val document = file.viewProvider.document ?: return
-
       underlineRanges.forEach { underline ->
         underline.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(document, project, it) }
       }
-
       applyReplacements(document, replacements)
     }
 
@@ -90,6 +95,20 @@ object GrazieReplaceTypoQuickFix {
         val range = it.range ?: return@mapNotNull null
         val file = it.containingFile ?: return@mapNotNull null
         RangeToHighlight(file, TextRange.create(range), EditorColors.SEARCH_RESULT_ATTRIBUTES)
+      }
+    }
+
+    private class ForPreview(
+      rule: Rule,
+      index: Int,
+      @IntentionFamilyName family: String,
+      @NlsSafe suggestion: String,
+      replacements: List<Pair<SmartPsiFileRange, String>>,
+      underlineRanges: List<SmartPsiFileRange>,
+      toHighlight: List<SmartPsiFileRange>
+    ): ChangeToVariantAction(rule, index, family, suggestion, replacements, underlineRanges, toHighlight) {
+      override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+        performFix(project, file, editor)
       }
     }
   }
