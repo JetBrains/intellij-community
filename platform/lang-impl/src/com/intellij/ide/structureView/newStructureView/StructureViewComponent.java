@@ -317,7 +317,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @Override
   public void restoreState() {
-    TreeState state = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
+    FileEditor editor = myFileEditor;
+    TreeState state = editor == null ? null : editor.getUserData(STRUCTURE_VIEW_STATE_KEY);
     if (state == null) {
       if (!Boolean.TRUE.equals(ComponentUtil.getClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) {
         TreeUtil.expand(getTree(), getMinimumExpandDepth(myTreeModel));
@@ -326,9 +327,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     else {
       ComponentUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, true);
       state.applyTo(myTree);
-      if (myFileEditor != null) {
-        myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
-      }
+      editor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
     }
   }
 
@@ -336,7 +335,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   protected ActionGroup createActionGroup() {
     DefaultActionGroup result = new DefaultActionGroup();
     List<AnAction> sorters = getSortActions();
-    if (sorters.size() > 0) {
+    if (!sorters.isEmpty()) {
       result.addAll(sorters);
       result.addSeparator();
     }
@@ -893,8 +892,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public boolean isValid() {
       TreeElement value = getValue();
-      PsiTreeElementBase psi = value instanceof PsiTreeElementBase ? (PsiTreeElementBase)value : null;
-      return psi == null || psi.isValid();
+      return !(value instanceof PsiTreeElementBase<?> treeElementBase) || treeElementBase.isValid();
     }
 
     @Override
@@ -1025,8 +1023,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   public static Object unwrapWrapper(Object o) {
     Object p = unwrapNavigatable(o);
-    return p instanceof MyNodeWrapper ? ((MyNodeWrapper)p).getValue() :
-           p instanceof MyGroupWrapper ? ((MyGroupWrapper)p).getValue() : p;
+    return p instanceof MyNodeWrapper nodeWrapper ? nodeWrapper.getValue() :
+           p instanceof MyGroupWrapper groupWrapper ? groupWrapper.getValue() : p;
   }
 
   private static Object unwrapElement(Object o) {
@@ -1069,7 +1067,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
       else {
         for (Object o : children) {
-          NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, o);
+          NodeDescriptor<?> descriptor = TreeUtil.getUserObject(NodeDescriptor.class, o);
           if (descriptor != null && isAutoExpandNode(descriptor)) {
             expandLater(parentPath, o);
           }
@@ -1084,7 +1082,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       });
     }
 
-    boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+    boolean isAutoExpandNode(NodeDescriptor<?> nodeDescriptor) {
       if (provider != null) {
         Object value = unwrapWrapper(nodeDescriptor.getElement());
         if (value instanceof CustomRegionTreeElement) {
@@ -1103,7 +1101,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         }
       }
       // expand root node & its immediate children
-      NodeDescriptor parent = nodeDescriptor.getParentDescriptor();
+      NodeDescriptor<?> parent = nodeDescriptor.getParentDescriptor();
       return parent == null || parent.getParentDescriptor() == null;
     }
   }

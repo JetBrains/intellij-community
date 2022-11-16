@@ -120,9 +120,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     int offset = myEditor.getCaretModel().getOffset();
     Object o1 = findAcceptableElement(file.getViewProvider().findElementAt(offset, file.getLanguage()));
     Object o2 = offset == 0 ? o1 : findAcceptableElement(file.getViewProvider().findElementAt(offset - 1, file.getLanguage()));
-    if (o1 != o2 && o1 instanceof PsiElement && o2 instanceof PsiElement) {
-      if (PsiTreeUtil.isAncestor((PsiElement)o1, (PsiElement)o2, false)) return o2;
-    }
+    if (o1 != o2 && o1 instanceof PsiElement e1 && o2 instanceof PsiElement e2 && PsiTreeUtil.isAncestor(e1, e2, false)) return o2;
     return o1;
   }
 
