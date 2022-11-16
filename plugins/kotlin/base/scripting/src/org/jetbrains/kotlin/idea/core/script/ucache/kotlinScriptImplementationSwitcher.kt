@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtFile
 const val KOTLIN_SCRIPTS_AS_ENTITIES = "kotlin.scripts.as.entities"
 
 val scriptsAsEntities: Boolean
-    get() = Registry.`is`(KOTLIN_SCRIPTS_AS_ENTITIES, true)
+    get() = Registry.`is`(KOTLIN_SCRIPTS_AS_ENTITIES, false)
 
 
 /**
