@@ -47,8 +47,22 @@ if(USE_CEF_SANDBOX)
   if(NOT DEFINED CEF_VERSION)
     set(CEF_VERSION "104.4.26+g4180781+chromium-104.0.5112.102")
   endif()
-  DownloadCEF("windows64" "${CEF_VERSION}" "${CMAKE_SOURCE_DIR}/cef")
+
+  include(CheckSymbolExists)
+  # MSVC predefines _M_ARM64 for compilations that target ARM64
+  # and _M_AMD64 for compilations that target x86_64.
+  check_symbol_exists("_M_ARM64" "" CEF_PLATFORM_WINARM64)
+  check_symbol_exists("_M_AMD64" "" CEF_PLATFORM_WIN64)
+
+  if(CEF_PLATFORM_WINARM64)
+    set(CEF_PLATFORM "windowsarm64")
+  elseif(CEF_PLATFORM_WIN64)
+    set(CEF_PLATFORM "windows64")
+  endif()
+
+  DownloadCEF(${CEF_PLATFORM} "${CEF_VERSION}" "${CMAKE_SOURCE_DIR}/cef")
   message(STATUS "Use cef_sandbox.lib from root: ${CEF_ROOT}")
+
   set(CEF_INCLUDE_PATH "${CEF_ROOT}")
   set(CEF_SANDBOX_LIB_RELEASE "${CEF_ROOT}/Release/cef_sandbox.lib")
   add_library(cef_sandbox_lib STATIC IMPORTED)
