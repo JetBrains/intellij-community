@@ -191,25 +191,24 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
         PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
         UsageViewEx view = usageViewRef.get();
-        if (element != null && view != null) {
-          Class<? extends PsiElement> targetClass = element.getClass();
-          Language language = ReadAction.compute(element::getLanguage);
-          SearchScope scope = null;
-
-          if (element instanceof DataProvider) {
-            scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
-          }
-          if (isCancelled) {
-            UsageViewStatisticsCollector.logSearchCancelled(myProject, targetClass, scope, language, view.getUsagesCount(),
-                                                            durationFirstResults, duration,
-                                                            tooManyUsages.get(), CodeNavigateSource.FindToolWindow, view);
-          }
-          else {
-            UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language, view.getUsagesCount(),
-                                                           durationFirstResults, duration,
-                                                           tooManyUsages.get(), CodeNavigateSource.FindToolWindow, view);
-          }
+        Class<? extends PsiElement> targetClass = element != null ? element.getClass() : null;
+        Language language = element != null ? ReadAction.compute(element::getLanguage) : null;
+        SearchScope scope = null;
+        if (element instanceof DataProvider) {
+          scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
         }
+        int numberOfUsagesFound = view == null ? 0 : view.getUsagesCount();
+        if (isCancelled) {
+          UsageViewStatisticsCollector.logSearchCancelled(myProject, targetClass, scope, language, numberOfUsagesFound,
+                                                          durationFirstResults, duration,
+                                                          tooManyUsages.get(), CodeNavigateSource.FindToolWindow, view);
+        }
+        else {
+          UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language, numberOfUsagesFound,
+                                                         durationFirstResults, duration,
+                                                         tooManyUsages.get(), CodeNavigateSource.FindToolWindow, view);
+        }
+
         return duration;
       }
     };
