@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.ElementStatusTracker;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
@@ -122,6 +124,14 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
       if (PsiTreeUtil.isAncestor((PsiElement)o1, (PsiElement)o2, false)) return o2;
     }
     return o1;
+  }
+
+  @Override
+  public @NotNull FileStatus getElementStatus(Object element) {
+    if (myEditor == null || myPsiFile == null) return FileStatus.NOT_CHANGED;
+    if (!(element instanceof PsiElement psiElement)) return FileStatus.NOT_CHANGED;
+    if (psiElement.getContainingFile() != myPsiFile) return FileStatus.NOT_CHANGED;
+    return ElementStatusTracker.getInstance(myPsiFile.getProject()).getElementStatus(psiElement);
   }
 
   protected @Nullable Object findAcceptableElement(PsiElement element) {

@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -390,11 +391,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private @NotNull List<AnAction> getFilterActions() {
     List<AnAction> result = new ArrayList<>();
     for (Filter filter : myTreeModel.getFilters()) {
-      result.add(new TreeActionWrapper(filter, StructureViewComponent.this));
+      result.add(new TreeActionWrapper(filter, this));
     }
     if (myTreeModel instanceof ProvidingTreeModel) {
       for (NodeProvider<?> provider : ((ProvidingTreeModel)myTreeModel).getNodeProviders()) {
-        result.add(new TreeActionWrapper(provider, StructureViewComponent.this));
+        result.add(new TreeActionWrapper(provider, this));
       }
     }
     return result;
@@ -765,7 +766,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     AsyncPromise<Void> result = new AsyncPromise<>();
     rebuild();
     TreeVisitor visitor = path -> {
-      AbstractTreeNode node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
+      AbstractTreeNode<?> node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
       if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
@@ -792,6 +793,14 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     MyNodeWrapper(Project project, @NotNull TreeElement value, @NotNull TreeModel treeModel) {
       super(project, value, treeModel);
+    }
+
+    @Override
+    public FileStatus getFileStatus() {
+      StructureViewModel model = ((TreeModelWrapper)myTreeModel).getModel();
+      StructureViewTreeElement value = (StructureViewTreeElement)getValue();
+      if (value == null) return FileStatus.NOT_CHANGED;
+      return model.getElementStatus(value.getValue());
     }
 
     @Override

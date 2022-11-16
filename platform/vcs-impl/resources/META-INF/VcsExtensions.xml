@@ -53,6 +53,9 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"
                     overrides="true"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.ElementStatusTracker"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ElementStatusTrackerImpl"
+                    overrides="true"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsDirtyScopeManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
