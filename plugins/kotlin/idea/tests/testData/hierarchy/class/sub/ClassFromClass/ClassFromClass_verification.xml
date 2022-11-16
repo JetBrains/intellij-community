@@ -10,5 +10,5 @@
   <node text="D in foo() in MyClass ()"/>
   <node text="X in MyClass2() in MyClass2 ()"/>
   <node text="Anonymous in MyClass2() in MyClass2 ()"/>
-  <node text="E in bar() in main.kt ()"/>
+  <node text="E in getBar() in main.kt ()"/>
 </node>
