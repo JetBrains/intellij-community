@@ -11,18 +11,8 @@ import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.toUElementOfType
 
 class KotlinTestDiffProvider : TestDiffProvider {
-    //override fun getExpectedElement(
-    //    file: PsiFile,
-    //    range: TextRange
-    //): PsiElement? {
-    //    val failedCallExpression = (findElementsOfClassInRange(
-    //        file, range.startOffset, range.endOffset, KtCallExpression::class.java
-    //    ).firstOrNull() as? KtCallExpression) ?: return null
-    //    return getExpectedLiteral(failedCallExpression)
-    //}
-
-    override fun getInjectionLiteral(project: Project, stackTrace: String): PsiElement {
-        TODO("Not yet implemented")
+    override fun getInjectionLiteral(project: Project, stackTrace: String): PsiElement? {
+        return null
     }
 
     private fun getExpectedLiteral(callExpression: KtCallExpression): KtStringTemplateEntry? {
