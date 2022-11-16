@@ -1,11 +1,10 @@
-// "Merge with 'case Point(double x, double y) point when y > x'" "false"
 class C {
   void foo(Object o) {
     switch (o) {
-      case Point(double x, double y) point when y > x -> bar("A");
+      case Point(double x, double y) point -> bar("A");
       case Number n -> bar("B");
+      case null -> bar("A");
       default -> bar("C");
-      case null -> ba<caret>r("A");
     }
   }
   void bar(String s){}
