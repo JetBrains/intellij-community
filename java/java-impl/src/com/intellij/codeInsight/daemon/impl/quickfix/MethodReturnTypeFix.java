@@ -157,11 +157,31 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     PsiType[] superTypes = mySuggestSuperTypes ? myReturnType.getSuperTypes() : PsiType.EMPTY_ARRAY;
     if ((!isNullType && superTypes.length == 0) || editor == null || ApplicationManager.getApplication().isUnitTestMode()) {
       changeReturnType(project, file, editor, myMethod, myReturnType);
-      return;
     }
-    List<PsiType> returnTypes = getReturnTypes(superTypes, myReturnType);
-    if (returnTypes.isEmpty()) return;
-    selectReturnType(project, file, editor, returnTypes, myReturnType, myMethod);
+    else {
+      Set<PsiType> allSuperTypes = collectSuperTypes(myReturnType, startElement, new LinkedHashSet<>());
+      List<PsiType> returnTypes = getReturnTypes(allSuperTypes.toArray(PsiType.EMPTY_ARRAY), myReturnType);
+      final PsiType currentType = myMethod.getReturnType();
+      assert currentType != null;
+      returnTypes.removeIf(e -> e.getCanonicalText().equals(currentType.getCanonicalText()));
+      if (returnTypes.isEmpty()) return;
+      selectReturnType(project, file, editor, returnTypes, myReturnType, myMethod);
+    }
+  }
+
+  private static Set<PsiType> collectSuperTypes(PsiType type, PsiElement context, Set<PsiType> result) {
+    final PsiType[] superTypes = type.getSuperTypes();
+    if (superTypes.length == 0 && type instanceof PsiArrayType) {
+      final Project project = context.getProject();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      result.add(factory.createTypeFromText(CommonClassNames.JAVA_IO_SERIALIZABLE, context));
+      result.add(factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLONEABLE, context));
+      result.add(factory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, context));
+    }
+    for (PsiType superType : superTypes) {
+      if (result.add(superType)) collectSuperTypes(superType, context, result);
+    }
+    return result;
   }
 
   private static void addReturnType(@NotNull Project project, @NotNull PsiMethod myMethod, @NotNull PsiType myReturnType) {
@@ -171,7 +191,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   @NotNull
   private static List<PsiType> getReturnTypes(PsiType @NotNull [] types, @NotNull PsiType defaultType) {
-    Map<String, PsiType> map = new HashMap<>();
+    Map<String, PsiType> map = new LinkedHashMap<>();
     String defaultTypeKey = serialize(defaultType);
     map.put(defaultTypeKey, defaultType);
     Arrays.stream(types).forEach(t -> map.put(serialize(t), t));
