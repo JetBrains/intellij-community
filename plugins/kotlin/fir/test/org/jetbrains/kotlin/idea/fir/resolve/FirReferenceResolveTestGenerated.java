@@ -696,6 +696,11 @@ public abstract class FirReferenceResolveTestGenerated extends AbstractFirRefere
             runTest("../idea/tests/testData/resolve/references/JavaEnumValueOf.kt");
         }
 
+        @TestMetadata("JavaImplicitConstructor.kt")
+        public void testJavaImplicitConstructor() throws Exception {
+            runTest("../idea/tests/testData/resolve/references/JavaImplicitConstructor.kt");
+        }
+
         @TestMetadata("JavaParameter.kt")
         public void testJavaParameter() throws Exception {
             runTest("../idea/tests/testData/resolve/references/JavaParameter.kt");
