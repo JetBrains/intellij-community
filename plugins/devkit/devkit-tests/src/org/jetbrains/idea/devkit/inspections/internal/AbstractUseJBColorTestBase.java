@@ -1,10 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.quickfix.DevKitInspectionFixTestBase;
 
-public abstract class AbstractUseJBColorTestBase extends JavaCodeInsightFixtureTestCase {
+public abstract class AbstractUseJBColorTestBase extends DevKitInspectionFixTestBase {
 
   @Override
   protected void setUp() throws Exception {
@@ -62,7 +61,4 @@ public abstract class AbstractUseJBColorTestBase extends JavaCodeInsightFixtureT
                          }
                          """);
   }
-
-  @NotNull
-  protected abstract String getFileExtension();
 }
