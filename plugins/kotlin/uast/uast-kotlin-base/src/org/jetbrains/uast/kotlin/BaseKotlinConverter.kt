@@ -84,7 +84,7 @@ interface BaseKotlinConverter {
             else
                 el<UField>(buildKtOpt(kotlinOrigin, ::KotlinUField))
 
-        if (element is KtNamedDeclaration && element.nameAsSafeName.isSpecial) {
+        if (isSpecialDeclaration(element)) {
             return null
         }
 
@@ -236,6 +236,21 @@ interface BaseKotlinConverter {
                 else -> null
             }
         }
+    }
+
+    private fun isSpecialDeclaration(element: PsiElement): Boolean {
+        if (element is KtCallableDeclaration && element.nameAsSafeName.isSpecial) {
+            return true
+        }
+
+        if (element is KtLightElement<*, *>) {
+            val kotlinCallable = element.kotlinOrigin as? KtCallableDeclaration
+            if (kotlinCallable != null && kotlinCallable.nameAsSafeName.isSpecial) {
+                return true
+            }
+        }
+
+        return false
     }
 
     fun convertDeclarationOrElement(

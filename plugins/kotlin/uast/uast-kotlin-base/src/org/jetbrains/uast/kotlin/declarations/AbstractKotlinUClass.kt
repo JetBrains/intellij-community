@@ -49,14 +49,14 @@ abstract class AbstractKotlinUClass(
         val hasPrimaryConstructor = ktClass?.hasPrimaryConstructor() ?: false
         var secondaryConstructorsCount = 0
 
-        fun createUMethod(psiMethod: PsiMethod): UMethod {
+        fun createUMethod(psiMethod: PsiMethod): UMethod? {
             return if (psiMethod is KtLightMethod && psiMethod.isConstructor) {
                 if (!hasPrimaryConstructor && secondaryConstructorsCount++ == 0)
                     KotlinSecondaryConstructorWithInitializersUMethod(ktClass, psiMethod, this)
                 else
                     KotlinConstructorUMethod(ktClass, psiMethod, this)
             } else {
-                languagePlugin?.convertOpt(psiMethod, this) ?: reportConvertFailure(psiMethod)
+                languagePlugin?.convertOpt(psiMethod, this)
             }
         }
 
@@ -67,7 +67,7 @@ abstract class AbstractKotlinUClass(
 
         for (lightMethod in javaPsi.methods) {
             if (isDelegatedMethod(lightMethod)) continue
-            val uMethod = createUMethod(lightMethod)
+            val uMethod = createUMethod(lightMethod) ?: continue
             result.add(uMethod)
 
             // Ensure we pick the main Kotlin origin, not the auxiliary one
