@@ -3505,6 +3505,7 @@ public final class UIUtil {
     Color color = getDeprecatedBackground();
     if (color != null) {
       component.setBackground(color);
+      component.setOpaque(true);
     }
   }
 
