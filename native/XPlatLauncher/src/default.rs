@@ -575,19 +575,32 @@ fn get_ide_home(current_exe: &Path) -> Result<PathBuf> {
 
 #[cfg(target_os = "windows")]
 pub fn get_config_home() -> PathBuf {
-    // TODO: see LoadVMOptions
+    PathBuf::from("C:\\tmp")
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_cache_home() -> PathBuf {
     PathBuf::from("C:\\tmp")
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_config_home() -> PathBuf {
-    get_user_home().join(".config")
+    get_user_home()
+        .join("Library")
+        .join("Application Support")
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_cache_home() -> PathBuf {
+    get_user_home()
+        .join("Library")
+        .join("Caches")
 }
 
 // CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 #[cfg(target_os = "linux")]
 pub fn get_config_home() -> PathBuf {
-    let xdg_config_home = get_xdg_config_home();
+    let xdg_config_home = get_xdg_dir("XDG_CONFIG_HOME");
 
     match xdg_config_home {
         Some(p) => { p }
@@ -596,23 +609,32 @@ pub fn get_config_home() -> PathBuf {
 }
 
 #[cfg(target_os = "linux")]
-fn get_xdg_config_home() -> Option<PathBuf> {
-    let xdg_config_home = env::var("XDG_CONFIG_HOME").unwrap_or(String::from(""));
-    debug!("XDG_CONFIG_HOME={xdg_config_home}");
+pub fn get_cache_home() -> PathBuf {
+    let xdg_cache_home = get_xdg_dir("XDG_CACHE_HOME");
 
-    if xdg_config_home.is_empty() {
+    match xdg_cache_home {
+        Some(p) => { p }
+        None => { get_user_home().join(".config") }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn get_xdg_dir(env_var_name: &str) -> Option<PathBuf> {
+    let xdg_dir = env::var(env_var_name).unwrap_or(String::from(""));
+    debug!("{env_var_name}={xdg_dir}");
+
+    if xdg_dir.is_empty() {
         return None
     }
 
-    let path = PathBuf::from(xdg_config_home);
+    let path = PathBuf::from(xdg_dir);
     if !path.is_absolute() {
         // TODO: consider change
-        warn!("XDG_CONFIG_HOME is not set to an absolute path, this may be a misconfiguration");
+        warn!("{env_var_name} is not set to an absolute path ({path:?}), this is likely a misconfiguration");
     }
 
     Some(path)
 }
-
 
 // used in ${HOME}/.config
 // TODO: is this the same as env:
