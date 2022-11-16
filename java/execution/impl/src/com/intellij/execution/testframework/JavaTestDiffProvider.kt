@@ -14,7 +14,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.siyeh.ig.testFrameworks.AssertHint.Companion.createAssertEqualsHint
 
 class JavaTestDiffProvider : TestDiffProvider {
-  override fun getInjectionLiteral(project: Project, stackTrace: String): PsiElement? {
+  override fun findExpected(project: Project, stackTrace: String): PsiElement? {
     var expectedParamIndex: Int? = null
     parse(stackTrace).forEach { stackFrame ->
       if (stackFrame.location !is JavaStackFrame.FileLocation) return@forEach

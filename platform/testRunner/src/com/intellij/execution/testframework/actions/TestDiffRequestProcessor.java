@@ -106,7 +106,7 @@ public class TestDiffRequestProcessor {
       );
       String stackTrace = testProxy.getStacktrace();
       if (stackTrace == null) return null;
-      PsiElement injectionLiteral = testDiffProvider.getInjectionLiteral(myProject, testProxy.getStacktrace());
+      PsiElement injectionLiteral = testDiffProvider.findExpected(myProject, testProxy.getStacktrace());
       if (injectionLiteral == null) return null;
       return injectionLiteral.getContainingFile().getVirtualFile();
     }

@@ -11,7 +11,7 @@ import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.toUElementOfType
 
 class KotlinTestDiffProvider : TestDiffProvider {
-    override fun getInjectionLiteral(project: Project, stackTrace: String): PsiElement? {
+    override fun findExpected(project: Project, stackTrace: String): PsiElement? {
         return null
     }
 
