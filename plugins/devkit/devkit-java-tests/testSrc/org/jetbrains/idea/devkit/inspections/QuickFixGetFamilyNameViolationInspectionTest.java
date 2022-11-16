@@ -57,6 +57,14 @@ public class QuickFixGetFamilyNameViolationInspectionTest extends LightJavaCodeI
     doTest();
   }
 
+  public void testViolationByPsiElementFieldUsageInUsedMethod() {
+    doTest();
+  }
+
+  public void testViolationByPsiElementFieldUsageInUsedParentClassMethod() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
