@@ -19,7 +19,10 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
       when {
         !visible && value > 0.0 -> animator.animate(createHidingAnimation(value, updateVisibility))
         visible && value < 1.0 -> animator.animate(createShowingAnimation(value, updateVisibility))
-        else -> animator.stop()
+        else -> {
+          animator.stop()
+          updateVisibility()
+        }
       }
     }
   }
@@ -43,7 +46,7 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
   private val hidingDuration
     get() = intValue("ide.animation.hiding.duration", 150)
 
-  private fun createShowingAnimation(value: Double, visibility: () -> Unit) = Animation(consumer).apply {
+  private fun createShowingAnimation(value: Double, updateVisibility: () -> Unit) = Animation(consumer).apply {
     if (value > 0.0) {
       duration = (showingDuration * (1 - value)).roundToInt()
       easing = statefulEasing.coerceIn(value, 1.0)
@@ -53,9 +56,13 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
       duration = showingDuration
       easing = statefulEasing
     }
-  }.runWhenScheduled(visibility)
+  }.runWhenScheduled {
+    if (atomicVisible.get()) { // Most likely not needed, just for consistency with hide. In the worst case we just avoid minor flickering here.
+      updateVisibility()
+    }
+  }
 
-  private fun createHidingAnimation(value: Double, visibility: () -> Unit) = Animation(consumer).apply {
+  private fun createHidingAnimation(value: Double, updateVisibility: () -> Unit) = Animation(consumer).apply {
     if (value < 1.0) {
       duration = (hidingDuration * value).roundToInt()
       easing = statefulEasing.coerceIn(0.0, value).reverse()
@@ -65,5 +72,9 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
       duration = hidingDuration
       easing = statefulEasing.reverse()
     }
-  }.runWhenExpiredOrCancelled(visibility)
+  }.runWhenExpiredOrCancelled {
+    if (!atomicVisible.get()) { // If the animation is cancelled and the component was already made visible, we do NOT want to hide it again!
+      updateVisibility()
+    }
+  }
 }
