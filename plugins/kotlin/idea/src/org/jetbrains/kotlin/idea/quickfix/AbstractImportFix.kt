@@ -412,7 +412,7 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
         val importedFqNamesAsAlias = getImportedFqNamesAsAlias(ktFile)
         val (defaultImports, excludedImports) = ImportInsertHelperImpl.computeDefaultAndExcludedImports(ktFile)
         return result.filter {
-            val descriptor = it.takeUnless { it.isSealed() } ?: return@filter false
+            val descriptor = it.takeUnless { expression.parent is KtCallExpression && it.isSealed() } ?: return@filter false
             val importableFqName = descriptor.importableFqName ?: return@filter true
             val importPath = ImportPath(importableFqName, isAllUnder = false)
             !importPath.isImported(defaultImports, excludedImports) || importableFqName in importedFqNamesAsAlias
