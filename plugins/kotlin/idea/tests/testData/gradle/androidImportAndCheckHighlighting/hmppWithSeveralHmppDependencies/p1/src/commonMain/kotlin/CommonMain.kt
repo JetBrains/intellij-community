@@ -33,7 +33,7 @@ interface <lineMarker descr="Is implemented by     AndroidMain     IosMa
         }
     }
 
-    fun <lineMarker descr="Is overridden in     IosMain     JvmAndAndroidMain     JvmMain">androidSdkIsNotVisible</lineMarker>(context: android.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: content" textAttributesKey="null">content</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">Context</error>) {
+    fun <lineMarker descr="Is overridden in     IosMain     JvmAndAndroidMain     JvmMain">androidSdkIsNotVisible</lineMarker>(context: <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: android" textAttributesKey="null">android</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">content</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">Context</error>) {
 
     }
 }

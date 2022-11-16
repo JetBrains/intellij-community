@@ -37,7 +37,7 @@ interface <lineMarker descr="Is implemented by     AndroidMain     JvmMa
     }
 
 
-    override fun <lineMarker descr="Overrides function in 'CommonMain'"><lineMarker descr="Is overridden in     JvmMain">androidSdkIsNotVisible</lineMarker></lineMarker>(context: android.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: content" textAttributesKey="null">content</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">Context</error>) {
+    override fun <lineMarker descr="Overrides function in 'CommonMain'"><lineMarker descr="Is overridden in     JvmMain">androidSdkIsNotVisible</lineMarker></lineMarker>(context: <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: android" textAttributesKey="null">android</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">content</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">Context</error>) {
 
     }
 

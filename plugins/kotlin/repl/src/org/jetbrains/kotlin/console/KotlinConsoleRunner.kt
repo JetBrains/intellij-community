@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderConten
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.trackers.KOTLIN_CONSOLE_KEY
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
@@ -289,6 +291,10 @@ class KotlinConsoleRunner(
                 true,
                 false
             ) as KtFile? ?: error("Failed to setup PSI for file:\n$text")
+
+            runInEdt {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
+            }
 
             replState.submitLine(psiFile)
             configureFileDependencies(psiFile)

@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.applyIf
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
@@ -82,7 +84,6 @@ abstract class ScriptClassRootsUpdater(
             override fun projectClosing(project: Project) {
                 scheduledUpdate?.apply {
                     cancel()
-                    awaitCompletion()
                 }
             }
         })
@@ -205,17 +206,30 @@ abstract class ScriptClassRootsUpdater(
             if (underProgressManager) {
                 ProgressManager.checkCanceled()
             }
+
             if (disposable.disposed) return
 
-            runInEdt(ModalityState.NON_MODAL) {
-                runWriteAction {
-                    if (scriptsAsEntities) { // (updates.changed && !updates.hasNewRoots)
-                        val manager = VirtualFileManager.getInstance()
-                        updates.cache.scriptsPaths().takeUnless { it.isEmpty() }?.asSequence()
-                            ?.map { checkNotNull(manager.findFileByNioPath(Paths.get(it))) { "Couldn't find script as a VFS file: $it" } }
-                            ?.let { project.syncScriptEntities(it) }
+            if (scriptsAsEntities) { // (updates.changed && !updates.hasNewRoots)
+                val manager = VirtualFileManager.getInstance()
+                updates.cache.scriptsPaths().takeUnless { it.isEmpty() }?.asSequence()
+                    ?.map {
+                        val byNioPath = manager.findFileByNioPath(Paths.get(it))
+                        if (byNioPath == null) { // e.g. jupyter notebooks have their .kts in memory only
+                            val path = it.applyIf(it.startsWith("/")) { it.replaceFirst("/", "") }
+                            LightVirtualFile(path)
+                        } else {
+                            byNioPath
+                        }
                     }
-                }
+                    ?.let {
+                        // Here we're sometimes under read-lock, so there is no way to call syncScriptEntities() synchronously (dead lock)
+                        runInEdt(ModalityState.NON_MODAL) {
+                            runWriteAction {
+                                if (!project.isDisposed)
+                                    project.syncScriptEntities(it)
+                            }
+                        }
+                    }
             }
 
             if (updates.hasNewRoots) {

@@ -97,7 +97,7 @@
 
     <registryKey key="kotlin.scripts.as.entities"
                  description="Enables explicit script dependencies support"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="true"/>
 
     <registryKey key="kotlin.scripting.support.warning"

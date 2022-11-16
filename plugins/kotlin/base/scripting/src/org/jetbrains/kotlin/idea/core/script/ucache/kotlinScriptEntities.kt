@@ -7,9 +7,9 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.ide.BuilderSnapshot
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
@@ -35,52 +35,55 @@ fun KotlinScriptEntity.listDependencies(rootTypeId: KotlinScriptLibraryRootTypeI
     .filter { it.isValid }
     .toList()
 
+
 @RequiresWriteLock
 internal fun Project.syncScriptEntities(actualScriptFiles: Sequence<VirtualFile>) {
-    var replaced: Boolean
-    val wsModel = WorkspaceModel.getInstance(this)
-    do {
-        val snapshot = wsModel.getBuilderSnapshot()
-        snapshot.syncScriptEntities(actualScriptFiles, this)
-        replaced = wsModel.replaceProjectModel(snapshot.getStorageReplacement())
-    } while (!replaced)
+    WorkspaceModel.getInstance(this).updateProjectModel("") { builder ->
+        builder.syncScriptEntities(actualScriptFiles, this)
+    }
 }
 
-private fun BuilderSnapshot.syncScriptEntities(filesToAddOrUpdate: Sequence<VirtualFile>, project: Project) {
+private fun MutableEntityStorage.syncScriptEntities(filesToAddOrUpdate: Sequence<VirtualFile>, project: Project) {
     val fileUrlManager = VirtualFileUrlManager.getInstance(project)
     val actualPaths = filesToAddOrUpdate.map { it.path }.toSet()
 
-    builder.entities(KotlinScriptEntity::class.java)
+    entities(KotlinScriptEntity::class.java)
         .filter { it.path !in actualPaths }
-        .forEach { builder.removeEntity(it) /* dependencies are removed automatically */ }
+        .forEach { removeEntity(it) /* dependencies are removed automatically */ }
 
     filesToAddOrUpdate.forEach { scriptFile ->
         // WorkspaceModel API trait: LibraryEntity needs to be created first and only then it can be referred to (from ScriptEntity).
         // ScriptEntity cannot be fully created in a single step.
 
-        val scriptDependencies = builder.addOrUpdateScriptDependencies(scriptFile, project)
-        val scriptEntity = builder.resolve(ScriptId(scriptFile.path))
+        val (scriptDependencies, containUpdates) = getActualScriptDependencies(scriptFile, project)
+        val scriptEntity = resolve(ScriptId(scriptFile.path))
         if (scriptEntity == null) {
             val scriptSource = KotlinScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
-            builder.addEntity(KotlinScriptEntity(scriptFile.path, scriptSource) {
+            addEntity(KotlinScriptEntity(scriptFile.path, scriptSource) {
                 this.dependencies = scriptDependencies
             })
         } else {
             val outdatedDependencies =
-                builder.entitiesBySource { it == scriptEntity.entitySource }[scriptEntity.entitySource]
+                entitiesBySource { it == scriptEntity.entitySource }[scriptEntity.entitySource]
                     ?.get(LibraryEntity::class.java)
                     ?.let { it.toSet() - scriptDependencies.toSet() }
 
-            outdatedDependencies?.forEach { builder.removeEntity(it) }
+            outdatedDependencies?.forEach { removeEntity(it) }
 
-            builder.modifyEntity(scriptEntity) {
-                this.dependencies = scriptDependencies
+            if (containUpdates) {
+                modifyEntity(scriptEntity) {
+                    this.dependencies = scriptDependencies
+                }
             }
         }
     }
 }
 
-private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: VirtualFile, project: Project): List<KotlinScriptLibraryEntity> {
+private fun MutableEntityStorage.getActualScriptDependencies(
+    scriptFile: VirtualFile,
+    project: Project
+): Pair<List<KotlinScriptLibraryEntity>, Boolean> {
+
     val configurationManager = ScriptConfigurationManager.getInstance(project)
 
     val dependenciesClassFiles = configurationManager.getScriptDependenciesClassFiles(scriptFile)
@@ -125,16 +128,30 @@ private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: Virtu
         }
     }
 
-    scriptDependencies.forEach { dependency ->
-        // Library entity modification is currently not detected by indexing mechanism, we use remove/add as a workaround
-        entities(KotlinScriptLibraryEntity::class.java)
-            .find { it.name == dependency.name }
-            ?.let { removeEntity(it) }
-        addEntity(dependency)
+    var includeUpdates = false
+    val dependencies = scriptDependencies.map { dependency ->
+        val existingEntity = entities(KotlinScriptLibraryEntity::class.java).find { it.name == dependency.name }
+        if (existingEntity != null) {
+            if (existingEntity.sameAs(dependency)) {
+                existingEntity
+            } else {
+                removeEntity(existingEntity)
+                addEntity(dependency)
+                includeUpdates = true
+                dependency
+            }
+        } else {
+            addEntity(dependency)
+            includeUpdates = true
+            dependency
+        }
     }
 
-    return scriptDependencies
+    return Pair(dependencies, includeUpdates)
 }
+
+private fun KotlinScriptLibraryEntity.sameAs(dependency: KotlinScriptLibraryEntity): Boolean =
+    this.roots.containsAll(dependency.roots) && dependency.roots.containsAll(this.roots)
 
 internal fun Collection<VirtualFile>.filterRedundantDependencies() =
     if (Registry.`is`("kotlin.scripting.filter.redundant.deps")) {
@@ -157,10 +174,9 @@ internal fun Collection<VirtualFile>.filterRedundantDependencies() =
         toMutableSet()
     }
 
-fun VirtualFile.relativeName(project: Project): String {
-    return if (ScratchUtil.isScratch(this)) presentableName
+fun VirtualFile.relativeName(project: Project): String =
+    if (ScratchUtil.isScratch(this) || this is LightVirtualFile) presentableName
     else toNioPath().relativeTo(Path.of(project.basePath!!)).pathString
-}
 
 private fun addIdeSpecificDependencies(
     project: Project,
