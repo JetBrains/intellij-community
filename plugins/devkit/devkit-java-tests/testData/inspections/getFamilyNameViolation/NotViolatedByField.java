@@ -6,11 +6,10 @@ class MyQuickFix implements QuickFix {
 
   public String getName() {
     return "some name";
-  };
+  }
 
   public String getFamilyName() {
     return someField + getName() + "123";
-  };
-
+  }
 
 }
