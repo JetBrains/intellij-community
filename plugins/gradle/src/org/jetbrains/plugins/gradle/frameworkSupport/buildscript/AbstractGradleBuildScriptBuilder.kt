@@ -99,12 +99,23 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
       call("mavenCentral")
     }
 
-  override fun withPlugin(id: String, version: String?) = withPlugin {
-    when (version) {
-      null -> call("id", id)
-      else -> infixCall(call("id", id), "version", string(version))
+  override fun applyPlugin(plugin: String) =
+    withPrefix {
+      call("apply", argument("plugin", string(plugin)))
     }
-  }
+
+  override fun applyPluginFrom(path: String) =
+    withPrefix {
+      call("apply", argument("from", string(path)))
+    }
+
+  override fun withPlugin(id: String, version: String?) =
+    withPlugin {
+      when (version) {
+        null -> call("id", id)
+        else -> infixCall(call("id", id), "version", string(version))
+      }
+    }
 
   override fun withJavaPlugin() =
     withPlugin("java")

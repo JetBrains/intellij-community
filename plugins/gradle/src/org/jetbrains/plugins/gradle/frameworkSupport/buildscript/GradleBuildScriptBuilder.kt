@@ -54,6 +54,9 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun withMavenCentral(): BSB
   fun withBuildScriptMavenCentral(): BSB
 
+  fun applyPlugin(plugin: String): BSB
+  fun applyPluginFrom(path: String): BSB
+
   fun withPlugin(id: String, version: String? = null): BSB
 
   fun withJavaPlugin(): BSB

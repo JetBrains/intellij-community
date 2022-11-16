@@ -282,7 +282,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":web", it -> { it.addDependency("provided", "junit:junit:4.11"); })
         .project(":user", it -> {
           it
-            .applyPlugin("'war'")
+            .applyPlugin("war")
             .addImplementationDependency(it.project(":web"))
             .addDependency("providedCompile", it.project(":web", "provided"));
         })
@@ -1468,7 +1468,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         })
         .project(":projectC", it -> {
           it
-            .applyPlugin("'war'")
+            .applyPlugin("war")
             .addDependency("providedCompile", it.project(":projectB"));
         })
         .generate()
