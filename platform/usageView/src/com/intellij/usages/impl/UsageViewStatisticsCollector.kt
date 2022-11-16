@@ -36,11 +36,11 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 
   companion object {
     val GROUP = EventLogGroup("usage.view", 10)
-    val USAGE_VIEW = object : PrimitiveEventField<UsageView>() {
+    val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
-      override fun addData(fuData: FeatureUsageData, value: UsageView) {
-        fuData.addData(name, value.id)
+      override fun addData(fuData: FeatureUsageData, value: UsageView?) {
+        value?.let { fuData.addData(name, value.id) }
       }
 
       override val validationRule: List<String>
@@ -140,7 +140,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun logSearchCancelled(project: Project?,
-                           targetClass: Class<*>,
+                           targetClass: Class<*>?,
                            scope: SearchScope?,
                            language: Language?,
                            results: Int,
@@ -148,7 +148,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                            duration: Long,
                            tooManyResult: Boolean,
                            source: CodeNavigateSource,
-                           usageView: UsageView) {
+                           usageView: UsageView?) {
       searchCancelled.log(project,
                           SYMBOL_CLASS.with(targetClass),
                           SEARCH_SCOPE.with(scope?.let { ScopeIdMapper.instance.getScopeSerializationId(it.displayName) }),
@@ -164,7 +164,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     @JvmStatic
     fun logSearchFinished(
       project: Project?,
-      targetClass: Class<*>,
+      targetClass: Class<*>?,
       scope: SearchScope?,
       language: Language?,
       results: Int,
@@ -172,7 +172,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
       duration: Long,
       tooManyResult: Boolean,
       source: CodeNavigateSource,
-      usageView : UsageView
+      usageView : UsageView?
     ) {
       searchFinished.log(project,
                          USAGE_VIEW.with(usageView),
