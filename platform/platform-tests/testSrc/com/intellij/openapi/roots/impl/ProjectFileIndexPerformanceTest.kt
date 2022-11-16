@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -194,7 +195,7 @@ class ProjectFileIndexPerformanceTest {
 
   @Test
   fun `access to index after change`() {
-    assertTrue(WorkspaceFileIndexEx.IS_ENABLED, "This test is expected to fail if the old implementation of DirectoryIndex is used")
+    assumeTrue(WorkspaceFileIndexEx.IS_ENABLED, "This test is expected to fail if the old implementation of DirectoryIndex is used")
     val newRoot = runWriteActionAndWait { ourProjectRoot.subdir("newContentRoot") }
     val module = ourProjectModel.moduleManager.findModuleByName("big")!!
     PlatformTestUtil.startPerformanceTest("Checking status of file after adding and removing content root", 5) {
