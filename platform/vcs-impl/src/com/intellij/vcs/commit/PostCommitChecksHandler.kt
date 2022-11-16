@@ -197,6 +197,10 @@ class PostCommitChecksHandler(val project: Project) {
           problem.showDetails(project)
         })
       }
+
+      notification.addAction(NotificationAction.createSimple(VcsBundle.message("post.commit.checks.failed.notification.ignore.action")) {
+        resetPendingCommits()
+      })
     }
   }
 
