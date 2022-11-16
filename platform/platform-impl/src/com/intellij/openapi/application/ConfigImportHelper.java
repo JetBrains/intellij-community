@@ -19,9 +19,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.impl.ProgressResult;
+import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -59,6 +60,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -969,14 +971,28 @@ public final class ConfigImportHelper {
     }
   }
 
-  @RequiresBackgroundThread
   private static void downloadUpdatesForIncompatiblePlugins(@NotNull Path newPluginsDir,
                                                             @NotNull ConfigImportOptions options,
                                                             @NotNull List<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     if (options.headless) {
-      downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, new EmptyProgressIndicator());
+      CompletableFuture<ProgressResult<Object>> future = new ProgressRunner<>(indicator -> {
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, indicator);
+        return null;
+      }).submit();
+
+      try {
+        Throwable throwable = future.get().getThrowable();
+        if (throwable != null) {
+          throw new RuntimeException(throwable);
+        }
+      }
+      catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
     else {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+
       ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
       AppUIUtil.updateWindowIcon(dialog);
