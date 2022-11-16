@@ -39,7 +39,6 @@ import java.awt.Cursor
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.*
-import kotlin.properties.Delegates
 
 object GHPRReviewThreadComponent {
 
@@ -78,75 +77,45 @@ object GHPRReviewThreadComponent {
     val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover,
                                         tooltip = GithubBundle.message("pull.request.timeline.review.thread.expand"))
 
-    val contentPanel = RoundedPanel(VerticalLayout(4), 8).apply {
-      isOpaque = false
-      add(createFileName(thread, selectInToolWindowHelper, collapseButton, expandButton))
+    val diffComponent = diffComponentFactory.createComponent(thread.diffHunk, thread.startLine).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.TOP)
     }
 
-    val commentPanel = JPanel(VerticalLayout(4)).apply {
+    val commentsPanel = JPanel(VerticalLayout(12)).apply {
       isOpaque = false
-    }
+      val reviewCommentComponent = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
+                                                                      reviewDataProvider, avatarIconsProvider,
+                                                                      suggestedChangeHelper,
+                                                                      false)
+      add(GHPRReviewThreadCommentsPanel.create(thread, reviewCommentComponent))
 
-    object : CollapseController(thread, contentPanel, commentPanel, collapseButton, expandButton) {
-
-      override fun createDiffAndCommentsPanels(): Pair<JComponent, JComponent> {
-        val diffComponent = diffComponentFactory.createComponent(thread.diffHunk, thread.startLine).apply {
-          border = IdeBorderFactory.createBorder(SideBorder.TOP)
-        }
-
-        val commentsComponent = JPanel(VerticalLayout(12)).apply {
-          isOpaque = false
-          val reviewCommentComponent = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
-                                                                          reviewDataProvider, avatarIconsProvider,
-                                                                          suggestedChangeHelper,
-                                                                          false)
-          add(GHPRReviewThreadCommentsPanel.create(thread, reviewCommentComponent))
-
-          if (reviewDataProvider.canComment()) {
-            add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
-          }
-        }
-        return diffComponent to commentsComponent
+      if (reviewDataProvider.canComment()) {
+        add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
       }
     }
 
+    CollapseController(thread, diffComponent, commentsPanel, collapseButton, expandButton)
+
+    val contentPanel = RoundedPanel(VerticalLayout(4), 8).apply {
+      isOpaque = false
+      add(createFileName(thread, selectInToolWindowHelper, collapseButton, expandButton))
+      add(diffComponent)
+    }
 
     return JPanel(VerticalLayout(4)).apply {
       isOpaque = false
       add(contentPanel)
-      add(commentPanel)
+      add(commentsPanel)
     }
   }
 
-  private abstract class CollapseController(private val thread: GHPRReviewThreadModel,
-                                            private val contentPanel: JPanel,
-                                            private val commentPanel: JPanel,
-                                            private val collapseButton: InlineIconButton,
-                                            private val expandButton: InlineIconButton) {
+  private class CollapseController(private val thread: GHPRReviewThreadModel,
+                                   private val diffPanel: JComponent,
+                                   private val commentsPanel: JComponent,
+                                   private val collapseButton: InlineIconButton,
+                                   private val expandButton: InlineIconButton) {
 
     private val collapseModel = SingleValueModel(true)
-    private var childPanels by Delegates.observable<Pair<JComponent, JComponent>?>(null) { _, oldValue, newValue ->
-      var revalidate = false
-      if (oldValue != null) {
-        contentPanel.remove(oldValue.first)
-        commentPanel.remove(oldValue.second)
-        revalidate = true
-      }
-      if (newValue != null) {
-        contentPanel.add(newValue.first)
-        commentPanel.add(newValue.second)
-      }
-      if (revalidate) {
-        contentPanel.revalidate()
-        commentPanel.revalidate()
-      }
-      else {
-        contentPanel.validate()
-        commentPanel.validate()
-      }
-      contentPanel.repaint()
-      commentPanel.repaint()
-    }
 
     init {
       collapseButton.actionListener = ActionListener { collapseModel.value = true }
@@ -157,20 +126,11 @@ object GHPRReviewThreadComponent {
 
     private fun update() {
       val shouldBeVisible = !thread.isResolved || !collapseModel.value
-      if (shouldBeVisible) {
-        if (childPanels == null) {
-          childPanels = createDiffAndCommentsPanels()
-        }
-      }
-      else {
-        childPanels = null
-      }
-
+      diffPanel.isVisible = shouldBeVisible
+      commentsPanel.isVisible = shouldBeVisible
       collapseButton.isVisible = thread.isResolved && !collapseModel.value
       expandButton.isVisible = thread.isResolved && collapseModel.value
     }
-
-    abstract fun createDiffAndCommentsPanels(): Pair<JComponent, JComponent>
   }
 
   private fun createFileName(thread: GHPRReviewThreadModel,
@@ -272,7 +232,8 @@ object GHPRReviewThreadComponent {
       { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
       {
         GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
-                                                         GithubBundle.message("pull.request.review.thread.reply"),
+                                                         GithubBundle.message(
+                                                           "pull.request.review.thread.reply"),
                                                          onCancel = { toggleModel.value = false })
       }
     )
