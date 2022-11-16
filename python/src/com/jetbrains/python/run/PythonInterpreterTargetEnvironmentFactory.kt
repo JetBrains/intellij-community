@@ -118,7 +118,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     fun Panel.projectSyncRows(project: Project?, configuration: TargetEnvironmentConfiguration?): ProjectSync? =
       if (configuration != null && project != null && !project.isDefault) {
         findProjectSync(project, configuration)?.also { projectSync ->
-          projectSync.extendDialogPanelWithOptionalFields(this)
+          projectSync.extendDialogPanelWithOptionalFields(this, configuration)
         }
       }
       else null
