@@ -79,20 +79,21 @@ public abstract class ExperimentalUI {
       boolean isEnabled = value.asBoolean();
 
       patchUIDefaults(isEnabled);
+      ExperimentalUI instance = getInstance();
       if (isEnabled) {
-        if (getInstance().isIconPatcherSet.compareAndSet(false, true)) {
-          if (getInstance().iconPathPatcher != null) {
-            IconLoader.removePathPatcher(getInstance().iconPathPatcher);
+        if (instance.isIconPatcherSet.compareAndSet(false, true)) {
+          if (instance.iconPathPatcher != null) {
+            IconLoader.removePathPatcher(instance.iconPathPatcher);
           }
-          getInstance().iconPathPatcher = getInstance().createPathPatcher();
-          IconLoader.installPathPatcher(getInstance().iconPathPatcher);
+          instance.iconPathPatcher = instance.createPathPatcher();
+          IconLoader.installPathPatcher(instance.iconPathPatcher);
         }
-        getInstance().onExpUIEnabled(true);
+        instance.onExpUIEnabled(true);
       }
-      else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
-        IconLoader.removePathPatcher(getInstance().iconPathPatcher);
-        getInstance().iconPathPatcher = null;
-        getInstance().onExpUIDisabled(true);
+      else if (instance.isIconPatcherSet.compareAndSet(true, false)) {
+        IconLoader.removePathPatcher(instance.iconPathPatcher);
+        instance.iconPathPatcher = null;
+        instance.onExpUIDisabled(true);
       }
     }
   }
@@ -110,7 +111,7 @@ public abstract class ExperimentalUI {
     }
   }
 
-  private IconPathPatcher createPathPatcher() {
+  private @NotNull IconPathPatcher createPathPatcher() {
     Map<ClassLoader, Map<String, String>> paths = getIconMappings();
     return new IconPathPatcher() {
       @Override
@@ -126,7 +127,7 @@ public abstract class ExperimentalUI {
     };
   }
 
-  public abstract Map<ClassLoader, Map<String, String>> getIconMappings();
+  public abstract @NotNull Map<ClassLoader, Map<String, String>> getIconMappings();
 
   public abstract void onExpUIEnabled(boolean suggestRestart);
   public abstract void onExpUIDisabled(boolean suggestRestart);

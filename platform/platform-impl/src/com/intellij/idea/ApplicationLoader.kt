@@ -11,12 +11,14 @@ import com.intellij.ide.*
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -82,8 +84,26 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
                            listenerCallbacks = null)
   }
 
+
   withContext(Dispatchers.IO) {
     initConfigurationStore(app)
+  }
+
+  val loadIconMapping: Job = if (app.isHeadlessEnvironment) {
+    CompletableDeferred(value = Unit)
+  }
+  else {
+    app.coroutineScope.launchAndMeasure("icon mapping loading", Dispatchers.IO) {
+      try {
+        service<IconMapLoader>().preloadIconMapping()
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
   }
 
   coroutineScope {
@@ -95,6 +115,7 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
 
     // executed in main thread
     launch {
+      loadIconMapping.join()
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
         // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
