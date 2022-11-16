@@ -3,11 +3,9 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -23,8 +21,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.intellij.lang.annotations.MagicConstant
-import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
 
 internal class WorkspaceFileIndexData(private val contributorList: List<WorkspaceFileIndexContributor<*>>,
                                       private val project: Project,
@@ -438,85 +434,6 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                             entity: WorkspaceEntity) {
       fileSets.removeValueIf(root) { it is ExcludedFileSet.ByCondition && isResolvesTo(it.entityReference, entity) }
     }
-  }
-}
-
-internal class WorkspaceFileSetImpl(override val root: VirtualFile,
-                                    override val kind: WorkspaceFileKind,
-                                    override val entityReference: EntityReference<WorkspaceEntity>,
-                                    override val data: WorkspaceFileSetData)
-  : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
-  fun isUnloaded(project: Project): Boolean {
-    return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
-  }
-}
-
-internal class MultipleWorkspaceFileSets(val fileSets: List<WorkspaceFileSetImpl>) : WorkspaceFileInternalInfo
-
-internal object DummyWorkspaceFileSetData : WorkspaceFileSetData
-
-internal object WorkspaceFileKindMask {
-  const val CONTENT = 1
-  const val EXTERNAL_BINARY = 2
-  const val EXTERNAL_SOURCE = 4
-  const val EXTERNAL = EXTERNAL_SOURCE or EXTERNAL_BINARY
-  const val ALL = CONTENT or EXTERNAL
-}
-
-/**
- * Base interface for file sets stored in [WorkspaceFileIndexData]. 
- */
-internal sealed interface StoredFileSet {
-  val entityReference: EntityReference<WorkspaceEntity>
-}
-
-internal sealed interface ExcludedFileSet : StoredFileSet {
-  class ByFileKind(@MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
-                   override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet
-  
-  class ByPattern(val root: VirtualFile, patterns: List<String>,
-                  override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet {
-    val table = FileTypeAssocTable<Boolean>()
-
-    init {
-      for (pattern in patterns) {
-        table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), true)
-      }
-    }
-
-    fun isExcluded(file: VirtualFile): Boolean {
-      var current = file
-      while (current != root) {
-        if (table.findAssociatedFileType(current.nameSequence) != null) {
-          return true
-        }
-        current = current.parent
-      }
-      return false
-    }
-  }
-  
-  class ByCondition(val root: VirtualFile, val condition: (VirtualFile) -> Boolean,
-                    override val entityReference: EntityReference<WorkspaceEntity>) : ExcludedFileSet {
-    fun isExcluded(file: VirtualFile): Boolean {
-      var current = file
-      while (current != root) {
-        if (condition(current)) {
-          return true
-        }
-        current = current.parent
-      }
-
-      return condition(root)
-    }
-  }
-}
-
-internal inline fun <K, V> MultiMap<K, V>.removeValueIf(key: K, crossinline valuePredicate: (V) -> Boolean) {
-  val collection = get(key)
-  collection.removeIf { valuePredicate(it) }
-  if (collection.isEmpty()) {
-    remove(key)
   }
 }
 
