@@ -11,8 +11,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +28,8 @@ class PatternHighlightingModel {
   static void createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull HighlightInfoHolder holder) {
     if (deconstructionPattern == null) return;
     PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
-    PsiType deconstructionType = typeElement.getType();
-    PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(deconstructionType);
+    PsiType recordType = typeElement.getType();
+    var resolveResult = recordType instanceof PsiClassType classType ? classType.resolveGenerics() : ClassResolveResult.EMPTY;
     PsiClass recordClass = resolveResult.getElement();
     if (recordClass == null || !recordClass.isRecord()) {
       String message = JavaErrorBundle.message("switch.record.required", typeElement.getText());
@@ -37,7 +37,7 @@ class PatternHighlightingModel {
       holder.add(info);
       return;
     }
-    if (recordClass.hasTypeParameters() && deconstructionType instanceof PsiClassType classType && !classType.hasParameters()) {
+    if (recordClass.hasTypeParameters() && recordType instanceof PsiClassType classType && !classType.hasParameters()) {
       String message = JavaErrorBundle.message("error.raw.deconstruction", typeElement.getText());
       var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
       holder.add(info);
@@ -45,39 +45,41 @@ class PatternHighlightingModel {
     }
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
-    PsiPattern[] patternComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
+    PsiPattern[] deconstructionComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
     boolean hasMismatchedPattern = false;
-    for (int i = 0; i < Math.min(recordComponents.length, patternComponents.length); i++) {
-      PsiPattern patternComponent = patternComponents[i];
-      PsiType recordType = recordComponents[i].getType();
-      PsiType substitutedRecordType = substitutor.substitute(recordType);
-      PsiType patternType = JavaPsiPatternUtil.getPatternType(patternComponent);
-      if (!isApplicable(substitutedRecordType, patternType)) {
+    for (int i = 0; i < Math.min(recordComponents.length, deconstructionComponents.length); i++) {
+      PsiPattern deconstructionComponent = deconstructionComponents[i];
+      PsiType recordComponentType = recordComponents[i].getType();
+      PsiType substitutedRecordComponentType = substitutor.substitute(recordComponentType);
+      PsiType deconstructionComponentType = JavaPsiPatternUtil.getPatternType(deconstructionComponent);
+      if (!isApplicable(substitutedRecordComponentType, deconstructionComponentType)) {
         hasMismatchedPattern = true;
-        if (recordComponents.length == patternComponents.length) {
-          var builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordType, patternType, patternComponent.getTextRange(), 0);
+        if (recordComponents.length == deconstructionComponents.length) {
+          var builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
+                                                                          deconstructionComponent.getTextRange(), 0);
           holder.add(builder.create());
         }
       }
-      else if (JavaGenericsUtil.isUncheckedCast(Objects.requireNonNull(patternType), recordType)) {
+      else if (JavaGenericsUtil.isUncheckedCast(Objects.requireNonNull(deconstructionComponentType),
+                                                GenericsUtil.getVariableTypeByExpressionType(substitutedRecordComponentType))) {
         hasMismatchedPattern = true;
-        if (recordComponents.length == patternComponents.length) {
-          PsiType recordTypeErasure = TypeConversionUtil.erasure(recordType);
+        if (recordComponents.length == deconstructionComponents.length) {
+          PsiType recordComponentTypeErasure = TypeConversionUtil.erasure(recordComponentType);
           String message = JavaErrorBundle.message("unsafe.cast.in.instanceof",
-                                                   JavaHighlightUtil.formatType(recordTypeErasure),
-                                                   JavaHighlightUtil.formatType(patternType));
-          holder.add(SwitchBlockHighlightingModel.createError(patternComponent, message).create());
+                                                   JavaHighlightUtil.formatType(recordComponentTypeErasure),
+                                                   JavaHighlightUtil.formatType(deconstructionComponentType));
+          holder.add(SwitchBlockHighlightingModel.createError(deconstructionComponent, message).create());
         }
       }
-      if (recordComponents.length != patternComponents.length && hasMismatchedPattern) {
+      if (recordComponents.length != deconstructionComponents.length && hasMismatchedPattern) {
         break;
       }
-      if (patternComponent instanceof PsiDeconstructionPattern) {
-        createDeconstructionErrors((PsiDeconstructionPattern)patternComponent, holder);
+      if (deconstructionComponent instanceof PsiDeconstructionPattern) {
+        createDeconstructionErrors((PsiDeconstructionPattern)deconstructionComponent, holder);
       }
     }
-    if (recordComponents.length != patternComponents.length) {
-      HighlightInfo info = createIncorrectNumberOfNestedPatternsError(deconstructionPattern, patternComponents, recordComponents,
+    if (recordComponents.length != deconstructionComponents.length) {
+      HighlightInfo info = createIncorrectNumberOfNestedPatternsError(deconstructionPattern, deconstructionComponents, recordComponents,
                                                                       !hasMismatchedPattern);
       holder.add(info);
     }
