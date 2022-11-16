@@ -171,7 +171,7 @@ object TableUtils {
   }
 
   internal fun isFormattingEnabledForTables(file: PsiFile): Boolean {
-    return Registry.`is`("markdown.tables.editing.support.enable") &&
+    return isTableSupportEnabled() &&
            MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled &&
            file !in CodeStyle.getSettings(file).excludedFiles
   }
@@ -190,5 +190,9 @@ object TableUtils {
       else -> last + 1
     }
     return TextRange(first.coerceAtLeast(0), end).shiftRight(startOffset)
+  }
+
+  internal fun isTableSupportEnabled(): Boolean {
+    return Registry.`is`("markdown.tables.editing.support.enable", true)
   }
 }

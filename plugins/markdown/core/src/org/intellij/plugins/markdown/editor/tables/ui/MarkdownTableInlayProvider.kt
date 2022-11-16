@@ -4,12 +4,12 @@ package org.intellij.plugins.markdown.editor.tables.ui
 import com.intellij.codeInsight.hints.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
+import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTextRange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
@@ -23,7 +23,7 @@ import javax.swing.JPanel
 
 internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
-    if (!Registry.`is`("markdown.tables.editing.support.enable") || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
+    if (!TableUtils.isTableSupportEnabled() || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
       return null
     }
     if (file.fileType != MarkdownFileType.INSTANCE) {
