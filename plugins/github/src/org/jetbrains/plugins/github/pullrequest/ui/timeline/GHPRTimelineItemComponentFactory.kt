@@ -192,10 +192,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     if (review.body.isNotEmpty()) {
       val textPane = HtmlEditorPane(review.body.convertToHtml(project))
       panelHandle =
-        GHEditableHtmlPaneHandle(project, textPane, review::body, { newText ->
+        GHEditableHtmlPaneHandle(project, textPane, review::body) { newText ->
           reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText)
             .successOnEdt { textPane.setHtmlBody(it.convertToHtml(project)) }
-        })
+        }
     }
     else {
       panelHandle = null
