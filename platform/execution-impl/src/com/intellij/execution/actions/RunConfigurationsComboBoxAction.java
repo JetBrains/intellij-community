@@ -58,8 +58,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       return false;
     }
 
-    if (ExperimentalUI.isNewUI()) return true;
-
     if (PlatformUtils.isIntelliJ()) return true;
     if (PlatformUtils.isPhpStorm()) return true;
     if (PlatformUtils.isWebStorm()) return true;
@@ -67,9 +65,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     if (PlatformUtils.isPyCharmPro()) return true;
     if (PlatformUtils.isPyCharmCommunity()) return true;
     if (PlatformUtils.isDataGrip()) return true;
-    if (PlatformUtils.isCLion()) return true;
 
     return Registry.is("run.current.file.item.in.run.configurations.combobox");
+  }
+
+  private static boolean hasRunSubActions(@NotNull Project project) {
+    return hasRunCurrentFileItem(project) ||
+           ExperimentalUI.isNewUI() ||
+           PlatformUtils.isCLion();
   }
 
   @Override
@@ -517,7 +520,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
       // Secondary menu for the existing run configurations is not directly related to the 'Run Current File' feature.
       // We may reconsider changing this to `if (!RunManager.getInstance(project).isRunWidgetActive()) { addSubActions(); }`
-      if (hasRunCurrentFileItem(project)) {
+      if (hasRunSubActions(project)) {
         addSubActions();
       }
     }
