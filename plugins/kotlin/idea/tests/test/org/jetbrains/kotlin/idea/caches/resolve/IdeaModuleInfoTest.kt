@@ -249,7 +249,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val libraries = List(50) { index -> projectLibrary("kotlin-stdlib-$index", TestKotlinArtifacts.kotlinStdlib.jarRoot) }
         val features = libraries.map {
             executeOnPooledThread {
-                val value: List<LibraryInfo> = cache[it]
+                val value: List<LibraryInfo> = runReadAction { cache[it] }
                 resultSet.add(value)
             }
         }

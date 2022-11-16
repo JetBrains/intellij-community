@@ -2,11 +2,13 @@
 package org.jetbrains.kotlin.idea.base.util.caching
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import java.util.concurrent.ConcurrentHashMap
@@ -32,6 +34,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
         invalidate()
     }
 
+    @RequiresReadLock
     abstract operator fun get(key: Key): Value
 
     fun values(): Collection<Value> = useCache { it.values }
@@ -227,6 +230,7 @@ abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(projec
     }
 
     override fun get(key: Key): Value {
+        ApplicationManager.getApplication().assertReadAccessAllowed()
         checkKeyAndDisposeIllegalEntry(key)
 
         useCache { cache ->
@@ -285,6 +289,7 @@ abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(project: P
     }
 
     override fun get(key: Key): Value {
+        ApplicationManager.getApplication().assertReadAccessAllowed()
         checkKeyAndDisposeIllegalEntry(key)
 
         useCache { cache ->

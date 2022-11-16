@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.facet
 
+import com.intellij.ProjectTopics
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -25,7 +27,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
 
     override fun getSettings(module: Module) = KotlinFacet.get(module)?.configuration?.settings
 
-    override fun getInitializedSettings(module: Module): KotlinFacetSettings = get(module)
+    override fun getInitializedSettings(module: Module): KotlinFacetSettings = runReadAction { get(module) }
 
     override fun calculate(key: Module): KotlinFacetSettings {
         val kotlinFacetSettings = getSettings(key) ?: KotlinFacetSettings()

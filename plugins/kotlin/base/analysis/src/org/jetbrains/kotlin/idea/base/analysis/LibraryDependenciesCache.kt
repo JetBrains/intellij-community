@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -18,6 +19,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -218,7 +220,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
         }
 
+        @RequiresReadLock
         override fun get(key: Module): LibraryDependencyCandidatesAndSdkInfos {
+            ApplicationManager.getApplication().assertReadAccessAllowed()
             return internalGet(key, hashMapOf(), linkedSetOf(), hashMapOf())
         }
 

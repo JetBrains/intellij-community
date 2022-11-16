@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
@@ -58,7 +59,7 @@ val Project.languageVersionSettings: LanguageVersionSettings
 val PsiElement.languageVersionSettings: LanguageVersionSettings
     get() = if (project.serviceOrNull<ProjectFileIndex>() == null) {
         LanguageVersionSettingsImpl.DEFAULT
-    } else {
+    } else runReadAction {
         IDELanguageSettingsProvider.getLanguageVersionSettings(this.moduleInfo, project)
     }
 
