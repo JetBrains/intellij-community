@@ -207,10 +207,12 @@ class GitBranchesTreeModelImpl(
   private fun haveFilteredBranches(): Boolean = !localBranchesTree.isEmpty() || !remoteBranchesTree.isEmpty()
 
   private inner class LazyBranchesSubtreeHolder(
-    val branches: Collection<GitBranch>,
+    unsortedBranches: Collection<GitBranch>,
     comparator: Comparator<GitBranch>,
     private val matcher: MinusculeMatcher? = null
   ) {
+
+    val branches by lazy { unsortedBranches.sortedWith(comparator) }
 
     fun isEmpty() = matchingResult.first.isEmpty()
 
@@ -219,7 +221,7 @@ class GitBranchesTreeModelImpl(
     }
 
     val tree: Map<String, Any> by lazy {
-      val branchesList = matchingResult.first.sortedWith(comparator)
+      val branchesList = matchingResult.first
       buildSubTree(branchesList.map { (if (isPrefixGrouping) it.name.split('/') else listOf(it.name)) to it })
     }
 
