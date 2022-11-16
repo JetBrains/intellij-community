@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-abstract class UseEqualsFixTestBase extends JavaCodeInsightFixtureTestCase {
+public abstract class DevKitInspectionFixTestBase extends JavaCodeInsightFixtureTestCase {
 
   @NotNull
   protected abstract String getFileExtension();
