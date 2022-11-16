@@ -838,6 +838,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/sameModuleImportPriority.before.Main.kt");
             }
 
+            @TestMetadata("sealedClass.test")
+            public void testSealedClass() throws Exception {
+                runTest("testData/quickfix/autoImports/sealedClass.test");
+            }
+
+            @TestMetadata("sealedClass2.test")
+            public void testSealedClass2() throws Exception {
+                runTest("testData/quickfix/autoImports/sealedClass2.test");
+            }
+
             @TestMetadata("timesAssign.before.Main.kt")
             public void testTimesAssign() throws Exception {
                 runTest("testData/quickfix/autoImports/timesAssign.before.Main.kt");

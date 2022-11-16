@@ -1,0 +1,38 @@
+// FILE: first.before.kt
+// "Import class 'Class2'" "true"
+// ERROR: Unresolved reference: Class2
+/* IGNORE_FIR */
+
+package testing
+
+fun testing() {
+    val a = Class2<caret>()
+}
+//-----------------------
+
+
+// FILE: second.kt
+
+package some
+
+sealed class ClassToImport
+
+class Class2: ClassToImport()
+
+//-----------------------
+
+
+// FILE: first.after.kt
+// "Import class 'Class2'" "true"
+// ERROR: Unresolved reference: Class2
+/* IGNORE_FIR */
+
+package testing
+
+import some.Class2
+
+fun testing() {
+    val a = Class2<caret>()
+}
+//-----------------------
+
