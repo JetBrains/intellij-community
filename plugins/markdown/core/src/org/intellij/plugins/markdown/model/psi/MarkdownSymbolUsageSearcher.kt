@@ -20,6 +20,7 @@ import com.intellij.psi.util.walkUp
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
+import org.intellij.plugins.markdown.model.psi.headers.html.findInjectedHtmlFile
 
 internal class MarkdownSymbolUsageSearcher: UsageSearcher {
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> {
@@ -27,14 +28,26 @@ internal class MarkdownSymbolUsageSearcher: UsageSearcher {
     if (target !is MarkdownSymbolWithUsages) {
       return emptyList()
     }
-    val project = parameters.project
-    val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
-    val usages = buildSearchRequest(project, target, searchText, parameters.searchScope)
-    val selfUsage = buildDirectTargetQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
-    return listOf(usages, selfUsage)
+    return buildSearchRequests(parameters.project, parameters.searchScope, target)
   }
 
   companion object {
+    private fun buildSearchRequests(project: Project, searchScope: SearchScope, target: MarkdownSymbolWithUsages): Collection<Query<out Usage>> {
+      val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
+      val usages = buildSearchRequest(project, target, searchText, searchScope)
+      val selfUsage = buildDirectTargetQuery(createSelfUsage(target))
+      return listOf(usages, selfUsage)
+    }
+
+    private fun createSelfUsage(target: MarkdownSymbolWithUsages): PsiUsage {
+      val file = target.file
+      val actualFile = when (target) {
+        is MarkdownSymbolInsideInjection -> findInjectedHtmlFile(file) ?: file
+        else -> file
+      }
+      return MarkdownPsiUsage.create(actualFile, target.range, declaration = true)
+    }
+
     fun buildSearchRequest(project: Project, target: MarkdownSymbol, searchText: String, searchScope: SearchScope): Query<out PsiUsage> {
       val symbolPointer = Pointer.hardPointer(target)
       return SearchService.getInstance()
