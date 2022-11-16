@@ -6,11 +6,11 @@ class A {
     return new QuickFix() {
       public String getName() {
         return "some name";
-      };
+      }
 
       public String getFamilyName() {
         return someParameter + "123";
-      };
+      }
     };
   }
 
