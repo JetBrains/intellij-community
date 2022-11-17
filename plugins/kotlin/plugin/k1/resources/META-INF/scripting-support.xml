@@ -115,6 +115,11 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
+    <registryKey key="kotlin.scripting.filter.redundant.deps"
+                 description="Filter redundant dependencies from Kotlin/Gradle script dependencies like groovy/kotlin-daemon-embeddable/etc"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>
 

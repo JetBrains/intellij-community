@@ -5,6 +5,7 @@ import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.applyIf
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -82,8 +83,11 @@ private fun BuilderSnapshot.syncScriptEntities(filesToAddOrUpdate: Sequence<Virt
 private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: VirtualFile, project: Project): List<KotlinScriptLibraryEntity> {
     val configurationManager = ScriptConfigurationManager.getInstance(project)
 
-    val dependenciesClassFiles = configurationManager.getScriptDependenciesClassFiles(scriptFile).toMutableSet()
-    val dependenciesSourceFiles = configurationManager.getScriptDependenciesSourceFiles(scriptFile).toMutableSet()
+    val dependenciesClassFiles = configurationManager.getScriptDependenciesClassFiles(scriptFile)
+        .filterRedundantDependencies()
+
+    val dependenciesSourceFiles = configurationManager.getScriptDependenciesSourceFiles(scriptFile)
+        .filterRedundantDependencies()
 
     addIdeSpecificDependencies(project, scriptFile, dependenciesClassFiles, dependenciesSourceFiles)
 
@@ -131,6 +135,27 @@ private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: Virtu
 
     return scriptDependencies
 }
+
+internal fun Collection<VirtualFile>.filterRedundantDependencies() =
+    if (Registry.`is`("kotlin.scripting.filter.redundant.deps")) {
+        filterNotTo(hashSetOf()) {
+            it.name.startsWith("groovy") ||
+                    it.name.startsWith("kotlin-daemon-client") ||
+                    it.name.startsWith("kotlin-script-runtime") ||
+                    it.name.startsWith("kotlin-daemon-embeddable") ||
+                    it.name.startsWith("kotlin-util-klib") ||
+                    it.name.startsWith("kotlin-scripting-compiler-embeddable") ||
+                    it.name.startsWith("kotlin-scripting-compiler-impl-embeddable") ||
+                    it.name.startsWith("kotlin-compiler-embeddable") ||
+                    it.name.startsWith("resources") ||
+                    it.name.endsWith("-sources.jar") ||
+                    with(it.toString()) {
+                        contains("unzipped-distribution/gradle-") && contains("subprojects/")
+                    }
+        }
+    } else {
+        toMutableSet()
+    }
 
 fun VirtualFile.relativeName(project: Project): String {
     return if (ScratchUtil.isScratch(this)) presentableName
