@@ -21,16 +21,16 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
 
         val visibleSourceSets = dependsOnSourceSets + additionalVisibleSourceSets - sourceSet
 
-        val fromDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
+        val fromDataNode = getSiblingKotlinModuleData(sourceSet, gradleIdeaModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
             ?: continue
 
         /* Add dependencies from current sourceSet to all visible source sets (dependsOn, test to production, ...)*/
         for (visibleSourceSet in visibleSourceSets) {
-            val toDataNode = getSiblingKotlinModuleData(visibleSourceSet, gradleModule, ideModule, resolverCtx) ?: continue
+            val toDataNode = getSiblingKotlinModuleData(visibleSourceSet, gradleIdeaModule, ideModule, resolverCtx) ?: continue
             addDependency(fromDataNode, toDataNode, visibleSourceSet.isTestComponent)
         }
 
-        if (!processedModuleIds.add(getKotlinModuleId(gradleModule, sourceSet, resolverCtx))) continue
+        if (!processedModuleIds.add(getKotlinModuleId(gradleIdeaModule, sourceSet, resolverCtx))) continue
         val directDependencies = getDependencies(sourceSet).toSet()
         val directIntransitiveDependencies = getIntransitiveDependencies(sourceSet).toSet()
         val dependenciesFromVisibleSourceSets = getDependenciesFromVisibleSourceSets(visibleSourceSets)
