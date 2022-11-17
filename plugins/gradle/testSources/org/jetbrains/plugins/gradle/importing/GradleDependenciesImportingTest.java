@@ -1736,35 +1736,45 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourcesJavadocAttachmentFromGradleCache() throws Exception {
-    importProject(createBuildScriptBuilder()
-                    .withJavaPlugin()
-                    .withJUnit4() // download classes and sources - the default import settings
-                    .generate());
+    var dependency = "junit:junit:4.12";
+    var dependencyName = "Gradle: junit:junit:4.12";
+    var dependencyJar = "junit-4.12.jar";
+    var dependencySourcesJar = "junit-4.12-sources.jar";
+    var dependencyJavadocJar = "junit-4.12-javadoc.jar";
+
+    importProject(script(it -> {
+      it.withJavaPlugin();
+      it.withMavenCentral();
+      // download classes and sources - the default import settings
+      it.addTestImplementationDependency(dependency);
+    }));
     assertModules("project", "project.main", "project.test");
 
     WriteAction.runAndWait(() -> {
-      LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", "Gradle: junit:junit:4.12");
+      LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
       Library library = regularLibFromGradleCache.getLibrary();
       ApplicationManager.getApplication().runWriteAction(() -> library.getTable().removeLibrary(library));
     });
 
-    importProject(createBuildScriptBuilder()
-                    .withJavaPlugin()
-                    .withIdeaPlugin()
-                    .withJUnit4()
-                    .addPrefix(
-                      "idea.module {",
-                      "  downloadJavadoc = true",
-                      "  downloadSources = false", // should be already available in Gradle cache
-                      "}")
-                    .generate());
+    importProject(script(it -> {
+      it.withJavaPlugin();
+      it.withIdeaPlugin();
+      it.withMavenCentral();
+      // download classes and sources - the default import settings
+      it.addTestImplementationDependency(dependency);
+      it.addPrefix(
+        "idea.module {",
+        "  downloadJavadoc = true",
+        "  downloadSources = false", // should be already available in Gradle cache
+        "}");
+    }));
 
     assertModules("project", "project.main", "project.test");
 
-    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", "Gradle: junit:junit:4.12");
+    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
     assertThat(regularLibFromGradleCache.getRootFiles(OrderRootType.CLASSES))
       .hasSize(1)
-      .allSatisfy(file -> assertEquals("junit-4.12.jar", file.getName()));
+      .allSatisfy(file -> assertEquals(dependencyJar, file.getName()));
 
     String binaryPath = PathUtil.getLocalPath(regularLibFromGradleCache.getRootFiles(OrderRootType.CLASSES)[0]);
     Ref<Boolean> sourceFound = Ref.create(false);
@@ -1774,12 +1784,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     if (sourceFound.get()) {
       assertThat(regularLibFromGradleCache.getRootFiles(OrderRootType.SOURCES))
         .hasSize(1)
-        .allSatisfy(file -> assertEquals("junit-4.12-sources.jar", file.getName()));
+        .allSatisfy(file -> assertEquals(dependencySourcesJar, file.getName()));
     }
     if (docFound.get()) {
       assertThat(regularLibFromGradleCache.getRootFiles(JavadocOrderRootType.getInstance()))
         .hasSize(1)
-        .allSatisfy(file -> assertEquals("junit-4.12-javadoc.jar", file.getName()));
+        .allSatisfy(file -> assertEquals(dependencyJavadocJar, file.getName()));
     }
   }
 

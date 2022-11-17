@@ -24,7 +24,7 @@ fun getGroovyVersion(): String {
 }
 
 fun getJunit4Version(): String {
-  return "4.12"
+  return "4.13.2"
 }
 
 fun getJunit5Version(): String {
