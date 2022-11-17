@@ -8,8 +8,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -70,7 +68,7 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
 }
 
 open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
-  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement())
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
 
   private val taskInfo = CommitChecksTaskInfo()
   private val progressFlow = MutableStateFlow<InlineCommitChecksProgressIndicator?>(null)
