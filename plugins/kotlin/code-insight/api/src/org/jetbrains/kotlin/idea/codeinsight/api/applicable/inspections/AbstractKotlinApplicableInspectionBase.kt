@@ -22,6 +22,13 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>,
 ) : KotlinSingleElementInspection<ELEMENT>(elementType), KotlinApplicableToolBase<ELEMENT> {
     /**
+     * The action family name is an action name without any element-specific information. For example, the family name for an action
+     * "Replace 'get' call with indexing operator" would be "Replace 'get' or 'set' call with indexing operator".
+     *
+     * This is currently used as a fallback for when an element isn't available to build an action name, but may also be used in the future
+     * as a group name for multiple quick fixes, as [QuickFix.getFamilyName] intends. (Once the applicable inspections API supports
+     * multiple quick fixes.)
+     *
      * @see com.intellij.codeInspection.QuickFix.getFamilyName
      */
     abstract fun getActionFamilyName(): @IntentionFamilyName String

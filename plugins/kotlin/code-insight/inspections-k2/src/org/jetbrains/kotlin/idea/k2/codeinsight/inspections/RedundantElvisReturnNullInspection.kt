@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
 internal class RedundantElvisReturnNullInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>(KtBinaryExpression::class) {
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.redundant.elvis.return.null.descriptor")
-    override fun getActionName(element: KtBinaryExpression): String = KotlinBundle.message("remove.redundant.elvis.return.null.text")
+    override fun getProblemDescription(element: KtBinaryExpression): String = KotlinBundle.message("inspection.redundant.elvis.return.null.descriptor")
+    override fun getActionFamilyName(): String = KotlinBundle.message("remove.redundant.elvis.return.null.text")
 
     override fun getApplicabilityRange() = applicabilityRanges { binaryExpression: KtBinaryExpression ->
         val right =

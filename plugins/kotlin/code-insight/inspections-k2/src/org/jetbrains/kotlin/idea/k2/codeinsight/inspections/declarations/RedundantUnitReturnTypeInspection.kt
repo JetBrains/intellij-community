@@ -17,9 +17,10 @@ internal class RedundantUnitReturnTypeInspection :
     AbstractKotlinApplicableInspectionWithContext<KtNamedFunction, TypeInfo>(KtNamedFunction::class),
     CleanupLocalInspectionTool {
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.redundant.unit.return.type.display.name")
-    override fun getActionName(element: KtNamedFunction, context: TypeInfo): String =
-        KotlinBundle.message("inspection.redundant.unit.return.type.action.name")
+    override fun getProblemDescription(element: KtNamedFunction, context: TypeInfo): String =
+        KotlinBundle.message("inspection.redundant.unit.return.type.display.name")
+
+    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.redundant.unit.return.type.action.name")
 
     override fun getApplicabilityRange() = ApplicabilityRanges.CALLABLE_RETURN_TYPE
 

@@ -26,9 +26,11 @@ internal class ReplaceGetOrSetInspection :
 
     class Context(val calleeName: Name)
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.replace.get.or.set.display.name")
     override fun getProblemDescription(element: KtDotQualifiedExpression, context: Context): String =
         KotlinBundle.message("explicit.0.call", context.calleeName)
+
+    override fun getActionFamilyName(): String = KotlinBundle.message("replace.get.or.set.call.with.indexing.operator")
+
     override fun getActionName(element: KtDotQualifiedExpression, context: Context): String =
         KotlinBundle.message("replace.0.call.with.indexing.operator", context.calleeName)
 

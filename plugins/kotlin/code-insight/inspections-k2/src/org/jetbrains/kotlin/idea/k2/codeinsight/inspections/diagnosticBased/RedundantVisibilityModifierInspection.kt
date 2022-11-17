@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 internal class RedundantVisibilityModifierInspection :
     RedundantModifierInspectionBase<KtFirDiagnostic.RedundantVisibilityModifier>(KtTokens.VISIBILITY_MODIFIERS) {
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("redundant.visibility.modifier")
+    override fun getActionFamilyName(): String = KotlinBundle.message("remove.redundant.visibility.modifier")
 
     override fun getDiagnosticType() = KtFirDiagnostic.RedundantVisibilityModifier::class
 

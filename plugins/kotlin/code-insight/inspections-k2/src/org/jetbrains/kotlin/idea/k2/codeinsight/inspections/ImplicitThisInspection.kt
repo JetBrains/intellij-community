@@ -24,9 +24,10 @@ internal class ImplicitThisInspection :
         val isUnambiguousLabel: Boolean
     )
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.implicit.this.display.name")
-    override fun getActionName(element: KtExpression, context: ImplicitReceiverInfo): String =
-        KotlinBundle.message("inspection.implicit.this.action.name")
+    override fun getProblemDescription(element: KtExpression, context: ImplicitReceiverInfo): String =
+        KotlinBundle.message("inspection.implicit.this.display.name")
+
+    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.implicit.this.action.name")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
 

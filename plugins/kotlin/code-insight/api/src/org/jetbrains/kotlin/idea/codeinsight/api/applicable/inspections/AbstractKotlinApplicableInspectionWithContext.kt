@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
@@ -23,18 +24,17 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
     elementType: KClass<ELEMENT>,
 ) : AbstractKotlinApplicableInspectionBase<ELEMENT>(elementType), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
     /**
-     * [getProblemDescription] must be lightweight: it should not perform expensive computations so that it doesn't cause performance
-     * issues.
-     *
      * @see com.intellij.codeInspection.CommonProblemDescriptor.getDescriptionTemplate
      */
-    open fun getProblemDescription(element: ELEMENT, context: CONTEXT): @InspectionMessage String = getActionFamilyName()
+    abstract fun getProblemDescription(element: ELEMENT, context: CONTEXT): @InspectionMessage String
 
     /**
      * Returns the [ProblemHighlightType] for the inspection's registered problem.
      */
     open fun getProblemHighlightType(element: ELEMENT, context: CONTEXT): ProblemHighlightType =
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+
+    override fun getActionName(element: ELEMENT, context: CONTEXT): @IntentionName String = getActionFamilyName()
 
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
         val context = prepareContextWithAnalyze(element, needsReadAction = true) ?: return null

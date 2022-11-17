@@ -12,9 +12,10 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinApplicableInspection<KtValueArgumentList>(KtValueArgumentList::class) {
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.display.name")
-    override fun getActionName(element: KtValueArgumentList): String =
-        KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.action.name")
+    override fun getProblemDescription(element: KtValueArgumentList): String =
+        KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.display.name")
+
+    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.action.name")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtValueArgumentList> = ApplicabilityRanges.SELF
 
