@@ -422,6 +422,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         override fun rootsChanged(event: ModuleRootEvent) {
             if (event.isCausedByWorkspaceModelChangesOnly) return
 
+            // TODO: `invalidate()` to be drop when IDEA-298694 is fixed
+            //  Reason: unload modules are untracked with WorkspaceModel
+            invalidate()
+
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()
 

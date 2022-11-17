@@ -116,6 +116,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
     abstract inner class AbstractCache<Key : Any, Value : Any>(initializer: (AbstractCache<Key, Value>) -> Unit) :
         SynchronizedFineGrainedEntityCache<Key, Value>(project),
+        ModuleRootListener,
         WorkspaceModelChangeListener {
 
         @Volatile
@@ -125,6 +126,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(WorkspaceModelTopics.CHANGED, this)
+            connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
             subscribe(connection)
         }
 
@@ -164,6 +166,15 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         override fun checkKeyValidity(key: Module) {
             key.checkValidity()
+        }
+
+        override fun rootsChanged(event: ModuleRootEvent) {
+            // TODO: entire method to be drop when IDEA-298694 is fixed.
+            //  Reason: unload modules are untracked with WorkspaceModel
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
+            invalidate()
+            project.ideaModules().forEach(::get)
         }
 
         override fun modelChanged(event: VersionedStorageChange) {
@@ -246,7 +257,6 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         override fun subscribe(connection: MessageBusConnection) {
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
-            connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
         }
 
         override fun checkKeyValidity(key: Sdk) = Unit
@@ -283,7 +293,12 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             applyIfPossible {
                 // SDK could be changed (esp in tests) out of message bus subscription
                 val sdks = runReadAction { ProjectJdkTable.getInstance().allJdks }
-                invalidateEntries({ k, _ -> k !in sdks })
+
+                // TODO: `invalidate()` to be drop when IDEA-298694 is fixed
+                //  Reason: unload modules are untracked with WorkspaceModel
+                invalidate()
+                // TODO: `invalidateEntries(..)` to be uncommented when IDEA-298694 is fixed
+                //invalidateEntries({ k, _ -> k !in sdks })
 
                 // force calculation
                 sdks.forEach(::get)
