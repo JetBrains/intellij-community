@@ -54,6 +54,9 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
       try {
         return delegate.beforeFirstTask();
       }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
       catch (Exception e) {
         LOG.error(e);
         return false;
@@ -64,6 +67,9 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     public void afterLastTask() {
       try {
         delegate.afterLastTask();
+      }
+      catch (ProcessCanceledException pce) {
+        throw pce;
       }
       catch (Exception e) {
         LOG.error(e);
@@ -118,6 +124,9 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
           runBackgroundProcess(visibleIndicator);
         }
       });
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
     }
     catch (Throwable e) {
       LOG.error("Failed to start background index update task", e);
