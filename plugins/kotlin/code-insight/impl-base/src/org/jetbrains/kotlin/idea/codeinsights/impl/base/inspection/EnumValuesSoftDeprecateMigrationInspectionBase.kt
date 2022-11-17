@@ -42,6 +42,9 @@ abstract class EnumValuesSoftDeprecateMigrationInspectionBase : AbstractKotlinIn
             PsiElementVisitor.EMPTY_VISITOR
         } else {
             callExpressionVisitor(fun(callExpression: KtCallExpression) {
+                if (callExpression.text != "values()") {
+                    return
+                }
                 analyze(callExpression) {
                     if (!isOptInAllowed(callExpression, EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
                         return

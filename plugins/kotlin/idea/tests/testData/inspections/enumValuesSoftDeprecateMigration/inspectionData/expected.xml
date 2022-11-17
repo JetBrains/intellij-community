@@ -104,19 +104,6 @@
     <length>8</length>
   </problem>
   <problem>
-    <file>test.kt</file>
-    <line>32</line>
-    <module>light_idea_test_case</module>
-    <package>sample</package>
-    <entry_point TYPE="method" FQNAME="sample.TestKt void foo()" />
-    <problem_class id="EnumValuesMethodSoftDeprecateMigration" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</problem_class>
-    <description>'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9</description>
-    <highlighted_element>localEnumValuesStaticImport()</highlighted_element>
-    <language>kotlin</language>
-    <offset>4</offset>
-    <length>29</length>
-  </problem>
-  <problem>
     <file>optIn.kt</file>
     <line>6</line>
     <module>light_idea_test_case</module>

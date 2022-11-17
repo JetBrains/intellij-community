@@ -29,10 +29,10 @@ fun foo() {
     LocalEnumImportAlias.values()
     LocalEnumTypeAlias.values()
     values()
-    localEnumValuesStaticImport()
 
     // Must not report
     NotEnum.values()
     LocalEnum.values(false)
     JavaEnum.values(false)
+    localEnumValuesStaticImport()
 }
