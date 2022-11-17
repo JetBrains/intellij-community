@@ -2,14 +2,17 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -267,12 +270,25 @@ public final class CodeInsightUtil {
     return positionCursor(project, targetFile, lBrace != null ? lBrace : psiClass);
   }
 
-  public static Editor positionCursor(final Project project, PsiFile targetFile, @NotNull PsiElement element) {
+  @Nullable("null means unable to open the editor")
+  public static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
-    LOG.assertTrue(range != null, "element: " + element + "; valid: " + element.isValid());
+    LOG.assertTrue(range != null, element.getClass());
     int textOffset = range.getStartOffset();
-
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, targetFile.getVirtualFile(), textOffset);
+    if (IntentionPreviewUtils.isPreviewElement(targetFile)) {
+      Editor editor = IntentionPreviewUtils.getPreviewEditor();
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(textOffset);
+      }
+      return editor;
+    }
+    VirtualFile file = targetFile.getVirtualFile();
+    if (file == null) {
+      file = PsiUtilCore.getVirtualFile(element);
+      if (file == null) return null;
+    }
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, textOffset);
+    descriptor.setScrollType(ScrollType.MAKE_VISIBLE); // avoid centering caret in editor if it's already visible
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 

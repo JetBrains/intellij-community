@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
@@ -91,7 +92,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       final Template template = templateBuilder.buildTemplate();
       template.setToReformat(true);
 
-      final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
+      final Editor editor = CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), aClass);
       if (editor == null) return;
 
       Segment textRange = aClass.getTextRange();
@@ -99,7 +100,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       startTemplate(editor, template, project, null, getText());
     }
     else {
-      positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
+      CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
     }
   }
 

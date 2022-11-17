@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.CodeInsightUtil.positionCursor
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils

@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -79,7 +79,7 @@ public abstract class LanguageLevelQuickFix {
 
   protected void runTemplate(@Nullable Template template, @NotNull XmlTag tagProperty) {
     if (template == null) return;
-    Editor editor = CreateFromUsageBaseFix.positionCursor(project, tagProperty.getContainingFile(), tagProperty);
+    Editor editor = CodeInsightUtil.positionCursor(project, tagProperty.getContainingFile(), tagProperty);
     if (editor == null) return;
     template.setToReformat(true);
     TemplateManager.getInstance(project).startTemplate(editor, template, new TemplateFinishedEditing());

@@ -189,7 +189,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       final Template template = templateBuilder.buildTemplate();
       template.setToReformat(true);
 
-      final Editor editor = CreateFromUsageBaseFix.positionCursor(project, aClass.getContainingFile(), aClass);
+      final Editor editor = CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), aClass);
       if (editor == null) return;
 
       Segment textRange = aClass.getTextRange();
