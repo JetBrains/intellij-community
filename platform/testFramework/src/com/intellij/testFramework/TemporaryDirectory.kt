@@ -27,9 +27,12 @@ import java.util.function.Predicate
 import kotlin.properties.Delegates
 
 /**
- * fileName argument is not used as is for generated file or dir name - sortable UID is added as suffix.
- * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
- * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
+ * Provides the possibility to create a temporary directory during a test.
+ * The directory is not actually created by default; call [createDir] to do that.
+ *
+ * * The `fileName` argument is not used as is for generated file or dir name - sortable UID is added as suffix.
+ * * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
+ * * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
  */
 open class TemporaryDirectory : ExternalResource() {
   private val paths = SmartList<Path>()
