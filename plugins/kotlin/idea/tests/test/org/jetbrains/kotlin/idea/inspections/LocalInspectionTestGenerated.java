@@ -14133,6 +14133,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/setterBackingFieldAssignment/noBackingField.kt");
         }
 
+        @TestMetadata("onLeftBrace.kt")
+        public void testOnLeftBrace() throws Exception {
+            runTest("testData/inspectionsLocal/setterBackingFieldAssignment/onLeftBrace.kt");
+        }
+
         @TestMetadata("plusAssign.kt")
         public void testPlusAssign() throws Exception {
             runTest("testData/inspectionsLocal/setterBackingFieldAssignment/plusAssign.kt");
