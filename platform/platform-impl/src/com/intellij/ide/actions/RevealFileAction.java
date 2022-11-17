@@ -243,7 +243,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       try {
         WinNT.HRESULT result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
         if (!WinError.S_OK.equals(result)) {
-          LOG.error("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+          LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
         }
       }
       finally {
@@ -275,7 +275,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       try {
         CapturingProcessHandler handler;
         if (SystemInfo.isWindows) {
-          assert command.length == 1;
+          assert command.length == 1 : Arrays.toString(command);
           Process process = Runtime.getRuntime().exec(command[0]);  // no quoting/escaping is needed
           handler = new CapturingProcessHandler.Silent(process, null, command[0]);
         }
