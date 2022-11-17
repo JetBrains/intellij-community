@@ -155,7 +155,7 @@ fun getPresentablePath(path: @NonNls String): @NlsSafe String {
 }
 
 @JvmOverloads
-fun getCanonicalPath(path: @NonNls String, removeLastSlash: Boolean = true): @NonNls String {
+fun getCanonicalPath(path: @NlsSafe String, removeLastSlash: Boolean = true): @NonNls String {
   return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
 }
 

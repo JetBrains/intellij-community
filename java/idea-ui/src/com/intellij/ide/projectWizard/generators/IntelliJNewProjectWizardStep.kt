@@ -25,7 +25,10 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
@@ -103,7 +106,9 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         row(UIBundle.message("label.project.wizard.new.project.content.root")) {
           val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.content.root.title")
           val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor) { getPresentablePath(it.path) }
+            .withPathToTextConvertor(::getPresentablePath)
+            .withTextToPathConvertor(::getCanonicalPath)
+          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
             .bindText(contentRootProperty.toUiPathProperty())
             .align(AlignX.FILL)
             .validationOnApply { validateContentRoot() }
@@ -113,7 +118,9 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
           val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.module.file.location.title")
           val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor) { getPresentablePath(it.path) }
+            .withPathToTextConvertor(::getPresentablePath)
+            .withTextToPathConvertor(::getCanonicalPath)
+          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
             .bindText(moduleFileLocationProperty.toUiPathProperty())
             .align(AlignX.FILL)
             .validationOnApply { validateModuleFileLocation() }

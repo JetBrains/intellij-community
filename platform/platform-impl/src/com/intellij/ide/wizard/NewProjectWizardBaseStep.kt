@@ -21,8 +21,9 @@ import com.intellij.openapi.ui.getTextWidth
 import com.intellij.openapi.ui.shortenTextWithEllipsis
 import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.applyIf
 import java.io.File
@@ -101,10 +102,12 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
       }.bottomGap(BottomGap.SMALL)
 
       val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
-        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
-        val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
+        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+          .withFileFilter { it.isDirectory }
+          .withPathToTextConvertor(::getPresentablePath)
+          .withTextToPathConvertor(::getCanonicalPath)
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-        textFieldWithBrowseButton(title, context.project, fileChooserDescriptor, fileChosen)
+        textFieldWithBrowseButton(title, context.project, fileChooserDescriptor)
           .bindText(pathProperty.toUiPathProperty())
           .align(AlignX.FILL)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)

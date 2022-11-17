@@ -28,8 +28,9 @@ import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.annotations.Nls
 import java.io.File
@@ -193,11 +194,13 @@ abstract class CommonStarterInitialStep(
 
   private fun Row.projectLocationField(locationProperty: GraphProperty<String>,
                                        wizardContext: WizardContext): Cell<TextFieldWithBrowseButton> {
-    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
-    val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
+    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+      .withFileFilter { it.isDirectory }
+      .withPathToTextConvertor(::getPresentablePath)
+      .withTextToPathConvertor(::getCanonicalPath)
     val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
     val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-    return this.textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor, fileChosen)
+    return textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor)
       .bindText(property)
   }
 }
