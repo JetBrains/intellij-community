@@ -40,13 +40,18 @@ class GoToNamedElementCommand(text: String, line: Int) : AbstractCommand(text, l
       }
       editor.caretModel.addCaretListener(caretListener)
       actionCallback.doWhenProcessed { editor.caretModel.removeCaretListener(caretListener) }
-      psiFile.goToElement(position = position, actionCallback = actionCallback, editor = editor,
-                          predicate = { elementName == it.text && !hasCommentParent(psiFile!!, it) })
+      psiFile.goToElement(
+        position = position,
+        actionCallback = actionCallback,
+        editor = editor,
+        predicate = {
+          elementName == it.text && !hasCommentParent(psiFile!!, it)
+        })
       if (params.contains(SUPPRESS_ERROR_IF_NOT_FOUND) && !actionCallback.isDone) {
         actionCallback.setDone()
       }
       else if (!actionCallback.isDone) {
-        actionCallback.reject("not found element $params")
+        actionCallback.reject("not found element ${params.contentToString()}")
       }
     }
     return actionCallback.toPromise()

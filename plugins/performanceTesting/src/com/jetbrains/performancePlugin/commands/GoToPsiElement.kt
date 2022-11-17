@@ -22,10 +22,8 @@ class GoToPsiElementWalkingVisitor(private val position: String,
         actionCallback.setDone()
       }
       else {
-        ApplicationManager.getApplication().invokeLater {
-          editor.caretModel.moveToOffset(offset)
-          editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
-        }
+        editor.caretModel.moveToOffset(offset)
+        editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
       }
       stopWalking()
     }
