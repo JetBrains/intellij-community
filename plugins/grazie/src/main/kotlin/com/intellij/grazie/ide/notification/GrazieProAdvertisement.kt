@@ -71,6 +71,7 @@ internal fun advertiseGrazieProfessional(project: Project) {
     }
     val group = GrazieToastNotifications.GENERAL_GROUP
     group.createNotification(text, NotificationType.INFORMATION)
+      .setTitle(GrazieBundle.message("grazie.notification.pro.advertisement.title"))
       .addAction(InstallGrazieProfessionalAction())
       .addAction(remindLaterAction)
       .addAction(ignoreAction)
