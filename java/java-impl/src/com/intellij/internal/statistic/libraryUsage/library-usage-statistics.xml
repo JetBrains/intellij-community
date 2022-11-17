@@ -1,26 +1,48 @@
 <technologies>
-  <technology name="scalaz" root="scalaz"/>
-  <technology name="scalamock" root="org.scalamock"/>
-  <technology name="scalacheck" root="org.scalacheck"/>
-  <technology name="specs2" root="org.specs2"/>
-  <technology name="utest" root="utest"/>
-  <technology name="munit" root="munit"/>
-  <technology name="zio-test" root="zio.test"/>
+  <!-- Scala libraries -->
+  <technology name="akka-actor-typed" root="akka.actor.typed"/>
   <technology name="akka-http" root="akka.http"/>
-  <technology name="netty" root="io.netty"/>
-  <technology name="scalatra" root="org.scalatra"/>
-  <technology name="unfiltered" root="unfiltered"/>
-  <technology name="sttp" root="sttp.client3"/>
-  <technology name="http4s" root="org.http4s"/>
-  <technology name="twitter-util" root="com.twitter.util"/>
-  <technology name="shapeless" root="shapeless"/>
+  <technology name="akka-stream" root="akka.stream"/>
+  <technology name="algebird" root="com.twitter.algebird"/>
+  <technology name="caliban" root="caliban"/>
+  <technology name="cats-effect" root="cats.effect"/>
+  <technology name="chimney" root="chimney"/>
+  <technology name="chisel3" root="chisel3"/>
+  <technology name="circe" root="io.circe"/>
+  <technology name="deequ" root="deequ"/>
+  <technology name="delta-core" root="delta"/>
+  <technology name="doobie" root="doobie"/>
+  <technology name="elastic4s" root="elastic4s"/>
+  <technology name="elasticmq" root="elasticmq"/>
   <technology name="finagle" root="com.twitter.finagle"/>
-  <technology name="cats" root="cats"/>
-  <technology name="breeze" root="breeze"/>
-  <technology name="slick" root="slick.sql"/>
-  <technology name="fs2" root="fs2"/>
-  <technology name="monix" root="monix.reactive"/>
-  <technology name="zio" root="zio"/>
+  <technology name="finatra" root="com.twitter.finatra"/>
+  <technology name="gatling" root="io.gatling"/>
+  <technology name="json4s" root="json4s"/>
+  <technology name="jsoniter-scala" root="jsoniter_scala"/>
+  <technology name="laminar" root="laminar"/>
+  <technology name="macwire" root="macwire"/>
+  <technology name="magnolia" root="magnolia1"/>
+  <technology name="mleap" root="ml.combust.mleap"/>
+  <technology name="monocle" root="monocle"/>
+  <technology name="play" root="play"/>
+  <technology name="play-json" root="play.api.libs.json"/>
+  <technology name="pureconfig" root="pureconfig"/>
+  <technology name="quill" root="io.getquill"/>
+  <technology name="refined" root="refined"/>
+  <technology name="sangria" root="sangria"/>
+  <technology name="scala-async" root="scala.async"/>
+  <technology name="scalafx" root="scalafx"/>
+  <technology name="scalalikejdbc" root="scalalikejdbc"/>
+  <technology name="scalameta" root="scalameta"/>
+  <technology name="scalapb" root="scalapb"/>
+  <technology name="scio" root="scio"/>
+  <technology name="skunk" root="skunk"/>
+  <technology name="spark-core" root="spark"/>
+  <technology name="spire" root="spire"/>
+  <technology name="tapir" root="sttp.tapir"/>
+  <technology name="twitter-server" root="com.twitter.server"/>
+  <technology name="upickle" root="upickle"/>
+    
   <technology name="micronaut" root="io.micronaut"/>
   <technology name="akka-java" root="akka.actor"/>
   <technology name="vertx" root="io.vertx"/>
