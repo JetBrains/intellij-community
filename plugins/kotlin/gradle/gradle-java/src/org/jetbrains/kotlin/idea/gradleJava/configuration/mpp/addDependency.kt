@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
 import com.intellij.openapi.roots.DependencyScope
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 internal fun KotlinMPPGradleProjectResolver.Companion.addDependency(
     fromModule: DataNode<*>, toModule: DataNode<*>, dependOnTestModule: Boolean
@@ -33,3 +34,5 @@ internal fun KotlinMPPGradleProjectResolver.Companion.addDependency(
 
     fromModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
 }
+
+
