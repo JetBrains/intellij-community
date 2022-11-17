@@ -1392,6 +1392,189 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse")
+    public abstract static class WhenWithOnlyElse extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable")
+        public abstract static class SubjectVariable extends AbstractK2LocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse")
+            public static class BlockElse extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("multiReference.kt")
+                public void testMultiReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse/multiReference.kt");
+                }
+
+                @TestMetadata("noReference.kt")
+                public void testNoReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse/noReference.kt");
+                }
+
+                @TestMetadata("noReference2.kt")
+                public void testNoReference2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse/noReference2.kt");
+                }
+
+                @TestMetadata("singleReference.kt")
+                public void testSingleReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse/singleReference.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression")
+            public static class BlockElseUsedAsExpression extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("multiReference.kt")
+                public void testMultiReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression/multiReference.kt");
+                }
+
+                @TestMetadata("noReference.kt")
+                public void testNoReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression/noReference.kt");
+                }
+
+                @TestMetadata("noReference2.kt")
+                public void testNoReference2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression/noReference2.kt");
+                }
+
+                @TestMetadata("singleReference.kt")
+                public void testSingleReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression/singleReference.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse")
+            public static class SingleElse extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("multiReference.kt")
+                public void testMultiReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/multiReference.kt");
+                }
+
+                @TestMetadata("multiReferenceUsedAsExpression.kt")
+                public void testMultiReferenceUsedAsExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/multiReferenceUsedAsExpression.kt");
+                }
+
+                @TestMetadata("noReference.kt")
+                public void testNoReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/noReference.kt");
+                }
+
+                @TestMetadata("noReference2.kt")
+                public void testNoReference2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/noReference2.kt");
+                }
+
+                @TestMetadata("noReferenceUsedAsExpression.kt")
+                public void testNoReferenceUsedAsExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/noReferenceUsedAsExpression.kt");
+                }
+
+                @TestMetadata("noReferenceUsedAsExpression2.kt")
+                public void testNoReferenceUsedAsExpression2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/noReferenceUsedAsExpression2.kt");
+                }
+
+                @TestMetadata("singleReference.kt")
+                public void testSingleReference() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/singleReference.kt");
+                }
+
+                @TestMetadata("singleReferenceUsedAsExpression.kt")
+                public void testSingleReferenceUsedAsExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse/singleReferenceUsedAsExpression.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable")
+            public static class Uncategorized extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("hasAnnotation.kt")
+                public void testHasAnnotation() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasAnnotation.kt");
+                }
+
+                @TestMetadata("hasSameNameVariable.kt")
+                public void testHasSameNameVariable() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasSameNameVariable.kt");
+                }
+
+                @TestMetadata("hasSameNameVariable2.kt")
+                public void testHasSameNameVariable2() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasSameNameVariable2.kt");
+                }
+
+                @TestMetadata("hasSameNameVariable3.kt")
+                public void testHasSameNameVariable3() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasSameNameVariable3.kt");
+                }
+
+                @TestMetadata("hasSameNameVariable4.kt")
+                public void testHasSameNameVariable4() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/hasSameNameVariable4.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse")
+        public static class Uncategorized extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("complexExpression.kt")
+            public void testComplexExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/complexExpression.kt");
+            }
+
+            @TestMetadata("emptyElseBranchBlock.kt")
+            public void testEmptyElseBranchBlock() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/emptyElseBranchBlock.kt");
+            }
+
+            @TestMetadata("hasOtherBranches.kt")
+            public void testHasOtherBranches() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/hasOtherBranches.kt");
+            }
+
+            @TestMetadata("notExpression.kt")
+            public void testNotExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/notExpression.kt");
+            }
+
+            @TestMetadata("simpleExpression.kt")
+            public void testSimpleExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/simpleExpression.kt");
+            }
+
+            @TestMetadata("userKotlinDotRun.kt")
+            public void testUserKotlinDotRun() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/userKotlinDotRun.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

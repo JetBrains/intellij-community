@@ -17141,6 +17141,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/whenWithOnlyElse/complexExpression.kt");
             }
 
+            @TestMetadata("emptyElseBranchBlock.kt")
+            public void testEmptyElseBranchBlock() throws Exception {
+                runTest("testData/inspectionsLocal/whenWithOnlyElse/emptyElseBranchBlock.kt");
+            }
+
             @TestMetadata("hasOtherBranches.kt")
             public void testHasOtherBranches() throws Exception {
                 runTest("testData/inspectionsLocal/whenWithOnlyElse/hasOtherBranches.kt");
@@ -17154,6 +17159,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("simpleExpression.kt")
             public void testSimpleExpression() throws Exception {
                 runTest("testData/inspectionsLocal/whenWithOnlyElse/simpleExpression.kt");
+            }
+
+            @TestMetadata("userKotlinDotRun.kt")
+            public void testUserKotlinDotRun() throws Exception {
+                runTest("testData/inspectionsLocal/whenWithOnlyElse/userKotlinDotRun.kt");
             }
         }
     }

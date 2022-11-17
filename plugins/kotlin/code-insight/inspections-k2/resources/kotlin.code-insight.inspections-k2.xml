@@ -191,5 +191,12 @@
                      language="kotlin"
                      key="inspection.enum.values.method.soft.deprecate.migration.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions.WhenWithOnlyElseInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="false"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.when.with.only.else.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>
