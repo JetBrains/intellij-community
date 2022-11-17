@@ -80,23 +80,6 @@ fun fieldWithGearWithIndent(): JPanel {
   }
 }
 
-fun alignFieldsInTheNestedGrid(): JPanel {
-  return panel {
-    buttonGroup {
-      row {
-        RadioButton("In KeePass")()
-        row("Database:") {
-          JTextField()()
-          gearButton()
-        }
-        row("Master Password:") {
-          JBPasswordField()(comment = "Stored using weak encryption.")
-        }
-      }
-    }
-  }
-}
-
 fun noteRowInTheDialog(): JPanel {
   val passwordField = JPasswordField()
   return panel {

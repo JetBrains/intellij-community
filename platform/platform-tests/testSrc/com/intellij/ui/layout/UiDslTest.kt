@@ -46,11 +46,6 @@ abstract class UiDslTest {
   }
 
   @Test
-  fun `align fields in the nested grid`() {
-    doTest { alignFieldsInTheNestedGrid() }
-  }
-
-  @Test
   fun `note row in the dialog`() {
     doTest { noteRowInTheDialog() }
   }
