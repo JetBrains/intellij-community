@@ -713,6 +713,35 @@ class ExternalSystemStorageTest {
     checkFacetAndSubFacet(module, "web", null, MOCK_EXTERNAL_SOURCE)
   }
 
+  @Test
+  fun `load module with test properties`() = loadProjectAndCheckResults("moduleWithTestProperties") { project ->
+    val mainModuleName = "foo"
+    val testModuleName = "foo.test"
+    val moduleManager = ModuleManager.getInstance(project)
+    val testModule = moduleManager.findModuleByName(testModuleName)
+    val mainModule = moduleManager.findModuleByName(mainModuleName)
+    assertNotNull(testModule)
+    assertNotNull(mainModule)
+    val testModuleProperties = TestModuleProperties.getInstance(testModule!!)
+    assertEquals(mainModuleName, testModuleProperties.productionModuleName)
+    assertSame(mainModule, testModuleProperties.productionModule)
+  }
+
+  @Test
+  fun `test property for module`() {
+    loadModifySaveAndCheck("twoModules", "moduleWithTestProperties") {project ->
+      val mainModuleName = "foo"
+      val testModuleName = "foo.test"
+      val moduleManager = ModuleManager.getInstance(project)
+      val testModule = moduleManager.findModuleByName(testModuleName)
+      assertNotNull(testModule)
+      val testModuleProperties = TestModuleProperties.getInstance(testModule!!)
+      runWriteActionAndWait {
+        testModuleProperties.productionModuleName = mainModuleName
+      }
+    }
+  }
+
   @Test(expected = Test.None::class)
   fun `get modifiable models of renamed module`() = loadProjectAndCheckResults("singleModuleWithImportedSubFacet") { project ->
     runWriteActionAndWait {

@@ -42,6 +42,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridg
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import com.intellij.workspaceModel.storage.VersionedEntityStorage;
@@ -180,7 +181,13 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
       }
 
       for (Map.Entry<Module, String> entry: myProductionModulesForTestModules.entrySet()) {
-        TestModuleProperties.getInstance(entry.getKey()).setProductionModuleName(entry.getValue());
+        TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(entry.getKey());
+        if (testModuleProperties instanceof TestModulePropertiesBridge) {
+          ((TestModulePropertiesBridge)testModuleProperties).setProductionModuleNameToBuilder(entry.getValue(),
+                                                                                              getActualStorageBuilder());
+        } else {
+          testModuleProperties.setProductionModuleName(entry.getValue());
+        }
       }
 
       for (Map.Entry<Module, ModifiableFacetModel> each: myModifiableFacetModels.entrySet()) {

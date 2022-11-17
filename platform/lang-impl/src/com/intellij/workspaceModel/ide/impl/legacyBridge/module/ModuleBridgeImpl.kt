@@ -14,12 +14,14 @@ import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.EntityChange
@@ -63,6 +65,18 @@ internal class ModuleBridgeImpl(
           }
         }
       })
+    }
+
+    // This is temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
+    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+    val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
+                               ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
+    if (TestModuleProperties.testModulePropertiesBridgeEnabled()) {
+      registerService(TestModuleProperties::class.java, TestModulePropertiesBridge::class.java, corePluginDescriptor, false)
+    } else {
+      val classLoader = javaClass.classLoader
+      val implClass = classLoader.loadClass("com.intellij.openapi.roots.impl.TestModulePropertiesImpl")
+      registerService(TestModuleProperties::class.java, implClass, corePluginDescriptor, false)
     }
   }
 

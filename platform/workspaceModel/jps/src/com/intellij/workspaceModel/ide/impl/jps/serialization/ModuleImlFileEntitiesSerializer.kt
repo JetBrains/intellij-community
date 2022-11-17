@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
+import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.io.exists
@@ -33,6 +34,7 @@ import java.nio.file.Path
 import java.util.*
 
 internal const val DEPRECATED_MODULE_MANAGER_COMPONENT_NAME = "DeprecatedModuleOptionManager"
+internal const val TEST_MODULE_PROPERTIES_COMPONENT_NAME = "TestModuleProperties"
 private const val MODULE_ROOT_MANAGER_COMPONENT_NAME = "NewModuleRootManager"
 private const val URL_ATTRIBUTE = "url"
 private val STANDARD_MODULE_OPTIONS = setOf(
@@ -168,6 +170,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     loadExternalSystemOptions(builder, moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
     loadContentRoots(customRootsSerializer, builder, moduleEntity, reader, customDir, errorReporter, virtualFileManager,
                      moduleEntity.entitySource, false)
+    loadTestModuleProperty(builder, moduleEntity, reader, entitySource)
 
     return ModuleLoadedInfo(moduleEntity, customRootsSerializer, customDir)
   }
@@ -421,6 +424,17 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     storeSourceRootsOrder(orderOfItems, contentRootEntity, builder)
   }
 
+  private fun loadTestModuleProperty(builder: MutableEntityStorage, moduleEntity: ModuleEntity, reader: JpsFileContentReader,
+                                     entitySource: EntitySource) {
+    if (!TestModuleProperties.testModulePropertiesBridgeEnabled()) return
+    val component = reader.loadComponent(fileUrl.url, TEST_MODULE_PROPERTIES_COMPONENT_NAME) ?: return
+    val productionModuleName = component.getAttribute(PRODUCTION_MODULE_NAME_ATTRIBUTE).value
+    if (productionModuleName.isEmpty()) return
+    builder.modifyEntity(moduleEntity) {
+      this.testProperties = TestModulePropertiesEntity(ModuleId(productionModuleName), entitySource)
+    }
+  }
+
   private fun Element.getChildrenAndDetach(cname: String): List<Element> {
     val result = getChildren(cname).toList()
     result.forEach { it.detach() }
@@ -531,6 +545,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     for (it in CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList) {
       it.saveComponent(module, fileUrl, writer)
     }
+    saveTestModuleProperty(module, writer)
   }
 
   private fun saveRootManagerElement(module: ModuleEntity,
@@ -756,6 +771,14 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     return sourceRootTag
   }
 
+  private fun saveTestModuleProperty(moduleEntity: ModuleEntity, writer: JpsFileContentWriter) {
+    if (!TestModuleProperties.testModulePropertiesBridgeEnabled()) return
+    val testProperties = moduleEntity.testProperties ?: return
+    val testModulePropertyTag = Element(TEST_MODULE_PROPERTIES_COMPONENT_NAME)
+    testModulePropertyTag.setAttribute(PRODUCTION_MODULE_NAME_ATTRIBUTE, testProperties.productionModuleId.presentableName)
+    writer.saveComponent(fileUrl.url, TEST_MODULE_PROPERTIES_COMPONENT_NAME, testModulePropertyTag)
+  }
+
   override val additionalEntityTypes: List<Class<out WorkspaceEntity>>
     get() = listOf(SourceRootOrderEntity::class.java)
 
@@ -876,6 +899,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     writer.saveComponent(fileUrl, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME, null)
     writer.saveComponent(fileUrl, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
     writer.saveComponent(fileUrl, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
+    writer.saveComponent(fileUrl, TEST_MODULE_PROPERTIES_COMPONENT_NAME, null)
   }
 
   private fun getModuleFileUrl(source: JpsFileEntitySource.FileInDirectory,
