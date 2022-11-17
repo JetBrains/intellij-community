@@ -11086,6 +11086,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/insertExplicitTypeArguments/inapplicableTypeNotInferred.kt");
         }
 
+        @TestMetadata("inferredIntersectionTypeFromElvis.kt")
+        public void testInferredIntersectionTypeFromElvis() throws Exception {
+            runTest("testData/intentions/insertExplicitTypeArguments/inferredIntersectionTypeFromElvis.kt");
+        }
+
+        @TestMetadata("inferredTypeFromElvis.kt")
+        public void testInferredTypeFromElvis() throws Exception {
+            runTest("testData/intentions/insertExplicitTypeArguments/inferredTypeFromElvis.kt");
+        }
+
         @TestMetadata("insertImportForArg.kt")
         public void testInsertImportForArg() throws Exception {
             runTest("testData/intentions/insertExplicitTypeArguments/insertImportForArg.kt");
