@@ -1557,6 +1557,41 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-16622
+  public void testVariableEnumValueType() {
+    doTest("str",
+           """
+             from enum import Enum
+                          
+                          
+             class IDE(Enum):
+                 DS = 'DataSpell'
+                 PY = 'PyCharm'
+                          
+                          
+             IDE_TO_CLEAR_SETTINGS_FOR = IDE.PY
+             expr = IDE_TO_CLEAR_SETTINGS_FOR.value
+             """);
+  }
+
+  // PY-16622
+  public void testFunctionReturnEnumIntValueType() {
+    doTest("int",
+           """
+             from enum import Enum
+                          
+             class Fruit(Enum):
+                 Apple = 1
+                 Banana = 2
+                 
+             def f():
+                 return Fruit.Apple
+                 
+             res = f()
+             expr = res.value
+             """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
