@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
+import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
@@ -189,13 +190,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             )
         }
 
-        inner class ModelChangeListener : WorkspaceEntityChangeListener<ModuleEntity, Module>(project) {
-            override val entityClass: Class<ModuleEntity>
-                get() = ModuleEntity::class.java
-
-            override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
-                entity.findModule(storage)
-
+        inner class ModelChangeListener : ModuleEntityChangeListener(project) {
             override fun entitiesChanged(outdated: List<Module>) {
                 invalidate()
             }
@@ -405,7 +400,6 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun calculate(key: Module): LibraryDependencyCandidatesAndSdkInfos =
-            //computeLibrariesAndSdksUsedIn(key)
             throw UnsupportedOperationException("calculate(Module) should not be invoked due to custom impl of get()")
 
         override fun checkKeyValidity(key: Module) {
