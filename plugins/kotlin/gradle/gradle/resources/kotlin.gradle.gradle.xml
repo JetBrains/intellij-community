@@ -19,7 +19,7 @@
 
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.extrasSerialization"
-            interface="org.jetbrains.kotlin.idea.gradle.configuration.serialize.ExtrasSerializationService"
+            interface="org.jetbrains.kotlin.idea.gradle.configuration.serialize.KotlinExtrasSerializationService"
             dynamic="true"
     />
 

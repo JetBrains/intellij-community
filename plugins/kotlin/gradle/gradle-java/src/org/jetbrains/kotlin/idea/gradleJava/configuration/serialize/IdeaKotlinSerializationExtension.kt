@@ -3,14 +3,14 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.serialize
 
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.gradle.idea.serialize.*
-import org.jetbrains.kotlin.idea.gradle.configuration.serialize.ExtrasSerializationService
+import org.jetbrains.kotlin.idea.gradle.configuration.serialize.KotlinExtrasSerializationService
 import org.jetbrains.kotlin.tooling.core.Extras
 
 class IntellijIdeaKotlinSerializationContext : IdeaKotlinSerializationContext {
     override val logger: IdeaKotlinSerializationLogger = IntellijIdeaSerializationLogger
 
     override val extrasSerializationExtension: IdeaKotlinExtrasSerializationExtension = IdeaCompositeExtrasSerializationExtension(
-        ExtrasSerializationService.EP_NAME.extensionList.map { it.extension }
+      KotlinExtrasSerializationService.EP_NAME.extensionList.map { it.extension }
     )
 }
 
