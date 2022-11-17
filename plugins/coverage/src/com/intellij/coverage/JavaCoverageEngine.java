@@ -254,11 +254,11 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            long lastCoverageTimeStamp,
                                            String suiteToMerge,
                                            boolean coverageByTestEnabled,
-                                           boolean tracingEnabled,
+                                           boolean branchCoverage,
                                            boolean trackTestFolders, Project project) {
 
     return createSuite(covRunner, name, coverageDataFileProvider, filters, null, lastCoverageTimeStamp, coverageByTestEnabled,
-                       tracingEnabled, trackTestFolders, project);
+                       branchCoverage, trackTestFolders, project);
   }
 
   @Override
@@ -272,8 +272,8 @@ public class JavaCoverageEngine extends CoverageEngine {
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
                          new Date().getTime(),
-                         javaConfig.isTrackPerTestCoverage() && !javaConfig.isSampling(),
-                         !javaConfig.isSampling(),
+                         javaConfig.isTrackPerTestCoverage() && javaConfig.isTracingEnabled(),
+                         javaConfig.isTracingEnabled(),
                          javaConfig.isTrackTestFolders(), config.getConfiguration().getProject());
     }
     return null;
@@ -392,7 +392,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
     final List<Integer> uncoveredLines = new ArrayList<>();
     try {
-      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, !suite.isTracingEnabled(), suite.getProject());
+      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.getProject());
     }
     catch (Exception e) {
       LOG.error("Fail to process class from: " + classFile.getPath(), e);
@@ -691,9 +691,9 @@ public class JavaCoverageEngine extends CoverageEngine {
                                           String[] excludePatterns,
                                           long lastCoverageTimeStamp,
                                           boolean coverageByTestEnabled,
-                                          boolean tracingEnabled,
+                                          boolean branchCoverage,
                                           boolean trackTestFolders, Project project) {
-    return new JavaCoverageSuite(name, coverageDataFileProvider, filters, excludePatterns, lastCoverageTimeStamp, coverageByTestEnabled, tracingEnabled,
+    return new JavaCoverageSuite(name, coverageDataFileProvider, filters, excludePatterns, lastCoverageTimeStamp, coverageByTestEnabled, branchCoverage,
                                  trackTestFolders, acceptedCovRunner, this, project);
   }
 

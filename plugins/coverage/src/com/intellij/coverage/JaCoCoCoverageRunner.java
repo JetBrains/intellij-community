@@ -208,9 +208,9 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public void appendCoverageArgument(String sessionDataFilePath,
                                      String @Nullable [] patterns,
                                      SimpleJavaParameters parameters,
-                                     boolean collectLineInfo,
-                                     boolean isSampling) {
-    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null, null);
+                                     boolean testTracking,
+                                     boolean branchCoverage) {
+    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, testTracking, branchCoverage, null, null);
   }
 
   @Override
@@ -218,8 +218,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      String @Nullable [] patterns,
                                      String[] excludePatterns,
                                      SimpleJavaParameters javaParameters,
-                                     boolean collectLineInfo,
-                                     boolean isSampling,
+                                     boolean testTracking,
+                                     boolean branchCoverage,
                                      String sourceMapPath,
                                      @Nullable Project project) {
     String path;
@@ -268,7 +268,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   }
 
   @Override
-  public boolean isBranchInfoAvailable(boolean sampling) {
+  public boolean isBranchInfoAvailable(boolean branchCoverage) {
     return true;
   }
 

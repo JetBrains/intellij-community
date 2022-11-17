@@ -55,8 +55,8 @@ public final class CoverageFragment<T extends RunConfigurationBase<?>> extends N
     fragments.add(createRunnerFragment());
     SettingsEditorFragment<T, ?> tracing =
       SettingsEditorFragment.createTag("coverage.tracing", JavaCoverageBundle.message("coverage.settings.tracing"), null,
-                                       t -> !configuration.isSampling(),
-                                       (t, value) -> configuration.setSampling(!value));
+                                       t -> configuration.isTracingEnabled(),
+                                       (t, value) -> configuration.setTracingEnabled(value));
     tracing.setActionHint(JavaCoverageBundle.message("enables.accurate.collection"));
     fragments.add(tracing);
     SettingsEditorFragment<T, ?> tests =
