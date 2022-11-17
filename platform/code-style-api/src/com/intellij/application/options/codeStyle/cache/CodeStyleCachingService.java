@@ -18,6 +18,8 @@ public interface CodeStyleCachingService {
     return project.getService(CodeStyleCachingService.class);
   }
 
+  CodeStyleSettings tryGetSettings(@NotNull VirtualFile file);
+
   @Nullable
   CodeStyleSettings tryGetSettings(@NotNull PsiFile file);
 
