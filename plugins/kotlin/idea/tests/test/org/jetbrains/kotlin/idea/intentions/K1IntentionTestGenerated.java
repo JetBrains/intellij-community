@@ -17773,9 +17773,19 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/getAnd.kt");
         }
 
+        @TestMetadata("getAnd2.kt")
+        public void testGetAnd2() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getAnd2.kt");
+        }
+
         @TestMetadata("getIf.kt")
         public void testGetIf() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/getIf.kt");
+        }
+
+        @TestMetadata("getIf2.kt")
+        public void testGetIf2() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getIf2.kt");
         }
 
         @TestMetadata("getImplicitReceiver.kt")
@@ -17786,6 +17796,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("getOr.kt")
         public void testGetOr() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/getOr.kt");
+        }
+
+        @TestMetadata("getOr2.kt")
+        public void testGetOr2() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/getOr2.kt");
         }
 
         @TestMetadata("getReservedWord1.kt")

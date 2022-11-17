@@ -214,7 +214,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
     }
 
     private fun String.isSuitableAsPropertyAccessor(): Boolean =
-        canBePropertyAccessor(this) && commonGetterLikePrefixes.none { prefix -> this.startsWith(prefix) }
+        canBePropertyAccessor(this) && commonGetterLikePrefixes.none { prefix -> this.contains(prefix) }
 
     private fun checkWillResolveToProperty(
         resolvedCall: ResolvedCall<out CallableDescriptor>,
@@ -302,8 +302,8 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
     }
 }
 
-private val commonGetterLikePrefixes: Set<String> = setOf(
-    "getOr",
-    "getAnd",
-    "getIf",
+private val commonGetterLikePrefixes: Set<Regex> = setOf(
+    "^getOr[A-Z]".toRegex(),
+    "^getAnd[A-Z]".toRegex(),
+    "^getIf[A-Z]".toRegex(),
 )
