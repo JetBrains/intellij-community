@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
 import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
@@ -157,7 +157,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           .successOnEdt { textPane.setHtmlBody(it.body.convertToHtml(project)) }
       }
       contentPanel = panelHandle.panel
-      actionsPanel = if (details.viewerCanUpdate) NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
+      actionsPanel = if (details.viewerCanUpdate) NonOpaquePanel(HorizontalLayout(8)).apply {
         add(GHTextActions.createEditButton(panelHandle))
       }
       else null
@@ -176,7 +176,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
         .successOnEdt { textPane.setHtmlBody(it.convertToHtml(project)) }
     }
-    val actionsPanel = NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
+    val actionsPanel = NonOpaquePanel(HorizontalLayout(8)).apply {
       if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
       if (comment.viewerCanDelete) add(GHTextActions.createDeleteButton {
         commentsDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
@@ -201,7 +201,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       panelHandle = null
     }
 
-    val actionsPanel = NonOpaquePanel(HorizontalLayout(JBUIScale.scale(8))).apply {
+    val actionsPanel = NonOpaquePanel(HorizontalLayout(8)).apply {
       if (panelHandle != null && review.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
     }
 
