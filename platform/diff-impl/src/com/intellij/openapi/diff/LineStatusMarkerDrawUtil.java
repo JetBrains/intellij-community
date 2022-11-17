@@ -16,7 +16,6 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IntPair;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.JBUI;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
-import static com.intellij.diff.util.DiffUserDataKeys.CUSTOM_GUTTER_AREA_FUNC;
 
 public class LineStatusMarkerDrawUtil {
   @NotNull
@@ -196,14 +194,6 @@ public class LineStatusMarkerDrawUtil {
 
   @NotNull
   public static IntPair getGutterArea(@NotNull Editor editor) {
-    Producer<IntPair> gutterAreaFunc = editor.getUserData(CUSTOM_GUTTER_AREA_FUNC);
-    if (gutterAreaFunc != null) {
-      IntPair customGutterArea = gutterAreaFunc.produce();
-      if (customGutterArea != null) {
-        return customGutterArea;
-      }
-    }
-
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     if (ExperimentalUI.isNewUI()) {
