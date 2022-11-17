@@ -33,7 +33,7 @@ private class KotlinTargetReflectionImpl(private val instance: Any) : KotlinTarg
         gradleTarget.name
     }
     override val presetName: String? by lazy {
-        instance.callReflectiveAnyGetter("getPreset", logger)
+        instance.callReflectiveGetter<Any?>("getPreset", logger)
             ?.callReflectiveGetter("getName", logger)
     }
 
