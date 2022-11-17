@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -18,6 +19,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class SetterBackingFieldAssignmentInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
@@ -52,10 +55,13 @@ class SetterBackingFieldAssignmentInspection : AbstractKotlinInspection(), Clean
                     }
                 }) return
 
+            val name = accessor.namePlaceholder
+            val highlightRange = TextRange(name.startOffset, (accessor.rightParenthesis ?: name).endOffset).shiftLeft(accessor.startOffset)
             holder.registerProblem(
                 accessor,
                 KotlinBundle.message("existing.backing.field.is.not.assigned.by.the.setter"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                highlightRange,
                 AssignBackingFieldFix()
             )
         })
