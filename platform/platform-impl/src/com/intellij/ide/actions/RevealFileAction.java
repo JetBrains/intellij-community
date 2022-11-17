@@ -236,20 +236,22 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   private static void openViaShellApi(String dir, String toSelect) {
     if (LOG.isDebugEnabled()) LOG.debug("shell open: dir=" + dir + " toSelect=" + toSelect);
 
-    Pointer pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
-    Pointer[] apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
-    try {
-      WinNT.HRESULT result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, new WinDef.UINT(apIdl != null ? 1 : 0), apIdl, new WinDef.DWORD(0));
-      if (!WinError.S_OK.equals(result)) {
-        LOG.error("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+    ProcessIOExecutorService.INSTANCE.execute(() -> {
+      Pointer pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
+      Pointer[] apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
+      try {
+        WinNT.HRESULT result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, new WinDef.UINT(apIdl != null ? 1 : 0), apIdl, new WinDef.DWORD(0));
+        if (!WinError.S_OK.equals(result)) {
+          LOG.error("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+        }
       }
-    }
-    finally {
-      if (apIdl != null) {
-        Shell32Ex.INSTANCE.ILFree(apIdl[0]);
+      finally {
+        if (apIdl != null) {
+          Shell32Ex.INSTANCE.ILFree(apIdl[0]);
+        }
+        Shell32Ex.INSTANCE.ILFree(pIdl);
       }
-      Shell32Ex.INSTANCE.ILFree(pIdl);
-    }
+    });
   }
 
   private interface Shell32Ex extends StdCallLibrary {
