@@ -121,11 +121,11 @@ mod tests {
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::UserJRE})]
     #[cfg(target_os = "macos")]
     fn jre_is_user_jre_test(#[case] layout_spec: &LayoutSpec) {
-        let dump = run_launcher_and_get_dump(launcher_location);
+        let dump = run_launcher_and_get_dump(layout_spec);
 
         let idea_jdk = get_custom_user_file_with_java_path().join("idea.jdk");
         let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
-        let jbr_home = get_jbr_home(&Path::new(&idea_jdk_content).to_path_buf());
+        let jbr_home = get_jbr_home(&Path::new(&idea_jdk_content).to_path_buf()).unwrap();
         let resolved_jdk_path = Path::new(&idea_jdk_content);
         let resolved_jdk = get_bin_java_path(resolved_jdk_path);
         let metadata = idea_jdk.metadata().unwrap();
@@ -137,7 +137,7 @@ mod tests {
         assert!(resolved_jdk.is_executable(), "Java executable from JDK is not executable");
         assert_eq!(
             &dump.systemProperties["java.home"],
-            jbr_home.to_str().unwrap(),
+            jbr_home.to_str().expect("Can't display jbr_home"),
             "Resolved java is not from .config"
         );
     }
@@ -145,6 +145,7 @@ mod tests {
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::UserJRE})]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::UserJRE})]
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
     fn jre_is_user_jre_test(#[case] layout_spec: &LayoutSpec) {
         let dump = run_launcher_and_get_dump(layout_spec);
 
@@ -190,7 +191,7 @@ mod tests {
             unsupported_os => panic!("Unsupported OS: {unsupported_os}")
         };
 
-        let jbr_home = get_jbr_home(&jbr_dir);
+        let jbr_home = get_jbr_home(&jbr_dir).expect("Can't get jbr home");
 
         let java_executable = get_bin_java_path(&jbr_dir);
 
@@ -205,7 +206,7 @@ mod tests {
         //     "Java vendor is not JetBrains. Resolved java is not JBR");
         assert_eq!(
             &dump.systemProperties["java.home"],
-            jbr_home.to_str().unwrap(),
+            jbr_home.to_str().expect("Can't display jbr_home"),
             "Resolved java is not JBR"
         );
         // assert!(

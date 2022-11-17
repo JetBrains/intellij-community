@@ -8,8 +8,9 @@ use std::io::{BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output};
 use std::sync::Once;
-use log::{debug, warn};
+use log::{debug};
 use utils::{get_path_from_env_var, PathExt};
+use xplat_launcher::get_config_home;
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -49,11 +50,16 @@ fn prepare_test_env_impl(layout_kind: &LayoutSpec) -> Result<TestEnvironment> {
     let temp_dir_path = temp_dir.path();
 
     match layout_kind.java_type {
-        JavaType::JBR => {
+        JavaType::UserJRE => {
             create_dummy_config(&shared.jbrsdk_root);
             debug!("Custom user file with runtime is created. JBR is not included in layout")
         }
-        _ => {}
+        JavaType::EnvVar => {
+            debug!("Java type don't need custom user file with runtime. JBR is not included in layout")
+        }
+        JavaType::JBR => {
+            debug!("Java type don't need custom user file with runtime. JBR is included in layout")
+        }
     }
 
     layout_launcher(
@@ -84,7 +90,7 @@ pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     // gradle_command_wrapper("clean");
     gradle_command_wrapper("fatJar");
 
-    let jbrsdk_root = get_jbrsdk_from_project_root(&project_root);
+    let jbrsdk_root = get_jbrsdk_from_project_root(&project_root)?;
 
     let jar_path = Path::new("./resources/TestProject/build/libs/app.jar");
     let intellij_app_jar_source = jar_path.canonicalize()?;
@@ -98,7 +104,7 @@ pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     Ok(result)
 }
 
-pub fn get_jbrsdk_from_project_root(project_root: &PathBuf) -> PathBuf {
+pub fn get_jbrsdk_from_project_root(project_root: &Path) -> Result<PathBuf> {
     let gradle_jvm = project_root
         .join("resources")
         .join("TestProject")
@@ -111,11 +117,12 @@ pub fn get_jbrsdk_from_project_root(project_root: &PathBuf) -> PathBuf {
     };
 
     // jbrsdk-17.0.3-osx-x64-b469.37-f87880
-    let jbrsdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix).unwrap();
+    let jbrsdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix)?;
 
     // jbrsdk-17.0.3-x64-b469
-    let jbrsdk_root = get_child_dir(&jbrsdk_gradle_parent, java_dir_prefix).unwrap();
-    jbrsdk_root
+    let jbrsdk_root = get_child_dir(&jbrsdk_gradle_parent, java_dir_prefix)?;
+
+    Ok(jbrsdk_root)
 }
 
 pub struct TestEnvironmentShared {
@@ -206,7 +213,7 @@ pub enum JavaType {
 
 #[cfg(target_os = "linux")]
 pub fn layout_launcher(
-    layout_kind: &LayoutSpecification,
+    layout_kind: &LayoutSpec,
     target_dir: &Path,
     project_root: &Path,
     jbr_absolute_path: &Path,
@@ -255,7 +262,7 @@ pub fn layout_launcher(
 
 #[cfg(target_os = "macos")]
 pub fn layout_launcher(
-    layout_kind: &LayoutSpecification,
+    layout_kind: &LayoutSpec,
     target_dir: &Path,
     project_root: &Path,
     jbr_absolute_path: &Path,
@@ -455,59 +462,21 @@ pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
 }
 
 #[cfg(target_os = "linux")]
-pub fn get_jbr_home(jbr_dir: &PathBuf) -> PathBuf {
-    jbr_dir.canonicalize().unwrap()
+pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
+    Ok(jbr_dir.canonicalize()?)
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_jbr_home(jbr_dir: &PathBuf) -> PathBuf {
-    jbr_dir.join("Contents").join("Home").canonicalize().unwrap()
+pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
+    Ok(jbr_dir.join("Contents").join("Home").canonicalize()?)
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_jbr_home(jbr_dir: &PathBuf) -> PathBuf {
-    junction::get_target(jbr_dir).unwrap()
+pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
+    Ok(junction::get_target(jbr_dir)?)
 }
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
-fn get_config_home() -> PathBuf {
-    let home = match env::var("HOME") {
-        Ok(s) => {
-            debug!("User home directory resolved as '{s}'");
-            let path = PathBuf::from(s);
-            if !path.is_absolute() {
-                warn!("User home directory is not absolute, this may be a misconfiguration");
-            }
-
-            path
-        }
-        Err(e) => {
-            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
-
-            PathBuf::from("/")
-        }
-    };
-
-    Path::new(&home).join(".config")
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_config_home() -> PathBuf {
-    match dirs::home_dir() {
-        Some(path) => {
-            debug!("User home directory resolved as '{path:?}'");
-
-            path
-        }
-        None => {
-            warn!("Failed to get User Home dir. Using '/' as home dir");
-
-            PathBuf::from("/")
-        }
-    }.join(".config")
-}
-
-pub fn create_dummy_config(java_root: &PathBuf) {
+pub fn create_dummy_config(java_root: &Path) {
     let idea_config_path = get_custom_user_file_with_java_path();
     let idea_config_file = idea_config_path.join("idea.jdk");
 
@@ -637,7 +606,7 @@ pub fn run_launcher_and_get_dump_with_args(layout_kind: &LayoutSpec, args: &[&st
 
 pub fn run_launcher_and_get_dump_with_java_env(layout_specification: &LayoutSpec, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
     let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
+    let launcher_jdk = get_jbrsdk_from_project_root(&project_root).expect("Can't get jbrsdk from project root");
 
     run_launcher_and_get_dump_with_env_vars(layout_specification, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
 }

@@ -38,7 +38,7 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::File;
 use std::path::PathBuf;
-use log::{debug, error, LevelFilter};
+use log::{debug, error, LevelFilter, warn};
 use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
@@ -258,6 +258,88 @@ fn show_fail_to_start_message(title: &str, text: &str) {
         Err(e) => {
             // TODO: proper message
             error!("Failed to show error message: {e:?}")
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_config_home() -> PathBuf {
+    get_user_home().join(".config")
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_config_home() -> PathBuf {
+    get_user_home().join(".config")
+}
+
+// CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+#[cfg(target_os = "linux")]
+pub fn get_config_home() -> PathBuf {
+    let xdg_config_home = get_xdg_config_home();
+
+    match xdg_config_home {
+        Some(p) => { p }
+        None => { get_user_home().join(".config") }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn get_xdg_config_home() -> Option<PathBuf> {
+    let xdg_config_home = env::var("XDG_CONFIG_HOME").unwrap_or(String::from(""));
+    debug!("XDG_CONFIG_HOME={xdg_config_home}");
+
+    if xdg_config_home.is_empty() {
+        return None
+    }
+
+    let path = PathBuf::from(xdg_config_home);
+    if !path.is_absolute() {
+        // TODO: consider change
+        warn!("XDG_CONFIG_HOME is not set to an absolute path, this may be a misconfiguration");
+    }
+
+    Some(path)
+}
+
+
+// used in ${HOME}/.config
+// TODO: is this the same as env:
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn get_user_home() -> PathBuf {
+    // TODO: dirs::home_dir seems better then just simply using $HOME as it checks `getpwuid_r`
+
+    match env::var("HOME") {
+        Ok(s) => {
+            debug!("User home directory resolved as '{s}'");
+            let path = PathBuf::from(s);
+            if !path.is_absolute() {
+                warn!("User home directory is not absolute, this may be a misconfiguration");
+            }
+
+            path
+        }
+        Err(e) => {
+            // TODO: this seems wrong
+            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
+
+            PathBuf::from("/")
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn get_user_home() -> PathBuf {
+    match dirs::home_dir() {
+        Some(path) => {
+            debug!("User home directory resolved as '{path:?}'");
+
+            path
+        }
+        None => {
+            warn!("Failed to get User Home dir. Using '/' as home dir");
+
+            // Windows resolve it as the root of the system drive
+            PathBuf::from("/")
         }
     }
 }

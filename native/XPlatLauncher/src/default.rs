@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use log::{debug, warn};
 use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
-use crate::{LaunchConfiguration, ProductInfo};
+use crate::{get_config_home, LaunchConfiguration, ProductInfo};
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
@@ -298,7 +298,7 @@ impl DefaultLaunchConfiguration {
         let content = read_file_to_end(jre_path_file.as_path())?;
         let user_jre_path = Path::new(content.as_str());
 
-        let java_executable = get_bin_java_path(user_jre_path);
+        let java_executable = get_bin_java_path(&user_jre_path);
 
         match is_executable::is_executable(&java_executable) {
             true => { Ok(java_executable) }
@@ -571,85 +571,4 @@ fn get_ide_home(current_exe: &Path) -> Result<PathBuf> {
     }
 
     bail!("Failed to resolve ide_home in {max_lookup_count} attempts")
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_config_home() -> PathBuf {
-    get_user_home().join(".config")
-}
-
-#[cfg(target_os = "macos")]
-pub fn get_config_home() -> PathBuf {
-    get_user_home().join(".config")
-}
-
-// CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
-#[cfg(target_os = "linux")]
-pub fn get_config_home() -> PathBuf {
-    let xdg_config_home = get_xdg_config_home();
-
-    match xdg_config_home {
-        Some(p) => { p }
-        None => { get_user_home().join(".config") }
-    }
-}
-
-#[cfg(target_os = "linux")]
-fn get_xdg_config_home() -> Option<PathBuf> {
-    let xdg_config_home = env::var("XDG_CONFIG_HOME").unwrap_or(String::from(""));
-    debug!("XDG_CONFIG_HOME={xdg_config_home}");
-
-    if xdg_config_home.is_empty() {
-        return None
-    }
-
-    let path = PathBuf::from(xdg_config_home);
-    if !path.is_absolute() {
-        // TODO: consider change
-        warn!("XDG_CONFIG_HOME is not set to an absolute path, this may be a misconfiguration");
-    }
-
-    Some(path)
-}
-
-
-// used in ${HOME}/.config
-// TODO: is this the same as env:
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn get_user_home() -> PathBuf {
-    // TODO: dirs::home_dir seems better then just simply using $HOME as it checks `getpwuid_r`
-
-    match env::var("HOME") {
-        Ok(s) => {
-            debug!("User home directory resolved as '{s}'");
-            let path = PathBuf::from(s);
-            if !path.is_absolute() {
-                warn!("User home directory is not absolute, this may be a misconfiguration");
-            }
-
-            path
-        }
-        Err(e) => {
-            // TODO: this seems wrong
-            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
-
-            PathBuf::from("/")
-        }
-    }
-}
-
-#[cfg(target_os = "windows")]
-fn get_user_home() -> PathBuf {
-    match dirs::home_dir() {
-        Some(path) => {
-            debug!("User home directory resolved as '{path:?}'");
-
-            path
-        }
-        None => {
-            warn!("Failed to get User Home dir. Using '/' as home dir");
-
-            PathBuf::from("/")
-        }
-    }
 }

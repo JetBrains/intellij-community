@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
-use crate::default::get_config_home;
+use crate::get_config_home;
 use utils::{get_path_from_env_var, PathExt, read_file_to_end};
 use crate::{DefaultLaunchConfiguration, is_remote_dev, LaunchConfiguration};
 
