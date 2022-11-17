@@ -11,8 +11,8 @@ import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
+import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
@@ -521,10 +521,10 @@ open class CodeVisionHost(val project: Project) {
   }
 
   protected open fun openCodeVisionSettings(groupId: String? = null) {
-    InlayHintsConfigurable.showSettingsDialogForLanguage(project, Language.ANY) {
-      if (groupId == null) return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW
+    showInlaySettings(project, Language.ANY) {
+      if (groupId == null) return@showInlaySettings it.group == InlayGroup.CODE_VISION_GROUP_NEW
 
-      return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW && it.id == groupId
+      return@showInlaySettings it.group == InlayGroup.CODE_VISION_GROUP_NEW && it.id == groupId
     }
   }
 
