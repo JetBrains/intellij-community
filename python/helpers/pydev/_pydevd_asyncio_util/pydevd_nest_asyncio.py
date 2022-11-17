@@ -26,28 +26,77 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from _pydevd_bundle.pydevd_constants import IS_PY3K
-apply = None
+from _pydevd_bundle.pydevd_constants import IS_ASYNCIO_DEBUGGER_ENV
 
-if IS_PY3K:
+apply = None
+PyDevCoro = None
+
+if IS_ASYNCIO_DEBUGGER_ENV:
     import asyncio
     import asyncio.events as events
     import os
     import sys
     import threading
+    import contextvars
+    import inspect
+    import itertools
     from contextlib import contextmanager, suppress
-    from heapq import heappop
-    from _pydevd_bundle.pydevd_constants import IS_PY3K
+    from heapq import heappop, heappush
+    from _pydev_bundle.pydev_log import warn
+
+    _task_name_counter = itertools.count(1).__next__
+
+
+    class _PyDevCoro:
+        """ Internal coroutine wrapper """
+
+        def __init__(self, coroutine):
+            self.pydevd_coro = coroutine
+
+
+    class _PydevdAsyncioUtils:
+        @staticmethod
+        def get_event_loop(is_from_event=False):
+            try:
+                if is_from_event:
+                    loop = events.get_event_loop_policy().get_event_loop()
+                else:
+                    loop = asyncio.get_event_loop()
+            except:
+                loop = asyncio.new_event_loop()
+            return loop
+
+        @staticmethod
+        def try_to_get_internal_coro(coroutine):
+            if isinstance(coroutine, _PyDevCoro):
+                return True, coroutine.pydevd_coro
+            if isinstance(coroutine, asyncio.Task):
+                if hasattr(coroutine, '_is_internal') and coroutine._is_internal:
+                    return True, coroutine
+            return False, coroutine
+
+        @staticmethod
+        def try_to_get_internal_callback(task):
+            if isinstance(task, asyncio.Task):
+                callback = task._Task__step
+                if hasattr(task, '_is_internal') and task._is_internal:
+                    return True, callback
+                return False, callback
+            return False, task
 
 
     def _apply(loop=None):
-        """Patch asyncio to make its event loop reentrant."""
-        _patch_asyncio()
-        _patch_task()
-        _patch_tornado()
+        """ Patch asyncio to make its event loop reentrant. """
+        try:
+            _patch_asyncio()
+            _patch_task()
+            _patch_tornado()
 
-        loop = loop or asyncio.get_event_loop()
-        _patch_loop(loop)
+            loop = loop or asyncio.get_event_loop()
+            loop._compute_internal_coro = False
+            _patch_loop(loop)
+        except:
+            warn("Failed to patch asyncio library")
 
 
     def _patch_asyncio():
@@ -55,13 +104,16 @@ if IS_PY3K:
         Patch asyncio module to use pure Python tasks and futures,
         use module level _current_tasks, all_tasks and patch run method.
         """
+
+        def new_event_loop():
+            loop = asyncio.get_event_loop_policy().new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop._compute_internal_coro = False
+            _patch_loop(loop)
+            return loop
+
         def run(main, debug=False):
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                _patch_loop(loop)
+            loop = _PydevdAsyncioUtils.get_event_loop()
             loop.set_debug(debug)
             task = asyncio.ensure_future(main)
             try:
@@ -75,33 +127,58 @@ if IS_PY3K:
         def _get_event_loop(stacklevel=3):
             loop = events._get_running_loop()
             if loop is None:
-                try:
-                    loop = events.get_event_loop_policy().get_event_loop()
-                except:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    _patch_loop(loop)
+                loop = _PydevdAsyncioUtils.get_event_loop(is_from_event=True)
             return loop
 
-        if hasattr(asyncio, '_nest_patched'):
+        def ensure_future(coro_or_future, loop=None):
+            is_internal_coro, target_coroutine = _PydevdAsyncioUtils.try_to_get_internal_coro(coro_or_future)
+
+            if asyncio.futures.isfuture(target_coroutine):
+                if loop is not None and loop is not asyncio.futures._get_loop(target_coroutine):
+                    raise ValueError('The future belongs to a different loop than '
+                                     'the one specified as the loop argument')
+                return target_coroutine
+
+            if not asyncio.coroutines.iscoroutine(target_coroutine):
+                if inspect.isawaitable(target_coroutine):
+                    target_coroutine = asyncio.tasks._wrap_awaitable(target_coroutine)
+                else:
+                    raise TypeError('An asyncio.Future, a coroutine or an awaitable '
+                                    'is required')
+
+            if is_internal_coro:
+                coro_or_future.pydevd_coro = target_coroutine
+            else:
+                coro_or_future = target_coroutine
+
+            if loop is None:
+                loop = _PydevdAsyncioUtils.get_event_loop(is_from_event=True)
+            return loop.create_task(coro_or_future)
+
+        if hasattr(asyncio, '_pydevd_nest_patched'):
             return
-        if sys.version_info >= (3, 6, 0):
-            asyncio.Task = asyncio.tasks._CTask = asyncio.tasks.Task = \
-                asyncio.tasks._PyTask
-            asyncio.Future = asyncio.futures._CFuture = asyncio.futures.Future = \
-                asyncio.futures._PyFuture
-        if sys.version_info < (3, 7, 0):
-            asyncio.tasks._current_tasks = asyncio.tasks.Task._current_tasks
-            asyncio.all_tasks = asyncio.tasks.Task.all_tasks
+
+        asyncio.Task = asyncio.tasks._CTask = asyncio.tasks.Task = asyncio.tasks._PyTask
+        asyncio.Future = asyncio.futures._CFuture = asyncio.futures.Future = asyncio.futures._PyFuture
+
         if sys.version_info >= (3, 9, 0):
-            events._get_event_loop = events.get_event_loop = \
-                asyncio.get_event_loop = _get_event_loop
+            events._get_event_loop = events.get_event_loop = asyncio.get_event_loop = _get_event_loop
+
         asyncio.run = run
+        asyncio.ensure_future = ensure_future
+        asyncio.new_event_loop = new_event_loop
         asyncio._nest_patched = True
+        asyncio._pydevd_nest_patched = True
 
 
     def _patch_loop(loop):
         """Patch loop to make it reentrant."""
+
+        def _get_internal_coroutines(loop):
+            delta = loop._ready.copy()
+            for handle in loop._original_ready:
+                delta.remove(handle)
+            return delta
 
         def run_forever(self):
             with manage_run(self), manage_asyncgens(self):
@@ -113,6 +190,11 @@ if IS_PY3K:
 
         def run_until_complete(self, future):
             with manage_run(self):
+                is_internal_coro, _ = _PydevdAsyncioUtils.try_to_get_internal_coro(future)
+                if is_internal_coro:
+                    self._original_ready = self._ready.copy()
+                    self._compute_internal_coro = True
+
                 f = asyncio.ensure_future(future, loop=self)
                 if f is not future:
                     f._log_destroy_pending = False
@@ -121,8 +203,11 @@ if IS_PY3K:
                     if self._stopping:
                         break
                 if not f.done():
-                    raise RuntimeError(
-                        'Event loop stopped before Future completed.')
+                    raise RuntimeError('Event loop stopped before Future completed.')
+
+                if is_internal_coro:
+                    self._compute_internal_coro = False
+
                 return f.result()
 
         def _run_once(self):
@@ -148,13 +233,54 @@ if IS_PY3K:
                 handle = heappop(scheduled)
                 ready.append(handle)
 
-            for _ in range(len(ready)):
-                if not ready:
-                    break
-                handle = ready.popleft()
-                if not handle._cancelled:
-                    handle._run()
+            if self._compute_internal_coro:
+                internal_coroutines = _get_internal_coroutines(self)
+                for elem in internal_coroutines:
+                    try:
+                        ready.remove(elem)
+                        if not elem._cancelled:
+                            elem._run()
+                    except:
+                        pass
+            else:
+                for _ in range(len(ready)):
+                    if not ready or self._compute_internal_coro:
+                        break
+                    handle = ready.popleft()
+                    if not handle._cancelled:
+                        handle._run()
             handle = None
+
+        def call_at(self, when, callback, *args, context=None):
+            if when is None:
+                raise TypeError("when cannot be None")
+            self._check_closed()
+            _, target_callback = _PydevdAsyncioUtils.try_to_get_internal_callback(callback)
+            if self._debug:
+                self._check_thread()
+                self._check_callback(target_callback, 'call_at')
+
+            timer = events.TimerHandle(when, target_callback, args, self, context)
+
+            if timer._source_traceback:
+                del timer._source_traceback[-1]
+            heappush(self._scheduled, timer)
+            timer._scheduled = True
+            return timer
+
+        def call_soon(self, callback, *args, context=None):
+            self._check_closed()
+            _, target_callback = _PydevdAsyncioUtils.try_to_get_internal_callback(callback)
+            if self._debug:
+                self._check_thread()
+                self._check_callback(target_callback, 'call_soon')
+
+            handle = events.Handle(target_callback, args, self, context)
+            if handle._source_traceback:
+                del handle._source_traceback[-1]
+            self._ready.append(handle)
+
+            return handle
 
         @contextmanager
         def manage_run(self):
@@ -205,7 +331,7 @@ if IS_PY3K:
             """Do not throw exception if loop is already running."""
             pass
 
-        if hasattr(loop, '_nest_patched'):
+        if hasattr(loop, '_pydevd_nest_patched'):
             return
         if not isinstance(loop, asyncio.BaseEventLoop):
             raise ValueError('Can\'t patch loop of type %s' % type(loop))
@@ -213,14 +339,16 @@ if IS_PY3K:
         cls.run_forever = run_forever
         cls.run_until_complete = run_until_complete
         cls._run_once = _run_once
+        cls.call_soon = call_soon
+        cls.call_at = call_at
         cls._check_running = _check_running
-        cls._check_runnung = _check_running  # typo in Python 3.7 source
         cls._num_runs_pending = 0
         cls._is_proactorloop = (
                 os.name == 'nt' and issubclass(cls, asyncio.ProactorEventLoop))
         if sys.version_info < (3, 7, 0):
             cls._set_coroutine_origin_tracking = cls._set_coroutine_wrapper
         cls._nest_patched = True
+        cls._pydevd_nest_patched = True
 
 
     def _patch_task():
@@ -236,27 +364,52 @@ if IS_PY3K:
                 else:
                     curr_tasks[task._loop] = curr_task
 
+        def task_new_init(self, coro, loop=None, name=None, context=None):
+            asyncio.futures.Future.__init__(self, loop=loop)
+            if self._source_traceback:
+                del self._source_traceback[-1]
+            self._is_internal, target_coroutine = _PydevdAsyncioUtils.try_to_get_internal_coro(coro)
+            if not asyncio.coroutines.iscoroutine(target_coroutine):
+                self._log_destroy_pending = False
+                raise TypeError('a coroutine was expected, got %s' % target_coroutine)
+
+            if name is None:
+                self._name = 'Task-%s' %_task_name_counter()
+            else:
+                self._name = str(name)
+
+            self._num_cancels_requested = 0
+            self._must_cancel = False
+            self._fut_waiter = None
+            self._coro = target_coroutine
+            if context is None:
+                self._context = contextvars.copy_context()
+            else:
+                self._context = context
+
+            self._loop.call_soon(self, context=self._context)
+            asyncio.tasks._register_task(self)
+
         Task = asyncio.Task
-        if hasattr(Task, '_nest_patched'):
+        if hasattr(Task, '_pydevd_nest_patched'):
             return
-        if sys.version_info >= (3, 7, 0):
 
-            def enter_task(loop, task):
-                curr_tasks[loop] = task
+        Task.__init__ = task_new_init
 
-            def leave_task(loop, task):
-                curr_tasks.pop(loop, None)
+        def enter_task(loop, task):
+            curr_tasks[loop] = task
 
-            asyncio.tasks._enter_task = enter_task
-            asyncio.tasks._leave_task = leave_task
-            curr_tasks = asyncio.tasks._current_tasks
-            step_orig = Task._Task__step
-            Task._Task__step = step
-        else:
-            curr_tasks = Task._current_tasks
-            step_orig = Task._step
-            Task._step = step
+        def leave_task(loop, task):
+            curr_tasks.pop(loop, None)
+
+        asyncio.tasks._enter_task = enter_task
+        asyncio.tasks._leave_task = leave_task
+        curr_tasks = asyncio.tasks._current_tasks
+        step_orig = Task._Task__step
+        Task._Task__step = step
+
         Task._nest_patched = True
+        Task._pydevd_nest_patched = True
 
 
     def _patch_tornado():
@@ -270,4 +423,6 @@ if IS_PY3K:
             if asyncio.Future not in tc.FUTURES:
                 tc.FUTURES += (asyncio.Future,)
 
+
     apply = _apply
+    PyDevCoro = _PyDevCoro

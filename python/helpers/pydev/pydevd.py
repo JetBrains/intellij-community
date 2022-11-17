@@ -28,7 +28,7 @@ from collections import defaultdict
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, get_current_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
-    IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON, GOTO_HAS_RESPONSE
+    IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON, GOTO_HAS_RESPONSE, IS_ASYNCIO_DEBUGGER_ENV
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -1485,6 +1485,10 @@ class PyDB(object):
         # Note: important: set the tracing right before calling _exec.
         if set_trace:
             self.enable_tracing()
+
+        if IS_ASYNCIO_DEBUGGER_ENV:
+            from _pydevd_asyncio_util.pydevd_nest_asyncio import apply
+            apply()
 
         return self._exec(is_module, entry_point_fn, module_name, file, globals, locals)
 
