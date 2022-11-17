@@ -20,11 +20,11 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import java.util.IdentityHashMap
+import java.util.*
 
 internal class LibrariesAndSdkContributors(private val project: Project,
                                            private val rootFileSupplier: RootFileSupplier,
-                                           private val fileSets: MultiMap<VirtualFile, StoredFileSet>,
+                                           private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
                                            private val fileSetsByPackagePrefix: MultiMap<String, WorkspaceFileSetImpl>
 ) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
   private val sdkRoots = MultiMap.create<Sdk, VirtualFile>()

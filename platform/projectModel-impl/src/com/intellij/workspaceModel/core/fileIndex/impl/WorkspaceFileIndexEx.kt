@@ -6,12 +6,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
-   * An internal variant of [findFileSetWithCustomData] method which provides more information if [file] isn't included in the workspace.
+   * An internal variant of [findFileSetWithCustomData] method which provides more information if [file] isn't included in the workspace
+   * or if multiple file sets are associated with [file]. 
    */
   fun getFileInfo(file: VirtualFile,
                   honorExclusion: Boolean,
@@ -63,6 +67,12 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   }
 }
 
+/**
+ * A base interface for instances which may be returned from [WorkspaceFileIndexEx.getFileInfo]:
+ * * [NonWorkspace] if no file set is associated;
+ * * [WorkspaceFileSetWithCustomData] if there is a single file set;
+ * * [MultipleWorkspaceFileSets] if there are several associated file sets.
+ */
 sealed interface WorkspaceFileInternalInfo {
   enum class NonWorkspace : WorkspaceFileInternalInfo {
     /** File or one of its parents is marked as 'ignored' */
@@ -75,4 +85,9 @@ sealed interface WorkspaceFileInternalInfo {
     /** File is invalid */
     INVALID
   }
+}
+
+internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
+  val fileSets: List<WorkspaceFileSetWithCustomData<*>>
+  fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetWithCustomData<*>?
 }

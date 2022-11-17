@@ -34,7 +34,7 @@ internal class NonIncrementalContributors(private val project: Project,
   private var upToDate = false
   private val lock = Any()
 
-  fun updateIfNeeded(fileSets: MultiMap<VirtualFile, StoredFileSet>, fileSetsByPackagePrefix: MultiMap<String, WorkspaceFileSetImpl>) {
+  fun updateIfNeeded(fileSets: MutableMap<VirtualFile, StoredFileSetCollection>, fileSetsByPackagePrefix: MultiMap<String, WorkspaceFileSetImpl>) {
     if (!upToDate) {
       ApplicationManager.getApplication().assertReadAccessAllowed()
       val newExcludedRoots = computeCustomExcludedRoots()
@@ -59,9 +59,9 @@ internal class NonIncrementalContributors(private val project: Project,
             fileSets.putValue(it.key, ExcludedFileSet.ByFileKind(it.intValue, NonIncrementalMarker))
             newRoots.add(it.key)
           }
-          newFileSets.entrySet().forEach { (root, sets) ->
-            fileSets.putValues(root, sets)
-            for (set in sets) {
+          newFileSets.forEach { (root, sets) ->
+            sets.forEach { set ->
+              fileSets.putValue(root, set)
               val fileSet = set as? WorkspaceFileSetImpl
               if (fileSet != null && fileSet.data is JvmPackageRootData) {
                 fileSetsByPackagePrefix.putValue("", fileSet)
@@ -115,8 +115,8 @@ internal class NonIncrementalContributors(private val project: Project,
     return result
   }
 
-  private fun computeFileSets(): MultiMap<VirtualFile, StoredFileSet> {
-    val result = MultiMap.create<VirtualFile, StoredFileSet>()
+  private fun computeFileSets(): Map<VirtualFile, StoredFileSetCollection> {
+    val result = HashMap<VirtualFile, StoredFileSetCollection>()
     AdditionalLibraryRootsProvider.EP_NAME.extensionList.forEach { provider ->
       provider.getAdditionalProjectLibraries(project).forEach { library ->
         fun registerRoots(files: MutableCollection<VirtualFile>, kind: WorkspaceFileKind, fileSetData: WorkspaceFileSetData) {
