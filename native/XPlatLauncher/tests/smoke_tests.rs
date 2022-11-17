@@ -251,6 +251,7 @@ mod tests {
         );
     }
 
+    #[cfg(target_os = "freebsd")]
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::EnvVar})]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::PluginsBin, java_type: JavaType::EnvVar})]
