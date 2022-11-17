@@ -7,9 +7,8 @@ use std::path::{Path, PathBuf};
 use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
-use crate::default::{get_cache_home, get_config_home, get_logs_home};
 use utils::{get_path_from_env_var, PathExt, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, is_remote_dev, LaunchConfiguration};
+use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, is_remote_dev, LaunchConfiguration};
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,

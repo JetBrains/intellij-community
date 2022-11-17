@@ -51,7 +51,7 @@ fn prepare_test_env_impl(layout_kind: &LayoutSpec) -> Result<TestEnvironment> {
 
     match layout_kind.java_type {
         JavaType::UserJRE => {
-            create_dummy_config(&shared.jbrsdk_root);
+            create_dummy_config(&shared.jbrsdk_root)?;
             debug!("Custom user file with runtime is created. JBR is not included in layout")
         }
         JavaType::EnvVar => {
@@ -487,23 +487,27 @@ pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
     Ok(junction::get_target(jbr_dir)?)
 }
 
-pub fn create_dummy_config(java_root: &Path) {
-    let idea_config_path = get_custom_user_file_with_java_path();
+pub fn create_dummy_config(java_root: &Path) -> Result<()> {
+    let idea_config_path = get_custom_user_file_with_java_path()?;
     let idea_config_file = idea_config_path.join("idea.jdk");
 
     if !idea_config_file.exists() {
-        fs::create_dir_all(idea_config_path).unwrap();
+        fs::create_dir_all(idea_config_path)?;
         let idea_jdk_content = java_root.to_str().unwrap().as_bytes();
         let mut idea_jdk_file = File::create(&idea_config_file).expect("Fail to create idea.jdk");
         idea_jdk_file.write_all(idea_jdk_content).expect("Fail to write in idea.jdk");
     }
+
+    Ok(())
 }
 
-pub fn get_custom_user_file_with_java_path() -> PathBuf {
-    let config_home_path = get_config_home();
-    config_home_path
+pub fn get_custom_user_file_with_java_path() -> Result<PathBuf> {
+    let config_home_path = get_config_home()?;
+    let config_path = config_home_path
         .join("JetBrains")
-        .join("IntelliJIdea2022.3") //todo
+        .join("IntelliJIdea2022.3"); //todo
+
+    Ok(config_path)
 }
 
 // TODO: test for additionalJvmArguments in product-info.json being set

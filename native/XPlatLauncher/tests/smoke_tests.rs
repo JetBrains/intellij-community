@@ -123,7 +123,7 @@ mod tests {
     fn jre_is_user_jre_test(#[case] layout_spec: &LayoutSpec) {
         let dump = run_launcher_and_get_dump(layout_spec);
 
-        let idea_jdk = get_custom_user_file_with_java_path().join("idea.jdk");
+        let idea_jdk = get_custom_user_file_with_java_path().unwrap().join("idea.jdk");
         let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
         let jbr_home = get_jbr_home(&Path::new(&idea_jdk_content).to_path_buf()).unwrap();
         let resolved_jdk_path = Path::new(&idea_jdk_content);
@@ -149,7 +149,7 @@ mod tests {
     fn jre_is_user_jre_test(#[case] layout_spec: &LayoutSpec) {
         let dump = run_launcher_and_get_dump(layout_spec);
 
-        let idea_jdk = get_custom_user_file_with_java_path().join("idea.jdk");
+        let idea_jdk = get_custom_user_file_with_java_path().unwrap().join("idea.jdk");
         let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
         let resolved_jdk_path = Path::new(&idea_jdk_content);
         let resolved_jdk = get_bin_java_path(resolved_jdk_path);
