@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.ClickListener
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -150,23 +149,6 @@ object GHPRReviewThreadComponent {
         }
       }.installOn(this)
     }
-
-    val outdatedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.thread.outdated")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
-
-    val resolvedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.resolved")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
-
-
-    thread.addAndInvokeStateChangeListener {
-      outdatedLabel.isVisible = thread.isOutdated
-      resolvedLabel.isVisible = thread.isResolved
-    }
-
     return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
       border = JBUI.Borders.empty(10)
 
@@ -176,11 +158,8 @@ object GHPRReviewThreadComponent {
         foreground = UIUtil.getContextHelpForeground()
       })
 
-      add(outdatedLabel, CC().hideMode(3))
-      add(resolvedLabel, CC().hideMode(3))
-
-      add(collapseButton, CC().hideMode(3))
-      add(expandButton, CC().hideMode(3))
+      add(collapseButton, CC().hideMode(3).gapLeft("10:push"))
+      add(expandButton, CC().hideMode(3).gapLeft("10:push"))
     }
   }
 

@@ -7,8 +7,8 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.JBDateFormat
-import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Panels
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -18,6 +18,7 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.util.*
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -36,20 +37,10 @@ object GHPRTimelineItemUIUtil {
                  date: Date?,
                  content: JComponent,
                  actionsPanel: JComponent? = null): JComponent {
-    return createItem(avatarIconsProvider, actor, date, content, TIMELINE_CONTENT_WIDTH, actionsPanel)
+    return createItem(avatarIconsProvider, actor, date, content, TIMELINE_CONTENT_WIDTH, actionsPanel = actionsPanel)
   }
 
-  fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
-                 actor: GHActor,
-                 date: Date?,
-                 content: JComponent,
-                 maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
-                 actionsPanel: JComponent? = null): JComponent {
-    val icon = avatarIconsProvider.getIcon(actor.avatarUrl.nullize(), MAIN_AVATAR_SIZE)
-    val iconLabel = JLabel(icon).apply {
-      toolTipText = actor.login
-    }
-
+  private fun createTitleTextPane(actor: GHActor, date: Date?): HtmlEditorPane {
     val titleText = HtmlBuilder()
       .appendLink(actor.url, actor.getPresentableName())
       .append(HtmlChunk.nbsp())
@@ -61,6 +52,46 @@ object GHPRTimelineItemUIUtil {
     val titleTextPane = HtmlEditorPane(titleText).apply {
       foreground = UIUtil.getContextHelpForeground()
     }
+    return titleTextPane
+  }
+
+  fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
+                 actor: GHActor,
+                 date: Date?,
+                 content: JComponent,
+                 maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
+                 actionsPanel: JComponent? = null): JComponent {
+    val icon = avatarIconsProvider.getIcon(actor.avatarUrl, MAIN_AVATAR_SIZE)
+    val titleTextPane = createTitleTextPane(actor, date)
+    return createItem(icon, titleTextPane, content, maxContentWidth, actionsPanel = actionsPanel)
+  }
+
+  fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
+                 actor: GHActor,
+                 date: Date?,
+                 content: JComponent,
+                 maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
+                 additionalTitle: JComponent? = null,
+                 actionsPanel: JComponent? = null,
+                 additionalContent: JComponent? = null): JComponent {
+    val icon = avatarIconsProvider.getIcon(actor.avatarUrl, MAIN_AVATAR_SIZE)
+    val titleTextPane = createTitleTextPane(actor, date)
+    val titlePanel = Panels.simplePanel(10, 0).addToCenter(titleTextPane).andTransparent().apply {
+      if (additionalTitle != null) {
+        addToRight(additionalTitle)
+      }
+    }
+
+    return createItem(icon, titlePanel, content, maxContentWidth, additionalContent, actionsPanel)
+  }
+
+  private fun createItem(mainIcon: Icon,
+                         title: JComponent,
+                         content: JComponent,
+                         maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
+                         additionalContent: JComponent? = null,
+                         actionsPanel: JComponent? = null): JComponent {
+    val iconLabel = JLabel(mainIcon)
 
     return JPanel(null).apply {
       isOpaque = false
@@ -69,20 +100,27 @@ object GHPRTimelineItemUIUtil {
       layout = MigLayout(LC()
                            .fillX()
                            .gridGap("0", "0")
-                           .insets("0", "0", "0", "0"))
+                           .insets("0", "0", "0", "0")
+                           .hideMode(3))
 
       add(iconLabel, CC().spanY(2).alignY("top")
         .gapRight("$AVATAR_CONTENT_GAP"))
 
-      add(titleTextPane, CC().grow().push().gapRight("push")
+      add(title, CC().push().split(2)
         .maxWidth("$TIMELINE_CONTENT_WIDTH"))
 
       if (actionsPanel != null) {
-        add(actionsPanel, CC().gapLeft("10"))
+        add(actionsPanel, CC().gapLeft("10:push"))
       }
-      add(content, CC().push().grow().spanX(2).newline()
+      add(content, CC().push().grow().newline()
         .gapTop("4")
         .minWidth("0").maxWidth("$maxContentWidth"))
+
+      if (additionalContent != null) {
+        add(additionalContent, CC().push().grow().newline().spanX(2)
+          .gapTop("4")
+          .minWidth("0").maxWidth("$TIMELINE_ITEM_WIDTH"))
+      }
     }
   }
 

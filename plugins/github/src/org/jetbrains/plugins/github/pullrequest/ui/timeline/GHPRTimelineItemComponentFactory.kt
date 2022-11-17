@@ -15,10 +15,12 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
 import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.text.JBDateFormat
+import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -190,16 +192,40 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
   private fun createComponent(review: GHPullRequestReview): JComponent {
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
-    val threadsPanel = GHPRReviewThreadsPanel.create(reviewThreadsModel) {
-      val content = GHPRReviewThreadComponent.createWithDiff(project, it,
+
+    val threadsPanel = GHPRReviewThreadsPanel.create(reviewThreadsModel) { thread ->
+      val content = GHPRReviewThreadComponent.createWithDiff(project, thread,
                                                              reviewDataProvider, avatarIconsProvider,
                                                              reviewDiffComponentFactory,
                                                              selectInToolWindowHelper, suggestedChangeHelper,
                                                              ghostUser, currentUser)
-      val firstComment: GHPRReviewCommentModel = (if (it.size <= 0) null else it.getElementAt(0))
+
+      val outdatedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.thread.outdated")} ", UIUtil.ComponentStyle.SMALL).apply {
+        foreground = UIUtil.getContextHelpForeground()
+        background = UIUtil.getPanelBackground()
+      }.andOpaque()
+
+      val resolvedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.resolved")} ", UIUtil.ComponentStyle.SMALL).apply {
+        foreground = UIUtil.getContextHelpForeground()
+        background = UIUtil.getPanelBackground()
+      }.andOpaque()
+
+      thread.addAndInvokeStateChangeListener {
+        outdatedLabel.isVisible = thread.isOutdated
+        resolvedLabel.isVisible = thread.isResolved
+      }
+
+      val tagsPanel = JPanel(HorizontalLayout(10)).apply {
+        isOpaque = false
+        add(outdatedLabel)
+        add(resolvedLabel)
+      }
+
+      val firstComment: GHPRReviewCommentModel = (if (thread.size <= 0) null else thread.getElementAt(0))
                                                  ?: return@create JPanel(null)
       GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, firstComment.author ?: ghostUser, firstComment.dateCreated,
-                                        content, Int.MAX_VALUE)
+                                        content, Int.MAX_VALUE,
+                                        additionalTitle = tagsPanel)
     }
 
     val reviewItem = createReviewContentItem(review)
