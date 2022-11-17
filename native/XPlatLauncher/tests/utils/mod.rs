@@ -230,6 +230,7 @@ pub fn layout_launcher(
     // ├── bin/
     // │   └── xplat-launcher
     // │   └── idea64.vmoptions
+    // │   └── idea.properties
     // ├── lib/
     // │   └── app.jar
     // ├── plugins/
