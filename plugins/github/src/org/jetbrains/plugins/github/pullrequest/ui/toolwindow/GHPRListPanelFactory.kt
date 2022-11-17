@@ -9,17 +9,14 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
@@ -67,7 +64,7 @@ internal class GHPRListPanelFactory(private val project: Project,
     }
 
     val repository = repositoryDataService.repositoryCoordinates.repositoryPath.repository
-    ListEmptyTextController(scope, listLoader, searchVm, list.emptyText, repository, disposable)
+    GHPRListPanelController(scope, listLoader, searchVm, list.emptyText, repository, disposable)
 
     val searchPanel = GHPRSearchPanelFactory(searchVm, avatarIconsProvider).create(scope)
 
@@ -146,39 +143,6 @@ internal class GHPRListPanelFactory(private val project: Project,
       if (loader.loading) progressStripe.startLoading() else progressStripe.stopLoading()
     }
     return progressStripe
-  }
-
-  private class ListEmptyTextController(scope: CoroutineScope,
-                                        private val listLoader: GHListLoader<*>,
-                                        private val searchVm: GHPRSearchPanelViewModel,
-                                        private val emptyText: StatusText,
-                                        private val repository: String,
-                                        listenersDisposable: Disposable) {
-    init {
-      listLoader.addLoadingStateChangeListener(listenersDisposable, ::update)
-      scope.launch {
-        searchVm.searchState.collect {
-          update()
-        }
-      }
-    }
-
-    private fun update() {
-      emptyText.clear()
-      if (listLoader.loading || listLoader.error != null) return
-
-      val search = searchVm.searchState.value
-      if (search.filterCount == 0) {
-        emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded", repository))
-      }
-      else {
-        emptyText
-          .appendText(GithubBundle.message("pull.request.list.no.matches"))
-          .appendSecondaryText(GithubBundle.message("pull.request.list.filters.clear"), SimpleTextAttributes.LINK_ATTRIBUTES) {
-            searchVm.searchState.value = GHPRListSearchValue.EMPTY
-          }
-      }
-    }
   }
 
   private class OutdatedPanelController(private val listLoader: GHListLoader<*>,
