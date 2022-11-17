@@ -19,10 +19,10 @@ object WindowsFileUtil {
 
   private const val SEE_MASK_NO_CLOSE_PROCESS = 0x00000040
 
-  fun windowsShellExecute(executable: String, workingDirectory: Path, parameters: List<String>, waitForProcess: Duration? = null) : WinNT.HANDLE {
+  fun windowsShellExecute(executable: Path, workingDirectory: Path, parameters: List<String>, waitForProcess: Duration? = null) : WinNT.HANDLE {
     val info = ShellAPI.SHELLEXECUTEINFO()
     info.cbSize = info.size()
-    info.lpFile = executable
+    info.lpFile = executable.toString()
     info.lpVerb = "open"
     info.lpParameters = ParametersListUtil.join(parameters)
     info.lpDirectory = workingDirectory.toString()
