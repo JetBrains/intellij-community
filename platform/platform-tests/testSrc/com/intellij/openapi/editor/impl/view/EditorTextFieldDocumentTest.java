@@ -7,10 +7,13 @@ import com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument;
 public class EditorTextFieldDocumentTest extends AbstractEditorTest {
   public void testSelection() {
     EditorTextFieldRendererDocument document = new EditorTextFieldRendererDocument();
-    document.setText("""
-                       12345
-                       67890
-                       """);
+    document.setText("12345\n67890\n\r12345\r11111");
     assertEquals(5, document.getLineEndOffset(0));
+    assertEquals(6, document.getLineStartOffset(1));
+    assertEquals(11, document.getLineEndOffset(1));
+    assertEquals(12, document.getLineStartOffset(2));
+    assertEquals(12, document.getLineEndOffset(2));
+    assertEquals(13, document.getLineStartOffset(3));
+    assertEquals(18, document.getLineEndOffset(3));
   }
 }
